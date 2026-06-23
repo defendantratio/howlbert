@@ -1,0 +1,125 @@
+"""Tests for per-wolf character trait modifiers."""
+
+import database as db
+from engine.character_traits import (
+    KANAMI_CHARACTER_TRAITS,
+    MIREWORT_CHARACTER_TRAITS,
+    MURKVEIN_CHARACTER_TRAITS,
+    SPLINTER_CHARACTER_TRAITS,
+    encode_character_traits,
+    trait_check_adjustments,
+    trait_check_disadvantage,
+    trait_combat_modifier,
+    trait_hunt_multiplier,
+)
+from engine.dice import resolve_check
+
+
+def _row(**kwargs):
+    base = {
+        "exhaustion": 0,
+        "active_injuries": "[]",
+        "genetic_conditions": "[]",
+        "disease": None,
+        "great_pack": "mistmoor",
+        "character_traits": encode_character_traits(MIREWORT_CHARACTER_TRAITS),
+        "attr_str": 2,
+        "attr_dex": 3,
+        "attr_con": 4,
+        "attr_int": 5,
+        "attr_cha": 2,
+        "attr_wis": 8,
+        "skill_proficiencies": '["herblore", "medicine"]',
+    }
+    base.update(kwargs)
+    return base
+
+
+def test_mirewort_herblore_bonus():
+    user = _row()
+    mod, names = trait_check_adjustments(user, ("attr_int",), skill_key="herblore")
+    assert mod == 6
+    assert "Herbal Mastery (Swamp)" in names
+
+
+def test_mirewort_medicine_bonus():
+    user = _row()
+    mod, names = trait_check_adjustments(user, ("attr_wis",), skill_key="medicine")
+    assert mod == 5
+    assert "Wound-Tending" in names
+
+
+def test_mirewort_swamp_nav_outside_mistmoor():
+    user = _row(great_pack="thistlehide")
+    mod, names = trait_check_adjustments(user, ("attr_con", "attr_str"), skill_key="survival")
+    assert mod == -4
+    assert "Physically Frail" in names
+    assert "Swamp Navigation" not in names
+
+
+def test_mirewort_frail_and_detachment_stack():
+    user = _row()
+    mod, names = trait_check_adjustments(user, ("attr_cha",), skill_key="persuasion")
+    assert mod == -2
+    assert names == ["Morbid Detachment"]
+
+
+def test_mirewort_combat_penalty():
+    user = _row()
+    assert trait_combat_modifier(user) == -4
+
+
+def test_splinter_stealth_bonus():
+    user = _row(
+        great_pack="rogue",
+        character_traits=encode_character_traits(SPLINTER_CHARACTER_TRAITS),
+        attr_dex=4,
+        skill_proficiencies='["stealth", "tracking"]',
+    )
+    mod, names = trait_check_adjustments(user, ("attr_dex",), skill_key="stealth")
+    assert mod == 1  # +4 stealth, -3 missing leg on dex
+    assert "Stealth" in names
+
+
+def test_resolve_check_includes_trait_modifier():
+    import engine.dice as dice_mod
+
+    user = _row()
+    original = dice_mod.roll_d20
+    dice_mod.roll_d20 = lambda: 10
+    try:
+        result = resolve_check(
+            user,
+            attr_keys=("attr_int",),
+            skill="Herblore",
+            dc=15,
+            proficient=True,
+            skill_key="herblore",
+        )
+    finally:
+        dice_mod.roll_d20 = original
+    assert result["trait_modifier"] == 6
+    assert result["total"] == 18
+    assert result["success"] is True
+
+
+def test_kanami_blindness_penalties():
+    user = _row(
+        great_pack="thistlehide",
+        character_traits=encode_character_traits(KANAMI_CHARACTER_TRAITS),
+    )
+    mult, note = trait_hunt_multiplier(user)
+    assert mult == 0.65
+    assert "Total Blindness" in note
+    assert trait_check_disadvantage(user, ("attr_wis",), skill_key="persuasion")
+    assert not trait_check_disadvantage(user, ("attr_wis",), skill_key="stealth")
+
+
+def test_murkvein_no_tail_penalties():
+    user = _row(
+        great_pack="mistmoor",
+        character_traits=encode_character_traits(MURKVEIN_CHARACTER_TRAITS),
+    )
+    mult, _ = trait_hunt_multiplier(user)
+    assert mult == 0.9
+    assert trait_check_disadvantage(user, ("attr_dex",), skill_key="survival")

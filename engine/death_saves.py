@@ -1,0 +1,95 @@
+import random
+
+from engine.character import attr_modifier, parse_proficiencies
+from engine.dice import roll_d20
+from rpg_rules import PROFICIENCY_BONUS
+
+DEATH_SAVE_DCS = (10, 12, 15)
+
+
+def roll_death_save(user) -> dict:
+    """Round 1-3: CON save vs escalating DC. Three successes → stabilize at 1 HP."""
+    round_num = user["death_save_round"] if user["death_save_round"] else 1
+    round_num = min(3, max(1, round_num))
+    dc = DEATH_SAVE_DCS[round_num - 1]
+
+    die = roll_d20()
+    mod = attr_modifier(user["attr_con"])
+    from engine.herb_buffs import death_save_bonus
+
+    mod += death_save_bonus(user)
+    total = die + mod
+
+    if die == 1:
+        success = False
+        auto_fail = True
+    elif die == 20:
+        success = True
+        auto_fail = False
+    else:
+        success = total >= dc
+        auto_fail = False
+
+    return {
+        "die": die,
+        "modifier": mod,
+        "total": total,
+        "dc": dc,
+        "round": round_num,
+        "success": success,
+        "auto_fail": auto_fail,
+        "nat20": die == 20,
+    }
+
+
+def stabilize_bonus(
+    *,
+    yarrow: bool = False,
+    yarrow_fresh: bool = False,
+    oak_bark: bool = False,
+    cattail: bool = False,
+) -> int:
+    bonus = 0
+    if yarrow or yarrow_fresh:
+        bonus += 2
+    if oak_bark:
+        bonus += 2
+    if cattail:
+        bonus += 2
+    return bonus
+
+
+def stabilize_check(
+    healer,
+    target_has_herblore: bool = False,
+    *,
+    yarrow: bool = False,
+    yarrow_fresh: bool = False,
+    oak_bark: bool = False,
+    cattail: bool = False,
+) -> dict:
+    die = roll_d20()
+    mod = attr_modifier(healer["attr_wis"])
+    profs = parse_proficiencies(healer["skill_proficiencies"])
+    prof = PROFICIENCY_BONUS if "medicine" in profs else 0
+    if target_has_herblore and "herblore" in profs:
+        prof = max(prof, PROFICIENCY_BONUS)
+    mod += stabilize_bonus(
+        yarrow=yarrow,
+        yarrow_fresh=yarrow_fresh,
+        oak_bark=oak_bark,
+        cattail=cattail,
+    )
+    from engine.herb_buffs import death_save_bonus
+
+    mod += death_save_bonus(healer)
+    total = die + mod + prof
+    dc = 15
+    return {
+        "die": die,
+        "modifier": mod,
+        "proficiency": prof,
+        "total": total,
+        "dc": dc,
+        "success": total >= dc or die == 20,
+    }

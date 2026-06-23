@@ -1,0 +1,387 @@
+"""Discord events for invite tracking and server boost rewards."""
+
+from __future__ import annotations
+
+import logging
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+import database as db
+from engine.kickstarter import grant_tier2_rewards, kickstarter_badge_text
+from engine.patron import (
+    grant_first_boost,
+    grant_second_boost,
+    patron_status_lines,
+    record_invite_join,
+)
+from engine.donor import (
+    apply_donation_grant,
+    create_donation_code,
+    donor_status_lines,
+    redeem_code,
+)
+from engine.kofi_shop import fulfill_shop_order, list_pending_shop_orders
+from engine.kofi_webhook import start_kofi_webhook, stop_kofi_webhook
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.permissions import is_howlbert_admin
+
+logger = logging.getLogger("howlbert.patron")
+
+
+class Patron(commands.Cog):
+    patronadmin = app_commands.Group(
+        name="patronadmin",
+        description="Admin; donation codes and manual grants.",
+    )
+    kickstarter = app_commands.Group(
+        name="kickstarter",
+        description="Admin; Kickstarter backer badge and Tier 2 fulfillment.",
+        parent=patronadmin,
+    )
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self._invite_cache: dict[int, dict[str, tuple[int, int | None]]] = {}
+
+    async def cog_load(self):
+        for guild in self.bot.guilds:
+            await self._refresh_invites(guild)
+        await start_kofi_webhook(self.bot)
+
+    async def cog_unload(self):
+        await stop_kofi_webhook()
+
+    async def _require_admin(self, interaction: discord.Interaction) -> bool:
+        if is_howlbert_admin(interaction):
+            return True
+        await interaction.response.send_message(
+            embed=howlbert_embed("Denied", "Admins only.", color=ERROR_COLOR),
+            ephemeral=True,
+        )
+        return False
+
+    async def _refresh_invites(self, guild: discord.Guild) -> None:
+        try:
+            invites = await guild.invites()
+            self._invite_cache[guild.id] = {
+                inv.code: (inv.uses or 0, inv.inviter.id if inv.inviter else None)
+                for inv in invites
+            }
+        except discord.Forbidden:
+            self._invite_cache[guild.id] = {}
+            logger.warning("No Manage Server permission to track invites in guild %s", guild.id)
+
+    @commands.Cog.listener()
+    async def on_invite_create(self, invite: discord.Invite):
+        cache = self._invite_cache.setdefault(invite.guild.id, {})
+        cache[invite.code] = (invite.uses or 0, invite.inviter.id if invite.inviter else None)
+
+    @commands.Cog.listener()
+    async def on_invite_delete(self, invite: discord.Invite):
+        cache = self._invite_cache.get(invite.guild.id, {})
+        cache.pop(invite.code, None)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        guild = member.guild
+        try:
+            invites = await guild.invites()
+        except discord.Forbidden:
+            return
+
+        old = self._invite_cache.get(guild.id, {})
+        inviter_id = None
+        for inv in invites:
+            prev_uses, _ = old.get(inv.code, (0, None))
+            if (inv.uses or 0) > prev_uses:
+                inviter_id = inv.inviter.id if inv.inviter else None
+                break
+
+        self._invite_cache[guild.id] = {
+            inv.code: (inv.uses or 0, inv.inviter.id if inv.inviter else None)
+            for inv in invites
+        }
+
+        if not inviter_id or inviter_id == member.id:
+            return
+
+        world = db.get_world(guild.id)
+        day = world["day_number"] if world else 1
+        record_invite_join(guild.id, member.id, inviter_id, day)
+        logger.info(
+            "Invite tracked: %s invited %s to guild %s",
+            inviter_id,
+            member.id,
+            guild.id,
+        )
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
+        if before.premium_since is None and after.premium_since is not None:
+            note = grant_first_boost(after.id)
+            if note:
+                logger.info("First boost reward for %s: %s", after.id, note)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.type is not discord.MessageType.premium_guild_subscription:
+            return
+        if not message.guild or not message.author:
+            return
+        count = 1
+        if message.content and str(message.content).isdigit():
+            count = int(message.content)
+        if count >= 2:
+            note = grant_second_boost(message.author.id)
+            if note:
+                logger.info("Second boost reward for %s", message.author.id)
+
+    @app_commands.command(
+        name="patron",
+        description="View invite & server boost rewards (booster perks are yours only).",
+    )
+    async def patron_status(self, interaction: discord.Interaction):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            return
+
+        is_boosting = bool(
+            interaction.user
+            and isinstance(interaction.user, discord.Member)
+            and interaction.user.premium_since
+        )
+        lines = patron_status_lines(interaction.user.id, is_boosting=is_boosting)
+        lines.extend(donor_status_lines(interaction.user.id))
+        embed = howlbert_embed("Patron & Invites", "\n".join(lines), color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="redeem", description="Redeem a one-time donation or gift code.")
+    @app_commands.describe(code="Code from Ko-fi, Patreon, or an admin")
+    async def redeem(self, interaction: discord.Interaction, code: str):
+        ok, note = redeem_code(interaction.user.id, code)
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = "Code Redeemed" if ok else "Redeem Failed"
+        await interaction.response.send_message(
+            embed=howlbert_embed(title, note, color=color),
+            ephemeral=True,
+        )
+
+    @patronadmin.command(name="code", description="Create a one-time or limited-use redeem code.")
+    @app_commands.describe(
+        bones="Bones granted on redeem",
+        max_uses="How many total redemptions (default 1)",
+        tier="Optional donor tier label: friend, benefactor, legend",
+        mood="Optional mood bonus",
+        standing="Optional standing bonus",
+        supporter_days="Days of +3 /bones action:daily supporter perk",
+        note="Internal note for this code",
+    )
+    @app_commands.choices(
+        tier=[
+            app_commands.Choice(name="None", value=""),
+            app_commands.Choice(name="Den Friend", value="friend"),
+            app_commands.Choice(name="Pack Benefactor", value="benefactor"),
+            app_commands.Choice(name="Legend of the Den", value="legend"),
+        ]
+    )
+    async def patronadmin_code(
+        self,
+        interaction: discord.Interaction,
+        bones: app_commands.Range[int, 0, 5000],
+        max_uses: app_commands.Range[int, 1, 100] = 1,
+        tier: app_commands.Choice[str] | None = None,
+        mood: app_commands.Range[int, 0, 50] = 0,
+        standing: app_commands.Range[int, 0, 20] = 0,
+        supporter_days: app_commands.Range[int, 0, 365] = 0,
+        note: str = "",
+    ):
+        if not await self._require_admin(interaction):
+            return
+        tier_val = tier.value if tier else ""
+        code = create_donation_code(
+            bones=bones,
+            donor_tier=tier_val,
+            mood_bonus=mood,
+            standing_bonus=standing,
+            daily_bonus_days=supporter_days,
+            max_uses=max_uses,
+            note=note,
+        )
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Donation Code Created",
+                f"**`{code}`**\n"
+                f"**{bones}** bones · max uses **{max_uses}**"
+                + (f" · tier **{tier_val}**" if tier_val else "")
+                + (f" · **{supporter_days}** supporter days" if supporter_days else ""),
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=True,
+        )
+
+    @patronadmin.command(name="grant", description="Manually grant donor rewards to a player.")
+    @app_commands.describe(
+        player="Discord member",
+        bones="Bones to grant",
+        tier="Optional donor tier",
+        supporter_days="Days of +3 /bones action:daily supporter perk",
+    )
+    @app_commands.choices(
+        tier=[
+            app_commands.Choice(name="None", value=""),
+            app_commands.Choice(name="Den Friend", value="friend"),
+            app_commands.Choice(name="Pack Benefactor", value="benefactor"),
+            app_commands.Choice(name="Legend of the Den", value="legend"),
+        ]
+    )
+    async def patronadmin_grant(
+        self,
+        interaction: discord.Interaction,
+        player: discord.Member,
+        bones: app_commands.Range[int, 0, 5000],
+        tier: app_commands.Choice[str] | None = None,
+        supporter_days: app_commands.Range[int, 0, 365] = 0,
+    ):
+        if not await self._require_admin(interaction):
+            return
+        ok, note = apply_donation_grant(
+            player.id,
+            bones=bones,
+            tier=tier.value if tier else "",
+            supporter_days=supporter_days,
+            count_toward_monthly_cap=False,
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = "Grant Applied" if ok else "Grant Failed"
+        await interaction.response.send_message(
+            embed=howlbert_embed(title, f"{player.mention}: {note}", color=color),
+            ephemeral=True,
+        )
+
+    @kickstarter.command(name="grant", description="Grant the permanent Kickstarter backer badge.")
+    @app_commands.describe(player="Discord member who backed Tier 2+")
+    async def kickstarter_grant_badge(
+        self,
+        interaction: discord.Interaction,
+        player: discord.Member,
+    ):
+        if not await self._require_admin(interaction):
+            return
+        if not db.get_user(player.id):
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "No Wolf",
+                    f"{player.display_name} must `/register` before the badge is granted.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=True,
+            )
+            return
+        if db.grant_kickstarter_backer(player.id):
+            note = f"{kickstarter_badge_text()}; visible on `/patron` and `/profile`."
+        else:
+            note = f"{kickstarter_badge_text()} was already granted."
+        await interaction.response.send_message(
+            embed=howlbert_embed("Kickstarter Backer", f"{player.mention}: {note}", color=SUCCESS_COLOR),
+            ephemeral=True,
+        )
+
+    @kickstarter.command(
+        name="tier2",
+        description="Fulfill Tier 2 (Bone Pouch Backer): badge, 75 bones, one bonus item.",
+    )
+    @app_commands.describe(
+        player="Discord member",
+        bonus_item="Lucky Tooth, Den Charm, or Herb Bundle",
+    )
+    @app_commands.choices(
+        bonus_item=[
+            app_commands.Choice(name="Lucky Tooth", value="lucky_tooth"),
+            app_commands.Choice(name="Den Charm", value="den_charm"),
+            app_commands.Choice(name="Herb Bundle", value="herb_bundle"),
+        ]
+    )
+    async def kickstarter_tier2(
+        self,
+        interaction: discord.Interaction,
+        player: discord.Member,
+        bonus_item: app_commands.Choice[str],
+    ):
+        if not await self._require_admin(interaction):
+            return
+        ok, note = grant_tier2_rewards(player.id, bonus_item=bonus_item.value)
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = "Tier 2 Fulfilled" if ok else "Tier 2 Failed"
+        await interaction.response.send_message(
+            embed=howlbert_embed(title, f"{player.mention}: {note}", color=color),
+            ephemeral=True,
+        )
+
+    @kickstarter.command(name="revoke", description="Remove the Kickstarter backer badge.")
+    @app_commands.describe(player="Discord member")
+    async def kickstarter_revoke(
+        self,
+        interaction: discord.Interaction,
+        player: discord.Member,
+    ):
+        if not await self._require_admin(interaction):
+            return
+        if db.revoke_kickstarter_backer(player.id):
+            note = "Kickstarter backer badge removed."
+        else:
+            note = "That player did not have the badge."
+        await interaction.response.send_message(
+            embed=howlbert_embed("Kickstarter Backer", f"{player.mention}: {note}", color=SUCCESS_COLOR),
+            ephemeral=True,
+        )
+
+    @patronadmin.command(name="orders", description="List pending Ko-fi shop orders to fulfill.")
+    async def patronadmin_orders(self, interaction: discord.Interaction):
+        if not await self._require_admin(interaction):
+            return
+        rows = list_pending_shop_orders(limit=15)
+        if not rows:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Shop Orders", "No pending orders.", color=SUCCESS_COLOR),
+                ephemeral=True,
+            )
+            return
+        lines = []
+        for row in rows:
+            who = f"<@{row['discord_id']}>" if row["discord_id"] else row["email"] or "-"
+            lines.append(
+                f"**#{row['id']}**; **{row['product_label']}** · {who} · "
+                f"${int(row['amount_cents']) / 100:.2f} · {row['created_at'][:10]}"
+            )
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Pending Shop Orders",
+                "\n".join(lines) + "\n\nMark done with `/patronadmin fulfill`.",
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=True,
+        )
+
+    @patronadmin.command(name="fulfill", description="Mark a Ko-fi shop order as fulfilled.")
+    @app_commands.describe(order_id="Order id from /patronadmin orders", notes="Optional note")
+    async def patronadmin_fulfill(
+        self,
+        interaction: discord.Interaction,
+        order_id: app_commands.Range[int, 1, 999999],
+        notes: str = "",
+    ):
+        if not await self._require_admin(interaction):
+            return
+        ok, note = fulfill_shop_order(order_id, notes=notes)
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(
+            embed=howlbert_embed("Shop Fulfillment", note, color=color),
+            ephemeral=True,
+        )
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Patron(bot))

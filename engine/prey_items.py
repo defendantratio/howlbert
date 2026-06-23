@@ -1,0 +1,267 @@
+"""Prey carcasses; Wolvden-style hoard food with uses and rot timers."""
+
+from __future__ import annotations
+
+import random
+
+# Rollovers (sunrises) before meat turns rotting; then ROTTEN_GRACE before it spoils.
+PREY_FRESH_DAYS = 5
+PREY_ROTTEN_GRACE_DAYS = 2
+PREY_ROTTING_EAT_DISEASE_CHANCE = 0.25
+
+PREY_CATALOG: dict[str, dict] = {
+    "vole": {
+        "name": "Vole Carcass",
+        "label": "a vole",
+        "uses": 2,
+        "bones": 6,
+        "rot_days": 4,
+    },
+    "hare": {
+        "name": "Hare Carcass",
+        "label": "a hare",
+        "uses": 4,
+        "bones": 12,
+        "rot_days": 5,
+    },
+    "rabbit": {
+        "name": "Rabbit Carcass",
+        "label": "a rabbit",
+        "uses": 4,
+        "bones": 10,
+        "rot_days": 5,
+    },
+    "fish": {
+        "name": "River Fish",
+        "label": "a fish",
+        "uses": 3,
+        "bones": 10,
+        "rot_days": 4,
+    },
+    "grouse": {
+        "name": "Grouse Carcass",
+        "label": "a grouse",
+        "uses": 4,
+        "bones": 16,
+        "rot_days": 5,
+    },
+    "agouti": {
+        "name": "Agouti Carcass",
+        "label": "an agouti",
+        "uses": 4,
+        "bones": 14,
+        "rot_days": 5,
+    },
+    "beaver": {
+        "name": "Beaver Carcass",
+        "label": "a beaver",
+        "uses": 6,
+        "bones": 28,
+        "rot_days": 6,
+    },
+    "deer": {
+        "name": "Deer Carcass",
+        "label": "a deer",
+        "uses": 8,
+        "bones": 50,
+        "rot_days": 7,
+    },
+    "elk": {
+        "name": "Elk Carcass",
+        "label": "an elk",
+        "uses": 10,
+        "bones": 70,
+        "rot_days": 8,
+    },
+    "carrion": {
+        "name": "Old Carrion",
+        "label": "old carrion",
+        "uses": 2,
+        "bones": 8,
+        "rot_days": 3,
+    },
+    # Combat kills (added to hoard when downed in a fight)
+    "coyote": {
+        "name": "Coyote Carcass",
+        "label": "a coyote",
+        "uses": 4,
+        "bones": 14,
+        "rot_days": 5,
+    },
+    "fox": {
+        "name": "Fox Carcass",
+        "label": "a fox",
+        "uses": 3,
+        "bones": 10,
+        "rot_days": 4,
+    },
+    "badger": {
+        "name": "Badger Carcass",
+        "label": "a badger",
+        "uses": 5,
+        "bones": 20,
+        "rot_days": 6,
+    },
+    "wolverine": {
+        "name": "Wolverine Carcass",
+        "label": "a wolverine",
+        "uses": 5,
+        "bones": 22,
+        "rot_days": 6,
+    },
+    "cougar": {
+        "name": "Cougar Carcass",
+        "label": "a cougar",
+        "uses": 8,
+        "bones": 48,
+        "rot_days": 7,
+    },
+    "black_bear": {
+        "name": "Black Bear Carcass",
+        "label": "a black bear",
+        "uses": 10,
+        "bones": 58,
+        "rot_days": 8,
+    },
+    "grizzly_bear": {
+        "name": "Grizzly Carcass",
+        "label": "a grizzly bear",
+        "uses": 12,
+        "bones": 85,
+        "rot_days": 8,
+    },
+    "feral_dog": {
+        "name": "Feral Hearth-hound Carcass",
+        "label": "a feral hearth-hound",
+        "uses": 4,
+        "bones": 12,
+        "rot_days": 5,
+    },
+    "guard_dog": {
+        "name": "Guard Hearth-hound Carcass",
+        "label": "a guard hearth-hound",
+        "uses": 5,
+        "bones": 16,
+        "rot_days": 5,
+    },
+    "hunting_dog": {
+        "name": "Hunting Hearth-hound Carcass",
+        "label": "a hunting hearth-hound",
+        "uses": 4,
+        "bones": 14,
+        "rot_days": 5,
+    },
+    "fighting_dog": {
+        "name": "Fighting Hearth-hound Carcass",
+        "label": "a fighting hearth-hound",
+        "uses": 5,
+        "bones": 18,
+        "rot_days": 5,
+    },
+    "cat_carcass": {
+        "name": "Cat Carcass",
+        "label": "a cat",
+        "uses": 3,
+        "bones": 9,
+        "rot_days": 4,
+    },
+    "kittypet_carcass": {
+        "name": "Kittypet Carcass",
+        "label": "a kittypet",
+        "uses": 2,
+        "bones": 6,
+        "rot_days": 3,
+    },
+    "wolf_carcass": {
+        "name": "Wolf Carcass",
+        "label": "a wolf",
+        "uses": 8,
+        "bones": 35,
+        "rot_days": 6,
+        "cannibal": True,
+    },
+}
+
+SNIFF_FLAVORS = (
+    "You nose the wind; rabbit somewhere east of the creek.",
+    "Old blood on stone. Something was dragged through the bracken recently.",
+    "Pine and prey-scent tangled; a trail worth following at dawn.",
+    "The ground holds a warm track; small game, not far.",
+    "Fish-oil and mud: the river bend was busy last night.",
+    "A rival's mark on the border post; fresh, angry, close.",
+)
+
+SNIFF_HUNT_HINT = (
+    "Your whiskers prickle; prey-scent runs strong; strike while the trail is hot.",
+    "Scent pools in the ravine; the wind favors hunters who move now.",
+    "Fresh blood on the breeze; your next hunt or track should run richer.",
+)
+
+# Max hunt flavor tier per carcass type (stops "heavy prey" text on grouse, etc.)
+PREY_FLAVOR_TIER_CAP: dict[str, str] = {
+    "vole": "small",
+    "hare": "small",
+    "rabbit": "solid",
+    "fish": "solid",
+    "grouse": "solid",
+    "agouti": "solid",
+    "beaver": "big",
+    "deer": "big",
+    "elk": "legendary",
+    "carrion": "small",
+}
+
+
+def prey_flavor_tier_cap(prey_key: str) -> str:
+    return PREY_FLAVOR_TIER_CAP.get(prey_key, "solid")
+
+
+def prey_meta(key: str) -> dict:
+    return PREY_CATALOG.get(key, PREY_CATALOG["hare"])
+
+
+def canonical_prey_bones(prey_key: str) -> int:
+    """Standard bone value for a carcass type (eating, salvage, pile display)."""
+    return int(prey_meta(prey_key)["bones"])
+
+
+def is_cannibal_prey(prey_key: str) -> bool:
+    return bool(prey_meta(prey_key).get("cannibal"))
+
+
+def prey_key_from_hunt_amount(amount: int) -> str:
+    if amount <= 0:
+        return "vole"
+    if amount <= 8:
+        return "vole"
+    if amount <= 15:
+        return random.choice(["hare", "rabbit"])
+    if amount <= 22:
+        return random.choice(["grouse", "agouti"])
+    if amount <= 28:
+        return random.choice(["rabbit", "grouse"])
+    if amount <= 35:
+        return "beaver"
+    if amount <= 60:
+        return "deer"
+    return "elk"
+
+
+def freshness_label(acquired_day: int, current_day: int, prey_key: str, *, rotting: bool) -> str:
+    meta = prey_meta(prey_key)
+    rot_days = meta.get("rot_days", PREY_FRESH_DAYS)
+    age = max(0, current_day - acquired_day)
+    if rotting:
+        left = max(0, PREY_ROTTEN_GRACE_DAYS - (age - rot_days))
+        return f"**rotting** ({left}d until spoiled)" if left else "**spoiled soon**"
+    left = max(0, rot_days - age)
+    if left <= 1:
+        return f"fresh (**rotting soon**; {left}d)"
+    return f"fresh ({left}d)"
+
+
+def salvage_bones(prey_key: str, uses_left: int, bone_value: int) -> int:
+    meta = prey_meta(prey_key)
+    full_uses = max(1, meta["uses"])
+    portion = max(1, uses_left) / full_uses
+    return max(1, int(bone_value * portion * 0.5))

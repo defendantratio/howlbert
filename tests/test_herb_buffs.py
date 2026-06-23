@@ -1,0 +1,50 @@
+"""Herb buff and supplemental treatment mechanics."""
+
+from engine.herb_buffs import (
+    apply_supplemental_herb,
+    disease_save_uses_advantage,
+    grant_disease_save_advantage,
+)
+from engine.herb_storage import parse_herb_stack_id
+from engine.conditions import treat_with_herb
+from herbs import HERBS
+
+
+class Row:
+    def __init__(self, **kw):
+        self._d = kw
+
+    def __getitem__(self, k):
+        return self._d[k]
+
+    def keys(self):
+        return self._d.keys()
+
+
+def test_saffron_stabilizes_dying():
+    user = Row(hp=0, condition="dying", disease="", active_injuries="[]")
+    assert treat_with_herb(user, "saffron", HERBS["saffron"]) == "stabilized"
+
+
+def test_elderberry_grants_three_day_advantage():
+    user = Row(
+        disease="",
+        disease_save_buff=0,
+        disease_save_buff_days=0,
+        herb_buffs="{}",
+        last_rest_day=5,
+        mood=50,
+    )
+    effect = apply_supplemental_herb("elderberry", user, day=5, outcome="symptom_ease")
+    assert effect is not None
+    assert effect["fields"]["disease_save_buff_days"] == 3
+    assert effect["fields"]["disease_save_buff"] == 1
+
+
+def test_disease_save_advantage_flag():
+    user = Row(disease_save_buff=1, disease_save_buff_days=0)
+    assert disease_save_uses_advantage(user)
+
+
+def test_parse_stack_id():
+    assert parse_herb_stack_id("stack:3") == 3

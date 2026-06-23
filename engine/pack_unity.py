@@ -1,0 +1,135 @@
+"""Pack unity meter; hunt bonuses, howl rally rules, and dissolve threshold."""
+
+from __future__ import annotations
+
+import random
+
+from config import (
+    PACK_UNITY_DISSOLVE_THRESHOLD,
+    PACK_UNITY_MAX,
+    PACK_UNITY_MIN,
+)
+
+
+HOWL_CALLS = (
+    "Your voice carries over the ridges; a long, clear note.",
+    "The den answers in scattered echoes before the wind takes them.",
+    "You throw your head back and let the wild hear where you stand.",
+    "A mourning note, then a rallying rise; the old song of the pack.",
+    "Your howl threads through the pines; somewhere, a packmate pricks their ears.",
+)
+
+HOWL_ECHO_CALLS = (
+    "The chorus swells; **{count}** wolves howl as one this sunrise.",
+    "**{count}** voices braid the sky. Even the river seems to listen.",
+    "Answer builds on answer; **{count}** throats, one heartbeat.",
+)
+
+HOWL_MUTED_CALLS = (
+    "Your howl goes up; but the den is too fractured to answer with strength.",
+    "You sing anyway. The silence between echoes hurts more than hunger.",
+    "Only a few voices answer. The pack's heart is not in it yet.",
+)
+
+
+def unity_is_broken(unity: int) -> bool:
+    """Unity at 0 or below; ordinary howls cannot raise unity."""
+    return unity <= 0
+
+
+def howl_can_rally_unity(user, pack) -> bool:
+    """Alpha or Beta (Advisor) can rally a broken pack; ordinary wolves cannot."""
+    from engine.pack_leadership import is_pack_alpha, is_pack_beta
+
+    if not unity_is_broken(int(pack["pack_unity"])):
+        return True
+    if is_pack_alpha(user, pack):
+        return True
+    return is_pack_beta(user, pack)
+
+
+def compute_howl_unity_gain(user, pack, unity: int, echo_count: int) -> int:
+    from engine.pack_leadership import is_pack_alpha
+
+    if unity_is_broken(unity) and not howl_can_rally_unity(user, pack):
+        return 0
+
+    gain = 2 if is_pack_alpha(user, pack) else 1
+
+    if echo_count >= 3 and gain > 0:
+        gain += 1
+    return gain
+
+
+def unity_effect_text(unity: int) -> str:
+    if unity <= PACK_UNITY_DISSOLVE_THRESHOLD:
+        return (
+            f"**Dissolved**; at **{PACK_UNITY_DISSOLVE_THRESHOLD}** unity the den fractures; "
+            "every wolf is cast to **loner** until they `/setfaction` back in."
+        )
+    if unity < 0:
+        return (
+            f"Pack fracturing (**{unity}**); **−25%** bones on `/bones action:hunt` "
+            "(50🦴 → 37🦴 before tax). "
+            "**Plain `/packlife action:howl` cannot raise unity** until **Alpha** or **Beta (Advisor)** rallies, "
+            "or you share fresh-kill / hang a den charm."
+        )
+    if unity == 0:
+        return (
+            "Pack breaking; **−20%** hunt bones (50🦴 → 40🦴). "
+            "**Plain `/packlife action:howl` does not raise unity**; need Alpha, Beta (Advisor), den charm, or fresh-kill."
+        )
+    if unity <= 2:
+        return "Low unity; **−10%** hunt bones (50🦴 → 45🦴 before tax)."
+    if unity >= 8:
+        return "High unity; **+10%** hunt bones (50🦴 → 55🦴); howls rally harder."
+    return "Steady; normal hunt payouts. Howl to strengthen the chorus."
+
+
+def standing_effect_text(standing: int) -> str:
+    from config import WOLF_STANDING_KICK_THRESHOLD
+
+    if standing <= WOLF_STANDING_KICK_THRESHOLD:
+        return (
+            f"**Cast out**; at **{WOLF_STANDING_KICK_THRESHOLD}** standing you are expelled "
+            "from the pack (loner until `/setfaction`). "
+            "**Alphas** face the **Rite of the Broken Canine** instead (`/pack brokenrite`)."
+        )
+    if standing < 0:
+        return (
+            f"Disfavored (**{standing}**); one step from exile at "
+            f"**{WOLF_STANDING_KICK_THRESHOLD}**. Earn standing through quests, howls, and sharing. "
+            "**Crime** and **cross-pack mating** (if caught) lower standing. "
+            "Raiding a rival pack's treasury with `/crime target_pack:` raises standing if you succeed."
+        )
+    return "In good standing with the den."
+
+
+def hunt_bone_multiplier(unity: int) -> float:
+    if unity < 0:
+        return 0.75
+    if unity == 0:
+        return 0.8
+    if unity <= 2:
+        return 0.9
+    if unity >= 8:
+        return 1.1
+    return 1.0
+
+
+def apply_unity_to_hunt_amount(amount: int, unity: int) -> int:
+    if amount <= 0:
+        return 0
+    return max(0, int(amount * hunt_bone_multiplier(unity)))
+
+
+def pick_howl_flavor(*, echo_count: int, muted: bool = False) -> str:
+    if muted:
+        return random.choice(HOWL_MUTED_CALLS)
+    if echo_count >= 3:
+        return random.choice(HOWL_ECHO_CALLS).format(count=echo_count)
+    return random.choice(HOWL_CALLS)
+
+
+def format_unity_meter(unity: int) -> str:
+    return f"{unity}/{PACK_UNITY_MAX} (min {PACK_UNITY_MIN})"
