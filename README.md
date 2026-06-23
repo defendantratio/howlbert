@@ -5,7 +5,7 @@ discord bot for realistic sentient wolf rp. economy uses **🦴 bones** only.
 ## quick start
 
 ```bash
-git clone <your-repo-url> howlbert
+git clone https://github.com/defendantratio/howlbert howlbert
 cd howlbert
 python3 -m venv .venv
 source .venv/bin/activate   # windows: .venv\Scripts\activate
