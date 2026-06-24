@@ -24,8 +24,8 @@ def hunger_activity_block(user) -> str | None:
     hunger = user_hunger(user)
     if hunger < HUNGER_CRITICAL_THRESHOLD:
         return (
-            f"You're starving (**{hunger}/{HUNGER_MAX}**); eat from `/prey` or ask for `/packlife action:feedall` "
-            "before ranging out."
+            f"You're starving (**{hunger}/{HUNGER_MAX}**); eat from `/prey` or ask your **Alpha** for "
+            "`/packlife action:feedall` before ranging out."
         )
     return None
 

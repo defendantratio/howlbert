@@ -530,7 +530,7 @@ def run_surgery(
             apply_bone_rest(patient_id, day=day)
             lines.append(
                 f"_**Splint confinement**: den rest until sunrise **{day + 7}** "
-                f"(`/vitals action:swim` may shorten)._"
+                f"(`/medic action:swim` may shorten)._"
             )
         if spec.success_long_term:
             from engine.long_term_injuries import add_long_term_injury

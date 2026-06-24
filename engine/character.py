@@ -104,37 +104,24 @@ def is_skill_proficient(user, skill_key: str) -> bool:
 
 
 def skill_proficiency_bonus(user, skill_key: str | None, *, proficient: bool | None = None) -> int:
-    from rpg_rules import PROFICIENCY_BONUS, SKILL_RANK_BONUS
-
-    if not skill_key:
-        return PROFICIENCY_BONUS if proficient else 0
-    if proficient is None:
-        proficient = is_skill_proficient(user, skill_key)
-    bonus = PROFICIENCY_BONUS if proficient else 0
-    if proficient:
-        bonus += get_skill_rank(user, skill_key) * SKILL_RANK_BONUS
-    return bonus
+    """Legacy hook; proficiency no longer adds to dice (use character traits instead)."""
+    return 0
 
 
 def format_skill_proficiencies_line(user) -> str:
-    """Profile / advance display: proficiencies, role skills, and ranks."""
+    """Role/sheet training labels only (not added to dice; traits handle modifiers)."""
     from rpg_rules import ROLE_PROFICIENCIES, SKILLS
 
     profs = parse_proficiencies(user["skill_proficiencies"] if "skill_proficiencies" in user.keys() else None)
     role = user["wolf_role"] if "wolf_role" in user.keys() else ""
     role_profs = set(ROLE_PROFICIENCIES.get(role, ()))
-    ranks = parse_skill_ranks(user["skill_ranks"] if "skill_ranks" in user.keys() else None)
     labels: list[str] = []
     for skill_key in sorted(profs | role_profs):
         label = SKILLS.get(skill_key, ((), skill_key.title()))[1]
-        rank = ranks.get(skill_key, 0)
-        bonus = skill_proficiency_bonus(user, skill_key, proficient=True)
         if skill_key in role_profs and skill_key not in profs:
-            labels.append(f"{label} (role +{bonus})")
-        elif rank:
-            labels.append(f"{label} (+{bonus}, rank {rank})")
+            labels.append(f"{label} (role)")
         else:
-            labels.append(f"{label} (+{bonus})")
+            labels.append(label)
     return ", ".join(labels) if labels else "None"
 
 

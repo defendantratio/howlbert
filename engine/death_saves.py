@@ -2,8 +2,6 @@ import random
 
 from engine.character import attr_modifier, parse_proficiencies
 from engine.dice import roll_d20
-from rpg_rules import PROFICIENCY_BONUS
-
 DEATH_SAVE_DCS = (10, 12, 15)
 
 
@@ -70,10 +68,11 @@ def stabilize_check(
 ) -> dict:
     die = roll_d20()
     mod = attr_modifier(healer["attr_wis"])
-    profs = parse_proficiencies(healer["skill_proficiencies"])
-    prof = PROFICIENCY_BONUS if "medicine" in profs else 0
-    if target_has_herblore and "herblore" in profs:
-        prof = max(prof, PROFICIENCY_BONUS)
+    from engine.character_traits import trait_check_adjustments
+
+    trait_mod, _ = trait_check_adjustments(
+        healer, ("attr_wis",), skill_key="medicine", skill_label="Medicine"
+    )
     mod += stabilize_bonus(
         yarrow=yarrow,
         yarrow_fresh=yarrow_fresh,
@@ -83,12 +82,12 @@ def stabilize_check(
     from engine.herb_buffs import death_save_bonus
 
     mod += death_save_bonus(healer)
-    total = die + mod + prof
+    total = die + mod + trait_mod
     dc = 15
     return {
         "die": die,
         "modifier": mod,
-        "proficiency": prof,
+        "proficiency": trait_mod,
         "total": total,
         "dc": dc,
         "success": total >= dc or die == 20,

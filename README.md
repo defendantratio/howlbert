@@ -86,8 +86,8 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/bones`     | `balance`, `daily`, `hunt`, `work`, `crime`, `shop`, `buy`, `sell`, `inventory`, `use`, `give`, `leaderboard` |
 | `/field`     | `forage`, `verge`, `scavenge`, `track`, `fishing`, `sniff`                                                    |
 | `/hoarding`  | `hoard`, `gift`, `shred`                                                                                      |
-| `/playpen`   | `toys`, `play`, `playall`, `socialize`, `groom`                                                               |
-| `/packlife`  | `feedall`, `howl`                                                                                             |
+| `/playpen`   | `toys`, `play`, `playall`, `toystore`, `socialize`, `groom`                                                   |
+| `/packlife`  | `feedall`, `drinkall`, `howl`                                                                                 |
 | `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`                                                                    |
 | `/quest`     | `board`, `daily`, `accept`, `progress`, `complete`, `abandon`, `log`                                          |
@@ -96,10 +96,11 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/courtship` | `court`, `mate`, `pregnancy`                                                                                  |
 | `/pupcare`   | `birth`, `feed`, `list`, `save`, `adopt`                                                                      |
 | `/wolfset`   | `birthsex`, `sexuality`, `mawbelief`, `size` (combat build)                                                    |
-| `/advance`   | `view`, `spend` (attribute, skill proficiency, **skill rank**, role feature)                                  |
-| `/medic`     | `deathsaves`, `stabilize`                                                                                     |
+| `/advance`   | `view`, `spend` (attribute, **skill trait**, role feature)                                  |
+| `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe` |
+| `/herbs`     | `bag`, `guide`, `prepare`, `dryall`, `store`, `turnin`                                                      |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
-| `/vitals`    | `condition`, `rest`, `treat`, `herbs`, `turnin`, `prepare`, `herbbag`, `sacred`                               |
+| `/vitals`    | `condition`, `rest`                                                                                           |
 
 
 ### standalone commands
@@ -116,7 +117,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/pack …`                                              | treasury, stash, tax, territory, wars, unity           |
 | `/combat …`                                            | initiative combat; `/combat encounter` for ambushes    |
 | `/hazard`                                              | weather opposed roll                                   |
-| `/quarantine`                                          | isolate sick wolves                                    |
+| `/medic action:quarantine`                               | isolate sick wolves (or `action:quarantine`)           |
 | `/trade`                                               | player item and bone trades                            |
 | `/patron` `/redeem`                                    | boosts, invites, supporter perks                       |
 | `/help topic:<category>`                               | full command guide                                     |
@@ -168,7 +169,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 | attributes and roles | `/register`, `/rpg action:setstats`, `/profile`                                |
 | skill checks         | `/rpg action:roll`                                                             |
 | combat               | `/combat start`, `join`, `begin`, `attack`, `status`, `end`                    |
-| herbs                | `/field action:forage`, `action:verge`, `/vitals action:herbs`, `action:treat` |
+| herbs                | `/field action:forage`, `action:verge`, `/herbs`, `/medic action:treat`        |
 | conditions           | `/vitals action:condition`, `action:rest`; disease progresses each rollover    |
 | death saves          | `/medic action:deathsaves`, `action:stabilize` at 0 hp                         |
 | weather hazards      | `/hazard`                                                                      |
@@ -178,7 +179,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **hp** = 10 + str + survival (con score). **pack unity** (0–10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
 
-**herb compendium:** 90+ plants. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/vitals action:herbs` for the guide.
+**herb compendium:** 90+ plants. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide.
 
 illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:vitals` in discord for the full list.
 

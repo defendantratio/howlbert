@@ -7,6 +7,7 @@ from config import WEATHER_HUNT_MODIFIERS
 from engine.season_effects import season_hunt_modifier_label
 from engine.chat_xp import try_chat_message_xp
 from engine.cooldowns import build_cooldown_fields
+from utils.permissions import is_howlbert_admin
 from engine.donor import donor_daily_bonus
 from engine.lexicon import format_sunrise
 from engine.season_effects import season_activity_blurb
@@ -183,6 +184,7 @@ class World(commands.Cog):
             prestige_tier=prestige_tier,
             is_booster=is_booster,
             donor_bonus=donor_bonus,
+            discord_admin=is_howlbert_admin(interaction),
         ):
             embed.add_field(name=name, value=value, inline=inline)
         embed = trim_embed_fields(embed)

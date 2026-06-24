@@ -286,6 +286,57 @@ class WolfAdmin(commands.Cog):
         await interaction.followup.send(embed=embed, ephemeral=True)
 
     @wolfadmin.command(
+        name="possess",
+        description="Steer another player's wolf (all commands act as that character).",
+    )
+    @app_commands.describe(
+        player="Wolf owner",
+        wolf_name="Which wolf (defaults to their active wolf)",
+    )
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_possess(
+        self,
+        interaction: discord.Interaction,
+        player: discord.User,
+        wolf_name: str | None = None,
+    ):
+        if not await self._require_admin(interaction):
+            return
+        if player.bot:
+            embed = howlbert_embed("Invalid Player", "Bots cannot own wolves.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        wolf, err = db.resolve_possessed_wolf(interaction.user.id, player.id, wolf_name)
+        if err:
+            embed = howlbert_embed("Wolf Not Found", err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        ok, msg = db.set_admin_possess(interaction.user.id, wolf["id"])
+        if not ok:
+            embed = howlbert_embed("Cannot Possess", msg, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        embed = howlbert_embed("Possessing Wolf", msg, color=SUCCESS_COLOR)
+        embed.set_footer(text="Use /wolfadmin release when done · /profile shows their sheet")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @wolfadmin.command(
+        name="release",
+        description="Stop steering another player's wolf and return to your own.",
+    )
+    async def wolfadmin_release(self, interaction: discord.Interaction):
+        if not await self._require_admin(interaction):
+            return
+        ok, msg = db.clear_admin_possess(interaction.user.id)
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = "Released" if ok else "Not Possessing"
+        embed = howlbert_embed(title, msg, color=color)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @wolfadmin.command(
         name="setage",
         description="Set a wolf's age in moons (0-120).",
     )

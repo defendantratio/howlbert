@@ -62,7 +62,7 @@ def lone_nursing_note(mother) -> str:
         return ""
     return (
         " **Lone mothers** have no pack caretaker; nurse daily or use **honey** "
-        "(`/vitals action:treat` on the pup, or carry honey when nursing)."
+        "(`/medic action:treat` on the pup, or carry honey when nursing)."
     )
 
 
@@ -303,7 +303,7 @@ def apply_unfed_pup_penalty_on_rollover(conn, day_ending: int) -> list[dict]:
                     "line": (
                         f"**{row['wolf_name']}** went hungry in the nursery "
                         f"(**−{PUP_UNFED_EXTRA_DECAY}** hunger; use **`/pupcare action:feed`** "
-                        "or **`/vitals action:treat`** with **honey**)."
+                        "or **`/medic action:treat`** with **honey**)."
                     ),
                 }
             )

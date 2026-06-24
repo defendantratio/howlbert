@@ -172,7 +172,7 @@ def on_restricted_herb_acquired(user, herb_key: str) -> str:
     name = HERBS.get(herb_key, {}).get("name", herb_key.replace("_", " ").title())
     return (
         f"**{name}** is Medic knowledge. {RESTRICTED_HERB_HOARD_WARN}\n"
-        "_Use `/vitals action:turnin` to hand it to the healers' den safely._"
+        "_Use `/herbs action:turnin` to hand it to the healers' den safely._"
     )
 
 

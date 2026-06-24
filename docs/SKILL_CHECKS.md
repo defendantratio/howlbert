@@ -12,9 +12,9 @@ Full catalog lives in `engine/skill_checks.py` (69 scenarios).
 ## Herb preparation loop
 
 1. `/field action:forage` or `verge` → **fresh** stack in herb bag
-2. `/vitals action:herbbag`; view stacks (`#ID`)
-3. `/vitals action:prepare`; `dry` · `poultice` · `tonic` · `decoction` on `stack:ID`
-4. `/vitals action:treat` with `stack:ID`; respects fresh toxicity, form requirements, potency
+2. `/herbs action:bag`; view stacks (`#ID`)
+3. `/herbs action:prepare`; `dry` · `poultice` · `tonic` · `decoction` on `stack:ID`
+4. `/medic action:treat` with `stack:ID`; respects fresh toxicity, form requirements, potency
 
 Fresh herbs rot after **1 sunrise** without drying. Shop/inventory herbs stay stable.
 

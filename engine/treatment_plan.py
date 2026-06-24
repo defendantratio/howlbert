@@ -48,7 +48,7 @@ def _rest_step(injury_key: str | None, disease_key: str | None) -> str:
             return "Lifelong den care; no full recovery expected."
         return "Short rest between treatments; avoid hunt and patrol."
     if disease_key == "cough":
-        return "Quarantine (`/quarantine`); isolate **3-7** sunrises with herb doses."
+        return "Quarantine (`/medic action:quarantine`); isolate **3-7** sunrises with herb doses."
     if disease_key == "rot_lung":
         return "Strict rest; mullein or marsh-mallow course; no ranging in cold air."
     if disease_key == "shock_emotional":
@@ -98,7 +98,7 @@ def build_treatment_checklist(user, *, day: int | None = None) -> str:
 
     return (
         f"**Care plan: {headline}**\n"
-        f"1. **Herbs**: {_herb_suggestions(cure_keys)} (`/vitals action:treat`)\n"
+        f"1. **Herbs**: {_herb_suggestions(cure_keys)} (`/medic action:treat`)\n"
         f"2. **Surgery**: {surgery_line}\n"
         f"3. **Rest**: {_rest_step(primary_injury, disease_key)}"
     )

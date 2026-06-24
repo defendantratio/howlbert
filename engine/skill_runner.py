@@ -17,6 +17,49 @@ def _proficient(user, skill_key: str) -> bool:
     return is_skill_proficient(user, skill_key)
 
 
+def _append_setback_on_failure(
+    user,
+    lines: list[str],
+    *,
+    skill_key: str,
+    outcome: str,
+    day: int,
+    total: int | None = None,
+    dc: int | None = None,
+    margin: int | None = None,
+) -> None:
+    from engine.character_traits import maybe_apply_failure_setback
+
+    note = maybe_apply_failure_setback(
+        user,
+        skill_key=skill_key,
+        outcome=outcome,
+        game_day=day,
+        total=total,
+        dc=dc,
+        margin=margin,
+    )
+    if note:
+        lines.append(note)
+
+
+def _append_success_recovery(
+    user,
+    lines: list[str],
+    *,
+    skill_key: str,
+    day: int,
+    dc: int | None = None,
+) -> None:
+    from engine.character_traits import maybe_apply_success_recovery
+
+    note = maybe_apply_success_recovery(
+        user, skill_key=skill_key, game_day=day, dc=dc
+    )
+    if note:
+        lines.append(note)
+
+
 def _weather_scent_dc_mod(weather: str, *, rained: bool = False) -> tuple[int, str]:
     notes = []
     mod = 0
@@ -91,6 +134,15 @@ def _run_opposed(
         db.set_user_conditions(attacker["discord_id"], hp=new_hp)
         lines.append(scenario.failure)
         lines.append(f"**−{dmg} HP** from the taste.")
+        _append_setback_on_failure(
+            attacker,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome=result["outcome"],
+            day=day,
+            total=result["total"],
+            dc=plant_dc,
+        )
         return False, "\n\n".join(lines)
 
     att_roll = roll_contest(
@@ -127,6 +179,15 @@ def _run_opposed(
             new_hp = max(0, int(attacker["hp"]) - dmg)
             db.set_user_conditions(attacker["discord_id"], hp=new_hp)
             lines.append(f"**−{dmg} HP**")
+        setback_outcome = "critical_failure" if att_roll["die"] == 1 else "failure"
+        _append_setback_on_failure(
+            attacker,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome=setback_outcome,
+            day=day,
+            margin=max(0, def_total - att_total) if setback_outcome == "failure" else None,
+        )
         return False, "\n\n".join(lines)
     if att_total > def_total:
         lines.append(f"**{att_name}** wins (**{att_total}** vs **{def_total}**).")
@@ -143,9 +204,25 @@ def _run_opposed(
             lines.append(f"**−{dmg} HP**")
         if scenario.fail_mood:
             db.adjust_mood(attacker["id"], -scenario.fail_mood)
+        _append_setback_on_failure(
+            attacker,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome="failure",
+            day=day,
+            margin=max(0, def_total - att_total),
+        )
         return False, "\n\n".join(lines)
     lines.append(f"Tie at **{att_total}**; edge to the defender.")
     lines.append(scenario.failure)
+    _append_setback_on_failure(
+        attacker,
+        lines,
+        skill_key=scenario.skill_key,
+        outcome="failure",
+        day=day,
+        margin=1,
+    )
     return False, "\n\n".join(lines)
 
 
@@ -247,6 +324,14 @@ def run_skill_scenario(
         if scenario.key == "surv_stabilize":
             cap = effective_max_hp(user)
             db.set_user_conditions(user["discord_id"], hp=max(1, min(cap, 1)), condition="stable")
+        if scenario.key == "spirit_cleanse":
+            from engine.supernatural import lift_spirit_curse
+
+            if lift_spirit_curse(user["id"]):
+                lines.append("_Curse scent lifts from the pelt._")
+        _append_success_recovery(
+            user, lines, skill_key=scenario.skill_key, day=day, dc=dc
+        )
     else:
         lines.append(scenario.failure)
         success = False
@@ -257,6 +342,17 @@ def run_skill_scenario(
             new_hp = max(0, int(user["hp"]) - dmg)
             db.set_user_conditions(user["discord_id"], hp=new_hp)
             lines.append(f"**−{dmg} HP**")
+        if scenario.key == "spirit_cleanse":
+            from engine.supernatural import apply_spirit_curse
+
+            apply_spirit_curse(user["id"], source="botched cleansing ritual")
+            lines.append("_Smoke wrong; the curse clings._")
+        if scenario.key == "spirit_ancestors" and not result["success"]:
+            from engine.supernatural import apply_spirit_curse
+
+            if random.random() < 0.35:
+                apply_spirit_curse(user["id"], source="ancestor silence turned cruel")
+                lines.append("_The ancestors do not answer; something darker does._")
         if scenario.key == "surv_set_bone":
             from engine.long_term_injuries import add_long_term_injury
 
@@ -268,5 +364,16 @@ def run_skill_scenario(
                 exhaustion=min(6, int(user["exhaustion"]) + 1),
             )
             lines.append("+1 exhaustion from exposure.")
+
+    if not success:
+        _append_setback_on_failure(
+            user,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome=result["outcome"],
+            day=day,
+            total=result["total"],
+            dc=dc,
+        )
 
     return success, "\n\n".join(lines), effects

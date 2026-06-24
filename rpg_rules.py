@@ -140,10 +140,14 @@ SKILLS = {
     "medicine": (("attr_wis",), "Medicine"),
 }
 
-PROFICIENCY_BONUS = 2
-MAX_SKILL_RANK = 3
-SKILL_RANK_BONUS = 1
-XP_PER_SKILL_RANK = 5
+PROFICIENCY_BONUS = 2  # legacy; no longer applied on rolls
+MAX_SKILL_RANK = 3  # max earned trait bonus per skill from XP / quests
+SKILL_RANK_BONUS = 1  # legacy alias
+XP_PER_SKILL_RANK = 5  # cost for +1 earned trait bonus
+XP_PER_TRAIT = XP_PER_SKILL_RANK
+MAX_EARNED_TRAIT_BONUS = MAX_SKILL_RANK
+MAX_EARNED_TRAIT_SETBACK = MAX_SKILL_RANK
+SKILL_STRAIN_THRESHOLD = 3
 
 ROLE_PROFICIENCIES = {
     "alpha": ("intimidation", "persuasion"),

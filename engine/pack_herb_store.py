@@ -25,22 +25,21 @@ def list_pack_herb_store(pack_id: int, day: int) -> str:
     if not stacks:
         return (
             "No herbs in the **healers' store**; "
-            "Medics/Foragers deposit with `/vitals action:denstore mode:deposit`; "
-            "any wolf may `/vitals action:turnin` restricted poison herbs."
+            "any wolf may `/herbs action:store mode:deposit` or `mode:depositall` "
+            "(forage bag + `/inventory` herbs); "
+            "fresh stacks: `/herbs action:dryall`; "
+            "use `/herbs action:turnin` for restricted poison herbs."
         )
     return "\n".join(format_pack_herb_line(s, day) for s in stacks)
 
 
-def deposit_herb_to_store(
+def _deposit_herb_stack_to_store(
     user,
     stack_id: int,
     *,
     pack_id: int,
     guild_id: int,
-    day: int,
 ) -> tuple[bool, str]:
-    if not can_manage_den_herbs(user):
-        return False, "Only **Medics** and **Foragers** may stock the healers' den store."
     stack = db.get_herb_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "That herb isn't in your forage bag."
@@ -57,7 +56,144 @@ def deposit_herb_to_store(
         deposited_by=user["id"],
     )
     db.remove_herb_stack(stack_id)
-    return True, f"**{name}** ({form_label(stack['form'])}) added to the den herb store (`/vitals action:denstore mode:list`)."
+    return True, f"**{name}** ({form_label(stack['form'])}) added to the den herb store (`/herbs action:store mode:list`)."
+
+
+def deposit_herb_to_store(
+    user,
+    stack_id: int,
+    *,
+    pack_id: int,
+    guild_id: int,
+    day: int,
+) -> tuple[bool, str]:
+    if not user["pack_id"] or int(user["pack_id"]) != pack_id:
+        return False, "You must be in this pack to deposit herbs."
+    return _deposit_herb_stack_to_store(
+        user, stack_id, pack_id=pack_id, guild_id=guild_id
+    )
+
+
+def deposit_inventory_herb_to_store(
+    user,
+    item_key: str,
+    *,
+    pack_id: int,
+    guild_id: int,
+    day: int,
+) -> tuple[bool, str]:
+    if not user["pack_id"] or int(user["pack_id"]) != pack_id:
+        return False, "You must be in this pack to deposit herbs."
+    key = item_key.strip().lower()
+    if not key.startswith("herb_"):
+        return False, "Use an inventory herb key like **`herb_arnica`**."
+    herb_key = key.replace("herb_", "", 1)
+    if herb_key not in HERBS:
+        return False, "That herb isn't in the compendium."
+    from engine.restricted_herbs import is_restricted_herb
+
+    if is_restricted_herb(herb_key):
+        return False, "Restricted poison herbs use `/herbs action:turnin`."
+    item = db.get_item_by_key(key)
+    if not item:
+        return False, "Unknown herb item."
+    if db.get_inventory_quantity(user["discord_id"], item["id"]) < 1:
+        return False, f"You don't have **{item['name']}** in `/inventory`."
+    if not db.consume_item(user["discord_id"], item["id"], quantity=1):
+        return False, "Could not use herb from inventory."
+    meta = HERBS.get(herb_key, {})
+    name = meta.get("name", herb_key)
+    db.add_pack_herb_stack(
+        pack_id,
+        herb_key,
+        form="dried",
+        potency=100,
+        quantity=1,
+        acquired_day=day,
+        guild_id=guild_id,
+        deposited_by=user["id"],
+    )
+    return (
+        True,
+        f"**{name}** (dried) from inventory added to the den herb store "
+        f"(`/herbs action:store mode:list`).",
+    )
+
+
+def deposit_all_herbs_to_store(
+    user,
+    *,
+    pack_id: int,
+    guild_id: int,
+    day: int,
+) -> tuple[bool, str]:
+    if not user["pack_id"] or int(user["pack_id"]) != pack_id:
+        return False, "You must be in this pack to deposit herbs."
+    stacks = db.get_herb_stacks(user["id"])
+    from engine.restricted_herbs import is_restricted_herb
+
+    stack_ids = [int(s["id"]) for s in stacks if not is_restricted_herb(s["herb_key"])]
+    skipped_restricted = sum(1 for s in stacks if is_restricted_herb(s["herb_key"]))
+    inventory_herbs = [
+        (row["key"], row["name"], int(row["quantity"]))
+        for row in db.get_inventory(user["discord_id"])
+        if row["key"].startswith("herb_")
+    ]
+    inventory_count = sum(
+        qty for key, _, qty in inventory_herbs if not is_restricted_herb(key.replace("herb_", "", 1))
+    )
+    if not stack_ids and inventory_count == 0:
+        if skipped_restricted or any(
+            is_restricted_herb(k.replace("herb_", "", 1)) for k, _, _ in inventory_herbs
+        ):
+            return (
+                False,
+                "Only **restricted poison** herbs remain; use `/herbs action:turnin` for those.",
+            )
+        return (
+            False,
+            "No herbs to deposit in your **forage bag** (`/herbs action:bag`) "
+            "or **inventory** (`/inventory`).",
+        )
+
+    deposited = 0
+    names: list[str] = []
+    for stack_id in stack_ids:
+        ok, msg = _deposit_herb_stack_to_store(
+            user,
+            stack_id,
+            pack_id=pack_id,
+            guild_id=guild_id,
+        )
+        if ok:
+            deposited += 1
+            if "**" in msg:
+                names.append(msg.split("**")[1])
+
+    for item_key, name, qty in inventory_herbs:
+        herb_key = item_key.replace("herb_", "", 1)
+        if is_restricted_herb(herb_key):
+            skipped_restricted += qty
+            continue
+        for _ in range(qty):
+            ok, msg = deposit_inventory_herb_to_store(
+                user,
+                item_key,
+                pack_id=pack_id,
+                guild_id=guild_id,
+                day=day,
+            )
+            if ok:
+                deposited += 1
+                names.append(name)
+    if deposited == 0:
+        return False, "Nothing could be deposited."
+
+    summary = ", ".join(names[:8])
+    if len(names) > 8:
+        summary += f", _…and {len(names) - 8} more_"
+    note = f"\n\n_{skipped_restricted} restricted stack(s) left; `/herbs action:turnin`._" if skipped_restricted else ""
+    return True, f"**{deposited}** herb stack(s) added to the healers' store: {summary}.{note}"
 
 
 def withdraw_herb_from_store(
@@ -93,7 +229,7 @@ def withdraw_herb_from_store(
     from engine.restricted_herbs import on_restricted_herb_acquired
 
     hoard_note = on_restricted_herb_acquired(user, stack["herb_key"])
-    msg = f"**{name}** moved to your herb bag (`/vitals action:herbbag`)."
+    msg = f"**{name}** moved to your herb bag (`/herbs action:bag`)."
     if hoard_note:
         msg = f"{msg}\n\n{hoard_note}"
     return True, msg
@@ -120,7 +256,7 @@ def turnin_restricted_herb(
         return (
             False,
             "Only **restricted poison** herbs use turn-in. "
-            "Medics/Foragers stock other herbs via `/vitals action:denstore mode:deposit`.",
+            "Medics/Foragers stock other herbs via `/herbs action:store mode:deposit` or `mode:depositall`.",
         )
     meta = HERBS.get(stack["herb_key"], {})
     name = meta.get("name", stack["herb_key"])
@@ -145,6 +281,6 @@ def turnin_restricted_herb(
         bone_note = " Pack treasury was empty; no bone bounty this time."
     return True, (
         f"**{name}** ({form_label(stack['form'])}) handed to the healers' den "
-        f"(`/vitals action:denstore mode:list`).\n"
+        f"(`/herbs action:store mode:list`).\n"
         f"Standing **+{RESTRICTED_HERB_TURNIN_STANDING}** for obeying Medicine law.{bone_note}{kick_note}"
     )

@@ -8,8 +8,7 @@ import database as db
 from config import PUP_MAX_MOONS
 from engine.conditions import medicine_check, parse_injuries
 from engine.diseases import contagious_rate, disease_display, parse_disease
-from engine.role_features import has_any_role, is_full_medic
-from engine.role_privileges import is_forager, is_medic
+from engine.role_features import has_any_role, is_full_medic, wolf_role_key
 from engine.sacred_visits import format_sacred_visit_reminder, sacred_visit_due
 from engine.surgery import participant_has_herb
 from herbs import HERBS
@@ -27,12 +26,20 @@ def _herb_name(key: str) -> str:
 
 
 def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
-    """Den health scan for /medic action:checkup."""
-    if not is_full_medic(medic) and not has_any_role(medic, "medic_apprentice"):
-        return False, "Only **Medics** and **medic apprentices** may walk den checkups."
+    """Den health scan for /medic action:checkup (full Medics only)."""
+    if wolf_role_key(medic) != "medic":
+        return (
+            False,
+            "Only full **Medics** may walk den checkups. "
+            "Apprentices observe cases with `/medic action:observe`.",
+        )
     last = int(medic["last_medic_rounds_day"] if "last_medic_rounds_day" in medic.keys() else 0)
-    if last >= day:
-        return False, "You already walked den checkups this sunrise."
+    if day > 0 and last >= day:
+        return (
+            False,
+            "You already walked den checkups this sunrise. "
+            "Wait for the next `/rollover` (or ask an admin to call one).",
+        )
     pack_id = medic["pack_id"] if "pack_id" in medic.keys() else None
     if not pack_id:
         return False, "Join a pack to walk the sick den."
@@ -66,10 +73,9 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
             bleeding.append(f"**{name}**: bleeding risk")
         if is_full_medic(wolf) and sacred_visit_due(wolf, day):
             sacred_due.append(f"**{name}**: sacred visit due")
-        if is_medic(wolf) or is_forager(wolf):
-            stacks = db.get_herb_stacks(wolf["id"])
-            if len(stacks) < 2:
-                low_herbs.append(f"**{name}**: herb bag thin ({len(stacks)} stacks)")
+        stacks = db.get_herb_stacks(wolf["id"])
+        if len(stacks) < 2:
+            low_herbs.append(f"**{name}**: herb bag thin ({len(stacks)} stacks)")
         cond = wolf["condition"] if "condition" in wolf.keys() else "healthy"
         if cond == "dying" or (int(wolf["hp"]) <= 0 and cond != "dead"):
             dying.append(f"**{name}**: **dying**")
@@ -91,7 +97,7 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
     if sacred_due:
         lines.append("\n**Sacred visit due**\n" + "\n".join(sacred_due))
     if low_herbs:
-        lines.append("\n**Low herb warning**\n" + "\n".join(low_herbs[:6]))
+        lines.append("\n**Low herb warning**\n" + "\n".join(low_herbs))
 
     from engine.restricted_herbs import medic_rounds_scan_hoarders
 
@@ -170,7 +176,15 @@ def run_spirit_ritual(medic, patient, herb_key: str, *, day: int) -> tuple[bool,
         f"Herblore: **{check['total']}** vs DC **15**",
     ]
     if not check["success"]:
+        from engine.supernatural import apply_spirit_curse
+
+        apply_spirit_curse(patient["id"], source="botched cleansing smoke")
         return False, "\n".join(lines + ["_Smoke wrong; curse scent clings._"])
+
+    from engine.supernatural import lift_spirit_curse
+
+    if lift_spirit_curse(patient["id"]):
+        lines.append("_Spirit curse broken; the den breathes easier._")
 
     if dkey == "shock_emotional":
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], clear_disease=True, condition="healthy")
@@ -197,11 +211,18 @@ def run_naming_ceremony(medic, pup, *, day: int) -> tuple[bool, str]:
     if named > 0:
         return False, f"**{pup['wolf_name']}** already received a naming blessing."
     db.update_user_by_id(pup["id"], naming_ceremony_day=day)
-    db.update_user_by_id(medic["id"], last_sacred_day=day)
+    from engine.sacred_visits import apply_sacred_visit_blessings
+
+    blessings, blessed = apply_sacred_visit_blessings(medic, day=day)
+    bless_note = ""
+    if blessed:
+        bless_note = f"\n\n**Blessings:** {' · '.join(blessings)}"
+    elif int(medic["last_sacred_day"] if "last_sacred_day" in medic.keys() else 0) >= day:
+        bless_note = "\n\n_Half-moon sacred visit already recorded this sunrise._"
     return True, (
         f"At the **sacred place**, **{medic['wolf_name']}** speaks **{pup['wolf_name']}** "
-        "into the ancestors' hearing; eyes open, name bound to the pack.\n"
-        "_Half-moon sacred visit recorded for the Medic._"
+        "into the ancestors' hearing; eyes open, name bound to the pack."
+        f"{bless_note}"
     )
 
 

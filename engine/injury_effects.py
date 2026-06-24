@@ -5,7 +5,6 @@ from __future__ import annotations
 from engine.character import attr_modifier, parse_proficiencies
 from engine.conditions import parse_injuries
 from herbs import INJURIES
-from rpg_rules import PROFICIENCY_BONUS
 
 
 def active_injury_keys(user) -> list[str]:
@@ -57,7 +56,7 @@ def bone_rest_activity_block(user, *, day: int | None = None) -> str | None:
         left = rest_until - day
         return (
             f"**Splint confinement**: **{left}** sunrise(s) of bone rest. "
-            "Den activities only; `/vitals action:swim` may ease recovery."
+            "Den activities only; `/medic action:swim` may ease recovery."
         )
     return None
 

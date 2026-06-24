@@ -1,6 +1,6 @@
 import random
 
-from engine.character import attr_modifier, skill_proficiency_bonus
+from engine.character import attr_modifier
 from engine.character_traits import (
     trait_clears_infection_on_heal,
     trait_combat_modifier,
@@ -11,8 +11,6 @@ from engine.combat_guide import COMBAT_MANEUVERS
 from engine.combat_status import attacker_roll_modifiers, maneuver_pin_block, roll_attack_die
 from engine.rolls import roll_d20
 from engine.injury_effects import attack_roll_modifiers, bite_attack_blocked
-from rpg_rules import PROFICIENCY_BONUS
-
 CRIT_HIT_EFFECTS = {
     1: "Bonus damage (+1d4)",
     2: "Knock target prone",
@@ -77,10 +75,17 @@ def _attack_result_base(attack_name: str) -> dict:
     }
 
 
-def _prof_bonus(user, skill: str) -> int:
-    from engine.skill_runner import _proficient
+def _trait_skill_bonus(user, skill: str) -> int:
+    from engine.character_traits import trait_check_adjustments
+    from rpg_rules import SKILLS
 
-    return skill_proficiency_bonus(user, skill, proficient=_proficient(user, skill))
+    attr_keys = SKILLS.get(skill, ((),))[0]
+    mod, _ = trait_check_adjustments(user, attr_keys, skill_key=skill)
+    return mod
+
+
+def _prof_bonus(user, skill: str) -> int:
+    return _trait_skill_bonus(user, skill)
 
 
 def overlay_fighter_hp(base_stats, fighter) -> dict:

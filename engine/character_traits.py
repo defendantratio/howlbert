@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 
 from rpg_rules import SKILLS
@@ -3197,6 +3198,451 @@ def encode_character_traits(traits: dict) -> str:
     return json.dumps(traits)
 
 
+def _blank_traits() -> dict:
+    return {"bonuses": [], "weaknesses": []}
+
+
+def ensure_traits_dict(traits: dict | None) -> dict:
+    if not traits:
+        return _blank_traits()
+    out = copy.deepcopy(traits)
+    out.setdefault("bonuses", [])
+    out.setdefault("weaknesses", [])
+    return out
+
+
+def _earned_traits_for_skill(traits: dict, skill_key: str, *, group: str) -> list[dict]:
+    matches: list[dict] = []
+    for trait in traits.get(group, []):
+        if not trait.get("earned"):
+            continue
+        skills = trait.get("skills") or []
+        if skill_key in skills:
+            matches.append(trait)
+    return matches
+
+
+def earned_trait_bonus_total(traits: dict | None, skill_key: str) -> int:
+    if not traits:
+        return 0
+    total = 0
+    for trait in _earned_traits_for_skill(traits, skill_key, group="bonuses"):
+        total += max(0, int(trait.get("modifier", 0)))
+    return total
+
+
+def earned_trait_setback_total(traits: dict | None, skill_key: str) -> int:
+    if not traits:
+        return 0
+    total = 0
+    for trait in _earned_traits_for_skill(traits, skill_key, group="weaknesses"):
+        total += abs(min(0, int(trait.get("modifier", 0))))
+    return total
+
+
+def _adjust_skill_trait_experience_step(
+    wolf_id: int,
+    skill_key: str,
+    step: int,
+) -> tuple[bool, str]:
+    import database as db
+    from rpg_rules import MAX_EARNED_TRAIT_BONUS, MAX_EARNED_TRAIT_SETBACK, SKILLS
+
+    if skill_key not in SKILLS:
+        return False, "Unknown skill."
+    attr_keys, label = SKILLS[skill_key]
+
+    wolf = db.get_user_by_id(wolf_id)
+    if not wolf:
+        return False, "Wolf not found."
+
+    traits = ensure_traits_dict(_traits_for_user(wolf))
+
+    if step > 0:
+        current = earned_trait_bonus_total(traits, skill_key)
+        if current >= MAX_EARNED_TRAIT_BONUS:
+            return (
+                False,
+                f"**{label}** experience is already maxed "
+                f"(+{MAX_EARNED_TRAIT_BONUS} from play; stacks with lore traits).",
+            )
+        earned = _earned_traits_for_skill(traits, skill_key, group="bonuses")
+        if earned:
+            trait = earned[0]
+            trait["modifier"] = int(trait.get("modifier", 0)) + 1
+        else:
+            traits["bonuses"].append(
+                {
+                    "name": f"{label} (experience)",
+                    "modifier": 1,
+                    "skills": [skill_key],
+                    "attrs": list(attr_keys),
+                    "earned": True,
+                    "blurb": "Honed through quests and practice.",
+                }
+            )
+        db.update_user_by_id(wolf_id, character_traits=encode_character_traits(traits))
+        new_total = earned_trait_bonus_total(traits, skill_key)
+        return (
+            True,
+            f"**{label}** gained **+{new_total}** experience trait "
+            f"(added to lore traits on matching checks).",
+        )
+
+    earned_bonus = _earned_traits_for_skill(traits, skill_key, group="bonuses")
+    if earned_bonus and int(earned_bonus[0].get("modifier", 0)) > 0:
+        trait = earned_bonus[0]
+        trait["modifier"] = int(trait["modifier"]) - 1
+        if trait["modifier"] <= 0:
+            traits["bonuses"] = [
+                t
+                for t in traits["bonuses"]
+                if not (
+                    t.get("earned")
+                    and skill_key in (t.get("skills") or [])
+                    and t.get("name") == trait.get("name")
+                )
+            ]
+        db.update_user_by_id(wolf_id, character_traits=encode_character_traits(traits))
+        remaining = earned_trait_bonus_total(traits, skill_key)
+        if remaining:
+            return True, f"**{label}** experience slipped to **+{remaining}**."
+        return True, f"**{label}** hard-won experience faded."
+
+    current_setback = earned_trait_setback_total(traits, skill_key)
+    if current_setback >= MAX_EARNED_TRAIT_SETBACK:
+        return False, f"**{label}** setbacks are already as bad as they get."
+    earned_weak = _earned_traits_for_skill(traits, skill_key, group="weaknesses")
+    if earned_weak:
+        trait = earned_weak[0]
+        trait["modifier"] = int(trait.get("modifier", 0)) - 1
+    else:
+        traits["weaknesses"].append(
+            {
+                "name": f"{label} (setback)",
+                "modifier": -1,
+                "skills": [skill_key],
+                "attrs": list(attr_keys),
+                "earned": True,
+                "blurb": "A rough lesson left its mark.",
+            }
+        )
+    db.update_user_by_id(wolf_id, character_traits=encode_character_traits(traits))
+    new_setback = earned_trait_setback_total(traits, skill_key)
+    return True, f"**{label}** setback deepened (**−{new_setback}** on matching checks)."
+
+
+def adjust_skill_trait_experience(
+    wolf_id: int,
+    skill_key: str,
+    delta: int = 1,
+) -> tuple[bool, str]:
+    """
+    Shift earned trait experience for a skill.
+    Positive delta adds earned bonus trait steps; negative peels bonus then adds setbacks.
+    """
+    skill_key = skill_key.strip().lower()
+    if delta == 0:
+        return False, "No change."
+    steps = abs(int(delta))
+    sign = 1 if delta > 0 else -1
+    last_msg = "No change."
+    for _ in range(steps):
+        ok, last_msg = _adjust_skill_trait_experience_step(wolf_id, skill_key, sign)
+        if not ok:
+            return False, last_msg
+    return True, last_msg
+
+
+def spend_xp_trait_bonus(user, skill: str) -> str | None:
+    from rpg_rules import MAX_EARNED_TRAIT_BONUS, SKILLS
+
+    if skill not in SKILLS:
+        return "Unknown skill."
+    traits = _traits_for_user(user)
+    if earned_trait_bonus_total(traits, skill) >= MAX_EARNED_TRAIT_BONUS:
+        return (
+            f"**{SKILLS[skill][1]}** experience is already maxed "
+            f"(+{MAX_EARNED_TRAIT_BONUS} from play)."
+        )
+    return None
+
+
+def get_earned_trait_bonus_for_wolf(wolf_id: int, skill_key: str) -> int:
+    import database as db
+
+    wolf = db.get_user_by_id(wolf_id)
+    if not wolf:
+        return 0
+    return earned_trait_bonus_total(_traits_for_user(wolf), skill_key.strip().lower())
+
+
+def parse_trait_failure_days(raw: str | None) -> dict[str, int]:
+    """Legacy per-skill failure day map (int values only)."""
+    state = parse_skill_strain_state(raw)
+    out: dict[str, int] = {}
+    for skill, entry in state.items():
+        day = entry.get("last_fail_day")
+        if day is not None:
+            out[skill] = int(day)
+    return out
+
+
+def parse_skill_strain_state(raw: str | None) -> dict[str, dict]:
+    """
+    Per-skill practice strain before an earned setback lands.
+    Stored in users.trait_failure_days as JSON.
+    """
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    out: dict[str, dict] = {}
+    for key, value in data.items():
+        skill = str(key).lower()
+        if isinstance(value, int):
+            out[skill] = {"strain": 0, "last_fail_day": value}
+        elif isinstance(value, dict):
+            out[skill] = {
+                "strain": max(0, int(value.get("strain", 0))),
+                "last_fail_day": int(value["last_fail_day"])
+                if value.get("last_fail_day") is not None
+                else None,
+            }
+    return out
+
+
+def encode_skill_strain_state(state: dict[str, dict]) -> str:
+    clean: dict[str, dict] = {}
+    for skill, entry in state.items():
+        if not entry:
+            continue
+        strain = max(0, int(entry.get("strain", 0)))
+        payload: dict = {"strain": strain}
+        if entry.get("last_fail_day") is not None:
+            payload["last_fail_day"] = int(entry["last_fail_day"])
+        if strain or payload.get("last_fail_day") is not None:
+            clean[skill] = payload
+    return json.dumps(clean)
+
+
+def format_skill_strain_line(user) -> str | None:
+    state = parse_skill_strain_state(_user_field(user, "trait_failure_days", "{}"))
+    if not state:
+        return None
+    from rpg_rules import SKILL_STRAIN_THRESHOLD, SKILLS
+
+    parts: list[str] = []
+    for skill, entry in sorted(state.items()):
+        strain = int(entry.get("strain", 0))
+        if strain <= 0:
+            continue
+        label = SKILLS.get(skill, ((), skill.title()))[1]
+        parts.append(f"**{label}** {strain}/{SKILL_STRAIN_THRESHOLD}")
+    if not parts:
+        return None
+    return "Practice strain (rest or success eases): " + " · ".join(parts)
+
+
+def compute_failure_strain_gain(
+    user,
+    *,
+    outcome: str,
+    total: int | None = None,
+    dc: int | None = None,
+    margin: int | None = None,
+) -> tuple[int, str]:
+    """How much strain a failed check should add (0 = close call, no lasting dent)."""
+    from rpg_rules import SKILL_STRAIN_THRESHOLD
+
+    if outcome == "critical_failure":
+        gain = 2
+        note = "A botched attempt shakes confidence."
+    elif outcome == "failure":
+        if margin is None and total is not None and dc is not None:
+            margin = int(dc) - int(total)
+        miss = max(0, int(margin or 0))
+        if miss <= 1:
+            return 0, "_Close call; nerves only — no lasting dent._"
+        if miss <= 4:
+            gain = 1
+            note = "The miss lingers in muscle memory."
+        else:
+            gain = 2
+            note = "A clear failure; doubt creeps in."
+        if dc is not None and int(dc) >= 20 and gain > 0:
+            gain += 1
+            note = "Legendary difficulty; the failure cuts deep."
+    else:
+        return 0, ""
+
+    exhaustion = int(user["exhaustion"]) if user and "exhaustion" in user.keys() else 0
+    if exhaustion >= 3 and gain > 0:
+        gain += 1
+        note += " Exhaustion made it worse."
+
+    if gain >= SKILL_STRAIN_THRESHOLD:
+        note = "Confidence collapses under pressure."
+
+    return gain, note
+
+
+def _apply_strain_gain(
+    user,
+    *,
+    skill_key: str,
+    gain: int,
+    game_day: int | None,
+    flavor: str,
+) -> str | None:
+    import database as db
+    from rpg_rules import SKILL_STRAIN_THRESHOLD
+
+    if gain <= 0:
+        return flavor if flavor.startswith("_") else f"_{flavor}_" if flavor else None
+
+    wolf_id = int(user["id"])
+    skill_key = skill_key.strip().lower()
+    day = int(game_day) if game_day is not None else 0
+    state = parse_skill_strain_state(_user_field(user, "trait_failure_days", "{}"))
+    entry = state.get(skill_key, {"strain": 0, "last_fail_day": None})
+    entry["strain"] = int(entry.get("strain", 0)) + gain
+    entry["last_fail_day"] = day
+    state[skill_key] = entry
+
+    lines: list[str] = []
+    if flavor:
+        lines.append(flavor if flavor.startswith("_") else f"_{flavor}_")
+
+    while entry["strain"] >= SKILL_STRAIN_THRESHOLD:
+        ok, msg = adjust_skill_trait_experience(wolf_id, skill_key, -1)
+        entry["strain"] -= SKILL_STRAIN_THRESHOLD
+        if ok:
+            lines.append(f"_{msg}_")
+        else:
+            entry["strain"] = 0
+            break
+
+    state[skill_key] = entry
+    db.update_user_by_id(wolf_id, trait_failure_days=encode_skill_strain_state(state))
+
+    remaining = int(entry["strain"])
+    if remaining > 0:
+        lines.append(
+            f"_Practice strain on this skill: **{remaining}/{SKILL_STRAIN_THRESHOLD}** "
+            f"(success or a night's rest eases it)._"
+        )
+    return "\n".join(lines) if lines else None
+
+
+def maybe_apply_success_recovery(
+    user,
+    *,
+    skill_key: str | None,
+    game_day: int | None = None,
+    dc: int | None = None,
+) -> str | None:
+    """Successful practice shakes off doubt before it becomes a setback."""
+    import database as db
+
+    if not user or not skill_key or "id" not in user.keys():
+        return None
+    skill_key = skill_key.strip().lower()
+    state = parse_skill_strain_state(_user_field(user, "trait_failure_days", "{}"))
+    entry = state.get(skill_key)
+    if not entry or int(entry.get("strain", 0)) <= 0:
+        return None
+
+    relief = 2 if dc is not None and int(dc) >= 18 else 1
+    new_strain = max(0, int(entry["strain"]) - relief)
+    if new_strain <= 0:
+        state.pop(skill_key, None)
+    else:
+        entry["strain"] = new_strain
+        state[skill_key] = entry
+    db.update_user_by_id(int(user["id"]), trait_failure_days=encode_skill_strain_state(state))
+
+    if new_strain <= 0:
+        return "_A clean success; shaken confidence steadies._"
+    from rpg_rules import SKILL_STRAIN_THRESHOLD
+
+    return (
+        f"_Success helps — strain down to **{new_strain}/{SKILL_STRAIN_THRESHOLD}**._"
+    )
+
+
+def decay_skill_strain_on_rollover() -> None:
+    """A night's sleep eases practice strain across all skills."""
+    import database as db
+
+    with db.get_db() as conn:
+        rows = conn.execute(
+            "SELECT id, trait_failure_days FROM users WHERE trait_failure_days IS NOT NULL AND trait_failure_days != '{}'"
+        ).fetchall()
+        for row in rows:
+            state = parse_skill_strain_state(row["trait_failure_days"])
+            if not state:
+                continue
+            changed = False
+            for skill in list(state.keys()):
+                entry = state[skill]
+                strain = int(entry.get("strain", 0))
+                if strain <= 0:
+                    if not entry.get("last_fail_day"):
+                        state.pop(skill, None)
+                    continue
+                entry["strain"] = strain - 1
+                changed = True
+                if entry["strain"] <= 0 and not entry.get("last_fail_day"):
+                    state.pop(skill, None)
+            if changed:
+                conn.execute(
+                    "UPDATE users SET trait_failure_days = ? WHERE id = ?",
+                    (encode_skill_strain_state(state), row["id"]),
+                )
+
+
+def maybe_apply_failure_setback(
+    user,
+    *,
+    skill_key: str | None,
+    outcome: str,
+    game_day: int | None = None,
+    total: int | None = None,
+    dc: int | None = None,
+    margin: int | None = None,
+) -> str | None:
+    """
+    Failed skill checks build **practice strain** before peeling earned traits.
+    Close misses (1 point under DC) only rattle nerves. Nat 1 / big misses build strain faster.
+    """
+    if not user or not skill_key:
+        return None
+    if outcome not in ("failure", "critical_failure"):
+        return None
+    if "id" not in user.keys():
+        return None
+
+    gain, flavor = compute_failure_strain_gain(
+        user,
+        outcome=outcome,
+        total=total,
+        dc=dc,
+        margin=margin,
+    )
+    return _apply_strain_gain(
+        user,
+        skill_key=skill_key,
+        gain=gain,
+        game_day=game_day,
+        flavor=flavor,
+    )
+
+
 def _user_pack(user) -> str | None:
     return _user_field(user, "great_pack")
 
@@ -3339,6 +3785,8 @@ def format_traits_for_profile(user) -> str | None:
         sign = f"+{mod}" if mod >= 0 else str(mod)
         blurb = trait.get("blurb", "")
         line = f"**{trait['name']}** ({sign})"
+        if trait.get("earned"):
+            line += " _(earned)_"
         if blurb:
             line += f"; {blurb}"
         lines.append(line)
@@ -3347,6 +3795,8 @@ def format_traits_for_profile(user) -> str | None:
         sign = f"+{mod}" if mod >= 0 else str(mod)
         blurb = trait.get("blurb", "")
         line = f"**{trait['name']}** ({sign})"
+        if trait.get("earned"):
+            line += " _(earned)_"
         if blurb:
             line += f"; {blurb}"
         lines.append(line)
@@ -3426,6 +3876,12 @@ CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Kanami": {"size_class": "small"},
     "Pale'Step": {"size_class": "small"},
     "Croaker": {"size_class": "small"},
+    # Thistlehide herb & healers (den checkup, forage, treat)
+    "Barkhollow": {"wolf_role": "forager"},
+    "Cloverfern": {"wolf_role": "forager"},
+    "Fernspot": {"wolf_role": "forager"},
+    "Mossgaze": {"wolf_role": "forager"},
+    "Sypha": {"wolf_role": "medic"},
 }
 
 

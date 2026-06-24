@@ -138,7 +138,7 @@ HELP_TOPICS = {
 
         "`/vitals action:condition`; injuries, disease, exhaustion, mood, hunger & thirst (bleeding/infection progress each `/rollover`); **3-step treatment plan** embed\n"
 
-        "**Disease**; Wolvden illnesses + Warriors cough stages (`/vitals action:condition` · `action:treat`):\n"
+        "**Disease**; Wolvden illnesses + Warriors cough stages (`/vitals action:condition` · `/medic action:treat`):\n"
 
         "• **Whitecough** = **Green-cough (Mild)** (`cough:mild`); see `/terms`\n"
 
@@ -166,11 +166,11 @@ HELP_TOPICS = {
 
         "• **Nursing**; mothers **`/pupcare action:feed`** each sunrise until pups reach **6 moons**; **honey** in inventory auto-sweetens the meal (**+10** hunger); unfed pups lose extra hunger at `/rollover`\n"
 
-        "• **Lone mothers**; no pack caretaker; nurse daily or **`/vitals action:treat`** with **honey** on the pup\n"
+        "• **Lone mothers**; no pack caretaker; nurse daily or **`/medic action:treat`** with **honey** on the pup\n"
 
         "• **Shaking-Sickness** (Mistmoor); Belly-Rip bad water; tremors → hemorrhage; **sweet sedge**, **yarrow**, or **cobwebs**\n"
 
-        "**Chronic illness**; progressive, often elder-onset (`/vitals action:condition` · `action:treat`):\n"
+        "**Chronic illness**; progressive, often elder-onset (`/vitals action:condition` · `/medic action:treat`):\n"
 
         "• **Rabies**; feral hearth-hound / wolf bites; incubation → frenzy → death; **boneset** or **goldenrod** slow early stages (no cure)\n"
 
@@ -184,13 +184,13 @@ HELP_TOPICS = {
 
         "**Mental illness**; insomnia, anxiety, grief, delirium, pack madness, obsession, night terrors, chronic stress, eating distress; "
 
-        "calming herbs (**chamomile**, **valerian**, **poppy**, **lavender**, **passionflower**, **skullcap**) have real cure/buff paths via `/vitals action:treat`\n"
+        "calming herbs (**chamomile**, **valerian**, **poppy**, **lavender**, **passionflower**, **skullcap**) have real cure/buff paths via `/medic action:treat`\n"
 
         "**Mental degeneration**; dementia (forgetful → lost) and feral shift → **Mind-Fracture** (unsentient; **RP fantasy**); "
 
         "**chamomile** or **dried skullcap** may slow decline; unsentient wolves keep `/vitals`, `/eat`, `/drink` but lose field commands\n"
 
-        "**Restricted herbs**; poison plants (bloodroot, foxglove, wolfsbane, …): **−4** if caught using; hoarding risks **−3 if caught**; `/vitals action:turnin` (**+1 standing**, **10🦴** from pack treasury when funded)\n"
+        "**Restricted herbs**; poison plants (bloodroot, foxglove, wolfsbane, …): **−4** if caught using; hoarding risks **−3 if caught**; `/herbs action:turnin` (**+1 standing**, **10🦴** from pack treasury when funded)\n"
 
         "Illnesses can pass during **`/mate`** (close contact): respiratory diseases most easily, "
 
@@ -198,23 +198,26 @@ HELP_TOPICS = {
 
         "Groom & socialize can pass illness immediately; packmates catch it each `/rollover`.\n"
 
-        "`/quarantine`; Medics, Alpha, or Advisor isolate sick wolves (blocks spread & activities)\n"
+        "`/medic action:quarantine`; Medics, Alpha, or Advisor isolate sick wolves (blocks spread & activities)\n"
 
         "`/vitals action:rest`; short rest (comfrey heal, 3/sunrise); long rest is automatic each rollover\n"
 
-        "`/vitals action:treat herb:`; inventory herb **or** forage `stack:ID` (**Medics**: unlimited; **`patient:`** treats packmate from your bag)\n"
+        "`/medic action:treat herb:`; inventory herb **or** forage `stack:ID` (**Medics**: unlimited; **`patient:`** treats packmate from your bag)\n"
 
-        "`/vitals action:denstore mode:`; Medic/Forager pack herb store (list · deposit · withdraw)\n"
+        "`/herbs action:store mode:`; pack herb store — anyone: **deposit** / **depositall** "
+        "(forage bag + inventory); Medics/Foragers: **withdraw**\n"
 
-        "`/vitals action:turnin`; any wolf: hand **restricted poison** herbs to the healers' den (**+1 standing**)\n"
+        "`/herbs action:turnin`; any wolf: hand **restricted poison** herbs to the healers' den (**+1 standing**)\n"
 
-        "`/vitals action:ritual` · `action:naming` · `action:lay_to_rest` · `action:swim`; spirit rites & swim therapy\n"
+        "`/medic action:ritual` · `action:naming` · `action:lay_to_rest` · `action:swim`; spirit rites & swim therapy\n"
 
-        "`/vitals action:prepare`; dry / poultice / tonic / decoction on a forage stack\n"
+        "`/herbs action:prepare`; dry / poultice / tonic / decoction on a forage stack or inventory herb\n"
 
-        "`/vitals action:herbbag`; fresh & prepared herbs (foraged; rot if not dried)\n"
+        "`/herbs action:dryall`; dry every fresh forage stack, `herb_*` in `/inventory`, and fresh den store stacks\n"
 
-        "`/vitals action:herbs`; paginated herb guide (gathering, effects, treat keys)\n"
+        "`/herbs action:bag`; fresh & prepared herbs (foraged; rot if not dried)\n"
+
+        "`/herbs action:guide`; paginated herb guide (gathering, effects, treat keys)\n"
 
         "`/rpg action:delete confirm:DELETE`; remove active wolf (keeps prestige)",
 
@@ -304,7 +307,7 @@ HELP_TOPICS = {
 
         "`/field action:forage`; gather herbs in pack territory (**Foragers** unlimited; harder in Leaf-bare; crit → rare herb + season blurb)\n"
 
-        "`/field action:compendium`; read-only herb browser (same data as `/vitals action:herbs`)\n"
+        "`/field action:compendium`; read-only herb browser (same data as `/herbs action:guide`)\n"
 
         "`/field action:verge`; **Thunderpath** or **Twoleg fence-line** herbs (once/sunrise; riskier)\n"
 
@@ -326,9 +329,9 @@ HELP_TOPICS = {
 
         "**Scout**; `/scout rescout` · `/scout survey` · `/scout trail` · `collaborate:true` on survey/trail for pack parties\n"
 
-        "**Amusement**; `/playpen action:toys` · `action:play` · `action:playall` · `/hoarding action:gift`\n"
+        "**Amusement**; `/playpen action:toys` · `action:play` · `action:toystore` · `action:playall` (Alpha) · `/hoarding action:gift`\n"
 
-        "**Pack**; `/playpen action:socialize` · `action:groom` · `/pack stash` · `/packlife action:feedall`\n"
+        "**Pack**; `/playpen action:socialize` · `action:groom` · `/pack stash` · `/packlife action:feedall` · `action:drinkall` (Alpha)\n"
 
         "**Bonds**; `/bonds` friendships, rivalries, kin, mentors · found families (`/playpen action:socialize` & `action:groom` deepen ties)\n"
 
@@ -360,7 +363,7 @@ HELP_TOPICS = {
 
         "**Sell**; `action:sell item:herb_arnica` (inventory herbs) or **`item:stack:ID`** (forage bag stacks)\n"
 
-        "**Poison bounty**; `/vitals action:turnin` pays **10🦴** from treasury + standing (restricted herbs only)\n"
+        "**Poison bounty**; `/herbs action:turnin` pays **10🦴** from treasury + standing (restricted herbs only)\n"
 
         "**Trade**; `/trade offer` · `/bones action:give` · `action:giveitem`\n"
 
@@ -379,6 +382,8 @@ HELP_TOPICS = {
         "**Fog & storm**; `/field action:sniff` in **fog**, **rain**, or **storm** may bring spirit whispers\n"
 
         "**Mistmoor & Drown-Sick**; higher chance of **anxiety** from whispers on the wind\n"
+        "**Spirit curse**; rare in fog if whispers turn cruel; **−1** spiritual checks until broken "
+        "(wolfsbane, swamp milkweed, cleansing ritual, `/skills` spirit_cleanse)\n"
 
         "**Pack madness**; mental illness from paranoia and den stress; treat via calming herbs\n"
 
@@ -432,7 +437,7 @@ HELP_TOPICS = {
 
         "**Hunter**; **Killer's Instinct**: +1d6 damage vs prone/pinned foes; **3 hunts per sunrise**.\n"
 
-        "**Medic**; **Green Tongue**: unlimited `/vitals action:treat` and comfrey heals per sunrise.\n"
+        "**Medic**; **Green Tongue**: unlimited `/medic action:treat` and comfrey heals per sunrise.\n"
 
         "**Scout**; **Unseen Paw**: hidden in fog/mist on successful `/scout survey` or `/field action:sniff`; "
 
@@ -486,9 +491,13 @@ HELP_TOPICS = {
 
         "**Hunters** depositing to `/pack stash` feed the healer den: **+1 unity** & **+1 standing** once per sunrise\n"
 
-        "`/packlife action:feedall`; communal meal from reserve (once per pack per sunrise)\n"
+        "`/packlife action:feedall`; communal meal from reserve — **Alpha** (once per pack per sunrise)\n"
 
-        "`/playpen action:playall`; den romp mood boost for packmates\n"
+        "`/packlife action:drinkall`; creek drink for whole den — **Alpha** (once per pack per sunrise)\n"
+
+        "`/playpen action:playall`; den romp mood boost — **Alpha** (uses your toys or den toy store)\n"
+
+        "`/playpen action:toystore mode:`; den toy store (list · deposit · depositall · withdraw)\n"
 
         "`/pack taxrate` `/settax`; hunt tax (Alpha, 0-25%)\n"
 
@@ -532,7 +541,8 @@ HELP_TOPICS = {
 
         "`/wilderness action:travel` · `action:encounter` · `action:omen`; Basil travel hazards & omens\n"
 
-        "`/vitals action:sacred`: Medic half-moon visit; the **ancestors speak** one line at the stone (see `/world action:cooldowns`)\n"
+        "`/medic action:sacred`: Medic half-moon visit; ancestors speak + **+2 standing**, "
+        "**+5 mood**, **+1 pack unity**, next Medicine/Herblore **+2** (miss: **−2** standing)\n"
 
         "`/rollover`; advance one sunrise (admin)\n"
 
@@ -590,7 +600,8 @@ HELP_TOPICS = {
 
         "**HP** = 10 + Strength + Survival (Constitution score). Example: 10 + 7(Str) + 5(Survival) = **22**.\n"
 
-        "Roll **1d20 + attribute modifier + 2** if proficient.\n"
+        "Roll **1d20 + attribute modifier + character traits** (weaknesses subtract).\n"
+        "Failed **skill** rolls (`/skills`, `/rpg action:roll skill:…`) build practice strain before traits slip.\n"
 
         "Nat 1 = critical failure · Nat 20 = critical success.\n\n"
 
@@ -669,13 +680,13 @@ HELP_TOPICS = {
 
         "Full Basil reference: `docs/BASIL_RULES.md`.\n\n"
 
-        "**Herb loop:** `/field action:forage` → fresh stack in `/vitals action:herbbag` → "
+        "**Herb loop:** `/field action:forage` → fresh stack in `/herbs action:bag` → "
 
-        "`/vitals action:prepare` (dry/poultice/tonic/decoction) → `/vitals action:treat` with `stack:ID`.\n"
+        "`/herbs action:prepare` or **`action:dryall`** (bag + `/inventory` + den store) → `/medic action:treat` with `stack:ID`.\n"
 
-        "Fresh herbs rot after **1 sunrise** if not dried. Some plants are **toxic fresh** (Survival save).\n"
+        "Stock the healers' den: `/herbs action:store mode:depositall`. Fresh forage stacks rot after **1 sunrise** if not dried.\n"
 
-        "Shop/inventory herbs remain stable (dried).",
+        "Shop/inventory herbs are stable; dry or deposit them when ready.",
 
     ),
 
@@ -697,12 +708,15 @@ HELP_TOPICS = {
 
         "`/medic action:observe`; apprentice/senior observe a case (quest progress; no surgery cooldown)\n"
 
-        "`/medic action:checkup`; once-per-sunrise den scan (contagion, mind & spirit, bleeding, dying; **~52%** catch poison hoarders, else suspicious scent)\n\n"
+        "`/medic action:checkup`; **full Medic only** — once-per-sunrise den scan (contagion, mind & spirit, bleeding, dying, herb bags; **~52%** catch poison hoarders)\n\n"
 
         "**XP**; +1 from daily, quest complete, and den chat (once per sunrise). "
 
-        "`/advance action:spend` for +1 attribute, new skill proficiency, or **+1 skill rank** "
-        "(rank adds +1 per rank on proficient checks, max 3); "
+        "`/advance action:spend` for +1 attribute, **+1 earned skill trait** "
+        "(max +3 from play; stacks with lore traits on `/skills` checks); "
+        "**failed skill rolls** build **practice strain** (close misses are nerves only); "
+        "at **3 strain** you lose earned trait progress or gain a setback — "
+        "success and `/rollover` rest ease strain; "
 
         "`purchase:role_feature` submits a bonus role-feature request (**admin approval**).\n"
 
@@ -741,6 +755,8 @@ HELP_TOPICS = {
         "`/wolfadmin assign`; create a wolf for a player\n"
 
         "`/wolfadmin transfer`; move a wolf between players\n"
+
+        "`/wolfadmin possess` / `release`; steer another player's wolf for RP\n"
 
         "`/wolfadmin list`; inspect a player's wolves\n"
 

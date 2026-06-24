@@ -3,7 +3,7 @@ import random
 
 from engine.character import attr_modifier, default_stats_for_role
 from engine.dice import roll_d20
-from rpg_rules import PROFICIENCY_BONUS, ROLE_PROFICIENCIES, SKILLS, MAX_SKILL_RANK, XP_PER_SKILL_RANK
+from rpg_rules import ROLE_PROFICIENCIES, SKILLS, MAX_SKILL_RANK, XP_PER_TRAIT
 
 GESTATION_DAYS = 63
 XP_PER_ATTRIBUTE = 5
@@ -18,15 +18,15 @@ COURTSHIP_DCS = {
 
 
 def courtship_check(user, difficulty: str = "friendly") -> dict:
-    from engine.character import is_skill_proficient, skill_proficiency_bonus
+    from engine.character_traits import trait_check_adjustments
 
     dc = COURTSHIP_DCS.get(difficulty, 15)
     die = roll_d20()
     cha_mod = attr_modifier(user["attr_cha"])
-    prof = skill_proficiency_bonus(
-        user, "persuasion", proficient=is_skill_proficient(user, "persuasion")
+    trait_mod, _ = trait_check_adjustments(
+        user, ("attr_cha",), skill_key="persuasion", skill_label="Persuasion"
     )
-    total = die + cha_mod + prof
+    total = die + cha_mod + trait_mod
     if die == 1:
         outcome = "critical_failure"
         success = False
@@ -149,23 +149,7 @@ def spend_xp_attribute(user, attr_key: str) -> str | None:
     return None
 
 
-def spend_xp_skill(user, skill: str) -> str | None:
-    from engine.character import is_skill_proficient
+def spend_xp_trait_bonus(user, skill: str) -> str | None:
+    from engine.character_traits import spend_xp_trait_bonus as _validate
 
-    if skill not in SKILLS:
-        return "Unknown skill."
-    if is_skill_proficient(user, skill):
-        return "Already proficient in that skill (including role training)."
-    return None
-
-
-def spend_xp_skill_rank(user, skill: str) -> str | None:
-    from engine.character import get_skill_rank, is_skill_proficient
-
-    if skill not in SKILLS:
-        return "Unknown skill."
-    if not is_skill_proficient(user, skill):
-        return f"Learn **{SKILLS[skill][1]}** proficiency first (`/advance action:spend purchase:skill`)."
-    if get_skill_rank(user, skill) >= MAX_SKILL_RANK:
-        return f"**{SKILLS[skill][1]}** is already at max rank (**{MAX_SKILL_RANK}**)."
-    return None
+    return _validate(user, skill)

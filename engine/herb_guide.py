@@ -1,4 +1,4 @@
-"""Paginated herb compendium for /vitals action:herbs."""
+"""Paginated herb compendium for /herbs action:guide."""
 
 from __future__ import annotations
 
@@ -26,11 +26,11 @@ OVERVIEW_BODY = (
     "· `/field action:verge verge_site:compound`; Twoleg fence-lines & gardens\n"
     "· **Foragers**; unlimited territory + verge forage each sunrise\n\n"
     "**Using herbs**\n"
-    "· `/vitals action:treat herb:herb_yarrow`; keys from `/bones action:inventory`\n"
+    "· `/medic action:treat herb:herb_yarrow`; keys from `/bones action:inventory`\n"
     "· Matching **injury** or **disease** → auto-cures on success\n"
     "· No match → often needs **Medicine DC 15** (Medics / Herblore help)\n"
     "· `/vitals action:rest rest_type:short use_herb:true`; comfrey heal (3/day, Medics unlimited)\n"
-    "· **Medics**; unlimited `/vitals action:treat` per sunrise\n\n"
+    "· **Medics**; unlimited `/medic action:treat` per sunrise\n\n"
     "_Flip pages below. Filter by where plants grow or browse everything._"
 )
 
@@ -104,5 +104,5 @@ def build_herb_guide_embed(*, page: int = 0, filter_key: str = "all") -> tuple[s
     title = f"Herb Guide: {filter_label}"
     blocks = [format_herb_block(k, HERBS[k]) for k in chunk]
     body = "\n\n".join(blocks)
-    footer_note = f"Page **{page + 1}** of **{total_pages(filter_key) + 1}** · `/vitals action:treat herb:herb_<key>`"
+    footer_note = f"Page **{page + 1}** of **{total_pages(filter_key) + 1}** · `/medic action:treat herb:herb_<key>`"
     return title, f"{body}\n\n_{footer_note}_"
