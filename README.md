@@ -28,6 +28,43 @@ the bot only runs while its process is alive. closing the terminal stops slash c
 ✦ **paas:** railway, fly.io, render with `DISCORD_TOKEN` in env  
 ✦ **auto rollover:** set `AUTO_ROLLOVER_ENABLED=true`; missed sunrises catch up on the next startup (up to 31 days)
 
+### restarting
+
+stop the running process first; only one instance may run (`.howlbert.lock`). if the bot crashed and won't start, delete a stale lock only when no `python main.py` is still running.
+
+**windows (powershell, local dev):**
+
+```powershell
+cd C:\path\to\howlbert
+# stop: Ctrl+C in the bot terminal, or:
+Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*howlbert*" } | Stop-Process
+# stale lock after a crash (only if start still says another instance is running):
+Remove-Item -Force .howlbert.lock -ErrorAction SilentlyContinue
+.\.venv\Scripts\Activate.ps1
+python main.py
+```
+
+**linux / mac (local dev):**
+
+```bash
+cd ~/howlbert
+# stop: Ctrl+C, or find and kill the process
+pkill -f "python main.py"   # only if you're sure it's this bot
+rm -f .howlbert.lock        # stale lock only
+source .venv/bin/activate
+python main.py
+```
+
+**vps with systemd** (see `docs/DEPLOY.md`):
+
+```bash
+sudo systemctl restart howlbert
+sudo systemctl status howlbert
+journalctl -u howlbert -f    # live logs
+```
+
+after slash-command or cog changes, restart so discord picks up updates. `/ping` should answer once the bot is back online.
+
 ## design
 
 ✦ **rollover** = one in-game sunrise (`/rollover` for admins, or auto via `.env`)  

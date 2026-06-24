@@ -602,7 +602,7 @@ HELP_TOPICS = {
 
         "`/rpg action:roll use_role_reroll:true`; **Elder**/**Diplomat** reroll on failure (once/sunrise)\n\n"
 
-        "`/combat start` `/join` `/npc` `/begin` `/attack` `/maneuver` `/npcattack` `/yield` `/status` `/end`\n"
+        "`/combat start` `/join` `/list` `/npc` `/begin` `/attack` `/maneuver` `/npcattack` `/yield` `/status` `/end`\n"
 
         "`/combat encounter`; random ambush (90 min cooldown; also triggers on hunt/explore)\n"
 
@@ -623,6 +623,9 @@ HELP_TOPICS = {
         "Clan **cats** use maneuvers in NPC fights (rakes, Badger Defence); no pinning wolves.\n"
 
         "After `/combat begin`; **Pick a target** from the dropdown, then **Bite** / **Claw** / **Maneuver**\n"
+
+        "Several fights can run in one channel; each has a **fight #**. `/combat list` shows them; "
+        "`/combat join` works mid-fight (rolls initiative). Pass `encounter:` when several are open.\n"
 
         "Target lock is saved; any combat message in the channel works after a bot restart\n"
 

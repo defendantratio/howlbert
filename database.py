@@ -5639,16 +5639,226 @@ def mark_cat_pact_gift_day(pack_id: int, day: int) -> None:
         )
 
 
-def get_active_encounter(channel_id: int) -> sqlite3.Row | None:
+def reconcile_encounter_if_broken(encounter_id: int) -> bool:
+    """
+    End or repair encounters stuck with no fighters, no living combatants,
+    or a turn order pointing at missing fighters. Returns True if ended.
+    """
+    import json
+
+    enc = get_encounter(encounter_id)
+    if not enc or enc["status"] not in ("recruiting", "active"):
+        return False
+
+    fighters = get_combat_fighters(encounter_id)
+    if not fighters:
+        end_encounter(encounter_id)
+        return True
+
+    if enc["status"] == "recruiting":
+        return False
+
+    if len(fighters) < 2:
+        end_encounter(encounter_id)
+        return True
+
+    living = [f for f in fighters if int(f["hp"]) > 0]
+    if not living:
+        end_encounter(encounter_id)
+        return True
+
+    order = json.loads(enc["turn_order"] or "[]")
+    valid = {f["id"] for f in fighters}
+    pruned = [fid for fid in order if fid in valid]
+    if pruned == order and order:
+        return False
+
+    if not pruned:
+        rebuild_encounter_initiative(encounter_id)
+        return False
+
+    old_turn = int(enc["current_turn"])
+    current_fid = order[old_turn] if order and 0 <= old_turn < len(order) else None
+    if current_fid in pruned:
+        new_turn = pruned.index(current_fid)
+    else:
+        new_turn = min(old_turn, len(pruned) - 1)
+
     with get_db() as conn:
-        return conn.execute(
+        conn.execute(
             """
-            SELECT * FROM combat_encounters
+            UPDATE combat_encounters
+            SET turn_order = ?, current_turn = ?
+            WHERE id = ?
+            """,
+            (json.dumps(pruned), new_turn, encounter_id),
+        )
+    return False
+
+
+def insert_fighter_into_active_encounter(
+    encounter_id: int,
+    fighter_id: int,
+    initiative: int,
+) -> None:
+    """Slot a new fighter into an active fight without re-rolling everyone."""
+    import json
+
+    set_fighter_initiative(fighter_id, initiative)
+    with get_db() as conn:
+        enc = conn.execute(
+            "SELECT * FROM combat_encounters WHERE id = ?", (encounter_id,)
+        ).fetchone()
+        if not enc or enc["status"] != "active":
+            return
+
+        order = json.loads(enc["turn_order"] or "[]")
+        if fighter_id in order:
+            return
+
+        old_turn = int(enc["current_turn"])
+        current_fid = order[old_turn] if order and 0 <= old_turn < len(order) else None
+
+        order.append(fighter_id)
+        rows = conn.execute(
+            "SELECT id, initiative FROM combat_fighters WHERE encounter_id = ?",
+            (encounter_id,),
+        ).fetchall()
+        inits = {row["id"]: int(row["initiative"] or 0) for row in rows}
+        order.sort(key=lambda fid: (-inits.get(fid, 0), fid))
+
+        if current_fid is not None and current_fid in order:
+            new_turn = order.index(current_fid)
+        else:
+            new_turn = min(old_turn, len(order) - 1) if order else 0
+
+        conn.execute(
+            """
+            UPDATE combat_encounters
+            SET turn_order = ?, current_turn = ?
+            WHERE id = ?
+            """,
+            (json.dumps(order), new_turn, encounter_id),
+        )
+
+
+def list_active_encounters(channel_id: int) -> list:
+    """All recruiting/active fights in a channel (reconciles broken ones)."""
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id FROM combat_encounters
             WHERE channel_id = ? AND status IN ('recruiting', 'active')
-            ORDER BY id DESC LIMIT 1
+            ORDER BY id DESC
             """,
             (channel_id,),
-        ).fetchone()
+        ).fetchall()
+    alive: list = []
+    for row in rows:
+        if reconcile_encounter_if_broken(row["id"]):
+            continue
+        enc = get_encounter(row["id"])
+        if enc and enc["status"] in ("recruiting", "active"):
+            alive.append(enc)
+    return alive
+
+
+def player_encounters_in_channel(channel_id: int, discord_id: int) -> list:
+    return [
+        enc
+        for enc in list_active_encounters(channel_id)
+        if player_in_encounter(enc["id"], discord_id)
+    ]
+
+
+def format_encounter_choices(encounters: list, *, limit: int = 8) -> str:
+    if not encounters:
+        return ""
+    parts = []
+    for enc in encounters[:limit]:
+        n = len(get_combat_fighters(enc["id"]))
+        parts.append(f"**#{enc['id']}** ({enc['status']}, {n} fighters)")
+    return ", ".join(parts)
+
+
+def resolve_combat_encounter(
+    channel_id: int,
+    discord_id: int | None = None,
+    encounter_id: int | None = None,
+    *,
+    require_membership: bool = False,
+    joinable_only: bool = False,
+    require_recruiting: bool = False,
+) -> tuple[sqlite3.Row | None, str | None]:
+    """Pick the fight a command should target. Returns (encounter, error_message)."""
+
+    def _fresh(enc_id: int) -> sqlite3.Row | None:
+        reconcile_encounter_if_broken(enc_id)
+        enc = get_encounter(enc_id)
+        if enc and enc["status"] in ("recruiting", "active"):
+            return enc
+        return None
+
+    if encounter_id is not None:
+        enc = get_encounter(encounter_id)
+        if not enc or enc["channel_id"] != channel_id:
+            return None, f"No open fight **#{encounter_id}** in this channel."
+        enc = _fresh(encounter_id)
+        if not enc:
+            return None, f"Fight **#{encounter_id}** is not open."
+        if require_membership and discord_id and not player_in_encounter(enc["id"], discord_id):
+            return None, f"You're not in fight **#{encounter_id}**."
+        if joinable_only and discord_id and player_in_encounter(enc["id"], discord_id):
+            return None, "You're already in that fight."
+        if require_recruiting and enc["status"] != "recruiting":
+            return None, f"Fight **#{encounter_id}** has already begun; `/combat join` still works mid-fight."
+        return enc, None
+
+    active = list_active_encounters(channel_id)
+    if not active:
+        return None, "No open fights here. `/combat start` opens a new one."
+
+    if joinable_only and discord_id:
+        candidates = [e for e in active if not player_in_encounter(e["id"], discord_id)]
+        if require_recruiting:
+            candidates = [e for e in candidates if e["status"] == "recruiting"]
+        if not candidates:
+            return None, "No fights here you can join."
+        if len(candidates) == 1:
+            return candidates[0], None
+        return None, (
+            "Several fights are open: "
+            f"{format_encounter_choices(candidates)}. "
+            "Use `encounter:` on `/combat join`."
+        )
+
+    if require_membership and discord_id:
+        mine = [e for e in active if player_in_encounter(e["id"], discord_id)]
+        if require_recruiting:
+            mine = [e for e in mine if e["status"] == "recruiting"]
+        if len(mine) == 1:
+            return mine[0], None
+        if len(mine) > 1:
+            return None, (
+                "You're in multiple fights: "
+                f"{format_encounter_choices(mine)}. "
+                "Pass `encounter:` on this command."
+            )
+        return None, "You're not in a fight here."
+
+    if len(active) == 1:
+        return active[0], None
+    return None, (
+        "Several fights are open: "
+        f"{format_encounter_choices(active)}. "
+        "Use `/combat list` or pass `encounter:`."
+    )
+
+
+def get_active_encounter(channel_id: int) -> sqlite3.Row | None:
+    """Most recent open fight in a channel (legacy helper)."""
+    active = list_active_encounters(channel_id)
+    return active[0] if active else None
 
 
 def get_encounter(encounter_id: int) -> sqlite3.Row | None:
