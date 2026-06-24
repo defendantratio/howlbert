@@ -75,6 +75,69 @@ def parse_proficiencies(raw: str | None) -> set[str]:
         return {s.strip().lower() for s in raw.split(",") if s.strip()}
 
 
+def parse_skill_ranks(raw: str | None) -> dict[str, int]:
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            return {}
+        return {str(k).lower(): max(0, int(v)) for k, v in data.items()}
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return {}
+
+
+def get_skill_rank(user, skill_key: str) -> int:
+    if not skill_key or not user:
+        return 0
+    raw = user["skill_ranks"] if "skill_ranks" in user.keys() else "{}"
+    return parse_skill_ranks(raw).get(skill_key.lower(), 0)
+
+
+def is_skill_proficient(user, skill_key: str) -> bool:
+    from rpg_rules import ROLE_PROFICIENCIES
+
+    if skill_key in parse_proficiencies(user["skill_proficiencies"] if "skill_proficiencies" in user.keys() else None):
+        return True
+    role = user["wolf_role"] if "wolf_role" in user.keys() else ""
+    return skill_key in ROLE_PROFICIENCIES.get(role, ())
+
+
+def skill_proficiency_bonus(user, skill_key: str | None, *, proficient: bool | None = None) -> int:
+    from rpg_rules import PROFICIENCY_BONUS, SKILL_RANK_BONUS
+
+    if not skill_key:
+        return PROFICIENCY_BONUS if proficient else 0
+    if proficient is None:
+        proficient = is_skill_proficient(user, skill_key)
+    bonus = PROFICIENCY_BONUS if proficient else 0
+    if proficient:
+        bonus += get_skill_rank(user, skill_key) * SKILL_RANK_BONUS
+    return bonus
+
+
+def format_skill_proficiencies_line(user) -> str:
+    """Profile / advance display: proficiencies, role skills, and ranks."""
+    from rpg_rules import ROLE_PROFICIENCIES, SKILLS
+
+    profs = parse_proficiencies(user["skill_proficiencies"] if "skill_proficiencies" in user.keys() else None)
+    role = user["wolf_role"] if "wolf_role" in user.keys() else ""
+    role_profs = set(ROLE_PROFICIENCIES.get(role, ()))
+    ranks = parse_skill_ranks(user["skill_ranks"] if "skill_ranks" in user.keys() else None)
+    labels: list[str] = []
+    for skill_key in sorted(profs | role_profs):
+        label = SKILLS.get(skill_key, ((), skill_key.title()))[1]
+        rank = ranks.get(skill_key, 0)
+        bonus = skill_proficiency_bonus(user, skill_key, proficient=True)
+        if skill_key in role_profs and skill_key not in profs:
+            labels.append(f"{label} (role +{bonus})")
+        elif rank:
+            labels.append(f"{label} (+{bonus}, rank {rank})")
+        else:
+            labels.append(f"{label} (+{bonus})")
+    return ", ".join(labels) if labels else "None"
+
+
 def default_stats_for_role(role: str) -> dict:
     return dict(ROLE_DEFAULT_STATS.get(role, ROLE_DEFAULT_STATS["hunter"]))
 

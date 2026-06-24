@@ -473,11 +473,18 @@ def build_npc_stats(template_key: str) -> dict:
     """Build a combat stat dict for resolve_attack from a bestiary key."""
     import json
 
+    from engine.combat_size import size_class_for_template
+
     template = BESTIARY_NPCS[template_key]
     stats = dict(template["attrs"])
     stats["skill_proficiencies"] = json.dumps(template.get("proficiencies", []))
     stats["npc_attack_profile"] = template["attack"]
     stats["npc_template"] = template_key
+    stats["size_class"] = size_class_for_template(template_key, template.get("category"))
+    if "maneuvers" in template:
+        stats["maneuvers"] = template["maneuvers"]
+    if "maneuver_weight" in template:
+        stats["maneuver_weight"] = template["maneuver_weight"]
     return stats
 
 
@@ -496,6 +503,7 @@ def stats_for_fighter(fighter) -> dict:
         "attr_cha": 10,
         "attr_wis": 10,
         "skill_proficiencies": "[]",
+        "size_class": "medium",
     }
 
 

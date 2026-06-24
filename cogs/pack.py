@@ -262,6 +262,14 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=howlbert_embed("Food Reserve", msg, color=color))
 
     @app_commands.command(
+        name="howl",
+        description="Raise a pack howl for unity, or a lone howl if you have no pack.",
+    )
+    @app_commands.describe(message="Optional line carried on the wind")
+    async def howl(self, interaction: discord.Interaction, message: str | None = None):
+        await self._howl(interaction, message)
+
+    @app_commands.command(
         name="packlife",
         description="Feed the whole den or raise a pack howl.",
     )
@@ -551,6 +559,7 @@ class Pack(commands.Cog):
 
         world = db.get_world(interaction.guild.id)
         day = world["day_number"]
+        wolf_name = user["wolf_name"]
         if user["last_howl_day"] >= day:
             embed = howlbert_embed(
                 "Already Howled",
@@ -560,7 +569,18 @@ class Pack(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        wolf_name = user["wolf_name"]
+        from engine.character_traits import trait_blocks_howl
+
+        blocked, trait_name = trait_blocks_howl(user)
+        if blocked:
+            embed = howlbert_embed(
+                "Cannot Howl",
+                f"**{wolf_name}**'s throat will not answer the pack; **{trait_name}** silences the call.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
         echo_count = 0
 
         if user["pack_id"]:

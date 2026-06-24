@@ -66,8 +66,11 @@ class RoleCog(commands.Cog):
             pack_note = ""
             if q["required_pack"]:
                 pack_note = f" _(requires {q['required_pack'].title()} pack)_"
+            from engine.quest_rewards import format_quest_reward_line
+
+            reward_line = format_quest_reward_line(q["key"], q["reward_bones"])
             embed.add_field(
-                name=f"{q['title']} ({q['difficulty']}); {format_bones(q['reward_bones'])}",
+                name=f"{q['title']} ({q['difficulty']}); {reward_line}",
                 value=f"`{q['key']}`; {q['description']}{pack_note}",
                 inline=False,
             )

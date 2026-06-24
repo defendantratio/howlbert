@@ -5,20 +5,16 @@ from __future__ import annotations
 import random
 
 import database as db
-from engine.character import parse_proficiencies
 from engine.dice import format_contest_roll, format_roll_result, resolve_check, roll_contest
 from engine.exhaustion_effects import effective_max_hp
 from engine.herb_storage import consume_yarrow_from_bag, has_yarrow
 from engine.skill_checks import OPPOSED_SPECS, SKILL_SCENARIOS, opponent_required
-from rpg_rules import ROLE_PROFICIENCIES
 
 
 def _proficient(user, skill_key: str) -> bool:
-    profs = parse_proficiencies(user["skill_proficiencies"])
-    if skill_key in profs:
-        return True
-    role = user["role"] if "role" in user.keys() else ""
-    return skill_key in ROLE_PROFICIENCIES.get(role, ())
+    from engine.character import is_skill_proficient
+
+    return is_skill_proficient(user, skill_key)
 
 
 def _weather_scent_dc_mod(weather: str, *, rained: bool = False) -> tuple[int, str]:

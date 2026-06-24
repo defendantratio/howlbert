@@ -527,16 +527,18 @@ def herb_special_effect(herb_key: str, user, *, inventory_qty: int = 1) -> str |
 
 
 def medicine_check(user, dc: int = 15) -> dict:
+    from engine.character import is_skill_proficient, skill_proficiency_bonus
     from engine.herb_buffs import herb_check_adjustments
 
     die = roll_d20()
     mod = attr_modifier(user["attr_wis"])
-    profs = parse_proficiencies(user["skill_proficiencies"])
-    prof = PROFICIENCY_BONUS if "medicine" in profs else 0
+    prof = skill_proficiency_bonus(
+        user, "medicine", proficient=is_skill_proficient(user, "medicine")
+    )
     from engine.role_features import is_full_medic
 
-    if "herblore" in profs or is_full_medic(user):
-        prof = max(prof, PROFICIENCY_BONUS)
+    if is_skill_proficient(user, "herblore") or is_full_medic(user):
+        prof = max(prof, skill_proficiency_bonus(user, "herblore", proficient=True))
     herb_mod, herb_adv = herb_check_adjustments(user, ("attr_wis",), skill_key="medicine")
     if herb_adv:
         die = max(roll_d20(), roll_d20())

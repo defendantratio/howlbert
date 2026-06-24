@@ -51,14 +51,15 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/hoarding`  | `hoard`, `gift`, `shred`                                                                                      |
 | `/playpen`   | `toys`, `play`, `playall`, `socialize`, `groom`                                                               |
 | `/packlife`  | `feedall`, `howl`                                                                                             |
+| `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`                                                                    |
 | `/quest`     | `board`, `daily`, `accept`, `progress`, `complete`, `abandon`, `log`                                          |
 | `/role`      | `rolequests`, `roleevent`, `prophecy`                                                                         |
 | `/prestige`  | `view`, `require`, `bonus`, `legacy`, `retire`, `halloffame`                                                  |
 | `/courtship` | `court`, `mate`, `pregnancy`                                                                                  |
 | `/pupcare`   | `birth`, `feed`, `list`, `save`, `adopt`                                                                      |
-| `/wolfset`   | `birthsex`, `sexuality`, `mawbelief`                                                                          |
-| `/advance`   | `xp`, `spendxp`                                                                                               |
+| `/wolfset`   | `birthsex`, `sexuality`, `mawbelief`, `size` (combat build)                                                    |
+| `/advance`   | `view`, `spend` (attribute, skill proficiency, **skill rank**, role feature)                                  |
 | `/medic`     | `deathsaves`, `stabilize`                                                                                     |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
 | `/vitals`    | `condition`, `rest`, `treat`, `herbs`, `turnin`, `prepare`, `herbbag`, `sacred`                               |
@@ -118,7 +119,7 @@ use `**/patron**` to check status. the bot needs **manage server** to track invi
 
 ✦ ko-fi tips and memberships can grant bones when webhook is configured  
 ✦ `**/redeem`** for one-time gift codes when configured  
-✦ players: `**/patron**` and `**/help topic:patron**` in discord
+✦ players: `**/patron`** and `**/help topic:patron**` in discord
 
 ## rpg system
 

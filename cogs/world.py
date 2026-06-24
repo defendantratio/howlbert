@@ -11,7 +11,7 @@ from engine.donor import donor_daily_bonus
 from engine.lexicon import format_sunrise
 from engine.season_effects import season_activity_blurb
 from engine.world import forecast_weather, season_blurb, season_label, time_blurb, time_label, weather_label
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, trim_embed_fields
 from utils.permissions import is_howlbert_admin
 
 
@@ -185,6 +185,7 @@ class World(commands.Cog):
             donor_bonus=donor_bonus,
         ):
             embed.add_field(name=name, value=value, inline=inline)
+        embed = trim_embed_fields(embed)
         if guild_id:
             embed.set_footer(
                 text="Activities reset each sunrise. Patrol/scout need an active pack war. "

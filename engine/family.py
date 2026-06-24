@@ -3,7 +3,7 @@ import random
 
 from engine.character import attr_modifier, default_stats_for_role
 from engine.dice import roll_d20
-from rpg_rules import PROFICIENCY_BONUS, ROLE_PROFICIENCIES, SKILLS
+from rpg_rules import PROFICIENCY_BONUS, ROLE_PROFICIENCIES, SKILLS, MAX_SKILL_RANK, XP_PER_SKILL_RANK
 
 GESTATION_DAYS = 63
 XP_PER_ATTRIBUTE = 5
@@ -18,10 +18,14 @@ COURTSHIP_DCS = {
 
 
 def courtship_check(user, difficulty: str = "friendly") -> dict:
+    from engine.character import is_skill_proficient, skill_proficiency_bonus
+
     dc = COURTSHIP_DCS.get(difficulty, 15)
     die = roll_d20()
     cha_mod = attr_modifier(user["attr_cha"])
-    prof = PROFICIENCY_BONUS
+    prof = skill_proficiency_bonus(
+        user, "persuasion", proficient=is_skill_proficient(user, "persuasion")
+    )
     total = die + cha_mod + prof
     if die == 1:
         outcome = "critical_failure"
@@ -146,9 +150,22 @@ def spend_xp_attribute(user, attr_key: str) -> str | None:
 
 
 def spend_xp_skill(user, skill: str) -> str | None:
+    from engine.character import is_skill_proficient
+
     if skill not in SKILLS:
         return "Unknown skill."
-    profs = json.loads(user["skill_proficiencies"] or "[]")
-    if skill in profs:
-        return "Already proficient in that skill."
+    if is_skill_proficient(user, skill):
+        return "Already proficient in that skill (including role training)."
+    return None
+
+
+def spend_xp_skill_rank(user, skill: str) -> str | None:
+    from engine.character import get_skill_rank, is_skill_proficient
+
+    if skill not in SKILLS:
+        return "Unknown skill."
+    if not is_skill_proficient(user, skill):
+        return f"Learn **{SKILLS[skill][1]}** proficiency first (`/advance action:spend purchase:skill`)."
+    if get_skill_rank(user, skill) >= MAX_SKILL_RANK:
+        return f"**{SKILLS[skill][1]}** is already at max rank (**{MAX_SKILL_RANK}**)."
     return None

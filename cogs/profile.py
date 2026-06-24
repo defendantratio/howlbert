@@ -27,7 +27,7 @@ from engine.character_lore import (
     lore_embed_fields,
 )
 
-from engine.character import attr_modifier, parse_proficiencies
+from engine.character import attr_modifier
 
 from engine.pack_unity import standing_effect_text
 from engine.prestige import get_tier_info
@@ -758,6 +758,10 @@ class Profile(commands.Cog):
 
         embed.add_field(name="Role", value=ROLE_LABELS.get(wolf_role, wolf_role.title()), inline=True)
 
+        from engine.combat_size import format_size_class_profile
+
+        embed.add_field(name="Build", value=format_size_class_profile(user), inline=True)
+
         age_mo = user["age_months"] if "age_months" in user.keys() else 24
         embed.add_field(
             name="Age",
@@ -845,17 +849,12 @@ class Profile(commands.Cog):
             embed.add_field(name="HP", value=hp_line, inline=True)
 
         if "skill_proficiencies" in user.keys():
-
-            profs = parse_proficiencies(user["skill_proficiencies"])
+            from engine.character import format_skill_proficiencies_line
 
             embed.add_field(
-
                 name="Skills",
-
-                value=", ".join(p.title() for p in sorted(profs)) or "None",
-
+                value=format_skill_proficiencies_line(user),
                 inline=False,
-
             )
 
         if wolf_role in ROLE_FEATURES:

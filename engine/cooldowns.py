@@ -6,6 +6,7 @@ import sqlite3
 
 import database as db
 from config import BOOST_DAILY_BONUS, DAILY_REWARD, SNIFF_HUNT_BONUS_PCT
+from engine.role_features import has_any_role, is_full_medic
 from engine.prestige import apply_bone_bonus, bone_bonus_pct
 from engine.role_privileges import (
     HERB_HEAL_DAILY_LIMIT,
@@ -215,11 +216,23 @@ def build_cooldown_fields(
 
     fields.append(
         (
-            "/packlife action:howl",
+            "/howl",
             _status(user, "howl", ready=not _used_today(user, day, "last_howl_day")),
             True,
         )
     )
+    if is_full_medic(user) or has_any_role(user, "medic_apprentice"):
+        fields.append(
+            (
+                "/medic action:checkup",
+                _status(
+                    user,
+                    "den checkup",
+                    ready=not _used_today(user, day, "last_medic_rounds_day"),
+                ),
+                True,
+            )
+        )
     sniff_ready = not _used_today(user, day, "last_sniff_day")
     sniff_bonus = int(user["sniff_bonus_day"]) >= day if "sniff_bonus_day" in user.keys() else False
     sniff_label = _status(user, "sniff", ready=sniff_ready)

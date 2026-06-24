@@ -24,6 +24,7 @@ from engine.herb_buffs import (
 )
 from engine.herb_properties import can_use_form, herb_form_rule
 from engine.medical_access import can_medic_treat_cross_pack
+from engine.character_traits import trait_clears_infection_on_heal, trait_treat_heal_bonus
 from engine.role_features import is_full_medic
 from herbs import HERBS
 
@@ -248,10 +249,21 @@ def treat_from_herb_stack(
     elif outcome == "healed" or herb_key == "comfrey":
         lo, hi = heal_amount_for_form(form, complex_wound=complex_wound)
         heal = max(1, int(random.randint(lo, hi) * (int(stack["potency"]) / 100.0)))
+        heal += trait_treat_heal_bonus(healer)
         cap = effective_max_hp(patient)
         new_hp = min(cap, int(patient["hp"]) + heal)
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)
         msg = f"**{name}**{form_tag}{target_note} healed **{heal} HP**."
+        if trait_clears_infection_on_heal(healer) and "infected_wound" in injuries:
+            injuries.remove("infected_wound")
+            db.clear_injury_since(patient["id"], "infected_wound")
+            db.set_user_conditions(
+                patient["discord_id"],
+                wolf_id=patient["id"],
+                active_injuries=json.dumps(injuries),
+                condition="healthy" if not injuries else patient["condition"],
+            )
+            msg += " Infection drawn out overnight."
     elif outcome == "symptom_ease":
         if meta.get("poison") and is_restricted_herb(herb_key) and not is_full_medic(healer):
             survived, poison_msg, _ = roll_poison_herb_misuse(patient, herb_key, day=day)

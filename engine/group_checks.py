@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 
 from engine.dice import format_roll_result, resolve_check
+from engine.character import is_skill_proficient
 
 
 def pack_howl_range(charisma_roll: int, pack_size: int, *, natural_20: bool) -> int:
@@ -28,8 +29,7 @@ def run_group_check(
     results = []
     successes = 0
     for wolf in wolves:
-        profs = wolf["skill_proficiencies"] if "skill_proficiencies" in wolf.keys() else "[]"
-        proficient = skill_key in str(profs)
+        proficient = is_skill_proficient(wolf, skill_key)
         roll = resolve_check(
             wolf,
             attr_keys=attr_keys,
