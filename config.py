@@ -576,8 +576,8 @@ RESTRICTED_HERB_HOARD_CAUGHT_TEXT = [
     "Apprentices were told never to touch what you hid; an elder found your stash at dawn.",
     "The healers' store is for poison herbs, not your pockets; **{herbs}** seized and your name dragged through the nursery.",
     "Someone saw you nosing a forbidden leaf; word reached the Alpha before you could bury it.",
-    "Pack law is clear: only Medicine cats carry death-berries. You are not one of them.",
-    "A patrol wolf flattens their ears at the reek on your pelt; **{herbs}** in a warrior's bag is exile talk.",
+    "Pack law is clear: only **Medics** carry death-berries. You are not one of them.",
+    "A patrol wolf flattens their ears at the reek on your pelt; **{herbs}** in a hunter's bag is exile talk.",
 ]
 RESTRICTED_HERB_SNIFF_CAUGHT_TEXT = [
     "You read the wind, but the wind reads **you**; poison-scent on your coat gives you away to a ridge patrol.",
@@ -816,6 +816,88 @@ STATIC_QUESTS = (
         "medium",
     ),
 )
+
+# Per-quest XP (account pool) and skill-rank rewards (active wolf).
+# Skill rewards: quest_key -> (skill_key, rank_gain). Rank adds +SKILL_RANK_BONUS per rank on checks.
+QUEST_XP_REWARDS: dict[str, int] = {
+    # Static board
+    "first_hunt": 2,
+    "den_patrol": 1,
+    "river_fish": 1,
+    "triple_tracker": 2,
+    "den_gift": 1,
+    "biome_wander": 1,
+    "trail_seeker": 2,
+    # Role quests
+    "hunter_first_blood": 2,
+    "medic_healer_path": 2,
+    "scout_border_eyes": 1,
+    "scout_biome_eyes": 1,
+    "scout_wind_survey": 2,
+    "scout_trail_hunter": 2,
+    "guard_den_watch": 1,
+    "forager_root_seeker": 1,
+    "diplomat_peace_talk": 2,
+    "elder_memory_howl": 1,
+    "caretaker_pup_watch": 1,
+    "alpha_den_judgment": 3,
+    "advisor_alpha_shadow": 2,
+    "drown_belly_vigil": 2,
+    "drown_moon_prophecy": 2,
+    "drown_whisper_stone": 3,
+    "pup_first_moon": 1,
+    "pup_den_warmth": 1,
+    "juvenile_blooding": 2,
+    "juvenile_rank_patrol": 1,
+    "juvenile_practice_hunt": 2,
+    # Daily quests
+    "daily_hunt": 1,
+    "daily_scavenge": 1,
+    "daily_track": 1,
+    "daily_fish": 1,
+    "daily_deep_scrape": 2,
+    "daily_river_storm": 2,
+}
+
+QUEST_SKILL_REWARDS: dict[str, tuple[str, int]] = {
+    # Static board
+    "first_hunt": ("hunting", 1),
+    "den_patrol": ("stealth", 1),
+    "river_fish": ("survival", 1),
+    "triple_tracker": ("tracking", 1),
+    "biome_wander": ("survival", 1),
+    "trail_seeker": ("tracking", 1),
+    "den_gift": ("persuasion", 1),
+    # Role quests
+    "hunter_first_blood": ("hunting", 1),
+    "medic_healer_path": ("medicine", 1),
+    "scout_border_eyes": ("stealth", 1),
+    "scout_biome_eyes": ("tracking", 1),
+    "scout_wind_survey": ("tracking", 1),
+    "scout_trail_hunter": ("tracking", 1),
+    "guard_den_watch": ("survival", 1),
+    "forager_root_seeker": ("herblore", 1),
+    "diplomat_peace_talk": ("persuasion", 1),
+    "elder_memory_howl": ("medicine", 1),
+    "caretaker_pup_watch": ("persuasion", 1),
+    "alpha_den_judgment": ("intimidation", 1),
+    "advisor_alpha_shadow": ("persuasion", 1),
+    "drown_belly_vigil": ("stealth", 1),
+    "drown_moon_prophecy": ("tracking", 1),
+    "drown_whisper_stone": ("tracking", 1),
+    "pup_first_moon": ("survival", 1),
+    "pup_den_warmth": ("survival", 1),
+    "juvenile_blooding": ("hunting", 1),
+    "juvenile_rank_patrol": ("stealth", 1),
+    "juvenile_practice_hunt": ("hunting", 1),
+    # Daily quests
+    "daily_hunt": ("hunting", 1),
+    "daily_scavenge": ("survival", 1),
+    "daily_track": ("tracking", 1),
+    "daily_fish": ("survival", 1),
+    "daily_deep_scrape": ("survival", 1),
+    "daily_river_storm": ("survival", 1),
+}
 
 # Role quests: key, title, desc, objective, count, reward, standing, type, difficulty, role[, pack]
 ROLE_QUESTS = (

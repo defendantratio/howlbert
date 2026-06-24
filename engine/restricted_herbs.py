@@ -109,7 +109,7 @@ def medic_rounds_scan_hoarders(pack_id: int) -> tuple[list[dict], list[str]]:
         names = format_herb_names(held)
         if roll_restricted_hoard_caught(RESTRICTED_HERB_MEDIC_ROUNDS_CATCH_CHANCE):
             flavor = (
-                f"**Medic rounds** found **{names}** in **{wolf['wolf_name']}**'s herb bag; "
+                f"**Den checkup** found **{names}** in **{wolf['wolf_name']}**'s herb bag; "
                 "poison plants belong in the healers' store."
             )
             note = apply_caught_hoarding(wolf, held, flavor=flavor)

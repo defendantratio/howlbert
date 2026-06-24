@@ -2,15 +2,23 @@
 
 import database as db
 from engine.character_traits import (
+    DUSK_CHARACTER_TRAITS,
+    FINNPELT_CHARACTER_TRAITS,
+    GASP_CHARACTER_TRAITS,
     KANAMI_CHARACTER_TRAITS,
     MIREWORT_CHARACTER_TRAITS,
     MURKVEIN_CHARACTER_TRAITS,
+    SLUDGE_CHARACTER_TRAITS,
     SPLINTER_CHARACTER_TRAITS,
+    canonical_traits_for_name,
     encode_character_traits,
+    trait_blocks_howl,
     trait_check_adjustments,
     trait_check_disadvantage,
     trait_combat_modifier,
+    trait_damage_reduction,
     trait_hunt_multiplier,
+    trait_treat_heal_bonus,
 )
 from engine.dice import resolve_check
 
@@ -123,3 +131,72 @@ def test_murkvein_no_tail_penalties():
     mult, _ = trait_hunt_multiplier(user)
     assert mult == 0.9
     assert trait_check_disadvantage(user, ("attr_dex",), skill_key="survival")
+
+
+def test_eltanin_canonical_traits():
+    traits = canonical_traits_for_name("Eltanin")
+    assert traits is not None
+    mod, names = trait_check_adjustments(
+        _row(
+            great_pack="thistlehide",
+            character_traits=encode_character_traits(traits),
+            skill_proficiencies='["hunting", "tracking"]',
+        ),
+        ("attr_str",),
+        skill_key="hunting",
+    )
+    assert mod == 3
+    assert "Bold Hunter" in names
+
+
+def test_gasp_frail_hunt_penalty():
+    user = _row(
+        great_pack="mistmoor",
+        character_traits=encode_character_traits(GASP_CHARACTER_TRAITS),
+    )
+    mult, note = trait_hunt_multiplier(user)
+    assert mult == 0.45
+    assert "Frail" in note
+
+
+def test_dusk_blocks_howl():
+    user = _row(
+        great_pack="mistmoor",
+        character_traits=encode_character_traits(DUSK_CHARACTER_TRAITS),
+    )
+    blocked, name = trait_blocks_howl(user)
+    assert blocked
+    assert name == "Rasping Voice"
+
+
+def test_sludge_hunt_abort_roll(monkeypatch):
+    import random
+
+    user = _row(
+        great_pack="mistmoor",
+        character_traits=encode_character_traits(SLUDGE_CHARACTER_TRAITS),
+    )
+    monkeypatch.setattr(random, "random", lambda: 0.0)
+    from engine.character_traits import roll_trait_hunt_abort
+
+    aborted, name = roll_trait_hunt_abort(user)
+    assert aborted
+    assert name == "Superstitious"
+
+
+def test_finnpelt_damage_reduction():
+    user = _row(
+        great_pack="thistlehide",
+        character_traits=encode_character_traits(FINNPELT_CHARACTER_TRAITS),
+    )
+    reduction, label = trait_damage_reduction(user)
+    assert reduction == 2
+    assert label == "Armor-Like Coat"
+
+
+def test_mirewort_treat_heal_bonus():
+    user = _row(
+        great_pack="mistmoor",
+        character_traits=encode_character_traits(MIREWORT_CHARACTER_TRAITS),
+    )
+    assert trait_treat_heal_bonus(user) == 1

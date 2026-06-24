@@ -1,4 +1,4 @@
-"""Medic rounds, observe, ritual, naming, lay to rest, swim therapy."""
+"""Medic den checkup, observe, ritual, naming, lay to rest, swim therapy."""
 
 from __future__ import annotations
 
@@ -27,14 +27,12 @@ def _herb_name(key: str) -> str:
 
 
 def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
-    """Den health scan for /medic action:rounds."""
-    from engine.role_privileges import is_medic
-
-    if not is_medic(medic):
-        return False, "Only **Medics** and **medic apprentices** may walk den rounds."
+    """Den health scan for /medic action:checkup."""
+    if not is_full_medic(medic) and not has_any_role(medic, "medic_apprentice"):
+        return False, "Only **Medics** and **medic apprentices** may walk den checkups."
     last = int(medic["last_medic_rounds_day"] if "last_medic_rounds_day" in medic.keys() else 0)
     if last >= day:
-        return False, "You already walked den rounds this sunrise."
+        return False, "You already walked den checkups this sunrise."
     pack_id = medic["pack_id"] if "pack_id" in medic.keys() else None
     if not pack_id:
         return False, "Join a pack to walk the sick den."
@@ -79,7 +77,7 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
         if rest_until > day:
             bone_rest.append(f"**{name}**: splint rest **{rest_until - day}** sunrise(s)")
 
-    lines = [f"**Den rounds**: **{len(wolves)}** wolves checked."]
+    lines = [f"**Den checkup**: **{len(wolves)}** wolves checked."]
     if dying:
         lines.append("\n**Dying** (Healer's Code)\n" + "\n".join(dying))
     if contagious:

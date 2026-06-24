@@ -24,6 +24,8 @@ MIREWORT_CHARACTER_TRAITS = {
             "name": "Wound-Tending",
             "modifier": 5,
             "skills": ["medicine"],
+            "treat_heal_bonus": 1,
+            "clears_infection_on_heal": True,
             "blurb": (
                 "Cleans, sews, and packs wounds with rot-fighting muds; unerring eye for infection."
             ),
@@ -722,6 +724,14 @@ HEMLOCK_CHARACTER_TRAITS = {
             "exclude_skills": ["intimidation"],
             "blurb": "Resentment makes her careless with wolves she dislikes.",
         },
+        {
+            "name": "Clouded Eye",
+            "modifier": -2,
+            "skills": ["tracking"],
+            "attrs": ["attr_wis", "attr_int"],
+            "check_disadvantage": True,
+            "blurb": "Puphood cataract; depth and distance fail her in low light.",
+        },
     ],
 }
 
@@ -1323,6 +1333,7 @@ RIPPLE_CHARACTER_TRAITS = {
             "modifier": 4,
             "skills": ["medicine"],
             "attrs": ["attr_wis"],
+            "treat_heal_bonus": 1,
             "blurb": "Excellent bedside manner; wolves heal faster around her.",
         },
         {
@@ -1963,6 +1974,7 @@ DUSK_CHARACTER_TRAITS = {
             "modifier": -2,
             "skills": ["persuasion", "intimidation"],
             "attrs": ["attr_cha"],
+            "blocks_howl": True,
             "blurb": "Cannot howl or call for help; silent in emergencies.",
         },
         {
@@ -2131,6 +2143,7 @@ SLUDGE_CHARACTER_TRAITS = {
             "modifier": -2,
             "attrs": ["attr_wis"],
             "exclude_skills": ["survival", "stealth"],
+            "hunt_abort_chance": 0.22,
             "blurb": "Aborts hunts on bad omens; crow flying left, ripple without wind, three frog croaks.",
         },
     ],
@@ -2168,6 +2181,7 @@ GRISTLE_CHARACTER_TRAITS = {
             "modifier": -2,
             "attrs": ["attr_dex"],
             "skills": ["stealth", "hunting"],
+            "hunt_mult": 0.85,
             "blurb": "Scares prey away; other hunters hate hunting with him.",
         },
         {
@@ -2270,6 +2284,7 @@ GASP_CHARACTER_TRAITS = {
             "modifier": -4,
             "attrs": ["attr_str"],
             "combat": True,
+            "hunt_mult": 0.45,
             "blurb": "Cannot fight, hunt, or run; relies on the pack to feed them.",
         },
         {
@@ -2658,6 +2673,14 @@ FINNPELT_CHARACTER_TRAITS = {
             "attrs": ["attr_con"],
             "blurb": "High pain tolerance; patrols for days on minimal sleep.",
         },
+        {
+            "name": "Armor-Like Coat",
+            "modifier": 0,
+            "attrs": ["attr_con"],
+            "combat": True,
+            "damage_reduction": 2,
+            "blurb": "River-oiled ash-black fur; thorns and teeth slide off like armor.",
+        },
     ],
     "weaknesses": [
         {
@@ -3038,6 +3061,57 @@ ASHBARK_CHARACTER_TRAITS = {
 }
 
 
+ELTANIN_CHARACTER_TRAITS = {
+    "bonuses": [
+        {
+            "name": "Observant Tracker",
+            "modifier": 3,
+            "skills": ["tracking"],
+            "attrs": ["attr_int", "attr_wis"],
+            "blurb": "Quiet border runs; reads scent and sign before others notice.",
+        },
+        {
+            "name": "Bold Hunter",
+            "modifier": 3,
+            "skills": ["hunting"],
+            "attrs": ["attr_str", "attr_dex"],
+            "blurb": "Takes calculated risks to feed the den, not reckless bravado.",
+        },
+        {
+            "name": "Protective Vigilance",
+            "modifier": 2,
+            "skills": ["survival"],
+            "attrs": ["attr_wis"],
+            "blurb": "Stalks trouble before pups or caretakers know they are missing.",
+        },
+    ],
+    "weaknesses": [
+        {
+            "name": "Emotionally Reserved",
+            "modifier": -2,
+            "skills": ["persuasion"],
+            "attrs": ["attr_cha"],
+            "blurb": "Walls up; wolves mistake silence for coldness.",
+        },
+        {
+            "name": "Twoleg Avoidance",
+            "modifier": -2,
+            "skills": ["survival", "tracking"],
+            "attrs": ["attr_wis"],
+            "blurb": "Refuses logging scars and thunder-stick range; border hunts suffer.",
+        },
+        {
+            "name": "Impatient with Liars",
+            "modifier": -2,
+            "skills": ["persuasion", "intimidation"],
+            "attrs": ["attr_cha"],
+            "exclude_skills": ["hunting", "tracking"],
+            "blurb": "Little patience for laziness or deceit; snaps when trust breaks.",
+        },
+    ],
+}
+
+
 PALESTEP_CHARACTER_TRAITS = {
     "bonuses": [
         {
@@ -3277,3 +3351,172 @@ def format_traits_for_profile(user) -> str | None:
             line += f"; {blurb}"
         lines.append(line)
     return "\n".join(lines) if lines else None
+
+
+CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
+    "Mirewort": MIREWORT_CHARACTER_TRAITS,
+    "Splinter": SPLINTER_CHARACTER_TRAITS,
+    "Moth": MOTH_CHARACTER_TRAITS,
+    "Scab": SCAB_CHARACTER_TRAITS,
+    "Sleet": SLEET_CHARACTER_TRAITS,
+    "Harepup": HAREPUP_CHARACTER_TRAITS,
+    "Cinderpup": CINDERPUP_CHARACTER_TRAITS,
+    "Rime": RIME_CHARACTER_TRAITS,
+    "Talus": TALUS_CHARACTER_TRAITS,
+    "Slate": SLATE_CHARACTER_TRAITS,
+    "Ironjaw": IRONJAW_CHARACTER_TRAITS,
+    "Stonepiercer": STONEPIERCER_CHARACTER_TRAITS,
+    "Raven": RAVEN_CHARACTER_TRAITS,
+    "Frostburn": FROSTBURN_CHARACTER_TRAITS,
+    "Hemlock": HEMLOCK_CHARACTER_TRAITS,
+    "Thorn": THORN_CHARACTER_TRAITS,
+    "Icefang": ICEFANG_CHARACTER_TRAITS,
+    "Grim": GRIM_CHARACTER_TRAITS,
+    "Cinder": CINDER_CHARACTER_TRAITS,
+    "Pebble": PEBBLE_CHARACTER_TRAITS,
+    "Driftpup": DRIFTPUP_CHARACTER_TRAITS,
+    "Ripplepup": RIPPLEPUP_CHARACTER_TRAITS,
+    "Riptide": RIPTIDE_CHARACTER_TRAITS,
+    "Ebb": EBB_CHARACTER_TRAITS,
+    "Curlgrip": CURLGRIP_CHARACTER_TRAITS,
+    "Churn": CHURN_CHARACTER_TRAITS,
+    "Aromis": AROMIS_CHARACTER_TRAITS,
+    "Ripple": RIPPLE_CHARACTER_TRAITS,
+    "Rift": RIFT_CHARACTER_TRAITS,
+    "Saltmuzzle": SALTMUZZLE_CHARACTER_TRAITS,
+    "Barkhollow": BARKHOLLOW_CHARACTER_TRAITS,
+    "Fernspot": FERNSPOT_CHARACTER_TRAITS,
+    "Mossgaze": MOSSGAZE_CHARACTER_TRAITS,
+    "Thyme": THYME_CHARACTER_TRAITS,
+    "Root": ROOT_CHARACTER_TRAITS,
+    "Mossheart": MOSSHEART_CHARACTER_TRAITS,
+    "Rivenmaw": RIVENMAW_CHARACTER_TRAITS,
+    "Kanami": KANAMI_CHARACTER_TRAITS,
+    "Murkvein": MURKVEIN_CHARACTER_TRAITS,
+    "Dusk": DUSK_CHARACTER_TRAITS,
+    "Soot": SOOT_CHARACTER_TRAITS,
+    "Rotteddust": ROTTEDDUST_CHARACTER_TRAITS,
+    "Sludge": SLUDGE_CHARACTER_TRAITS,
+    "Gristle": GRISTLE_CHARACTER_TRAITS,
+    "Croaker": CROAKER_CHARACTER_TRAITS,
+    "Gasp": GASP_CHARACTER_TRAITS,
+    "Yarrow": YARROW_CHARACTER_TRAITS,
+    "Hollowstem": HOLLOWSTEM_CHARACTER_TRAITS,
+    "Mudpup": MUDPUP_CHARACTER_TRAITS,
+    "Mosspup": MOSSPUP_CHARACTER_TRAITS,
+    "Reedwhisper": REEDWHISPER_CHARACTER_TRAITS,
+    "Mudnose": MUDNOSE_CHARACTER_TRAITS,
+    "Puddlebane": PUDDLEBANE_CHARACTER_TRAITS,
+    "Finnpelt": FINNPELT_CHARACTER_TRAITS,
+    "Skye": SKYE_CHARACTER_TRAITS,
+    "Brackenpelt": BRACKENPELT_CHARACTER_TRAITS,
+    "Cloverfern": CLOVERFERN_CHARACTER_TRAITS,
+    "Sypha": SYPHA_CHARACTER_TRAITS,
+    "RiverShroud": RIVERSHROUD_CHARACTER_TRAITS,
+    "Lucid": LUCID_CHARACTER_TRAITS,
+    "Ashbark": ASHBARK_CHARACTER_TRAITS,
+    "Pale'Step": PALESTEP_CHARACTER_TRAITS,
+    "Eltanin": ELTANIN_CHARACTER_TRAITS,
+}
+
+# Canonical register backstory hooks (role, belief, build) applied with lore/traits.
+CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
+    "Gasp": {"wolf_role": "drown_sick"},
+    "Eltanin": {"maw_belief": "agnostic"},
+    "Kanami": {"size_class": "small"},
+    "Pale'Step": {"size_class": "small"},
+    "Croaker": {"size_class": "small"},
+}
+
+
+def canonical_traits_for_name(wolf_name: str) -> dict | None:
+    for key, traits in CHARACTER_TRAITS_BY_NAME.items():
+        if key.lower() == (wolf_name or "").strip().lower():
+            return traits
+    return None
+
+
+def canonical_register_defaults_for_name(wolf_name: str) -> dict[str, str] | None:
+    for key, defaults in CHARACTER_REGISTER_DEFAULTS.items():
+        if key.lower() == (wolf_name or "").strip().lower():
+            return defaults
+    return None
+
+
+def trait_blocks_howl(user) -> tuple[bool, str]:
+    """True when a weakness forbids pack howls (e.g. scarred throat)."""
+    traits = _traits_for_user(user)
+    if not traits:
+        return False, ""
+    pack = _user_pack(user)
+    for trait in traits.get("weaknesses", []):
+        if not trait.get("blocks_howl"):
+            continue
+        if _pack_ok(trait, pack):
+            return True, trait["name"]
+    return False, ""
+
+
+def roll_trait_hunt_abort(user) -> tuple[bool, str]:
+    """Roll omen/superstition abort; consumes the hunt attempt when True."""
+    import random
+
+    traits = _traits_for_user(user)
+    if not traits:
+        return False, ""
+    pack = _user_pack(user)
+    for trait in traits.get("weaknesses", []):
+        chance = trait.get("hunt_abort_chance")
+        if chance is None:
+            continue
+        if not _pack_ok(trait, pack):
+            continue
+        if random.random() < float(chance):
+            return True, trait["name"]
+    return False, ""
+
+
+def trait_treat_heal_bonus(healer) -> int:
+    """Extra HP healed when this wolf treats with herbs."""
+    traits = _traits_for_user(healer)
+    if not traits:
+        return 0
+    pack = _user_pack(healer)
+    bonus = 0
+    for trait in traits.get("bonuses", []):
+        if not _pack_ok(trait, pack):
+            continue
+        bonus = max(bonus, int(trait.get("treat_heal_bonus", 0)))
+    return bonus
+
+
+def trait_clears_infection_on_heal(healer) -> bool:
+    traits = _traits_for_user(healer)
+    if not traits:
+        return False
+    pack = _user_pack(healer)
+    for trait in traits.get("bonuses", []):
+        if trait.get("clears_infection_on_heal") and _pack_ok(trait, pack):
+            return True
+    return False
+
+
+def trait_damage_reduction(defender) -> tuple[int, str]:
+    """Flat damage shaved off incoming hits (best bonus applies)."""
+    traits = _traits_for_user(defender)
+    if not traits:
+        return 0, ""
+    pack = _user_pack(defender)
+    best = 0
+    label = ""
+    for trait in traits.get("bonuses", []):
+        raw = trait.get("damage_reduction")
+        if raw is None:
+            continue
+        if not _pack_ok(trait, pack):
+            continue
+        val = int(raw)
+        if val > best:
+            best = val
+            label = trait["name"]
+    return best, label

@@ -289,7 +289,7 @@ HERBS = {
     "mullein": _h(
         "Mullein",
         "rare",
-        "Heals yellowcough and rot-lung lung damage; medicine cats use it for full recovery.",
+        "Heals yellowcough and rot-lung lung damage; Medics use it for full recovery.",
         ("greyspire", "mistmoor"),
         habitat=("roadside",),
         cures=("yellowcough", "rot_lung", "cancer"),

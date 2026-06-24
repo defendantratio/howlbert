@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from engine.combat_guide import COMBAT_MANEUVERS
+from engine.combat_size import can_pin_target, can_scruff_target
 from engine.rolls import roll_d20
 from engine.injury_effects import attack_roll_modifiers
 
@@ -163,6 +164,8 @@ def maneuver_pin_block(
     *,
     defender_hp: int | None = None,
     defender_max_hp: int | None = None,
+    attacker_stats=None,
+    defender_stats=None,
 ) -> str | None:
     """Return a block reason when pin requirements aren't met."""
     name = spec["name"]
@@ -181,7 +184,16 @@ def maneuver_pin_block(
         if not pinner_id or defender_f["id"] != pinner_id:
             return f"**{name}** must target the fighter pinning you."
     if d_flags.get("pinned") and spec.get("requires_target_unpinned"):
-        return f"**{name}** can't land on a wolf already **pinned**."
+        return f"**{name}** can't land on a foe already **pinned**."
+    if spec.get("applies_pin_on_hit") and attacker_stats and defender_stats:
+        if not can_pin_target(attacker_stats, defender_stats):
+            return (
+                f"**{name}** can't hold down a foe that much larger; "
+                "try **Badger Defence** or rake from below."
+            )
+    if spec.get("requires_smaller_target") and attacker_stats and defender_stats:
+        if not can_scruff_target(attacker_stats, defender_stats):
+            return f"**{name}** only works on a **smaller** opponent."
     min_pct = spec.get("min_defender_hp_pct")
     if min_pct is not None and defender_hp is not None and defender_max_hp:
         wounded = defender_hp <= defender_max_hp * min_pct
@@ -229,6 +241,8 @@ def apply_maneuver_pin_effects(
     *,
     hit: bool,
     defender_name: str,
+    attacker_stats=None,
+    defender_stats=None,
 ) -> str | None:
     if not hit or not maneuver_key or not attacker_f or not defender_f:
         return None
@@ -238,9 +252,14 @@ def apply_maneuver_pin_effects(
 
     notes: list[str] = []
     if spec.get("applies_pin_on_hit") and defender_f.get("id"):
-        encounter_id = int(defender_f.get("encounter_id") or 0)
-        set_fighter_pinned(defender_f["id"], attacker_f["id"], encounter_id)
-        notes.append(f"**{defender_name}** is **pinned** on their back.")
+        if attacker_stats and defender_stats and not can_pin_target(attacker_stats, defender_stats):
+            notes.append(
+                f"_You land on **{defender_name}**, but you're too light to force them **pinned**._"
+            )
+        else:
+            encounter_id = int(defender_f.get("encounter_id") or 0)
+            set_fighter_pinned(defender_f["id"], attacker_f["id"], encounter_id)
+            notes.append(f"**{defender_name}** is **pinned** on their back.")
     if spec.get("clears_self_pin_on_hit") and attacker_f.get("id"):
         if parse_combat_flags(attacker_f).get("pinned"):
             clear_fighter_pin(attacker_f["id"])

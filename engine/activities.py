@@ -245,6 +245,18 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         )
         return embed, False, enc_id
 
+    from engine.character_traits import roll_trait_hunt_abort
+
+    aborted, omen_trait = roll_trait_hunt_abort(user)
+    if aborted:
+        record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
+        flavor = (
+            f"A bad omen stops you cold; **{omen_trait}** sends you back to the den empty-pawed."
+        )
+        embed = howlbert_embed("Hunt Aborted", flavor, color=ERROR_COLOR)
+        embed.set_footer(text="Today's hunt is spent; try again after the next sunrise.")
+        return embed, False, None
+
     dex_bonus = max(0, attr_modifier(get_attr(user, "dex")))
     amount = roll_hunt_amount()
     if amount > 0:
@@ -685,7 +697,9 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
         return howlbert_embed("Already Active", "You're already on that quest.", color=ERROR_COLOR)
     embed = howlbert_embed("Quest Accepted", q["description"], color=SUCCESS_COLOR)
     embed.add_field(name="Objective", value=f"{q['objective_type']} x{q['objective_count']}", inline=True)
-    embed.add_field(name="Reward", value=format_bones(q["reward_bones"]), inline=True)
+    from engine.quest_rewards import format_quest_reward_line
+
+    embed.add_field(name="Reward", value=format_quest_reward_line(q["key"], q["reward_bones"]), inline=True)
     return embed
 
 
@@ -711,6 +725,24 @@ def complete_quest(interaction: discord.Interaction, quest_key: str | None = Non
     embed.add_field(name="Quest", value=result["title"], inline=False)
     embed.add_field(name="Bones", value=format_bones(result["reward_bones"], signed=True), inline=True)
     embed.add_field(name="Standing", value=f"+{result['standing_reward']}", inline=True)
+    from engine.quest_rewards import format_quest_reward_suffix, quest_xp_reward, quest_skill_reward
+
+    xp_gain = quest_xp_reward(result["quest_key"])
+    embed.add_field(name="XP", value=f"+{xp_gain}", inline=True)
+    skill_reward = quest_skill_reward(result["quest_key"])
+    if skill_reward:
+        from rpg_rules import SKILLS, SKILL_RANK_BONUS
+
+        skill_key, rank_gain = skill_reward
+        label = SKILLS.get(skill_key, ((), skill_key))[1]
+        embed.add_field(
+            name="Skill",
+            value=f"**{label}** rank +{rank_gain} (+{SKILL_RANK_BONUS}/rank on checks)",
+            inline=False,
+        )
+    extra = format_quest_reward_suffix(result["quest_key"])
+    if extra:
+        embed.set_footer(text=f"Rewards: {extra}")
     return embed
 
 

@@ -213,11 +213,30 @@ async def execute_npc_attack(
 
     att_name = current["npc_name"]
     npc_stats = stats_for_fighter(current)
-    atk_profile = npc_stats.get("npc_attack_profile")
-    npc_action = atk_profile["type"] if atk_profile else "bite"
+    defender_stats = db.get_user(defender_f["discord_id"])
+    if not defender_stats:
+        await _combat_reply(
+            interaction,
+            embed=howlbert_embed("Invalid Target", color=ERROR_COLOR),
+            ephemeral=True,
+        )
+        return True
+    defender_stats = overlay_fighter_hp(defender_stats, defender_f)
+    npc_stats = overlay_fighter_hp(npc_stats, current)
+
+    from engine.npc_combat import pick_npc_action
+
+    npc_action, maneuver_key = pick_npc_action(
+        current, defender_f, npc_stats, defender_stats
+    )
     try:
         body, new_hp, hit = _apply_attack_result(
-            defender_f, npc_action, npc_stats, att_name, attacker_f=current
+            defender_f,
+            npc_action,
+            npc_stats,
+            att_name,
+            attacker_f=current,
+            maneuver_key=maneuver_key,
         )
     except ValueError:
         await _combat_reply(
@@ -227,7 +246,10 @@ async def execute_npc_attack(
         )
         return True
 
-    await finish_attack_turn(interaction, bot, enc_id, body, hit, defender_f, new_hp)
+    await finish_attack_turn(
+        interaction, bot, enc_id, body, hit, defender_f, new_hp,
+        title="Maneuver" if maneuver_key else "Attack",
+    )
     return True
 
 
@@ -252,6 +274,9 @@ def _apply_attack_result(
         def_name = defender_stats["wolf_name"]
 
     defender_stats = overlay_fighter_hp(defender_stats, defender_f)
+    attacker_for_resolve = (
+        overlay_fighter_hp(attacker_stats, attacker_f) if attacker_f else attacker_stats
+    )
 
     if attacker_f and defender_f:
         reach_block = attack_target_block(
@@ -282,7 +307,7 @@ def _apply_attack_result(
 
     result = (
         resolve_maneuver(
-            attacker_stats,
+            attacker_for_resolve,
             defender_stats,
             maneuver_key,
             attacker_f=attacker_f,
@@ -290,7 +315,7 @@ def _apply_attack_result(
         )
         if maneuver_key
         else resolve_attack(
-            attacker_stats,
+            attacker_for_resolve,
             defender_stats,
             action,
             attacker_f=attacker_f,
@@ -325,6 +350,8 @@ def _apply_attack_result(
             maneuver_key,
             hit=result["hit"],
             defender_name=def_name,
+            attacker_stats=attacker_for_resolve,
+            defender_stats=defender_stats,
         )
         if pin_msg:
             status_note += f"\n{pin_msg}"

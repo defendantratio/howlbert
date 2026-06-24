@@ -420,7 +420,7 @@ HELP_TOPICS = {
 
         "Your **role** on `/profile` grants mechanical perks. Purchased extras show as **Bonus feature**.\n\n"
 
-        "**Alpha**; **Commanding Howl**: `/packlife action:howl` grants packmates advantage on their next "
+        "**Alpha**; **Commanding Howl**: `/howl` grants packmates advantage on their next "
 
         "skill check or attack.\n"
 
@@ -504,7 +504,7 @@ HELP_TOPICS = {
 
         "`/pack unity`; pack unity **−5 to 10**; low unity hurts hunts; **−5 dissolves** the den\n"
 
-        "`/packlife action:howl`; once per sunrise; raises unity (**Alpha** or **Beta/Advisor** rally when unity ≤ 0). "
+        "`/howl`; once per sunrise; raises unity (**Alpha** or **Beta/Advisor** rally when unity ≤ 0). "
 
         "**Alpha** howls grant **Commanding Howl**; packmates gain advantage on their next check or attack.\n"
 
@@ -619,8 +619,8 @@ HELP_TOPICS = {
         "**Injuries**; 1d10 on crit or dropping to 0 HP · **Crit/fumble**; nat 20/1 rolls 1d4 extra\n"
 
         "**Pin**; pin sets **prone**; pinning wolf shown as `pinning`. "
-
-        "While pinning, bite/claw only your pinned target. Lethal moves need pin or low HP.\n"
+        "Only **same size or larger** fighters can pin (cats cannot pin wolves). "
+        "Clan **cats** use maneuvers in NPC fights (rakes, Badger Defence); no pinning wolves.\n"
 
         "After `/combat begin`; **Pick a target** from the dropdown, then **Bite** / **Claw** / **Maneuver**\n"
 
@@ -694,15 +694,16 @@ HELP_TOPICS = {
 
         "`/medic action:observe`; apprentice/senior observe a case (quest progress; no surgery cooldown)\n"
 
-        "`/medic action:rounds`; den health scan (contagion, mind & spirit, bleeding; **~52%** catch poison hoarders, else suspicious scent)\n\n"
+        "`/medic action:checkup`; once-per-sunrise den scan (contagion, mind & spirit, bleeding, dying; **~52%** catch poison hoarders, else suspicious scent)\n\n"
 
         "**XP**; +1 from daily, quest complete, and den chat (once per sunrise). "
 
-        "`/advance action:spend` for +1 attribute or skill; "
+        "`/advance action:spend` for +1 attribute, new skill proficiency, or **+1 skill rank** "
+        "(rank adds +1 per rank on proficient checks, max 3); "
 
         "`purchase:role_feature` submits a bonus role-feature request (**admin approval**).\n"
 
-        "`/wolfset`; update birth sex, sexuality, or Maw belief.\n\n"
+        "`/wolfset`; update birth sex, sexuality, Maw belief, or **combat size** (small / medium / large).\n\n"
 
         "**Mating**; `/courtship action:court` then `action:mate` (spring). "
 

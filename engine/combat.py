@@ -1,7 +1,12 @@
 import random
 
-from engine.character import attr_modifier, parse_proficiencies
-from engine.character_traits import trait_combat_modifier
+from engine.character import attr_modifier, skill_proficiency_bonus
+from engine.character_traits import (
+    trait_clears_infection_on_heal,
+    trait_combat_modifier,
+    trait_damage_reduction,
+    trait_treat_heal_bonus,
+)
 from engine.combat_guide import COMBAT_MANEUVERS
 from engine.combat_status import attacker_roll_modifiers, maneuver_pin_block, roll_attack_die
 from engine.rolls import roll_d20
@@ -21,6 +26,18 @@ CRIT_FUMBLE_EFFECTS = {
     3: "Stumble; you fall prone",
     4: "Bite own tongue: 1 damage; cannot speak or use vocal skills for 1 round",
 }
+
+
+def _apply_defender_damage_reduction(defender, damage: int, extra: str) -> tuple[int, str]:
+    if damage <= 0:
+        return damage, extra
+    reduction, label = trait_damage_reduction(defender)
+    if reduction <= 0:
+        return damage, extra
+    new_damage = max(0, damage - reduction)
+    note = f"_{label}: −{reduction} damage._"
+    extra = (extra + " " + note).strip() if extra else note
+    return new_damage, extra
 
 
 def _apply_crit_to_damage(damage: int) -> tuple[int, int, str]:
@@ -61,8 +78,9 @@ def _attack_result_base(attack_name: str) -> dict:
 
 
 def _prof_bonus(user, skill: str) -> int:
-    profs = parse_proficiencies(user["skill_proficiencies"])
-    return PROFICIENCY_BONUS if skill in profs else 0
+    from engine.skill_runner import _proficient
+
+    return skill_proficiency_bonus(user, skill, proficient=_proficient(user, skill))
 
 
 def overlay_fighter_hp(base_stats, fighter) -> dict:
@@ -182,6 +200,9 @@ def _resolve_attack_profile(
             extra = (extra + " " + profile["on_hit"]).strip()
     elif fumble:
         fumble_effect, extra, fumble_self_damage = _roll_fumble()
+
+    if hit:
+        damage, extra = _apply_defender_damage_reduction(defender, damage, extra)
 
     result = _attack_result_base(attack_name)
     result.update(
@@ -309,6 +330,9 @@ def resolve_attack(
     elif fumble:
         fumble_effect, extra, fumble_self_damage = _roll_fumble()
 
+    if hit:
+        damage, extra = _apply_defender_damage_reduction(defender, damage, extra)
+
     result = _attack_result_base(attack_name)
     result.update(
         {
@@ -357,6 +381,8 @@ def resolve_maneuver(
             defender_f,
             defender_hp=defender_hp,
             defender_max_hp=defender_max,
+            attacker_stats=attacker,
+            defender_stats=defender,
         )
     if pin_block:
         return {
@@ -397,7 +423,7 @@ def resolve_maneuver(
         from engine.collab_combat import collab_assist_bonus
 
         a_mod += collab_assist_bonus(attacker_f["encounter_id"], attacker_f["id"])
-    d_mod = attr_modifier(defender["attr_dex"]); spec.get("defense_bonus", 0)
+    d_mod = attr_modifier(defender["attr_dex"]) + spec.get("defense_bonus", 0)
 
     a_total = a_die + a_mod
     d_total = d_die + d_mod
@@ -442,6 +468,9 @@ def resolve_maneuver(
         fumble_effect, extra, fumble_self_damage = _roll_fumble()
     elif spec.get("defense_bonus"):
         extra = "Defensive maneuver; you hold your ground."
+
+    if hit and damage > 0:
+        damage, extra = _apply_defender_damage_reduction(defender, damage, extra)
 
     result = _attack_result_base(spec["name"])
     result.update(

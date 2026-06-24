@@ -141,6 +141,9 @@ SKILLS = {
 }
 
 PROFICIENCY_BONUS = 2
+MAX_SKILL_RANK = 3
+SKILL_RANK_BONUS = 1
+XP_PER_SKILL_RANK = 5
 
 ROLE_PROFICIENCIES = {
     "alpha": ("intimidation", "persuasion"),

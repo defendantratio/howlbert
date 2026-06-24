@@ -564,6 +564,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN naming_ceremony_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "skill_ranks" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN skill_ranks TEXT NOT NULL DEFAULT '{}'"
+        )
+    if "size_class" not in user_cols_needs:
+        conn.execute("ALTER TABLE users ADD COLUMN size_class TEXT NOT NULL DEFAULT ''")
     conn.execute("UPDATE users SET disease = 'redscratch' WHERE disease = 'den_fever'")
 
     conn.execute(
@@ -2539,6 +2545,8 @@ def register_user(
     if great_pack and great_pack in GREAT_PACKS:
         grant_great_pack_starting_herbs(wolf_id, great_pack)
     _apply_canonical_character_lore(discord_id, wolf_id, wolf_name.strip())
+    _apply_canonical_character_traits(discord_id, wolf_id, wolf_name.strip())
+    _apply_canonical_character_defaults(discord_id, wolf_id, wolf_name.strip())
     return wolf_id
 
 
@@ -2549,6 +2557,130 @@ def _apply_canonical_character_lore(discord_id: int, wolf_id: int, wolf_name: st
         if key.lower() == wolf_name.lower():
             update_user(discord_id, wolf_id=wolf_id, character_lore=lore_json)
             break
+
+
+def _apply_canonical_character_traits(discord_id: int, wolf_id: int, wolf_name: str) -> None:
+    from engine.character_traits import canonical_traits_for_name, encode_character_traits
+
+    traits = canonical_traits_for_name(wolf_name)
+    if traits:
+        update_user(discord_id, wolf_id=wolf_id, character_traits=encode_character_traits(traits))
+
+
+def _apply_canonical_character_defaults(discord_id: int, wolf_id: int, wolf_name: str) -> None:
+    import json
+
+    from engine.aging import proficiencies_for_role
+    from engine.character_traits import canonical_register_defaults_for_name
+
+    defaults = canonical_register_defaults_for_name(wolf_name)
+    if not defaults:
+        return
+    fields: dict = {}
+    if "wolf_role" in defaults:
+        role = defaults["wolf_role"]
+        fields["wolf_role"] = role
+        fields["skill_proficiencies"] = json.dumps(proficiencies_for_role(role))
+    if "maw_belief" in defaults:
+        fields["maw_belief"] = defaults["maw_belief"]
+    if "size_class" in defaults:
+        fields["size_class"] = defaults["size_class"]
+    if fields:
+        update_user(discord_id, wolf_id=wolf_id, **fields)
+
+
+def backfill_canonical_character_sheet(
+    user,
+    *,
+    force_lore: bool = False,
+    force_traits: bool = False,
+    force_defaults: bool = False,
+    dry_run: bool = False,
+) -> list[str]:
+    """
+    Apply canonical lore/traits/register defaults for a named character wolf.
+    By default only fills empty lore/traits and unset default fields.
+    Returns human-readable change lines (empty when nothing to do).
+    """
+    from engine.character_lore_data import CHARACTER_LORE_BY_NAME
+    from engine.character_traits import (
+        canonical_register_defaults_for_name,
+        canonical_traits_for_name,
+        encode_character_traits,
+    )
+    from engine.aging import proficiencies_for_role
+
+    import json
+
+    def _field(key: str, default=None):
+        if hasattr(user, "keys") and key in user.keys():
+            return user[key]
+        if isinstance(user, dict):
+            return user.get(key, default)
+        return default
+
+    wolf_name = (_field("wolf_name") or "").strip()
+    wolf_id = int(_field("id") or 0)
+    discord_id = int(_field("discord_id") or 0)
+    if not wolf_name or not wolf_id or not discord_id:
+        return []
+
+    canonical_key = None
+    for key in CHARACTER_LORE_BY_NAME:
+        if key.lower() == wolf_name.lower():
+            canonical_key = key
+            break
+    if not canonical_key:
+        return []
+
+    changes: list[str] = []
+    updates: dict = {}
+
+    lore_raw = _field("character_lore")
+    if force_lore or not lore_raw:
+        updates["character_lore"] = CHARACTER_LORE_BY_NAME[canonical_key]
+        changes.append("lore")
+
+    traits = canonical_traits_for_name(wolf_name)
+    traits_raw = _field("character_traits")
+    if traits and (force_traits or not traits_raw):
+        updates["character_traits"] = encode_character_traits(traits)
+        changes.append("traits")
+
+    defaults = canonical_register_defaults_for_name(wolf_name) or {}
+    if "wolf_role" in defaults:
+        role = defaults["wolf_role"]
+        current_role = _field("wolf_role") or "hunter"
+        if force_defaults or current_role == "hunter":
+            if current_role != role or force_defaults:
+                updates["wolf_role"] = role
+                updates["skill_proficiencies"] = json.dumps(proficiencies_for_role(role))
+                if current_role != role:
+                    changes.append(f"role -> {role}")
+
+    if "maw_belief" in defaults:
+        belief = defaults["maw_belief"]
+        current_belief = _field("maw_belief")
+        if force_defaults or not current_belief:
+            if current_belief != belief or force_defaults:
+                updates["maw_belief"] = belief
+                if current_belief != belief:
+                    changes.append(f"maw_belief -> {belief}")
+
+    if "size_class" in defaults:
+        size = defaults["size_class"]
+        current_size = (_field("size_class") or "").strip()
+        if force_defaults or not current_size:
+            if current_size != size or force_defaults:
+                updates["size_class"] = size
+                if current_size != size:
+                    changes.append(f"size_class -> {size}")
+
+    if updates and not dry_run:
+        update_user(discord_id, wolf_id=wolf_id, **updates)
+    elif not updates:
+        return []
+    return changes
 
 
 def update_user(discord_id: int, wolf_id: int | None = None, **fields) -> None:
@@ -4420,7 +4552,7 @@ def get_user_questlog(discord_id: int, limit: int = 15) -> list[sqlite3.Row]:
             return []
         return conn.execute(
             """
-            SELECT uq.completed_at, q.title, q.reward_bones, q.difficulty
+            SELECT uq.completed_at, q.key AS quest_key, q.title, q.reward_bones, q.difficulty
             FROM user_quests uq
             JOIN quests q ON q.id = uq.quest_id
             WHERE uq.wolf_id = ? AND uq.status = 'completed'
@@ -4664,7 +4796,15 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
     user = get_user(discord_id)
     if user and user["pack_id"]:
         adjust_pack_unity(user["pack_id"], 1)
-    add_xp(discord_id, 1)
+
+    from config import QUEST_SKILL_REWARDS, QUEST_XP_REWARDS
+
+    xp_gain = QUEST_XP_REWARDS.get(uq["quest_key"], 1)
+    add_xp(discord_id, xp_gain)
+    skill_reward = QUEST_SKILL_REWARDS.get(uq["quest_key"])
+    if skill_reward:
+        skill_key, rank_gain = skill_reward
+        add_skill_rank(int(uq["wolf_id"]), skill_key, rank_gain, grant_proficiency=True)
     return uq
 
 
@@ -6250,6 +6390,58 @@ def try_grant_chat_xp(discord_id: int, guild_id: int, day: int) -> bool:
     return True
 
 
+def add_skill_rank(
+    wolf_id: int,
+    skill_key: str,
+    amount: int = 1,
+    *,
+    grant_proficiency: bool = False,
+) -> int:
+    """Raise a wolf's skill rank (max MAX_SKILL_RANK). Returns new rank."""
+    import json
+
+    from engine.character import parse_proficiencies, parse_skill_ranks
+    from rpg_rules import MAX_SKILL_RANK, SKILLS
+
+    skill_key = skill_key.strip().lower()
+    if skill_key not in SKILLS:
+        return 0
+    amount = max(0, int(amount))
+    if amount == 0:
+        return get_skill_rank_for_wolf(wolf_id, skill_key)
+
+    with get_db() as conn:
+        row = conn.execute("SELECT skill_ranks, skill_proficiencies FROM users WHERE id = ?", (wolf_id,)).fetchone()
+        if not row:
+            return 0
+        ranks = parse_skill_ranks(row["skill_ranks"])
+        current = ranks.get(skill_key, 0)
+        new_rank = min(MAX_SKILL_RANK, current + amount)
+        ranks[skill_key] = new_rank
+        updates: dict = {"skill_ranks": json.dumps(ranks)}
+        if grant_proficiency:
+            profs = list(parse_proficiencies(row["skill_proficiencies"]))
+            if skill_key not in profs:
+                profs.append(skill_key)
+                updates["skill_proficiencies"] = json.dumps(profs)
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
+        conn.execute(
+            f"UPDATE users SET {set_clause} WHERE id = ?",
+            (*updates.values(), wolf_id),
+        )
+    return new_rank
+
+
+def get_skill_rank_for_wolf(wolf_id: int, skill_key: str) -> int:
+    from engine.character import parse_skill_ranks
+
+    with get_db() as conn:
+        row = conn.execute("SELECT skill_ranks FROM users WHERE id = ?", (wolf_id,)).fetchone()
+    if not row:
+        return 0
+    return parse_skill_ranks(row["skill_ranks"]).get(skill_key.strip().lower(), 0)
+
+
 def spend_xp(discord_id: int, cost: int) -> bool:
     get_account(discord_id)
     with get_db() as conn:
@@ -6269,6 +6461,23 @@ def set_birth_sex(discord_id: int, birth_sex: str) -> None:
     if birth_sex not in ("female", "male", "intersex", "nonbinary"):
         birth_sex = "female"
     update_user(discord_id, birth_sex=birth_sex)
+
+
+def set_size_class(discord_id: int, size_class: str, *, wolf_id: int | None = None) -> tuple[bool, str | None]:
+    from engine.combat_size import VALID_SIZE_CLASSES
+
+    key = (size_class or "").strip().lower()
+    if key in ("auto", "default", "reset", ""):
+        value = ""
+    elif key in VALID_SIZE_CLASSES:
+        value = key
+    else:
+        return False, "Use **small**, **medium**, **large**, or **auto**."
+    wid = wolf_id or _resolve_wolf_id(discord_id)
+    if not wid:
+        return False, "No wolf profile found."
+    update_user(discord_id, wolf_id=wid, size_class=value)
+    return True, None
 
 
 def set_maw_belief(discord_id: int, belief: str, *, wolf_id: int | None = None) -> tuple[bool, str | None]:

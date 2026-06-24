@@ -93,9 +93,12 @@ class Quests(commands.Cog):
             return
 
         embed = howlbert_embed("Den Board", "Accept a quest with the buttons below.")
+        from engine.quest_rewards import format_quest_reward_line
+
         for q in rows[:10]:
+            reward_line = format_quest_reward_line(q["key"], q["reward_bones"])
             embed.add_field(
-                name=f"{q['title']} ({q['difficulty']}); {format_bones(q['reward_bones'])}",
+                name=f"{q['title']} ({q['difficulty']}); {reward_line}",
                 value=f"`{q['key']}`; {q['description']}",
                 inline=False,
             )
@@ -113,15 +116,19 @@ class Quests(commands.Cog):
             return
 
         rows = db.ensure_daily_quests(interaction.user.id, day)
+        from engine.quest_rewards import format_quest_reward_line
+
         embed = howlbert_embed(f"Daily Quests; Day {day}")
         for q in rows:
             status = "done" if q["status"] == "completed" else f"{q['progress']}/{q['objective_count']}"
+            key = q["quest_key"] if "quest_key" in q.keys() else q["key"]
+            reward_line = format_quest_reward_line(key, q["reward_bones"])
             embed.add_field(
-                name=f"[{q['difficulty'].title()}] {q['title']}; {format_bones(q['reward_bones'])}",
+                name=f"[{q['difficulty'].title()}] {q['title']}; {reward_line}",
                 value=f"{q['description']}\nProgress: **{status}**",
                 inline=False,
             )
-        embed.set_footer(text="Daily quests auto-assign each rollover. Use /complete when finished.")
+        embed.set_footer(text="Daily quests reset each sunrise · +1 XP default · hard dailies +2 XP")
         await interaction.response.send_message(embed=embed)
 
     async def _accept(self, interaction: discord.Interaction, quest: str):
@@ -139,10 +146,19 @@ class Quests(commands.Cog):
             return
 
         embed = howlbert_embed("Active Quests")
+        from engine.quest_rewards import format_quest_reward_suffix
+
         for q in rows:
+            extra = format_quest_reward_suffix(q["quest_key"])
+            reward_note = f"\nRewards: {format_bones(q['reward_bones'])}"
+            if extra:
+                reward_note += f" · {extra}"
             embed.add_field(
                 name=q["title"],
-                value=f"{q['progress']}/{q['objective_count']} ({q['objective_type']})\n`{q['quest_key']}`",
+                value=(
+                    f"{q['progress']}/{q['objective_count']} ({q['objective_type']})\n"
+                    f"`{q['quest_key']}`{reward_note}"
+                ),
                 inline=False,
             )
         view = make_quest_complete_view(rows)
@@ -170,8 +186,10 @@ class Quests(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
+        from engine.quest_rewards import format_quest_reward_line
+
         lines = [
-            f"**{r['title']}**; {format_bones(r['reward_bones'])} ({r['difficulty']})"
+            f"**{r['title']}**; {format_quest_reward_line(r['quest_key'], r['reward_bones'])} ({r['difficulty']})"
             for r in rows
         ]
         embed = howlbert_embed("Quest Log", "\n".join(lines))

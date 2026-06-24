@@ -1,5 +1,5 @@
-from rpg_rules import DC_TIERS, PROFICIENCY_BONUS
-from engine.character import attr_modifier, best_modifier
+from rpg_rules import DC_TIERS, PROFICIENCY_BONUS, SKILL_RANK_BONUS
+from engine.character import attr_modifier, best_modifier, get_skill_rank, skill_proficiency_bonus
 from engine.disease_effects import disease_check_adjustments
 from engine.genetics import genetic_check_adjustments
 from engine.injury_effects import injury_check_adjustments
@@ -89,7 +89,14 @@ def resolve_check(
     else:
         die = roll_d20()
     mod, attr_label = best_modifier(user, attr_keys)
-    prof = PROFICIENCY_BONUS if proficient else 0
+    if skill_key:
+        prof = skill_proficiency_bonus(user, skill_key, proficient=proficient)
+        rank_bonus = (
+            get_skill_rank(user, skill_key) * SKILL_RANK_BONUS if proficient else 0
+        )
+    else:
+        prof = PROFICIENCY_BONUS if proficient else 0
+        rank_bonus = 0
     total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod
     safe_roll_used = False
     first_die = die
@@ -148,6 +155,7 @@ def resolve_check(
         "first_die": first_die,
         "modifier": mod,
         "proficiency": prof,
+        "rank_bonus": rank_bonus,
         "total": total,
         "dc": dc,
         "success": success,
@@ -171,7 +179,12 @@ def resolve_check(
 
 
 def format_roll_result(r: dict) -> str:
-    prof = f" +{r['proficiency']} prof" if r["proficiency"] else ""
+    prof = ""
+    if r["proficiency"]:
+        if r.get("rank_bonus"):
+            prof = f" +{r['proficiency']} prof (+{r['rank_bonus']} rank)"
+        else:
+            prof = f" +{r['proficiency']} prof"
     skill = f" ({r['skill']})" if r.get("skill") else ""
     lines = [
         f"**1d20** → **{r['die']}** + {r['modifier']} {r['attr_label']}{prof} = **{r['total']}** vs DC **{r['dc']}**{skill}",
