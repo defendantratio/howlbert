@@ -1,13 +1,11 @@
-"""Skill rank XP and check bonuses; run: python -m tests.test_skill_ranks"""
+"""Legacy skill rank tests now cover earned trait XP; run: python -m tests.test_skill_ranks"""
 
 from __future__ import annotations
 
-import json
-
 import database as db
-from engine.character import get_skill_rank, skill_proficiency_bonus
+from engine.character_traits import adjust_skill_trait_experience, earned_trait_bonus_total, parse_character_traits
 from engine.dice import resolve_check
-from rpg_rules import MAX_SKILL_RANK, PROFICIENCY_BONUS, SKILL_RANK_BONUS
+from rpg_rules import MAX_EARNED_TRAIT_BONUS
 
 _pass = 0
 _fail = 0
@@ -30,9 +28,19 @@ class Row(dict):
 
 def main() -> None:
     db.init_db()
+    db.purge_test_accounts()
+    db.register_user(999001, "RankWolf", affiliation="lone", wolf_role="hunter")
+    wolf = db.get_user(999001)
+    assert wolf
+
+    adjust_skill_trait_experience(wolf["id"], "tracking", 2)
+    wolf = db.get_user_by_id(wolf["id"])
+    traits = parse_character_traits(wolf["character_traits"])
+    earned = earned_trait_bonus_total(traits, "tracking")
+    check("quest-style rank becomes trait bonus", earned == 2, f"got {earned}")
 
     user = Row(
-        id=999001,
+        id=wolf["id"],
         discord_id=999001,
         wolf_role="hunter",
         attr_str=6,
@@ -41,15 +49,10 @@ def main() -> None:
         attr_int=6,
         attr_cha=6,
         attr_wis=6,
-        skill_proficiencies=json.dumps(["tracking"]),
-        skill_ranks=json.dumps({"tracking": 2}),
+        character_traits=wolf["character_traits"],
         exhaustion=0,
         omen_buff="",
     )
-
-    bonus = skill_proficiency_bonus(user, "tracking", proficient=True)
-    expected = PROFICIENCY_BONUS + 2 * SKILL_RANK_BONUS
-    check("rank bonus stacks on proficiency", bonus == expected, f"got {bonus}")
 
     roll = resolve_check(
         user,
@@ -59,12 +62,12 @@ def main() -> None:
         proficient=True,
         skill_key="tracking",
     )
-    check("resolve_check uses rank bonus", roll["proficiency"] == expected)
-    check("roll shows rank_bonus field", roll.get("rank_bonus") == 2 * SKILL_RANK_BONUS)
+    check("traits on dice not proficiency", roll["trait_modifier"] == 2 and roll["proficiency"] == 0)
 
-    check("max skill rank constant", MAX_SKILL_RANK >= 1)
+    check("max earned constant", MAX_EARNED_TRAIT_BONUS >= 1)
 
     print(f"\n{_pass} passed, {_fail} failed")
+    db.purge_test_accounts()
     if _fail:
         raise SystemExit(1)
 

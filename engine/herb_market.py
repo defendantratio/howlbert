@@ -42,7 +42,7 @@ def sell_forage_herb_stack(
         return (
             False,
             "The trading post won't buy **restricted poison** herbs. "
-            "Use `/vitals action:turnin` for a pack bounty instead.",
+            "Use `/herbs action:turnin` for a pack bounty instead.",
             0,
         )
     spoiling = stack["form"] == "fresh" and day - int(stack["acquired_day"]) >= 1

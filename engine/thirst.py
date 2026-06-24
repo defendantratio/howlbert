@@ -48,8 +48,8 @@ def thirst_activity_block(user) -> str | None:
     thirst = user_thirst(user)
     if thirst < THIRST_CRITICAL_THRESHOLD:
         return (
-            f"You're parched (**{thirst}/{THIRST_MAX}**); `/drink` at the creek or eat moist prey "
-            "before ranging out."
+            f"You're parched (**{thirst}/{THIRST_MAX}**); `/drink` at the creek, eat moist prey, "
+            "or ask your **Alpha** for `/packlife action:drinkall` before ranging out."
         )
     return None
 
@@ -120,3 +120,52 @@ def drink_at_creek(user, *, day: int, season: str) -> tuple[bool, str]:
         msg += f", **+{hp_gain} HP**"
     msg += f". _(Next drink in {DRINK_COOLDOWN_MINUTES} min.)_"
     return True, msg
+
+
+def run_drinkall(
+    pack_id: int,
+    day: int,
+    *,
+    caller=None,
+    discord_admin: bool = False,
+) -> tuple[bool, str, int]:
+    """Alpha leads the den to the creek; thirst restore for all packmates once per sunrise."""
+    import database as db
+
+    from engine.pack_leadership import PACK_BULK_ALPHA_ONLY_MSG, can_run_pack_bulk_action
+    from engine.vitals import living_wolf_block
+
+    pack = db.get_pack(pack_id)
+    if not pack:
+        return False, "Pack not found.", 0
+    if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
+        return False, PACK_BULK_ALPHA_ONLY_MSG, 0
+    if int(pack["last_drinkall_day"]) >= day:
+        return False, "The den already drank together at the creek this sunrise.", 0
+
+    members = db.get_pack_den_wolves(pack_id)
+    if not members:
+        return False, "No wolves in the den.", 0
+
+    drank = 0
+    lines: list[str] = []
+    for wolf in members:
+        block = living_wolf_block(wolf)
+        if block:
+            lines.append(f"**{wolf['wolf_name']}**; {block}")
+            continue
+        thirst = db.adjust_thirst(wolf["id"], DRINK_THIRST_RESTORE)
+        lines.append(f"**{wolf['wolf_name']}** → thirst **{thirst}** (+{DRINK_THIRST_RESTORE})")
+        drank += 1
+
+    if drank == 0:
+        return False, "No packmate could drink at the creek.", 0
+
+    db.set_pack_drinkall_day(pack_id, day)
+    summary = "\n".join(lines[:12])
+    if len(lines) > 12:
+        summary += f"\n_…and {len(lines) - 12} more._"
+    msg = (
+        f"**Communal drink** at the creek; **{drank}** wolf(s) lapped up.\n{summary}"
+    )
+    return True, msg, drank

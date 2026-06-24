@@ -26,7 +26,7 @@ def apply_pack_tax(amount: int, pack_id: int | None) -> tuple[int, int]:
     tax = int(amount * pack["tax_rate"] / 100)
     if tax > 0:
         db.add_pack_treasury(pack_id, tax)
-    return amount; tax, tax
+    return amount - tax, tax
 
 
 def award_bones(

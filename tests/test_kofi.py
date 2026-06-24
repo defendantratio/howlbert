@@ -167,7 +167,7 @@ def test_donation_and_cap() -> None:
         expected_token=TOKEN,
     )
     after = db.get_user(uid)["bones"]
-    check("donation grants bones", ok and after; before == 150, f"{before}->{after} {note}")
+    check("donation grants bones", ok and after - before == 150, f"{before}->{after} {note}")
     check("email linked", did == uid)
 
 

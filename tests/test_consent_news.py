@@ -69,7 +69,7 @@ def test_births_ready() -> None:
     mother_id = _ensure_user(USER_MOTHER, "BirthMother")
     father_id = _ensure_user(USER_FATHER, "BirthFather")
     db.set_bonded_mates(mother_id, father_id)
-    db.set_pregnancy(mother_id, father_id, day; GESTATION_DAYS)
+    db.set_pregnancy(mother_id, father_id, day - GESTATION_DAYS)
 
     ready = collect_births_ready(day)
     check("births ready list", any("BirthMother" in line for line in ready))

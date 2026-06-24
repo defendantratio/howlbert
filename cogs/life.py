@@ -25,8 +25,7 @@ from engine.family import (
     courtship_check,
     generate_pup_stats,
     spend_xp_attribute,
-    spend_xp_skill,
-    spend_xp_skill_rank,
+    spend_xp_trait_bonus,
 )
 from engine.aging import stage_for_age, stage_label
 from engine.youth_lineage import (
@@ -40,10 +39,19 @@ from engine.mating import execute_mating, mating_embed_title
 from config import JUVENILE_MAX_MOONS
 from utils.adoption_views import AdoptionConsentView
 from utils.mate_views import MateConsentView
-from rpg_rules import ROLE_FEATURES, ROLE_LABELS, SKILLS, MAX_SKILL_RANK, PROFICIENCY_BONUS, SKILL_RANK_BONUS, XP_PER_SKILL_RANK
+from rpg_rules import ROLE_FEATURES, ROLE_LABELS, SKILLS, MAX_SKILL_RANK, XP_PER_TRAIT
 from engine.role_restrictions import young_wolf_block
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.notifications import notify_consent_request
+from utils.herb_autocomplete import herb_inventory_autocomplete
+from cogs.care_handlers import (
+    lay_to_rest,
+    naming_ceremony,
+    quarantine_command,
+    sacred_visit,
+    spirit_ritual,
+    treat,
+)
 
 
 def _resolve_own_wolf(discord_id: int, name: str):
@@ -103,6 +111,24 @@ def _resolve_adoptee(
     return None, "Specify who to adopt with `youth` or `own_youth`."
 
 
+async def _quarantine_own_wolf_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf["id"] == active["id"]:
+            continue
+        name = wolf["wolf_name"]
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=name[:100], value=name))
+    return choices[:25]
+
+
 class Life(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -116,13 +142,20 @@ class Life(commands.Cog):
 
     @app_commands.command(
         name="medic",
-        description="Death saves, stabilize, or surgery on a packmate.",
+        description="Clinical care, herb treatment, spirit rites, and sick-den quarantine.",
     )
     @app_commands.describe(
-        action="deathsaves, stabilize, surgery, observe, or checkup",
-        patient="Dying wolf (stabilize) or injured patient (surgery/observe/ritual)",
+        action="deathsaves, stabilize, surgery, treat, checkup, sacred, ritual, naming, lay_to_rest, swim, quarantine, or observe",
+        patient="Packmate (stabilize, surgery, treat, ritual, naming, observe)",
         helper="Assisting Medic for surgery (Medicine DC 10 → advantage)",
         procedure="Surgery type (surgery only)",
+        herb="Herb key or forage stack (treat)",
+        ritual_herb="douglas_sagewort, lavender, or mountain_ash (ritual)",
+        deceased="Dead wolf to prepare (lay_to_rest)",
+        lay_herb="rosemary, lavender, or mint (lay_to_rest)",
+        wolf="Packmate to isolate or release (quarantine)",
+        own_wolf="Your other wolf in the same pack (quarantine)",
+        release="Release from quarantine instead of isolating",
         use_yarrow="Apply yarrow for +2 (stabilize)",
         use_cobwebs="Cobwebs auto-stabilize (stabilize)",
         use_poppy="Poppy seeds sedation +2 (amputation surgery)",
@@ -136,8 +169,15 @@ class Life(commands.Cog):
             app_commands.Choice(name="Death save (dying wolf)", value="deathsaves"),
             app_commands.Choice(name="Stabilize packmate", value="stabilize"),
             app_commands.Choice(name="Surgery on patient", value="surgery"),
-            app_commands.Choice(name="Observe case (apprentice)", value="observe"),
+            app_commands.Choice(name="Treat with herb", value="treat"),
             app_commands.Choice(name="Den checkup", value="checkup"),
+            app_commands.Choice(name="Sacred visit (Medic)", value="sacred"),
+            app_commands.Choice(name="Spirit ritual", value="ritual"),
+            app_commands.Choice(name="Pup naming rite", value="naming"),
+            app_commands.Choice(name="Lay wolf to rest", value="lay_to_rest"),
+            app_commands.Choice(name="Swim therapy (river)", value="swim"),
+            app_commands.Choice(name="Quarantine sick wolf", value="quarantine"),
+            app_commands.Choice(name="Observe case (apprentice)", value="observe"),
         ],
         procedure=[
             app_commands.Choice(name="Stitch wound (deep gash / infection)", value="stitch"),
@@ -146,6 +186,7 @@ class Life(commands.Cog):
             app_commands.Choice(name="Amputate ruined limb", value="amputate"),
         ],
     )
+    @app_commands.autocomplete(herb=herb_inventory_autocomplete, own_wolf=_quarantine_own_wolf_autocomplete)
     async def medic(
         self,
         interaction: discord.Interaction,
@@ -153,6 +194,13 @@ class Life(commands.Cog):
         patient: discord.Member | None = None,
         helper: discord.Member | None = None,
         procedure: str = "stitch",
+        herb: str | None = None,
+        ritual_herb: str | None = None,
+        deceased: discord.Member | None = None,
+        lay_herb: str | None = None,
+        wolf: discord.Member | None = None,
+        own_wolf: str | None = None,
+        release: bool = False,
         use_yarrow: bool = False,
         use_cobwebs: bool = False,
         use_poppy: bool = False,
@@ -193,6 +241,14 @@ class Life(commands.Cog):
                 use_plantain,
                 use_rush_stalks,
             )
+        elif action == "treat":
+            if not herb:
+                await interaction.response.send_message(
+                    "Provide an **herb** key or forage **stack:ID** from `/herbs action:bag`.",
+                    ephemeral=True,
+                )
+                return
+            await treat(interaction, herb, patient)
         elif action == "observe":
             if not patient:
                 await interaction.response.send_message(
@@ -203,6 +259,18 @@ class Life(commands.Cog):
             await self._observe(interaction, patient)
         elif action in ("rounds", "checkup"):
             await self._medic_rounds(interaction)
+        elif action == "sacred":
+            await sacred_visit(interaction)
+        elif action == "ritual":
+            await spirit_ritual(interaction, patient, ritual_herb)
+        elif action == "naming":
+            await naming_ceremony(interaction, patient)
+        elif action == "lay_to_rest":
+            await lay_to_rest(interaction, deceased, lay_herb)
+        elif action == "swim":
+            await self._swim_therapy(interaction)
+        elif action == "quarantine":
+            await quarantine_command(interaction, wolf, own_wolf, release)
 
     async def _surgery(
         self,
@@ -310,6 +378,18 @@ class Life(commands.Cog):
         if rem:
             body += f"\n\n{rem}"
         await interaction.response.send_message(embed=howlbert_embed("Den Checkup", body))
+
+    async def _swim_therapy(self, interaction: discord.Interaction):
+        user = await self._require_user(interaction)
+        if not user or not interaction.guild:
+            await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+            return
+        world = db.get_world(interaction.guild.id)
+        from engine.medical_care import run_swim_therapy
+
+        ok, body = run_swim_therapy(user, day=world["day_number"], season=world["season"])
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(embed=howlbert_embed("Swim Therapy", body, color=color))
 
     async def _deathsaves(self, interaction: discord.Interaction):
         user = await self._require_user(interaction)
@@ -435,7 +515,7 @@ class Life(commands.Cog):
         action="view or spend",
         purchase="What to buy (spend only)",
         attribute="Attribute to raise (spend)",
-        skill="Skill proficiency to gain (spend)",
+        skill="Skill to raise (spend)",
         role_feature="Role whose feature to gain (spend)",
     )
     @app_commands.choices(
@@ -445,8 +525,7 @@ class Life(commands.Cog):
         ],
         purchase=[
             app_commands.Choice(name=f"+1 Attribute ({XP_PER_ATTRIBUTE} XP)", value="attribute"),
-            app_commands.Choice(name=f"+1 Skill proficiency ({XP_PER_SKILL} XP)", value="skill"),
-            app_commands.Choice(name=f"+1 Skill rank ({XP_PER_SKILL_RANK} XP)", value="skill_rank"),
+            app_commands.Choice(name=f"+1 Skill trait ({XP_PER_TRAIT} XP)", value="trait"),
             app_commands.Choice(name=f"Role feature ({XP_PER_ROLE_FEATURE} XP)", value="role_feature"),
         ],
         attribute=[
@@ -489,12 +568,10 @@ class Life(commands.Cog):
         embed.description = (
             f"You have **{xp_val} XP**.\n\n"
             f"**{XP_PER_ATTRIBUTE} XP**: +1 attribute (max 10)\n"
-            f"**{XP_PER_SKILL} XP**: new skill proficiency (+{PROFICIENCY_BONUS} on that skill's checks)\n"
-            f"**{XP_PER_SKILL_RANK} XP**: +1 skill rank (requires proficiency; "
-            f"+{SKILL_RANK_BONUS} per rank, max **{MAX_SKILL_RANK}**)\n"
+            f"**{XP_PER_TRAIT} XP**: +1 **earned trait** on a skill (max +{MAX_SKILL_RANK} from play; stacks with lore)\n"
             f"**{XP_PER_ROLE_FEATURE} XP**; gain another role's feature (**requires admin approval**)"
         )
-        embed.set_footer(text="Earn XP from quests, daily ration, den chat, and RP milestones. Quests may grant skill-specific ranks.")
+        embed.set_footer(text="Earn XP from quests, daily ration, den chat, and RP milestones. Quests may grant skill trait experience.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _spendxp(
@@ -528,46 +605,27 @@ class Life(commands.Cog):
             await interaction.response.send_message(embed=embed)
             return
 
-        if purchase == "skill":
+        if purchase == "trait":
             if not skill:
                 await interaction.response.send_message("Pick a skill.", ephemeral=True)
                 return
-            err = spend_xp_skill(user, skill)
+            err = spend_xp_trait_bonus(user, skill)
             if err:
                 embed = howlbert_embed("Cannot Spend", err, color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
-            if not db.spend_xp(interaction.user.id, XP_PER_SKILL):
-                embed = howlbert_embed("Not Enough XP", color=ERROR_COLOR)
+            if not db.spend_xp(interaction.user.id, XP_PER_TRAIT):
+                embed = howlbert_embed("Not Enough XP", f"Need {XP_PER_TRAIT} XP.", color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
-            profs = json.loads(user["skill_proficiencies"] or "[]")
-            profs.append(skill)
-            db.update_user(interaction.user.id, skill_proficiencies=json.dumps(profs))
-            embed = howlbert_embed("Skill Learned", f"Proficient in **{SKILLS[skill][1]}** (+2 on checks).", color=SUCCESS_COLOR)
-            await interaction.response.send_message(embed=embed)
-            return
+            from engine.character_traits import adjust_skill_trait_experience
 
-        if purchase == "skill_rank":
-            if not skill:
-                await interaction.response.send_message("Pick a skill.", ephemeral=True)
-                return
-            err = spend_xp_skill_rank(user, skill)
-            if err:
-                embed = howlbert_embed("Cannot Spend", err, color=ERROR_COLOR)
+            ok, msg = adjust_skill_trait_experience(user["id"], skill, 1)
+            if not ok:
+                embed = howlbert_embed("Cannot Spend", msg, color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
-            if not db.spend_xp(interaction.user.id, XP_PER_SKILL_RANK):
-                embed = howlbert_embed("Not Enough XP", f"Need {XP_PER_SKILL_RANK} XP.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-            new_rank = db.add_skill_rank(user["id"], skill, 1)
-            embed = howlbert_embed(
-                "Skill Rank Raised",
-                f"**{SKILLS[skill][1]}** rank **{new_rank}** "
-                f"(+{PROFICIENCY_BONUS + new_rank * SKILL_RANK_BONUS} total on checks when proficient).",
-                color=SUCCESS_COLOR,
-            )
+            embed = howlbert_embed("Trait Raised", msg, color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
             return
 

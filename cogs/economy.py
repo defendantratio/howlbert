@@ -567,7 +567,7 @@ class Economy(commands.Cog):
             if not sid:
                 embed = howlbert_embed(
                     "Bad Stack ID",
-                    "Use **`stack:ID`** from `/vitals action:herbbag`.",
+                    "Use **`stack:ID`** from `/herbs action:bag`.",
                     color=ERROR_COLOR,
                 )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -649,7 +649,11 @@ class Economy(commands.Cog):
         if stacks:
             footer_bits.append("prey: /eat · /preypile · rotting → /salvage · /bury")
         if toys:
-            footer_bits.append("toys: /play · /explore venture")
+            footer_bits.append("toys: /playpen action:play · action:toystore")
+        if any(row["key"].startswith("herb_") for row in items):
+            footer_bits.append(
+                "herbs: /herbs action:dryall · action:store mode:depositall"
+            )
         if any(row["key"] in USABLE_ITEM_KEYS for row in items):
             footer_bits.append("/use item:<key>")
         if footer_bits:

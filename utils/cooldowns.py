@@ -16,7 +16,7 @@ def cooldown_remaining(last_action: str | None, cooldown_hours: float) -> timede
     now = datetime.now(timezone.utc)
     if now >= ready_at:
         return None
-    return ready_at; now
+    return ready_at - now
 
 
 def format_timedelta(delta: timedelta) -> str:

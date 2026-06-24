@@ -133,6 +133,80 @@ def prepare_herb_stack(
     )
 
 
+def prepare_pack_herb_stack(
+    user,
+    store_id: int,
+    method: str,
+    *,
+    day: int,
+    pack_id: int,
+) -> tuple[bool, str]:
+    """Dry (or prepare) one healers' den store stack; dryall uses this for fresh rows."""
+    if method not in PREP_FORMS:
+        return False, "Use **dry**, **poultice**, **tonic**, or **decoction**."
+    stack = db.get_pack_herb_stack(store_id)
+    if not stack or int(stack["pack_id"]) != pack_id:
+        return False, "That stack isn't in your pack's herb store."
+    herb_key = stack["herb_key"]
+    meta = HERBS.get(herb_key, {})
+    if stack["form"] != "fresh" and method == "dry":
+        return False, "Only **fresh** herbs can be dried."
+    if stack["form"] not in ("fresh", "dried") and method != "dry":
+        return False, f"Already prepared as **{stack['form']}**."
+
+    dc = _prep_dc(method, user, herb_key)
+    result = resolve_check(
+        user,
+        attr_keys=("attr_int", "attr_wis"),
+        skill="Herblore",
+        dc=dc,
+        proficient=_herblore_proficient(user),
+        skill_key="herblore",
+        game_day=day,
+    )
+    target = _target_form(method)
+    name = meta.get("name", herb_key)
+    qty = int(stack["quantity"])
+    store_note = f" (den store ×**{qty}**)" if qty > 1 else " (den store)"
+
+    if result["outcome"] == "critical_failure":
+        db.remove_pack_herb_stack(store_id)
+        return (
+            False,
+            format_roll_result(result)
+            + f"\n\n**{name}**{store_note} ruined; batch spoiled.",
+        )
+    if not result["success"]:
+        if method == "dry":
+            db.update_pack_herb_stack(store_id, potency=max(40, int(stack["potency"]) - 30))
+            return (
+                False,
+                format_roll_result(result)
+                + f"\n\n**{name}**{store_note}: poor drying; **reduced potency** (still usable).",
+            )
+        return False, format_roll_result(result) + "\n\nPreparation failed; try again."
+
+    potency = 100
+    if method == "dry" and result["outcome"] != "critical_success":
+        potency = 90
+    if result["outcome"] == "critical_success":
+        potency = 100
+    if method == "decoction":
+        potency = 120
+    db.update_pack_herb_stack(
+        store_id,
+        form=target,
+        acquired_day=day,
+        potency=min(120, potency),
+    )
+    bonus = " Stores for months in the healers' den." if method == "dry" else ""
+    return (
+        True,
+        format_roll_result(result)
+        + f"\n\n**{name}**{store_note} → **{target}**.{bonus}",
+    )
+
+
 def prepare_herb_from_inventory(
     user,
     item_key: str,
@@ -176,3 +250,112 @@ def prepare_herb_from_inventory(
     )
     note = f"_Used **1× {item['name']}** from inventory → forage bag._\n\n"
     return ok, note + msg
+
+
+def dry_all_fresh_herbs(
+    user,
+    *,
+    day: int,
+    guild_id: int,
+    at_den: bool = False,
+) -> tuple[bool, str]:
+    """Roll drying separately for each fresh forage stack and inventory herb item."""
+    stacks = db.get_herb_stacks(user["id"])
+    fresh_ids = [int(s["id"]) for s in stacks if s["form"] == "fresh"]
+    inventory_herbs = [
+        (row["key"], row["name"], int(row["quantity"]))
+        for row in db.get_inventory(user["discord_id"])
+        if row["key"].startswith("herb_")
+    ]
+    pack_id = int(user["pack_id"]) if user and user["pack_id"] else None
+    pack_fresh_ids: list[int] = []
+    if pack_id:
+        pack_fresh_ids = [
+            int(s["id"])
+            for s in db.get_pack_herb_stacks(pack_id)
+            if s["form"] == "fresh"
+        ]
+    if not fresh_ids and not inventory_herbs and not pack_fresh_ids:
+        return (
+            False,
+            "No herbs to dry in your **forage bag** (`/herbs action:bag`), "
+            "**inventory** (`/inventory`), or **healers' den store** (`/herbs action:store mode:list`).",
+        )
+
+    dried = 0
+    failed = 0
+    ruined = 0
+    lines: list[str] = []
+
+    for stack_id in fresh_ids:
+        stack = db.get_herb_stack(stack_id)
+        if not stack or stack["form"] != "fresh":
+            continue
+        meta = HERBS.get(stack["herb_key"], {})
+        name = meta.get("name", stack["herb_key"])
+        ok, msg = prepare_herb_stack(user, stack_id, "dry", day=day, at_den=at_den)
+        if ok:
+            dried += 1
+            lines.append(f"**{name}** → dried")
+        elif "ruined" in msg.lower() or "spoiled" in msg.lower():
+            ruined += 1
+            lines.append(f"**{name}** — ruined")
+        else:
+            failed += 1
+            lines.append(f"**{name}** — failed")
+
+    for item_key, name, qty in inventory_herbs:
+        for _ in range(qty):
+            ok, msg = prepare_herb_from_inventory(
+                user,
+                item_key,
+                "dry",
+                day=day,
+                guild_id=guild_id,
+                at_den=at_den,
+            )
+            if ok:
+                dried += 1
+                lines.append(f"**{name}** → dried")
+            elif "ruined" in msg.lower() or "spoiled" in msg.lower():
+                ruined += 1
+                lines.append(f"**{name}** — ruined")
+            else:
+                failed += 1
+                lines.append(f"**{name}** — failed")
+
+    if pack_id:
+        for store_id in pack_fresh_ids:
+            stack = db.get_pack_herb_stack(store_id)
+            if not stack or stack["form"] != "fresh":
+                continue
+            meta = HERBS.get(stack["herb_key"], {})
+            name = meta.get("name", stack["herb_key"])
+            qty = int(stack["quantity"])
+            label = f"**{name}** (den store ×{qty})" if qty > 1 else f"**{name}** (den store)"
+            ok, msg = prepare_pack_herb_stack(
+                user, store_id, "dry", day=day, pack_id=pack_id
+            )
+            if ok:
+                dried += 1
+                lines.append(f"{label} → dried")
+            elif "ruined" in msg.lower() or "spoiled" in msg.lower():
+                ruined += 1
+                lines.append(f"{label} — ruined")
+            else:
+                failed += 1
+                lines.append(f"{label} — failed")
+
+    if dried == 0:
+        summary = "\n".join(lines[:10])
+        return False, f"No herbs dried.\n{summary}"
+
+    summary = "\n".join(lines[:12])
+    if len(lines) > 12:
+        summary += f"\n_…and {len(lines) - 12} more._"
+    tail = f"\n\n**{dried}** dried"
+    if failed:
+        tail += f", **{failed}** failed"
+    if ruined:
+        tail += f", **{ruined}** ruined"
+    return True, f"**Dry all** complete.{tail}\n{summary}"

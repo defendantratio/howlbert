@@ -569,7 +569,7 @@ RESTRICTED_HERB_SNIFF_CATCH_CHANCE = 0.42
 RESTRICTED_HERB_GROOM_CATCH_CHANCE = 0.32
 RESTRICTED_HERB_HOARD_WARN = (
     "_Poison plants belong in the healers' den, not your personal bag. "
-    "Turn in to a **Medic** or `/vitals action:denstore mode:deposit` before a patrol catches the scent._"
+    "Turn in to a **Medic** or `/herbs action:store mode:deposit` before a patrol catches the scent._"
 )
 RESTRICTED_HERB_HOARD_CAUGHT_TEXT = [
     "A **Medic** traces bitter poison-scent to your herb bag; the whole den heard the lecture.",

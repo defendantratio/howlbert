@@ -33,7 +33,7 @@ class HerbGuideView(discord.ui.View):
     def _embed(self) -> discord.Embed:
         title, body = build_herb_guide_embed(page=self.page, filter_key=self.filter_key)
         embed = howlbert_embed(title, body, color=EMBED_COLOR)
-        embed.set_footer(text="Herb guide · /vitals action:herbs")
+        embed.set_footer(text="Herb guide · /herbs action:guide")
         return embed
 
     @discord.ui.select(

@@ -430,6 +430,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN last_feedall_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_drinkall_day" not in pack_cols:
+        conn.execute(
+            "ALTER TABLE packs ADD COLUMN last_drinkall_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_pack_event_day" not in pack_cols:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN last_pack_event_day INTEGER NOT NULL DEFAULT 0"
@@ -568,6 +572,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN skill_ranks TEXT NOT NULL DEFAULT '{}'"
         )
+    if "trait_failure_days" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN trait_failure_days TEXT NOT NULL DEFAULT '{}'"
+        )
     if "size_class" not in user_cols_needs:
         conn.execute("ALTER TABLE users ADD COLUMN size_class TEXT NOT NULL DEFAULT ''")
     conn.execute("UPDATE users SET disease = 'redscratch' WHERE disease = 'den_fever'")
@@ -591,6 +599,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
     _migrate_multi_wolf(conn)
 
     _seed_great_packs(conn)
+    _reconcile_great_pack_alphas(conn)
     _migrate_user_pack_affiliation(conn)
     _backfill_starting_herbs(conn)
     _strip_canonical_lore_genetics(conn)
@@ -1132,6 +1141,20 @@ def _migrate(conn: sqlite3.Connection) -> None:
 
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS pack_amusement_stacks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pack_id INTEGER NOT NULL,
+            guild_id INTEGER NOT NULL,
+            item_key TEXT NOT NULL,
+            uses_left INTEGER NOT NULL,
+            deposited_by INTEGER,
+            FOREIGN KEY (pack_id) REFERENCES packs(id)
+        )
+        """
+    )
+
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS amusement_stacks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             wolf_id INTEGER NOT NULL,
@@ -1212,6 +1235,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE account_progress ADD COLUMN kofi_membership_until TEXT NOT NULL DEFAULT ''"
         )
+    if acct_cols_late and "possess_wolf_id" not in acct_cols_late:
+        conn.execute("ALTER TABLE account_progress ADD COLUMN possess_wolf_id INTEGER")
 
     conn.execute(
         """
@@ -1350,7 +1375,27 @@ def _migrate(conn: sqlite3.Connection) -> None:
     _migrate_wolf_name_uniqueness(conn)
     _migrate_merge_suffix_duplicate_wolves(conn)
     _migrate_pending_stillborn_name_uniqueness(conn)
+    _migrate_skill_ranks_to_traits(conn)
     _migrate_stick_item_key(conn)
+
+
+def _migrate_skill_ranks_to_traits(conn: sqlite3.Connection) -> None:
+    """Legacy skill_ranks column → earned character_traits bonuses."""
+    from engine.character import parse_skill_ranks
+    from engine.character_traits import adjust_skill_trait_experience
+
+    rows = conn.execute(
+        "SELECT id, skill_ranks FROM users WHERE skill_ranks IS NOT NULL AND skill_ranks != '{}'"
+    ).fetchall()
+    for row in rows:
+        ranks = parse_skill_ranks(row["skill_ranks"])
+        if not ranks:
+            continue
+        wolf_id = int(row["id"])
+        for skill_key, rank in ranks.items():
+            for _ in range(max(0, int(rank))):
+                adjust_skill_trait_experience(wolf_id, skill_key, 1)
+        conn.execute("UPDATE users SET skill_ranks = '{}' WHERE id = ?", (wolf_id,))
 
 
 def _migrate_stick_item_key(conn: sqlite3.Connection) -> None:
@@ -1698,9 +1743,20 @@ def validate_wolf_name_available(
 
 def _resolve_wolf_id_conn(conn: sqlite3.Connection, discord_id: int) -> int | None:
     account = conn.execute(
-        "SELECT active_wolf_id FROM account_progress WHERE discord_id = ?",
+        "SELECT active_wolf_id, possess_wolf_id FROM account_progress WHERE discord_id = ?",
         (discord_id,),
     ).fetchone()
+    if account and account["possess_wolf_id"]:
+        possessed = conn.execute(
+            "SELECT id FROM users WHERE id = ?",
+            (account["possess_wolf_id"],),
+        ).fetchone()
+        if possessed:
+            return int(possessed["id"])
+        conn.execute(
+            "UPDATE account_progress SET possess_wolf_id = NULL WHERE discord_id = ?",
+            (discord_id,),
+        )
     if account and account["active_wolf_id"]:
         return account["active_wolf_id"]
     row = conn.execute(
@@ -1898,6 +1954,31 @@ def _seed_great_packs(conn: sqlite3.Connection) -> None:
                 VALUES (?, ?, NULL, 0, 0, 5, ?)
                 """,
                 (key, info["name"], now),
+            )
+
+
+def _reconcile_great_pack_alphas(conn: sqlite3.Connection) -> None:
+    """Point Great Pack alpha_id at a wolf with the Alpha role when the seat is stale."""
+    for key in GREAT_PACKS:
+        pack = conn.execute("SELECT * FROM packs WHERE key = ?", (key,)).fetchone()
+        if not pack:
+            continue
+        alphas = conn.execute(
+            """
+            SELECT discord_id FROM users
+            WHERE pack_id = ? AND wolf_role = 'alpha'
+            ORDER BY standing DESC, id ASC
+            """,
+            (pack["id"],),
+        ).fetchall()
+        if not alphas:
+            continue
+        valid = {int(row["discord_id"]) for row in alphas}
+        holder = pack["alpha_id"]
+        if holder is None or int(holder) not in valid:
+            conn.execute(
+                "UPDATE packs SET alpha_id = ? WHERE id = ?",
+                (alphas[0]["discord_id"], pack["id"]),
             )
 
 
@@ -2370,6 +2451,7 @@ def set_active_wolf(discord_id: int, wolf_id: int) -> bool:
         ).fetchone()
         if not row:
             return False
+        user = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
         conn.execute(
             "INSERT OR IGNORE INTO account_progress (discord_id) VALUES (?)",
             (discord_id,),
@@ -2387,6 +2469,18 @@ def set_active_wolf(discord_id: int, wolf_id: int) -> bool:
                 "UPDATE account_progress SET used_secondary_switch = 1 WHERE discord_id = ?",
                 (discord_id,),
             )
+        if user and user["pack_id"]:
+            pack = conn.execute(
+                "SELECT * FROM packs WHERE id = ?", (user["pack_id"],)
+            ).fetchone()
+            if pack and pack["key"] in GREAT_PACKS:
+                if user["wolf_role"] == "alpha":
+                    conn.execute(
+                        "UPDATE packs SET alpha_id = ? WHERE id = ?",
+                        (discord_id, pack["id"]),
+                    )
+                elif pack["alpha_id"] == discord_id:
+                    _promote_pack_alpha(conn, pack["id"])
         return True
 
 
@@ -2397,6 +2491,80 @@ def has_used_secondary_switch(discord_id: int) -> bool:
 
 def get_active_wolf_id(discord_id: int) -> int | None:
     return _resolve_wolf_id(discord_id)
+
+
+def get_possess_wolf_id(admin_discord_id: int) -> int | None:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT possess_wolf_id FROM account_progress WHERE discord_id = ?",
+            (admin_discord_id,),
+        ).fetchone()
+    if not row or not row["possess_wolf_id"]:
+        return None
+    return int(row["possess_wolf_id"])
+
+
+def get_possess_session(admin_discord_id: int) -> dict | None:
+    """Return {wolf_id, wolf_name, owner_discord_id} when an admin is steering another wolf."""
+    wolf_id = get_possess_wolf_id(admin_discord_id)
+    if not wolf_id:
+        return None
+    wolf = get_user_by_id(wolf_id)
+    if not wolf:
+        clear_admin_possess(admin_discord_id)
+        return None
+    return {
+        "wolf_id": wolf_id,
+        "wolf_name": wolf["wolf_name"],
+        "owner_discord_id": int(wolf["discord_id"]),
+    }
+
+
+def set_admin_possess(admin_discord_id: int, wolf_id: int) -> tuple[bool, str]:
+    wolf = get_user_by_id(wolf_id)
+    if not wolf:
+        return False, "That wolf no longer exists."
+    if int(wolf["discord_id"]) == admin_discord_id:
+        return False, "That's your own wolf; use `/switchwolf` instead."
+    with get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO account_progress (discord_id) VALUES (?)",
+            (admin_discord_id,),
+        )
+        conn.execute(
+            "UPDATE account_progress SET possess_wolf_id = ? WHERE discord_id = ?",
+            (wolf_id, admin_discord_id),
+        )
+    return True, f"Now steering **{wolf['wolf_name']}** (owner <@{wolf['discord_id']}>)."
+
+
+def clear_admin_possess(admin_discord_id: int) -> tuple[bool, str]:
+    session = get_possess_session(admin_discord_id)
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE account_progress SET possess_wolf_id = NULL WHERE discord_id = ?",
+            (admin_discord_id,),
+        )
+    if not session:
+        return False, "You are not possessing a wolf."
+    return True, f"Released **{session['wolf_name']}**; back to your own wolves."
+
+
+def resolve_possessed_wolf(
+    admin_discord_id: int,
+    player: int,
+    wolf_name: str | None,
+) -> tuple[sqlite3.Row | None, str | None]:
+    """Pick a wolf row for /wolfadmin possess."""
+    if wolf_name:
+        wolf = find_user_wolf(player, wolf_name)
+        if not wolf:
+            return None, explain_wolf_not_found(player, wolf_name, player_label=f"<@{player}>")
+        return wolf, None
+    wolf = get_user(player)
+    if not wolf:
+        return None, f"<@{player}> has no active wolf."
+    return wolf, None
 
 
 def _backfill_rpg_stats(conn: sqlite3.Connection) -> None:
@@ -3692,6 +3860,9 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         spread_notes = apply_disease_spread_on_rollover(conn)
     condition_notes.extend(spread_notes)
     _long_rest_all_wolves_on_rollover(new_day)
+    from engine.character_traits import decay_skill_strain_on_rollover
+
+    decay_skill_strain_on_rollover()
     with get_db() as conn:
         from engine.nursing import apply_unfed_pup_penalty_on_rollover
 
@@ -6607,49 +6778,39 @@ def add_skill_rank(
     *,
     grant_proficiency: bool = False,
 ) -> int:
-    """Raise a wolf's skill rank (max MAX_SKILL_RANK). Returns new rank."""
-    import json
-
-    from engine.character import parse_proficiencies, parse_skill_ranks
-    from rpg_rules import MAX_SKILL_RANK, SKILLS
+    """Grant earned trait experience on a skill (quest rewards). Returns new earned bonus total."""
+    from engine.character_traits import adjust_skill_trait_experience, get_earned_trait_bonus_for_wolf
 
     skill_key = skill_key.strip().lower()
-    if skill_key not in SKILLS:
-        return 0
     amount = max(0, int(amount))
-    if amount == 0:
-        return get_skill_rank_for_wolf(wolf_id, skill_key)
+    for _ in range(amount):
+        ok, _msg = adjust_skill_trait_experience(wolf_id, skill_key, 1)
+        if not ok:
+            break
+    if grant_proficiency:
+        import json
 
-    with get_db() as conn:
-        row = conn.execute("SELECT skill_ranks, skill_proficiencies FROM users WHERE id = ?", (wolf_id,)).fetchone()
-        if not row:
-            return 0
-        ranks = parse_skill_ranks(row["skill_ranks"])
-        current = ranks.get(skill_key, 0)
-        new_rank = min(MAX_SKILL_RANK, current + amount)
-        ranks[skill_key] = new_rank
-        updates: dict = {"skill_ranks": json.dumps(ranks)}
-        if grant_proficiency:
-            profs = list(parse_proficiencies(row["skill_proficiencies"]))
-            if skill_key not in profs:
-                profs.append(skill_key)
-                updates["skill_proficiencies"] = json.dumps(profs)
-        set_clause = ", ".join(f"{k} = ?" for k in updates)
-        conn.execute(
-            f"UPDATE users SET {set_clause} WHERE id = ?",
-            (*updates.values(), wolf_id),
-        )
-    return new_rank
+        from engine.character import parse_proficiencies
+
+        with get_db() as conn:
+            row = conn.execute(
+                "SELECT skill_proficiencies FROM users WHERE id = ?", (wolf_id,)
+            ).fetchone()
+            if row:
+                profs = list(parse_proficiencies(row["skill_proficiencies"]))
+                if skill_key not in profs:
+                    profs.append(skill_key)
+                    conn.execute(
+                        "UPDATE users SET skill_proficiencies = ? WHERE id = ?",
+                        (json.dumps(profs), wolf_id),
+                    )
+    return get_earned_trait_bonus_for_wolf(wolf_id, skill_key)
 
 
 def get_skill_rank_for_wolf(wolf_id: int, skill_key: str) -> int:
-    from engine.character import parse_skill_ranks
+    from engine.character_traits import get_earned_trait_bonus_for_wolf
 
-    with get_db() as conn:
-        row = conn.execute("SELECT skill_ranks FROM users WHERE id = ?", (wolf_id,)).fetchone()
-    if not row:
-        return 0
-    return parse_skill_ranks(row["skill_ranks"]).get(skill_key.strip().lower(), 0)
+    return get_earned_trait_bonus_for_wolf(wolf_id, skill_key)
 
 
 def spend_xp(discord_id: int, cost: int) -> bool:
@@ -8298,7 +8459,7 @@ def get_pack_herb_stack(stack_id: int) -> sqlite3.Row | None:
 
 
 def update_pack_herb_stack(stack_id: int, **fields) -> None:
-    allowed = {"quantity", "form", "potency"}
+    allowed = {"quantity", "form", "potency", "acquired_day"}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return
@@ -8317,6 +8478,14 @@ def set_pack_feedall_day(pack_id: int, day: int) -> None:
     with get_db() as conn:
         conn.execute(
             "UPDATE packs SET last_feedall_day = ? WHERE id = ?",
+            (day, pack_id),
+        )
+
+
+def set_pack_drinkall_day(pack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE packs SET last_drinkall_day = ? WHERE id = ?",
             (day, pack_id),
         )
 
@@ -8420,6 +8589,61 @@ def transfer_amusement_stack(stack_id: int, new_wolf_id: int) -> bool:
             (new_wolf_id, stack_id),
         )
         return True
+
+
+def add_pack_amusement_stack(
+    pack_id: int,
+    item_key: str,
+    *,
+    uses_left: int,
+    guild_id: int,
+    deposited_by: int | None = None,
+) -> int:
+    with get_db() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO pack_amusement_stacks
+            (pack_id, guild_id, item_key, uses_left, deposited_by)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (pack_id, guild_id, item_key, uses_left, deposited_by),
+        )
+        return cursor.lastrowid
+
+
+def get_pack_amusement_stacks(pack_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pack_amusement_stacks
+            WHERE pack_id = ? AND uses_left > 0
+            ORDER BY id DESC
+            """,
+            (pack_id,),
+        ).fetchall()
+
+
+def get_pack_amusement_stack(stack_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM pack_amusement_stacks WHERE id = ?", (stack_id,)
+        ).fetchone()
+
+
+def update_pack_amusement_stack_uses(stack_id: int, uses_left: int) -> None:
+    with get_db() as conn:
+        if uses_left <= 0:
+            conn.execute("DELETE FROM pack_amusement_stacks WHERE id = ?", (stack_id,))
+        else:
+            conn.execute(
+                "UPDATE pack_amusement_stacks SET uses_left = ? WHERE id = ?",
+                (uses_left, stack_id),
+            )
+
+
+def remove_pack_amusement_stack(stack_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("DELETE FROM pack_amusement_stacks WHERE id = ?", (stack_id,))
 
 
 def adjust_mood(wolf_id: int, delta: int) -> int:

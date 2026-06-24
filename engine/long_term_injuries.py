@@ -59,6 +59,11 @@ def format_long_term_injuries(user) -> str | None:
         return None
     lines = []
     for entry in entries:
+        if entry == "spirit_curse":
+            from engine.supernatural import SPIRIT_CURSE_BLURB
+
+            lines.append(f"**Spirit Curse**: {SPIRIT_CURSE_BLURB}")
+            continue
         if entry.startswith("fear:"):
             trigger = entry[5:].replace("_", " ").title()
             lines.append(f"**Fear of {trigger}**: Wisdom DC 12 or frightened 1 round when faced.")
@@ -193,5 +198,15 @@ def check_adjustments(
             if "attr_str" in attr_keys or "attr_dex" in attr_keys:
                 disadvantage = True
                 notes.append("Chronic pain (disadvantage)")
+
+    if "spirit_curse" in entries:
+        from engine.supernatural import spirit_curse_check_adjustment
+
+        sc_mod, sc_note = spirit_curse_check_adjustment(
+            user, attr_keys=attr_keys, skill_key=skill_key
+        )
+        mod += sc_mod
+        if sc_note:
+            notes.append(sc_note)
 
     return mod, disadvantage, " · ".join(notes)

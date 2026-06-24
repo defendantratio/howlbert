@@ -10,6 +10,7 @@ from engine.amusement_items import amusement_meta
 from engine.amusement_storage import format_amusement_line, grant_amusement, play_amusement
 from engine.explore import try_explore, try_rescout
 from engine.pack_play import run_playall
+from utils.permissions import is_howlbert_admin
 from engine.socialize import run_socialize
 from engine.prey_items import prey_meta
 from engine.prey_storage import format_prey_hoard_line
@@ -122,11 +123,12 @@ class Explore(commands.Cog):
 
     @app_commands.command(
         name="playpen",
-        description="Toys, play, socialize, groom, den romp, or bury carcass.",
+        description="Toys, play, socialize, groom, den romp, toy store, or bury carcass.",
     )
     @app_commands.describe(
-        action="toys, play, socialize, groom, playall, or bury",
-        toy="Toy stack (play)",
+        action="toys, play, socialize, groom, playall, toystore, or bury",
+        mode="toystore: list, deposit, depositall, or withdraw",
+        toy="Toy stack (play / toystore deposit or withdraw)",
         prey="Carcass stack (bury)",
         wolf="Packmate (socialize/groom)",
         own_wolf="Your other wolf (socialize/groom)",
@@ -137,15 +139,23 @@ class Explore(commands.Cog):
             app_commands.Choice(name="Play with toy", value="play"),
             app_commands.Choice(name="Socialize", value="socialize"),
             app_commands.Choice(name="Groom packmate", value="groom"),
-            app_commands.Choice(name="Play with whole den", value="playall"),
+            app_commands.Choice(name="Play with whole den (Alpha)", value="playall"),
+            app_commands.Choice(name="Den toy store", value="toystore"),
             app_commands.Choice(name="Bury carcass", value="bury"),
-        ]
+        ],
+        mode=[
+            app_commands.Choice(name="List store", value="list"),
+            app_commands.Choice(name="Deposit toy", value="deposit"),
+            app_commands.Choice(name="Deposit all toys", value="depositall"),
+            app_commands.Choice(name="Withdraw toy", value="withdraw"),
+        ],
     )
     @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete, prey=_prey_autocomplete)
     async def playpen(
         self,
         interaction: discord.Interaction,
         action: str,
+        mode: str = "list",
         toy: str | None = None,
         prey: str | None = None,
         wolf: discord.Member | None = None,
@@ -164,6 +174,8 @@ class Explore(commands.Cog):
             await self._groom(interaction, wolf, own_wolf)
         elif action == "playall":
             await self._playall(interaction)
+        elif action == "toystore":
+            await self._toystore(interaction, mode, toy)
         elif action == "bury":
             if not prey:
                 await interaction.response.send_message("Pick `prey` to bury.", ephemeral=True)
@@ -190,8 +202,88 @@ class Explore(commands.Cog):
             "\n".join(lines),
         )
         embed.add_field(name="Mood", value=f"**{mood}**/100", inline=True)
-        embed.set_footer(text="`/play toy:`; +mood per use · mood slips each sunrise")
+        embed.set_footer(
+            text="`/playpen action:play` · `action:toystore` · Alpha: `action:playall` (uses your toys or den store)"
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    async def _toystore(
+        self,
+        interaction: discord.Interaction,
+        mode: str,
+        toy: str | None,
+    ):
+        user = db.get_user(interaction.user.id)
+        if not user or not interaction.guild:
+            await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+            return
+        if not user["pack_id"]:
+            await interaction.response.send_message(
+                embed=howlbert_embed("No Pack", "Join a pack to use the den toy store.", color=ERROR_COLOR),
+                ephemeral=True,
+            )
+            return
+        from engine.pack_amusement_store import (
+            deposit_all_amusement_to_store,
+            deposit_amusement_to_store,
+            list_pack_amusement_store,
+            withdraw_amusement_from_store,
+        )
+
+        if mode == "list":
+            body = list_pack_amusement_store(user["pack_id"])
+            embed = howlbert_embed("Den Toy Store", body)
+            embed.set_footer(text="Anyone: `mode:deposit` / `depositall` / `withdraw`")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        if mode == "depositall":
+            ok, msg = deposit_all_amusement_to_store(
+                user,
+                pack_id=user["pack_id"],
+                guild_id=interaction.guild.id,
+            )
+        elif mode == "deposit":
+            if not toy:
+                await interaction.response.send_message(
+                    "Pick a `toy` stack from `/playpen action:toys` to deposit.", ephemeral=True
+                )
+                return
+            try:
+                stack_id = int(toy)
+            except ValueError:
+                await interaction.response.send_message("Pick a toy from autocomplete.", ephemeral=True)
+                return
+            ok, msg = deposit_amusement_to_store(
+                user,
+                stack_id,
+                pack_id=user["pack_id"],
+                guild_id=interaction.guild.id,
+            )
+        elif mode == "withdraw":
+            if not toy:
+                await interaction.response.send_message(
+                    "Enter store toy **`#ID`** from `mode:list` as the `toy` parameter.", ephemeral=True
+                )
+                return
+            try:
+                store_id = int(toy.strip().lstrip("#"))
+            except ValueError:
+                await interaction.response.send_message(
+                    "Enter store stack **`#ID`** from `mode:list`.", ephemeral=True
+                )
+                return
+            ok, msg = withdraw_amusement_from_store(
+                user,
+                store_id,
+                pack_id=user["pack_id"],
+            )
+        else:
+            await interaction.response.send_message(
+                "Pick **list**, **deposit**, **depositall**, or **withdraw**.", ephemeral=True
+            )
+            return
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(embed=howlbert_embed("Den Toy Store", msg, color=color))
 
     async def _play(self, interaction: discord.Interaction, toy: str):
         user = db.get_user(interaction.user.id)
@@ -524,7 +616,12 @@ class Explore(commands.Cog):
             return
 
         world = db.get_world(interaction.guild.id)
-        ok, msg = run_playall(user, user["pack_id"], world["day_number"])
+        ok, msg = run_playall(
+            user,
+            user["pack_id"],
+            world["day_number"],
+            discord_admin=is_howlbert_admin(interaction),
+        )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed("Play All", msg, color=color))
 

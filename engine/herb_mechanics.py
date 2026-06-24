@@ -1,4 +1,4 @@
-"""Mechanical descriptions for the herb compendium (/vitals action:herbs)."""
+"""Mechanical descriptions for the herb compendium (/herbs action:guide)."""
 
 from __future__ import annotations
 
@@ -169,5 +169,5 @@ def build_usage_hint(herb_key: str, meta: dict | None = None) -> str:
 
     effect = (meta.get("effect") or "").strip()
     if effect:
-        return f"_{effect} Use via `/vitals action:treat`._"
-    return "_Use via `/vitals action:treat`._"
+        return f"_{effect} Use via `/medic action:treat`._"
+    return "_Use via `/medic action:treat`._"

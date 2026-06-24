@@ -14,7 +14,7 @@ Permanent marks after healing; roleplay plus minor mechanics. Shown on `/vitals 
 | **Fear of [trigger]** | Wisdom DC 12 or frightened 1 round when faced |
 
 - Assigned on failed `/skills` **Set bone without comfrey** (crit fail → limp).
-- Cured with **wolfsbane** (spirit curse; 2-6 poison damage) or **swamp milkweed** via `/vitals action:treat`.
+- Cured with **wolfsbane** (spirit curse; 2-6 poison damage) or **swamp milkweed** via `/medic action:treat`.
 - Otherwise months of rest at GM discretion.
 
 ## Fear of Fire
@@ -118,7 +118,7 @@ Medics are **not blocked** from courtship, mating, or pups; but the den punishes
 | **Birth** | Always public → **−5 standing**; litter **exiled**; healer **exiled** |
 | **Adopt** | Always public → same as birth |
 
-`/vitals action:sacred`: half-moon sacred visit (every **3** sunrises). The ancestors speak one line at the stone. Miss one: **−2 standing** on rollover. Reminder on `/profile`, `/vitals action:condition`, and `/world action:cooldowns`.
+`/medic action:sacred`: half-moon sacred visit (every **3** sunrises). Ancestors speak one line at the stone. Rewards: **+2 standing**, **+5 mood**, **+1 pack unity**, next Medicine/Herblore check **+2**, distress eased. Miss one: **−2 standing** on rollover. Reminder on `/profile`, `/vitals action:condition`, and `/world action:cooldowns`.
 
 Apprentices observe; full **Medic** role bears the code.
 
@@ -150,9 +150,9 @@ Apprentices observe; full **Medic** role bears the code.
 
 - Nat **1**: infection, shock, or permanent **limp** (set bone).
 - Success clears the injury; stitch heals **1d4 HP**; amputation adds **scarring**.
-- `/vitals action:treat` handles minor wounds; surgery is for injuries herbs alone cannot fix.
+- `/medic action:treat` handles minor wounds; surgery is for injuries herbs alone cannot fix.
 
-### Pack herb store (`/vitals action:denstore`)
+### Pack herb store (`/herbs action:store`)
 
 Medics and Foragers deposit forage stacks into the **healers' den store** (shared `pack_herb_stacks` table).
 
@@ -166,20 +166,20 @@ Medics and Foragers deposit forage stacks into the **healers' den store** (share
 
 Shows a **3-step care plan** embed field: suggested **herbs**, **surgery** need, and **rest days** for the active injury or disease.
 
-### Treat packmates (`/vitals action:treat patient:`)
+### Treat packmates (`/medic action:treat patient:`)
 
 **Medics** may treat a packmate using the **healer's** forage stack (`treat_from_herb_stack` with `patient`).
 
-### Spirit ritual (`/vitals action:ritual`)
+### Spirit ritual (`/medic action:ritual`)
 
 **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan) over a patient: Herblore DC 15; eases **shock (emotional)** or fulfills **spirit_cleanse** flavor.
 
 ### Naming & death rites
 
-- **`/vitals action:naming`**: Medic names pups ~3 weeks (under **1** moon) at the sacred place.
-- **`/vitals action:lay_to_rest`**: rosemary / lavender / mint over the dead (consumable).
+- **`/medic action:naming`**: Medic names pups ~3 weeks (under **1** moon) at the sacred place.
+- **`/medic action:lay_to_rest`**: rosemary / lavender / mint over the dead (consumable).
 
-### Swim therapy (`/vitals action:swim`)
+### Swim therapy (`/medic action:swim`)
 
 River territory once per sunrise; bonus recovery for **sprains**, **fractured ribs**, or **splint confinement** after bone-setting.
 
@@ -192,7 +192,7 @@ River territory once per sunrise; bonus recovery for **sprains**, **fractured ri
 
 - **`/medic action:surgery helper:`**: second Medic; helper Medicine DC **10** grants **advantage** on the surgeon's roll.
 - **`use_rush_stalks:true`** on **set bone**: rush stalks **+2** (lashes splint).
-- Successful **set bone** applies **splint confinement** (`bone_rest_until`, 7 sunrises); `/vitals action:swim` may shorten.
+- Successful **set bone** applies **splint confinement** (`bone_rest_until`, 7 sunrises); `/medic action:swim` may shorten.
 
 ### Group & assisted skill checks
 
@@ -205,17 +205,17 @@ Soft reminder when a **dying** packmate is in the den (commands + rollover). **W
 
 ### Herb compendium
 
-- **`/vitals action:herbs`** or **`/field action:compendium`**: read-only browser from `herbs_compendium.py` with habitat filter.
+- **`/herbs action:guide`** or **`/field action:compendium`**: read-only browser from `herbs_compendium.py` with habitat filter.
 
 ### Restricted herbs
 
 **bloodroot**, **deadly nightshade**, **deathberries**, **foxglove**, **holly berries**, **oleander**, **poison ivy**, **water hemlock**, **wintergreen**, **wolfsbane** are Medic knowledge.
 
-- Non-Medics who **use** a restricted herb via `/vitals action:treat` take poison saves **and** lose **4 standing** (using poison is always witnessed).
+- Non-Medics who **use** a restricted herb via `/medic action:treat` take poison saves **and** lose **4 standing** (using poison is always witnessed).
 - Non-Medics who **keep** restricted herbs in a personal forage bag risk **−3 standing if caught** (~38% rollover, sniff/groom, **~52% on Medic rounds**; missed rounds show **suspicious scent** only).
-- **`/vitals action:turnin`**: hand poison herbs to the healers' den (**+1 standing**; **10🦴** from pack treasury when funded).
+- **`/herbs action:turnin`**: hand poison herbs to the healers' den (**+1 standing**; **10🦴** from pack treasury when funded).
 - **`/bones action:sell item:stack:ID`**: sell normal forage herbs at the trading post (UnbelievaBoat-style); restricted herbs cannot be sold.
-- Turn poison finds in via **`/vitals action:denstore mode:deposit`** (Medic/Forager) or **turnin**; **deathberries** mercy remains Medic-only.
+- Turn poison finds in via **`/herbs action:store mode:deposit`** (Medic/Forager) or **turnin**; **deathberries** mercy remains Medic-only.
 - **Hunters** who **`/pack stash deposit`** feed the healer den: **+1 pack unity** and **+1 standing** once per sunrise (Basil tradition).
 
 ### Forage crit flavor
@@ -228,8 +228,8 @@ Rollover **season** line when **rot_lung** count in a pack exceeds threshold (de
 
 ### Herb gathering & storage
 
-- `/field action:forage`: Survival check; fresh stack in `/vitals action:herbbag`.
-- Fresh herbs **rot after 1 sunrise** unless dried via `/vitals action:prepare`.
+- `/field action:forage`: Survival check; fresh stack in `/herbs action:bag`.
+- Fresh herbs **rot after 1 sunrise** unless dried via `/herbs action:prepare`.
 - Shop or inventory herbs stay stable (dried). Foragers receive one common herb per sunrise in pack territory.
 
 ## Practices & Traditions

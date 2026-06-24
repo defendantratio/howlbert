@@ -35,14 +35,22 @@ def spirit_whisper_on_sniff(user, *, weather: str) -> str | None:
     line = random.choice(WHISPERING_SPIRIT_LINES)
     bits = [f"_{line}_"]
     if _whispering_affinity(user) and not has_disease(user):
-        ill = try_contract_disease(
-            user,
-            "anxiety",
-            "uneasy",
-            chance=WHISPERING_SNIFF_ANXIETY_CHANCE,
-        )
-        if ill:
-            bits.append(f"\n\n**Whispering unease**; {ill}")
+        from engine.supernatural import has_spirit_curse, maybe_curse_from_whisper
+
+        curse_note = maybe_curse_from_whisper(user, weather=weather)
+        if curse_note:
+            bits.append(f"\n\n**{curse_note}**")
+        elif not has_spirit_curse(user):
+            ill = try_contract_disease(
+                user,
+                "anxiety",
+                "uneasy",
+                chance=WHISPERING_SNIFF_ANXIETY_CHANCE,
+            )
+            if ill:
+                bits.append(f"\n\n**Whispering unease**; {ill}")
+        elif has_spirit_curse(user):
+            bits.append("\n\n_The curse answers the fog; the whispers are louder tonight._")
     return "\n".join(bits)
 
 

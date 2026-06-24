@@ -6,7 +6,7 @@ import sqlite3
 
 import database as db
 from config import BOOST_DAILY_BONUS, DAILY_REWARD, SNIFF_HUNT_BONUS_PCT
-from engine.role_features import has_any_role, is_full_medic
+from engine.role_features import has_any_role, is_full_medic, wolf_role_key
 from engine.prestige import apply_bone_bonus, bone_bonus_pct
 from engine.role_privileges import (
     HERB_HEAL_DAILY_LIMIT,
@@ -142,6 +142,7 @@ def build_cooldown_fields(
     prestige_tier: int = 0,
     is_booster: bool = False,
     donor_bonus: int = 0,
+    discord_admin: bool = False,
 ) -> list[tuple[str, str, bool]]:
     """Return embed fields: (name, value, inline)."""
     if not guild_id:
@@ -208,7 +209,7 @@ def build_cooldown_fields(
         stabilize_line = "Ready; Medicine DC 15 (herbs optional)"
     fields.append(
         (
-            "/vitals action:treat · /medic action:stabilize",
+            "/medic action:treat · /medic action:stabilize",
             f"Treat: {treat_line}\nStabilize: {stabilize_line}",
             False,
         )
@@ -221,7 +222,7 @@ def build_cooldown_fields(
             True,
         )
     )
-    if is_full_medic(user) or has_any_role(user, "medic_apprentice"):
+    if wolf_role_key(user) == "medic":
         fields.append(
             (
                 "/medic action:checkup",
@@ -266,22 +267,42 @@ def build_cooldown_fields(
                 False,
             )
         )
-    fields.append(
-        (
-            "/playpen action:playall",
-            _status(user, "playall", ready=not _used_today(user, day, "last_playall_day")),
-            True,
-        )
-    )
+    from engine.pack_leadership import can_run_pack_bulk_action
+
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
-    if pack_id:
-        pack = db.get_pack(pack_id)
-        feedall_ready = bool(pack) and int(pack["last_feedall_day"]) < day
+    pack = db.get_pack(pack_id) if pack_id else None
+    if can_run_pack_bulk_action(user, pack, discord_admin=discord_admin):
         fields.append(
             (
-                "/packlife action:feedall",
-                _status(user, "feedall", ready=feedall_ready),
+                "/playpen action:playall",
+                _status(user, "playall", ready=not _used_today(user, day, "last_playall_day")),
                 True,
+            )
+        )
+        if pack_id:
+            feedall_ready = bool(pack) and int(pack["last_feedall_day"]) < day
+            drinkall_ready = bool(pack) and int(pack.get("last_drinkall_day", 0)) < day
+            fields.append(
+                (
+                    "/packlife action:feedall",
+                    _status(user, "feedall", ready=feedall_ready),
+                    True,
+                )
+            )
+            fields.append(
+                (
+                    "/packlife action:drinkall",
+                    _status(user, "drinkall", ready=drinkall_ready),
+                    True,
+                )
+            )
+    elif pack_id:
+        fields.append(
+            (
+                "Pack-wide den commands",
+                "Alpha only: `/playpen action:playall`, `/packlife action:feedall`, "
+                "`/packlife action:drinkall`",
+                False,
             )
         )
     fields.append(
@@ -351,7 +372,7 @@ def build_cooldown_fields(
         if reminder:
             fields.append(
                 (
-                    "/vitals action:sacred",
+                    "/medic action:sacred",
                     f"{_status(user, 'sacred visit', ready=not sacred_visit_due(user, day))}\n{reminder}",
                     False,
                 )

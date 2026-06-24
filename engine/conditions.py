@@ -5,8 +5,6 @@ from engine.character import attr_modifier, parse_proficiencies
 from engine.exhaustion_effects import effective_max_hp
 from engine.rolls import roll_d20
 from herbs import EXHAUSTION_EFFECTS, INJURIES, INJURY_TABLE
-from rpg_rules import PROFICIENCY_BONUS
-
 
 def parse_injuries(raw: str | None) -> list[str]:
     if not raw:
@@ -206,10 +204,13 @@ def apply_long_rest_healing(user) -> tuple[int, int]:
 
 def _survival_or_con_mod(user) -> int:
     """Best of Survival (Wis) or Constitution modifier for infection saves."""
-    profs = parse_proficiencies(user["skill_proficiencies"])
+    from engine.character_traits import trait_check_adjustments
+
     wis = attr_modifier(user["attr_wis"])
-    if "survival" in profs:
-        wis += PROFICIENCY_BONUS
+    trait_mod, _ = trait_check_adjustments(
+        user, ("attr_wis",), skill_key="survival", skill_label="Survival"
+    )
+    wis += trait_mod
     con = attr_modifier(user["attr_con"])
     return max(wis, con)
 
@@ -527,27 +528,23 @@ def herb_special_effect(herb_key: str, user, *, inventory_qty: int = 1) -> str |
 
 
 def medicine_check(user, dc: int = 15) -> dict:
-    from engine.character import is_skill_proficient, skill_proficiency_bonus
+    from engine.character_traits import trait_check_adjustments
     from engine.herb_buffs import herb_check_adjustments
 
     die = roll_d20()
     mod = attr_modifier(user["attr_wis"])
-    prof = skill_proficiency_bonus(
-        user, "medicine", proficient=is_skill_proficient(user, "medicine")
+    trait_mod, _ = trait_check_adjustments(
+        user, ("attr_wis",), skill_key="medicine", skill_label="Medicine"
     )
-    from engine.role_features import is_full_medic
-
-    if is_skill_proficient(user, "herblore") or is_full_medic(user):
-        prof = max(prof, skill_proficiency_bonus(user, "herblore", proficient=True))
     herb_mod, herb_adv = herb_check_adjustments(user, ("attr_wis",), skill_key="medicine")
     if herb_adv:
         die = max(roll_d20(), roll_d20())
     mod += herb_mod
-    total = die + mod + prof
+    total = die + mod + trait_mod
     return {
         "die": die,
         "modifier": mod,
-        "proficiency": prof,
+        "proficiency": trait_mod,
         "total": total,
         "dc": dc,
         "success": total >= dc,

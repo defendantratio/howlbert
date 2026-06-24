@@ -12,18 +12,21 @@ from engine.character import attr_modifier, parse_proficiencies
 from engine.dice import roll_d20
 from engine.pack_leadership import is_pack_alpha, wolf_role_key
 from engine.role_restrictions import life_stage
-from rpg_rules import PROFICIENCY_BONUS, ROLE_LABELS
+from rpg_rules import ROLE_LABELS
 
 RITE_NAME = "Rite of the Broken Canine"
 
 
 def _leadership_roll(user) -> tuple[int, dict]:
+    from engine.character_traits import trait_check_adjustments
+
     die = roll_d20()
     mod = attr_modifier(int(user["attr_str"]))
-    profs = parse_proficiencies(user["skill_proficiencies"])
-    prof = PROFICIENCY_BONUS if "intimidation" in profs else 0
-    total = die + mod + prof
-    return total, {"die": die, "mod": mod, "prof": prof, "total": total}
+    trait_mod, _ = trait_check_adjustments(
+        user, ("attr_cha",), skill_key="intimidation", skill_label="Intimidation"
+    )
+    total = die + mod + trait_mod
+    return total, {"die": die, "mod": mod, "prof": trait_mod, "total": total}
 
 
 def _resolve_bout(a, b) -> tuple[sqlite3.Row, str]:

@@ -469,20 +469,52 @@ class Profile(commands.Cog):
                 pack_label = _pack_display(pack)
             lines.append(f"**{w['wolf_name']}**; {pack_label}{marker}")
 
-        embed = howlbert_embed("Your Wolves", "\n".join(lines))
         limit_note = "unlimited" if is_howlbert_admin(interaction) else str(MAX_WOLVES_PER_PLAYER)
-        embed.set_footer(text=f"{len(rows)} wolf(s) · limit {limit_note} · /switchwolf to play as another")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        footer = (
+            f"{len(rows)} wolf(s) · limit {limit_note} · /switchwolf to play as another"
+            + (" · type a name if yours is not in the list" if len(rows) > 25 else "")
+        )
+        page_size = 20
+        if len(lines) <= page_size:
+            embed = howlbert_embed("Your Wolves", "\n".join(lines))
+            embed.set_footer(text=footer)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        pages: list[discord.Embed] = []
+        for start in range(0, len(lines), page_size):
+            chunk = lines[start : start + page_size]
+            page_num = start // page_size + 1
+            page_total = (len(lines) + page_size - 1) // page_size
+            embed = howlbert_embed(
+                f"Your Wolves ({page_num}/{page_total})",
+                "\n".join(chunk),
+            )
+            embed.set_footer(text=footer)
+            pages.append(embed)
+        view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
+        await interaction.response.send_message(embed=pages[0], view=view, ephemeral=True)
+
+    async def _own_wolf_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        return await self._switchwolf_autocomplete(interaction, current)
 
     async def _switchwolf_autocomplete(
         self,
         interaction: discord.Interaction,
         current: str,
     ) -> list[app_commands.Choice[str]]:
-        rows = db.list_user_wolves(interaction.user.id)
+        rows = sorted(
+            db.list_user_wolves(interaction.user.id),
+            key=lambda w: w["wolf_name"].lower(),
+        )
+        needle = current.lower()
         choices = []
         for w in rows:
-            if current and current.lower() not in w["wolf_name"].lower():
+            if needle and needle not in w["wolf_name"].lower():
                 continue
             choices.append(app_commands.Choice(name=w["wolf_name"], value=w["wolf_name"]))
         return choices[:25]
@@ -709,15 +741,21 @@ class Profile(commands.Cog):
 
 
     @app_commands.command(name="profile", description="View a wolf's profile or character sheet.")
-    @app_commands.describe(member="The wolf to look up (defaults to you)", sheet="Show lore sheet (appearance, backstory)")
+    @app_commands.describe(
+        member="The wolf to look up (defaults to you)",
+        sheet="Show lore sheet (appearance, backstory)",
+        own_wolf="One of your other wolves (sheet only; defaults to active wolf)",
+    )
+    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
     async def profile(
         self,
         interaction: discord.Interaction,
         member: discord.Member | None = None,
         sheet: bool = False,
+        own_wolf: str | None = None,
     ):
         if sheet:
-            await self._bio(interaction, member)
+            await self._bio(interaction, member, own_wolf=own_wolf)
             return
 
         target = member or interaction.user
@@ -751,6 +789,12 @@ class Profile(commands.Cog):
 
 
         embed = howlbert_embed(user["wolf_name"])
+        possess = db.get_possess_session(interaction.user.id)
+        if possess and target == interaction.user:
+            embed.description = (
+                f"_Admin steering **{user['wolf_name']}** "
+                f"(owner <@{possess['owner_discord_id']}>) · `/wolfadmin release` to stop._"
+            )
 
         embed.set_thumbnail(url=target.display_avatar.url)
 
@@ -848,14 +892,13 @@ class Profile(commands.Cog):
                 hp_line += f"\n_(exhaustion cap {cap}; base {user['max_hp']})_"
             embed.add_field(name="HP", value=hp_line, inline=True)
 
-        if "skill_proficiencies" in user.keys():
-            from engine.character import format_skill_proficiencies_line
+        from engine.character_traits import format_traits_for_profile, format_skill_strain_line
 
-            embed.add_field(
-                name="Skills",
-                value=format_skill_proficiencies_line(user),
-                inline=False,
-            )
+        strain_line = format_skill_strain_line(user)
+        if strain_line:
+            embed.add_field(name="Practice Strain", value=strain_line, inline=False)
+
+        traits_text = format_traits_for_profile(user)
 
         if wolf_role in ROLE_FEATURES:
             from engine.role_features import bonus_feature_label
@@ -866,9 +909,6 @@ class Profile(commands.Cog):
                 role_text += f"\n**Bonus feature:** {bonus}"
             embed.add_field(name="Role Feature", value=role_text, inline=False)
 
-        from engine.character_traits import format_traits_for_profile
-
-        traits_text = format_traits_for_profile(user)
         if traits_text:
             if len(traits_text) > 1024:
                 traits_text = traits_text[:1021] + "…"
@@ -970,14 +1010,46 @@ class Profile(commands.Cog):
         view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
         await interaction.response.send_message(embed=pages[0], view=view)
 
-    async def _bio(self, interaction: discord.Interaction, member: discord.Member | None = None):
-        target = member or interaction.user
-        user = db.get_user(target.id)
+    async def _bio(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member | None = None,
+        *,
+        own_wolf: str | None = None,
+    ):
+        if member and own_wolf:
+            embed = howlbert_embed(
+                "Pick One",
+                "Use **member** for another player's active wolf, or **own_wolf** for one of yours — not both.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        if own_wolf:
+            match = db.find_user_wolf(interaction.user.id, own_wolf)
+            if not match:
+                embed = howlbert_embed(
+                    "Not Found",
+                    f"No wolf named **{own_wolf}** on your account. Check `/wolves`.",
+                    color=ERROR_COLOR,
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+            user = db.get_user_by_id(match["id"])
+            title_name = user["wolf_name"]
+            avatar = interaction.user.display_avatar.url
+        else:
+            target = member or interaction.user
+            user = db.get_user(target.id)
+            title_name = user["wolf_name"] if user else ""
+            avatar = target.display_avatar.url
+
         if not user:
             message = (
                 "You haven't registered yet. Use `/register` to create your wolf."
-                if target == interaction.user
-                else f"{target.display_name} hasn't registered a wolf yet."
+                if not member and not own_wolf
+                else f"{(member or interaction.user).display_name} hasn't registered a wolf yet."
             )
             embed = howlbert_embed("No Profile Found", message, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -987,14 +1059,14 @@ class Profile(commands.Cog):
         if not fields:
             embed = howlbert_embed(
                 "No Lore Saved",
-                f"**{user['wolf_name']}** has no character sheet on file yet.",
+                f"**{title_name}** has no character sheet on file yet.",
                 color=ERROR_COLOR,
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        embed = howlbert_embed(f"{user['wolf_name']}; Character Sheet")
-        embed.set_thumbnail(url=target.display_avatar.url)
+        embed = howlbert_embed(f"{title_name}; Character Sheet")
+        embed.set_thumbnail(url=avatar)
         for name, value in fields:
             embed.add_field(name=name, value=value, inline=False)
         await interaction.response.send_message(embed=embed)

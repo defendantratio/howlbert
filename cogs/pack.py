@@ -5,13 +5,18 @@ from discord import app_commands
 from discord.ext import commands
 
 import database as db
-from engine.pack_leadership import can_resolve_war, is_pack_alpha, is_pack_officer
+from engine.pack_leadership import (
+    can_act_as_pack_alpha,
+    can_act_as_pack_officer,
+    can_resolve_war,
+)
 from engine.pack_food import (
     deposit_to_pack_stash,
     format_pack_stash_line,
     run_feedall,
     withdraw_from_pack_stash,
 )
+from engine.thirst import run_drinkall
 from engine.pack_unity import (
     compute_howl_unity_gain,
     format_unity_meter,
@@ -25,14 +30,15 @@ from config import CURRENCY_LABEL, MAX_PACK_TAX_RATE
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.permissions import is_howlbert_admin
 
 
-def _is_pack_officer(user, pack) -> bool:
-    return is_pack_officer(user, pack)
+def _is_pack_officer(user, pack, *, discord_admin: bool = False) -> bool:
+    return can_act_as_pack_officer(user, pack, discord_admin=discord_admin)
 
 
-def _is_alpha(user, pack) -> bool:
-    return is_pack_alpha(user, pack)
+def _is_alpha(user, pack, *, discord_admin: bool = False) -> bool:
+    return can_act_as_pack_alpha(user, pack, discord_admin=discord_admin)
 
 
 async def _personal_prey_autocomplete(
@@ -159,7 +165,7 @@ class Pack(commands.Cog):
         if not user:
             return
 
-        if not _is_pack_officer(user, pack):
+        if not _is_pack_officer(user, pack, discord_admin=is_howlbert_admin(interaction)):
             embed = howlbert_embed("Officers Only", "Alpha or Advisor role required.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
@@ -210,9 +216,13 @@ class Pack(commands.Cog):
 
         lines = [format_pack_stash_line(s, world["day_number"]) for s in stacks]
         fed_day = int(pack["last_feedall_day"]) if "last_feedall_day" in pack.keys() else 0
-        fed_note = " · communal meal used this sunrise" if fed_day >= world["day_number"] else ""
+        drank_day = int(pack["last_drinkall_day"]) if "last_drinkall_day" in pack.keys() else 0
+        fed_note = " · fed this sunrise" if fed_day >= world["day_number"] else ""
+        drank_note = " · drank this sunrise" if drank_day >= world["day_number"] else ""
         embed = howlbert_embed(f"{pack['name']}; Food Reserve", "\n".join(lines))
-        embed.set_footer(text=f"`/packlife action:feedall` feeds the whole den{fed_note}")
+        embed.set_footer(
+            text=f"Alpha: `/packlife action:feedall` · `action:drinkall`{fed_note}{drank_note}"
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @stash.command(name="deposit", description="Add a carcass from your hoard to the den reserve.")
@@ -271,18 +281,21 @@ class Pack(commands.Cog):
 
     @app_commands.command(
         name="packlife",
-        description="Feed the whole den or raise a pack howl.",
+        description="Feed or water the whole den, or raise a pack howl.",
     )
-    @app_commands.describe(action="feedall or howl", message="Optional howl message")
+    @app_commands.describe(action="feedall, drinkall, or howl", message="Optional howl message")
     @app_commands.choices(
         action=[
             app_commands.Choice(name="Feed all packmates", value="feedall"),
+            app_commands.Choice(name="Drink at creek (all)", value="drinkall"),
             app_commands.Choice(name="Pack howl", value="howl"),
         ]
     )
     async def packlife(self, interaction: discord.Interaction, action: str, message: str | None = None):
         if action == "feedall":
             await self._feedall(interaction)
+        elif action == "drinkall":
+            await self._drinkall(interaction)
         elif action == "howl":
             await self._howl(interaction, message)
 
@@ -295,9 +308,32 @@ class Pack(commands.Cog):
             return
 
         world = db.get_world(interaction.guild.id)
-        ok, msg, _ = run_feedall(pack["id"], world["day_number"], caller=user)
+        ok, msg, _ = run_feedall(
+            pack["id"],
+            world["day_number"],
+            caller=user,
+            discord_admin=is_howlbert_admin(interaction),
+        )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed("Feed All", msg, color=color))
+
+    async def _drinkall(self, interaction: discord.Interaction):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        world = db.get_world(interaction.guild.id)
+        ok, msg, _ = run_drinkall(
+            pack["id"],
+            world["day_number"],
+            caller=user,
+            discord_admin=is_howlbert_admin(interaction),
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(embed=howlbert_embed("Drink All", msg, color=color))
 
     @pack.command(name="taxrate", description="View your pack's hunt tax rate.")
     async def pack_taxrate(self, interaction: discord.Interaction):
@@ -318,7 +354,7 @@ class Pack(commands.Cog):
         if not user:
             return
 
-        if not _is_alpha(user, pack):
+        if not _is_alpha(user, pack, discord_admin=is_howlbert_admin(interaction)):
             embed = howlbert_embed(
                 "Alpha Only",
                 "Your active wolf must have the **Alpha** role and lead this pack.",
@@ -362,7 +398,7 @@ class Pack(commands.Cog):
         if not user or not interaction.guild:
             return
 
-        if not _is_alpha(user, pack):
+        if not _is_alpha(user, pack, discord_admin=is_howlbert_admin(interaction)):
             embed = howlbert_embed(
                 "Alpha Only",
                 "Your active wolf must have the **Alpha** role and lead this pack.",
@@ -420,7 +456,7 @@ class Pack(commands.Cog):
         if not user or not interaction.guild:
             return
 
-        if not can_resolve_war(user, pack):
+        if not can_resolve_war(user, pack, discord_admin=is_howlbert_admin(interaction)):
             embed = howlbert_embed(
                 "Denied",
                 "Only the pack **Alpha** or a **Diplomat** can resolve a war.",

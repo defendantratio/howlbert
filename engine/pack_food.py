@@ -142,11 +142,21 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
     return True, msg + disease_note
 
 
-def run_feedall(pack_id: int, day: int, *, caller=None) -> tuple[bool, str, int]:
+def run_feedall(
+    pack_id: int,
+    day: int,
+    *,
+    caller=None,
+    discord_admin: bool = False,
+) -> tuple[bool, str, int]:
     """Feed every living packmate one use from the den reserve. Once per pack per sunrise."""
     pack = db.get_pack(pack_id)
     if not pack:
         return False, "Pack not found.", 0
+    from engine.pack_leadership import PACK_BULK_ALPHA_ONLY_MSG, can_run_pack_bulk_action
+
+    if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
+        return False, PACK_BULK_ALPHA_ONLY_MSG, 0
     if int(pack["last_feedall_day"]) >= day:
         return False, "The den already shared a communal meal this sunrise.", 0
 
