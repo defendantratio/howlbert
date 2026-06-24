@@ -113,7 +113,7 @@ on large prey or ambushes, party wolves join combat on initiative (+1 attack per
 | **+5 bones on `/bones action:daily`** | while actively boosting                    |
 
 
-use `**/patron**` to check status. the bot needs **manage server** to track invites.
+use `/patron` to check status. the bot needs **manage server** to track invites.
 
 ### donations and shop
 
