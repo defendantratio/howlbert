@@ -118,8 +118,8 @@ use `**/patron**` to check status. the bot needs **manage server** to track invi
 ### donations and shop
 
 ✦ ko-fi tips and memberships can grant bones when webhook is configured  
-✦ `**/redeem`** for one-time gift codes when configured  
-✦ players: `**/patron`** and `**/help topic:patron**` in discord
+✦ `/redeem` for one-time gift codes when configured  
+✦ players: `/patron` and `/help topic:patron` in discord
 
 ## rpg system
 
