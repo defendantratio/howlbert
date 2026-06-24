@@ -35,7 +35,7 @@ the bot only runs while its process is alive. closing the terminal stops slash c
 ✦ each great pack shares one treasury, tax, territory, and wars  
 ✦ **quests** progress from hunts, patrols, deposits, etc.; turn in with `/quest action:complete`  
 ✦ **mood / hunger / thirst** decay each sunrise; low stats block hunts and add exhaustion  
-✦ **basil rules** for attributes, skill checks, combat, herbs, disease, and pups; use `/help` in discord for the player guide
+✦ **basil'S rules** for attributes, skill checks, combat, herbs, disease, and pups; use `/help` in discord for the player guide
 
 ## commands
 
