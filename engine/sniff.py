@@ -124,7 +124,6 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         if (
             border_odds > 0
             and random.random() < border_odds
-            and not db.get_active_encounter(interaction.channel_id)
         ):
             from engine.border_combat import start_border_cat_fight
 

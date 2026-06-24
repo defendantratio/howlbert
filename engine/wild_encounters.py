@@ -109,8 +109,6 @@ def wild_encounter_cooldown_minutes(user) -> int:
 
 
 def can_trigger_wild_encounter(user, channel_id: int) -> bool:
-    if db.get_active_encounter(channel_id):
-        return False
     return wild_encounter_cooldown_minutes(user) == 0
 
 

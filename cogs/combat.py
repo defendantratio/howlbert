@@ -86,7 +86,7 @@ async def finish_attack_turn(
 ) -> None:
     db.advance_combat_turn(enc_id)
     db.clear_combat_target(interaction.user.id, enc_id)
-    enc = db.get_active_encounter(interaction.channel_id)
+    enc = db.get_encounter(enc_id)
     embed = howlbert_embed(title, body, color=SUCCESS_COLOR if hit else ERROR_COLOR)
     embed.add_field(name="Target HP", value=f"{new_hp}/{defender_f['max_hp']}", inline=True)
     embed.set_footer(text=_turn_footer_static(enc, bot) if enc else "Combat ended")
@@ -589,39 +589,38 @@ def _turn_footer_static(enc, bot: commands.Bot) -> str:
     return f"Round {enc['round']}; {name}'s turn"
 
 
-def _recruitment_block(enc) -> tuple[str, str] | None:
-    """Return (title, body) when join/npc cannot proceed; None if recruiting is open."""
+def _join_block(enc) -> tuple[str, str] | None:
+    """Return (title, body) when join/npc cannot proceed; None if join is allowed."""
     if not enc:
         return (
-            "No Recruitment",
-            "No open encounter here. Start one with `/combat start`.",
+            "No Open Fight",
+            "No open fight here. `/combat start` opens a new one, or `/combat list` to see fights.",
         )
-    if enc["status"] == "active":
+    if enc["status"] not in ("recruiting", "active"):
         return (
-            "Combat Underway",
-            "This fight has already begun; new wolves can't join mid-encounter.\n"
-            "Use `/combat status` for turn order, or `/combat end` to close it.",
-        )
-    if enc["status"] != "recruiting":
-        return (
-            "No Recruitment",
-            f"Encounter status is **{enc['status']}**; can't join.",
+            "No Open Fight",
+            f"Fight **#{enc['id']}** status is **{enc['status']}**; can't join.",
         )
     return None
 
 
-def _existing_encounter_message(enc) -> tuple[str, str]:
-    if enc["status"] == "recruiting":
-        return (
-            "Recruitment Open",
-            "An encounter is recruiting here. Others can `/combat join` or `/combat npc`.\n"
-            "When ready: `/combat begin`.",
-        )
-    return (
-        "Combat Active",
-        "A fight is already **active** in this channel.\n"
-        "Use `/combat status` for turn order, or `/combat end` to close it.",
-    )
+async def _encounter_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[int]]:
+    if not interaction.channel_id:
+        return []
+    needle = current.strip().lower()
+    choices: list[app_commands.Choice[int]] = []
+    for enc in db.list_active_encounters(interaction.channel_id):
+        label = f"#{enc['id']} ({enc['status']})"
+        if needle and needle not in label.lower():
+            continue
+        choices.append(app_commands.Choice(name=label[:100], value=int(enc["id"])))
+    return choices[:25]
+
+
+def _encounter_tag(enc) -> str:
+    return f" · fight **#{enc['id']}**"
 
 
 class Combat(commands.Cog):
@@ -632,6 +631,36 @@ class Combat(commands.Cog):
         self.bot.add_dynamic_items(*COMBAT_DYNAMIC_ITEMS)
 
     combat = app_commands.Group(name="combat", description="Basil combat; initiative, bite, claw.")
+
+    def _resolve_encounter(
+        self,
+        channel_id: int | None,
+        discord_id: int | None,
+        encounter_id: int | None,
+        *,
+        require_membership: bool = False,
+        joinable_only: bool = False,
+        require_recruiting: bool = False,
+    ) -> tuple[object | None, str | None]:
+        if not channel_id:
+            return None, "Use this in a server channel."
+        return db.resolve_combat_encounter(
+            channel_id,
+            discord_id,
+            encounter_id,
+            require_membership=require_membership,
+            joinable_only=joinable_only,
+            require_recruiting=require_recruiting,
+        )
+
+    async def _send_encounter_error(
+        self, interaction: discord.Interaction, err: str, *, deferred: bool = False
+    ) -> None:
+        embed = howlbert_embed("Which Fight?", err, color=ERROR_COLOR)
+        if deferred:
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _require_user(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -694,13 +723,6 @@ class Combat(commands.Cog):
 
         await interaction.response.defer()
 
-        existing = db.get_active_encounter(interaction.channel_id)
-        if existing:
-            title, body = _existing_encounter_message(existing)
-            embed = howlbert_embed(title, body, color=ERROR_COLOR)
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
-
         enc_id = db.create_encounter(
             interaction.guild.id, interaction.channel_id, interaction.user.id
         )
@@ -713,9 +735,10 @@ class Combat(commands.Cog):
         )
         embed = howlbert_embed(
             "Combat Started",
-            f"**{user['wolf_name']}** enters the fray.\n"
-            "Others: `/combat join` · Random ambush: `/combat encounter`\n"
-            "Story fight: `/combat npc` · When ready: `/combat begin`",
+            f"Fight **#{enc_id}** opened; **{user['wolf_name']}** enters the fray.\n"
+            "Others: `/combat join` (works mid-fight too) · `/combat encounter` for ambush\n"
+            "Story threat: `/combat npc` · `/combat list` if several fights share a channel\n"
+            "When ready: `/combat begin`",
             color=SUCCESS_COLOR,
         )
         await interaction.followup.send(embed=embed)
@@ -741,13 +764,6 @@ class Combat(commands.Cog):
 
         await interaction.response.defer()
 
-        existing = db.get_active_encounter(interaction.channel_id)
-        if existing:
-            title, body = _existing_encounter_message(existing)
-            embed = howlbert_embed(title, body, color=ERROR_COLOR)
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
-
         from engine.wild_encounters import (
             ambush_embed,
             can_trigger_wild_encounter,
@@ -757,9 +773,7 @@ class Combat(commands.Cog):
 
         if not can_trigger_wild_encounter(user, interaction.channel_id):
             wait = wild_encounter_cooldown_minutes(user)
-            if db.get_active_encounter(interaction.channel_id):
-                msg = "A fight is already active in this channel."
-            elif wait:
+            if wait:
                 msg = f"Recent ambush; wait **{wait}** min before forcing another encounter."
             else:
                 msg = "Cannot start an encounter here right now."
@@ -773,13 +787,18 @@ class Combat(commands.Cog):
             channel_id=interaction.channel_id,
         )
         embed = ambush_embed(template_key, flavor)
+        embed.description = (embed.description or "") + f"\n\nFight **#{enc_id}**"
         enc = db.get_encounter(enc_id)
         embed.set_footer(text=self._turn_footer(enc))
         view = make_combat_view(enc_id, self.bot)
         await interaction.followup.send(embed=embed, view=view)
 
-    @combat.command(name="join", description="Join the active combat in this channel.")
-    async def combat_join(self, interaction: discord.Interaction):
+    @combat.command(name="join", description="Join a fight in this channel (recruiting or mid-encounter).")
+    @app_commands.describe(encounter="Fight ID from /combat list (optional if only one is open)")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
+    async def combat_join(
+        self, interaction: discord.Interaction, encounter: int | None = None
+    ):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -794,8 +813,17 @@ class Combat(commands.Cog):
 
         await interaction.response.defer(ephemeral=True)
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        blocked = _recruitment_block(enc)
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            joinable_only=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err, deferred=True)
+            return
+
+        blocked = _join_block(enc)
         if blocked:
             title, body = blocked
             embed = howlbert_embed(title, body, color=ERROR_COLOR)
@@ -816,6 +844,7 @@ class Combat(commands.Cog):
         )
         world = db.get_world(interaction.guild.id)
         from engine.role_features import apply_scout_combat_hidden
+        from engine.combat import roll_initiative
 
         if apply_scout_combat_hidden(
             user,
@@ -826,17 +855,26 @@ class Combat(commands.Cog):
             hidden_note = " **Unseen Paw**; hidden in the obscured air."
         else:
             hidden_note = ""
+
+        init_note = ""
+        if enc["status"] == "active":
+            _, _, total = roll_initiative(user)
+            db.insert_fighter_into_active_encounter(enc["id"], fighter_id, total)
+            init_note = f"\nInitiative **{total}**; slotted into turn order."
+
         embed = howlbert_embed(
             "Joined Combat",
-            f"**{user['wolf_name']}** joins (HP {user['hp']}/{user['max_hp']}).{hidden_note}",
+            f"**{user['wolf_name']}** joins fight **#{enc['id']}** "
+            f"(HP {user['hp']}/{user['max_hp']}).{hidden_note}{init_note}",
             color=SUCCESS_COLOR,
         )
         await interaction.followup.send(embed=embed)
 
-    @combat.command(name="npc", description="Add a predator, hearth-hound, or clan cat from the bestiary (during recruitment).")
+    @combat.command(name="npc", description="Add a predator, hearth-hound, or clan cat from the bestiary.")
     @app_commands.describe(
         category="Threat category",
         threat="Creature to add",
+        encounter="Fight ID (optional if you're in only one recruiting fight)",
     )
     @app_commands.choices(
         category=[
@@ -849,16 +887,28 @@ class Combat(commands.Cog):
             for key, data in BESTIARY_NPCS.items()
         ],
     )
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
     async def combat_npc(
         self,
         interaction: discord.Interaction,
         threat: str,
         category: str | None = None,
+        encounter: int | None = None,
     ):
         await interaction.response.defer(ephemeral=True)
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        blocked = _recruitment_block(enc)
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+            require_recruiting=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err, deferred=True)
+            return
+
+        blocked = _join_block(enc)
         if blocked:
             title, body = blocked
             embed = howlbert_embed(title, body, color=ERROR_COLOR)
@@ -989,11 +1039,20 @@ class Combat(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @combat.command(name="begin", description="Roll initiative and begin turns.")
-    async def combat_begin(self, interaction: discord.Interaction):
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc or enc["status"] != "recruiting":
-            embed = howlbert_embed("Cannot Begin", "No recruiting encounter in this channel.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+    @app_commands.describe(encounter="Fight ID (optional if you're in only one recruiting fight)")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
+    async def combat_begin(
+        self, interaction: discord.Interaction, encounter: int | None = None
+    ):
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+            require_recruiting=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err)
             return
 
         fighters = db.get_combat_fighters(enc["id"])
@@ -1026,8 +1085,12 @@ class Combat(commands.Cog):
         db.start_combat_encounter(enc["id"], order)
 
         lines = [f"**{name}**; {die} + {mod} = **{total}**" for _, name, die, mod, total in rolls]
-        enc = db.get_active_encounter(interaction.channel_id)
-        embed = howlbert_embed("Initiative", "\n".join(lines), color=SUCCESS_COLOR)
+        enc = db.get_encounter(enc["id"])
+        embed = howlbert_embed(
+            "Initiative",
+            "\n".join(lines) + _encounter_tag(enc),
+            color=SUCCESS_COLOR,
+        )
         embed.set_footer(text=self._turn_footer(enc))
         view = make_combat_view(enc["id"], self.bot)
         await interaction.followup.send(embed=embed, view=view)
@@ -1036,6 +1099,7 @@ class Combat(commands.Cog):
     @app_commands.describe(
         target="Fighter to attack; wolves and NPCs in this encounter",
         action="Attack type",
+        encounter="Fight ID (optional if you're in only one)",
     )
     @app_commands.choices(
         action=[
@@ -1043,19 +1107,33 @@ class Combat(commands.Cog):
             app_commands.Choice(name="Claw (DEX vs DEX)", value="claw"),
         ]
     )
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
     async def combat_attack(
         self,
         interaction: discord.Interaction,
         target: str,
         action: str = "bite",
+        encounter: int | None = None,
     ):
         user = await self._require_user(interaction)
         if not user:
             return
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc or enc["status"] != "active":
-            embed = howlbert_embed("No Active Combat", color=ERROR_COLOR)
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err)
+            return
+        if enc["status"] != "active":
+            embed = howlbert_embed(
+                "Not Started",
+                f"Fight **#{enc['id']}** is still recruiting; `/combat begin` first.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -1115,14 +1193,27 @@ class Combat(commands.Cog):
         name="npcattack",
         description="Run the active NPC's natural attack (anyone in the fight can GM this).",
     )
-    @app_commands.describe(target="Wolf for the NPC to attack")
+    @app_commands.describe(
+        target="Wolf for the NPC to attack",
+        encounter="Fight ID (optional if you're in only one)",
+    )
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
     async def combat_npcattack(
         self,
         interaction: discord.Interaction,
         target: str,
+        encounter: int | None = None,
     ):
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc or enc["status"] != "active":
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err)
+            return
+        if enc["status"] != "active":
             embed = howlbert_embed("No Active Combat", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
@@ -1144,13 +1235,25 @@ class Combat(commands.Cog):
         name="yield",
         description="Surrender and leave the fight; may cost standing if caught (35%).",
     )
-    async def combat_yield(self, interaction: discord.Interaction):
+    @app_commands.describe(encounter="Fight ID (optional if you're in only one)")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
+    async def combat_yield(
+        self, interaction: discord.Interaction, encounter: int | None = None
+    ):
         user = await self._require_user(interaction)
         if not user:
             return
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc or enc["status"] not in ("recruiting", "active"):
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err)
+            return
+        if enc["status"] not in ("recruiting", "active"):
             embed = howlbert_embed("No Combat", "There is no fight to yield from.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
@@ -1172,19 +1275,28 @@ class Combat(commands.Cog):
             )
             return
 
-        enc = db.get_active_encounter(interaction.channel_id)
+        enc = db.get_encounter(enc["id"])
         if enc and enc["status"] == "active":
             body += f"\n\n{self._turn_footer(enc)}"
         embed = howlbert_embed(title, body, color=color)
         await interaction.response.send_message(embed=embed)
 
+    def _encounter_for_autocomplete(self, interaction: discord.Interaction):
+        if not interaction.channel_id or not interaction.user:
+            return None
+        enc, _ = db.resolve_combat_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            None,
+            require_membership=True,
+        )
+        return enc
+
     @combat_attack.autocomplete("target")
     async def combat_attack_target_autocomplete(
         self, interaction: discord.Interaction, current: str
     ):
-        if not interaction.channel_id:
-            return []
-        enc = db.get_active_encounter(interaction.channel_id)
+        enc = self._encounter_for_autocomplete(interaction)
         if not enc or enc["status"] != "active":
             return []
         attacker = db.resolve_player_fighter(enc["id"], interaction.user.id)
@@ -1198,7 +1310,7 @@ class Combat(commands.Cog):
     async def combat_npcattack_target_autocomplete(
         self, interaction: discord.Interaction, current: str
     ):
-        enc = db.get_active_encounter(interaction.channel_id)
+        enc = self._encounter_for_autocomplete(interaction)
         if not enc or enc["status"] != "active":
             return []
         if not db.player_in_encounter(enc["id"], interaction.user.id):
@@ -1226,19 +1338,9 @@ class Combat(commands.Cog):
             choices.append(app_commands.Choice(name=label[:100], value=str(fighter["id"])))
         return choices[:25]
 
-    @combat.command(name="status", description="Show combat HP and turn order.")
-    async def combat_status(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc:
-            embed = howlbert_embed("No Combat", "No encounter in this channel.", color=ERROR_COLOR)
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
-
-        fighters = db.get_combat_fighters(enc["id"])
+    def _fighter_status_lines(self, enc) -> list[str]:
         lines = []
-        for f in fighters:
+        for f in db.get_combat_fighters(enc["id"]):
             line = (
                 f"**{fighter_name(f, self.bot)}**; {f['hp']}/{f['max_hp']} HP"
                 + (f" (init {f['initiative']})" if f["initiative"] else "")
@@ -1251,12 +1353,97 @@ class Combat(commands.Cog):
             if flags:
                 line += f" · _{flags}_"
             lines.append(line)
-        footer = f"Status: {enc['status']}"
+        return lines
+
+    @combat.command(name="list", description="List open fights in this channel.")
+    async def combat_list(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        encs = db.list_active_encounters(interaction.channel_id)
+        if not encs:
+            embed = howlbert_embed(
+                "No Open Fights",
+                "No recruiting or active fights here. `/combat start` opens a new one.",
+                color=ERROR_COLOR,
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        blocks: list[str] = []
+        for enc in encs:
+            header = f"**#{enc['id']}** · {enc['status']}"
+            if enc["status"] == "active":
+                header += f" · round {enc['round']}"
+            fighter_lines = self._fighter_status_lines(enc)
+            blocks.append(header + "\n" + ("\n".join(fighter_lines) if fighter_lines else "_No fighters_"))
+        embed = howlbert_embed("Open Fights", "\n\n".join(blocks))
+        embed.set_footer(text="Pass encounter:# on /combat join, status, attack, end, …")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @combat.command(name="status", description="Show combat HP and turn order.")
+    @app_commands.describe(encounter="Fight ID (optional; lists all if omitted and you're not in one)")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
+    async def combat_status(
+        self, interaction: discord.Interaction, encounter: int | None = None
+    ):
+        await interaction.response.defer()
+
+        if encounter is not None:
+            enc, err = self._resolve_encounter(
+                interaction.channel_id,
+                interaction.user.id if interaction.user else None,
+                encounter,
+            )
+            if err:
+                await self._send_encounter_error(interaction, err, deferred=True)
+                return
+            encs = [enc]
+        else:
+            mine = (
+                db.player_encounters_in_channel(interaction.channel_id, interaction.user.id)
+                if interaction.user
+                else []
+            )
+            if len(mine) == 1:
+                encs = mine
+            elif mine:
+                ids = db.format_encounter_choices(mine)
+                await self._send_encounter_error(
+                    interaction,
+                    f"You're in multiple fights ({ids}). Pass `encounter:` or use `/combat list`.",
+                    deferred=True,
+                )
+                return
+            else:
+                encs = db.list_active_encounters(interaction.channel_id)
+                if not encs:
+                    embed = howlbert_embed(
+                        "No Combat",
+                        "No open fights in this channel.",
+                        color=ERROR_COLOR,
+                    )
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    return
+                if len(encs) > 1:
+                    embed = howlbert_embed(
+                        "Several Fights",
+                        db.format_encounter_choices(encs) + "\n\nUse `/combat list` or `encounter:` on status.",
+                        color=ERROR_COLOR,
+                    )
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    return
+
+        enc = encs[0]
+        lines = self._fighter_status_lines(enc)
+        footer = f"Fight #{enc['id']} · {enc['status']}"
         if enc["status"] == "active":
-            footer = self._turn_footer(enc)
-        embed = howlbert_embed("Combat Status", "\n".join(lines) or "No fighters.")
+            footer = self._turn_footer(enc) + _encounter_tag(enc)
+        embed = howlbert_embed(
+            f"Combat Status · #{enc['id']}",
+            "\n".join(lines) or "No fighters; fight will auto-close.",
+            color=ERROR_COLOR if not lines else SUCCESS_COLOR,
+        )
         embed.set_footer(text=footer)
-        view = make_combat_view(enc["id"], self.bot) if enc["status"] == "active" else None
+        view = make_combat_view(enc["id"], self.bot) if enc["status"] == "active" and lines else None
         await interaction.followup.send(embed=embed, view=view)
 
     @combat.command(name="guide", description="Wolf combat fundamentals, vulnerable areas, and maneuvers.")
@@ -1286,6 +1473,7 @@ class Combat(commands.Cog):
     @app_commands.describe(
         target="Fighter to target",
         maneuver="Combat maneuver",
+        encounter="Fight ID (optional if you're in only one)",
     )
     @app_commands.choices(
         maneuver=[
@@ -1293,18 +1481,28 @@ class Combat(commands.Cog):
             for m in sorted(COMBAT_MANEUVERS.values(), key=lambda x: x["name"])[:25]
         ]
     )
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
     async def combat_maneuver(
         self,
         interaction: discord.Interaction,
         target: str,
         maneuver: str,
+        encounter: int | None = None,
     ):
         user = await self._require_user(interaction)
         if not user:
             return
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc or enc["status"] != "active":
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id,
+            encounter,
+            require_membership=True,
+        )
+        if err:
+            await self._send_encounter_error(interaction, err)
+            return
+        if enc["status"] != "active":
             embed = howlbert_embed("No Active Combat", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
@@ -1364,7 +1562,7 @@ class Combat(commands.Cog):
     async def combat_maneuver_target_autocomplete(
         self, interaction: discord.Interaction, current: str
     ):
-        enc = db.get_active_encounter(interaction.channel_id)
+        enc = self._encounter_for_autocomplete(interaction)
         if not enc or enc["status"] != "active":
             return []
         attacker = db.resolve_player_fighter(enc["id"], interaction.user.id)
@@ -1372,20 +1570,35 @@ class Combat(commands.Cog):
             return []
         return self._target_choices(enc, exclude_id=attacker["id"], current=current, players_only=False)
 
-    @combat.command(name="end", description="End combat and sync HP to profiles.")
-    async def combat_end(self, interaction: discord.Interaction):
+    @combat.command(name="end", description="End a fight and sync HP to profiles.")
+    @app_commands.describe(encounter="Fight ID (optional if you're in only one)")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete)
+    async def combat_end(
+        self, interaction: discord.Interaction, encounter: int | None = None
+    ):
         await interaction.response.defer(ephemeral=True)
 
-        enc = db.get_active_encounter(interaction.channel_id)
-        if not enc:
-            embed = howlbert_embed("No Combat", color=ERROR_COLOR)
-            await interaction.followup.send(embed=embed, ephemeral=True)
+        enc, err = self._resolve_encounter(
+            interaction.channel_id,
+            interaction.user.id if interaction.user else None,
+            encounter,
+            require_membership=(encounter is None and bool(interaction.user)),
+        )
+        if err and encounter is None:
+            enc, err = self._resolve_encounter(
+                interaction.channel_id,
+                None,
+                None,
+                require_membership=False,
+            )
+        if err:
+            await self._send_encounter_error(interaction, err, deferred=True)
             return
 
         db.end_encounter(enc["id"])
         embed = howlbert_embed(
             "Combat Ended",
-            "HP synced to wolf profiles. Wounds and conditions persist.",
+            f"Fight **#{enc['id']}** closed. HP synced to wolf profiles; wounds and conditions persist.",
             color=SUCCESS_COLOR,
         )
         await interaction.followup.send(embed=embed)
