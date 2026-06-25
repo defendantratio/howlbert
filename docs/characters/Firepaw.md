@@ -19,27 +19,27 @@ Despite blindness she is among the most capable apprentices in the den. Hearing 
 
 ## Backstory
 
-Born in Thistlehide without sight. Elders whispered she would never hunt or serve the den. Rejection hardened her pride instead of breaking it. She apprenticed under **Sypha**, the Fur-Giver, learning plants by texture and wound-work by touch when others demanded eyes she does not have.
+Born in Thistlehide without sight. Elders whispered she would never hunt or serve the den. Rejection hardened her pride instead of breaking it. She apprenticed under Sypha, the Fur-Giver, learning plants by texture and wound-work by touch when others demanded eyes she does not have.
 
 She is still a Medic Apprentice; the pack tests her temper as often as her skill. She refuses pity and sometimes takes reckless risks to prove she belongs at the healer's shelves.
 
 ## Skills
 
-**Touch Herblore (Intelligence):** Identifies Thistlehide herbs by scent and texture; rarely mis-picks under pressure.
+**Touch Herblore (Herblore +4):** Identifies Thistlehide herbs by scent and texture; rarely mis-picks under pressure.
 
-**Acute Hearing (Wisdom):** Tracks movement in brush and snow; reads pain and fear in breathing.
+**Acute Hearing (Tracking +4, Medicine +4):** Tracks movement in brush and snow; reads pain and fear in breathing.
 
-**Wound-Tending (Wisdom):** Steady, gentle hands when treating; dressings placed by touch.
+**Gentle Hands (Medicine +3, +1 HP on treat):** Steady, gentle hands when treating; dressings placed by touch hold clean.
 
 ## Weaknesses
 
-**Total Blindness:** Cannot hunt by sight or read facial tells; visual survival tasks suffer.
+**Total Blindness (Wisdom -3):** Cannot hunt by sight or read facial tells; disadvantage on most sight-linked checks; hunting payout ×0.45. Medicine, herblore, and stealth exempt.
 
-**Defensive Temper:** Snaps and snarls when doubted; reacts before thinking in tense moments.
+**Defensive Temper (Charisma -3):** Snaps and snarls when doubted; reacts before thinking in tense moments.
 
-**Refuses Help:** Struggles to trust others; teamwork frays when she will not accept aid.
+**Refuses Help (Wisdom -2):** Struggles to trust others; teamwork frays when she will not accept aid. Medicine and herblore exempt.
 
-**Pride Before Proof:** Takes unnecessary risks to prove blindness is not weakness; falters in chaos she cannot map fast enough.
+**Pride Before Proof (Strength/Hunting/Survival -2):** Takes unnecessary risks to prove blindness is not weakness; falters in chaos she cannot map fast enough.
 
 ## Statistics (Total: 18; Medic Apprentice range)
 
@@ -78,6 +78,6 @@ Firepaw flinched, ears dropping, expecting punishment. Sypha inspected the dress
 
 ## Other
 
-**Family ties:** Mentor; Sypha (Fur-Giver, alive). Pack; Thistlehide. No mate.
+**Family ties:** Mentor: Sypha (Fur-Giver, alive). No mate.
 
 **Open plots:** Book One (*The Blinking*) healer lane; earn full Medic rank; temper costs allies; Mossgaze herb rivalry; Sypha's approval vs wolves who want her benched.
