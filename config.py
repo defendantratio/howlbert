@@ -707,12 +707,35 @@ CAT_PACT_DIPLOMAT_NEGOTIATE_BONUS = 2
 CAT_PACT_FORGE_FAIL_COOLDOWN_DAYS = 3
 CAT_PACT_GIFT_TRIBUTE = 15
 CAT_PACT_GIFT_TRUST = 8
+CAT_PACT_DUP_TRUST_PER_ITEM = 2
+CAT_PACT_DUP_TRUST_MAX = 14
+CAT_PACT_BARTER_PER_DUPES = 2
+CAT_PACT_BARTER_LOOT_MAX = 6
+CAT_PACT_RECEIVE_MIN_TRUST = 35
+PACK_DUP_TRADE_MIN_RELATION = 5
+PACK_DUP_TRADE_RELATION_GAIN = 1
 CAT_PACT_TRUST_HIGH = 70
 CAT_PACT_TRUST_LOW = 35
 CAT_PACT_VIOLATION_TRUST = -30
 CAT_PACT_VIOLATION_UNITY = -4
 CAT_PACT_VIOLATION_STANDING = -3
 CAT_PACT_PATROL_TEMPLATES = frozenset({"clan_warrior", "clan_deputy"})
+# Seasonal Gathering (Warrior Cats Fourtrees truce)
+CAT_GATHERING_UNITY = 2
+CAT_GATHERING_STANDING = 1
+CAT_GATHERING_MOOD = 3
+# StarClan omens on high-trust clan receive
+CAT_PACT_STARCLAN_RECEIVE_CHANCE = 0.18
+CAT_PACT_STARCLAN_MOOD = 3
+# Firepaw plot mechanics (Book One: The Blinking)
+FIREPAW_PLOT_SNIFF_MOOD_EARLY = 2
+FIREPAW_PLOT_SNIFF_MOOD_LATE = 1
+FIREPAW_PLOT_SNIFF_STANDING = 1
+FIREPAW_PLOT_TREAT_HEAL_BONUS = 2
+FIREPAW_PLOT_TREAT_STANDING = 1
+FIREPAW_PLOT_TREAT_MOOD_SELF = 2
+FIREPAW_PLOT_OBSERVE_MOOD = 2
+FIREPAW_PLOT_OBSERVE_STRAIN_RELIEF = 2
 FISHING_BONES = (10, 22)
 
 # Pack warfare
@@ -815,6 +838,94 @@ STATIC_QUESTS = (
         "static",
         "medium",
     ),
+    (
+        "blink_border_patrol",
+        "White Omen Patrol",
+        "Walk the border while the moon is bitten; report what you scent.",
+        "patrol",
+        1,
+        45,
+        4,
+        "static",
+        "easy",
+    ),
+    (
+        "blink_river_crisis",
+        "Warm Shallows",
+        "Fish the river twice while the water runs wrong.",
+        "fishing",
+        2,
+        55,
+        5,
+        "static",
+        "medium",
+    ),
+    (
+        "blink_wind_witness",
+        "Wind Witness",
+        "Read the wind on a paranoid border sunrise.",
+        "sniff",
+        1,
+        40,
+        4,
+        "static",
+        "easy",
+    ),
+    (
+        "blink_mill_scout",
+        "Mill Scout",
+        "Range the wild and investigate what sleeps under the mill road.",
+        "explore",
+        1,
+        70,
+        6,
+        "static",
+        "medium",
+    ),
+    (
+        "blink_ash_naming",
+        "Ash Naming Howl",
+        "Sing the remembered name to the pack three sunrises.",
+        "howl",
+        3,
+        80,
+        8,
+        "static",
+        "medium",
+    ),
+    (
+        "blink_rogue_ledger",
+        "Edge Ledger",
+        "Run two scores on the border while packs blame each other (rogues).",
+        "crime",
+        2,
+        65,
+        5,
+        "static",
+        "medium",
+    ),
+    (
+        "blink_healer_listen",
+        "Ear to the Wind",
+        "Read the bitten moon by sound while The Blinking begins.",
+        "sniff",
+        1,
+        40,
+        4,
+        "static",
+        "easy",
+    ),
+    (
+        "blink_healer_touch",
+        "Healer's Touch",
+        "Treat wounds twice while the den runs hot with injuries.",
+        "treat",
+        2,
+        55,
+        5,
+        "static",
+        "medium",
+    ),
 )
 
 # Per-quest XP (account pool) and skill-rank rewards (active wolf).
@@ -828,6 +939,14 @@ QUEST_XP_REWARDS: dict[str, int] = {
     "den_gift": 1,
     "biome_wander": 1,
     "trail_seeker": 2,
+    "blink_border_patrol": 1,
+    "blink_river_crisis": 1,
+    "blink_wind_witness": 1,
+    "blink_mill_scout": 2,
+    "blink_ash_naming": 2,
+    "blink_rogue_ledger": 2,
+    "blink_healer_listen": 1,
+    "blink_healer_touch": 2,
     # Role quests
     "hunter_first_blood": 2,
     "medic_healer_path": 2,
@@ -868,6 +987,14 @@ QUEST_SKILL_REWARDS: dict[str, tuple[str, int]] = {
     "biome_wander": ("survival", 1),
     "trail_seeker": ("tracking", 1),
     "den_gift": ("persuasion", 1),
+    "blink_border_patrol": ("stealth", 1),
+    "blink_river_crisis": ("survival", 1),
+    "blink_wind_witness": ("tracking", 1),
+    "blink_mill_scout": ("survival", 1),
+    "blink_ash_naming": ("persuasion", 1),
+    "blink_rogue_ledger": ("stealth", 1),
+    "blink_healer_listen": ("medicine", 1),
+    "blink_healer_touch": ("medicine", 1),
     # Role quests
     "hunter_first_blood": ("hunting", 1),
     "medic_healer_path": ("medicine", 1),

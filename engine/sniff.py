@@ -37,12 +37,6 @@ SNIFF_ENCOUNTER_STRANGER = (
     "**{name}** is here too, nose to the ground. You lock eyes, then relax.",
 )
 
-SNIFF_CAT_SCENT = (
-    "Cat-musk on the wind; fresh marks on the border trees. Something is watching.",
-    "You catch forest-cat scent mixed with moss and claw-scratch. Patrol, not prey.",
-    "The wind carries a sharp, alien musk; **cat territory** is close.",
-)
-
 
 def sniff_bonus_active(user, day: int) -> bool:
     bonus_day = int(user["sniff_bonus_day"]) if "sniff_bonus_day" in user.keys() else 0
@@ -121,17 +115,29 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         border_odds = SNIFF_CAT_ENCOUNTER_CHANCE * pact_border_chance_multiplier(
             interaction.guild.id, user["pack_id"]
         )
+        from engine.plot_blinking import plot_sniff_border_mult
+
+        border_odds *= plot_sniff_border_mult(interaction.guild.id)
         if (
             border_odds > 0
             and random.random() < border_odds
         ):
             from engine.border_combat import start_border_cat_fight
+            from engine.cat_clans import sniff_cat_scent_line
+            from engine.cat_pacts import pick_border_cat_for_pack
 
-            body += f"\n\n_{random.choice(SNIFF_CAT_SCENT)}_"
+            border_pick = pick_border_cat_for_pack(interaction.guild.id, user["pack_id"])
+            _template, border_clan, violation = border_pick
+            if violation:
+                scent = sniff_cat_scent_line(allied_clan=border_clan, allied_patrol=True)
+            else:
+                scent = sniff_cat_scent_line(rival_clan=border_clan)
+            body += f"\n\n_{scent}_"
             enc_id, _template, fight_flavor = start_border_cat_fight(
                 user,
                 guild_id=interaction.guild.id,
                 channel_id=interaction.channel_id,
+                pick=border_pick,
             )
             body += f"\n\n{fight_flavor}"
             combat_enc_id = enc_id
@@ -158,6 +164,10 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     if hoard_caught:
         body += f"\n\n{hoard_caught}"
         footer_bits.append("Poison herbs seized")
+
+    from engine.plot_blinking import try_plot_sniff_extras
+
+    body += try_plot_sniff_extras(user, interaction.guild.id, day=day)
 
     from engine.whispering_wild import spirit_whisper_on_sniff
 

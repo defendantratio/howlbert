@@ -632,6 +632,12 @@ class Pack(commands.Cog):
             )
             unity_gain = compute_howl_unity_gain(user, pack, unity_before, echo_count)
             muted = unity_gain == 0 and unity_is_broken(unity_before)
+            from engine.plot_blinking import apply_plot_howl_mood_cost, plot_howl_unity_bonus
+
+            plot_unity = plot_howl_unity_bonus(interaction.guild.id)
+            if plot_unity and unity_gain and not muted:
+                unity_gain += plot_unity
+            mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
             flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
 
             dissolve = ""
@@ -646,6 +652,7 @@ class Pack(commands.Cog):
 
             kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
             db.update_user(interaction.user.id, last_howl_day=day)
+            db.increment_quest_progress(interaction.user.id, "howl")
 
             if dissolve == "dissolved":
                 body = (
@@ -667,6 +674,8 @@ class Pack(commands.Cog):
                 )
             if message:
                 body += f"\n\n_{message.strip()}_"
+            if mood_note:
+                body += f"\n\n_{mood_note}_"
 
             from engine.role_features import can_grant_commanding_howl, grant_commanding_howl_buffs
 
@@ -840,7 +849,7 @@ class Pack(commands.Cog):
     )
     @app_commands.describe(
         action="View, forge, renew, break, or send tribute",
-        clan_name="Forest cat clan (e.g. MossClan)",
+        clan_name="Forest cat Clan (e.g. ThunderClan)",
         pact_type="Treaty type when forging",
         terms="Short RP terms (optional)",
     )
@@ -851,6 +860,8 @@ class Pack(commands.Cog):
             app_commands.Choice(name="Renew treaty", value="renew"),
             app_commands.Choice(name="Break treaty", value="break"),
             app_commands.Choice(name="Send tribute gift", value="gift"),
+            app_commands.Choice(name="Trade duplicates", value="trade"),
+            app_commands.Choice(name="Receive clan goods", value="receive"),
         ],
         pact_type=[
             app_commands.Choice(name="Border truce (12 sunrises)", value="truce"),
@@ -880,6 +891,8 @@ class Pack(commands.Cog):
             format_pacts_body,
             gift_cat_pact,
             renew_cat_pact,
+            trade_duplicates_cat_pact,
+            receive_cat_goods,
         )
 
         world = db.get_world(interaction.guild.id)
@@ -889,7 +902,9 @@ class Pack(commands.Cog):
             body = format_pacts_body(interaction.guild.id, pack["id"], day=day)
             embed = howlbert_embed(f"{pack['name']}; Cat Pacts", body)
             treasury = int(pack["treasury"])
-            embed.set_footer(text=f"Treasury: {format_bones(treasury)} · max 2 active treaties")
+            embed.set_footer(
+                text=f"Treasury: {format_bones(treasury)} · four Clans · Warrior Cats lake territory"
+            )
             await interaction.response.send_message(embed=embed)
             return
 
@@ -897,7 +912,7 @@ class Pack(commands.Cog):
             await interaction.response.send_message(
                 embed=howlbert_embed(
                     "Clan Name",
-                    "Name the forest cat clan; e.g. **MossClan**, **PineClan**.",
+                    "Name a forest Clan; e.g. **ThunderClan**, **ShadowClan**, **WindClan**, **RiverClan**.",
                     color=ERROR_COLOR,
                 ),
                 ephemeral=True,
@@ -939,7 +954,9 @@ class Pack(commands.Cog):
             return
 
         if action == "break":
-            ok, msg = break_cat_pact(user, pack, clan_name=clan_name, day=day)
+            ok, msg = break_cat_pact(
+                user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
+            )
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             await interaction.response.send_message(
                 embed=howlbert_embed("Treaty Broken" if ok else "Cannot Break", msg, color=color),
@@ -947,12 +964,101 @@ class Pack(commands.Cog):
             return
 
         if action == "gift":
-            ok, msg = gift_cat_pact(user, pack, clan_name=clan_name, day=day)
+            ok, msg = gift_cat_pact(
+                user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
+            )
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             await interaction.response.send_message(
                 embed=howlbert_embed("Tribute Sent" if ok else "Gift Failed", msg, color=color),
                 ephemeral=not ok,
             )
+            return
+
+        if action == "trade":
+            ok, msg = trade_duplicates_cat_pact(
+                user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
+            )
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(
+                embed=howlbert_embed("Clan Barter" if ok else "Barter Failed", msg, color=color),
+                ephemeral=not ok,
+            )
+            return
+
+        if action == "receive":
+            ok, msg = receive_cat_goods(
+                user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
+            )
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(
+                embed=howlbert_embed("Clan Goods" if ok else "Receive Failed", msg, color=color),
+                ephemeral=not ok,
+            )
+
+    @pack.command(
+        name="tradepack",
+        description="Trade all duplicate hoard items to a wolf in another Great Pack.",
+    )
+    @app_commands.describe(
+        wolf="Wolf in another pack (must accept standing)",
+        pack_name="Their Great Pack name (optional check)",
+    )
+    async def pack_tradepack(
+        self,
+        interaction: discord.Interaction,
+        wolf: discord.Member,
+        pack_name: str | None = None,
+    ):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        if wolf.bot or wolf.id == interaction.user.id:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Invalid Target", "Pick another wolf.", color=ERROR_COLOR),
+                ephemeral=True,
+            )
+            return
+
+        recipient = db.get_user(wolf.id)
+        if not recipient:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Not Registered", "They have no wolf.", color=ERROR_COLOR),
+                ephemeral=True,
+            )
+            return
+
+        if pack_name:
+            other = db.get_pack_by_name(pack_name)
+            if not other or recipient["pack_id"] != other["id"]:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "Wrong Pack",
+                        f"**{recipient['wolf_name']}** is not in **{pack_name}**.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=True,
+                )
+                return
+
+        world = db.get_world(interaction.guild.id)
+        from engine.duplicate_trade import trade_duplicates_between_wolves
+
+        ok, msg = trade_duplicates_between_wolves(
+            user,
+            recipient,
+            guild_id=interaction.guild.id,
+            day=world["day_number"],
+            require_pack_trade=True,
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(
+            embed=howlbert_embed("Pack Duplicate Trade" if ok else "Trade Failed", msg, color=color),
+            ephemeral=not ok,
+        )
 
     @pack.command(
         name="brokenrite",

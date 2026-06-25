@@ -67,14 +67,23 @@ def start_border_cat_fight(
     *,
     guild_id: int,
     channel_id: int,
+    pick: tuple[str, str, bool] | None = None,
 ) -> tuple[int, str, str]:
     """Begin active combat vs a border cat. Returns (encounter_id, template_key, flavor)."""
     from engine.cat_pacts import pick_border_cat_for_pack
 
-    template_key, clan_name, violation = pick_border_cat_for_pack(guild_id, user["pack_id"])
+    if pick is None:
+        template_key, clan_name, violation = pick_border_cat_for_pack(guild_id, user["pack_id"])
+    else:
+        template_key, clan_name, violation = pick
     template = BESTIARY_NPCS[template_key]
     cat_hp = npc_hp(template)
-    display_name = f"{clan_name} {template['name']}"
+    named = None
+    if template_key in ("clan_warrior", "clan_deputy"):
+        from engine.cat_clans import pick_border_cat_display_name
+
+        named = pick_border_cat_display_name(clan_name, template_key)
+    display_name = named or f"{clan_name} {template['name']}"
     enc_id = db.setup_border_cat_encounter(
         guild_id,
         channel_id,
@@ -89,7 +98,9 @@ def start_border_cat_fight(
         border_pact_violation=violation,
     )
     flavor = border_encounter_flavor(template_key)
-    if clan_name:
+    if named:
+        flavor = f"**{named.split(' (', 1)[0]}** blocks the trail.\n\n{flavor}"
+    elif clan_name:
         flavor = flavor.replace("clan warrior", f"**{clan_name}** warrior").replace(
             "clan deputy", f"**{clan_name}** deputy"
         )

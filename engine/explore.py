@@ -297,11 +297,21 @@ def try_explore(
         loot_line = f"Found: {loot_line}"
 
     side = _maybe_explore_side_event(user, interaction.user.id)
+    mill_line = ""
+    if action == "investigate":
+        from engine.plot_blinking import try_plot_mill_investigate
+
+        mill_line = try_plot_mill_investigate(
+            user,
+            guild_id=interaction.guild.id,
+            day=day,
+            success=True,
+        )
     db.increment_quest_progress(interaction.user.id, "explore")
     embed = howlbert_embed(
         f"{spec['emoji']} Explore: {spec['label']}",
         format_roll_result(result)
-        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}",
+        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}",
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text="Amusement: /play · carcasses: /prey · sell scraps: /raccoon sell")

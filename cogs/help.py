@@ -519,11 +519,17 @@ HELP_TOPICS = {
 
         "`/pack relations` `/relation`; rival den standing\n"
 
-        "`/pack pact`; **cat clan treaties** (Alpha or **Diplomat**): truce, alliance, hunting rights\n"
+        "`/pack pact`; **Warrior Cats** clan treaties (Alpha or **Diplomat**): "
+        "ThunderClan, ShadowClan, WindClan, RiverClan\n"
+        "`action:receive`; collect **Clan patrol** goods at the scent-line (trust 35+, once/sunrise)\n"
+        "`action:trade`; barter **duplicates** for Clan prey, herbs, toys + trust\n"
+        "`/trade duplicates`; give all extras to another wolf (once per sunrise)\n\n"
 
-        "Tribute from treasury · Charisma parley · fewer `/sniff` border fights while active\n"
+        "Lake territory · warrior patrols, deputies, rogues, loners, kittypets · "
+        "seasonal **Gathering** at Fourtrees (unity/standing when treaties active)\n"
+        "tribute from treasury · Charisma parley · fewer `/sniff` border fights while active\n\n"
 
-        "Breaking a pact or killing an allied patrol costs **trust**, **unity**, and **standing**",
+        "Breaking a pact or killing an allied **warrior patrol** costs **trust**, **unity**, and **standing**",
 
     ),
 
@@ -539,7 +545,8 @@ HELP_TOPICS = {
 
         "`/world action:cooldowns`; what's ready this sunrise\n"
 
-        "`/wilderness action:travel` · `action:encounter` · `action:omen`; Basil travel hazards & omens\n"
+        "`/wilderness action:travel` · `action:encounter` · `action:omen`; travel hazards, border encounters, **StarClan** omens\n"
+        "`territory:twolegplace`; Thunderpath monsters, Twoleg nests, pet dogs\n\n"
 
         "`/medic action:sacred`: Medic half-moon visit; ancestors speak + **+2 standing**, "
         "**+5 mood**, **+1 pack unity**, next Medicine/Herblore **+2** (miss: **−2** standing)\n"

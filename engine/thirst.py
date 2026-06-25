@@ -85,7 +85,7 @@ def format_thirst_line(user) -> str:
     return f"**{thirst}/{THIRST_MAX}**{note}"
 
 
-def drink_at_creek(user, *, day: int, season: str) -> tuple[bool, str]:
+def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) -> tuple[bool, str]:
     """Creek drink; once per hour (real time), unlimited over a long day."""
     from engine.vitals import living_wolf_block
 
@@ -105,7 +105,15 @@ def drink_at_creek(user, *, day: int, season: str) -> tuple[bool, str]:
         last_drink_day=day,
         wolf_id=user["id"],
     )
-    thirst = db.adjust_thirst(user["id"], DRINK_THIRST_RESTORE)
+    from engine.plot_blinking import plot_drink_thirst_bonus
+
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    thirst_restore = DRINK_THIRST_RESTORE
+    plot_line = ""
+    if guild_id is not None:
+        bonus, plot_line = plot_drink_thirst_bonus(guild_id, gp)
+        thirst_restore = max(1, thirst_restore + bonus)
+    thirst = db.adjust_thirst(user["id"], thirst_restore)
     hunger = db.adjust_hunger(user["id"], DRINK_HUNGER_RESTORE)
     hp_gain = min(user["max_hp"] - user["hp"], DRINK_HP_RESTORE)
     if hp_gain > 0:
@@ -113,9 +121,11 @@ def drink_at_creek(user, *, day: int, season: str) -> tuple[bool, str]:
     mood = db.adjust_mood(user["id"], DRINK_MOOD_RESTORE)
 
     msg = (
-        f"Cold water from the **{season}** creek; thirst **{thirst}** (+{DRINK_THIRST_RESTORE}), "
+        f"Cold water from the **{season}** creek; thirst **{thirst}** (+{thirst_restore}), "
         f"hunger **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
     )
+    if plot_line:
+        msg += f"\n_{plot_line}_"
     if hp_gain:
         msg += f", **+{hp_gain} HP**"
     msg += f". _(Next drink in {DRINK_COOLDOWN_MINUTES} min.)_"

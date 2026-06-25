@@ -667,6 +667,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN last_work_day INTEGER NOT NULL DEFAULT 0")
     if "last_crime_day" not in user_cols_late:
         conn.execute("ALTER TABLE users ADD COLUMN last_crime_day INTEGER NOT NULL DEFAULT 0")
+    if "last_duplicate_trade_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_duplicate_trade_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_cat_receive_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_cat_receive_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_firepaw_reward_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_firepaw_reward_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "age_months" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN age_months INTEGER NOT NULL DEFAULT 24"
@@ -775,6 +787,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if pack_cols_late and "last_cat_pact_gift_day" not in pack_cols_late:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN last_cat_pact_gift_day INTEGER NOT NULL DEFAULT 0"
+        )
+
+    world_cols = {row[1] for row in conn.execute("PRAGMA table_info(world_state)")}
+    if world_cols and "plot_phase" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN plot_phase INTEGER NOT NULL DEFAULT 0"
         )
 
     conn.execute(
@@ -3599,6 +3617,33 @@ def get_world(guild_id: int) -> sqlite3.Row:
         ).fetchone()
 
 
+def get_plot_phase(guild_id: int) -> int:
+    world = get_world(guild_id)
+    if "plot_phase" not in world.keys():
+        return 0
+    return int(world["plot_phase"])
+
+
+def set_plot_phase(guild_id: int, phase: int) -> sqlite3.Row:
+    from engine.plot_blinking import PLOT_MAX_PHASE
+
+    get_world(guild_id)
+    phase = max(0, min(PLOT_MAX_PHASE, int(phase)))
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET plot_phase = ? WHERE guild_id = ?",
+            (phase, guild_id),
+        )
+    return get_world(guild_id)
+
+
+def advance_plot_phase(guild_id: int) -> tuple[int, sqlite3.Row]:
+    current = get_plot_phase(guild_id)
+    new_phase = min(current + 1, 12)
+    world = set_plot_phase(guild_id, new_phase)
+    return new_phase, world
+
+
 def save_world(
     guild_id: int,
     *,
@@ -3844,6 +3889,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     if rollover_at is None:
         rollover_at = rollover_now(ROLLOVER_TIMEZONE)
     state = get_world(guild_id)
+    old_season = state["season"]
     new_day = state["day_number"] + 1
     world = save_world(
         guild_id,
@@ -3935,6 +3981,19 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         needs_crisis.setdefault("food_cache", []).extend(cache_notes)
     if sacred_notes:
         needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
+    plot_phase = get_plot_phase(guild_id)
+    if plot_phase > 0:
+        from engine.plot_blinking import apply_plot_rollover_effects, plot_den_news_line
+
+        with get_db() as conn:
+            plot_notes = apply_plot_rollover_effects(conn, guild_id, new_day, plot_phase)
+        if plot_notes:
+            needs_crisis.setdefault("season_notes", []).extend(plot_notes)
+        plot_news = plot_den_news_line(plot_phase, new_day)
+        if plot_news:
+            needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
+                plot_news
+            )
     from engine.healer_refusal import healer_refusal_reminder, rot_lung_outbreak_news
 
     rot_lines: list[str] = []
@@ -3965,6 +4024,15 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         )
     if expired_pacts:
         needs_crisis.setdefault("expired_cat_pacts", expired_pacts)
+    if old_season != world["season"]:
+        from engine.cat_gathering import apply_gathering_on_season_change
+
+        with get_db() as conn:
+            gathering_notes = apply_gathering_on_season_change(
+                conn, guild_id, world["season"], new_day
+            )
+        if gathering_notes:
+            needs_crisis.setdefault("season_notes", []).extend(gathering_notes)
     sky = active_lunar_phase(rollover_at)
     needs_crisis["lunar_phase_label"] = (
         BIRTH_LUNAR_LABELS[sky] if sky else lunar_phase_label(rollover_at)
@@ -8769,6 +8837,20 @@ def update_herb_stack(stack_id: int, **fields) -> None:
 def remove_herb_stack(stack_id: int) -> None:
     with get_db() as conn:
         conn.execute("DELETE FROM herb_stacks WHERE id = ?", (stack_id,))
+
+
+def transfer_herb_stack(stack_id: int, new_wolf_id: int) -> bool:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT id FROM herb_stacks WHERE id = ?", (stack_id,)
+        ).fetchone()
+        if not row:
+            return False
+        conn.execute(
+            "UPDATE herb_stacks SET wolf_id = ? WHERE id = ?",
+            (new_wolf_id, stack_id),
+        )
+        return True
 
 
 def rot_herb_stacks(guild_id: int, day: int) -> int:

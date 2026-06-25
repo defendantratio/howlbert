@@ -31,15 +31,16 @@ class World(commands.Cog):
 
     @app_commands.command(
         name="world",
-        description="Time, weather, forecast, or cooldowns for this den.",
+        description="Time, weather, forecast, cooldowns, or plot for this den.",
     )
-    @app_commands.describe(action="time, weather, forecast, or cooldowns")
+    @app_commands.describe(action="time, weather, forecast, cooldowns, or plot")
     @app_commands.choices(
         action=[
             app_commands.Choice(name="Time & moon", value="time"),
             app_commands.Choice(name="Weather", value="weather"),
             app_commands.Choice(name="Forecast", value="forecast"),
             app_commands.Choice(name="Cooldowns", value="cooldowns"),
+            app_commands.Choice(name="Plot (The Blinking)", value="plot"),
         ]
     )
     async def world_info(self, interaction: discord.Interaction, action: str = "time"):
@@ -51,6 +52,8 @@ class World(commands.Cog):
             await self._weatherforecast(interaction)
         elif action == "cooldowns":
             await self._cooldowns(interaction)
+        elif action == "plot":
+            await self._plot(interaction)
 
     async def _time(self, interaction: discord.Interaction):
         guild_id = self._guild_id(interaction)
@@ -80,6 +83,95 @@ class World(commands.Cog):
         embed.set_footer(
             text=f"{format_sunrise(world['day_number'])} since the den began counting · {age_line}"
         )
+        await interaction.response.send_message(embed=embed)
+
+    async def _plot(self, interaction: discord.Interaction):
+        guild_id = self._guild_id(interaction)
+        if not guild_id:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        world = db.get_world(guild_id)
+        from engine.plot_blinking import PLOT_TITLE, plot_status_fields
+
+        embed = howlbert_embed(
+            PLOT_TITLE,
+            "Canon-first RP frame; mechanics apply while a phase is active.",
+        )
+        for name, value, inline in plot_status_fields(world):
+            embed.add_field(name=name, value=value, inline=inline)
+        phase = int(world["plot_phase"]) if "plot_phase" in world.keys() else 0
+        if phase > 0:
+            embed.set_footer(
+                text=(
+                    f"Sunrise {world['day_number']} · {season_label(world['season'])} · "
+                    "accept plot quests on `/quest action:board`"
+                )
+            )
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(
+        name="setplotphase",
+        description="Set Book One plot phase 0–12 (server admin). 0 = off.",
+    )
+    @app_commands.describe(phase="0 = off, 1–12 = The Blinking beats")
+    async def setplotphase(self, interaction: discord.Interaction, phase: int):
+        if not is_howlbert_admin(interaction):
+            embed = howlbert_embed(
+                "Denied",
+                "Only server admins may set the plot phase.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        guild_id = self._guild_id(interaction)
+        if not guild_id:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        world = db.set_plot_phase(guild_id, phase)
+        from engine.plot_blinking import PLOT_TITLE, phase_meta
+
+        meta = phase_meta(int(world["plot_phase"]))
+        if meta:
+            body = f"Phase **{world['plot_phase']}** — **{meta['title']}**\n_{meta['news']}_"
+        else:
+            body = "Plot **off**; Book One mechanics paused."
+        embed = howlbert_embed(PLOT_TITLE, body, color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(
+        name="plotadvance",
+        description="Advance Book One to the next plot phase (server admin).",
+    )
+    async def plotadvance(self, interaction: discord.Interaction):
+        if not is_howlbert_admin(interaction):
+            embed = howlbert_embed(
+                "Denied",
+                "Only server admins may advance the plot.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        guild_id = self._guild_id(interaction)
+        if not guild_id:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        new_phase, world = db.advance_plot_phase(guild_id)
+        from engine.plot_blinking import PLOT_TITLE, phase_meta
+
+        meta = phase_meta(new_phase)
+        if meta:
+            body = (
+                f"Advanced to phase **{new_phase}** — **{meta['title']}**\n"
+                f"_{meta['news']}_\n\n{meta['mechanics']}"
+            )
+        else:
+            body = "Plot is off or already at phase 12."
+        embed = howlbert_embed(PLOT_TITLE, body, color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(
@@ -297,7 +389,7 @@ class World(commands.Cog):
     )
     @app_commands.describe(
         action="travel, encounter, or omen",
-        territory="River, swamp, mountain, or forest (travel)",
+        territory="River, swamp, mountain, forest, or Twolegplace (travel)",
     )
     @app_commands.choices(
         action=[
@@ -310,6 +402,7 @@ class World(commands.Cog):
             app_commands.Choice(name="Swamp", value="swamp"),
             app_commands.Choice(name="Mountain", value="mountain"),
             app_commands.Choice(name="Forest", value="forest"),
+            app_commands.Choice(name="Twolegplace", value="twolegplace"),
         ],
     )
     async def wilderness(
@@ -332,7 +425,9 @@ class World(commands.Cog):
         if action == "travel":
             from engine.travel_hazards import roll_travel_hazard
 
-            ok, body = roll_travel_hazard(user, territory, day=day)
+            ok, body = roll_travel_hazard(
+                user, territory, day=day, season=world["season"], guild_id=interaction.guild.id
+            )
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             embed = howlbert_embed("Travel Hazard", body, color=color)
             await interaction.response.send_message(embed=embed)
@@ -357,7 +452,10 @@ class World(commands.Cog):
         elif kind == "bad":
             db.update_user_by_id(user["id"], omen_buff="bad")
             body += "\n_Disadvantage on your first roll next sunrise._"
-        embed = howlbert_embed("Rest Omen", body)
+        elif kind == "vision":
+            new_mood = db.adjust_mood(user["id"], 4)
+            body += f"\n**+4 mood** (now **{new_mood}**)."
+        embed = howlbert_embed("StarClan Omen", body)
         await interaction.response.send_message(embed=embed)
 
 

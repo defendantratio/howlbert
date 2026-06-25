@@ -137,13 +137,19 @@ async def treat(
         day = world["day_number"] if world else 0
         treat_patient = None
         if patient:
+            from engine.plot_blinking import firepaw_can_treat_patient
             from engine.role_privileges import is_medic
 
-            if not is_medic(user):
+            if not is_medic(user) and not (
+                interaction.guild
+                and firepaw_can_treat_patient(user, interaction.guild.id)
+            ):
                 await interaction.response.send_message(
                     embed=howlbert_embed(
                         "Medic Only",
-                        "Only **Medics** may treat a **patient** from their herb bag.",
+                        "Only **Medics** may treat a **patient** from their herb bag.\n\n"
+                        "_**Firepaw** (Medic Apprentice) may treat packmates during "
+                        "Book One phases **5–11**._",
                         color=ERROR_COLOR,
                     ),
                     ephemeral=True,
@@ -164,6 +170,13 @@ async def treat(
             patient=treat_patient,
             guild_id=interaction.guild.id if interaction.guild else None,
         )
+        if ok and interaction.guild:
+            from engine.plot_blinking import try_plot_treat_extras
+
+            patient_row = treat_patient or user
+            msg += try_plot_treat_extras(
+                user, patient_row, guild_id=interaction.guild.id, day=day
+            )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed("Treatment", msg, color=color)
         if ok:
