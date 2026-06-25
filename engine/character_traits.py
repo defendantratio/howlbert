@@ -1888,6 +1888,66 @@ KANAMI_CHARACTER_TRAITS = {
 }
 
 
+FIREPAW_CHARACTER_TRAITS = {
+    "bonuses": [
+        {
+            "name": "Acute Hearing",
+            "modifier": 4,
+            "skills": ["tracking", "medicine"],
+            "packs": ["thistlehide"],
+            "blurb": "Detects footsteps in snow, breathing shifts, and prey in cover by sound alone.",
+        },
+        {
+            "name": "Touch Herblore",
+            "modifier": 4,
+            "skills": ["herblore"],
+            "packs": ["thistlehide"],
+            "blurb": "Identifies plants by texture and scent; rarely mis-picks in Thistlehide brush.",
+        },
+        {
+            "name": "Gentle Hands",
+            "modifier": 3,
+            "skills": ["medicine"],
+            "treat_heal_bonus": 1,
+            "packs": ["thistlehide"],
+            "blurb": "Steady when treating wounds; touch-guided dressings hold clean.",
+        },
+    ],
+    "weaknesses": [
+        {
+            "name": "Total Blindness",
+            "modifier": -3,
+            "attrs": ["attr_wis"],
+            "exclude_skills": ["medicine", "herblore", "stealth"],
+            "check_disadvantage": True,
+            "hunt_mult": 0.45,
+            "blurb": "Milky blind eyes; cannot hunt by sight or read expressions.",
+        },
+        {
+            "name": "Defensive Temper",
+            "modifier": -3,
+            "skills": ["persuasion", "intimidation"],
+            "attrs": ["attr_cha"],
+            "blurb": "Snaps when doubted; snarls before she thinks in tense moments.",
+        },
+        {
+            "name": "Refuses Help",
+            "modifier": -2,
+            "attrs": ["attr_wis"],
+            "exclude_skills": ["medicine", "herblore"],
+            "blurb": "Won't accept aid on trails or hunts; overwhelmed when plans collapse.",
+        },
+        {
+            "name": "Pride Before Proof",
+            "modifier": -2,
+            "skills": ["hunting", "survival"],
+            "attrs": ["attr_str"],
+            "blurb": "Takes reckless risks to prove blindness is not weakness.",
+        },
+    ],
+}
+
+
 MURKVEIN_CHARACTER_TRAITS = {
     "bonuses": [
         {
@@ -3867,6 +3927,7 @@ CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
     "Ashbark": ASHBARK_CHARACTER_TRAITS,
     "Pale'Step": PALESTEP_CHARACTER_TRAITS,
     "Eltanin": ELTANIN_CHARACTER_TRAITS,
+    "Firepaw": FIREPAW_CHARACTER_TRAITS,
 }
 
 # Canonical register backstory hooks (role, belief, build) applied with lore/traits.
@@ -3882,6 +3943,7 @@ CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Fernspot": {"wolf_role": "forager"},
     "Mossgaze": {"wolf_role": "forager"},
     "Sypha": {"wolf_role": "medic"},
+    "Firepaw": {"wolf_role": "medic_apprentice"},
 }
 
 

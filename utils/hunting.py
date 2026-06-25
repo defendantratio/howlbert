@@ -36,6 +36,7 @@ def award_bones(
     activity: str,
     *,
     season: str | None = None,
+    guild_id: int | None = None,
 ) -> tuple[int, int, int, int, str, str, str, str, str]:
     """Returns (net, tax, gross_after_modifiers, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note)."""
     account = db.get_account(user["discord_id"])
@@ -46,6 +47,15 @@ def award_bones(
         amount = apply_season_hunt(amount, season)
         if amount != before:
             season_note = season_hunt_modifier_label(season)
+    if activity in HUNT_ACTIVITIES and guild_id is not None:
+        from engine.plot_blinking import plot_activity_payout_mult
+
+        gp = user["great_pack"] if "great_pack" in user.keys() else None
+        mult, plot_note = plot_activity_payout_mult(guild_id, activity, great_pack=gp)
+        if mult != 1.0:
+            amount = max(0, int(amount * mult))
+        if plot_note:
+            season_note = f"{season_note} · {plot_note}" if season_note else plot_note
     amount = apply_bone_bonus(amount, account["prestige_tier"])
     mood_note = ""
     hunger_note = ""
@@ -65,7 +75,8 @@ def award_bones(
     net, tax = apply_pack_tax(amount, user["pack_id"])
     if net > 0:
         db.add_bones(user["discord_id"], net)
-    db.increment_quest_progress(user["discord_id"], activity)
+    if activity not in ("work", "crime"):
+        db.increment_quest_progress(user["discord_id"], activity)
     if activity == "hunt":
         db.record_hunt(user["discord_id"])
     return net, tax, amount, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note

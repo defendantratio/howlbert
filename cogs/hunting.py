@@ -118,7 +118,12 @@ class Hunting(commands.Cog):
             return
 
         world = db.get_world(interaction.guild.id)
-        ok, msg = drink_at_creek(user, day=world["day_number"], season=world["season"])
+        ok, msg = drink_at_creek(
+            user,
+            day=world["day_number"],
+            season=world["season"],
+            guild_id=interaction.guild.id,
+        )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = "Drink" if ok else ("Creek Cooldown" if "min" in msg else "Cannot Drink")
         embed = howlbert_embed(title, msg, color=color)

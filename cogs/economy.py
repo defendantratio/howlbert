@@ -445,6 +445,53 @@ class Economy(commands.Cog):
         msg = await interaction.original_response()
         db.set_pending_trade_message_id(trade_id, msg.id)
 
+    @trade.command(
+        name="duplicates",
+        description="Instantly give all duplicate hoard items to another wolf (once per sunrise).",
+    )
+    @app_commands.describe(
+        wolf="Wolf to receive extras (keeps one of each type for you)",
+    )
+    async def trade_duplicates(self, interaction: discord.Interaction, wolf: discord.Member):
+        user = await self._require_registered(interaction)
+        if not user:
+            return
+        guild_id = self._require_guild(interaction)
+        if not guild_id:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
+
+        if wolf.bot or wolf.id == interaction.user.id:
+            embed = howlbert_embed("Invalid Target", "Choose another wolf.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        recipient = db.get_user(wolf.id)
+        if not recipient:
+            embed = howlbert_embed(
+                "Not Registered",
+                f"{wolf.display_name} hasn't registered a wolf yet.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        world = db.get_world(guild_id)
+        from engine.duplicate_trade import trade_duplicates_between_wolves
+
+        ok, msg = trade_duplicates_between_wolves(
+            user,
+            recipient,
+            guild_id=guild_id,
+            day=world["day_number"],
+            require_pack_trade=False,
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(
+            embed=howlbert_embed("Duplicate Trade" if ok else "Trade Failed", msg, color=color),
+            ephemeral=not ok,
+        )
+
     @trade.command(name="cancel", description="Cancel your outgoing trade offer.")
     async def trade_cancel(self, interaction: discord.Interaction):
         user = await self._require_registered(interaction)

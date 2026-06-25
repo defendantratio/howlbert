@@ -344,6 +344,10 @@ class Life(commands.Cog):
         from engine.medical_care import run_observe_apprentice
 
         ok, body = run_observe_apprentice(medic, target, day=world["day_number"])
+        if ok:
+            from engine.plot_blinking import try_plot_observe_extras
+
+            body += try_plot_observe_extras(medic, guild_id=interaction.guild.id, day=world["day_number"])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed("Observe", body, color=color))
         if ok:

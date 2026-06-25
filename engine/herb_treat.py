@@ -250,6 +250,10 @@ def treat_from_herb_stack(
         lo, hi = heal_amount_for_form(form, complex_wound=complex_wound)
         heal = max(1, int(random.randint(lo, hi) * (int(stack["potency"]) / 100.0)))
         heal += trait_treat_heal_bonus(healer)
+        if guild_id:
+            from engine.plot_blinking import plot_firepaw_heal_bonus
+
+            heal += plot_firepaw_heal_bonus(healer, guild_id)
         cap = effective_max_hp(patient)
         new_hp = min(cap, int(patient["hp"]) + heal)
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)

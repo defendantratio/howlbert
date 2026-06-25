@@ -69,7 +69,11 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Splinter limped toward the Silverrush border, stole a fish from the shallows, ate "
             "beneath a fallen log, and dreamed of the wolf he killed; as he always does."
         ),
-        open_plots="Could be killed by patrol; redeemed by a pack; recurring villain.",
+        open_plots=(
+            "Book One (*The Blinking*): rogue `/crime` border branch (phase 6+); `/sniff` may catch his "
+            "limp scent; `/explore investigate` mill tooth; redemption via returned prey + standing, or "
+            "death by patrol/combat; quest **blink_rogue_ledger**."
+        ),
     ),
     "Moth": _sheet(
         appearance=(
@@ -1989,6 +1993,45 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
         open_plots=(
             "Twoleg activity on eastern patrol; private Maw doubt if rot-season worsens; mistaken for cold "
             "because of silence; quietly watches over a caretaker or pup she will not admit to guarding."
+        ),
+    ),
+    "Firepaw": _sheet(
+        appearance=(
+            "Thick fiery-orange fur streaked with deep brown and rusty red, warm as late leaf-fall. "
+            "Strong slim build, broad shoulders, sharp claws, bright amber eyes clouded milky-white; "
+            "blind since puphood. Lighter markings ring her paws and back. Pale bones laced along her "
+            "torso like a ribcage, curving shoulder to flank, with more along one shoulder; worn as "
+            "adornment over her pelt."
+        ),
+        personality=(
+            "Sharp, defensive, impatient with doubt; snaps when wolves treat her blindness as weakness. "
+            "Harsh tone protects pride more than true cruelty. With the injured she becomes calm, gentle, "
+            "and focused; patience and quiet compassion she rarely shows elsewhere. Razor hearing maps "
+            "leaves, snow, and breathing; navigates by scent, sound, and memory. In healing she relies "
+            "on touch and smell, making her precise with herbs and dressings."
+        ),
+        backstory=(
+            "Born in Thistlehide without sight; elders whispered she would never hunt. Rejection sharpened "
+            "her instead of breaking her. She learned herbs at Sypha's side, proving herself by touch when "
+            "others demanded eyes. Still a Medic Apprentice; the den tests her temper as often as her skill. "
+            "She refuses pity and takes unnecessary risks to prove she belongs at the healer's shelves."
+        ),
+        family_ties="Mentor; Sypha (Fur-Giver, alive). Pack; Thistlehide. No mate.",
+        rp_sample=(
+            "The den was dark and tense. Firepaw listened as Sypha worked on a wolf injured on patrol, "
+            "handing dried herbs when asked, nose finding bundles too far for her mentor to reach. "
+            "\"Would this work?\" she asked quietly, setting cobweb and yarrow beside Sypha's paws. "
+            "\"Yes, perfect. Thank you.\" Sypha's voice was steady. Firepaw nosed the ground where she "
+            "had been told to find feverfew, tail twitching until an approving howl made it wag despite "
+            "herself. Later, when another wolf limped in whining, anger still hot from being shoved aside, "
+            "she put it down anyway: guided him to a quiet nook, lifted the paw, smelled warmth over the "
+            "torn pad, and dressed it by touch while Sypha watched. \"You did good,\" Sypha said at last. "
+            "\"Maybe you can help after all.\""
+        ),
+        open_plots=(
+            "Book One (*The Blinking*): Sypha's den runs hot in phases 5–11; `/medic action:treat` and "
+            "`action:observe` add Firepaw flavor (+standing/mood during border-paranoia phases). "
+            "Earn full Medic rank; temper costs allies; rivalry or friendship with Mossgaze over herbs."
         ),
     ),
 }

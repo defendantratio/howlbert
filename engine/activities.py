@@ -263,7 +263,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         amount += dex_bonus
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, amount, world["weather"], "hunt", season=world["season"]
+        user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id
     )
     prey_key = prey_key_for_payout(payout) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
@@ -333,7 +333,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         return blocked
     gross = roll_range(SCAVENGE_BONES)
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, gross, world["weather"], "scavenge", season=world["season"]
+        user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
     db.update_user(interaction.user.id, last_scavenge_day=day)
     db.increment_quest_progress(interaction.user.id, "scavenge")
@@ -415,7 +415,7 @@ def try_track(
     gross = roll_range(TRACK_BONES) + wis_bonus
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, gross, world["weather"], "track", season=world["season"]
+        user, gross, world["weather"], "track", season=world["season"], guild_id=guild_id
     )
     db.update_user(
         interaction.user.id,
@@ -470,7 +470,7 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         return blocked, False
     gross = roll_range(FISHING_BONES)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, gross, world["weather"], "fishing", season=world["season"]
+        user, gross, world["weather"], "fishing", season=world["season"], guild_id=guild_id
     )
     db.update_user(
         interaction.user.id,
@@ -844,6 +844,17 @@ def try_crime(
 
     db.update_user(interaction.user.id, last_crime_day=day)
 
+    from engine.plot_blinking import try_plot_rogue_crime
+
+    gross = roll_range(CRIME_BONES)
+    gross, plot_suffix, plot_caught = try_plot_rogue_crime(
+        interaction, user, day=day, gross=gross
+    )
+    if plot_caught:
+        embed = howlbert_embed("Caught on the Border", plot_caught, color=ERROR_COLOR)
+        embed.set_footer(text="No bones earned. The den remembers.")
+        return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
+
     if roll_crime_caught():
         kick = db.adjust_wolf_standing(interaction.user.id, crime_caught_standing())
         embed = howlbert_embed("Caught", pick_crime_caught_flavor(), color=ERROR_COLOR)
@@ -858,10 +869,15 @@ def try_crime(
         embed.set_footer(text="No bones earned. The den remembers.")
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
-    gross = roll_range(CRIME_BONES)
-    net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "crime")
+    net, tax, _, _, _, _, _, _, _ = award_bones(
+        user, gross, world["weather"], "crime", guild_id=guild_id
+    )
+    db.increment_quest_progress(interaction.user.id, "crime")
     updated = db.get_user(interaction.user.id)
-    embed = howlbert_embed(random.choice(CRIME_TEXT), color=SUCCESS_COLOR if net else ERROR_COLOR)
+    body = random.choice(CRIME_TEXT)
+    if plot_suffix:
+        body += plot_suffix
+    embed = howlbert_embed(body, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
@@ -917,6 +933,9 @@ def _try_cross_pack_steal(
 
     if roll_cross_pack_steal_caught():
         penalty = cross_pack_steal_caught_standing()
+        from engine.plot_blinking import plot_cross_pack_caught_standing_extra
+
+        penalty += plot_cross_pack_caught_standing_extra(interaction.guild.id)
         kick = db.adjust_wolf_standing(interaction.user.id, penalty)
         embed = howlbert_embed(
             "Caught at the Border",

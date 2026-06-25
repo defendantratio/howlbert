@@ -11,7 +11,7 @@ from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.permissions import is_howlbert_admin
 from utils.views import make_quest_accept_view, make_quest_complete_view
 
-QUEST_OBJECTIVES = ("hunt", "scavenge", "track", "fishing", "forage", "treat", "patrol", "deposit", "explore", "survey", "trail")
+QUEST_OBJECTIVES = ("hunt", "scavenge", "track", "fishing", "forage", "treat", "patrol", "deposit", "explore", "survey", "trail", "sniff", "howl", "crime")
 QUEST_KEY_RE = re.compile(r"^[a-z0-9_]{2,32}$")
 
 
