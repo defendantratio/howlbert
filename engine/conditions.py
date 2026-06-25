@@ -45,9 +45,9 @@ def injury_heal_note(key: str, since: dict[str, int], day: int, user=None) -> st
         elapsed = day - start
         return (
             f" _({elapsed}d elapsed · ~{heal_days}d with rest; "
-            f"clears via `/treat` only)_"
+            f"clears via `/medic action:treat` only)_"
         )
-    return f" _(~{heal_days}d with rest; clears via `/treat` only)_"
+    return f" _(~{heal_days}d with rest; clears via `/medic action:treat` only)_"
 
 
 def format_conditions(user, *, day: int | None = None) -> str:
@@ -519,7 +519,7 @@ def herb_special_effect(herb_key: str, user, *, inventory_qty: int = 1) -> str |
     if herb_key == "lizards_tail" and disease_key:
         return "reduce_exhaustion"
     if herb_key == "meadowsweet":
-        return "reduce_exhaustion"
+        return None
     if herb_key == "purslane":
         return "purslane_thirst"
     if herb_key == "honey" and not disease_key:

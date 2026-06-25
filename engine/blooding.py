@@ -21,7 +21,7 @@ def blooding_gate_message(user, *, action: str = "roleevent") -> str | None:
     if action == "roleevent":
         return (
             "You have not earned your **blooding** yet; bring down prey with a successful **`/bones action:hunt`** "
-            "before your role's trials (`/role action:roleevent`)."
+            "before your role's trials (`/role action:event`)."
         )
     return None
 

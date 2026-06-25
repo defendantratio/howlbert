@@ -216,7 +216,7 @@ def payout_collab_hunt(
 
     base, bonus_pct = _compute_collab_base(users, fixed_base=fixed_base)
     share = base // len(users) if users else 0
-    remainder = base; share * len(users)
+    remainder = base - share * len(users)
 
     lines: list[str] = []
     total_payout = 0

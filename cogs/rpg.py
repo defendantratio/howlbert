@@ -319,7 +319,7 @@ class Rpg(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -395,7 +395,7 @@ class Rpg(commands.Cog):
     async def _condition(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -455,7 +455,7 @@ class Rpg(commands.Cog):
 
         user = db.get_user(interaction.user.id)
         if not user:
-            embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 

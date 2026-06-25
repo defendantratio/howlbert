@@ -33,7 +33,7 @@ def format_hoard_summary(user, *, day: int) -> str:
 
     lines: list[str] = []
     remnants = db.get_remnants(user["id"])
-    lines.append(f"**Remnants:** {remnants} _(from `/shred`; save for future crafts)_")
+    lines.append(f"**Remnants:** {remnants} _(from `/hoarding action:shred`; save for future crafts)_")
 
     prey = db.get_prey_stacks(user["id"])
     if prey:
@@ -49,7 +49,7 @@ def format_hoard_summary(user, *, day: int) -> str:
         lines.append("**Toys**")
         lines.extend(format_amusement_line(s) for s in toys[:8])
         if len(toys) > 8:
-            lines.append(f"_…and {len(toys) - 8} more; `/toys` for full list._")
+            lines.append(f"_…and {len(toys) - 8} more; `/playpen action:toys` for full list._")
     else:
         lines.append("**Toys**; empty")
 

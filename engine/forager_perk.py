@@ -69,7 +69,9 @@ def apply_forager_daily_herbs_on_rollover(
         herb_key = _pick_forager_herb(user)
         from engine.herb_storage import grant_fresh_herb
 
-        grant_fresh_herb(user["id"], herb_key=herb_key, guild_id=guild_id, day=day, user=user)
+        grant_fresh_herb(
+            user["id"], herb_key=herb_key, guild_id=guild_id, day=day, user=user, conn=conn
+        )
         conn.execute(
             "UPDATE users SET last_forager_gift_day = ? WHERE id = ?",
             (day, user["id"]),

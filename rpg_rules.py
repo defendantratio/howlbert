@@ -93,7 +93,7 @@ ROLE_FEATURES = {
     "medic_apprentice": "Apprentice Healer; learning poultices under a Medic; herb heals still capped until full rank.",
     "guard": "Defender's Resolve; impose disadvantage when adjacent packmate is attacked.",
     "hunter": "Killer's Instinct - +1d6 damage vs surprised or prone targets. Three hunts per sunrise.",
-    "hunter_apprentice": "Blooding Lessons; run with hunters; earn the full Hunter rank through `/role action:roleevent` and role quests.",
+    "hunter_apprentice": "Blooding Lessons; run with hunters; earn the full Hunter rank through `/role action:event` and role quests.",
     "scout": "Unseen Paw; hide while lightly obscured.",
     "scout_apprentice": "Ridge Pup; border drills and scent-maps; earn Scout when the pack trusts your eyes.",
     "forager": "Nose of the Land; auto-find one common herb/day in pack territory. May forage without waiting for sunrise.",
@@ -112,7 +112,7 @@ ROLE_FEATURES = {
         "Survive the first moon to be named."
     ),
     "drown_sick": (
-        "Belly-Rip Whispers; hear the Maw's chewing; `/role action:roleevent` yields cryptic prophecy. "
+        "Belly-Rip Whispers; hear the Maw's chewing; `/role action:event` yields cryptic prophecy. "
         "Cannot hunt or fight effectively (frail). **+2 Perception** (tracking/stealth/Wisdom) in fog or swamp."
     ),
     "rogue": (

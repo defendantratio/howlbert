@@ -194,7 +194,12 @@ def check_adjustments(
         mod += 1
         notes.append("Scars (+1 Intimidation)")
     if "chronic_pain" in entries and first_physical_today:
-        if weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind"):
+        from engine.herb_buffs import pain_relief_active
+
+        day = day_number
+        if pain_relief_active(user, day):
+            notes.append("Pain relief (willow bark, poppy, etc.)")
+        elif weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind"):
             if "attr_str" in attr_keys or "attr_dex" in attr_keys:
                 disadvantage = True
                 notes.append("Chronic pain (disadvantage)")

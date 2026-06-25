@@ -48,7 +48,7 @@ PHASES: dict[int, dict[str, Any]] = {
         "act": "Act II",
         "title": "Border Paranoia",
         "news": "Cat musk and wolf theft on the same wind; every patrol suspects Greyspire.",
-        "mechanics": "Cat pact trust −3; `/sniff` border fights +25%; rogue `/crime` plot branch; quest **blink_wind_witness**.",
+        "mechanics": "Cat pact trust −3; `/field action:sniff` border fights +25%; rogue `/bones action:crime` plot branch; quest **blink_wind_witness**.",
     },
     7: {
         "act": "Act II",
@@ -95,8 +95,130 @@ MILL_PHASES = frozenset(range(8, 13))
 
 SPLINTER_NAME = "Splinter"
 FIREPAW_NAME = "Firepaw"
+SOOT_NAME = "Soot"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
+SOOT_PLOT_PHASES = frozenset(range(5, 12))
+
+PACK_LABELS = {
+    "thistlehide": "Thistlehide",
+    "silverrush": "Silverrush",
+    "mistmoor": "Mistmoor",
+    "greyspire": "Greyspire",
+}
+
+
+def is_plot_healer_role(user) -> bool:
+    from engine.role_features import has_any_role, is_full_medic
+
+    return is_full_medic(user) or has_any_role(user, "medic_apprentice")
+
+
+def increment_plot_sniff_quests(user, guild_id: int) -> None:
+    """Progress phase-appropriate blink sniff quests (listen 1–5, witness 6+)."""
+    from engine.plot_quests import plot_sniff_quest_keys
+
+    keys = plot_sniff_quest_keys(guild_id)
+    if not keys:
+        return
+    db.increment_quest_progress_by_keys(
+        user["discord_id"], keys, wolf_id=user["id"], guild_id=guild_id
+    )
+
+
+def _plot_witness_available(user, day: int) -> bool:
+    last = int(user["last_plot_witness_day"]) if "last_plot_witness_day" in user.keys() else 0
+    return last < day
+
+
+def _mark_plot_witness(user, day: int) -> None:
+    db.update_user_by_id(user["id"], last_plot_witness_day=day)
+
+
+def try_plot_witness(user, guild_id: int, day: int, *, action: str) -> str:
+    """
+    Once per sunrise: any wolf earns a small mood bump for living through The Blinking.
+    """
+    phase = plot_phase(guild_id)
+    if phase <= 0 or not day or not _plot_witness_available(user, day):
+        return ""
+    from config import PLOT_WITNESS_MOOD
+
+    meta = phase_meta(phase)
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    pack = PACK_LABELS.get(gp, "The den")
+    title = meta["title"] if meta else f"phase {phase}"
+    _mark_plot_witness(user, day)
+    mood = db.adjust_mood(user["id"], PLOT_WITNESS_MOOD)
+    action_hint = {
+        "sniff": "scent on the wind",
+        "howl": "voice in the howl",
+        "drink": "creek under a bruised moon",
+        "survey": "patrol on the ridge",
+        "explore": "step into the unknown",
+        "treat": "hands on a wound",
+        "hunt": "jaws in the brush",
+        "patrol": "paws on the border",
+    }.get(action, "paw in the story")
+    return (
+        f"\n\n_**The Blinking** — {pack}, **{title}**: you mark the sunrise "
+        f"({action_hint}) · **+{PLOT_WITNESS_MOOD} mood** (now **{mood}**)._"
+    )
+
+
+def apply_plot_generic_healer_treat_rewards(
+    healer,
+    patient,
+    *,
+    guild_id: int,
+    day: int,
+) -> str:
+    """Medics and apprentices (non-canon) earn healer quest credit and modest daily rewards."""
+    if plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return ""
+    if not is_plot_healer_role(healer):
+        return ""
+    if firepaw_plot_active(healer, guild_id) or soot_plot_active(healer, guild_id):
+        return ""
+    from config import PLOT_GENERIC_HEALER_MOOD, PLOT_GENERIC_HEALER_STANDING
+
+    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
+    last = int(healer["last_plot_healer_day"]) if "last_plot_healer_day" in healer.keys() else 0
+    if last >= day:
+        return "\n\n_Healer's work counts toward **blink_healer_touch**._"
+    db.update_user_by_id(healer["id"], last_plot_healer_day=day)
+    if healer["id"] != patient["id"]:
+        kick = db.adjust_wolf_standing(healer["discord_id"], PLOT_GENERIC_HEALER_STANDING)
+        if kick == "kicked":
+            return "\n\n_The den needed your hands — but the pack casts you out._"
+        return (
+            f"\n\n_The Blinking strains every shelf; your touch earns trust "
+            f"(**+{PLOT_GENERIC_HEALER_STANDING} standing**). "
+            "Counts toward **blink_healer_touch**._"
+        )
+    mood = db.adjust_mood(healer["id"], PLOT_GENERIC_HEALER_MOOD)
+    return (
+        f"\n\n_You steady yourself amid the pressure "
+        f"(**+{PLOT_GENERIC_HEALER_MOOD} mood**, now **{mood}**). "
+        "Counts toward **blink_healer_touch**._"
+    )
+
+
+def apply_plot_generic_healer_observe_rewards(medic, *, guild_id: int, day: int) -> str:
+    if plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return ""
+    if not is_plot_healer_role(medic):
+        return ""
+    if firepaw_plot_active(medic, guild_id) or soot_plot_active(medic, guild_id):
+        return ""
+    from config import PLOT_GENERIC_HEALER_MOOD
+
+    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
+    mood = db.adjust_mood(medic["id"], PLOT_GENERIC_HEALER_MOOD)
+    return (
+        f"\n\n_**+{PLOT_GENERIC_HEALER_MOOD} mood** (now **{mood}**). "
+        "Apprentice hours count toward **blink_healer_touch**._"
+    )
 
 
 def plot_phase(guild_id: int) -> int:
@@ -176,8 +298,8 @@ def apply_plot_rollover_effects(
     if phase == 5:
         notes.extend(_mistmoor_silence_disease_pressure(conn))
 
-    if phase in PARANOIA_PHASES:
-        _adjust_all_cat_trust(conn, guild_id, -3 if phase == 6 else 0)
+    if phase in range(6, 10):
+        _adjust_all_cat_trust(conn, guild_id, -3)
 
     if phase == 10:
         _adjust_all_cat_trust(conn, guild_id, -2)
@@ -217,7 +339,7 @@ def _mistmoor_silence_disease_pressure(conn: sqlite3.Connection) -> list[str]:
         """
     ).fetchall()
     for row in rows:
-        if random.random() >= 0.035:
+        if random.random() >= 0.05:
             continue
         encoded = encode_disease("rot_lung", spread_stage_for("rot_lung"))
         conn.execute("UPDATE users SET disease = ? WHERE id = ?", (encoded, row["id"]))
@@ -363,7 +485,7 @@ def try_plot_mill_investigate(
     bones = random.randint(15, 35)
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
     standing = db.adjust_wolf_standing(user["discord_id"], 2)
-    db.increment_quest_progress(user["discord_id"], "explore")
+    db.increment_quest_progress(user["discord_id"], "explore", guild_id=guild_id)
     kick = f" Standing **+2**" if standing != "kicked" else " (**cast out**)"
     return (
         f"\n\n_Under the mill timbers you uncover a **fossil tooth** wrapped in rust._\n"
@@ -387,6 +509,13 @@ def firepaw_can_treat_patient(user, guild_id: int) -> bool:
     return firepaw_plot_active(user, guild_id) and plot_phase(guild_id) in HEALER_PLOT_PHASES
 
 
+def soot_plot_active(user, guild_id: int) -> bool:
+    if plot_phase(guild_id) <= 0 or not _is_plot_wolf(user, SOOT_NAME):
+        return False
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    return gp == "mistmoor"
+
+
 def plot_firepaw_heal_bonus(healer, guild_id: int | None) -> int:
     if not guild_id or not firepaw_plot_active(healer, guild_id):
         return 0
@@ -397,6 +526,29 @@ def plot_firepaw_heal_bonus(healer, guild_id: int | None) -> int:
     return FIREPAW_PLOT_TREAT_HEAL_BONUS
 
 
+def plot_soot_heal_bonus(healer, patient, guild_id: int | None) -> int:
+    if not guild_id or not soot_plot_active(healer, guild_id):
+        return 0
+    if plot_phase(guild_id) not in SOOT_PLOT_PHASES:
+        return 0
+    from config import SOOT_PLOT_ROT_LUNG_HEAL_BONUS, SOOT_PLOT_TREAT_HEAL_BONUS
+    from engine.diseases import parse_disease
+
+    bonus = SOOT_PLOT_TREAT_HEAL_BONUS
+    disease_raw = patient["disease"] if "disease" in patient.keys() else None
+    key, _ = parse_disease(disease_raw)
+    if key == "rot_lung":
+        bonus += SOOT_PLOT_ROT_LUNG_HEAL_BONUS
+    return bonus
+
+
+def plot_healer_heal_bonus(healer, patient, guild_id: int | None) -> int:
+    """Stacked Book One heal bonuses for canon healer wolves."""
+    return plot_firepaw_heal_bonus(healer, guild_id) + plot_soot_heal_bonus(
+        healer, patient, guild_id
+    )
+
+
 def _firepaw_daily_available(user, day: int) -> bool:
     last = int(user["last_firepaw_reward_day"]) if "last_firepaw_reward_day" in user.keys() else 0
     return last < day
@@ -404,6 +556,15 @@ def _firepaw_daily_available(user, day: int) -> bool:
 
 def _mark_firepaw_daily(user, day: int) -> None:
     db.update_user_by_id(user["id"], last_firepaw_reward_day=day)
+
+
+def _soot_daily_available(user, day: int) -> bool:
+    last = int(user["last_soot_reward_day"]) if "last_soot_reward_day" in user.keys() else 0
+    return last < day
+
+
+def _mark_soot_daily(user, day: int) -> None:
+    db.update_user_by_id(user["id"], last_soot_reward_day=day)
 
 
 def apply_plot_firepaw_sniff(user, guild_id: int, day: int) -> str:
@@ -423,7 +584,6 @@ def apply_plot_firepaw_sniff(user, guild_id: int, day: int) -> str:
     if phase < 6:
         mood = db.adjust_mood(user["id"], FIREPAW_PLOT_SNIFF_MOOD_EARLY)
         db.update_user(user["discord_id"], wolf_id=user["id"], sniff_bonus_day=day)
-        db.increment_quest_progress(user["discord_id"], "sniff", wolf_id=user["id"])
         lines.append(
             f"**+{FIREPAW_PLOT_SNIFF_MOOD_EARLY} mood** (now **{mood}**)."
         )
@@ -449,6 +609,43 @@ def apply_plot_firepaw_sniff(user, guild_id: int, day: int) -> str:
     return ("\n\n_" + " ".join(lines) + "_") if lines else ""
 
 
+def apply_plot_soot_sniff(user, guild_id: int, day: int) -> str:
+    """Mistmoor second-sight rewards for Soot on /sniff during Belly Silence+."""
+    if not soot_plot_active(user, guild_id):
+        return ""
+    from config import (
+        SNIFF_HUNT_BONUS_PCT,
+        SOOT_PLOT_SNIFF_MOOD,
+        SOOT_PLOT_SNIFF_STANDING,
+    )
+
+    phase = plot_phase(guild_id)
+    if phase not in SOOT_PLOT_PHASES:
+        return ""
+    lines: list[str] = []
+
+    mood = db.adjust_mood(user["id"], SOOT_PLOT_SNIFF_MOOD)
+    db.update_user(user["discord_id"], wolf_id=user["id"], sniff_bonus_day=day)
+    lines.append(f"**+{SOOT_PLOT_SNIFF_MOOD} mood** (now **{mood}**).")
+    lines.append(
+        f"**Sniff bonus** active (**+{SNIFF_HUNT_BONUS_PCT}%** hunt/track); "
+        "mist-light and insect drift show paths others miss."
+    )
+
+    if phase in PARANOIA_PHASES and _soot_daily_available(user, day):
+        _mark_soot_daily(user, day)
+        kick = db.adjust_wolf_standing(user["discord_id"], SOOT_PLOT_SNIFF_STANDING)
+        standing_note = (
+            f"**+{SOOT_PLOT_SNIFF_STANDING} standing**"
+            if kick != "kicked"
+            else "**cast out**"
+        )
+        lines.append(
+            f"Mirewort's second sight on the border — {standing_note}."
+        )
+    return "\n\n_" + " ".join(lines) + "_"
+
+
 def apply_plot_firepaw_treat_rewards(
     healer,
     patient,
@@ -467,7 +664,7 @@ def apply_plot_firepaw_treat_rewards(
 
     phase = plot_phase(guild_id)
     lines: list[str] = []
-    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"])
+    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
 
     if phase in HEALER_PLOT_PHASES:
         lines.append(
@@ -501,6 +698,63 @@ def apply_plot_firepaw_treat_rewards(
     return ("\n\n" + "\n".join(lines)) if lines else ""
 
 
+def apply_plot_soot_treat_rewards(
+    healer,
+    patient,
+    *,
+    guild_id: int,
+    day: int,
+) -> str:
+    """Standing, mood, and quest credit for Soot treatments during The Blinking."""
+    if not soot_plot_active(healer, guild_id):
+        return ""
+    from config import (
+        SOOT_PLOT_ROT_LUNG_HEAL_BONUS,
+        SOOT_PLOT_TREAT_HEAL_BONUS,
+        SOOT_PLOT_TREAT_MOOD_SELF,
+        SOOT_PLOT_TREAT_STANDING,
+    )
+    from engine.diseases import parse_disease
+
+    phase = plot_phase(guild_id)
+    if phase not in SOOT_PLOT_PHASES:
+        return ""
+    lines: list[str] = []
+    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
+
+    heal_note = f"**+{SOOT_PLOT_TREAT_HEAL_BONUS} HP** on healing outcomes"
+    disease_raw = patient["disease"] if "disease" in patient.keys() else None
+    key, _ = parse_disease(disease_raw)
+    if key == "rot_lung":
+        heal_note += f" (**+{SOOT_PLOT_ROT_LUNG_HEAL_BONUS}** more for rot-lung)"
+    lines.append(f"Plot heal bonus: {heal_note}.")
+
+    if _soot_daily_available(healer, day):
+        _mark_soot_daily(healer, day)
+        if healer["id"] != patient["id"]:
+            kick = db.adjust_wolf_standing(
+                healer["discord_id"], SOOT_PLOT_TREAT_STANDING
+            )
+            if kick == "kicked":
+                lines.append("Mirewort's den trusts your hands — but the pack casts you out.")
+            else:
+                lines.append(
+                    f"Mirewort's den trusts your hands (**+{SOOT_PLOT_TREAT_STANDING} standing**)."
+                )
+        else:
+            mood = db.adjust_mood(healer["id"], SOOT_PLOT_TREAT_MOOD_SELF)
+            lines.append(
+                f"Swamp mist steadies you (**+{SOOT_PLOT_TREAT_MOOD_SELF} mood**, "
+                f"now **{mood}**)."
+            )
+
+    if phase == 5:
+        lines.append("The Belly falls silent; rot-lung walks the reeds — your litter's ghost in every wheeze.")
+    elif phase == 11:
+        lines.append("Ash naming at the creek; each fever cooled is a name remembered.")
+    return ("\n\n" + "\n".join(lines)) if lines else ""
+
+
 def apply_plot_firepaw_observe_rewards(medic, *, guild_id: int, day: int) -> str:
     if not firepaw_plot_active(medic, guild_id):
         return ""
@@ -515,7 +769,7 @@ def apply_plot_firepaw_observe_rewards(medic, *, guild_id: int, day: int) -> str
         return ""
 
     mood = db.adjust_mood(medic["id"], FIREPAW_PLOT_OBSERVE_MOOD)
-    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"])
+    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
 
     strain_note = ""
     state = parse_skill_strain_state(
@@ -541,12 +795,71 @@ def apply_plot_firepaw_observe_rewards(medic, *, guild_id: int, day: int) -> str
     )
 
 
+def apply_plot_soot_observe_rewards(medic, *, guild_id: int, day: int) -> str:
+    if not soot_plot_active(medic, guild_id):
+        return ""
+    from config import SOOT_PLOT_OBSERVE_MOOD, SOOT_PLOT_OBSERVE_STRAIN_RELIEF
+    from engine.character_traits import (
+        encode_skill_strain_state,
+        parse_skill_strain_state,
+    )
+
+    phase = plot_phase(guild_id)
+    if phase not in SOOT_PLOT_PHASES:
+        return ""
+
+    mood = db.adjust_mood(medic["id"], SOOT_PLOT_OBSERVE_MOOD)
+    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
+
+    strain_note = ""
+    state = parse_skill_strain_state(
+        medic["trait_failure_days"] if "trait_failure_days" in medic.keys() else "{}"
+    )
+    entry = state.get("medicine")
+    if entry and int(entry.get("strain", 0)) > 0:
+        entry["strain"] = max(
+            0, int(entry["strain"]) - SOOT_PLOT_OBSERVE_STRAIN_RELIEF
+        )
+        if entry["strain"] <= 0:
+            state.pop("medicine", None)
+        else:
+            state["medicine"] = entry
+        db.update_user_by_id(
+            medic["id"], trait_failure_days=encode_skill_strain_state(state)
+        )
+        strain_note = f" Medicine strain **−{SOOT_PLOT_OBSERVE_STRAIN_RELIEF}**."
+
+    return (
+        f"\n\n**+{SOOT_PLOT_OBSERVE_MOOD} mood** (now **{mood}**). "
+        f"Mirewort's ward counts toward **blink_healer_touch**.{strain_note}"
+    )
+
+
 def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
     phase = plot_phase(guild_id)
-    firepaw_block = apply_plot_firepaw_sniff(user, guild_id, day) if day else ""
+    if phase <= 0:
+        return ""
+    if day:
+        increment_plot_sniff_quests(user, guild_id)
+    healer_blocks: list[str] = []
+    if day:
+        firepaw_block = apply_plot_firepaw_sniff(user, guild_id, day)
+        soot_block = apply_plot_soot_sniff(user, guild_id, day)
+        if firepaw_block:
+            healer_blocks.append(firepaw_block.strip().strip("_"))
+        if soot_block:
+            healer_blocks.append(soot_block.strip().strip("_"))
+    else:
+        firepaw_block = ""
+        soot_block = ""
+    witness = try_plot_witness(user, guild_id, day, action="sniff") if day else ""
     if phase < 6:
-        return firepaw_block
-    db.increment_quest_progress(user["discord_id"], "sniff")
+        parts = []
+        if healer_blocks:
+            parts.append("_" + " ".join(healer_blocks) + "_")
+        if witness:
+            parts.append(witness)
+        return "".join(parts) if parts else (firepaw_block or soot_block)
     lines: list[str] = []
     if phase in PARANOIA_PHASES and random.random() < 0.22:
         lines.append(
@@ -554,14 +867,17 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
         )
     if _is_plot_wolf(user, SPLINTER_NAME):
         lines.append("_Your own trail doubles back; even you are not sure who you are stealing for._")
-    if firepaw_block and phase >= 6:
-        lines.append(firepaw_block.strip().strip("_"))
-    elif _is_plot_wolf(user, FIREPAW_NAME) and phase in PARANOIA_PHASES and not firepaw_block:
+    if healer_blocks:
+        lines.extend(healer_blocks)
+    elif _is_plot_wolf(user, FIREPAW_NAME) and phase in PARANOIA_PHASES:
         lines.append("_You map patrol gait and rogue limp on the wind before any wolf speaks it._")
-    body = ("\n\n" + "\n".join(lines)) if lines else ""
-    if firepaw_block and phase < 6:
-        return firepaw_block
-    return body
+    elif _is_plot_wolf(user, SOOT_NAME) and phase in PARANOIA_PHASES:
+        lines.append(
+            "_Mismatched eyes catch reed-shift and fever-breath on the border before patrol speaks it._"
+        )
+    if witness:
+        lines.append(witness.strip())
+    return ("\n\n" + "\n".join(lines)) if lines else witness
 
 
 def try_plot_rogue_crime(
@@ -614,15 +930,28 @@ def try_plot_rogue_crime(
 
 
 def try_plot_treat_extras(healer, patient, *, guild_id: int, day: int = 0) -> str:
-    """Backward-compatible alias for Firepaw treat rewards."""
     if not day:
         world = db.get_world(guild_id)
         day = int(world["day_number"])
-    return apply_plot_firepaw_treat_rewards(healer, patient, guild_id=guild_id, day=day)
+    parts = [
+        apply_plot_firepaw_treat_rewards(healer, patient, guild_id=guild_id, day=day),
+        apply_plot_soot_treat_rewards(healer, patient, guild_id=guild_id, day=day),
+        apply_plot_generic_healer_treat_rewards(
+            healer, patient, guild_id=guild_id, day=day
+        ),
+        try_plot_witness(healer, guild_id, day, action="treat"),
+    ]
+    return "".join(part for part in parts if part)
 
 
 def try_plot_observe_extras(medic, *, guild_id: int, day: int = 0) -> str:
     if not day:
         world = db.get_world(guild_id)
         day = int(world["day_number"])
-    return apply_plot_firepaw_observe_rewards(medic, guild_id=guild_id, day=day)
+    parts = [
+        apply_plot_firepaw_observe_rewards(medic, guild_id=guild_id, day=day),
+        apply_plot_soot_observe_rewards(medic, guild_id=guild_id, day=day),
+        apply_plot_generic_healer_observe_rewards(medic, guild_id=guild_id, day=day),
+        try_plot_witness(medic, guild_id, day, action="treat"),
+    ]
+    return "".join(part for part in parts if part)

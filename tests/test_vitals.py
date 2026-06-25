@@ -56,8 +56,9 @@ def test_needs_exhaustion() -> None:
         row = conn.execute(
             "SELECT exhaustion FROM users WHERE discord_id = 999300001000000001"
         ).fetchone()
+    test_notes = [n for n in notes if n.get("discord_id") == 999300001000000001]
     check("hunger low adds exhaustion", row["exhaustion"] == 2)
-    check("note recorded", len(notes) == 1 and notes[0]["cause"] == "hunger")
+    check("note recorded", len(test_notes) == 1 and test_notes[0]["cause"] == "hunger")
 
     with db.get_db() as conn:
         conn.execute(

@@ -54,7 +54,7 @@ def cannibalism_eat_consequences(user, prey_key: str) -> str:
     if not user["pack_id"]:
         return msg + "\n_No clan saw it; but the taste stays with you._"
     db.adjust_wolf_standing(user["discord_id"], -CANNIBALISM_STANDING_PENALTY)
-    extra_mood = CANNIBALISM_MOOD_PENALTY; CANNIBALISM_EAT_MOOD_PENALTY
+    extra_mood = CANNIBALISM_MOOD_PENALTY - CANNIBALISM_EAT_MOOD_PENALTY
     if extra_mood > 0:
         db.adjust_mood(user["id"], -extra_mood)
     return (

@@ -244,11 +244,11 @@ def _compute_party_base(users: list, *, kind: str, fixed_base: int | None = None
     return base, bonus_pct
 
 
-def _mark_survey_done(users: list, day: int) -> None:
+def _mark_survey_done(users: list, day: int, *, guild_id: int) -> None:
     for user in users:
         db.update_user(user["discord_id"], wolf_id=user["id"], last_survey_day=day)
-        db.increment_quest_progress(user["discord_id"], "survey")
-        db.increment_quest_progress(user["discord_id"], "patrol")
+        db.increment_quest_progress(user["discord_id"], "survey", guild_id=guild_id)
+        db.increment_quest_progress(user["discord_id"], "patrol", guild_id=guild_id)
 
 
 def _mark_trail_done(users: list, day: int) -> None:
@@ -276,19 +276,27 @@ def payout_collab_survey(
 
     base, bonus_pct = _compute_party_base(users, kind="survey", fixed_base=fixed_base)
     share = base // len(users) if users else 0
-    remainder = base; share * len(users)
+    remainder = base - share * len(users)
 
     lines: list[str] = []
+    from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
+
     for user in users:
         bones = share + (remainder if user["id"] == patrol["leader_wolf_id"] else 0)
         if bones > 0:
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
+        standing_gain = standing_delta
         if standing_delta:
-            db.adjust_wolf_standing(user["discord_id"], standing_delta)
+            gp = user["great_pack"] if "great_pack" in user.keys() else None
+            standing_gain += plot_thistlehide_patrol_standing_bonus(patrol["guild_id"], gp)
+            db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_delta}**")
+        if standing_delta:
+            lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_gain}**")
+        else:
+            lines.append(f"**{user['wolf_name']}** +{bones} bones")
 
-    _mark_survey_done(users, day)
+    _mark_survey_done(users, day, guild_id=patrol["guild_id"])
     db.adjust_pack_unity(patrol["pack_id"], 1)
 
     flavor = random.choice(SURVEY_FLAVOR)
@@ -336,7 +344,7 @@ def payout_collab_trail(
 
     base, bonus_pct = _compute_party_base(users, kind="trail", fixed_base=fixed_base)
     share = base // len(users) if users else 0
-    remainder = base; share * len(users)
+    remainder = base - share * len(users)
 
     lines: list[str] = []
     for user in users:
@@ -575,7 +583,7 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
     db.add_war_score(war["id"], patrol["pack_id"], total)
     for user in users:
         db.update_user(user["discord_id"], wolf_id=user["id"], last_patrol_day=day)
-        db.increment_quest_progress(user["discord_id"], "patrol")
+        db.increment_quest_progress(user["discord_id"], "patrol", guild_id=patrol["guild_id"])
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
 
     db.adjust_pack_unity(patrol["pack_id"], 1)

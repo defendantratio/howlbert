@@ -70,7 +70,7 @@ def meal_thirst_gain(prey_key: str, uses_consumed: int = 1) -> int:
 def format_thirst_line(user) -> str:
     thirst = user_thirst(user)
     if thirst <= 0:
-        note = "; **dying**; roll `/deathsaves` or get `/stabilize`."
+        note = "; **dying**; roll **`/medic action:deathsaves`** or get **`/medic action:stabilize`**."
     elif thirst <= THIRST_ROLLOVER_DECAY:
         note = "; will **collapse** at next sunrise without water."
     elif thirst < THIRST_CRITICAL_THRESHOLD:
@@ -126,6 +126,10 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
     )
     if plot_line:
         msg += f"\n_{plot_line}_"
+    if guild_id is not None:
+        from engine.plot_blinking import try_plot_witness
+
+        msg += try_plot_witness(user, guild_id, day, action="drink")
     if hp_gain:
         msg += f", **+{hp_gain} HP**"
     msg += f". _(Next drink in {DRINK_COOLDOWN_MINUTES} min.)_"

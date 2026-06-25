@@ -119,12 +119,22 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
     return True, "\n".join(lines)
 
 
-def run_observe_apprentice(medic, patient, *, day: int) -> tuple[bool, str]:
+def run_observe_apprentice(
+    medic, patient, *, day: int, guild_id: int | None = None
+) -> tuple[bool, str]:
     """Apprentice RP observation; quest progress, no surgery cooldown."""
     if not has_any_role(medic, "medic_apprentice") and not is_full_medic(medic):
         return False, "Only **Medics** and **medic apprentices** may observe surgery."
     if medic["id"] == patient["id"]:
         return False, "Observe another wolf's case; not your own."
+    if guild_id:
+        from engine.medical_access import can_medic_treat_cross_pack
+
+        ok_cross, cross_msg = can_medic_treat_cross_pack(
+            medic, patient, guild_id, emergency_stabilize=False
+        )
+        if not ok_cross:
+            return False, cross_msg
     last = int(medic["last_observe_day"] if "last_observe_day" in medic.keys() else 0)
     if last >= day:
         return False, "You already observed a case this sunrise."
@@ -153,10 +163,20 @@ def _injury_label(injuries: list[str]) -> str:
     return info.get("name", injuries[0])
 
 
-def run_spirit_ritual(medic, patient, herb_key: str, *, day: int) -> tuple[bool, str]:
+def run_spirit_ritual(
+    medic, patient, herb_key: str, *, day: int, guild_id: int | None = None
+) -> tuple[bool, str]:
     """Douglas sagewort / lavender / rowan for shock_emotional or spirit cleanse."""
     if not is_medic(medic) and not has_any_role(medic, "medic_apprentice"):
         return False, "Only **Medics** lead cleansing rituals."
+    if guild_id and medic["id"] != patient["id"]:
+        from engine.medical_access import can_medic_treat_cross_pack
+
+        ok_cross, cross_msg = can_medic_treat_cross_pack(
+            medic, patient, guild_id, emergency_stabilize=False
+        )
+        if not ok_cross:
+            return False, cross_msg
     key = herb_key.strip().lower()
     if key == "rowan":
         key = "mountain_ash"

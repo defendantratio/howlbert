@@ -22,7 +22,7 @@ def purchase_shop_item(
     """
     shop_item = db.get_item_by_key(item_key)
     if not shop_item or shop_item["price"] <= 0:
-        return False, "That item isn't for sale; check `/shop`.", ""
+        return False, "That item isn't for sale; check `/bones action:shop`.", ""
 
     price = int(shop_item["price"])
     user = db.get_user(discord_id)
@@ -55,7 +55,7 @@ def purchase_shop_item(
         if not db.deduct_bones(discord_id, price):
             return False, "Purchase failed.", shop_item["name"]
         grant_amusement(user["id"], toy_key)
-        return True, f"**{meta['name']}** added to your toys (`/toys` · `/play`).", shop_item["name"]
+        return True, f"**{meta['name']}** added to your toys (`/playpen action:toys` · `/playpen`).", shop_item["name"]
 
     if not db.buy_item(discord_id, shop_item["id"], price):
         return False, "Purchase failed.", shop_item["name"]

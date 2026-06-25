@@ -86,7 +86,10 @@ class Quests(commands.Cog):
             await interaction.response.send_message("Use `/register` first.", ephemeral=True)
             return
 
-        rows = db.get_available_quests(interaction.user.id)
+        rows = db.get_available_quests(
+            interaction.user.id,
+            guild_id=interaction.guild.id if interaction.guild else None,
+        )
         if not rows:
             embed = howlbert_embed("Den Board", "No new quests on the board right now.")
             await interaction.response.send_message(embed=embed)
@@ -277,7 +280,7 @@ class Quests(commands.Cog):
         embed.add_field(name="Key", value=f"`{key}`", inline=True)
         embed.add_field(name="Objective", value=f"{objective} x{count}", inline=True)
         embed.add_field(name="Reward", value=format_bones(reward), inline=True)
-        embed.set_footer(text="Wolves can /accept and /complete it now.")
+        embed.set_footer(text="Wolves can `/quest action:accept` and `/quest action:complete` now.")
         await interaction.response.send_message(embed=embed)
 
     @questadmin.command(name="list", description="List all den board quests (admin).")
@@ -309,7 +312,7 @@ class Quests(commands.Cog):
         if not db.delete_quest_by_key(key):
             embed = howlbert_embed(
                 "Can't Remove",
-                "Quest not found, or a wolf still has it active. Use `/abandon` first.",
+                "Quest not found, or a wolf still has it active. Use `/quest action:abandon` first.",
                 color=ERROR_COLOR,
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)

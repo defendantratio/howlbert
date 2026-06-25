@@ -270,7 +270,7 @@ class Economy(commands.Cog):
             return
 
         if not db.transfer_bones_by_wolf_id(user["id"], recipient["id"], amount):
-            embed = howlbert_embed("Transfer Failed", color=ERROR_COLOR)
+            embed = howlbert_embed("Transfer Failed", "Could not move bones to that wolf.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
         embed = howlbert_embed("Bones Gifted", color=SUCCESS_COLOR)
@@ -318,7 +318,7 @@ class Economy(commands.Cog):
             return
 
         if not db.transfer_item_by_wolf_id(user["id"], recipient["id"], shop_item["id"], quantity):
-            embed = howlbert_embed("Transfer Failed", color=ERROR_COLOR)
+            embed = howlbert_embed("Transfer Failed", "Could not move bones to that wolf.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -418,7 +418,7 @@ class Economy(commands.Cog):
                 return
 
         if offer_bones > 0 and user["bones"] < offer_bones:
-            embed = howlbert_embed("Not Enough Bones", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -433,7 +433,7 @@ class Economy(commands.Cog):
             to_bones=for_bones,
         )
         if not trade_id:
-            embed = howlbert_embed("Trade Failed", color=ERROR_COLOR)
+            embed = howlbert_embed("Trade Failed", "That trade could not be completed.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -555,21 +555,21 @@ class Economy(commands.Cog):
 
         shop_item = db.get_item_by_key(item)
         if not shop_item:
-            embed = howlbert_embed("Unknown Item", "Check `/shop` for valid item keys.", color=ERROR_COLOR)
+            embed = howlbert_embed("Unknown Item", "Check `/bones action:shop` for valid item keys.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         if shop_item["price"] <= 0:
             embed = howlbert_embed(
                 "Not For Sale",
-                "That isn't sold at the trading post. Wild herbs come from `/forage`; food and toys use keys like `prey_vole` or `toy_bone`.",
+                "That isn't sold at the trading post. Wild herbs come from `/field action:forage`; food and toys use keys like `prey_vole` or `toy_bone`.",
                 color=ERROR_COLOR,
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         if user["bones"] < shop_item["price"]:
-            embed = howlbert_embed("Not Enough Bones", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -585,11 +585,11 @@ class Economy(commands.Cog):
         )
         if not ok:
             if note == "Not enough bones.":
-                embed = howlbert_embed("Not Enough Bones", color=ERROR_COLOR)
+                embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
             elif note:
                 embed = howlbert_embed("Can't Buy", note, color=ERROR_COLOR)
             else:
-                embed = howlbert_embed("Purchase Failed", color=ERROR_COLOR)
+                embed = howlbert_embed("Purchase Failed", "That purchase could not be completed.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -635,7 +635,7 @@ class Economy(commands.Cog):
 
         shop_item = db.get_item_by_key(item)
         if not shop_item:
-            embed = howlbert_embed("Unknown Item", color=ERROR_COLOR)
+            embed = howlbert_embed("Unknown Item", "Check `/bones action:shop` for valid keys.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -702,7 +702,7 @@ class Economy(commands.Cog):
                 "herbs: /herbs action:dryall · action:store mode:depositall"
             )
         if any(row["key"] in USABLE_ITEM_KEYS for row in items):
-            footer_bits.append("/use item:<key>")
+            footer_bits.append("/bones action:use item:<key>")
         if footer_bits:
             embed.set_footer(text=" · ".join(footer_bits))
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -743,7 +743,7 @@ class Economy(commands.Cog):
                 "Check `/inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, "
                 "`revive`, `reincarnation`. "
                 "`lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. "
-                "`extra_paw` works with `/work` or `/crime`.",
+                "`extra_paw` works with `/bones action:work` or `/bones action:crime`.",
                 color=ERROR_COLOR,
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -870,7 +870,7 @@ class Economy(commands.Cog):
             old_age = user["age_months"] if "age_months" in user.keys() else 24
             err = db.revive_wolf(interaction.user.id)
             if err:
-                embed = howlbert_embed("Can't Revive", color=ERROR_COLOR)
+                embed = howlbert_embed("Can't Revive", err, color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
 
@@ -903,7 +903,7 @@ class Economy(commands.Cog):
             if not new_name or not new_name.strip():
                 embed = howlbert_embed(
                     "Need a New Name",
-                    "Use `/use item:reincarnation new_name:<name>`; a new identity for the same soul.",
+                    "Use `/bones action:use item:reincarnation new_name:<name>`; a new identity for the same soul.",
                     color=ERROR_COLOR,
                 )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -912,7 +912,11 @@ class Economy(commands.Cog):
             old_name = user["wolf_name"]
             err = db.reincarnate_as_new_life(interaction.user.id, new_name)
             if err == "not_dead":
-                embed = howlbert_embed("Still Breathing", color=ERROR_COLOR)
+                embed = howlbert_embed(
+                    "Still Breathing",
+                    "**Reincarnation** only works when your active wolf is **dead**.",
+                    color=ERROR_COLOR,
+                )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             if err == "same_name":
@@ -936,7 +940,7 @@ class Economy(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             if err:
-                embed = howlbert_embed("Can't Reincarnate", color=ERROR_COLOR)
+                embed = howlbert_embed("Can't Reincarnate", str(err), color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
 
@@ -950,7 +954,7 @@ class Economy(commands.Cog):
             embed.description = (
                 f"The mist takes **{old_name}**; **{reborn['wolf_name']}** wakes in a younger body.\n\n"
                 f"**{REINCARNATION_START_AGE_MOONS} moons** · **{role_label}** · stats & standing kept\n"
-                "Prey hoard & toys cleared · `/prey` `/toys`"
+                "Prey hoard & toys cleared · `/prey` `/playpen action:toys`"
             )
             await interaction.response.send_message(embed=embed)
             return

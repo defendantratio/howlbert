@@ -177,6 +177,11 @@ def treat_from_herb_stack(
 
     if outcome == "no_effect" and not special and herb_key not in ("comfrey", "cobwebs"):
         check = medicine_check(healer, dc=15)
+        from engine.herb_buffs import consume_herb_check_buffs
+
+        consume_fields = consume_herb_check_buffs(healer, skill_key="medicine")
+        if consume_fields:
+            db.update_user(healer["discord_id"], wolf_id=healer["id"], **consume_fields)
         if not check["success"] and not is_full_medic(healer):
             return False, f"Medicine check: {check['total']} vs DC 15: no effect."
 
@@ -251,9 +256,9 @@ def treat_from_herb_stack(
         heal = max(1, int(random.randint(lo, hi) * (int(stack["potency"]) / 100.0)))
         heal += trait_treat_heal_bonus(healer)
         if guild_id:
-            from engine.plot_blinking import plot_firepaw_heal_bonus
+            from engine.plot_blinking import plot_healer_heal_bonus
 
-            heal += plot_firepaw_heal_bonus(healer, guild_id)
+            heal += plot_healer_heal_bonus(healer, patient, guild_id)
         cap = effective_max_hp(patient)
         new_hp = min(cap, int(patient["hp"]) + heal)
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)

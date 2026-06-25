@@ -34,13 +34,15 @@ from config import (
 
     ROLLOVER_MINUTE,
 
+    ROLLOVER_STARTUP_DM_HOURS,
+
     ROLLOVER_TIMEZONE,
 
 )
 
 from engine.world import season_label, time_label, weather_label
 
-from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, resolve_timezone, rollover_now
+from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, rollover_now
 
 from utils.embeds import SUCCESS_COLOR, howlbert_embed
 
@@ -90,7 +92,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
         lines = [
 
-            f"**{d['wolf_name']}**; collapsed from {d['cause']} · use **`/deathsaves`**"
+            f"**{d['wolf_name']}**; collapsed from {d['cause']} · use **`/medic action:deathsaves`**"
 
             for d in collapses[:10]
 
@@ -242,7 +244,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
             "Hunger −12 · thirst −14 · low mood/hunger/thirst +1 exhaustion each. "
 
-            "Exhaustion 6 = death. At 0 hunger/thirst, collapse: /deathsaves. "
+            "Exhaustion 6 = death. At 0 hunger/thirst, collapse: `/medic action:deathsaves`. "
 
             f"Long-rest: +1 HP, −1 exhaustion. {age_note}"
 
@@ -253,7 +255,44 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
     return embed
 
 
+def build_startup_briefing_crisis(guild_id: int, world) -> dict:
+    """Den-news snapshot for morning startup when sunrise already rolled."""
+    from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, lunar_phase_label, rollover_now
+    from engine.plot_blinking import plot_den_news_line, plot_phase
+    from engine.rollover_news import collect_den_news
 
+    day = int(world["day_number"])
+    crisis: dict = {"den_news": collect_den_news(day, [])}
+    phase = plot_phase(guild_id)
+    if phase > 0:
+        line = plot_den_news_line(phase, day)
+        if line:
+            crisis["den_news"].setdefault("pack_events", []).append(line)
+    sky = active_lunar_phase(rollover_now(ROLLOVER_TIMEZONE))
+    crisis["lunar_phase_label"] = (
+        BIRTH_LUNAR_LABELS[sky] if sky else lunar_phase_label(rollover_now(ROLLOVER_TIMEZONE))
+    )
+    return crisis
+
+
+async def maybe_send_startup_den_briefing(
+    bot: commands.Bot, guild: discord.Guild, *, now: datetime
+) -> None:
+    """DM den news when the bot starts in the morning window but sunrise already ran."""
+    if not within_startup_den_news_dm_window(now):
+        return
+    if guild_due_for_rollover(guild.id, now):
+        return
+    world = db.get_world(guild.id)
+    crisis = build_startup_briefing_crisis(guild.id, world)
+    from utils.notifications import notify_den_news_after_rollover
+
+    try:
+        await notify_den_news_after_rollover(
+            bot, guild, world, crisis, catch_up_days=0, briefing=True
+        )
+    except Exception:
+        logger.exception("Startup den briefing DM failed for guild %s", guild.id)
 
 
 def _rollover_moment(day: datetime.date, tz) -> datetime:
@@ -323,10 +362,21 @@ def guild_due_for_rollover(guild_id: int, now: datetime) -> bool:
     return missed_rollover_count(guild_id, now) > 0
 
 
+def within_startup_den_news_dm_window(now: datetime) -> bool:
+    """
+    True when the bot came online soon after today's scheduled sunrise.
+    Used to DM den news when rollover was missed because the bot was offline.
+    """
+    tz = now.tzinfo
+    moment = _rollover_moment(now.date(), tz)
+    if now < moment:
+        return False
+    return now <= moment + timedelta(hours=ROLLOVER_STARTUP_DM_HOURS)
 
 
-
-async def run_guild_rollover(bot: commands.Bot, guild_id: int) -> int:
+async def run_guild_rollover(
+    bot: commands.Bot, guild_id: int, *, dm_den_news: bool = False
+) -> int:
     """Perform every due rollover (including catch-up after downtime). Returns count rolled."""
     now = rollover_now(ROLLOVER_TIMEZONE)
     missed = missed_rollover_count(guild_id, now)
@@ -358,6 +408,18 @@ async def run_guild_rollover(bot: commands.Bot, guild_id: int) -> int:
             except discord.HTTPException as exc:
                 logger.warning("Could not announce rollover in guild %s: %s", guild_id, exc)
         await notify_births_ready_after_rollover(bot, world["day_number"])
+
+    if dm_den_news and world and crisis:
+        guild = bot.get_guild(guild_id)
+        if guild:
+            from utils.notifications import notify_den_news_after_rollover
+
+            try:
+                await notify_den_news_after_rollover(
+                    bot, guild, world, crisis, catch_up_days=capped
+                )
+            except Exception:
+                logger.exception("Den news DM failed for guild %s", guild_id)
 
     logger.info(
         "Auto rollover guild %s: %s sunrise(s) → day %s",
@@ -433,39 +495,47 @@ async def auto_rollover_loop(bot: commands.Bot) -> None:
 
 
 
-    tz = resolve_timezone(ROLLOVER_TIMEZONE)
-
     logger.info(
-
-        "Auto rollover on at %02d:%02d %s (lunar birth aging: %s).",
-
+        "Auto rollover on at %02d:%02d %s (lunar birth aging: %s; startup DM window %sh).",
         ROLLOVER_HOUR,
-
         ROLLOVER_MINUTE,
-
         ROLLOVER_TIMEZONE,
-
         LUNAR_BIRTH_AGING,
-
+        ROLLOVER_STARTUP_DM_HOURS,
     )
 
-
+    first_pass = True
 
     while not bot.is_closed():
 
         try:
+            now = rollover_now(ROLLOVER_TIMEZONE)
+            dm_on_catchup = first_pass and within_startup_den_news_dm_window(now)
 
             for guild in bot.guilds:
 
                 try:
 
                     db.get_world(guild.id)
-
-                    await run_guild_rollover(bot, guild.id)
+                    due = guild_due_for_rollover(guild.id, now)
+                    if first_pass:
+                        logger.info(
+                            "Startup rollover guild %s: due=%s dm_window=%s",
+                            guild.id,
+                            due,
+                            dm_on_catchup,
+                        )
+                    rolled = await run_guild_rollover(
+                        bot, guild.id, dm_den_news=dm_on_catchup and due
+                    )
+                    if first_pass and dm_on_catchup and rolled == 0:
+                        await maybe_send_startup_den_briefing(bot, guild, now=now)
 
                 except Exception:
 
                     logger.exception("Auto rollover failed for guild %s", guild.id)
+
+            first_pass = False
 
         except Exception:
 

@@ -347,7 +347,7 @@ def build_cooldown_fields(
     )
     fields.append(
         (
-            "/role action:roleevent",
+            "/role action:event",
             _status(user, "roleevent", ready=not _used_today(user, day, "last_role_event_day")),
             True,
         )

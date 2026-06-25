@@ -99,7 +99,7 @@ class Pack(commands.Cog):
             return None, None
         pack = db.get_pack(user["pack_id"])
         if not pack:
-            embed = howlbert_embed("Pack Not Found", color=ERROR_COLOR)
+            embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return None, None
         return user, pack
@@ -140,7 +140,7 @@ class Pack(commands.Cog):
             return
 
         if amount <= 0:
-            embed = howlbert_embed("Invalid Amount", color=ERROR_COLOR)
+            embed = howlbert_embed("Invalid Amount", "Enter a positive number of bones.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -171,7 +171,7 @@ class Pack(commands.Cog):
             return
 
         if amount <= 0:
-            embed = howlbert_embed("Invalid Amount", color=ERROR_COLOR)
+            embed = howlbert_embed("Invalid Amount", "Enter a positive number of bones.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -473,7 +473,11 @@ class Pack(commands.Cog):
 
         status = db.resolve_war(war["id"])
         if not status:
-            embed = howlbert_embed("Resolve Failed", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Resolve Failed",
+                "This war can't be resolved yet (needs 2 rollovers or invalid state).",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -498,8 +502,11 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     async def _war_action(self, interaction: discord.Interaction, day_column: str, action_label: str, points_fn):
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            return
         user, pack = await self._require_pack_member(interaction)
-        if not user or not interaction.guild:
+        if not user:
             return
 
         war = db.get_active_war_for_pack(interaction.guild.id, pack["id"])
@@ -518,7 +525,7 @@ class Pack(commands.Cog):
 
         points = points_fn(user)
         db.add_war_score(war["id"], pack["id"], points)
-        db.increment_quest_progress(interaction.user.id, "patrol")
+        db.increment_quest_progress(interaction.user.id, "patrol", guild_id=interaction.guild.id)
         db.update_user(interaction.user.id, **{day_column: day})
 
         war = db.get_active_war_for_pack(interaction.guild.id, pack["id"])
@@ -622,7 +629,7 @@ class Pack(commands.Cog):
         if user["pack_id"]:
             pack = db.get_pack(user["pack_id"])
             if not pack:
-                embed = howlbert_embed("Pack Not Found", color=ERROR_COLOR)
+                embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
 
@@ -652,7 +659,7 @@ class Pack(commands.Cog):
 
             kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
             db.update_user(interaction.user.id, last_howl_day=day)
-            db.increment_quest_progress(interaction.user.id, "howl")
+            db.increment_quest_progress(interaction.user.id, "howl", guild_id=interaction.guild.id)
 
             if dissolve == "dissolved":
                 body = (
@@ -676,6 +683,9 @@ class Pack(commands.Cog):
                 body += f"\n\n_{message.strip()}_"
             if mood_note:
                 body += f"\n\n_{mood_note}_"
+            from engine.plot_blinking import try_plot_witness
+
+            body += try_plot_witness(user, interaction.guild.id, day, action="howl")
 
             from engine.role_features import can_grant_commanding_howl, grant_commanding_howl_buffs
 

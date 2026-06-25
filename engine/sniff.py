@@ -109,7 +109,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         new_mood = db.adjust_mood(user["id"], SNIFF_WOLF_ENCOUNTER_MOOD)
         body += f"\n\n**+{SNIFF_WOLF_ENCOUNTER_MOOD} mood** (now **{new_mood}**)."
         if user["pack_id"] and user["pack_id"] == encounter["pack_id"]:
-            body += "\nPackmate on the trail; try **`/socialize`** if you haven't mingled today."
+            body += "\nPackmate on the trail; try **`/playpen action:socialize`** if you haven't mingled today."
         footer_bits.append("Wolf encounter")
     else:
         border_odds = SNIFF_CAT_ENCOUNTER_CHANCE * pact_border_chance_multiplier(

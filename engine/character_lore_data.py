@@ -70,7 +70,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "beneath a fallen log, and dreamed of the wolf he killed; as he always does."
         ),
         open_plots=(
-            "Book One (*The Blinking*): rogue `/crime` border branch (phase 6+); `/sniff` may catch his "
+            "Book One (*The Blinking*): rogue `/bones action:crime` border branch (phase 6+); `/field action:sniff` may catch his "
             "limp scent; `/explore investigate` mill tooth; redemption via returned prey + standing, or "
             "death by patrol/combat; quest **blink_rogue_ledger**."
         ),
@@ -1887,13 +1887,17 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
         ),
         family_ties="Litter deceased (rot-lung). Mentor; Mirewort.",
         rp_sample=(
-            "Soot balanced a gourd on her nose, mismatched eyes crossed. Mirewort: \"Don't spill it.\" She spilled it. "
-            "\"Sorry! I'll get more-\" She knocked three containers, face-first in stinging nettle. Mirewort sighed, "
-            "helped her up, picked nettles from her fur. \"You're hopeless, you little vole-snout.\" \"I know.\" "
-            "\"Good. Hopeless wolves live longer.\" Was that encouragement? He did not send her away. That was enough."
+            "Soot balanced the gourd on her nose, trying to pour the murky liquid into a smaller container. Her "
+            "mismatched eyes crossed with concentration. The gourd wobbled. Mirewort: \"Don't spill it.\" She spilled it. "
+            "\"Sorry! I'm sorry. I'll get more—\" She scrambled for the herb pile, knocked over three more containers, "
+            "and landed face-first in stinging nettle. Mirewort sighed, helped her up, picked nettles from her fur. "
+            "\"You're hopeless, you little vole-snout.\" \"I know.\" \"Good. Hopeless wolves live longer. They don't "
+            "expect to succeed.\" Was that encouragement? He did not send her away. That was enough."
         ),
         open_plots=(
-            "Must heal someone alone; mismatched eyes reveal something supernatural; attachment to Mirewort tested."
+            "Must heal someone alone; mismatched eyes reveal something supernatural; attachment to Mirewort tested. "
+            "Book One (*The Blinking*): phases 5–11 `/field action:sniff` and `/medic` treat/observe add Soot flavor; "
+            "extra heal on rot-lung; shares blink_healer_listen and blink_healer_touch."
         ),
     ),
     "Dusk": _sheet(

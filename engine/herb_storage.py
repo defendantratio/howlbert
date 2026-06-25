@@ -31,6 +31,7 @@ def grant_fresh_herb(
     day: int,
     form: str = "fresh",
     user=None,
+    conn=None,
 ) -> tuple[int, str]:
     """Add a herb stack; returns (stack_id, restricted-hoard standing note if any)."""
     stack_id = db.add_herb_stack(
@@ -39,6 +40,7 @@ def grant_fresh_herb(
         guild_id=guild_id,
         acquired_day=day,
         form=form,
+        conn=conn,
     )
     hoard_note = ""
     if user is None:
@@ -77,13 +79,13 @@ def format_herb_stack_line(stack, current_day: int, *, user=None) -> str:
     else:
         fresh_lim, prep_lim, dried_lim = HERB_FRESH_DRY_DAYS, HERB_PREPARED_STORAGE_DAYS, HERB_DRIED_STORAGE_DAYS
     if stack["form"] == "fresh":
-        left = fresh_lim; age
+        left = fresh_lim - age
         if left <= 0:
             fresh_note = " · **spoiling**"
         else:
             fresh_note = f" · dry within **{left}** sunrise(s)"
     elif stack["form"] in HERB_PREPARED_FORMS:
-        left = prep_lim; age
+        left = prep_lim - age
         if left <= 0:
             fresh_note = " · **spoiled**"
         else:

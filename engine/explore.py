@@ -174,7 +174,7 @@ def try_explore(
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR), None
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), None
     if not interaction.guild:
         return howlbert_embed("Server Only", "Explore in a server channel.", color=ERROR_COLOR), None
 
@@ -307,21 +307,24 @@ def try_explore(
             day=day,
             success=True,
         )
-    db.increment_quest_progress(interaction.user.id, "explore")
+    from engine.plot_blinking import try_plot_witness
+
+    witness = try_plot_witness(user, interaction.guild.id, day, action="explore")
+    db.increment_quest_progress(interaction.user.id, "explore", guild_id=interaction.guild.id)
     embed = howlbert_embed(
         f"{spec['emoji']} Explore: {spec['label']}",
         format_roll_result(result)
-        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}",
+        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}{witness}",
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="Amusement: /play · carcasses: /prey · sell scraps: /raccoon sell")
+    embed.set_footer(text="Amusement: `/playpen` · carcasses: `/prey` · sell scraps: `/raccoon sell`")
     if is_scout(user):
         from config import SCOUT_EXPLORE_DC_BONUS
 
         embed.set_footer(
             text=(
                 f"Scout; unlimited ventures · explore DC −{SCOUT_EXPLORE_DC_BONUS} · "
-                f"/scout rescout · /play · /prey"
+                f"/scout rescout · `/playpen` · /prey"
             )
         )
     return embed, None
@@ -373,7 +376,7 @@ def try_rescout(interaction) -> discord.Embed | None:
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     if not is_scout(user):
         return howlbert_embed(
             "Scouts Only",
@@ -402,7 +405,7 @@ def try_rescout(interaction) -> discord.Embed | None:
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
     scout_footer = (
-        f"Scout; unlimited rescouts · explore DC −{SCOUT_EXPLORE_DC_BONUS} · /play · /prey"
+        f"Scout; unlimited rescouts · explore DC −{SCOUT_EXPLORE_DC_BONUS} · `/playpen` · /prey"
     )
 
     if result["outcome"] == "critical_failure":
@@ -459,7 +462,7 @@ def try_rescout(interaction) -> discord.Embed | None:
             new_mood = db.adjust_mood(user["id"], RESCOUT_MOOD_GAIN)
             loot_line = f"The land reads clear; **+{RESCOUT_MOOD_GAIN} mood** (now **{new_mood}**)"
 
-    db.increment_quest_progress(interaction.user.id, "explore")
+    db.increment_quest_progress(interaction.user.id, "explore", guild_id=interaction.guild.id)
     embed = howlbert_embed(
         "🔁 Rescout",
         format_roll_result(result) + f"\n\n_{biome}_\n\n{loot_line}",

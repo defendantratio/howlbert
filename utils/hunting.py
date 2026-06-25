@@ -74,9 +74,9 @@ def award_bones(
             amount = apply_unity_to_hunt_amount(amount, unity)
     net, tax = apply_pack_tax(amount, user["pack_id"])
     if net > 0:
-        db.add_bones(user["discord_id"], net)
+        db.add_bones(user["discord_id"], net, wolf_id=user["id"])
     if activity not in ("work", "crime"):
-        db.increment_quest_progress(user["discord_id"], activity)
+        db.increment_quest_progress(user["discord_id"], activity, wolf_id=user["id"], guild_id=guild_id)
     if activity == "hunt":
         db.record_hunt(user["discord_id"])
     return net, tax, amount, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note

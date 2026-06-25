@@ -80,4 +80,6 @@ Firepaw flinched, ears dropping, expecting punishment. Sypha inspected the dress
 
 **Family ties:** Mentor: Sypha (Fur-Giver, alive). No mate.
 
+**Roleplay boundaries:** I'm ok with everything but the polyamory.
+
 **Open plots:** Book One (*The Blinking*) healer lane; earn full Medic rank; temper costs allies; Mossgaze herb rivalry; Sypha's approval vs wolves who want her benched.

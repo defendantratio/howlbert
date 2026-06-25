@@ -281,9 +281,16 @@ class World(commands.Cog):
             embed.add_field(name=name, value=value, inline=inline)
         embed = trim_embed_fields(embed)
         if guild_id:
+            from config import LUNAR_BIRTH_AGING
+
+            age_line = (
+                "Wolves age when the sky matches their birth moon (new / half / full)."
+                if LUNAR_BIRTH_AGING
+                else "Wolves age 1 moon per sunrise."
+            )
             embed.set_footer(
                 text="Activities reset each sunrise. Patrol/scout need an active pack war. "
-                "Wolves age 1 moon per sunrise."
+                + age_line
             )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -322,7 +329,7 @@ class World(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 

@@ -10,7 +10,7 @@ from engine.role_restrictions import AGE_OVERRIDE_ROLES, JUVENILE_ROLE, PUP_ROLE
 from rpg_rules import ROLE_LABELS, ROLE_PROFICIENCIES
 
 YOUNG_LIFE_ROLES = frozenset({PUP_ROLE, JUVENILE_ROLE})
-ADULT_ROLES = frozenset(ROLE_PROFICIENCIES.keys()); YOUNG_LIFE_ROLES
+ADULT_ROLES = frozenset(ROLE_PROFICIENCIES.keys()) - YOUNG_LIFE_ROLES
 
 DEFAULT_AGE_BY_ROLE: dict[str, int] = {
     "pup": 3,
@@ -120,7 +120,7 @@ def check_age_milestones(old_age: int, new_age: int, current_role: str) -> list[
     if old_age < JUVENILE_MAX_MOONS <= new_age and current_role == JUVENILE_ROLE:
         notes.append(
             f"At **{format_wolf_age(JUVENILE_MAX_MOONS)}** you leave juvenile life; "
-            "earn an adult role through role quests and `/role action:roleevent`."
+            "earn an adult role through role quests and `/role action:event`."
         )
     if old_age < ELDER_MIN_MOONS <= new_age:
         notes.append(

@@ -49,7 +49,7 @@ def meal_hunger_gain(prey_key: str, uses_consumed: int = 1) -> int:
 def format_hunger_line(user) -> str:
     hunger = user_hunger(user)
     if hunger <= 0:
-        note = "; **dying**; roll `/deathsaves` or get `/stabilize`."
+        note = "; **dying**; roll **`/medic action:deathsaves`** or get **`/medic action:stabilize`**."
     elif hunger <= HUNGER_ROLLOVER_DECAY:
         note = "; will **collapse** at next sunrise without food."
     elif hunger < HUNGER_CRITICAL_THRESHOLD:

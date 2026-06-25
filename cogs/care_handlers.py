@@ -115,7 +115,7 @@ async def treat(
 
     user = db.get_user(interaction.user.id)
     if not user:
-        embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+        embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
@@ -123,10 +123,10 @@ async def treat(
 
     stack_id = parse_herb_stack_id(herb)
     if stack_id is not None:
-        if treat_limit_reached(user) and not patient:
+        if treat_limit_reached(user):
             embed = howlbert_embed(
                 "Limit Reached",
-                "You can only **/treat** **3 times per sunrise** (Medics unlimited).",
+                "You can only **`/medic action:treat`** **3 times per sunrise** (Medics unlimited).",
                 color=ERROR_COLOR,
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -137,19 +137,14 @@ async def treat(
         day = world["day_number"] if world else 0
         treat_patient = None
         if patient:
-            from engine.plot_blinking import firepaw_can_treat_patient
-            from engine.role_privileges import is_medic
+            from engine.role_features import has_any_role, is_full_medic
 
-            if not is_medic(user) and not (
-                interaction.guild
-                and firepaw_can_treat_patient(user, interaction.guild.id)
-            ):
+            if not (is_full_medic(user) or has_any_role(user, "medic_apprentice")):
                 await interaction.response.send_message(
                     embed=howlbert_embed(
                         "Medic Only",
-                        "Only **Medics** may treat a **patient** from their herb bag.\n\n"
-                        "_**Firepaw** (Medic Apprentice) may treat packmates during "
-                        "Book One phases **5–11**._",
+                        "Only **Medics** and **Medic apprentices** may treat a **patient** "
+                        "from their herb bag.",
                         color=ERROR_COLOR,
                     ),
                     ephemeral=True,
@@ -188,7 +183,8 @@ async def treat(
                 )
                 + 1,
             )
-            db.increment_quest_progress(interaction.user.id, "treat")
+            gid = interaction.guild.id if interaction.guild else None
+            db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -211,7 +207,7 @@ async def treat(
     if treat_limit_reached(user):
         embed = howlbert_embed(
             "Limit Reached",
-            "You can only **/treat** with herbs **3 times per sunrise**. "
+            "You can only **`/medic action:treat`** with herbs **3 times per sunrise**. "
             "**Medics** have no cap; promote to full Medic rank or wait for the next `/rollover`.",
             color=ERROR_COLOR,
         )
@@ -479,7 +475,8 @@ async def treat(
         )
         + 1,
     )
-    db.increment_quest_progress(interaction.user.id, "treat")
+    gid = interaction.guild.id if interaction.guild else None
+    db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
     await interaction.response.send_message(embed=embed)
 
 async def herb_guide(interaction: discord.Interaction, herb_filter: str = "all"):
@@ -667,11 +664,18 @@ async def spirit_ritual(
     world = db.get_world(interaction.guild.id)
     from engine.medical_care import run_spirit_ritual
 
-    ok, body = run_spirit_ritual(medic, target, ritual_herb, day=world["day_number"])
+    ok, body = run_spirit_ritual(
+        medic,
+        target,
+        ritual_herb,
+        day=world["day_number"],
+        guild_id=interaction.guild.id if interaction.guild else None,
+    )
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed("Spirit Ritual", body, color=color))
     if ok:
-        db.increment_quest_progress(interaction.user.id, "treat")
+        gid = interaction.guild.id if interaction.guild else None
+        db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
 
 async def naming_ceremony(
     interaction: discord.Interaction,

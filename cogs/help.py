@@ -72,7 +72,7 @@ HELP_TOPICS = {
 
         "**Pack life**; `/bones action:daily` · `/pack treasury` · `/playpen action:socialize` · `/pack stash`\n"
 
-        "**Juveniles (6-24 moons)**; hunt for practice; first kill earns **blooding**; then `/role action:roleevent`\n"
+        "**Juveniles (6-24 moons)**; hunt for practice; first kill earns **blooding**; then `/role action:event`\n"
 
         "**Life**; `/courtship action:court` → `action:mate` (spring) · `action:pregnancy` · `/pupcare action:birth names:…` · `action:feed` · `action:save` · `action:list`\n"
 
@@ -116,11 +116,11 @@ HELP_TOPICS = {
 
         "(default), wolves gain **+1 moon** only when the real sky matches their birth phase "
 
-        "(**new**, **half**, or **full**). `/time` shows tonight's moon.\n"
+        "(**new**, **half**, or **full**). `/world action:time` shows tonight's moon.\n"
 
         "Set `AUTO_ROLLOVER_ENABLED=true` in `.env` for a daily sunrise at `ROLLOVER_HOUR` "
 
-        "in `ROLLOVER_TIMEZONE` (default UTC midnight). If the bot was offline, missed sunrises "
+        "in `ROLLOVER_TIMEZONE` (default US Eastern). If the bot was offline, missed sunrises "
 
         "catch up on the next startup (up to 31 days).\n"
 
@@ -144,11 +144,11 @@ HELP_TOPICS = {
 
         "• **Cough** (green/white → black → red); rare **Green-cough** mold from rotten meat; **14%** den spread/rollover\n"
 
-        "• **Diarrhea**; rotting meat or rolling in filth (`/play`, awkward `/socialize`, bad explore)\n"
+        "• **Diarrhea**; rotting meat or rolling in filth (`/playpen`, awkward `/playpen action:socialize`, bad explore)\n"
 
         "• **Influenza** (50% den spread); failed blizzard, freezing rain, or deep snow `/hazard`\n"
 
-        "• **Fleas / hepatitis / distemper**; carrion and `/scavenge`; **mange**; mangy den sites\n"
+        "• **Fleas / hepatitis / distemper**; carrion and `/field action:scavenge`; **mange**; mangy den sites\n"
 
         "• **Pox**; den filth; hits pups harder; spreads by den contact\n"
 
@@ -249,7 +249,7 @@ HELP_TOPICS = {
 
         "Shop: utility items plus **prey carcasses** (`prey_vole`, `prey_hare`, …) and **toys** "
 
-        "(`toy_bone`, `toy_feather`, …); carcasses go to `/prey`, toys to `/toys`.\n"
+        "(`toy_bone`, `toy_feather`, …); carcasses go to `/prey`, toys to `/playpen action:toys`.\n"
 
         "Also: **Vitality Salve** (550🦴) · **Lucky Tooth** · **Herb Bundle** · **Prey Bundle** · **Den Charm** · "
 
@@ -359,7 +359,7 @@ HELP_TOPICS = {
 
         "**Pack pay**; `/bones action:daily` draws from **pack treasury** (Great Pack members only)\n"
 
-        "**Shop**; `action:shop` · `action:buy` prey (`prey_vole`) and toys (`toy_bone`) into `/prey` and `/toys`\n"
+        "**Shop**; `action:shop` · `action:buy` prey (`prey_vole`) and toys (`toy_bone`) into `/prey` and `/playpen action:toys`\n"
 
         "**Sell**; `action:sell item:herb_arnica` (inventory herbs) or **`item:stack:ID`** (forage bag stacks)\n"
 
@@ -413,9 +413,9 @@ HELP_TOPICS = {
 
         "Objectives track automatically when you hunt, patrol, deposit, explore, etc.\n"
 
-        "`/role action:rolequests`; quests only your **role** can take\n"
+        "`/role action:quests`; quests only your **role** can take\n"
 
-        "`/role action:roleevent`; once-per-rollover role scene (skill check + reward)",
+        "`/role action:event`; once-per-rollover role scene (skill check + reward)",
 
     ),
 
@@ -527,7 +527,7 @@ HELP_TOPICS = {
 
         "Lake territory · warrior patrols, deputies, rogues, loners, kittypets · "
         "seasonal **Gathering** at Fourtrees (unity/standing when treaties active)\n"
-        "tribute from treasury · Charisma parley · fewer `/sniff` border fights while active\n\n"
+        "tribute from treasury · Charisma parley · fewer `/field action:sniff` border fights while active\n\n"
 
         "Breaking a pact or killing an allied **warrior patrol** costs **trust**, **unity**, and **standing**",
 
@@ -595,7 +595,7 @@ HELP_TOPICS = {
 
         "`/prestige action:retire`; add wolf to dynasty (+legacy)\n"
 
-        "`/prestige action:hall`; top legacy scores\n\n"
+        "`/prestige action:halloffame`; top legacy scores\n\n"
 
         "Higher tiers grant permanent +% bones on hunts and daily.",
 
@@ -705,7 +705,7 @@ HELP_TOPICS = {
 
         "`/medic action:stabilize`; ally Medicine DC 15; cobwebs auto-stabilize (**Medics**; unlimited per sunrise).\n"
 
-        "`/medic action:surgery`; **Medic** only: stitch, set bone, extract, amputate "
+        "`/medic action:surgery`; **Medic** or **medic apprentice** (+2 DC): stitch, set bone, extract, amputate "
 
         "(herbs from bag/inventory; **stick** from patient or Medic: **2 sticks** for set bone; "
 
@@ -747,7 +747,7 @@ HELP_TOPICS = {
 
         "`action:save` with **Vitality Salve** · `action:adopt` · `action:list`. "
 
-        "Juveniles: first hunt kill = **blooding**, then `/role action:roleevent`.",
+        "Juveniles: first hunt kill = **blooding**, then `/role action:event`.",
 
     ),
 

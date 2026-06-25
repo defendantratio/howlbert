@@ -116,7 +116,7 @@ class Wolvden(commands.Cog):
         embed.add_field(name="Mood", value=format_mood_line(user), inline=True)
         embed.add_field(name="Hunger", value=format_hunger_line(user), inline=True)
         embed.add_field(name="Thirst", value=format_thirst_line(user), inline=True)
-        embed.set_footer(text="/shred · /prey · /toys · /raccoon buy")
+        embed.set_footer(text="/hoarding action:shred · /prey · /playpen action:toys · /raccoon buy")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _shred(self, interaction: discord.Interaction, toy: str):
@@ -127,7 +127,7 @@ class Wolvden(commands.Cog):
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
             return
 
         ok, msg, _ = shred_amusement_stack(user, stack_id)
@@ -209,7 +209,7 @@ class Wolvden(commands.Cog):
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
             return
 
         ok, msg = gift_amusement(user, stack_id, partner)
