@@ -293,7 +293,7 @@ class Explore(commands.Cog):
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
             return
         ok, msg, _ = play_amusement(user, stack_id)
         if ok and interaction.guild:
@@ -786,7 +786,7 @@ class Explore(commands.Cog):
         name="offer",
         description="Offer an acorn to the raccoon; he trades a random toy (once per sunrise).",
     )
-    @app_commands.describe(toy="Acorn stack from `/toys`")
+    @app_commands.describe(toy="Acorn stack from `/playpen action:toys`")
     @app_commands.autocomplete(toy=_amusement_autocomplete)
     async def raccoon_offer(self, interaction: discord.Interaction, toy: str):
         user = db.get_user(interaction.user.id)
@@ -809,7 +809,7 @@ class Explore(commands.Cog):
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
             return
 
         stack = db.get_amusement_stack(stack_id)

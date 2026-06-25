@@ -24,7 +24,7 @@ Staff reference for wolf–cat diplomacy in the **Warrior Cats lake territory** 
 | `action:gift` | Alpha, Diplomat | Treasury tribute → trust |
 | `action:receive` | Any member | Clan goods at scent-line (trust ≥ 35, once/sunrise) |
 | `action:trade` | Any member | Barter duplicate hoard → clan goods + trust |
-| `/sniff` | Anyone | May trigger border cat fight (reduced by active pacts) |
+| `/field action:sniff` | Anyone | May trigger border cat fight (reduced by active pacts) |
 | `/wilderness action:travel territory:twolegplace` | Anyone | Thunderpath / Twoleg hazards |
 
 ## Trust & violations
@@ -51,7 +51,7 @@ Clan receive/barter pulls from Clan tables with a bias toward **medicine-cat her
 
 ## Border NPCs
 
-Named patrol cats (original OC names, WC-style) appear on `/sniff` border fights for `clan_warrior` and `clan_deputy` templates. See `CLAN_CAT_NAMES` in `engine/cat_clans.py`.
+Named patrol cats (original OC names, WC-style) appear on `/field action:sniff` border fights for `clan_warrior` and `clan_deputy` templates. See `CLAN_CAT_NAMES` in `engine/cat_clans.py`.
 
 ## StarClan omens
 
@@ -77,7 +77,7 @@ Named patrol cats (original OC names, WC-style) appear on `/sniff` border fights
 - `engine/cat_clan_goods.py` — Loot tables
 - `engine/cat_gathering.py` — Season rollover Gathering
 - `engine/starclan_omens.py` — Omen text
-- `engine/border_combat.py` — `/sniff` cat fights
+- `engine/border_combat.py` — `/field action:sniff` cat fights
 - `engine/travel_hazards.py` — Twolegplace travel
 
 ## Tests

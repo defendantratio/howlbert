@@ -66,5 +66,5 @@ def gift_amusement(user, stack_id: int, recipient) -> tuple[bool, str]:
     return (
         True,
         f"You nudge **{meta['name']}** to **{recipient['wolf_name']}**; "
-        f"it's in their `/toys` now.",
+        f"it's in their `/playpen action:toys` now.",
     )

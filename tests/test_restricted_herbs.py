@@ -69,7 +69,7 @@ def test_standing_hooks() -> None:
     hoard_note = on_restricted_herb_acquired(user, "bloodroot")
     user = db.get_user_by_id(wolf_id)
     check("acquire no auto penalty", int(user["standing"]) == old2)
-    check("acquire warn", "Medic knowledge" in hoard_note and "denstore" in hoard_note.lower())
+    check("acquire warn", "Medic knowledge" in hoard_note and "turnin" in hoard_note.lower())
 
     db.add_herb_stack(wolf_id, "wolfsbane", guild_id=1, acquired_day=1)
     before_audit = int(db.get_user_by_id(wolf_id)["standing"])

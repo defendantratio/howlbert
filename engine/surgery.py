@@ -352,6 +352,7 @@ def run_surgery(
     use_plantain: bool = False,
     use_rush_stalks: bool = False,
     helper=None,
+    guild_id: int | None = None,
 ) -> tuple[bool, str]:
     """
     Perform surgery on patient. Surgeon must be Medic (apprentice +2 DC).
@@ -365,6 +366,15 @@ def run_surgery(
             "You cannot operate on yourself; another **Medic** must hold the stick "
             "and work the splint while you lie still."
         )
+
+    if guild_id:
+        from engine.medical_access import can_medic_treat_cross_pack
+
+        ok_cross, cross_msg = can_medic_treat_cross_pack(
+            surgeon, patient, guild_id, emergency_stabilize=False
+        )
+        if not ok_cross:
+            return False, cross_msg
 
     spec, err = procedure_for_patient(patient, procedure_key)
     if err or not spec:

@@ -206,7 +206,7 @@ def grant_clan_loot(
             grant_amusement(wolf_id, key)
             from engine.amusement_items import amusement_meta
 
-            lines.append(f"Toy **{amusement_meta(key)['name']}** → `/toys`")
+            lines.append(f"Toy **{amusement_meta(key)['name']}** → `/playpen action:toys`")
         elif kind == "bones":
             amount = max(1, int(key))
             db.add_bones(user["discord_id"], amount, wolf_id=wolf_id)

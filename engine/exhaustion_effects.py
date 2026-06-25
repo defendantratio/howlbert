@@ -22,6 +22,24 @@ EXHAUSTION_MAX = 6
 
 
 
+def consume_pain_exhaustion_skip(
+    conn: sqlite3.Connection, user_row: sqlite3.Row, exhaustion_gain: int
+) -> tuple[int, bool]:
+    """Meadowsweet; skip the first +1 exhaustion from disease pain this sunrise."""
+    if exhaustion_gain <= 0:
+        return 0, False
+    from engine.herb_buffs import buffs_json, get_buffs
+
+    buffs = get_buffs(user_row)
+    if not buffs.pop("pain_exhaustion_skip", None):
+        return exhaustion_gain, False
+    conn.execute(
+        "UPDATE users SET herb_buffs = ? WHERE id = ?",
+        (buffs_json(buffs), user_row["id"]),
+    )
+    return max(0, exhaustion_gain - 1), True
+
+
 def consume_march_exhaustion_skip(
 
     conn: sqlite3.Connection, user_row: sqlite3.Row, exhaustion_gain: int

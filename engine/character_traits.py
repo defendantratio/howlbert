@@ -3943,7 +3943,10 @@ CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Fernspot": {"wolf_role": "forager"},
     "Mossgaze": {"wolf_role": "forager"},
     "Sypha": {"wolf_role": "medic"},
+    "Skye": {"wolf_role": "advisor"},
+    "Finnpelt": {"wolf_role": "alpha"},
     "Firepaw": {"wolf_role": "medic_apprentice"},
+    "Soot": {"wolf_role": "medic", "maw_belief": "orthodox"},
 }
 
 

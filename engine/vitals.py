@@ -14,13 +14,13 @@ def living_wolf_block(user) -> str | None:
     cond = user["condition"] if "condition" in user.keys() else "healthy"
     if cond == "dead":
         return (
-            "Your wolf has died. `/use item:revive` (same wolf) or "
-            "`/use item:reincarnation new_name:<name>` (new name, same stats) from Ko-fi, "
+            "Your wolf has died. `/bones action:use item:revive` (same wolf) or "
+            "`/bones action:use item:reincarnation new_name:<name>` (new name, same stats) from Ko-fi, "
             "or `/switchwolf` / `/register` / `/rpg action:delete confirm:DELETE`."
         )
     if cond == "dying":
         return (
-            "You are **dying**; roll **`/deathsaves`** (CON save) or ask a medic for **`/stabilize`**."
+            "You are **dying**; roll **`/medic action:deathsaves`** (CON save) or ask a medic for **`/medic action:stabilize`**."
         )
     return None
 
@@ -118,6 +118,14 @@ def _apply_death_save_conn(conn: sqlite3.Connection, user: sqlite3.Row) -> str:
     """Run one death save on conn. Returns stabilized | died | continue."""
     result = roll_death_save(user)
     wolf_id = user["id"]
+    if result.get("consume_fields"):
+        fields = result["consume_fields"]
+        if fields:
+            sets = ", ".join(f"{k} = ?" for k in fields)
+            conn.execute(
+                f"UPDATE users SET {sets} WHERE id = ?",
+                (*fields.values(), wolf_id),
+            )
 
     if result.get("nat20"):
         _stabilize_wolf_conn(conn, wolf_id)

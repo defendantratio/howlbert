@@ -128,7 +128,7 @@ def herb_heal_limit_reached(user) -> bool:
 
 
 def treat_limit_reached(user) -> bool:
-    """Medics may `/treat` without the daily herb cap; apprentices and others are capped."""
+    """Medics may `/medic action:treat` without the daily herb cap; apprentices and others are capped."""
     if is_medic(user):
         return False
     return int(user["herb_treats_today"] if "herb_treats_today" in user.keys() else 0) >= HERB_TREAT_DAILY_LIMIT

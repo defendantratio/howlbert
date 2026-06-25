@@ -353,7 +353,7 @@ class Profile(commands.Cog):
         if user["wolf_role"] == "drown_sick":
             oracle_blurb = (
                 "Drown-Sick wolves are **Mistmoor oracles**; frail, prophetic, changed by the Belly-Rip. "
-                "Use `/role action:roleevent`, `/role action:prophecy`, and `/role action:rolequests`."
+                "Use `/role action:event`, `/role action:prophecy`, and `/role action:quests`."
             )
             if stage_for_age(age_mo) == "pup":
                 oracle_blurb += (
@@ -365,7 +365,7 @@ class Profile(commands.Cog):
                 name="Pup's Path",
                 value=(
                     "You are under **6 moons**; mothers nurse via `/pupcare action:feed`; pack caretakers mash-feed; forbidden to hunt, fight, or mate. "
-                    "Survive the first moon to be named. Use `/role action:roleevent` and `/role action:rolequests`."
+                    "Survive the first moon to be named. Use `/role action:event` and `/role action:quests`."
                 ),
                 inline=False,
             )
@@ -375,7 +375,7 @@ class Profile(commands.Cog):
                 value=(
                     "You are **6-24 moons**; practice hunting; your **blooding** comes on your first kill. "
                     "Forbidden to mate. "
-                    "Complete role quests and `/role action:roleevent` to grow toward an adult role."
+                    "Complete role quests and `/role action:event` to grow toward an adult role."
                 ),
                 inline=False,
             )

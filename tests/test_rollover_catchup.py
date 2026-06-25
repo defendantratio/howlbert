@@ -11,6 +11,7 @@ from engine.rollover_announce import (
     _rollover_moment,
     guild_due_for_rollover,
     missed_rollover_count,
+    within_startup_den_news_dm_window,
 )
 
 TEST_GUILD = 1516980863911329803
@@ -73,6 +74,11 @@ def main() -> None:
     due_moment = _rollover_moment(datetime(2026, 6, 22, tzinfo=tz).date(), tz)
     after_due = due_moment + timedelta(minutes=1)
     check("stale last counts missed sunrises", missed_rollover_count(TEST_GUILD, after_due) >= 1)
+
+    in_window = after_due + timedelta(hours=2)
+    check("startup DM window after rollover", within_startup_den_news_dm_window(in_window))
+    before_roll = base_day - timedelta(minutes=30)
+    check("startup DM window before rollover", not within_startup_den_news_dm_window(before_roll))
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:

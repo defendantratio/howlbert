@@ -14,7 +14,7 @@ COMBAT_GUIDE_TOPICS: dict[str, tuple[str, str]] = {
 
         "Wolf combat blends instinct, pack tactics, and terrain. Use `/combat` for "
 
-        "initiative fights, `/combat maneuver` for special techniques, and `/roll` for "
+        "initiative fights, `/combat maneuver` for special techniques, and `/rpg action:roll` for "
 
         "skill checks outside combat.\n\n"
 
@@ -32,7 +32,7 @@ COMBAT_GUIDE_TOPICS: dict[str, tuple[str, str]] = {
 
         "**Foes**; `/combat npc` adds predators, **clan cats**, hearth-hounds, foxes, and badgers. "
 
-        "**`/sniff`** can trigger a **border patrol** fight vs forest cats.\n\n"
+        "**`/field action:sniff`** can trigger a **border patrol** fight vs forest cats.\n\n"
 
         "**Topics:** `vulnerable` · `stance` · `awareness` · `defense` · `stamina` · "
 
@@ -141,7 +141,7 @@ COMBAT_GUIDE_TOPICS: dict[str, tuple[str, str]] = {
         "Badgers are slow but brutal; use **Badger Defence** against them. Foxes hit-and-run.\n\n"
         "**Size**; only same-size or larger fighters can **pin**. Pups and juveniles count as **small**.\n\n"
 
-        "**Border patrols**; **`/sniff`** may start a live fight vs a patrol cat (~12% when "
+        "**Border patrols**; **`/field action:sniff`** may start a live fight vs a patrol cat (~12% when "
 
         "no wolf encounter). Drive them off for **+standing**, **+mood**, and a small bone haul.\n"
 
@@ -877,7 +877,7 @@ COMBAT_GUIDE_TOPICS["injuries"] = (
 
     "Deep gashes bleed each sunrise until bandaged. Infected wounds need a daily save. "
 
-    "Treat with `/treat` and herbs from `/inventory`.",
+    "Treat with `/medic action:treat` and herbs from `/inventory`.",
 
 )
 

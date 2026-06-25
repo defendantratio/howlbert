@@ -319,6 +319,7 @@ class Life(commands.Cog):
             use_plantain=use_plantain,
             use_rush_stalks=use_rush_stalks,
             helper=helper_row,
+            guild_id=interaction.guild.id if interaction.guild else None,
         )
         embed = howlbert_embed(
             "Surgery" if ok else "Surgery Failed",
@@ -327,7 +328,8 @@ class Life(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
         if ok:
-            db.increment_quest_progress(interaction.user.id, "treat")
+            gid = interaction.guild.id if interaction.guild else None
+            db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
 
     async def _observe(self, interaction: discord.Interaction, patient: discord.Member):
         medic = await self._require_user(interaction)
@@ -343,7 +345,12 @@ class Life(commands.Cog):
         world = db.get_world(interaction.guild.id)
         from engine.medical_care import run_observe_apprentice
 
-        ok, body = run_observe_apprentice(medic, target, day=world["day_number"])
+        ok, body = run_observe_apprentice(
+            medic,
+            target,
+            day=world["day_number"],
+            guild_id=interaction.guild.id if interaction.guild else None,
+        )
         if ok:
             from engine.plot_blinking import try_plot_observe_extras
 
@@ -351,7 +358,8 @@ class Life(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed("Observe", body, color=color))
         if ok:
-            db.increment_quest_progress(interaction.user.id, "treat")
+            gid = interaction.guild.id if interaction.guild else None
+            db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
 
     async def _medic_rounds(self, interaction: discord.Interaction):
         medic = await self._require_user(interaction)
@@ -419,6 +427,8 @@ class Life(commands.Cog):
             user = db.get_user(interaction.user.id)
 
         result = roll_death_save(user)
+        if result.get("consume_fields"):
+            db.update_user(interaction.user.id, wolf_id=user["id"], **result["consume_fields"])
         outcome = db.apply_death_save_result(
             interaction.user.id, result["success"], result.get("nat20", False)
         )
@@ -432,7 +442,7 @@ class Life(commands.Cog):
             color = SUCCESS_COLOR
         elif outcome == "died":
             body += (
-                "\n\n**The wolf dies.** `/use item:revive` or `/use item:reincarnation new_name:<name>` "
+                "\n\n**The wolf dies.** `/bones action:use item:revive` or `/bones action:use item:reincarnation new_name:<name>` "
                 "if you have one (Ko-fi shop), or `/rpg action:delete confirm:DELETE` / `/register` for a fresh wolf."
             )
             color = ERROR_COLOR
@@ -459,10 +469,21 @@ class Life(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
+        if interaction.guild:
+            from engine.medical_access import can_medic_treat_cross_pack
+
+            ok_cross, cross_msg = can_medic_treat_cross_pack(
+                healer, target, interaction.guild.id, emergency_stabilize=True
+            )
+            if not ok_cross:
+                embed = howlbert_embed("Can't Stabilize", cross_msg, color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
         if use_cobwebs:
             item = db.get_item_by_key("herb_cobwebs")
             if not item or db.get_inventory_quantity(interaction.user.id, item["id"]) < 1:
-                embed = howlbert_embed("No Cobwebs", color=ERROR_COLOR)
+                embed = howlbert_embed("No Cobwebs", "You need **cobwebs** in inventory.", color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             db.consume_item(interaction.user.id, item["id"])
@@ -473,26 +494,25 @@ class Life(commands.Cog):
                 color=SUCCESS_COLOR,
             )
             await interaction.response.send_message(embed=embed)
-            db.increment_quest_progress(interaction.user.id, "treat")
+            gid = interaction.guild.id if interaction.guild else None
+            db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
             return
 
         if use_yarrow:
             item = db.get_item_by_key("herb_yarrow")
             if not item or db.get_inventory_quantity(interaction.user.id, item["id"]) < 1:
-                embed = howlbert_embed("No Yarrow", color=ERROR_COLOR)
+                embed = howlbert_embed("No Yarrow", "You need **yarrow** in inventory.", color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             db.consume_item(interaction.user.id, item["id"])
 
-        check = stabilize_check(healer, yarrow=use_yarrow)
-        from engine.herb_buffs import consume_death_save_bonus
-
-        bonus_fields = consume_death_save_bonus(healer)
-        if bonus_fields:
-            db.update_user(interaction.user.id, wolf_id=healer["id"], **bonus_fields)
+        check = stabilize_check(healer, yarrow=use_yarrow, patient=target)
+        if check.get("consume_fields"):
+            db.update_user(patient.id, wolf_id=target["id"], **check["consume_fields"])
         if check["success"]:
             db.stabilize_patient(patient.id)
-            db.increment_quest_progress(interaction.user.id, "treat")
+            gid = interaction.guild.id if interaction.guild else None
+            db.increment_quest_progress(interaction.user.id, "treat", guild_id=gid)
             embed = howlbert_embed(
                 "Stabilized",
                 f"Medicine: **{check['total']}** vs DC 15; **{target['wolf_name']}** at 1 HP.",
@@ -960,7 +980,7 @@ class Life(commands.Cog):
         )
         if err:
             if err == "__not_registered__":
-                embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+                embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Target", err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1236,7 +1256,7 @@ class Life(commands.Cog):
         )
         if err:
             if err == "__not_registered__":
-                embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+                embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Partner", err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1423,7 +1443,7 @@ class Life(commands.Cog):
             return
 
         if not user["is_pregnant"]:
-            embed = howlbert_embed("Not Pregnant", color=ERROR_COLOR)
+            embed = howlbert_embed("Not Pregnant", "This wolf is not expecting pups.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -1717,7 +1737,7 @@ class Life(commands.Cog):
         )
         if err:
             if err == "__not_registered__":
-                embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+                embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Partner", err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1752,7 +1772,7 @@ class Life(commands.Cog):
         )
         if adoptee_err:
             if adoptee_err == "__not_registered__":
-                embed = howlbert_embed("Not Registered", color=ERROR_COLOR)
+                embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Youth", adoptee_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=True)

@@ -85,3 +85,99 @@ async def notify_births_ready_after_rollover(bot: discord.Client, day_number: in
         if ok:
             sent += 1
     return sent
+
+
+def guild_member_ids_with_wolves(guild: discord.Guild) -> list[int]:
+    """Discord IDs in this guild who have at least one living wolf (member cache)."""
+    member_ids = {m.id for m in guild.members}
+    with db.get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT DISTINCT discord_id FROM users
+            WHERE condition NOT IN ('dead', 'dying')
+            """
+        ).fetchall()
+    return [int(r["discord_id"]) for r in rows if int(r["discord_id"]) in member_ids]
+
+
+async def guild_member_ids_with_wolves_resolved(
+    bot: discord.Client, guild: discord.Guild
+) -> list[int]:
+    """Wolf owners in this guild; chunk member list if cache is still cold."""
+    ids = guild_member_ids_with_wolves(guild)
+    if ids:
+        return ids
+    try:
+        await guild.chunk()
+    except (discord.HTTPException, AttributeError):
+        pass
+    return guild_member_ids_with_wolves(guild)
+
+
+async def notify_den_news_after_rollover(
+    bot: discord.Client,
+    guild: discord.Guild,
+    world,
+    crisis: dict,
+    *,
+    catch_up_days: int = 1,
+    briefing: bool = False,
+) -> int:
+    """DM the sunrise embed (den news + vitals) to registered players in the guild."""
+    from engine.rollover_announce import build_rollover_embed
+
+    day = int(world["day_number"])
+    if db.den_news_dm_sent_for_day(guild.id, day):
+        logger.info(
+            "Den news DM already sent for guild %s on day %s; skipping.",
+            guild.id,
+            day,
+        )
+        return 0
+
+    embed = build_rollover_embed(world, crisis)
+    if briefing:
+        embed.title = "Morning Den News"
+        embed.description = (
+            f"_Howlbert is back online. Day **{world['day_number']}** "
+            f"— den news for **{guild.name}**._"
+        )
+    elif catch_up_days > 1:
+        embed.title = f"Sunrise catch-up ({catch_up_days} days)"
+        embed.description = (
+            f"_The den rolled while Howlbert was offline. Day **{world['day_number']}** "
+            f"— sunrise news for **{guild.name}**._"
+        )
+    elif catch_up_days == 1:
+        embed.description = (
+            f"_Sunrise catch-up for **{guild.name}** — day **{world['day_number']}**._"
+        )
+    recipients = await guild_member_ids_with_wolves_resolved(bot, guild)
+    if not recipients:
+        logger.info(
+            "No DM recipients for guild %s (day %s); members may not be cached.",
+            guild.id,
+            world["day_number"],
+        )
+        return 0
+    sent = 0
+    for discord_id in recipients:
+        if await try_dm_user(bot, discord_id, embed=embed):
+            sent += 1
+    if sent:
+        db.mark_den_news_dm_sent(guild.id, day)
+        logger.info(
+            "DM'd sunrise den news to %s/%s player(s) in guild %s (day %s).",
+            sent,
+            len(recipients),
+            guild.id,
+            world["day_number"],
+        )
+    else:
+        logger.warning(
+            "Could not DM any of %s wolf owner(s) in guild %s (day %s).",
+            len(recipients),
+            guild.id,
+            world["day_number"],
+        )
+    return sent

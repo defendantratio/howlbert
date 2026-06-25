@@ -146,6 +146,121 @@ def test_firepaw_plot_sniff_and_treat():
     assert early == ""  # same sunrise: sniff daily already claimed via treat
 
 
+def test_soot_plot_sniff_and_treat():
+    from engine.plot_blinking import (
+        apply_plot_soot_sniff,
+        plot_healer_heal_bonus,
+        plot_soot_heal_bonus,
+        try_plot_treat_extras,
+    )
+
+    db.init_db()
+    guild_id = 999_008
+    day = 55
+    db.set_plot_phase(guild_id, 5)
+    healer = {
+        "wolf_name": "Soot",
+        "discord_id": 99020,
+        "great_pack": "mistmoor",
+        "id": 99021,
+        "last_soot_reward_day": 0,
+        "mood": 50,
+    }
+    patient = {
+        "wolf_name": "Wheezer",
+        "id": 99022,
+        "discord_id": 99023,
+        "disease": "rot_lung:fever",
+    }
+    with db.get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (id, discord_id, wolf_name, great_pack, wolf_role, mood, hp, max_hp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (healer["id"], healer["discord_id"], healer["wolf_name"], healer["great_pack"], "medic", 50, 20, 20),
+        )
+        conn.commit()
+
+    sniff = apply_plot_soot_sniff(healer, guild_id, day=day)
+    assert sniff and "+2 mood" in sniff and "mist-light" in sniff
+
+    extra = try_plot_treat_extras(healer, patient, guild_id=guild_id, day=day)
+    assert extra and "Mirewort" in extra
+    assert plot_soot_heal_bonus(healer, patient, guild_id) == 3
+    assert plot_healer_heal_bonus(healer, patient, guild_id) == 3
+
+    healer["last_soot_reward_day"] = day
+    assert apply_plot_soot_sniff(healer, guild_id, day=day)  # mood still; no second standing
+
+
+def test_plot_witness_once_per_day():
+    from engine.plot_blinking import try_plot_witness
+
+    db.init_db()
+    guild_id = 999_009
+    db.set_plot_phase(guild_id, 3)
+    user = {
+        "wolf_name": "Witness",
+        "discord_id": 99030,
+        "great_pack": "greyspire",
+        "id": 99031,
+        "last_plot_witness_day": 0,
+        "mood": 40,
+    }
+    with db.get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (id, discord_id, wolf_name, great_pack, mood, hp, max_hp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], user["discord_id"], user["wolf_name"], user["great_pack"], 40, 20, 20),
+        )
+        conn.commit()
+    first = try_plot_witness(user, guild_id, day=60, action="howl")
+    assert first and "+1 mood" in first
+    user["last_plot_witness_day"] = 60
+    second = try_plot_witness(user, guild_id, day=60, action="drink")
+    assert second == ""
+
+
+def test_plot_quest_phase_gates():
+    from engine.plot_quests import plot_quest_available, plot_sniff_quest_keys
+
+    db.init_db()
+    gid = 999_010
+    db.set_plot_phase(gid, 0)
+    assert not plot_quest_available("blink_healer_listen", gid)
+    db.set_plot_phase(gid, 3)
+    assert plot_quest_available("blink_healer_listen", gid)
+    assert plot_quest_available("blink_border_patrol", gid)
+    assert not plot_quest_available("blink_wind_witness", gid)
+    db.set_plot_phase(gid, 6)
+    assert not plot_quest_available("blink_healer_listen", gid)
+    assert plot_quest_available("blink_wind_witness", gid)
+    assert not plot_quest_available("blink_ash_naming", gid)
+    db.set_plot_phase(gid, 11)
+    assert plot_quest_available("blink_ash_naming", gid)
+    keys = plot_sniff_quest_keys(gid)
+    assert "blink_wind_witness" in keys
+    assert "blink_healer_listen" not in keys
+    db.set_plot_phase(gid, 4)
+    assert "blink_healer_listen" in plot_sniff_quest_keys(gid)
+
+
+def test_horsetail_death_save_consumed():
+    from engine.death_saves import roll_death_save
+    from engine.herb_buffs import death_save_bonus
+
+    user = {
+        "death_save_round": 1,
+        "attr_con": 10,
+        "herb_buffs": '{"death_save_bonus_next": 3}',
+    }
+    assert death_save_bonus(user) == 3
+    result = roll_death_save(user)
+    assert result.get("consume_fields")
+    merged = dict(user)
+    merged.update(result["consume_fields"])
+    assert death_save_bonus(merged) == 0
+
+
 if __name__ == "__main__":
     test_plot_phase_migration_and_set()
     test_plot_den_news()
@@ -155,4 +270,8 @@ if __name__ == "__main__":
     test_plot_drink_ash_naming()
     test_rogue_crime_inactive_before_phase_6()
     test_firepaw_plot_sniff_and_treat()
+    test_soot_plot_sniff_and_treat()
+    test_plot_witness_once_per_day()
+    test_plot_quest_phase_gates()
+    test_horsetail_death_save_consumed()
     print("test_plot_blinking: ok")

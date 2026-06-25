@@ -382,7 +382,7 @@ HERBS = {
     "poppy_seeds": _h(
         "Poppy Seeds",
         "common",
-        "Sedative; unconscious 1 hour.",
+        "Sedative and pain relief; unconscious rest 1 sunrise.",
         cures=("concussion", "insomnia", "anxiety", "shock_emotional", "night_terrors"),
     ),
     "prickly_ash": _h(
@@ -534,7 +534,7 @@ HERBS = {
     "willow_bark": _h(
         "Willow Bark",
         "common",
-        "Cools marsh fever; ignore pain penalties 6 hours.",
+        "Pain relief 1 sunrise; cools marsh fever.",
         ("mistmoor",),
         cures=("sprained_leg", "fractured_rib", "rot_lung"),
     ),

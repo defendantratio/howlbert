@@ -33,9 +33,9 @@ def build_shop_embed(items: list, page: int = 0) -> discord.Embed:
     embed = howlbert_embed(
         "Trading Post",
         "Spend bones with **Buy** below.\n"
-        "· **Consumables**; `/use item:<key>` (e.g. `herb_bundle`, `den_charm`)\n"
-        "· **Food & toys**; go to `/prey` and `/toys` automatically\n"
-        "· **Wild herbs**; not sold here; gather with `/forage`",
+        "· **Consumables**; `/bones action:use item:<key>` (e.g. `herb_bundle`, `den_charm`)\n"
+        "· **Food & toys**; go to `/prey` and `/playpen action:toys` automatically\n"
+        "· **Wild herbs**; not sold here; gather with `/field action:forage`",
     )
     for item in chunk:
         desc = item["description"] or "-"

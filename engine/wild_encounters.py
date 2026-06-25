@@ -131,7 +131,9 @@ def maybe_start_activity_ambush(
         return None
     if not roll_activity_ambush(activity):
         return None
-    return start_wild_encounter(user, guild_id=guild_id, channel_id=channel_id)
+    return start_wild_encounter(
+        user, guild_id=guild_id, channel_id=channel_id, activity=activity
+    )
 
 
 def start_wild_encounter(
@@ -139,6 +141,7 @@ def start_wild_encounter(
     *,
     guild_id: int,
     channel_id: int,
+    activity: str = "",
 ) -> tuple[int, str, str]:
     """Begin an active ambush vs a random wilderness threat."""
     template_key = pick_wild_encounter_template()

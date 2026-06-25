@@ -3,6 +3,7 @@ import re
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from config import (
     DB_PATH,
@@ -28,7 +29,7 @@ def utcnow() -> str:
 
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -679,6 +680,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_firepaw_reward_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_soot_reward_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_soot_reward_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_plot_witness_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_plot_witness_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_plot_healer_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_plot_healer_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "age_months" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN age_months INTEGER NOT NULL DEFAULT 24"
@@ -793,6 +806,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if world_cols and "plot_phase" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN plot_phase INTEGER NOT NULL DEFAULT 0"
+        )
+    if world_cols and "last_den_news_dm_day" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN last_den_news_dm_day INTEGER NOT NULL DEFAULT 0"
         )
 
     conn.execute(
@@ -2194,7 +2211,7 @@ def _seed_amusement_items(conn: sqlite3.Connection) -> None:
             price, sell = SHOP_TOY_PRICES[key]
         else:
             price, sell = 0, meta.get("sell_bones", 0)
-        desc = meta["description"] + "; `/play` to boost mood."
+        desc = meta["description"] + "; `/playpen action:play` to boost mood."
         if price > 0:
             desc += " Buy at the trading post."
         conn.execute(
@@ -3644,6 +3661,25 @@ def advance_plot_phase(guild_id: int) -> tuple[int, sqlite3.Row]:
     return new_phase, world
 
 
+def den_news_dm_sent_for_day(guild_id: int, day: int) -> bool:
+    """True if sunrise den-news DMs already went out for this in-game day."""
+    world = get_world(guild_id)
+    if "last_den_news_dm_day" not in world.keys():
+        return False
+    return int(world["last_den_news_dm_day"]) >= int(day)
+
+
+def mark_den_news_dm_sent(guild_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE world_state SET last_den_news_dm_day = ?
+            WHERE guild_id = ? AND last_den_news_dm_day < ?
+            """,
+            (int(day), guild_id, int(day)),
+        )
+
+
 def save_world(
     guild_id: int,
     *,
@@ -3882,6 +3918,15 @@ def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
             )
 
 
+_global_wolf_rollover_keys: set[str] = set()
+
+
+def _rollover_global_key(rollover_at: datetime, new_day: int, tz_name: str) -> str:
+    """One global wolf tick per in-game day per calendar sunrise (multi-guild dedup)."""
+    local_date = rollover_at.astimezone(ZoneInfo(tz_name)).date().isoformat()
+    return f"{local_date}:{new_day}"
+
+
 def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tuple[sqlite3.Row, dict]:
     from config import LUNAR_BIRTH_AGING, ROLLOVER_TIMEZONE
     from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, lunar_phase_label, rollover_now
@@ -3891,63 +3936,69 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     state = get_world(guild_id)
     old_season = state["season"]
     new_day = state["day_number"] + 1
-    world = save_world(
-        guild_id,
-        day_number=new_day,
-        season=_season_for_day(new_day),
-        weather=_random_weather(),
-        time_of_day="dawn",
-    )
+    new_season = _season_for_day(new_day)
+    new_weather = _random_weather()
+    global_key = _rollover_global_key(rollover_at, new_day, ROLLOVER_TIMEZONE)
+    run_global = global_key not in _global_wolf_rollover_keys
+    if run_global:
+        _global_wolf_rollover_keys.add(global_key)
     _pay_territory_bonuses(guild_id)
-    condition_notes = _progress_conditions(guild_id)
-    with get_db() as conn:
-        from engine.disease_spread import apply_disease_spread_on_rollover
+    condition_notes: list = []
+    age_milestones: list = []
+    wolves_aged: list = []
+    needs_crisis: dict = {"deaths": [], "collapses": []}
+    vitals_exhaustion: list = []
+    mood_exhaustion: list = []
+    if run_global:
+        condition_notes = _progress_conditions(guild_id)
+        with get_db() as conn:
+            from engine.disease_spread import apply_disease_spread_on_rollover
 
-        spread_notes = apply_disease_spread_on_rollover(conn)
-    condition_notes.extend(spread_notes)
-    _long_rest_all_wolves_on_rollover(new_day)
-    from engine.character_traits import decay_skill_strain_on_rollover
+            spread_notes = apply_disease_spread_on_rollover(conn)
+        condition_notes.extend(spread_notes)
+        _long_rest_all_wolves_on_rollover(new_day)
+        from engine.character_traits import decay_skill_strain_on_rollover
 
-    decay_skill_strain_on_rollover()
-    with get_db() as conn:
-        from engine.nursing import apply_unfed_pup_penalty_on_rollover
+        decay_skill_strain_on_rollover()
+        with get_db() as conn:
+            from engine.nursing import apply_unfed_pup_penalty_on_rollover
 
-        unfed_notes = apply_unfed_pup_penalty_on_rollover(conn, state["day_number"])
-    if unfed_notes:
-        condition_notes.extend(unfed_notes)
-    with get_db() as conn:
-        from engine.restricted_herbs import apply_restricted_hoard_audit_on_rollover
+            unfed_notes = apply_unfed_pup_penalty_on_rollover(conn, state["day_number"])
+        if unfed_notes:
+            condition_notes.extend(unfed_notes)
+        with get_db() as conn:
+            from engine.restricted_herbs import apply_restricted_hoard_audit_on_rollover
 
-        hoard_audit = apply_restricted_hoard_audit_on_rollover(conn)
-    if hoard_audit:
-        condition_notes.extend(
-            f"**{row['wolf_name']}**: {row['note']}" for row in hoard_audit
+            hoard_audit = apply_restricted_hoard_audit_on_rollover(conn)
+        if hoard_audit:
+            condition_notes.extend(
+                f"**{row['wolf_name']}**: {row['note']}" for row in hoard_audit
+            )
+        _decay_vitals_on_rollover()
+        from engine.exhaustion_effects import (
+            apply_exhaustion_death_on_rollover,
+            apply_mood_exhaustion_on_rollover,
+            clamp_hp_for_exhaustion_on_rollover,
         )
-    _decay_vitals_on_rollover()
-    from engine.exhaustion_effects import (
-        apply_exhaustion_death_on_rollover,
-        apply_mood_exhaustion_on_rollover,
-        clamp_hp_for_exhaustion_on_rollover,
-    )
-    from engine.vitals import apply_needs_crisis_on_rollover, apply_needs_exhaustion_on_rollover
+        from engine.vitals import apply_needs_crisis_on_rollover, apply_needs_exhaustion_on_rollover
 
-    with get_db() as conn:
-        vitals_exhaustion = apply_needs_exhaustion_on_rollover(conn)
-        mood_exhaustion = apply_mood_exhaustion_on_rollover(conn)
-        clamp_hp_for_exhaustion_on_rollover(conn)
-        exhaustion_deaths = apply_exhaustion_death_on_rollover(conn)
-        needs_crisis = apply_needs_crisis_on_rollover(conn)
-    needs_crisis["vitals_exhaustion"] = vitals_exhaustion + mood_exhaustion
-    if exhaustion_deaths:
-        needs_crisis["deaths"].extend(exhaustion_deaths)
+        with get_db() as conn:
+            vitals_exhaustion = apply_needs_exhaustion_on_rollover(conn)
+            mood_exhaustion = apply_mood_exhaustion_on_rollover(conn)
+            clamp_hp_for_exhaustion_on_rollover(conn)
+            exhaustion_deaths = apply_exhaustion_death_on_rollover(conn)
+            needs_crisis = apply_needs_crisis_on_rollover(conn)
+        needs_crisis["vitals_exhaustion"] = vitals_exhaustion + mood_exhaustion
+        if exhaustion_deaths:
+            needs_crisis["deaths"].extend(exhaustion_deaths)
+        age_milestones, wolves_aged = _age_wolves_on_rollover(MOONS_PER_ROLLOVER, rollover_at)
+        from engine.aging import apply_old_age_deaths_on_rollover
+
+        with get_db() as conn:
+            old_age_deaths = apply_old_age_deaths_on_rollover(conn)
+        needs_crisis["old_age_deaths"] = old_age_deaths
+        needs_crisis["deaths"].extend(old_age_deaths)
     expel_wolves_below_standing_threshold(guild_id)
-    age_milestones, wolves_aged = _age_wolves_on_rollover(MOONS_PER_ROLLOVER, rollover_at)
-    from engine.aging import apply_old_age_deaths_on_rollover
-
-    with get_db() as conn:
-        old_age_deaths = apply_old_age_deaths_on_rollover(conn)
-    needs_crisis["old_age_deaths"] = old_age_deaths
-    needs_crisis["deaths"].extend(old_age_deaths)
     close_prey_piles_for_guild(guild_id)
     close_collab_hunts_for_guild(guild_id)
     close_collab_patrols_for_guild(guild_id)
@@ -3972,7 +4023,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         from engine.season_rollover import apply_season_rollover_effects
 
         season_lines, cache_notes = apply_season_rollover_effects(
-            conn, guild_id, world["season"]
+            conn, guild_id, new_season
         )
         sacred_notes = apply_sacred_visit_reminders(conn, new_day)
     if season_lines:
@@ -3980,7 +4031,10 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     if cache_notes:
         needs_crisis.setdefault("food_cache", []).extend(cache_notes)
     if sacred_notes:
-        needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
+        if plot_phase == 5:
+            needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes + sacred_notes)
+        else:
+            needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
     plot_phase = get_plot_phase(guild_id)
     if plot_phase > 0:
         from engine.plot_blinking import apply_plot_rollover_effects, plot_den_news_line
@@ -4024,12 +4078,12 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         )
     if expired_pacts:
         needs_crisis.setdefault("expired_cat_pacts", expired_pacts)
-    if old_season != world["season"]:
+    if old_season != new_season:
         from engine.cat_gathering import apply_gathering_on_season_change
 
         with get_db() as conn:
             gathering_notes = apply_gathering_on_season_change(
-                conn, guild_id, world["season"], new_day
+                conn, guild_id, new_season, new_day
             )
         if gathering_notes:
             needs_crisis.setdefault("season_notes", []).extend(gathering_notes)
@@ -4039,6 +4093,13 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     )
     needs_crisis["wolves_aged"] = wolves_aged
     needs_crisis["lunar_birth_aging"] = LUNAR_BIRTH_AGING
+    world = save_world(
+        guild_id,
+        day_number=new_day,
+        season=new_season,
+        weather=new_weather,
+        time_of_day="dawn",
+    )
     return world, needs_crisis
 
 
@@ -4067,6 +4128,9 @@ def _progress_conditions(guild_id: int) -> list[dict]:
             if outcome.get("exhaustion_gain"):
                 gain = outcome["exhaustion_gain"]
                 gain, _ = consume_march_exhaustion_skip(conn, user, gain)
+                from engine.exhaustion_effects import consume_pain_exhaustion_skip
+
+                gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
                 if gain:
                     exhaustion = min(6, user["exhaustion"] + gain)
             if outcome.get("hunger_loss"):
@@ -4128,7 +4192,7 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                     {
                         "wolf_name": user["wolf_name"],
                         "discord_id": user["discord_id"],
-                        "line": "collapsed to **0 HP**; use **`/deathsaves`**.",
+                        "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
                     }
                 )
 
@@ -4157,6 +4221,9 @@ def _progress_conditions(guild_id: int) -> list[dict]:
             if outcome.get("exhaustion_gain"):
                 gain = outcome["exhaustion_gain"]
                 gain, _ = consume_march_exhaustion_skip(conn, user, gain)
+                from engine.exhaustion_effects import consume_pain_exhaustion_skip
+
+                gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
                 if gain:
                     exhaustion = min(6, user["exhaustion"] + gain)
             cond = user["condition"] if "condition" in user.keys() else "healthy"
@@ -4189,7 +4256,7 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                     {
                         "wolf_name": user["wolf_name"],
                         "discord_id": user["discord_id"],
-                        "line": "collapsed to **0 HP**; use **`/deathsaves`**.",
+                        "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
                     }
                 )
     from engine.chronic_conditions import apply_elder_chronic_on_rollover
@@ -4705,12 +4772,12 @@ def delete_quest_by_key(key: str) -> bool:
         return True
 
 
-def get_available_quests(discord_id: int) -> list[sqlite3.Row]:
+def get_available_quests(discord_id: int, *, guild_id: int | None = None) -> list[sqlite3.Row]:
     with get_db() as conn:
         wolf_id = _resolve_wolf_id_conn(conn, discord_id)
         if not wolf_id:
             return []
-        return conn.execute(
+        rows = conn.execute(
             """
             SELECT q.*
             FROM quests q
@@ -4725,6 +4792,11 @@ def get_available_quests(discord_id: int) -> list[sqlite3.Row]:
             """,
             (wolf_id,),
         ).fetchall()
+        if guild_id is not None:
+            from engine.plot_quests import plot_quest_available
+
+            rows = [q for q in rows if plot_quest_available(q["key"], guild_id)]
+        return rows
 
 
 def get_role_quests(discord_id: int) -> list[sqlite3.Row]:
@@ -4819,12 +4891,14 @@ def has_completed_unique(discord_id: int, quest_id: int) -> bool:
 
 
 def _credit_daily_objectives_conn(
-    conn: sqlite3.Connection, wolf_id: int, day: int
+    conn: sqlite3.Connection, wolf_id: int, day: int, *, guild_id: int | None = None
 ) -> None:
     """If the wolf already did a daily activity this rollover, credit matching quests."""
     user = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
     if not user or day <= 0:
         return
+    if guild_id is not None:
+        from engine.plot_quests import plot_quest_available
     done_today = {
         "forage": int(user["last_forage_day"]) >= day,
         "verge_forage": int(user["last_verge_forage_day"] if "last_verge_forage_day" in user.keys() else 0) >= day,
@@ -4838,7 +4912,7 @@ def _credit_daily_objectives_conn(
             continue
         rows = conn.execute(
             """
-            SELECT uq.id, uq.progress, q.objective_count
+            SELECT uq.id, uq.progress, q.objective_count, q.key AS quest_key
             FROM user_quests uq
             JOIN quests q ON q.id = uq.quest_id
             WHERE uq.wolf_id = ? AND uq.status = 'active' AND q.objective_type = ?
@@ -4846,6 +4920,8 @@ def _credit_daily_objectives_conn(
             (wolf_id, objective_type),
         ).fetchall()
         for row in rows:
+            if guild_id is not None and not plot_quest_available(row["quest_key"], guild_id):
+                continue
             new_progress = min(int(row["progress"]) + 1, int(row["objective_count"]))
             conn.execute(
                 "UPDATE user_quests SET progress = ? WHERE id = ?",
@@ -4853,7 +4929,9 @@ def _credit_daily_objectives_conn(
             )
 
 
-def accept_quest(discord_id: int, quest_id: int, assigned_day: int = 0) -> bool:
+def accept_quest(
+    discord_id: int, quest_id: int, assigned_day: int = 0, *, guild_id: int | None = None
+) -> bool:
     with get_db() as conn:
         wolf_id = _resolve_wolf_id_conn(conn, discord_id)
         if not wolf_id:
@@ -4875,7 +4953,7 @@ def accept_quest(discord_id: int, quest_id: int, assigned_day: int = 0) -> bool:
             (discord_id, wolf_id, quest_id, assigned_day, utcnow()),
         )
         if assigned_day > 0:
-            _credit_daily_objectives_conn(conn, wolf_id, assigned_day)
+            _credit_daily_objectives_conn(conn, wolf_id, assigned_day, guild_id=guild_id)
         return True
 
 
@@ -4905,6 +4983,7 @@ def increment_quest_progress(
     amount: int = 1,
     *,
     wolf_id: int | None = None,
+    guild_id: int | None = None,
 ) -> None:
     with get_db() as conn:
         wid = wolf_id or _resolve_wolf_id_conn(conn, discord_id)
@@ -4912,14 +4991,54 @@ def increment_quest_progress(
             return
         rows = conn.execute(
             """
-            SELECT uq.id, uq.progress, q.objective_count
+            SELECT uq.id, uq.progress, q.objective_count, q.key AS quest_key
             FROM user_quests uq
             JOIN quests q ON q.id = uq.quest_id
             WHERE uq.wolf_id = ? AND uq.status = 'active' AND q.objective_type = ?
             """,
             (wid, objective_type),
         ).fetchall()
+        if guild_id is not None:
+            from engine.plot_quests import plot_quest_available
         for row in rows:
+            if guild_id is not None and not plot_quest_available(row["quest_key"], guild_id):
+                continue
+            new_progress = min(row["progress"] + amount, row["objective_count"])
+            conn.execute(
+                "UPDATE user_quests SET progress = ? WHERE id = ?",
+                (new_progress, row["id"]),
+            )
+
+
+def increment_quest_progress_by_keys(
+    discord_id: int,
+    quest_keys: tuple[str, ...] | list[str],
+    amount: int = 1,
+    *,
+    wolf_id: int | None = None,
+    guild_id: int | None = None,
+) -> None:
+    if not quest_keys:
+        return
+    with get_db() as conn:
+        wid = wolf_id or _resolve_wolf_id_conn(conn, discord_id)
+        if not wid:
+            return
+        placeholders = ",".join("?" * len(quest_keys))
+        rows = conn.execute(
+            f"""
+            SELECT uq.id, uq.progress, q.objective_count, q.key AS quest_key
+            FROM user_quests uq
+            JOIN quests q ON q.id = uq.quest_id
+            WHERE uq.wolf_id = ? AND uq.status = 'active' AND q.key IN ({placeholders})
+            """,
+            (wid, *quest_keys),
+        ).fetchall()
+        if guild_id is not None:
+            from engine.plot_quests import plot_quest_available
+        for row in rows:
+            if guild_id is not None and not plot_quest_available(row["quest_key"], guild_id):
+                continue
             new_progress = min(row["progress"] + amount, row["objective_count"])
             conn.execute(
                 "UPDATE user_quests SET progress = ? WHERE id = ?",
@@ -8793,16 +8912,19 @@ def add_herb_stack(
     acquired_day: int,
     form: str = "fresh",
     potency: int = 100,
+    conn: sqlite3.Connection | None = None,
 ) -> int:
-    with get_db() as conn:
-        cur = conn.execute(
-            """
+    sql = """
             INSERT INTO herb_stacks
             (wolf_id, guild_id, herb_key, form, acquired_day, potency)
             VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (wolf_id, guild_id, herb_key, form, acquired_day, potency),
-        )
+            """
+    params = (wolf_id, guild_id, herb_key, form, acquired_day, potency)
+    if conn is not None:
+        cur = conn.execute(sql, params)
+        return int(cur.lastrowid)
+    with get_db() as inner:
+        cur = inner.execute(sql, params)
         return int(cur.lastrowid)
 
 

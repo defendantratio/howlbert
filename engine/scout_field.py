@@ -61,7 +61,7 @@ def _scout_only(user) -> discord.Embed | None:
         return howlbert_embed(
             "Scouts Only",
             "Only wolves with the **Scout** role can run field commands. "
-            "Apprentices earn the title through the den (`/role action:roleevent`, age-up).",
+            "Apprentices earn the title through the den (`/role action:event`, age-up).",
             color=ERROR_COLOR,
         )
     return None
@@ -70,7 +70,7 @@ def _scout_only(user) -> discord.Embed | None:
 def try_scout_survey(interaction) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     block = _scout_only(user)
     if block:
         return block
@@ -148,8 +148,8 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     standing += plot_thistlehide_patrol_standing_bonus(interaction.guild.id, gp)
     db.adjust_wolf_standing(interaction.user.id, standing)
-    db.increment_quest_progress(interaction.user.id, "survey")
-    db.increment_quest_progress(interaction.user.id, "patrol")
+    db.increment_quest_progress(interaction.user.id, "survey", guild_id=interaction.guild.id)
+    db.increment_quest_progress(interaction.user.id, "patrol", guild_id=interaction.guild.id)
 
     crit = " **Critical report!**" if result["outcome"] == "critical_success" else ""
     intel = ""
@@ -163,6 +163,11 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         + f"\n\n{crit} Intel for the Alpha; **+{bones}** bones, standing **+{standing}**.{intel}{hide_note}",
         color=SUCCESS_COLOR,
     )
+    from engine.plot_blinking import try_plot_witness
+
+    witness = try_plot_witness(user, interaction.guild.id, day, action="survey")
+    if witness:
+        embed.description = (embed.description or "") + witness
     embed.set_footer(text="Scouts · once per sunrise · counts toward survey & patrol quests")
     return embed
 
@@ -170,7 +175,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
 def try_scout_trail(interaction) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     block = _scout_only(user)
     if block:
         return block

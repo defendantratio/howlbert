@@ -153,7 +153,11 @@ async def execute_npc_attack(
     if not enc or enc["status"] != "active":
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("No Active Combat", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "No Active Combat",
+                "That fight has ended or doesn't exist in this channel.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return True
@@ -217,7 +221,11 @@ async def execute_npc_attack(
     if not defender_stats:
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("Invalid Target", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "Invalid Target",
+                "That attack couldn't land on this target.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return True
@@ -241,7 +249,11 @@ async def execute_npc_attack(
     except ValueError:
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("Invalid Target", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "Invalid Target",
+                "That attack couldn't land on this target.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return True
@@ -397,7 +409,7 @@ def _apply_attack_result(
             trauma = try_near_death_mental_trauma(defender_stats)
             if trauma:
                 injury_note += f"\n**Mind fracture:** {trauma}"
-            injury_note += f"\n**{def_name}** is **dying**; use `/deathsaves`."
+            injury_note += f"\n**{def_name}** is **dying**; use **`/medic action:deathsaves`**."
             release_pin_states(defender_f["id"], defender_f["encounter_id"])
         elif result.get("hit") and attacker_f:
             from engine.chronic_conditions import try_combat_bite_disease
@@ -466,7 +478,11 @@ async def handle_combat_button(
     if not enc or enc["status"] != "active":
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("No Active Combat", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "No Active Combat",
+                "That fight has ended or doesn't exist in this channel.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return
@@ -475,7 +491,7 @@ async def handle_combat_button(
     if not user:
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("Not Registered", color=ERROR_COLOR),
+            embed=howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR),
             ephemeral=True,
         )
         return
@@ -485,7 +501,11 @@ async def handle_combat_button(
         if not fighter:
             await _combat_reply(
                 interaction,
-                embed=howlbert_embed("Not In Combat", color=ERROR_COLOR),
+                embed=howlbert_embed(
+                    "Not In Combat",
+                    "You're not in this encounter.",
+                    color=ERROR_COLOR,
+                ),
                 ephemeral=True,
             )
             return
@@ -517,7 +537,11 @@ async def handle_combat_button(
     if not attacker_f or not defender_f:
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("Not In Combat", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "Not In Combat",
+                "You're not in this encounter.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return
@@ -564,7 +588,11 @@ async def handle_combat_button(
     except ValueError:
         await _combat_reply(
             interaction,
-            embed=howlbert_embed("Invalid Target", color=ERROR_COLOR),
+            embed=howlbert_embed(
+                "Invalid Target",
+                "That attack couldn't land on this target.",
+                color=ERROR_COLOR,
+            ),
             ephemeral=True,
         )
         return
@@ -917,7 +945,11 @@ class Combat(commands.Cog):
 
         template = BESTIARY_NPCS.get(threat)
         if not template:
-            embed = howlbert_embed("Unknown Threat", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Unknown Threat",
+                "Pick a threat from `/combat guide` bestiary keys.",
+                color=ERROR_COLOR,
+            )
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
         if category and template["category"] != category:
@@ -985,7 +1017,7 @@ class Combat(commands.Cog):
             return
         title, body = HAZARD_TOPICS.get(topic, HAZARD_TOPICS["humans"])
         embed = howlbert_embed(title, body)
-        embed.set_footer(text="Use /roll for opposed checks · Safe Roll cannot be used in combat.")
+        embed.set_footer(text="Use `/rpg action:roll` for opposed checks · Safe Roll cannot be used in combat.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _fire_hazard(
@@ -1183,7 +1215,11 @@ class Combat(commands.Cog):
                 defender_f, action, user, user["wolf_name"], attacker_f=attacker_f
             )
         except ValueError:
-            embed = howlbert_embed("Invalid Target", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Invalid Target",
+                "That attack couldn't land on this target.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -1214,7 +1250,11 @@ class Combat(commands.Cog):
             await self._send_encounter_error(interaction, err)
             return
         if enc["status"] != "active":
-            embed = howlbert_embed("No Active Combat", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "No Active Combat",
+                "That fight has ended or doesn't exist in this channel.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -1503,21 +1543,33 @@ class Combat(commands.Cog):
             await self._send_encounter_error(interaction, err)
             return
         if enc["status"] != "active":
-            embed = howlbert_embed("No Active Combat", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "No Active Combat",
+                "That fight has ended or doesn't exist in this channel.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         try:
             target_id = int(target)
         except ValueError:
-            embed = howlbert_embed("Invalid Target", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Invalid Target",
+                "Pick a valid fighter ID from the autocomplete list.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         attacker_f = db.resolve_player_fighter(enc["id"], interaction.user.id)
         defender_f = db.get_combat_fighter(enc["id"], target_id)
         if not attacker_f or not defender_f:
-            embed = howlbert_embed("Not In Combat", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Not In Combat",
+                "You're not in this encounter.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
         if attacker_f["id"] == defender_f["id"]:
@@ -1547,7 +1599,11 @@ class Combat(commands.Cog):
                 attacker_f=attacker_f,
             )
         except ValueError:
-            embed = howlbert_embed("Unknown Maneuver", color=ERROR_COLOR)
+            embed = howlbert_embed(
+                "Unknown Maneuver",
+                "Use `/combat maneuver` with a technique from `/combat guide`.",
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 

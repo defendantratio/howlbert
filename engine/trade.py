@@ -57,9 +57,9 @@ def build_trade_embed(trade, *, status: str = "pending") -> discord.Embed:
     if status == "completed":
         embed = howlbert_embed("Trade Complete", color=SUCCESS_COLOR)
     elif status == "declined":
-        embed = howlbert_embed("Trade Declined", color=ERROR_COLOR)
+        embed = howlbert_embed("Trade Declined", "The other wolf declined the trade.", color=ERROR_COLOR)
     elif status == "cancelled":
-        embed = howlbert_embed("Trade Cancelled", color=ERROR_COLOR)
+        embed = howlbert_embed("Trade Cancelled", "The trade offer was cancelled.", color=ERROR_COLOR)
     else:
         embed = howlbert_embed("Trade Offer", color=SUCCESS_COLOR)
 

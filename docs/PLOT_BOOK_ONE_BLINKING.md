@@ -47,14 +47,28 @@ Exiled Greyspire; not the main antagonist. Mechanics:
 - `/explore investigate` during phase 8+: mill tooth (all wolves)
 - Redemption/death remain RP + combat/standing
 
+## Universal participation (all wolves)
+
+While **plot_phase > 0**, every wolf can take part in Book One:
+
+| Mechanic | Who | When |
+|----------|-----|------|
+| **Plot witness** | Everyone | First plot-tagged action each sunrise: **+1 mood** + flavor (`/field action:sniff`, `/howl`, `/drink`, scout survey, `/explore`, `/medic action:treat`) |
+| **Sniff quests** | Everyone | `/field action:sniff` progresses **blink_healer_listen** (phases 1–5) and **blink_wind_witness** (phase 6+) |
+| **Healer quests** | Medics & apprentices | `/medic action:treat` or `action:observe` during phases **5–11** → **blink_healer_touch** (+1 standing or +1 mood once/day for non-canon healers) |
+| **Rollover pressure** | Everyone | Mood, thirst, disease, cat trust, unity — see phase table |
+| **Activity modifiers** | Pack-tinted | Fishing debuff, travel DC, mill tooth, rogue crime, howl costs — see phase table |
+
+Canon wolves (**Firepaw**, **Soot**, **Splinter**) keep **extra** rewards on top of the universal layer (see below).
+
 ## Firepaw (healer apprentice lane)
 
 Thistlehide **Medic Apprentice** under Sypha. **Requires wolf name Firepaw + thistlehide affiliation.**
 
 | Phase | Mechanic |
 |-------|----------|
-| **1–5** | `/sniff`: **+2 mood**, **sniff bonus** (hunt/track +15%), quest **blink_healer_listen** progress |
-| **6–10** | First `/sniff` each sunrise: **+1 standing**, **+1 mood** (once/day plot reward) |
+| **1–5** | `/field action:sniff`: **+2 mood**, **sniff bonus** (hunt/track +15%), quest **blink_healer_listen** progress *(+ universal witness)* |
+| **6–10** | First `/field action:sniff` each sunrise: **+1 standing**, **+1 mood** (once/day plot reward) |
 | **5–11** | `/medic action:treat`: **+2 HP** on heal outcomes; quest **blink_healer_touch** progress |
 | **5–11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
 | **5–11** | **Firepaw** may **`/medic action:treat patient:`** (apprentice border-triage) |
@@ -62,15 +76,29 @@ Thistlehide **Medic Apprentice** under Sypha. **Requires wolf name Firepaw + thi
 
 Quest skill rewards: **blink_healer_listen** → medicine +1 · **blink_healer_touch** → medicine +1
 
+## Soot (Mistmoor healer lane)
+
+Mistmoor **Medic** under Mirewort. **Requires wolf name Soot + mistmoor affiliation.**
+
+| Phase | Mechanic |
+|-------|----------|
+| **5–11** | `/field action:sniff`: **+2 mood**, **sniff bonus** (+15% hunt/track), quest **blink_healer_listen** progress |
+| **6–10** | First `/field action:sniff` each sunrise: **+1 standing** (second sight; once/day plot reward) |
+| **5–11** | `/medic action:treat`: **+2 HP** on heal outcomes (**+1** more on **rot-lung** patients) |
+| **5–11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
+| **5–11** | `/medic action:observe`: **+2 mood**, **−2 medicine strain**, treat quest progress |
+
+Shares healer quests with Firepaw: **blink_healer_listen**, **blink_healer_touch**.
+
 ## Living world (use alongside phases)
 
-Cat pacts, `/sniff` border fights, season stash failures, territory wars, diseases, restricted herbs, sacred visits, collab hunt/patrol, raccoon, predators, Whispering Wild — all continue during Book One.
+Cat pacts, `/field action:sniff` border fights, season stash failures, territory wars, diseases, restricted herbs, sacred visits, collab hunt/patrol, raccoon, predators, Whispering Wild — all continue during Book One.
 
 ## Canon anchors (affiliations)
 
 - **Thistlehide:** Finnpelt, Mossgaze, Kanami, River'Shroud, Pale'Step, Skye, Thyme, Firepaw, Eltanin
 - **Silverrush:** Saltmuzzle, Rift, Rivenmaw, Ripple, Aromis
-- **Mistmoor:** Murkvein, Mirewort, Gasp
+- **Mistmoor:** Murkvein, Mirewort, Gasp, Soot
 - **Greyspire:** Grim, Talus; **Splinter** exiled rogue
 
 ## Ending Book One

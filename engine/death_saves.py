@@ -13,9 +13,10 @@ def roll_death_save(user) -> dict:
 
     die = roll_d20()
     mod = attr_modifier(user["attr_con"])
-    from engine.herb_buffs import death_save_bonus
+    from engine.herb_buffs import consume_death_save_bonus, death_save_bonus
 
-    mod += death_save_bonus(user)
+    herb_bonus = death_save_bonus(user)
+    mod += herb_bonus
     total = die + mod
 
     if die == 1:
@@ -28,6 +29,8 @@ def roll_death_save(user) -> dict:
         success = total >= dc
         auto_fail = False
 
+    consume_fields = consume_death_save_bonus(user) if herb_bonus else {}
+
     return {
         "die": die,
         "modifier": mod,
@@ -37,6 +40,7 @@ def roll_death_save(user) -> dict:
         "success": success,
         "auto_fail": auto_fail,
         "nat20": die == 20,
+        "consume_fields": consume_fields,
     }
 
 
@@ -65,6 +69,7 @@ def stabilize_check(
     yarrow_fresh: bool = False,
     oak_bark: bool = False,
     cattail: bool = False,
+    patient=None,
 ) -> dict:
     die = roll_d20()
     mod = attr_modifier(healer["attr_wis"])
@@ -79,11 +84,14 @@ def stabilize_check(
         oak_bark=oak_bark,
         cattail=cattail,
     )
-    from engine.herb_buffs import death_save_bonus
+    from engine.herb_buffs import consume_death_save_bonus, death_save_bonus
 
-    mod += death_save_bonus(healer)
+    bonus_target = patient or healer
+    herb_bonus = death_save_bonus(bonus_target)
+    mod += herb_bonus
     total = die + mod + trait_mod
     dc = 15
+    consume_fields = consume_death_save_bonus(bonus_target) if herb_bonus else {}
     return {
         "die": die,
         "modifier": mod,
@@ -91,4 +99,5 @@ def stabilize_check(
         "total": total,
         "dc": dc,
         "success": total >= dc or die == 20,
+        "consume_fields": consume_fields,
     }

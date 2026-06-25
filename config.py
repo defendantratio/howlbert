@@ -17,9 +17,11 @@ AUTO_ROLLOVER_ENABLED = os.getenv("AUTO_ROLLOVER_ENABLED", "false").strip().lowe
     "true",
     "yes",
 )
-ROLLOVER_TIMEZONE = os.getenv("ROLLOVER_TIMEZONE", "UTC").strip() or "UTC"
+ROLLOVER_TIMEZONE = os.getenv("ROLLOVER_TIMEZONE", "America/New_York").strip() or "America/New_York"
 ROLLOVER_HOUR = max(0, min(23, int(os.getenv("ROLLOVER_HOUR", "0") or 0)))
 ROLLOVER_MINUTE = max(0, min(59, int(os.getenv("ROLLOVER_MINUTE", "0") or 0)))
+# After missed sunrise: DM den news on bot startup if online within this many hours of rollover
+ROLLOVER_STARTUP_DM_HOURS = max(1, min(24, int(os.getenv("ROLLOVER_STARTUP_DM_HOURS", "8") or 8)))
 AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID = os.getenv("AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID", "").strip()
 _auto_ch = AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID
 AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID = int(_auto_ch) if _auto_ch.isdigit() else None
@@ -115,14 +117,14 @@ DEFAULT_SHOP_ITEMS = (
     (
         "herb_bundle",
         "Herb Bundle",
-        "Use `/use item:herb_bundle`; random common herbs (2-4) added to `/inventory`.",
+        "Use `/bones action:use item:herb_bundle`; random common herbs (2-4) added to `/inventory`.",
         40,
         12,
     ),
     (
         "prey_bundle",
         "Prey Bundle",
-        "Use `/use item:prey_bundle`; random carcasses (2-3) added to `/prey`.",
+        "Use `/bones action:use item:prey_bundle`; random carcasses (2-3) added to `/prey`.",
         55,
         18,
     ),
@@ -144,35 +146,35 @@ DEFAULT_SHOP_ITEMS = (
     (
         "den_charm",
         "Den Charm",
-        "Use `/use item:den_charm`; +1 pack unity once per rollover (must be in a pack).",
+        "Use `/bones action:use item:den_charm`; +1 pack unity once per rollover (must be in a pack).",
         100,
         30,
     ),
     (
         "rabbit_pelt",
         "Rabbit Pelt",
-        "Use `/use item:rabbit_pelt recipient:@wolf`; trade for +2 standing; they gain 10 bones.",
+        "Use `/bones action:use item:rabbit_pelt recipient:@wolf`; trade for +2 standing; they gain 10 bones.",
         55,
         15,
     ),
     (
         "extra_paw",
         "An Extra Paw",
-        "Add RP to `/work` or `/crime`: your own `scene:` text, or `staff:true` for admin-written flavor (uses one).",
+        "Add RP to `/bones action:work` or `/bones action:crime`: your own `scene:` text, or `staff:true` for admin-written flavor (uses one).",
         150,
         40,
     ),
     (
         "safe_roll",
         "Safe Roll",
-        "🎲 `/roll use_safe_roll:true`; reroll a failed d20 once. **Cannot** be used in combat.",
+        "🎲 `/rpg action:roll use_safe_roll:true`; reroll a failed d20 once. **Cannot** be used in combat.",
         100,
         30,
     ),
     (
         "revive",
         "Revive",
-        "Use `/use item:revive` when your active wolf is **dead**; same name & stats, back at 1 HP. "
+        "Use `/bones action:use item:revive` when your active wolf is **dead**; same name & stats, back at 1 HP. "
         "Old-age deaths reset to 60 moons. **Ko-fi shop only**.",
         0,
         0,
@@ -180,7 +182,7 @@ DEFAULT_SHOP_ITEMS = (
     (
         "reincarnation",
         "Reincarnation",
-        "Use `/use item:reincarnation new_name:<name>` when **dead**; new name & juvenile age (12 moons), "
+        "Use `/bones action:use item:reincarnation new_name:<name>` when **dead**; new name & juvenile age (12 moons), "
         "but keep attributes, skills, standing & bones. Clears prey/toys. **Ko-fi shop only**.",
         0,
         0,
@@ -736,6 +738,19 @@ FIREPAW_PLOT_TREAT_STANDING = 1
 FIREPAW_PLOT_TREAT_MOOD_SELF = 2
 FIREPAW_PLOT_OBSERVE_MOOD = 2
 FIREPAW_PLOT_OBSERVE_STRAIN_RELIEF = 2
+# Soot plot mechanics (Book One: The Blinking — Mistmoor rot-lung lane)
+SOOT_PLOT_SNIFF_MOOD = 2
+SOOT_PLOT_SNIFF_STANDING = 1
+SOOT_PLOT_TREAT_HEAL_BONUS = 2
+SOOT_PLOT_ROT_LUNG_HEAL_BONUS = 1
+SOOT_PLOT_TREAT_STANDING = 1
+SOOT_PLOT_TREAT_MOOD_SELF = 2
+SOOT_PLOT_OBSERVE_MOOD = 2
+SOOT_PLOT_OBSERVE_STRAIN_RELIEF = 2
+# Universal plot witness (once per sunrise, any wolf)
+PLOT_WITNESS_MOOD = 1
+PLOT_GENERIC_HEALER_STANDING = 1
+PLOT_GENERIC_HEALER_MOOD = 1
 FISHING_BONES = (10, 22)
 
 # Pack warfare
@@ -1044,7 +1059,7 @@ ROLE_QUESTS = (
     (
         "medic_healer_path",
         "Poultice for the Den",
-        "Tend the wounded; use `/treat` with a herb or `/stabilize` a dying packmate.",
+        "Tend the wounded; use `/medic action:treat` with a herb or `/medic action:stabilize` a dying packmate.",
         "treat",
         1,
         55,

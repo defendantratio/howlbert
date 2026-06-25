@@ -105,6 +105,7 @@ async def _apply_prey_choice(
             wolf["discord_id"],
             effects["quest_objective"],
             wolf_id=wolf["id"],
+            guild_id=interaction.guild.id if interaction.guild else None,
         )
 
     db.record_prey_pile_response(pile_id, wolf["id"], wolf["wolf_name"], choice)

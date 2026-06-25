@@ -118,7 +118,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     if site not in VERGE_SITES:
         return howlbert_embed("Unknown Verge", "Pick **roadside** or **compound**.", color=ERROR_COLOR)
     if not interaction.guild:

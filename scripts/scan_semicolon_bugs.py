@@ -1,34 +1,34 @@
-"""Find lines where '; ' likely replaced ' - ' in code."""
+"""Find likely semicolon-used-as-minus bugs in Python code."""
 from __future__ import annotations
 
 import re
-import pathlib
+from pathlib import Path
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-CODE_HINT = re.compile(
-    r"(return |[=+\-*/%(,] |\bif |\belif |\bwhile |\bmax\(|\bmin\(|\babs\()"
-)
-SUSPECT = re.compile(r"[a-zA-Z0-9_\)\]]; [a-zA-Z0-9_\[\(]")
+ROOT = Path(__file__).resolve().parents[1]
+PAT = re.compile(r"(?<![\"'])\b\w+\s*=\s*\w+\s*;\s*\w+")
+SKIP = ("return ", "import ", "from ", '"""', "'''", "#")
 
 
-def main() -> None:
-    hits: list[str] = []
-    for p in list(ROOT.rglob("*.py")):
-        if ".venv" in p.parts or "scan_semicolon" in p.name:
+def main() -> int:
+    for root in ("engine", "utils", "cogs"):
+        for path in (ROOT / root).rglob("*.py"):
+            if ".venv" in path.parts:
+                continue
+            for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                s = line.strip()
+                if any(s.startswith(x) for x in SKIP):
+                    continue
+                if PAT.search(line):
+                    print(f"{path.relative_to(ROOT)}:{i}: {s[:120]}")
+    db = ROOT / "database.py"
+    for i, line in enumerate(db.read_text(encoding="utf-8").splitlines(), 1):
+        s = line.strip()
+        if any(s.startswith(x) for x in SKIP):
             continue
-        text = p.read_text(encoding="utf-8")
-        for i, line in enumerate(text.splitlines(), 1):
-            if not SUSPECT.search(line):
-                continue
-            if not CODE_HINT.search(line):
-                continue
-            if line.strip().startswith("#"):
-                continue
-            hits.append(f"{p.relative_to(ROOT)}:{i}: {line.strip()[:120]}")
-    for h in sorted(hits):
-        print(h)
-    print(f"TOTAL {len(hits)}")
+        if PAT.search(line):
+            print(f"database.py:{i}: {s[:120]}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

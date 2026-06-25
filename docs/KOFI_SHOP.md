@@ -89,7 +89,7 @@ How to use
 1. Join our Discord server and /register your wolf first
 2. Put your Discord user ID in this order message (see /patron in-server for help)
 3. After purchase, check /inventory for Revive
-4. When your wolf dies: /use item:revive
+4. When your wolf dies: `/bones action:use item:revive`
 
 Not sold for bones at the in-game trading post. Personal reward only; never taken from pack treasury. One Revive item per purchase.
 
@@ -125,14 +125,14 @@ What's new
 • Role synced to your new age
 
 What resets
-• Prey hoard and toys cleared (fresh start for /prey and /toys)
+• Prey hoard and toys cleared (fresh start for `/prey` and `/playpen action:toys`)
 • Full HP, healthy condition, no injuries or disease
 
 How to use
 1. Join our Discord server and /register first
 2. Put your Discord user ID in this order message (see /patron in-server)
 3. After purchase, check /inventory for Reincarnation
-4. When your wolf dies: /use item:reincarnation new_name:YourNewName
+4. When your wolf dies: `/bones action:use item:reincarnation new_name:YourNewName`
 
 Not the same as Reincarnation ($28); Revive brings back the same wolf unchanged. Reincarnation is for a new identity with the same soul and stats.
 

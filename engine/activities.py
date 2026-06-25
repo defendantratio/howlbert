@@ -136,7 +136,7 @@ def try_daily(interaction: discord.Interaction) -> discord.Embed | None:
 
     pack = db.get_pack(pack_id)
     if not pack:
-        return howlbert_embed("Pack Not Found", color=ERROR_COLOR)
+        return howlbert_embed("Pack Not Found", "Join a Great Pack first.", color=ERROR_COLOR)
 
     account = db.get_account(interaction.user.id)
 
@@ -195,7 +195,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     """Returns (embed, show_prey_buttons, hunt_combat_encounter_id)."""
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR), False, None
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), False, None
     block = young_wolf_block(user, action="hunt")
     if block:
         return howlbert_embed("Too Young to Hunt", block, color=ERROR_COLOR), False, None
@@ -317,7 +317,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
 def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR)
@@ -336,7 +336,8 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
     db.update_user(interaction.user.id, last_scavenge_day=day)
-    db.increment_quest_progress(interaction.user.id, "scavenge")
+    gid = interaction.guild.id if interaction.guild else None
+    db.increment_quest_progress(interaction.user.id, "scavenge", guild_id=gid)
     if net > 0:
         grant_prey_carcass_canonical(
             user["id"],
@@ -369,7 +370,7 @@ def try_track(
 ) -> tuple[discord.Embed | None, bool]:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR), False
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), False
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR), False
@@ -454,7 +455,7 @@ def try_track(
 def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None, bool]:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR), False
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), False
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR), False
@@ -478,7 +479,8 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         last_hunt_yield=payout if payout > 0 else 0,
         last_prey_label=PREY_LABEL_FISH,
     )
-    db.increment_quest_progress(interaction.user.id, "fishing")
+    gid = interaction.guild.id if interaction.guild else None
+    db.increment_quest_progress(interaction.user.id, "fishing", guild_id=gid)
     if net > 0:
         prey_name = grant_prey_carcass_canonical(
             user["id"],
@@ -507,7 +509,7 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
 def try_forage(interaction: discord.Interaction, rarity: str = "common") -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR)
@@ -638,10 +640,10 @@ def purchase_item(interaction: discord.Interaction, item_key: str) -> discord.Em
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     shop_item = db.get_item_by_key(item_key)
     if not shop_item or shop_item["price"] <= 0:
-        return howlbert_embed("Unknown Item", "Check `/shop` for valid items.", color=ERROR_COLOR)
+        return howlbert_embed("Unknown Item", "Check `/bones action:shop` for valid items.", color=ERROR_COLOR)
 
     guild_id = interaction.guild.id if interaction.guild else None
     day = db.get_world(guild_id)["day_number"] if guild_id else 0
@@ -664,10 +666,10 @@ def purchase_item(interaction: discord.Interaction, item_key: str) -> discord.Em
 def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     q = db.get_quest_by_key(quest_key)
     if not q or q["quest_type"] == "daily":
-        return howlbert_embed("Unknown Quest", color=ERROR_COLOR)
+        return howlbert_embed("Unknown Quest", "That key isn't on the den board.", color=ERROR_COLOR)
     req_role = q["required_role"] if "required_role" in q.keys() else None
     if req_role:
         from engine.apprentice_roles import quest_role_matches
@@ -689,11 +691,30 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
                 color=ERROR_COLOR,
             )
     elif q["quest_type"] == "role":
-        return howlbert_embed("Role Quest", "Use `/rolequests` for role-specific quests.", color=ERROR_COLOR)
+        return howlbert_embed("Role Quest", "Use `/role action:quests` for role-specific quests.", color=ERROR_COLOR)
     if q["quest_type"] == "unique" and db.has_completed_unique(interaction.user.id, q["id"]):
         return howlbert_embed("Already Done", "That tale is already written.", color=ERROR_COLOR)
-    day = db.get_world(interaction.guild.id)["day_number"] if interaction.guild else 0
-    if not db.accept_quest(interaction.user.id, q["id"], day):
+    guild_id = interaction.guild.id if interaction.guild else None
+    if q["key"].startswith("blink_"):
+        from engine.plot_quests import plot_quest_available
+
+        if not plot_quest_available(q["key"], guild_id):
+            return howlbert_embed(
+                "Not Yet",
+                "That **Book One** quest isn't on the den board for the current plot phase.",
+                color=ERROR_COLOR,
+            )
+        if q["key"] == "blink_rogue_ledger":
+            from engine.role_features import is_rogue_wolf
+
+            if not is_rogue_wolf(user):
+                return howlbert_embed(
+                    "Rogues Only",
+                    "**Edge Ledger** is for **rogue** wolves running border scores.",
+                    color=ERROR_COLOR,
+                )
+    day = db.get_world(guild_id)["day_number"] if guild_id else 0
+    if not db.accept_quest(interaction.user.id, q["id"], day, guild_id=guild_id):
         return howlbert_embed("Already Active", "You're already on that quest.", color=ERROR_COLOR)
     embed = howlbert_embed("Quest Accepted", q["description"], color=SUCCESS_COLOR)
     embed.add_field(name="Objective", value=f"{q['objective_type']} x{q['objective_count']}", inline=True)
@@ -705,7 +726,7 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
 
 def complete_quest(interaction: discord.Interaction, quest_key: str | None = None) -> discord.Embed | None:
     if not db.get_user(interaction.user.id):
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     result = db.complete_quest(interaction.user.id, quest_key)
     if not result:
         if quest_key:
@@ -759,8 +780,8 @@ def _apply_extra_paw(
     if not has_item(interaction.user.id, "extra_paw"):
         return howlbert_embed(
             "An Extra Paw Required",
-            "Buy **An Extra Paw** from `/shop` to add a custom `scene:` or `staff:true` "
-            "to `/work` or `/crime`.",
+            "Buy **An Extra Paw** from `/bones action:shop` to add a custom `scene:` or `staff:true` "
+            "to `/bones action:work` or `/bones action:crime`.",
             color=ERROR_COLOR,
         )
     if not consume_item_by_key(interaction.user.id, "extra_paw"):
@@ -785,7 +806,7 @@ def try_work(
 ) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR)
@@ -817,7 +838,7 @@ def try_crime(
 ) -> discord.Embed | None:
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
     block = young_wolf_block(user, action="crime")
     if block:
         return howlbert_embed("Too Young", block, color=ERROR_COLOR)
@@ -872,7 +893,8 @@ def try_crime(
     net, tax, _, _, _, _, _, _, _ = award_bones(
         user, gross, world["weather"], "crime", guild_id=guild_id
     )
-    db.increment_quest_progress(interaction.user.id, "crime")
+    gid = interaction.guild.id if interaction.guild else None
+    db.increment_quest_progress(interaction.user.id, "crime", guild_id=gid)
     updated = db.get_user(interaction.user.id)
     body = random.choice(CRIME_TEXT)
     if plot_suffix:
@@ -913,13 +935,13 @@ def _try_cross_pack_steal(
     if not user["pack_id"]:
         return howlbert_embed(
             "No Pack",
-            "Join a Great Pack to run a den raid; loners use `/crime` without a target for scraps.",
+            "Join a Great Pack to run a den raid; loners use `/bones action:crime` without a target for scraps.",
             color=ERROR_COLOR,
         )
 
     victim = db.get_pack_by_key(target_pack)
     if not victim:
-        return howlbert_embed("Pack Not Found", color=ERROR_COLOR)
+        return howlbert_embed("Pack Not Found", "Join a Great Pack first.", color=ERROR_COLOR)
 
     victim_name = GREAT_PACKS[target_pack]["name"]
     if int(victim["treasury"]) <= 0:

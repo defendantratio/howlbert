@@ -198,8 +198,8 @@ everything in tier 1, plus:
 - **kickstarter backer badge** on `/patron` and your active wolf's `/profile` footer (cosmetic, permanent)
 - **one bonus shop item** in `/inventory`, backer picks in survey (ready to use, no extra purchase):
   - **lucky tooth** (+15% bones on `/bones action:hunt` while carried), or
-  - **den charm** (`/use item:den_charm` for +1 pack unity once per rollover), or
-  - **herb bundle** (`/use item:herb_bundle` for 1d4+1 HP)
+  - **den charm** (`/bones action:use item:den_charm` for +1 pack unity once per rollover), or
+  - **herb bundle** (`/bones action:use item:herb_bundle` for 1d4+1 HP)
 
 **fulfillment:** auto-grant bones + badge + chosen item within 7 days of campaign end (discord id required, `/register` before grant).
 

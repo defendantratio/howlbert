@@ -190,9 +190,9 @@ def process_kofi_shop_order(
                     dm_parts.append(
                         f"**{item_row['name']}** is in your inventory.\n"
                         + (
-                            "When your wolf dies, use `/use item:revive` to bring them back as-is."
+                            "When your wolf dies, use `/bones action:use item:revive` to bring them back as-is."
                             if grant_item_key == "revive"
-                            else "When your wolf dies, use `/use item:reincarnation new_name:<name>` "
+                            else "When your wolf dies, use `/bones action:use item:reincarnation new_name:<name>` "
                             "for a new identity with the same stats."
                         )
                     )

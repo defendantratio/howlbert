@@ -45,9 +45,9 @@ def main() -> None:
     check("format body has friendship", "Friendship" in body and "BondWolfB" in body)
     check("strength tier close", strength_tier(65) == "close")
 
-    family, err = db.create_wolf_family(a["id"], "The Howlers", day=12)
+    family, err = db.create_wolf_family(a["id"], f"The Howlers {a['id']}", day=12)
     check("create family", family is not None and not err, err or "")
-    joined, jerr = db.join_wolf_family(b["id"], "The Howlers", role="sibling", day=12)
+    joined, jerr = db.join_wolf_family(b["id"], f"The Howlers {a['id']}", role="sibling", day=12)
     check("join family", joined is not None and not jerr, jerr or "")
     members = db.get_family_members(family["id"])
     check("two members", len(members) == 2)

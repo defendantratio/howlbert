@@ -819,15 +819,23 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
         }
 
     if herb_key == "meadowsweet":
-        fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1, calm_until_day=day + 1))
+        fields.update(
+            merge_buff_fields(
+                user,
+                pain_relief_until_day=day + 1,
+                calm_until_day=day + 1,
+                pain_exhaustion_skip=1,
+            )
+        )
         fields["mood"] = min(100, mood + 3)
+        msg = "Pain and stress ease; ignore **1** pain exhaustion this sunrise."
         if disease_key in ("chronic_stress", "eating_distress"):
-            return {
-                "kind": "minor_relief",
-                "message": "Pain and stress ease; ignore **1** pain exhaustion this sunrise.",
-                "fields": fields,
-            }
-        return None
+            msg = "Pain and stress ease; chronic strain loosens until next sunrise."
+        return {
+            "kind": "minor_relief",
+            "message": msg,
+            "fields": fields,
+        }
 
     if herb_key == "passionflower":
         fields.update(

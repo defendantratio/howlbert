@@ -24,7 +24,7 @@ def mood_activity_block(user) -> str | None:
     if mood < MOOD_CRITICAL_THRESHOLD:
         return (
             f"Your mood is too low (**{mood}/{MOOD_MAX}**); you can't face the wild today. "
-            "Rest, `/play`, or `/socialize` to lift your spirits."
+            "Rest, `/playpen`, or `/playpen action:socialize` to lift your spirits."
         )
     return None
 

@@ -91,7 +91,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`                                                                    |
 | `/quest`     | `board`, `daily`, `accept`, `progress`, `complete`, `abandon`, `log`                                          |
-| `/role`      | `rolequests`, `roleevent`, `prophecy`                                                                         |
+| `/role`      | `quests`, `event`, `prophecy`                                                                         |
 | `/prestige`  | `view`, `require`, `bonus`, `legacy`, `retire`, `halloffame`                                                  |
 | `/courtship` | `court`, `mate`, `pregnancy`                                                                                  |
 | `/pupcare`   | `birth`, `feed`, `list`, `save`, `adopt`                                                                      |
@@ -173,7 +173,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 | conditions           | `/vitals action:condition`, `action:rest`; disease progresses each rollover    |
 | death saves          | `/medic action:deathsaves`, `action:stabilize` at 0 hp                         |
 | weather hazards      | `/hazard`                                                                      |
-| xp                   | `/advance action:xp`, `action:spendxp`                                         |
+| xp                   | `/advance action:view`, `action:spend`                                         |
 | mating and pups      | `/courtship`, `/pupcare`                                                       |
 
 
