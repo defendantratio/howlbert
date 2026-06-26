@@ -24,6 +24,7 @@ from engine.donor import (
 )
 from engine.kofi_shop import fulfill_shop_order, list_pending_shop_orders
 from engine.kofi_webhook import start_kofi_webhook, stop_kofi_webhook
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.permissions import is_howlbert_admin
 
@@ -58,7 +59,7 @@ class Patron(commands.Cog):
             return True
         await interaction.response.send_message(
             embed=howlbert_embed("Denied", "Admins only.", color=ERROR_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
         return False
 
@@ -145,7 +146,7 @@ class Patron(commands.Cog):
     async def patron_status(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
 
         is_boosting = bool(
@@ -156,7 +157,8 @@ class Patron(commands.Cog):
         lines = patron_status_lines(interaction.user.id, is_boosting=is_boosting)
         lines.extend(donor_status_lines(interaction.user.id))
         embed = howlbert_embed("Patron & Invites", "\n".join(lines), color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.set_footer(text="/redeem · Ko-fi shop orders may need `/register` + Discord id in the message")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name="redeem", description="Redeem a one-time donation or gift code.")
     @app_commands.describe(code="Code from Ko-fi, Patreon, or an admin")
@@ -166,7 +168,7 @@ class Patron(commands.Cog):
         title = "Code Redeemed" if ok else "Redeem Failed"
         await interaction.response.send_message(
             embed=howlbert_embed(title, note, color=color),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @patronadmin.command(name="code", description="Create a one-time or limited-use redeem code.")
@@ -219,7 +221,7 @@ class Patron(commands.Cog):
                 + (f" · **{supporter_days}** supporter days" if supporter_days else ""),
                 color=SUCCESS_COLOR,
             ),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @patronadmin.command(name="grant", description="Manually grant donor rewards to a player.")
@@ -258,7 +260,7 @@ class Patron(commands.Cog):
         title = "Grant Applied" if ok else "Grant Failed"
         await interaction.response.send_message(
             embed=howlbert_embed(title, f"{player.mention}: {note}", color=color),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @kickstarter.command(name="grant", description="Grant the permanent Kickstarter backer badge.")
@@ -277,7 +279,7 @@ class Patron(commands.Cog):
                     f"{player.display_name} must `/register` before the badge is granted.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         if db.grant_kickstarter_backer(player.id):
@@ -286,7 +288,7 @@ class Patron(commands.Cog):
             note = f"{kickstarter_badge_text()} was already granted."
         await interaction.response.send_message(
             embed=howlbert_embed("Kickstarter Backer", f"{player.mention}: {note}", color=SUCCESS_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @kickstarter.command(
@@ -317,7 +319,7 @@ class Patron(commands.Cog):
         title = "Tier 2 Fulfilled" if ok else "Tier 2 Failed"
         await interaction.response.send_message(
             embed=howlbert_embed(title, f"{player.mention}: {note}", color=color),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @kickstarter.command(name="revoke", description="Remove the Kickstarter backer badge.")
@@ -335,7 +337,7 @@ class Patron(commands.Cog):
             note = "That player did not have the badge."
         await interaction.response.send_message(
             embed=howlbert_embed("Kickstarter Backer", f"{player.mention}: {note}", color=SUCCESS_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @patronadmin.command(name="orders", description="List pending Ko-fi shop orders to fulfill.")
@@ -346,7 +348,7 @@ class Patron(commands.Cog):
         if not rows:
             await interaction.response.send_message(
                 embed=howlbert_embed("Shop Orders", "No pending orders.", color=SUCCESS_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         lines = []
@@ -362,7 +364,7 @@ class Patron(commands.Cog):
                 "\n".join(lines) + "\n\nMark done with `/patronadmin fulfill`.",
                 color=SUCCESS_COLOR,
             ),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @patronadmin.command(name="fulfill", description="Mark a Ko-fi shop order as fulfilled.")
@@ -379,7 +381,7 @@ class Patron(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(
             embed=howlbert_embed("Shop Fulfillment", note, color=color),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
 

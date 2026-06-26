@@ -9,24 +9,25 @@ import discord
 
 import database as db
 from engine.role_privileges import treat_limit_reached
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
 async def herbbag(interaction: discord.Interaction):
     user = db.get_user(interaction.user.id)
     if not user:
-        await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=True)
+        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
         return
-    from engine.herb_storage import list_herb_bag_summary
+    from engine.herb_storage import herb_bag_footer, list_herb_bag_summary
     from engine.restricted_herbs import herbbag_hoard_warning
 
     world = db.get_world(interaction.guild.id)
+    stacks = db.get_herb_stacks(user["id"])
     body = list_herb_bag_summary(user["id"], world["day_number"])
     hoard_warn = herbbag_hoard_warning(user)
-    stacks = db.get_herb_stacks(user["id"])
     spoiling = sum(
         1
         for s in stacks
@@ -38,21 +39,33 @@ async def herbbag(interaction: discord.Interaction):
         if spoiling
         else ""
     )
+    inv_herbs = [
+        row for row in db.get_inventory(interaction.user.id) if row["key"].startswith("herb_")
+    ]
+    inv_note = ""
+    if inv_herbs:
+        keys = ", ".join(f"`{r['key']}`" for r in inv_herbs[:6])
+        extra = f" (+{len(inv_herbs) - 6} more)" if len(inv_herbs) > 6 else ""
+        inv_note = (
+            f"\n\n**Shop herbs** (`/bones action:inventory`): {keys}{extra}."
+            " Dry via `/herbs action:prepare` or **`action:dryall`**."
+        )
     embed = howlbert_embed(
-        f"{user['wolf_name']}: Forage Herb Bag",
+        f"{user['wolf_name']}: Forage Herb Bag ({len(stacks)} stack{'s' if len(stacks) != 1 else ''})",
         body
         + spoil_note
         + hoard_warn
-        + "\n\n`/herbs action:prepare` or **`action:dryall`**: forage **stack:ID** or **inventory** herb (`herb_arnica`)"
-        + "\n**Dry all** processes your forage bag, `/inventory` herbs, and fresh stacks in the **healers' den store**."
-        + "\nPrepared herbs land in this bag. Fresh forage stacks rot if not **dried** within 1 sunrise.",
+        + inv_note
+        + "\n\nFresh stacks rot if not **dried** within 1 sunrise."
+        + " Prepared herbs stay in this bag.",
     )
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    embed.set_footer(text=herb_bag_footer())
+    await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 async def prepare_herb(interaction: discord.Interaction, stack_id: int, prep_method: str):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     from engine.herb_preparation import prepare_herb_stack
 
@@ -70,7 +83,7 @@ async def prepare_herb(interaction: discord.Interaction, stack_id: int, prep_met
 async def dryall(interaction: discord.Interaction):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     from engine.herb_preparation import dry_all_fresh_herbs
 
@@ -89,7 +102,7 @@ async def prepare_herb_inventory(
 ):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     from engine.herb_preparation import prepare_herb_from_inventory
 
@@ -116,7 +129,7 @@ async def treat(
     user = db.get_user(interaction.user.id)
     if not user:
         embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     from engine.herb_storage import parse_herb_stack_id
@@ -129,7 +142,7 @@ async def treat(
                 "You can only **`/medic action:treat`** **3 times per sunrise** (Medics unlimited).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         from engine.herb_treat import treat_from_herb_stack
 
@@ -147,14 +160,14 @@ async def treat(
                         "from their herb bag.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             target = db.get_user(patient.id)
             if not target:
                 await interaction.response.send_message(
                     embed=howlbert_embed("Not Registered", "Patient is not on Howlbert.", color=ERROR_COLOR),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             treat_patient = target
@@ -175,6 +188,8 @@ async def treat(
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed("Treatment", msg, color=color)
         if ok:
+            embed.set_footer(text="Care plan: `/vitals action:condition` · surgery: `/medic action:surgery`")
+        if ok:
             db.update_user(
                 interaction.user.id,
                 wolf_id=user["id"],
@@ -192,16 +207,16 @@ async def treat(
     if not item or (not item["key"].startswith("herb_") and item["key"] != "stick"):
         embed = howlbert_embed(
             "Unknown Herb",
-            "Use an herb from `/inventory` (keys like `herb_yarrow` or `stick`).",
+            "Use an herb from `/bones action:inventory` (keys like `herb_yarrow` or `stick`).",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     qty = db.get_inventory_quantity(interaction.user.id, item["id"])
     if qty < 1:
         embed = howlbert_embed("Not In Inventory", f"You don't have **{item['name']}**.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if treat_limit_reached(user):
@@ -211,7 +226,7 @@ async def treat(
             "**Medics** have no cap; promote to full Medic rank or wait for the next `/rollover`.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     from herbs import HERBS
@@ -228,7 +243,7 @@ async def treat(
             "Ragweed needs **3 leaves** in inventory to remove 1 exhaustion.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if special == "honey_needs_depletion":
@@ -238,7 +253,7 @@ async def treat(
             "must be low first.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if special == "honey_pup_not_depleted":
@@ -247,7 +262,7 @@ async def treat(
             "Honey feeds starving pups; hunger or thirst must be low first.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if special == "feed_pup_honey":
@@ -255,7 +270,7 @@ async def treat(
             embed = howlbert_embed(
                 "Not In Inventory", f"You don't have enough **{item['name']}**.", color=ERROR_COLOR
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id) if interaction.guild else None
         day_number = world["day_number"] if world else None
@@ -275,7 +290,63 @@ async def treat(
         await interaction.response.send_message(embed=embed)
         return
 
-    outcome = treat_with_herb(user, herb_key, meta)
+    treat_subject = user
+    treat_patient = None
+    if patient:
+        from engine.role_features import has_any_role, is_full_medic
+
+        if not (is_full_medic(user) or has_any_role(user, "medic_apprentice")):
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Medic Only",
+                    "Only **Medics** and **Medic apprentices** may treat a **patient** "
+                    "from `/bones action:inventory` herbs.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        treat_patient = db.get_user(patient.id)
+        if not treat_patient:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Not Registered", "Patient is not on Howlbert.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        from engine.medical_access import can_medic_treat_cross_pack
+
+        p_cond = treat_patient["condition"] if "condition" in treat_patient.keys() else "healthy"
+        emergency = p_cond in ("dying",) or int(treat_patient["hp"]) <= 0
+        ok_cross, cross_msg = can_medic_treat_cross_pack(
+            user, treat_patient, interaction.guild.id, emergency_stabilize=emergency
+        )
+        if not ok_cross:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Cannot Treat", cross_msg, color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        treat_subject = treat_patient
+
+    if treat_patient and special in (
+        "reduce_exhaustion",
+        "hunger_shield",
+        "march_shield",
+        "jaw_meal_shield",
+        "purslane_thirst",
+        "sorrel_restore",
+    ):
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Self Use Only",
+                f"**{item['name']}** must be taken by the wolf themselves; not via patient treat.",
+                color=ERROR_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
+        return
+
+    outcome = treat_with_herb(treat_subject, herb_key, meta)
 
     if special == "reduce_exhaustion" and int(user["exhaustion"]) <= 0:
         embed = howlbert_embed(
@@ -283,7 +354,7 @@ async def treat(
             f"**{item['name']}**: you aren't carrying exhaustion to shed.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if special == "hunger_shield" and int(
@@ -294,7 +365,7 @@ async def treat(
             "Fennel's hunger shield is already active for the next sunrise.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if special == "march_shield" and int(
@@ -305,7 +376,7 @@ async def treat(
             "Burnet's march ward is already active for the next sunrise.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if outcome == "no_effect" and not special and herb_key not in ("comfrey", "cobwebs"):
@@ -327,11 +398,15 @@ async def treat(
     use_qty = 3 if herb_key == "ragweed" and special == "reduce_exhaustion" else 1
     if not db.consume_item(interaction.user.id, item["id"], quantity=use_qty):
         embed = howlbert_embed("Not In Inventory", f"You don't have enough **{item['name']}**.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
-    injuries = parse_injuries(user["active_injuries"])
+    injuries = parse_injuries(
+        treat_subject["active_injuries"] if "active_injuries" in treat_subject.keys() else None
+    )
     msg = ""
+    subject_did = treat_subject["discord_id"]
+    subject_id = treat_subject["id"]
 
     if special == "reduce_exhaustion":
         old_ex = int(user["exhaustion"])
@@ -359,11 +434,12 @@ async def treat(
             for inj in meta.get("cures", ()):
                 if inj in injuries:
                     injuries.remove(inj)
-                    db.clear_injury_since(user["id"], inj)
+                    db.clear_injury_since(subject_id, inj)
             db.set_user_conditions(
-                interaction.user.id,
+                subject_did,
+                wolf_id=subject_id,
                 active_injuries=json.dumps(injuries),
-                condition="healthy" if not injuries else user["condition"],
+                condition="healthy" if not injuries else treat_subject["condition"],
             )
             msg += " Broken jaw treated."
     elif special == "purslane_thirst":
@@ -386,37 +462,43 @@ async def treat(
         if had_gash:
             msg += " Bleeding staunched."
     elif outcome == "cured_disease":
-        db.set_user_conditions(interaction.user.id, clear_disease=True, condition="healthy")
-        msg = f"**{meta.get('name', item['name'])}** cured your disease."
+        db.set_user_conditions(
+            subject_did, wolf_id=subject_id, clear_disease=True, condition="healthy"
+        )
+        who = "their disease" if treat_patient else "your disease"
+        msg = f"**{meta.get('name', item['name'])}** cured {who}."
     elif outcome == "rabies_ease":
         from engine.herb_buffs import grant_disease_save_advantage
 
         db.update_user(
-            interaction.user.id,
-            wolf_id=user["id"],
-            **grant_disease_save_advantage(user),
+            subject_did,
+            wolf_id=subject_id,
+            **grant_disease_save_advantage(treat_subject),
         )
+        who = treat_subject["wolf_name"] if treat_patient else "you"
         msg = (
-            f"**{item['name']}**: herbs slow early rabies; **advantage** on your next disease save "
-            "(one sunrise). Rabies is not cured."
+            f"**{item['name']}**: herbs slow early rabies for **{who}**; **advantage** on the "
+            "next disease save (one sunrise). Rabies is not cured."
         )
     elif outcome == "cured_injury":
         for inj in meta.get("cures", ()):
             if inj in injuries:
                 injuries.remove(inj)
-                db.clear_injury_since(user["id"], inj)
+                db.clear_injury_since(subject_id, inj)
         db.set_user_conditions(
-            interaction.user.id,
+            subject_did,
+            wolf_id=subject_id,
             active_injuries=json.dumps(injuries),
-            condition="healthy" if not injuries else user["condition"],
+            condition="healthy" if not injuries else treat_subject["condition"],
         )
-        msg = f"**{item['name']}** treated your injury."
+        who = f"**{treat_subject['wolf_name']}**'s injury" if treat_patient else "your injury"
+        msg = f"**{item['name']}** treated {who}."
     elif outcome == "cured_genetic":
         from engine.genetics import genetic_keys_matching_cures, remove_genetic_keys
 
-        matched = genetic_keys_matching_cures(user, meta.get("cures", ()))
-        new_genetics = remove_genetic_keys(user, matched)
-        db.update_user(interaction.user.id, wolf_id=user["id"], genetic_conditions=new_genetics)
+        matched = genetic_keys_matching_cures(treat_subject, meta.get("cures", ()))
+        new_genetics = remove_genetic_keys(treat_subject, matched)
+        db.update_user(subject_did, wolf_id=subject_id, genetic_conditions=new_genetics)
         names = ", ".join(m.replace("_", " ").title() for m in matched)
         msg = f"**{item['name']}** eased or corrected **{names}**."
     elif outcome == "symptom_ease":
@@ -430,33 +512,35 @@ async def treat(
         from engine.exhaustion_effects import effective_max_hp
 
         heal = random.randint(1, 4)
-        cap = effective_max_hp(user)
-        new_hp = min(cap, user["hp"] + heal)
-        db.set_user_conditions(interaction.user.id, hp=new_hp)
-        msg = f"Comfrey poultice healed **{heal} HP**."
+        cap = effective_max_hp(treat_subject)
+        new_hp = min(cap, int(treat_subject["hp"]) + heal)
+        db.set_user_conditions(subject_did, wolf_id=subject_id, hp=new_hp)
+        who = treat_subject["wolf_name"] if treat_patient else "you"
+        msg = f"Comfrey poultice healed **{who}** **{heal} HP** (now **{new_hp}/{cap}**)."
     elif outcome == "stabilized":
-        db.set_user_conditions(interaction.user.id, hp=1, condition="stable")
+        db.set_user_conditions(subject_did, wolf_id=subject_id, hp=1, condition="stable")
+        who = treat_subject["wolf_name"] if treat_patient else "you"
         msg = (
-            f"**{item['name']}** stabilized you at 1 HP."
+            f"**{item['name']}** stabilized **{who}** at 1 HP."
             if herb_key != "cobwebs"
-            else "Cobwebs stabilized you at 1 HP."
+            else f"Cobwebs stabilized **{who}** at 1 HP."
         )
 
     from engine.herb_buffs import apply_supplemental_herb
 
-    supplemental = apply_supplemental_herb(herb_key, user, day=treat_day, outcome=outcome)
+    supplemental = apply_supplemental_herb(herb_key, treat_subject, day=treat_day, outcome=outcome)
     if supplemental:
         kind = supplemental["kind"]
         sfields = supplemental.get("fields") or {}
         if kind == "mercy":
-            db.set_user_conditions(interaction.user.id, condition="dead", hp=0)
+            db.set_user_conditions(subject_did, wolf_id=subject_id, condition="dead", hp=0)
             msg = f"**{item['name']}**: {supplemental['message']}"
         elif kind == "stabilize" and outcome != "stabilized":
-            db.set_user_conditions(interaction.user.id, hp=1, condition="stable")
+            db.set_user_conditions(subject_did, wolf_id=subject_id, hp=1, condition="stable")
             msg = f"**{item['name']}**: {supplemental['message']}"
         else:
             if sfields:
-                db.update_user(interaction.user.id, wolf_id=user["id"], **sfields)
+                db.update_user(subject_did, wolf_id=subject_id, **sfields)
             extra = supplemental["message"]
             if not msg:
                 msg = f"**{item['name']}**; {extra}"
@@ -466,7 +550,11 @@ async def treat(
     if not msg:
         msg = f"Applied **{item['name']}**: {meta.get('effect', 'minor relief')}."
 
+    if treat_patient and treat_patient["id"] != user["id"]:
+        msg = f"**{user['wolf_name']}** treats **{treat_subject['wolf_name']}**:\n{msg}"
+
     embed = howlbert_embed("Treatment", msg, color=SUCCESS_COLOR)
+    embed.set_footer(text="Care plan: `/vitals action:condition` · surgery: `/medic action:surgery`")
     db.update_user(
         interaction.user.id,
         wolf_id=user["id"],
@@ -489,7 +577,7 @@ async def herb_guide(interaction: discord.Interaction, herb_filter: str = "all")
     embed = howlbert_embed(title, body)
     embed.set_footer(text="Herb guide · /herbs action:guide")
     view = make_herb_guide_view(page=0, filter_key=herb_filter)
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 
 async def denstore(
     interaction: discord.Interaction,
@@ -499,12 +587,12 @@ async def denstore(
     ):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     if not user["pack_id"]:
         await interaction.response.send_message(
             embed=howlbert_embed("No Pack", "Join a pack to use the healers' herb store.", color=ERROR_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
         return
     from engine.pack_herb_store import (
@@ -523,7 +611,7 @@ async def denstore(
         embed.set_footer(
             text="Anyone: `mode:deposit` / `depositall` · Medics & Foragers: `mode:withdraw`"
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
     if mode == "depositall":
         ok, msg = deposit_all_herbs_to_store(
@@ -549,7 +637,7 @@ async def denstore(
             if stack_id is None:
                 await interaction.response.send_message(
                     "Pick a forage **stack:ID** or inventory **`herb_arnica`** key to deposit.",
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             ok, msg = deposit_herb_to_store(
@@ -567,7 +655,7 @@ async def denstore(
                     "Only **Medics** and **Foragers** may withdraw from the healers' store.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         try:
@@ -575,7 +663,7 @@ async def denstore(
         except (ValueError, TypeError):
             await interaction.response.send_message(
                 "Enter store stack **`#ID`** from `/herbs action:store mode:list`.",
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         ok, msg = withdraw_herb_from_store(
@@ -587,7 +675,7 @@ async def denstore(
         )
     else:
         await interaction.response.send_message(
-            "Pick **list**, **deposit**, **depositall**, or **withdraw**.", ephemeral=True
+            "Pick **list**, **deposit**, **depositall**, or **withdraw**.", ephemeral=reply_ephemeral()
         )
         return
     color = SUCCESS_COLOR if ok else ERROR_COLOR
@@ -596,12 +684,12 @@ async def denstore(
 async def turnin_restricted(interaction: discord.Interaction, store_stack: str | None):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     if not user["pack_id"]:
         await interaction.response.send_message(
             embed=howlbert_embed("No Pack", "Join a pack to turn poison herbs in.", color=ERROR_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
         return
     from engine.herb_storage import parse_herb_stack_id
@@ -611,7 +699,7 @@ async def turnin_restricted(interaction: discord.Interaction, store_stack: str |
     if not sid:
         await interaction.response.send_message(
             "Enter your forage **`stack:ID`** for the restricted herb to turn in.",
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
         return
     world = db.get_world(interaction.guild.id)
@@ -628,10 +716,10 @@ async def turnin_restricted(interaction: discord.Interaction, store_stack: str |
 async def sacred_visit(interaction: discord.Interaction):
     user = db.get_user(interaction.user.id)
     if not user:
-        await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=True)
+        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
         return
     world = db.get_world(interaction.guild.id)
     from engine.sacred_visits import record_sacred_visit
@@ -647,19 +735,19 @@ async def spirit_ritual(
     ):
     medic = db.get_user(interaction.user.id)
     if not medic or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     if not patient:
-        await interaction.response.send_message("Pick a **patient** for the cleansing ritual.", ephemeral=True)
+        await interaction.response.send_message("Pick a **patient** for the cleansing ritual.", ephemeral=reply_ephemeral())
         return
     if not ritual_herb:
         await interaction.response.send_message(
-            "Pick **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan).", ephemeral=True
+            "Pick **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan).", ephemeral=reply_ephemeral()
         )
         return
     target = db.get_user(patient.id)
     if not target:
-        await interaction.response.send_message("Patient is not on Howlbert.", ephemeral=True)
+        await interaction.response.send_message("Patient is not on Howlbert.", ephemeral=reply_ephemeral())
         return
     world = db.get_world(interaction.guild.id)
     from engine.medical_care import run_spirit_ritual
@@ -683,14 +771,14 @@ async def naming_ceremony(
     ):
     medic = db.get_user(interaction.user.id)
     if not medic or not interaction.guild:
-        await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
         return
     if not patient:
-        await interaction.response.send_message("Pick the **pup** (`patient`) for the naming rite.", ephemeral=True)
+        await interaction.response.send_message("Pick the **pup** (`patient`) for the naming rite.", ephemeral=reply_ephemeral())
         return
     pup = db.get_user(patient.id)
     if not pup:
-        await interaction.response.send_message("That wolf is not on Howlbert.", ephemeral=True)
+        await interaction.response.send_message("That wolf is not on Howlbert.", ephemeral=reply_ephemeral())
         return
     world = db.get_world(interaction.guild.id)
     from engine.medical_care import run_naming_ceremony
@@ -706,16 +794,16 @@ async def lay_to_rest(
     ):
     medic = db.get_user(interaction.user.id)
     if not medic:
-        await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+        await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
         return
     if not deceased or not lay_herb:
         await interaction.response.send_message(
-            "Pick **deceased** and **lay_herb** (rosemary, lavender, mint).", ephemeral=True
+            "Pick **deceased** and **lay_herb** (rosemary, lavender, mint).", ephemeral=reply_ephemeral()
         )
         return
     target = db.get_user(deceased.id)
     if not target:
-        await interaction.response.send_message("That wolf is not on Howlbert.", ephemeral=True)
+        await interaction.response.send_message("That wolf is not on Howlbert.", ephemeral=reply_ephemeral())
         return
     from engine.medical_care import run_lay_to_rest
 
@@ -739,7 +827,7 @@ async def quarantine_command(
     actor = db.get_user(interaction.user.id)
     if not actor:
         embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if wolf and own_wolf:
@@ -748,19 +836,30 @@ async def quarantine_command(
             "Choose another **player** or `own_wolf`; not both.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     pack = db.get_pack(actor["pack_id"]) if actor["pack_id"] else None
 
     if not wolf and not own_wolf:
         if is_quarantined(actor):
+            from engine.conditions import format_conditions
+
+            day = None
+            if interaction.guild_id:
+                world = db.get_world(interaction.guild_id)
+                if world:
+                    day = world["day_number"]
+            body = (
+                f"**{actor['wolf_name']}** is isolated in the sick den.\n\n"
+                f"{format_conditions(actor, day=day)}"
+            )
             embed = howlbert_embed(
                 "Quarantined",
-                f"**{actor['wolf_name']}** is isolated in the sick den.",
+                body,
                 color=SUCCESS_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if pack and can_manage_quarantine(actor, pack):
             rows = db.list_pack_quarantined(pack["id"])
@@ -777,14 +876,14 @@ async def quarantine_command(
                     "\n".join(lines),
                     color=SUCCESS_COLOR,
                 )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed(
             "Quarantine",
             "Pick a **wolf** to isolate, or use `release:true` to free someone.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if own_wolf:
@@ -795,18 +894,18 @@ async def quarantine_command(
         )
         if not target:
             embed = howlbert_embed("Unknown Wolf", f"No wolf named **{own_wolf}**.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
     else:
         target = db.get_user(wolf.id)
         if not target:
             embed = howlbert_embed("Not Registered", "That wolf isn't registered.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
     if not pack:
         embed = howlbert_embed("No Pack", "Quarantine is a pack sick-den measure.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if target["pack_id"] != pack["id"]:
@@ -815,7 +914,7 @@ async def quarantine_command(
             "**{0}** isn't in your pack.".format(target["wolf_name"]),
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if not can_manage_quarantine(actor, pack):
@@ -824,7 +923,7 @@ async def quarantine_command(
             "Only **Medics**, **Alphas**, and **Advisors** can manage quarantine.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if release:
@@ -834,7 +933,7 @@ async def quarantine_command(
                 f"**{target['wolf_name']}** isn't in isolation.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         db.set_quarantined(target["discord_id"], False, wolf_id=target["id"])
         embed = howlbert_embed(
@@ -851,13 +950,18 @@ async def quarantine_command(
             f"**{target['wolf_name']}** is already isolated.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     db.set_quarantined(target["discord_id"], True, wolf_id=target["id"])
     illness = disease_display(target)
+    from engine.diseases import illness_displays
+
+    all_ill = illness_displays(target)
     extra = ""
-    if illness:
+    if all_ill:
+        extra = "\n\nIllness: " + "; ".join(f"**{name}** — {effect}" for name, effect in all_ill)
+    elif illness:
         extra = f"\n\nIllness: **{illness[0]}**: {illness[1]}"
     embed = howlbert_embed(
         "Quarantined",

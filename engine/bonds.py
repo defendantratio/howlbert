@@ -65,8 +65,14 @@ def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str |
             )
     elif outcome == "good":
         row = db.adjust_bond_strength(user["id"], partner["id"], "friendship", 5, day=day)
-        if row and row["strength"] >= 40:
-            notes.append(f"Bond with **{partner['wolf_name']}** grows warmer.")
+        if row:
+            if row["strength"] >= 40:
+                notes.append(f"Bond with **{partner['wolf_name']}** grows warmer.")
+            else:
+                notes.append(
+                    f"Bond; **{partner['wolf_name']}**: friendship **{strength_bar(row['strength'])}** "
+                    f"({strength_tier(row['strength'])})"
+                )
     elif outcome == "awkward":
         db.adjust_bond_strength(user["id"], partner["id"], "rivalry", 5, day=day)
         db.adjust_bond_strength(user["id"], partner["id"], "friendship", -3, day=day)
@@ -82,8 +88,14 @@ def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str |
     return "\n".join(notes) if notes else None
 
 
-def apply_groom_bonds(user, partner, *, day: int = 0) -> None:
-    db.adjust_bond_strength(user["id"], partner["id"], "friendship", 3, day=day)
+def apply_groom_bonds(user, partner, *, day: int = 0) -> str | None:
+    row = db.adjust_bond_strength(user["id"], partner["id"], "friendship", 3, day=day)
+    if not row:
+        return None
+    return (
+        f"Bond; **{partner['wolf_name']}**: friendship **{strength_bar(row['strength'])}** "
+        f"({strength_tier(row['strength'])})"
+    )
 
 
 def format_bonds_embed_body(user) -> str:

@@ -1,4 +1,4 @@
-"""Wolvden-style explore, amusement, socialize, bury, and raccoon trading."""
+"""Wolvden-style explore, amusement, socialize, and raccoon trading."""
 
 import discord
 from discord import app_commands
@@ -8,13 +8,14 @@ import database as db
 from config import MOOD_LOW_THRESHOLD, RACCOON_BUNDLES, RACCOON_DAILY_BUYS, RACCOON_DAILY_SELLS, RACCOON_PREY_KEYS
 from engine.amusement_items import amusement_meta
 from engine.amusement_storage import format_amusement_line, grant_amusement, play_amusement
-from engine.explore import try_explore, try_rescout
+from engine.explore import try_explore
 from engine.pack_play import run_playall
 from utils.permissions import is_howlbert_admin
 from engine.socialize import run_socialize
 from engine.prey_items import prey_meta
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -97,6 +98,10 @@ class Explore(commands.Cog):
     async def explore_venture(self, interaction: discord.Interaction, action: str):
         embed, combat_enc = try_explore(interaction, action)
         if not embed:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Explore Failed", "Something went wrong.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
             return
         if combat_enc:
             from utils.combat_views import make_combat_view
@@ -106,30 +111,17 @@ class Explore(commands.Cog):
             return
         await interaction.response.send_message(
             embed=embed,
-            ephemeral=embed.color == ERROR_COLOR,
+            ephemeral=reply_ephemeral(),
         )
-
-    @explore.command(
-        name="rescout",
-        description="Scout only; walk the biome again for mood and loot (unlimited per sunrise).",
-    )
-    async def explore_rescout(self, interaction: discord.Interaction):
-        embed = try_rescout(interaction)
-        if embed:
-            await interaction.response.send_message(
-                embed=embed,
-                ephemeral=embed.color == ERROR_COLOR,
-            )
 
     @app_commands.command(
         name="playpen",
-        description="Toys, play, socialize, groom, den romp, toy store, or bury carcass.",
+        description="Toys, play, socialize, groom, den romp, or toy store.",
     )
     @app_commands.describe(
-        action="toys, play, socialize, groom, playall, toystore, or bury",
+        action="toys, play, socialize, groom, playall, or toystore",
         mode="toystore: list, deposit, depositall, or withdraw",
         toy="Toy stack (play / toystore deposit or withdraw)",
-        prey="Carcass stack (bury)",
         wolf="Packmate (socialize/groom)",
         own_wolf="Your other wolf (socialize/groom)",
     )
@@ -141,7 +133,6 @@ class Explore(commands.Cog):
             app_commands.Choice(name="Groom packmate", value="groom"),
             app_commands.Choice(name="Play with whole den (Alpha)", value="playall"),
             app_commands.Choice(name="Den toy store", value="toystore"),
-            app_commands.Choice(name="Bury carcass", value="bury"),
         ],
         mode=[
             app_commands.Choice(name="List store", value="list"),
@@ -150,14 +141,13 @@ class Explore(commands.Cog):
             app_commands.Choice(name="Withdraw toy", value="withdraw"),
         ],
     )
-    @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete, prey=_prey_autocomplete)
+    @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete)
     async def playpen(
         self,
         interaction: discord.Interaction,
         action: str,
         mode: str = "list",
         toy: str | None = None,
-        prey: str | None = None,
         wolf: discord.Member | None = None,
         own_wolf: str | None = None,
     ):
@@ -165,7 +155,7 @@ class Explore(commands.Cog):
             await self._toys(interaction)
         elif action == "play":
             if not toy:
-                await interaction.response.send_message("Pick a `toy` to play with.", ephemeral=True)
+                await interaction.response.send_message("Pick a `toy` to play with.", ephemeral=reply_ephemeral())
                 return
             await self._play(interaction, toy)
         elif action == "socialize":
@@ -176,16 +166,11 @@ class Explore(commands.Cog):
             await self._playall(interaction)
         elif action == "toystore":
             await self._toystore(interaction, mode, toy)
-        elif action == "bury":
-            if not prey:
-                await interaction.response.send_message("Pick `prey` to bury.", ephemeral=True)
-                return
-            await self._bury(interaction, prey)
 
     async def _toys(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         stacks = db.get_amusement_stacks(user["id"])
         mood = int(user["mood"]) if "mood" in user.keys() else 75
@@ -194,7 +179,7 @@ class Explore(commands.Cog):
                 "No Toys",
                 f"Mood: **{mood}/100**\n\nNothing yet; try `/explore venture`.",
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         lines = [format_amusement_line(s) for s in stacks]
         embed = howlbert_embed(
@@ -205,7 +190,7 @@ class Explore(commands.Cog):
         embed.set_footer(
             text="`/playpen action:play` · `action:toystore` · Alpha: `action:playall` (uses your toys or den store)"
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _toystore(
         self,
@@ -215,12 +200,12 @@ class Explore(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user or not interaction.guild:
-            await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
             return
         if not user["pack_id"]:
             await interaction.response.send_message(
                 embed=howlbert_embed("No Pack", "Join a pack to use the den toy store.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         from engine.pack_amusement_store import (
@@ -234,7 +219,7 @@ class Explore(commands.Cog):
             body = list_pack_amusement_store(user["pack_id"])
             embed = howlbert_embed("Den Toy Store", body)
             embed.set_footer(text="Anyone: `mode:deposit` / `depositall` / `withdraw`")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if mode == "depositall":
             ok, msg = deposit_all_amusement_to_store(
@@ -245,13 +230,13 @@ class Explore(commands.Cog):
         elif mode == "deposit":
             if not toy:
                 await interaction.response.send_message(
-                    "Pick a `toy` stack from `/playpen action:toys` to deposit.", ephemeral=True
+                    "Pick a `toy` stack from `/playpen action:toys` to deposit.", ephemeral=reply_ephemeral()
                 )
                 return
             try:
                 stack_id = int(toy)
             except ValueError:
-                await interaction.response.send_message("Pick a toy from autocomplete.", ephemeral=True)
+                await interaction.response.send_message("Pick a toy from autocomplete.", ephemeral=reply_ephemeral())
                 return
             ok, msg = deposit_amusement_to_store(
                 user,
@@ -262,14 +247,14 @@ class Explore(commands.Cog):
         elif mode == "withdraw":
             if not toy:
                 await interaction.response.send_message(
-                    "Enter store toy **`#ID`** from `mode:list` as the `toy` parameter.", ephemeral=True
+                    "Enter store toy **`#ID`** from `mode:list` as the `toy` parameter.", ephemeral=reply_ephemeral()
                 )
                 return
             try:
                 store_id = int(toy.strip().lstrip("#"))
             except ValueError:
                 await interaction.response.send_message(
-                    "Enter store stack **`#ID`** from `mode:list`.", ephemeral=True
+                    "Enter store stack **`#ID`** from `mode:list`.", ephemeral=reply_ephemeral()
                 )
                 return
             ok, msg = withdraw_amusement_from_store(
@@ -279,7 +264,7 @@ class Explore(commands.Cog):
             )
         else:
             await interaction.response.send_message(
-                "Pick **list**, **deposit**, **depositall**, or **withdraw**.", ephemeral=True
+                "Pick **list**, **deposit**, **depositall**, or **withdraw**.", ephemeral=reply_ephemeral()
             )
             return
         color = SUCCESS_COLOR if ok else ERROR_COLOR
@@ -288,19 +273,28 @@ class Explore(commands.Cog):
     async def _play(self, interaction: discord.Interaction, toy: str):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=reply_ephemeral())
             return
-        ok, msg, _ = play_amusement(user, stack_id)
-        if ok and interaction.guild:
-            world = db.get_world(interaction.guild.id)
-            db.update_user(interaction.user.id, last_play_day=world["day_number"])
+        world = db.get_world(interaction.guild.id)
+        day = world["day_number"]
+        ok, msg, _ = play_amusement(user, stack_id, day=day)
+        if ok:
+            db.update_user(interaction.user.id, last_play_day=world["day_number"], wolf_id=user["id"])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
-        await interaction.response.send_message(embed=howlbert_embed("Play", msg, color=color))
+        embed = howlbert_embed("Play", msg, color=color)
+        if ok:
+            embed.set_footer(text="/playpen action:toys · once per sunrise · /world action:cooldowns")
+        elif day is not None and "already played" in msg.lower():
+            embed.set_footer(text="/playpen action:socialize · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed)
 
     async def _socialize(
         self,
@@ -310,10 +304,10 @@ class Explore(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         if wolf and own_wolf:
@@ -323,7 +317,7 @@ class Explore(commands.Cog):
                     "Choose another **player** or `own_wolf`; not both.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -337,7 +331,7 @@ class Explore(commands.Cog):
                         "No wolf with that name on your account. Check `/wolves`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             if partner["id"] == user["id"]:
@@ -347,7 +341,7 @@ class Explore(commands.Cog):
                         "Switch to another wolf with `/switchwolf`, or pick a different `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
         elif wolf:
@@ -358,12 +352,12 @@ class Explore(commands.Cog):
                         "Use another **player**, or your other wolf via `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             partner = db.get_user(wolf.id)
             if not partner:
-                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=True)
+                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=reply_ephemeral())
                 return
         else:
             await interaction.response.send_message(
@@ -372,7 +366,7 @@ class Explore(commands.Cog):
                     "Pick another **player** or one of your wolves with `own_wolf`.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -383,7 +377,7 @@ class Explore(commands.Cog):
                     "You can only socialize wolves in the **same den**.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -391,7 +385,7 @@ class Explore(commands.Cog):
 
         block = quarantine_activity_block(user)
         if block:
-            await interaction.response.send_message(embed=howlbert_embed("Quarantined", block, color=ERROR_COLOR), ephemeral=True)
+            await interaction.response.send_message(embed=howlbert_embed("Quarantined", block, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         from engine.mental_effects import social_activity_block
 
@@ -399,7 +393,7 @@ class Explore(commands.Cog):
         if mind_block:
             await interaction.response.send_message(
                 embed=howlbert_embed("Mind Lost", mind_block, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         if is_quarantined(partner):
@@ -409,23 +403,27 @@ class Explore(commands.Cog):
                     f"**{partner['wolf_name']}** is quarantined; no close contact.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         world = db.get_world(interaction.guild.id)
         day = world["day_number"]
         if int(user["last_socialize_day"]) >= day:
-            await interaction.response.send_message(
-                embed=howlbert_embed("Already Socialized", "You've mingled this sunrise.", color=ERROR_COLOR),
-                ephemeral=True,
+            embed = howlbert_embed(
+                "Already Socialized",
+                "You've mingled this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="/bonds · /playpen action:groom · once per sunrise")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.update_user(interaction.user.id, last_socialize_day=day)
         result = run_socialize(user, partner, pack_id=int(user["pack_id"]), day=day)
         color = SUCCESS_COLOR if result["success"] else ERROR_COLOR
         embed = howlbert_embed("Socialize", result["body"], color=color)
+        embed.set_footer(text="/bonds · once per sunrise · /world action:cooldowns")
         await interaction.response.send_message(embed=embed)
 
     async def _groom(
@@ -436,10 +434,10 @@ class Explore(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         if wolf and own_wolf:
@@ -449,7 +447,7 @@ class Explore(commands.Cog):
                     "Choose another **player** or `own_wolf`; not both.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -463,7 +461,7 @@ class Explore(commands.Cog):
                         "No wolf with that name on your account. Check `/wolves`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             if partner["id"] == user["id"]:
@@ -473,7 +471,7 @@ class Explore(commands.Cog):
                         "Switch to another wolf with `/switchwolf`, or pick a different `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
         elif wolf:
@@ -484,12 +482,12 @@ class Explore(commands.Cog):
                         "Use another **player**, or your other wolf via `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             partner = db.get_user(wolf.id)
             if not partner:
-                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=True)
+                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=reply_ephemeral())
                 return
         else:
             await interaction.response.send_message(
@@ -498,7 +496,7 @@ class Explore(commands.Cog):
                     "Pick another **player** or one of your wolves with `own_wolf`.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -509,7 +507,7 @@ class Explore(commands.Cog):
                     "Groom wolves in the **same den**; your characters must share a Great Pack.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -517,7 +515,16 @@ class Explore(commands.Cog):
 
         block = quarantine_activity_block(user)
         if block:
-            await interaction.response.send_message(embed=howlbert_embed("Quarantined", block, color=ERROR_COLOR), ephemeral=True)
+            await interaction.response.send_message(embed=howlbert_embed("Quarantined", block, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.mental_effects import social_activity_block
+
+        mind_block = social_activity_block(user)
+        if mind_block:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Mind Lost", mind_block, color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
             return
         if is_quarantined(partner):
             await interaction.response.send_message(
@@ -526,17 +533,20 @@ class Explore(commands.Cog):
                     f"**{partner['wolf_name']}** is quarantined; no close contact.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         world = db.get_world(interaction.guild.id)
         day = world["day_number"]
         if int(user["last_groom_day"]) >= day:
-            await interaction.response.send_message(
-                embed=howlbert_embed("Already Groomed", "You've shared tongues this sunrise.", color=ERROR_COLOR),
-                ephemeral=True,
+            embed = howlbert_embed(
+                "Already Groomed",
+                "You've shared tongues this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="/bonds · Caretaker bonus on low mood · once per sunrise")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.update_user(interaction.user.id, last_groom_day=day)
@@ -576,7 +586,8 @@ class Explore(commands.Cog):
 
         from engine.bonds import apply_groom_bonds
 
-        apply_groom_bonds(user, partner, day=day)
+        bond_note = apply_groom_bonds(user, partner, day=day)
+        bond_line = f"\n{bond_note}" if bond_note else ""
 
         from engine.restricted_herbs import try_catch_hoarder_on_groom
 
@@ -591,15 +602,17 @@ class Explore(commands.Cog):
             + unity_line
             + spread_line
             + soothe_line
+            + bond_line
             + hoard_line,
             color=SUCCESS_COLOR,
         )
+        embed.set_footer(text="/bonds · once per sunrise · /world action:cooldowns")
         await interaction.response.send_message(embed=embed)
 
     async def _playall(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not user["pack_id"]:
             await interaction.response.send_message(
@@ -608,11 +621,11 @@ class Explore(commands.Cog):
                     "Join a Great Pack to rally a den romp.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -623,34 +636,16 @@ class Explore(commands.Cog):
             discord_admin=is_howlbert_admin(interaction),
         )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
-        await interaction.response.send_message(embed=howlbert_embed("Play All", msg, color=color))
-
-    async def _bury(self, interaction: discord.Interaction, prey: str):
-        user = db.get_user(interaction.user.id)
-        if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
-            return
-        try:
-            stack_id = int(prey)
-        except ValueError:
-            await interaction.response.send_message("Pick a carcass from `/prey`.", ephemeral=True)
-            return
-        stack = db.get_prey_stack(stack_id)
-        if not stack or stack["wolf_id"] != user["id"]:
-            await interaction.response.send_message("You don't carry that carcass.", ephemeral=True)
-            return
-        meta = prey_meta(stack["prey_key"])
-        db.remove_prey_stack(stack_id)
-        embed = howlbert_embed(
-            "Buried",
-            f"You scrape earth over **{meta['label']}**; gone from your hoard.",
-            color=SUCCESS_COLOR,
-        )
+        embed = howlbert_embed("Play All", msg, color=color)
+        if ok:
+            embed.set_footer(text="Alpha · once per sunrise · /world action:cooldowns")
+        elif not ok:
+            embed.set_footer(text="/playpen action:play · /world action:cooldowns")
         await interaction.response.send_message(embed=embed)
 
     raccoon = app_commands.Group(
         name="raccoon",
-        description="Sell small carcass scraps to the raccoon trader (Wolvden Raccoon Wares).",
+        description="Sell small carcass scraps to the raccoon trader.",
     )
 
     @raccoon.command(name="sell", description="Sell a small carcass for bones (5 sales per sunrise).")
@@ -659,15 +654,15 @@ class Explore(commands.Cog):
     async def raccoon_sell(self, interaction: discord.Interaction, prey: str):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
         try:
             stack_id = int(prey)
         except ValueError:
-            await interaction.response.send_message("Pick a carcass from `/prey`.", ephemeral=True)
+            await interaction.response.send_message("Pick a carcass from `/prey`.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -676,20 +671,19 @@ class Explore(commands.Cog):
         if int(user["last_raccoon_day"]) < day:
             sells = 0
         if sells >= RACCOON_DAILY_SELLS:
-            await interaction.response.send_message(
-                embed=howlbert_embed(
-                    "Raccoon Broke",
-                    f"The raccoon spent his purse for today (**{RACCOON_DAILY_SELLS}** sales max). "
-                    "Try again after sunrise.",
-                    color=ERROR_COLOR,
-                ),
-                ephemeral=True,
+            embed = howlbert_embed(
+                "Raccoon Broke",
+                f"The raccoon spent his purse for today (**{RACCOON_DAILY_SELLS}** sales max). "
+                "Try again after sunrise.",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="/world action:cooldowns · /raccoon buy")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         stack = db.get_prey_stack(stack_id)
         if not stack or stack["wolf_id"] != user["id"]:
-            await interaction.response.send_message("You don't carry that carcass.", ephemeral=True)
+            await interaction.response.send_message("You don't carry that carcass.", ephemeral=reply_ephemeral())
             return
         if stack["prey_key"] not in RACCOON_PREY_KEYS:
             await interaction.response.send_message(
@@ -699,7 +693,7 @@ class Explore(commands.Cog):
                     "Salvage or `/preypile` the big kills.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -717,6 +711,7 @@ class Explore(commands.Cog):
             f"The raccoon weighs **{meta['name']}**, flips a silver cone, and pays you **{format_bones(pay)}**.\n"
             f"Sales today: **{sells + 1}/{RACCOON_DAILY_SELLS}**"
         )
+        embed.set_footer(text="/raccoon buy · /prey · /playpen action:toys")
         await interaction.response.send_message(embed=embed)
 
     @raccoon.command(name="buy", description="Buy a toy bundle from the raccoon (3 purchases per sunrise).")
@@ -731,15 +726,15 @@ class Explore(commands.Cog):
     async def raccoon_buy(self, interaction: discord.Interaction, bundle: str):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         spec = RACCOON_BUNDLES.get(bundle)
         if not spec:
-            await interaction.response.send_message("Unknown bundle.", ephemeral=True)
+            await interaction.response.send_message("Unknown bundle.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -748,20 +743,19 @@ class Explore(commands.Cog):
         if int(user["last_raccoon_day"]) < day:
             buys = 0
         if buys >= RACCOON_DAILY_BUYS:
-            await interaction.response.send_message(
-                embed=howlbert_embed(
-                    "Raccoon Broke",
-                    f"No more bundles today (**{RACCOON_DAILY_BUYS}** buys max).",
-                    color=ERROR_COLOR,
-                ),
-                ephemeral=True,
+            embed = howlbert_embed(
+                "Raccoon Broke",
+                f"No more bundles today (**{RACCOON_DAILY_BUYS}** buys max).",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="/world action:cooldowns · /playpen action:toys")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if user["bones"] < spec["price"]:
             await interaction.response.send_message(
                 embed=howlbert_embed("Too Poor", f"Need **{spec['price']}** bones.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -780,6 +774,7 @@ class Explore(commands.Cog):
             f"You gain: {toys}\n"
             f"Buys today: **{buys + 1}/{RACCOON_DAILY_BUYS}**"
         )
+        embed.set_footer(text="/playpen action:toys · /raccoon sell · /raccoon offer")
         await interaction.response.send_message(embed=embed)
 
     @raccoon.command(
@@ -791,32 +786,35 @@ class Explore(commands.Cog):
     async def raccoon_offer(self, interaction: discord.Interaction, toy: str):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
         day = world["day_number"]
         if int(user["last_raccoon_offer_day"]) >= day:
-            await interaction.response.send_message(
-                embed=howlbert_embed("Already Offered", "The raccoon took an acorn this sunrise.", color=ERROR_COLOR),
-                ephemeral=True,
+            embed = howlbert_embed(
+                "Already Offered",
+                "The raccoon took an acorn this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="/playpen action:toys · /raccoon sell")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=reply_ephemeral())
             return
 
         stack = db.get_amusement_stack(stack_id)
         if not stack or stack["wolf_id"] != user["id"] or stack["item_key"] != "acorn":
             await interaction.response.send_message(
                 embed=howlbert_embed("Needs Acorn", "The raccoon only haggles for **Acorn** toys.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -832,6 +830,7 @@ class Explore(commands.Cog):
             f"You set an acorn on his stone; he pushes back **{meta['name']}** with a silver cone wink.",
             color=SUCCESS_COLOR,
         )
+        embed.set_footer(text="Once per sunrise · /playpen action:toys")
         await interaction.response.send_message(embed=embed)
 
 

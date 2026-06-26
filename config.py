@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent
-DB_PATH = BASE_DIR / "fable.db"
+_db_override = os.getenv("HOWLBERT_DB_PATH", "").strip()
+DB_PATH = Path(_db_override) if _db_override else BASE_DIR / "fable.db"
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 STATUS_CHANNEL_ID = os.getenv("STATUS_CHANNEL_ID")
 BOT_DISPLAY_NAME = os.getenv("BOT_DISPLAY_NAME", "Howlbert")
@@ -32,6 +33,13 @@ LUNAR_BIRTH_AGING = os.getenv("LUNAR_BIRTH_AGING", "true").strip().lower() not i
     "no",
 )
 
+# Slash replies: when true, bot posts to the channel (profiles, hunts, errors, everything)
+PUBLIC_GAMEPLAY_MESSAGES = os.getenv("PUBLIC_GAMEPLAY_MESSAGES", "true").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
 # Currency; bones only
 CURRENCY_EMOJI = "🦴"
 CURRENCY_NAME = "Bones"
@@ -40,7 +48,7 @@ CURRENCY_LABEL = f"{CURRENCY_EMOJI} {CURRENCY_NAME}"
 # Economy; sunrise stipend paid from pack treasury (see claim_daily_stipend)
 DAILY_REWARD = 25
 MAX_PACK_TAX_RATE = 25
-MAX_WOLVES_PER_PLAYER = 3
+MAX_WOLVES_PER_PLAYER = 10
 
 # Hunt outcomes: (min_bones, max_bones, weight)
 HUNT_OUTCOMES = [
@@ -117,7 +125,7 @@ DEFAULT_SHOP_ITEMS = (
     (
         "herb_bundle",
         "Herb Bundle",
-        "Use `/bones action:use item:herb_bundle`; random common herbs (2-4) added to `/inventory`.",
+        "Use `/bones action:use item:herb_bundle`; random common herbs (2-4) added to `/bones action:inventory`.",
         40,
         12,
     ),
@@ -261,7 +269,9 @@ DRINK_HP_RESTORE = 2
 HUNT_WILD_ENCOUNTER_CHANCE = 8
 EXPLORE_WILD_ENCOUNTER_CHANCE = 10
 WILD_ENCOUNTER_COOLDOWN_MINUTES = 90
-HUNTER_HUNTS_PER_SUNRISE = 3
+HUNTER_HUNTS_PER_SUNRISE = 10
+# Repeated field work: 2nd+ same activity tires wolves; untrained skills tire faster.
+ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD = 4
 
 # Pack collaborative hunt (/bones action:hunt collaborate:true)
 COLLAB_HUNT_MIN_WOLVES = 2

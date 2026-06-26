@@ -7,10 +7,11 @@ from discord.ext import commands
 import database as db
 from engine.amusement_items import amusement_meta
 from engine.amusement_storage import format_amusement_line, gift_amusement
-from engine.crafting import format_hoard_summary, shred_amusement_stack
+from engine.crafting import craft_from_remnants, format_hoard_summary, shred_amusement_stack
 from engine.hunger import format_hunger_line
 from engine.thirst import format_thirst_line
 from engine.mood import format_mood_line
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -63,18 +64,24 @@ class Wolvden(commands.Cog):
         description="Hoard overview, shred toys, or gift toys.",
     )
     @app_commands.describe(
-        action="hoard, shred, or gift",
+        action="hoard, shred, gift, or craft",
         toy="Toy stack (shred/gift)",
         wolf="Packmate (gift)",
         own_wolf="Your other wolf (gift)",
-        message="Optional howl text (unused for most actions)",
+        message="Optional note on gifts",
+        recipe="Craft recipe (bone_toy or stick_bundle)",
     )
     @app_commands.choices(
         action=[
             app_commands.Choice(name="Hoard overview", value="hoard"),
             app_commands.Choice(name="Shred toy", value="shred"),
             app_commands.Choice(name="Gift toy", value="gift"),
-        ]
+            app_commands.Choice(name="Craft from remnants", value="craft"),
+        ],
+        recipe=[
+            app_commands.Choice(name="Bone toy (8 remnants)", value="bone_toy"),
+            app_commands.Choice(name="Stick bundle (6 remnants)", value="stick_bundle"),
+        ],
     )
     @app_commands.autocomplete(toy=_toy_autocomplete, own_wolf=_other_wolf_autocomplete)
     async def hoarding(
@@ -85,27 +92,35 @@ class Wolvden(commands.Cog):
         wolf: discord.Member | None = None,
         own_wolf: str | None = None,
         message: str | None = None,
+        recipe: str | None = None,
     ):
         if action == "hoard":
             await self._hoard(interaction)
         elif action == "shred":
             if not toy:
-                await interaction.response.send_message("Pick a `toy` to shred.", ephemeral=True)
+                await interaction.response.send_message("Pick a `toy` to shred.", ephemeral=reply_ephemeral())
                 return
             await self._shred(interaction, toy)
         elif action == "gift":
             if not toy:
-                await interaction.response.send_message("Pick a `toy` to gift.", ephemeral=True)
+                await interaction.response.send_message("Pick a `toy` to gift.", ephemeral=reply_ephemeral())
                 return
-            await self._gift(interaction, toy, wolf, own_wolf)
+            await self._gift(interaction, toy, wolf, own_wolf, message)
+        elif action == "craft":
+            if not recipe:
+                await interaction.response.send_message(
+                    "Pick a `recipe` (bone_toy or stick_bundle).", ephemeral=reply_ephemeral()
+                )
+                return
+            await self._craft(interaction, recipe)
 
     async def _hoard(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -117,17 +132,17 @@ class Wolvden(commands.Cog):
         embed.add_field(name="Hunger", value=format_hunger_line(user), inline=True)
         embed.add_field(name="Thirst", value=format_thirst_line(user), inline=True)
         embed.set_footer(text="/hoarding action:shred · /prey · /playpen action:toys · /raccoon buy")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _shred(self, interaction: discord.Interaction, toy: str):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=reply_ephemeral())
             return
 
         ok, msg, _ = shred_amusement_stack(user, stack_id)
@@ -140,10 +155,11 @@ class Wolvden(commands.Cog):
         toy: str,
         wolf: discord.Member | None = None,
         own_wolf: str | None = None,
+        message: str | None = None,
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
 
         if wolf and own_wolf:
@@ -153,7 +169,7 @@ class Wolvden(commands.Cog):
                     "Choose another **player** or `own_wolf`; not both.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -167,7 +183,7 @@ class Wolvden(commands.Cog):
                         "No wolf with that name on your account. Check `/wolves`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             if partner["id"] == user["id"]:
@@ -177,7 +193,7 @@ class Wolvden(commands.Cog):
                         "Switch to another wolf with `/switchwolf`, or pick a different `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
         elif wolf:
@@ -188,12 +204,12 @@ class Wolvden(commands.Cog):
                         "Use another **player**, or your other wolf via `own_wolf`.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             partner = db.get_user(wolf.id)
             if not partner:
-                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=True)
+                await interaction.response.send_message("They haven't registered a wolf.", ephemeral=reply_ephemeral())
                 return
         else:
             await interaction.response.send_message(
@@ -202,19 +218,31 @@ class Wolvden(commands.Cog):
                     "Pick another **player** or one of your wolves with `own_wolf`.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         try:
             stack_id = int(toy)
         except ValueError:
-            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=True)
+            await interaction.response.send_message("Pick a toy from `/playpen action:toys`.", ephemeral=reply_ephemeral())
             return
 
         ok, msg = gift_amusement(user, stack_id, partner)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
-        await interaction.response.send_message(embed=howlbert_embed("Gift", msg, color=color))
+        embed = howlbert_embed("Gift", msg, color=color)
+        if ok and message:
+            embed.description = (embed.description or msg) + f"\n\n_Howl: {message}_"
+        await interaction.response.send_message(embed=embed)
+
+    async def _craft(self, interaction: discord.Interaction, recipe: str):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        ok, msg = craft_from_remnants(user, recipe)
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        await interaction.response.send_message(embed=howlbert_embed("Craft", msg, color=color))
 
 
 async def setup(bot: commands.Bot):

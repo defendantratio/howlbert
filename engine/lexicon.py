@@ -26,6 +26,22 @@ MOON_LABEL = "moon"  # ~30 sunrises between full moons
 LEXICON_CATEGORIES: dict[str, list[tuple[str, str]]] = {
     "basic": [
         ("Whitecough", "Glossary alias for **Green-cough (Mild)**; the first Warriors cough stage (`cough:mild`)."),
+        (
+            "Blooding",
+            "A juvenile's first successful hunt kill (6–24 moons); unlocks `/role action:event` (+8 mood, +1 standing).",
+        ),
+        (
+            "Drown-Sick",
+            "Mistmoor wolves who hear the Belly-Rip; fog whispers hit harder and spirit curses are more likely.",
+        ),
+        (
+            "StarClan",
+            "Ancestor spirits; `/world action:omen` reads their signs once per sunrise (advantage/disadvantage or vision).",
+        ),
+        (
+            "Spirit curse",
+            "A Maw-shadow mark from Belly whispers; −1 on spiritual checks until cleansed with herbs or `/skills`.",
+        ),
         ("Carrion", "A dead carcass that has begun to rot. Also an insult for a wolf with no strength or honor."),
         ("Scat", "Feces."),
         (
@@ -134,6 +150,8 @@ def build_terms_embed(category: str) -> tuple[str, str]:
             "• One `/rollover` = **one sunrise** (one day)",
             "• `/preypile` = laying out **fresh-kill** at the cache",
             "• Lone wolves register as **Loners** (not Rogues)",
+            "• Juveniles earn **blooding** on first hunt kill",
+            "• **StarClan** omens: `/world action:omen` once per sunrise",
             "",
             "Use `/terms topic:` for full lists; basic, seasons, measurements, insults.",
         ]

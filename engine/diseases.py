@@ -100,6 +100,54 @@ DISEASES: dict[str, dict] = {
             },
         },
     },
+    "mild_poison": {
+        "label": "Sting / Mild Venom",
+        "contagious": 0.0,
+        "spread_stage": "stung",
+        "stages": {
+            "stung": {
+                "name": "Insect Sting",
+                "dc": 11,
+                "next": None,
+                "effect": (
+                    "Swollen muzzle or paw; wasps, hornets, or biting flies. "
+                    "−6 mood each sunrise; awkward movement."
+                ),
+                "mood_loss": 6,
+                "cure_on_save": True,
+            },
+            "venom": {
+                "name": "Snake Venom",
+                "dc": 14,
+                "next": None,
+                "effect": (
+                    "Venom burn in the bite; limb swells fast. "
+                    "−8 mood and −1 HP each sunrise until treated."
+                ),
+                "mood_loss": 8,
+                "hp_loss": 1,
+                "cure_on_save": True,
+            },
+        },
+    },
+    "poison_ivy": {
+        "label": "Poison Ivy",
+        "contagious": 0.0,
+        "spread_stage": "active",
+        "stages": {
+            "active": {
+                "name": "Poison Ivy Rash",
+                "dc": 12,
+                "next": None,
+                "effect": (
+                    "Itching contact rash from oily leaves; −4 mood each sunrise; "
+                    "hard to move quietly through brush."
+                ),
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+        },
+    },
     "mange": {
         "label": "Mange",
         "contagious": 0.18,
@@ -938,6 +986,7 @@ MULTI_STAGE_DISEASES = frozenset(
         "night_terrors",
         "chronic_stress",
         "eating_distress",
+        "mild_poison",
     }
 )
 
@@ -1012,15 +1061,30 @@ def get_stage_info(disease_key: str, stage: str) -> dict | None:
 
 
 def disease_display(user) -> tuple[str, str] | None:
-    """Return (name, effect) for /condition."""
+    """Return (name, effect) for primary physical/mental illness in users.disease."""
+    displays = illness_displays(user)
+    return displays[0] if displays else None
+
+
+def illness_displays(user) -> list[tuple[str, str]]:
+    """Primary disease plus fever-delirium overlay (herb_buffs.mental_disease)."""
+    lines: list[tuple[str, str]] = []
     raw = user["disease"] if user and "disease" in user.keys() else None
     key, stage = parse_disease(raw)
-    if not key or not stage:
-        return None
-    info = get_stage_info(key, stage)
-    if not info:
-        return None
-    return info["name"], info["effect"]
+    if key and stage:
+        info = get_stage_info(key, stage)
+        if info:
+            lines.append((info["name"], info["effect"]))
+    from engine.herb_buffs import get_buffs
+
+    overlay = get_buffs(user).get("mental_disease") if user else None
+    if overlay:
+        o_key, o_stage = parse_disease(str(overlay))
+        if o_key and o_stage and is_mental_disease(o_key):
+            info = get_stage_info(o_key, o_stage)
+            if info and (o_key, o_stage) != (key, stage):
+                lines.append((info["name"], info["effect"]))
+    return lines
 
 
 def is_mental_disease(disease_key: str | None) -> bool:

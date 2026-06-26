@@ -71,13 +71,13 @@ def unity_effect_text(unity: int) -> str:
         return (
             f"Pack fracturing (**{unity}**); **−25%** bones on `/bones action:hunt` "
             "(50🦴 → 37🦴 before tax). "
-            "**Plain `/packlife action:howl` cannot raise unity** until **Alpha** or **Beta (Advisor)** rallies, "
+            "**Plain `/howl` cannot raise unity** until **Alpha** or **Beta (Advisor)** rallies, "
             "or you share fresh-kill / hang a den charm."
         )
     if unity == 0:
         return (
             "Pack breaking; **−20%** hunt bones (50🦴 → 40🦴). "
-            "**Plain `/packlife action:howl` does not raise unity**; need Alpha, Beta (Advisor), den charm, or fresh-kill."
+            "**Plain `/howl` does not raise unity**; need Alpha, Beta (Advisor), den charm, or fresh-kill."
         )
     if unity <= 2:
         return "Low unity; **−10%** hunt bones (50🦴 → 45🦴 before tax)."
@@ -100,7 +100,7 @@ def standing_effect_text(standing: int) -> str:
             f"Disfavored (**{standing}**); one step from exile at "
             f"**{WOLF_STANDING_KICK_THRESHOLD}**. Earn standing through quests, howls, and sharing. "
             "**Crime** and **cross-pack mating** (if caught) lower standing. "
-            "Raiding a rival pack's treasury with `/crime target_pack:` raises standing if you succeed."
+            "Raiding a rival pack's treasury with `/bones action:crime target_pack:` raises standing if you succeed."
         )
     return "In good standing with the den."
 

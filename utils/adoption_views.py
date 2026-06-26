@@ -6,6 +6,7 @@ import discord
 
 import database as db
 from engine.adoption_consent import accept_pending_adoption, decline_pending_adoption
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -19,7 +20,7 @@ class AdoptionConsentView(discord.ui.View):
         if not pending or pending["status"] != "pending":
             await interaction.response.send_message(
                 embed=howlbert_embed("Expired", "This adoption request is no longer active.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -30,7 +31,7 @@ class AdoptionConsentView(discord.ui.View):
                     "Only the youth's player can accept or decline.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -41,7 +42,7 @@ class AdoptionConsentView(discord.ui.View):
             db.set_pending_adoption_status(self.pending_id, "expired")
             await interaction.response.send_message(
                 embed=howlbert_embed("Invalid", "One of the wolves no longer exists.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -49,7 +50,7 @@ class AdoptionConsentView(discord.ui.View):
             ok, msg = decline_pending_adoption(self.pending_id)
             if not ok:
                 await interaction.response.send_message(
-                    embed=howlbert_embed("Expired", msg, color=ERROR_COLOR), ephemeral=True
+                    embed=howlbert_embed("Expired", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
                 )
                 return
             self.stop()
@@ -64,7 +65,7 @@ class AdoptionConsentView(discord.ui.View):
         ok, msg = accept_pending_adoption(self.pending_id)
         if not ok:
             await interaction.response.send_message(
-                embed=howlbert_embed("Cannot Adopt", msg, color=ERROR_COLOR), ephemeral=True
+                embed=howlbert_embed("Cannot Adopt", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
             )
             return
         self.stop()

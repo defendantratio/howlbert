@@ -1,4 +1,5 @@
 import re
+import logging
 
 import discord
 from discord import app_commands
@@ -7,12 +8,15 @@ from discord.ext import commands
 import database as db
 from engine.activities import accept_quest, complete_quest
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.permissions import is_howlbert_admin
 from utils.views import make_quest_accept_view, make_quest_complete_view
 
 QUEST_OBJECTIVES = ("hunt", "scavenge", "track", "fishing", "forage", "treat", "patrol", "deposit", "explore", "survey", "trail", "sniff", "howl", "crime")
 QUEST_KEY_RE = re.compile(r"^[a-z0-9_]{2,32}$")
+
+logger = logging.getLogger(__name__)
 
 
 class Quests(commands.Cog):
@@ -28,7 +32,7 @@ class Quests(commands.Cog):
         if is_howlbert_admin(interaction):
             return True
         embed = howlbert_embed("Denied", "Admins only.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return False
     def _guild_day(self, interaction: discord.Interaction) -> int | None:
         if not interaction.guild:
@@ -66,7 +70,7 @@ class Quests(commands.Cog):
             await self._dailyquests(interaction)
         elif action == "accept":
             if not quest:
-                await interaction.response.send_message("Provide a `quest` key.", ephemeral=True)
+                await interaction.response.send_message("Provide a `quest` key.", ephemeral=reply_ephemeral())
                 return
             await self._accept(interaction, quest)
         elif action == "progress":
@@ -75,7 +79,7 @@ class Quests(commands.Cog):
             await self._complete(interaction, quest)
         elif action == "abandon":
             if not quest:
-                await interaction.response.send_message("Provide a `quest` key.", ephemeral=True)
+                await interaction.response.send_message("Provide a `quest` key.", ephemeral=reply_ephemeral())
                 return
             await self._abandon(interaction, quest)
         elif action == "log":
@@ -83,7 +87,7 @@ class Quests(commands.Cog):
 
     async def _quests_board(self, interaction: discord.Interaction):
         if not db.get_user(interaction.user.id):
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
 
         rows = db.get_available_quests(
@@ -99,23 +103,26 @@ class Quests(commands.Cog):
         from engine.quest_rewards import format_quest_reward_line
 
         for q in rows[:10]:
-            reward_line = format_quest_reward_line(q["key"], q["reward_bones"])
+            reward_line = format_quest_reward_line(
+                q["key"], q["reward_bones"], difficulty=q["difficulty"]
+            )
             embed.add_field(
                 name=f"{q['title']} ({q['difficulty']}); {reward_line}",
                 value=f"`{q['key']}`; {q['description']}",
                 inline=False,
             )
+        embed.set_footer(text="/quest action:progress · action:complete · buttons accept below")
         view = make_quest_accept_view(rows[:10])
         await interaction.response.send_message(embed=embed, view=view)
 
     async def _dailyquests(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         day = self._guild_day(interaction)
         if day is None:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         rows = db.ensure_daily_quests(interaction.user.id, day)
@@ -125,7 +132,9 @@ class Quests(commands.Cog):
         for q in rows:
             status = "done" if q["status"] == "completed" else f"{q['progress']}/{q['objective_count']}"
             key = q["quest_key"] if "quest_key" in q.keys() else q["key"]
-            reward_line = format_quest_reward_line(key, q["reward_bones"])
+            reward_line = format_quest_reward_line(
+                key, q["reward_bones"], difficulty=q["difficulty"]
+            )
             embed.add_field(
                 name=f"[{q['difficulty'].title()}] {q['title']}; {reward_line}",
                 value=f"{q['description']}\nProgress: **{status}**",
@@ -138,21 +147,24 @@ class Quests(commands.Cog):
         embed = accept_quest(interaction, quest)
         if embed:
             await interaction.response.send_message(
-                embed=embed, ephemeral=embed.color == ERROR_COLOR
+                embed=embed, ephemeral=reply_ephemeral()
             )
 
     async def _progress(self, interaction: discord.Interaction):
         rows = db.get_user_active_quests(interaction.user.id)
         if not rows:
             embed = howlbert_embed("Quest Log", "No active quests.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Active Quests")
         from engine.quest_rewards import format_quest_reward_suffix
 
         for q in rows:
-            extra = format_quest_reward_suffix(q["quest_key"])
+            extra = format_quest_reward_suffix(
+                q["quest_key"],
+                difficulty=q["difficulty"] if "difficulty" in q.keys() else None,
+            )
             reward_note = f"\nRewards: {format_bones(q['reward_bones'])}"
             if extra:
                 reward_note += f" · {extra}"
@@ -164,39 +176,41 @@ class Quests(commands.Cog):
                 ),
                 inline=False,
             )
+        embed.set_footer(text="/quest action:complete · abandon with action:abandon quest:<key>")
         view = make_quest_complete_view(rows)
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 
     async def _complete(self, interaction: discord.Interaction, quest: str | None = None):
         embed = complete_quest(interaction, quest)
         if embed:
             await interaction.response.send_message(
-                embed=embed, ephemeral=embed.color == ERROR_COLOR
+                embed=embed, ephemeral=reply_ephemeral()
             )
 
     async def _abandon(self, interaction: discord.Interaction, quest: str):
         if not db.abandon_quest(interaction.user.id, quest):
             embed = howlbert_embed("Can't Abandon", "No active quest with that key.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed("Quest Abandoned", "The den board will wait.", color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _questlog(self, interaction: discord.Interaction):
         rows = db.get_user_questlog(interaction.user.id)
         if not rows:
             embed = howlbert_embed("Quest Log", "No completed quests yet.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.quest_rewards import format_quest_reward_line
 
         lines = [
-            f"**{r['title']}**; {format_quest_reward_line(r['quest_key'], r['reward_bones'])} ({r['difficulty']})"
+            f"**{r['title']}**; {format_quest_reward_line(r['quest_key'], r['reward_bones'], difficulty=r['difficulty'])} ({r['difficulty']})"
             for r in rows
         ]
         embed = howlbert_embed("Quest Log", "\n".join(lines))
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.set_footer(text="/quest action:board · action:daily")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @questadmin.command(name="create", description="Post a new quest on the den board.")
     @app_commands.describe(
@@ -246,17 +260,17 @@ class Quests(commands.Cog):
                 "Use 2-32 characters: lowercase letters, numbers, underscores only.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if db.get_quest_by_key(key):
             embed = howlbert_embed("Key Taken", f"`{key}` already exists.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if len(title.strip()) < 2 or len(description.strip()) < 5:
             embed = howlbert_embed("Too Short", "Title and description need more detail.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         try:
@@ -272,8 +286,9 @@ class Quests(commands.Cog):
                 difficulty=difficulty,
             )
         except Exception:
+            logger.exception("questadmin create_quest failed key=%s", key)
             embed = howlbert_embed("Failed", "Could not create quest.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Quest Posted", color=SUCCESS_COLOR)
@@ -291,7 +306,7 @@ class Quests(commands.Cog):
         rows = db.list_board_quests()
         if not rows:
             embed = howlbert_embed("Den Board", "No quests posted.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("All Board Quests")
@@ -301,7 +316,7 @@ class Quests(commands.Cog):
                 value=f"{q['objective_type']} x{q['objective_count']} · {format_bones(q['reward_bones'])} · {q['quest_type']}",
                 inline=False,
             )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @questadmin.command(name="remove", description="Remove a quest from the den board.")
     @app_commands.describe(key="Quest key to remove")
@@ -315,11 +330,11 @@ class Quests(commands.Cog):
                 "Quest not found, or a wolf still has it active. Use `/quest action:abandon` first.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Quest Removed", f"`{key.strip().lower()}` cleared from the board.", color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
 async def setup(bot: commands.Bot):

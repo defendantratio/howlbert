@@ -6,7 +6,6 @@ import random
 
 from config import WHISPERING_SNIFF_ANXIETY_CHANCE, WHISPERING_SPIRIT_LINES, WHISPERING_WEATHER
 from engine.disease_contract import has_disease, try_contract_disease
-from engine.diseases import is_mental_disease, parse_disease
 from engine.role_features import has_any_role
 
 
@@ -56,11 +55,12 @@ def spirit_whisper_on_sniff(user, *, weather: str) -> str | None:
 
 def format_mental_rounds_line(user) -> str | None:
     """Medic rounds: flag wolves with mental illness (Warriors cough-check style)."""
-    key, stage = parse_disease(user["disease"] if user and "disease" in user.keys() else None)
-    if not key or not is_mental_disease(key):
-        return None
+    from engine.mental_effects import _parsed
     from engine.diseases import get_stage_info
 
+    key, stage = _parsed(user)
+    if not key or not stage:
+        return None
     info = get_stage_info(key, stage)
     label = info["name"] if info else key.replace("_", " ").title()
     return f"**{user['wolf_name']}**: {label}"

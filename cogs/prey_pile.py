@@ -11,6 +11,7 @@ from engine.prey_pile import (
     format_response_summary,
 )
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, embed_footer, howlbert_embed
 
 BUTTON_STYLES = {
@@ -54,9 +55,9 @@ async def _apply_prey_choice(
             color=ERROR_COLOR,
         )
         if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if db.get_prey_pile_response(pile_id, wolf["id"]):
@@ -66,33 +67,62 @@ async def _apply_prey_choice(
             color=ERROR_COLOR,
         )
         if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
+
+    if not interaction.response.is_done():
+        await interaction.response.defer(thinking=False)
 
     effects = apply_prey_choice(choice, pile["prey_bones"])
     hp_gain = 0
     exhaustion_delta = 0
+    hunger_gain = 0
+    thirst_gain = 0
     if effects.get("restore_energy"):
         from engine.injury_effects import meal_blocked_by_injury
+        from engine.hunger import meal_hunger_gain
+        from engine.prey_items import prey_key_from_label
+        from engine.thirst import meal_thirst_gain
 
         meal_block = meal_blocked_by_injury(wolf)
         if meal_block:
             embed = howlbert_embed("Cannot Eat", meal_block, color=ERROR_COLOR)
             if interaction.response.is_done():
-                await interaction.followup.send(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
             else:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         new_hp, new_exhaustion, hp_gain = apply_meal_energy(wolf, pile["prey_bones"])
         exhaustion_delta = new_exhaustion - int(wolf["exhaustion"])
+        prey_key = prey_key_from_label(pile["prey_label"])
+        if prey_key:
+            hunger_gain = meal_hunger_gain(prey_key)
+            thirst_gain = meal_thirst_gain(prey_key)
+            db.adjust_hunger(wolf["id"], hunger_gain)
+            db.adjust_thirst(wolf["id"], thirst_gain)
         db.set_user_conditions(
             wolf["discord_id"],
             wolf_id=wolf["id"],
             hp=new_hp,
             exhaustion=new_exhaustion,
         )
+
+    dispute_note = ""
+    skirmish_id = None
+    hunter = db.get_user_by_id(pile["hunter_wolf_id"])
+    if hunter and hunter["id"] != wolf["id"]:
+        from engine.pack_relations import cross_pack_prey_dispute
+
+        dispute_note, skirmish_id = cross_pack_prey_dispute(
+            hunter,
+            wolf,
+            guild_id=interaction.guild.id if interaction.guild else pile["guild_id"],
+            channel_id=interaction.channel_id if interaction.channel else pile["channel_id"],
+            choice=choice,
+        )
+
     if effects.get("bones"):
         db.add_bones(wolf["discord_id"], effects["bones"], wolf_id=wolf["id"])
     if effects.get("standing"):
@@ -110,22 +140,54 @@ async def _apply_prey_choice(
 
     db.record_prey_pile_response(pile_id, wolf["id"], wolf["wolf_name"], choice)
 
+    outcome_body = choice_outcome_message(
+        choice,
+        bones=effects.get("bones", 0),
+        standing=effects.get("standing", 0),
+        treasury=effects.get("treasury_bones", 0),
+        hp_gain=hp_gain,
+        exhaustion_delta=exhaustion_delta,
+        hunger_gain=hunger_gain,
+        thirst_gain=thirst_gain,
+    )
+    if effects.get("restore_energy"):
+        from engine.prey_items import prey_key_from_label
+        from engine.cannibalism import cannibalism_eat_consequences
+
+        prey_key = prey_key_from_label(pile["prey_label"])
+        if prey_key:
+            outcome_body += cannibalism_eat_consequences(wolf, prey_key)
+    if effects.get("treasury_bones") and wolf["pack_id"]:
+        from engine.pack_food import pack_treasury_pinch_line
+
+        pinch = pack_treasury_pinch_line(wolf["pack_id"])
+        if pinch:
+            outcome_body += pinch
+    if dispute_note:
+        outcome_body += dispute_note
     result_embed = howlbert_embed(
         f"{wolf['wolf_name']}; Response",
-        choice_outcome_message(
-            choice,
-            bones=effects.get("bones", 0),
-            standing=effects.get("standing", 0),
-            treasury=effects.get("treasury_bones", 0),
-            hp_gain=hp_gain,
-            exhaustion_delta=exhaustion_delta,
-        ),
+        outcome_body,
         color=SUCCESS_COLOR,
     )
     if interaction.response.is_done():
-        await interaction.followup.send(embed=result_embed, ephemeral=True)
+        await interaction.followup.send(embed=result_embed, ephemeral=reply_ephemeral())
     else:
-        await interaction.response.send_message(embed=result_embed, ephemeral=True)
+        await interaction.response.send_message(embed=result_embed, ephemeral=reply_ephemeral())
+
+    if skirmish_id and interaction.channel:
+        from utils.combat_views import make_combat_view
+
+        view = make_combat_view(skirmish_id, interaction.client)
+        if view:
+            await interaction.channel.send(
+                embed=howlbert_embed(
+                    "Fresh-Kill Skirmish",
+                    "_Hostile rivals contest the pile; combat is live._",
+                    color=ERROR_COLOR,
+                ),
+                view=view,
+            )
 
     if pile["message_id"] and interaction.channel:
         try:
@@ -160,7 +222,7 @@ class PreyWolfSelect(discord.ui.Select):
         wolf = db.get_user_by_id(wolf_id)
         if not wolf or wolf["discord_id"] != interaction.user.id:
             await interaction.response.send_message(
-                "That wolf isn't yours.", ephemeral=True
+                "That wolf isn't yours.", ephemeral=reply_ephemeral()
             )
             return
         await _apply_prey_choice(interaction, self.pile_id, self.choice, wolf)
@@ -203,7 +265,7 @@ async def post_prey_pile_to_channel(
     day_number: int,
 ) -> int:
     """Post a fresh-kill cache message. Returns pile id."""
-    guild_id = channel.guild.id if hasattr(channel, "guild") and channel.guild else user.get("guild_id")
+    guild_id = channel.guild.id if hasattr(channel, "guild") and channel.guild else db.row_val(user, "guild_id")
     if not guild_id:
         raise ValueError("channel must be in a guild")
 
@@ -240,9 +302,9 @@ async def open_prey_pile(interaction: discord.Interaction, bot: commands.Bot) ->
     if err:
         embed = howlbert_embed("Can't Share", err, color=ERROR_COLOR)
         if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     user = db.get_user(interaction.user.id)
@@ -250,16 +312,25 @@ async def open_prey_pile(interaction: discord.Interaction, bot: commands.Bot) ->
     day = world["day_number"]
     stack = db.pick_prey_stack_for_pile(user["id"], day)
     if not stack:
-        embed = howlbert_embed(
-            "Can't Share",
-            "No fresh carcass in your hoard; hunt, track, or fish first.",
-            color=ERROR_COLOR,
-        )
-        if interaction.response.is_done():
-            await interaction.followup.send(embed=embed, ephemeral=True)
+        from engine.prey_storage import fresh_kill_pile_block_message
+
+        rotting_msg = fresh_kill_pile_block_message(user["id"], day)
+        if rotting_msg:
+            embed = howlbert_embed("Can't Share", rotting_msg, color=ERROR_COLOR)
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = howlbert_embed(
+                "Can't Share",
+                "No fresh carcass in your hoard; hunt, track, or fish first.",
+                color=ERROR_COLOR,
+            )
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
+
+    if not interaction.response.is_done():
+        await interaction.response.defer(thinking=False)
 
     from engine.prey_items import prey_meta
 
@@ -283,23 +354,14 @@ async def open_prey_pile(interaction: discord.Interaction, bot: commands.Bot) ->
     pile_note = "The cache is open; packmates can respond on the message above."
     if exposure:
         pile_note = exposure.lstrip("\n") + "\n\n" + pile_note
-    if interaction.response.is_done():
-        await interaction.followup.send(
-            embed=howlbert_embed(
-                "Fresh-kill Laid Out",
-                pile_note,
-                color=SUCCESS_COLOR,
-            ),
-            ephemeral=True,
-        )
-    else:
-        await interaction.response.send_message(
-            embed=howlbert_embed(
-                "Fresh-kill Laid Out",
-                pile_note.replace("on the message above", "below"),
-                color=SUCCESS_COLOR,
-            ),
-        )
+    await interaction.followup.send(
+        embed=howlbert_embed(
+            "Fresh-kill Laid Out",
+            pile_note,
+            color=SUCCESS_COLOR,
+        ),
+        ephemeral=reply_ephemeral(),
+    )
 
 
 class PreyPileCog(commands.Cog):
@@ -321,16 +383,16 @@ class PreyPileCog(commands.Cog):
                 "This prey pile has been cleared or the den rolled over.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.get_user(interaction.user.id):
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if choice not in PREY_CHOICES:
-            await interaction.response.send_message("Unknown choice.", ephemeral=True)
+            await interaction.response.send_message("Unknown choice.", ephemeral=reply_ephemeral())
             return
 
         available = db.wolves_available_for_prey_pile(interaction.user.id, pile_id)
@@ -340,7 +402,7 @@ class PreyPileCog(commands.Cog):
                 "Every wolf on your account has already responded to this prey pile.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if len(available) == 1:
@@ -356,7 +418,7 @@ class PreyPileCog(commands.Cog):
                 color=SUCCESS_COLOR,
             ),
             view=view,
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @app_commands.command(
@@ -366,10 +428,10 @@ class PreyPileCog(commands.Cog):
     async def preypile(self, interaction: discord.Interaction):
         if not db.get_user(interaction.user.id):
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
         await open_prey_pile(interaction, self.bot)
 

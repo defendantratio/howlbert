@@ -15,6 +15,7 @@ from engine.collab_hunt import (
     wolves_eligible_to_join,
 )
 from utils.combat_views import make_combat_view
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -35,7 +36,7 @@ class CollabWolfSelect(discord.ui.Select):
         wolf_id = int(self.values[0])
         wolf = db.get_user_by_id(wolf_id)
         if not wolf or wolf["discord_id"] != interaction.user.id:
-            await interaction.response.send_message("Invalid wolf.", ephemeral=True)
+            await interaction.response.send_message("Invalid wolf.", ephemeral=reply_ephemeral())
             return
         await CollabHuntCog.apply_join(interaction, self.hunt_id, wolf)
 
@@ -103,17 +104,17 @@ async def post_collab_hunt_call(
     user = db.get_user(interaction.user.id)
     if not user:
         embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=True)
+        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
         return
 
     day = db.get_world(interaction.guild.id)["day_number"]
     err = validate_start_collab_hunt(user, guild_id=interaction.guild.id, day=day)
     if err:
         embed = howlbert_embed("Can't Call Hunt", err, color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     hunt_id = db.create_collab_hunt(
@@ -128,12 +129,13 @@ async def post_collab_hunt_call(
         wolf_id=user["id"],
         wolf_name=user["wolf_name"],
         discord_id=user["discord_id"],
+        hunt_role="leader",
     )
 
     embed = build_collab_hunt_embed(hunt_id)
     view = make_collab_hunt_view(hunt_id)
 
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
     message = await interaction.channel.send(embed=embed, view=view)
     db.set_collab_hunt_message(hunt_id, message.id)
     bot.add_view(view, message_id=message.id)
@@ -144,7 +146,7 @@ async def post_collab_hunt_call(
             "Your den can join with the buttons on the hunt post.",
             color=SUCCESS_COLOR,
         ),
-        ephemeral=True,
+        ephemeral=reply_ephemeral(),
     )
 
 
@@ -165,22 +167,37 @@ class CollabHuntCog(commands.Cog):
                 "This pack hunt is no longer open.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         day = db.get_world(hunt["guild_id"])["day_number"]
         err = validate_join_collab_hunt(wolf, hunt, day)
         if err:
             embed = howlbert_embed("Can't Join", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
+        await interaction.response.defer(thinking=False)
+
+        from engine.hunt_party import assign_hunt_role
+
+        existing = [m["hunt_role"] for m in db.get_collab_hunt_members(hunt_id) if "hunt_role" in m.keys()]
+        role = assign_hunt_role(wolf, existing)
         db.add_collab_hunt_member(
             hunt_id,
             wolf_id=wolf["id"],
             wolf_name=wolf["wolf_name"],
             discord_id=wolf["discord_id"],
+            hunt_role=role,
         )
+        from engine.pack_relations import can_join_friendly_pack_hunt
+
+        _, allied_note = can_join_friendly_pack_hunt(
+            wolf, hunt, guild_id=int(hunt["guild_id"])
+        )
+        join_body = f"**{wolf['wolf_name']}** joins the hunting party as **{role}**."
+        if allied_note:
+            join_body += f"\n\n{allied_note.strip('_')}"
         embed = build_collab_hunt_embed(hunt_id)
         channel = interaction.client.get_channel(hunt["channel_id"])
         if channel and hunt["message_id"]:
@@ -190,25 +207,25 @@ class CollabHuntCog(commands.Cog):
             except discord.HTTPException:
                 pass
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=howlbert_embed(
                 "Joined",
-                f"**{wolf['wolf_name']}** joins the hunting party.",
+                join_body,
                 color=SUCCESS_COLOR,
             ),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
     async def handle_join(interaction: discord.Interaction, hunt_id: int) -> None:
         if not db.get_user(interaction.user.id):
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         hunt = db.get_collab_hunt(hunt_id)
         if not hunt:
-            await interaction.response.send_message("Hunt not found.", ephemeral=True)
+            await interaction.response.send_message("Hunt not found.", ephemeral=reply_ephemeral())
             return
 
         day = db.get_world(hunt["guild_id"])["day_number"]
@@ -219,7 +236,7 @@ class CollabHuntCog(commands.Cog):
                 "No eligible wolf on your account for this hunt (wrong pack, already hunted, or already joined).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if len(eligible) == 1:
@@ -234,14 +251,14 @@ class CollabHuntCog(commands.Cog):
                 color=SUCCESS_COLOR,
             ),
             view=view,
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
     async def handle_set_out(interaction: discord.Interaction, hunt_id: int) -> None:
         hunt = db.get_collab_hunt(hunt_id)
         if not hunt:
-            await interaction.response.send_message("Hunt not found.", ephemeral=True)
+            await interaction.response.send_message("Hunt not found.", ephemeral=reply_ephemeral())
             return
 
         user = db.get_user(interaction.user.id)
@@ -251,7 +268,7 @@ class CollabHuntCog(commands.Cog):
                 "Only the wolf who called this hunt can set the party out.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         members = db.get_collab_hunt_members(hunt_id)
@@ -261,12 +278,14 @@ class CollabHuntCog(commands.Cog):
                 f"Need at least **{COLLAB_HUNT_MIN_WOLVES}** wolves before setting out.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
+
+        await interaction.response.defer(thinking=False)
 
         embed, err, enc_id = try_set_out_collab_hunt(hunt_id)
         if err:
-            await interaction.response.send_message(err, ephemeral=True)
+            await interaction.followup.send(err, ephemeral=reply_ephemeral())
             return
 
         channel = interaction.client.get_channel(hunt["channel_id"])
@@ -282,13 +301,13 @@ class CollabHuntCog(commands.Cog):
             view = make_combat_view(enc_id, interaction.client)
             if channel:
                 await channel.send(embed=embed, view=view)
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 embed=howlbert_embed(
                     "Trouble!",
                     "Large prey or an ambush; the party fights together below (+1 attack per ally, max +3).",
                     color=SUCCESS_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -305,16 +324,16 @@ class CollabHuntCog(commands.Cog):
             await post_collab_hunt_prey_pile(interaction.client, channel, hunt_id)
         await refresh_collab_hunt_post(interaction.client, hunt_id)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=howlbert_embed("Away!", "The pack hunt is complete.", color=SUCCESS_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
     async def handle_cancel(interaction: discord.Interaction, hunt_id: int) -> None:
         hunt = db.get_collab_hunt(hunt_id)
         if not hunt or hunt["status"] != "open":
-            await interaction.response.send_message("This hunt is already closed.", ephemeral=True)
+            await interaction.response.send_message("This hunt is already closed.", ephemeral=reply_ephemeral())
             return
 
         user = db.get_user(interaction.user.id)
@@ -324,7 +343,7 @@ class CollabHuntCog(commands.Cog):
                 "Only the wolf who called this hunt can cancel it.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.set_collab_hunt_status(hunt_id, "cancelled")
@@ -339,7 +358,7 @@ class CollabHuntCog(commands.Cog):
 
         await interaction.response.send_message(
             embed=howlbert_embed("Cancelled", "The pack hunt was called off.", color=ERROR_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
 

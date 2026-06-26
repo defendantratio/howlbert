@@ -50,7 +50,7 @@ def is_medic(wolf) -> bool:
     if not wolf:
         return False
     role = wolf["wolf_role"] if "wolf_role" in wolf.keys() else "hunter"
-    return role == MEDIC_ROLE or role == "medic_apprentice"
+    return role == MEDIC_ROLE or parent_role(role) == "medic"
 
 
 def roll_crime_caught() -> bool:
@@ -144,7 +144,10 @@ def _apply_standing_penalties(
 ) -> str | None:
     expulsion_note = None
     for wolf in wolves:
-        if not wolf["pack_id"]:
+        if not wolf:
+            continue
+        pack_id = wolf["pack_id"] if "pack_id" in wolf.keys() else None
+        if not pack_id:
             continue
         kick = db.adjust_wolf_standing_by_id(wolf["id"], penalty)
         if kick == "kicked" and wolf["id"] == actor["id"]:

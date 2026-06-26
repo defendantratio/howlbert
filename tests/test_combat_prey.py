@@ -9,6 +9,9 @@ def test_npc_prey_map() -> None:
     assert prey_key_for_npc_template("coyote") == "coyote"
     assert prey_key_for_npc_template("clan_warrior") == "cat_carcass"
     assert prey_key_for_npc_template("kittypet") == "kittypet_carcass"
+    assert prey_key_for_npc_template("water_snake") == "snake"
+    assert prey_key_for_npc_template("garter_snake") == "snake"
+    assert prey_key_for_npc_template("skink") == "lizard"
     assert prey_key_for_npc_template("large_prey") is None
 
 

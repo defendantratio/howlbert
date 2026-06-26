@@ -9,6 +9,7 @@ from engine.dice import format_roll_result, resolve_check
 from engine.shop_items import consume_item_by_key, has_item
 from engine.role_features import can_use_role_reroll, has_any_role
 from engine.role_privileges import HERB_HEAL_DAILY_LIMIT, herb_heal_limit_reached
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 class Rpg(commands.Cog):
@@ -87,7 +88,7 @@ class Rpg(commands.Cog):
                     "Provide all six attributes for **setstats**.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             await self._setstats(
                 interaction, strength, dexterity, constitution, intelligence, charisma, wisdom
@@ -107,7 +108,7 @@ class Rpg(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not skill and not attribute:
@@ -116,7 +117,7 @@ class Rpg(commands.Cog):
                 "Pick a **skill** (e.g. Tracking) or an **attribute** (e.g. Wisdom).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if use_safe_roll and not has_item(interaction.user.id, "safe_roll"):
@@ -125,7 +126,7 @@ class Rpg(commands.Cog):
                 "Buy a **Safe Roll** from `/bones action:shop` or set `use_safe_roll:false`.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         day = 0
@@ -262,7 +263,7 @@ class Rpg(commands.Cog):
                 "Your account prestige and legacy are **kept**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         user = db.get_user(interaction.user.id)
@@ -272,7 +273,7 @@ class Rpg(commands.Cog):
                 "You don't have a wolf profile to delete.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf_name = user["wolf_name"]
@@ -285,7 +286,7 @@ class Rpg(commands.Cog):
                 "or leave the pack before deleting your profile.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Profile Deleted", color=SUCCESS_COLOR)
@@ -304,7 +305,7 @@ class Rpg(commands.Cog):
                 )
         else:
             embed.set_footer(text="Use /register to create a new wolf.")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
     async def _setstats(
@@ -320,7 +321,7 @@ class Rpg(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         stats = {
@@ -344,7 +345,7 @@ class Rpg(commands.Cog):
                 f"{error}\n\nYour role **{ROLE_LABELS.get(role, role)}** allows total **{lo}–{hi}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.set_user_stats(interaction.user.id, stats)
@@ -396,7 +397,7 @@ class Rpg(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.character import format_max_hp_breakdown
@@ -443,7 +444,19 @@ class Rpg(commands.Cog):
         refusal = healer_refusal_reminder(user, pack_id=user["pack_id"] if user["pack_id"] else None)
         if refusal:
             embed.add_field(name="Healer's Code", value=refusal, inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        from engine.herb_buffs import format_active_herb_buffs
+
+        herb_buffs = ""
+        if day is not None:
+            herb_buffs = format_active_herb_buffs(user, day)
+        if herb_buffs:
+            embed.add_field(name="Herb effects", value=herb_buffs, inline=False)
+        footer = "/medic action:treat · /medic action:surgery · Long rest each sunrise"
+        cond = user["condition"] if "condition" in user.keys() else "healthy"
+        if cond == "dying" or (int(user["hp"]) <= 0 and cond != "dead"):
+            footer = "`/medic action:deathsaves` · `/medic action:stabilize` · " + footer
+        embed.set_footer(text=footer)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _rest(
         self,
@@ -456,11 +469,11 @@ class Rpg(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -469,7 +482,7 @@ class Rpg(commands.Cog):
         if rest_type == "long":
             if user["last_rest_day"] >= day:
                 embed = howlbert_embed("Already Rested", "You took a long rest this rollover.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             from engine.conditions import apply_long_rest_healing
 
@@ -496,15 +509,19 @@ class Rpg(commands.Cog):
                 f"You can only use comfrey on short rest **{HERB_HEAL_DAILY_LIMIT}** times per sunrise.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         heal = 0
         if use_herb:
             item = db.get_item_by_key("herb_comfrey")
             if not item or db.get_inventory_quantity(interaction.user.id, item["id"]) < 1:
-                embed = howlbert_embed("No Comfrey", "You need comfrey in your inventory.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                embed = howlbert_embed(
+                    "No Comfrey",
+                    "You need comfrey in `/bones action:inventory` or your herb bag.",
+                    color=ERROR_COLOR,
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             heal = random.randint(1, 4) + 1
             db.consume_item(interaction.user.id, item["id"])

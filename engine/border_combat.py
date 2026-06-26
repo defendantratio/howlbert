@@ -112,7 +112,9 @@ def start_border_cat_fight(
 
 
 def is_border_fight_encounter(enc) -> bool:
-    return bool(enc and enc["is_border_fight"] if "is_border_fight" in enc.keys() else False)
+    if not enc:
+        return False
+    return bool(enc["is_border_fight"] if "is_border_fight" in enc.keys() else False)
 
 
 def is_border_cat_fighter(fighter) -> bool:
@@ -207,4 +209,5 @@ async def try_complete_border_victory(
         embed.add_field(name="Lucky Tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
+    embed.set_footer(text="/field action:sniff · /pack pact action:view")
     return embed

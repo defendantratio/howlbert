@@ -54,11 +54,17 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
     dying: list[str] = []
     bone_rest: list[str] = []
     mental: list[str] = []
+    quarantined: list[str] = []
 
+    from engine.quarantine import is_quarantined
     from engine.whispering_wild import format_mental_rounds_line
 
     for wolf in wolves:
         name = wolf["wolf_name"]
+        if is_quarantined(wolf):
+            ill = disease_display(wolf)
+            label = ill[0] if ill else "isolated"
+            quarantined.append(f"**{name}**: {label}")
         raw = wolf["disease"] if "disease" in wolf.keys() else None
         dkey, stage = parse_disease(raw)
         if dkey and contagious_rate(dkey) > 0:
@@ -88,6 +94,10 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
         lines.append("\n**Dying** (Healer's Code)\n" + "\n".join(dying))
     if contagious:
         lines.append("\n**Contagious**\n" + "\n".join(contagious[:8]))
+    if quarantined:
+        lines.append(
+            "\n**Quarantined** (`/medic action:quarantine`)\n" + "\n".join(quarantined[:8])
+        )
     if mental:
         lines.append("\n**Mind & spirit**\n" + "\n".join(mental[:8]))
     if bleeding:
@@ -266,7 +276,7 @@ def run_lay_to_rest(medic, deceased, herb_key: str, *, day: int) -> tuple[bool, 
     return True, (
         f"**{medic['wolf_name']}** lays **{_herb_name(key)}** over **{deceased['wolf_name']}**; "
         "death-scent masked, paws ready for the silent path.\n"
-        "_Consumable herbs spent in the rite._"
+        "_Consumable herbs spent in the rite. Bonded mates may need chamomile or borage._"
     )
 
 

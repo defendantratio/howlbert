@@ -9,6 +9,7 @@ from engine.attraction import BIRTH_SEX_LABELS, SEXUALITY_LABELS, SEXUALITY_OPTI
 from engine.aging import format_wolf_age, stage_for_age, stage_label
 from engine.family import XP_PER_ROLE_FEATURE
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.notifications import try_dm_user
 from utils.permissions import is_howlbert_admin
@@ -55,7 +56,7 @@ class WolfAdmin(commands.Cog):
         if is_howlbert_admin(interaction):
             return True
         embed = howlbert_embed("Denied", "Admins only.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return False
 
     @wolfadmin.command(
@@ -110,14 +111,14 @@ class WolfAdmin(commands.Cog):
                 "Bots cannot own wolves.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf_name, name_err = db.validate_wolf_name_available(name, label="Wolf names")
         if name_err:
             title = "Name Taken" if "already taken" in name_err else "Invalid Name"
             embed = howlbert_embed(title, name_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         try:
@@ -139,7 +140,7 @@ class WolfAdmin(commands.Cog):
                 else "Invalid Name"
             )
             embed = howlbert_embed(title, msg, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         user = db.get_user_by_id(wolf_id)
@@ -199,14 +200,14 @@ class WolfAdmin(commands.Cog):
                 "Bots cannot own wolves.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf = db.find_user_wolf(from_player.id, wolf_name)
         if not wolf:
             await interaction.response.send_message(
                 embed=_wolf_not_found_embed(from_player, wolf_name),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -216,7 +217,7 @@ class WolfAdmin(commands.Cog):
                 "Pick a different owner to transfer to.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         result = db.reassign_wolf_owner(
@@ -230,7 +231,7 @@ class WolfAdmin(commands.Cog):
                 "That wolf already belongs to the target player.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Wolf Transferred", color=SUCCESS_COLOR)
@@ -257,7 +258,7 @@ class WolfAdmin(commands.Cog):
         if not await self._require_admin(interaction):
             return
 
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         wolves = db.list_user_wolves(player.id)
         if not wolves:
@@ -266,7 +267,7 @@ class WolfAdmin(commands.Cog):
                 f"**{player.display_name}** has no registered wolves.",
                 color=ERROR_COLOR,
             )
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
             return
 
         active_id = db.get_active_wolf_id(player.id)
@@ -283,7 +284,7 @@ class WolfAdmin(commands.Cog):
             color=SUCCESS_COLOR,
         )
         embed.set_footer(text=f"{len(wolves)} wolf(s) · Discord ID {player.id}")
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     @wolfadmin.command(
         name="possess",
@@ -304,24 +305,24 @@ class WolfAdmin(commands.Cog):
             return
         if player.bot:
             embed = howlbert_embed("Invalid Player", "Bots cannot own wolves.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf, err = db.resolve_possessed_wolf(interaction.user.id, player.id, wolf_name)
         if err:
             embed = howlbert_embed("Wolf Not Found", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         ok, msg = db.set_admin_possess(interaction.user.id, wolf["id"])
         if not ok:
             embed = howlbert_embed("Cannot Possess", msg, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Possessing Wolf", msg, color=SUCCESS_COLOR)
         embed.set_footer(text="Use /wolfadmin release when done · /profile shows their sheet")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @wolfadmin.command(
         name="release",
@@ -334,7 +335,7 @@ class WolfAdmin(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = "Released" if ok else "Not Possessing"
         embed = howlbert_embed(title, msg, color=color)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @wolfadmin.command(
         name="setage",
@@ -361,7 +362,7 @@ class WolfAdmin(commands.Cog):
             if not wolf:
                 await interaction.response.send_message(
                     embed=_wolf_not_found_embed(player, wolf_name),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
         else:
@@ -372,13 +373,13 @@ class WolfAdmin(commands.Cog):
                     f"**{player.display_name}** has no active wolf.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         result = db.set_wolf_age_moons(wolf["id"], moons)
         if not result:
             embed = howlbert_embed("Error", "Could not update age.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Age Updated", color=SUCCESS_COLOR)
@@ -420,7 +421,7 @@ class WolfAdmin(commands.Cog):
                     f"No request with id `{request_id}`.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return None
             return row
 
@@ -429,7 +430,7 @@ class WolfAdmin(commands.Cog):
             if not wolf:
                 await interaction.response.send_message(
                     embed=_wolf_not_found_embed(player, wolf_name),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return None
             row = db.get_open_pending_for_wolf(wolf["id"])
@@ -439,7 +440,7 @@ class WolfAdmin(commands.Cog):
                     f"No open role-feature request for **{wolf['wolf_name']}**.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return None
             return row
 
@@ -448,7 +449,7 @@ class WolfAdmin(commands.Cog):
             "Provide **request_id** or both **player** and **wolf_name**.",
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return None
 
     @wolfadmin.command(
@@ -467,7 +468,7 @@ class WolfAdmin(commands.Cog):
                 "No role-feature requests are waiting for approval.",
                 color=SUCCESS_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         lines = []
@@ -485,7 +486,7 @@ class WolfAdmin(commands.Cog):
             color=SUCCESS_COLOR,
         )
         embed.set_footer(text="Approve with /wolfadmin approvefeature")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @wolfadmin.command(
         name="approvefeature",
@@ -522,7 +523,7 @@ class WolfAdmin(commands.Cog):
                 f"Request `{row['id']}` is already **{row['status']}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         role_key = row["role_feature"]
@@ -532,7 +533,7 @@ class WolfAdmin(commands.Cog):
                 f"Request `{row['id']}` references unknown role **{role_key}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf = db.get_user_by_id(row["wolf_id"])
@@ -542,7 +543,7 @@ class WolfAdmin(commands.Cog):
                 f"Wolf id `{row['wolf_id']}` no longer exists.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         existing_bonus = (
@@ -561,7 +562,7 @@ class WolfAdmin(commands.Cog):
                 f"**{wolf['wolf_name']}** already has this feature; request denied.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         account = db.get_account(row["discord_id"])
@@ -572,7 +573,7 @@ class WolfAdmin(commands.Cog):
                 f"<@{row['discord_id']}> only has **{xp_val}** XP (need {XP_PER_ROLE_FEATURE}).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.spend_xp(row["discord_id"], XP_PER_ROLE_FEATURE):
@@ -581,7 +582,7 @@ class WolfAdmin(commands.Cog):
                 "Could not deduct XP; request left pending.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.update_user(row["discord_id"], wolf_id=row["wolf_id"], bonus_role_feature=role_key)
@@ -598,7 +599,7 @@ class WolfAdmin(commands.Cog):
             f"({XP_PER_ROLE_FEATURE} XP spent from <@{row['discord_id']}>).",
             color=SUCCESS_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
         await try_dm_user(
             self.bot,
@@ -645,7 +646,7 @@ class WolfAdmin(commands.Cog):
                 f"Request `{row['id']}` is already **{row['status']}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.set_pending_role_feature_status(
@@ -661,7 +662,7 @@ class WolfAdmin(commands.Cog):
             f"(<@{row['discord_id']}>, id `{row['id']}`). No XP spent.",
             color=SUCCESS_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
 async def setup(bot: commands.Bot):

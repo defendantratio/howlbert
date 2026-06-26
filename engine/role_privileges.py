@@ -27,15 +27,29 @@ def is_hunter(user) -> bool:
 def hunts_used_today(user, day: int) -> int:
     if not user:
         return 0
-    if int(user["last_hunt_uses_day"]) if "last_hunt_uses_day" in user.keys() else 0 < day:
+    last_uses_day = int(user["last_hunt_uses_day"]) if "last_hunt_uses_day" in user.keys() else 0
+    if last_uses_day < day:
         return 0
     return int(user["hunt_uses_today"]) if "hunt_uses_today" in user.keys() else 0
 
 
 def hunts_remaining_today(user, day: int) -> int:
+    if not user:
+        return 0
     if not is_hunter(user):
-        return 1 if int(user["last_hunt_day"]) < day else 0
+        last = int(user["last_hunt_day"]) if "last_hunt_day" in user.keys() else 0
+        return 1 if last < day else 0
     return max(0, HUNTER_HUNTS_PER_SUNRISE - hunts_used_today(user, day))
+
+
+def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
+    """Footer fragment: N hunt(s) left this sunrise."""
+    left = hunts_remaining_today(user, day)
+    noun = "hunt" if left == 1 else "hunts"
+    core = f"**{left}** {noun} left this sunrise"
+    if role_prefix and is_hunter(user):
+        return f"Hunter: {core}"
+    return core
 
 
 def record_hunt_use(discord_id: int, *, wolf_id: int, day: int) -> None:
@@ -136,10 +150,11 @@ def treat_limit_reached(user) -> bool:
 
 def activity_cooldown_label(user, activity: str, *, ready: bool, day: int = 0) -> str:
     """Human label for /cooldowns; hunters and foragers show role perks."""
-    if activity == "hunt" and is_hunter(user):
+    if activity == "hunt":
         left = hunts_remaining_today(user, day)
         if left > 0:
-            return f"Ready ({left} left)"
+            cap = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
+            return f"Ready ({left}/{cap} left)"
         return "Used"
     if activity == "forage" and is_forager(user):
         return "Unlimited (Forager)"

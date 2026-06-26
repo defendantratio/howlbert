@@ -50,6 +50,8 @@ def purchase_shop_item(
         return True, f"**{meta['name']}** added to your hoard (`/prey`).", shop_item["name"]
 
     if key.startswith("toy_"):
+        if not guild_id:
+            return False, "Buy toys in a server channel (they go to your active wolf).", shop_item["name"]
         toy_key = key.removeprefix("toy_")
         meta = amusement_meta(toy_key)
         if not db.deduct_bones(discord_id, price):
@@ -59,4 +61,4 @@ def purchase_shop_item(
 
     if not db.buy_item(discord_id, shop_item["id"], price):
         return False, "Purchase failed.", shop_item["name"]
-    return True, f"**{shop_item['name']}** added to `/inventory`.", shop_item["name"]
+    return True, f"**{shop_item['name']}** added to `/bones action:inventory`.", shop_item["name"]

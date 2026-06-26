@@ -15,6 +15,7 @@ from engine.collab_patrol import (
     wolves_eligible_to_join_patrol,
 )
 from utils.combat_views import make_combat_view
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -35,7 +36,7 @@ class PatrolWolfSelect(discord.ui.Select):
         wolf_id = int(self.values[0])
         wolf = db.get_user_by_id(wolf_id)
         if not wolf or wolf["discord_id"] != interaction.user.id:
-            await interaction.response.send_message("Invalid wolf.", ephemeral=True)
+            await interaction.response.send_message("Invalid wolf.", ephemeral=reply_ephemeral())
             return
         await CollabPatrolCog.apply_join(interaction, self.patrol_id, wolf)
 
@@ -116,10 +117,10 @@ async def post_collab_party_call(
     user = db.get_user(interaction.user.id)
     if not user:
         embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=True)
+        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
         return
 
     day = db.get_world(interaction.guild.id)["day_number"]
@@ -134,7 +135,7 @@ async def post_collab_party_call(
         else:
             title = "Can't Call Patrol"
         embed = howlbert_embed(title, err, color=ERROR_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     patrol_id = db.create_collab_patrol(
@@ -155,7 +156,7 @@ async def post_collab_party_call(
     embed = build_collab_patrol_embed(patrol_id)
     view = make_collab_patrol_view(patrol_id)
 
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
     message = await interaction.channel.send(embed=embed, view=view)
     db.set_collab_patrol_message(patrol_id, message.id)
     bot.add_view(view, message_id=message.id)
@@ -171,7 +172,7 @@ async def post_collab_party_call(
         done_body = "Scouts in your den can join with the buttons on the patrol post."
     await interaction.followup.send(
         embed=howlbert_embed(done_title, done_body, color=SUCCESS_COLOR),
-        ephemeral=True,
+        ephemeral=reply_ephemeral(),
     )
 
 
@@ -201,7 +202,7 @@ class CollabPatrolCog(commands.Cog):
         if not patrol or patrol["status"] != "open":
             await interaction.response.send_message(
                 embed=howlbert_embed("Patrol Closed", "This pack patrol is no longer open.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -210,9 +211,11 @@ class CollabPatrolCog(commands.Cog):
         if err:
             await interaction.response.send_message(
                 embed=howlbert_embed("Can't Join", err, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
+
+        await interaction.response.defer(thinking=False)
 
         db.add_collab_patrol_member(
             patrol_id,
@@ -229,9 +232,9 @@ class CollabPatrolCog(commands.Cog):
             except discord.HTTPException:
                 pass
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=howlbert_embed("Joined", f"**{wolf['wolf_name']}** joins the patrol.", color=SUCCESS_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
@@ -239,13 +242,13 @@ class CollabPatrolCog(commands.Cog):
         if not db.get_user(interaction.user.id):
             await interaction.response.send_message(
                 embed=howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         patrol = db.get_collab_patrol(patrol_id)
         if not patrol:
-            await interaction.response.send_message("Patrol not found.", ephemeral=True)
+            await interaction.response.send_message("Patrol not found.", ephemeral=reply_ephemeral())
             return
 
         day = db.get_world(patrol["guild_id"])["day_number"]
@@ -257,7 +260,7 @@ class CollabPatrolCog(commands.Cog):
                     "No eligible scout on your account (wrong pack, already surveyed, or already joined).",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -269,21 +272,21 @@ class CollabPatrolCog(commands.Cog):
         await interaction.response.send_message(
             embed=howlbert_embed("Choose Your Wolf", "Which scout joins the patrol?", color=SUCCESS_COLOR),
             view=view,
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
     async def handle_set_out(interaction: discord.Interaction, patrol_id: int) -> None:
         patrol = db.get_collab_patrol(patrol_id)
         if not patrol:
-            await interaction.response.send_message("Patrol not found.", ephemeral=True)
+            await interaction.response.send_message("Patrol not found.", ephemeral=reply_ephemeral())
             return
 
         user = db.get_user(interaction.user.id)
         if not user or user["id"] != patrol["leader_wolf_id"]:
             await interaction.response.send_message(
                 embed=howlbert_embed("Caller Only", "Only the scout who called this patrol can set out.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -295,13 +298,15 @@ class CollabPatrolCog(commands.Cog):
                     f"Need at least **{COLLAB_PATROL_MIN_WOLVES}** scouts before setting out.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
+        await interaction.response.defer(thinking=False)
+
         embed, err, enc_id = try_set_out_collab_patrol(patrol_id)
         if err:
-            await interaction.response.send_message(err, ephemeral=True)
+            await interaction.followup.send(err, ephemeral=reply_ephemeral())
             return
 
         channel = interaction.client.get_channel(patrol["channel_id"])
@@ -322,13 +327,13 @@ class CollabPatrolCog(commands.Cog):
             view = make_combat_view(enc_id, interaction.client)
             if channel:
                 await channel.send(embed=embed, view=view)
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 embed=howlbert_embed(
                     "Ambush!",
                     "The party fights together below (+1 attack per ally, max +3).",
                     color=SUCCESS_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -344,16 +349,16 @@ class CollabPatrolCog(commands.Cog):
 
         await refresh_collab_patrol_post(interaction.client, patrol_id)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=howlbert_embed("Away!", done, color=SUCCESS_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
     @staticmethod
     async def handle_cancel(interaction: discord.Interaction, patrol_id: int) -> None:
         patrol = db.get_collab_patrol(patrol_id)
         if not patrol or patrol["status"] != "open":
-            await interaction.response.send_message("This party is already closed.", ephemeral=True)
+            await interaction.response.send_message("This party is already closed.", ephemeral=reply_ephemeral())
             return
 
         user = db.get_user(interaction.user.id)
@@ -364,7 +369,7 @@ class CollabPatrolCog(commands.Cog):
                     "Only the scout who called this party can cancel it.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -382,7 +387,7 @@ class CollabPatrolCog(commands.Cog):
         label = "war patrol" if war else "trail" if trail else "patrol"
         await interaction.response.send_message(
             embed=howlbert_embed("Cancelled", f"The pack {label} was called off.", color=ERROR_COLOR),
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
 

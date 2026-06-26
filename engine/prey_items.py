@@ -180,6 +180,27 @@ PREY_CATALOG: dict[str, dict] = {
         "rot_days": 6,
         "cannibal": True,
     },
+    "frog": {
+        "name": "Frog Carcass",
+        "label": "a frog",
+        "uses": 2,
+        "bones": 5,
+        "rot_days": 3,
+    },
+    "snake": {
+        "name": "Snake Carcass",
+        "label": "a snake",
+        "uses": 3,
+        "bones": 8,
+        "rot_days": 4,
+    },
+    "lizard": {
+        "name": "Lizard Carcass",
+        "label": "a lizard",
+        "uses": 2,
+        "bones": 6,
+        "rot_days": 4,
+    },
 }
 
 SNIFF_FLAVORS = (
@@ -203,6 +224,9 @@ PREY_FLAVOR_TIER_CAP: dict[str, str] = {
     "hare": "small",
     "rabbit": "solid",
     "fish": "solid",
+    "frog": "small",
+    "snake": "small",
+    "lizard": "small",
     "grouse": "solid",
     "agouti": "solid",
     "beaver": "big",
@@ -217,7 +241,41 @@ def prey_flavor_tier_cap(prey_key: str) -> str:
 
 
 def prey_meta(key: str) -> dict:
-    return PREY_CATALOG.get(key, PREY_CATALOG["hare"])
+    from engine.fishing import FISHING_CATCHES
+
+    if key in PREY_CATALOG:
+        return PREY_CATALOG[key]
+    if key in FISHING_CATCHES:
+        return FISHING_CATCHES[key]
+    return PREY_CATALOG["hare"]
+
+
+def prey_key_from_label(label: str | None) -> str | None:
+    """Reverse lookup for prey-pile and legacy labels (incl. large-prey flavor text)."""
+    if not label:
+        return None
+    low = label.lower().strip()
+    # Large-prey / hunt flavor labels (cornered deer, fighting elk, desperate stag, …)
+    if "elk" in low or "stag" in low:
+        return "elk"
+    if "deer" in low:
+        return "deer"
+    if "fish" in low:
+        return "fish"
+    if "hare" in low or "rabbit" in low:
+        return "hare" if "hare" in low else "rabbit"
+    from engine.fishing import FISHING_CATCHES
+
+    for catalog in (PREY_CATALOG, FISHING_CATCHES):
+        for key, meta in catalog.items():
+            if meta.get("label") == label:
+                return key
+    for catalog in (PREY_CATALOG, FISHING_CATCHES):
+        for key, meta in catalog.items():
+            cat_label = meta.get("label", "")
+            if cat_label and cat_label in low:
+                return key
+    return None
 
 
 def canonical_prey_bones(prey_key: str) -> int:
@@ -229,21 +287,51 @@ def is_cannibal_prey(prey_key: str) -> bool:
     return bool(prey_meta(prey_key).get("cannibal"))
 
 
-def prey_key_from_hunt_amount(amount: int) -> str:
+def prey_key_from_hunt_amount(
+    amount: int,
+    *,
+    great_pack: str | None = None,
+    season: str | None = None,
+) -> str:
     if amount <= 0:
         return "vole"
+    season = season or "spring"
     if amount <= 8:
+        if great_pack in ("mistmoor", "silverrush") and random.random() < 0.35:
+            return random.choice(["frog", "vole"])
+        if great_pack == "thistlehide" and random.random() < 0.22:
+            return random.choice(["lizard", "vole"])
+        if season == "summer" and random.random() < 0.2:
+            return "hare"
         return "vole"
     if amount <= 15:
+        if great_pack in ("mistmoor", "silverrush") and random.random() < 0.28:
+            return "frog"
+        if season == "summer" and random.random() < 0.35:
+            return random.choice(["hare", "rabbit", "vole"])
+        if season == "winter" and random.random() < 0.3:
+            return "vole"
         return random.choice(["hare", "rabbit"])
     if amount <= 22:
+        if season == "winter" and random.random() < 0.4:
+            return random.choice(["hare", "rabbit"])
         return random.choice(["grouse", "agouti"])
     if amount <= 28:
+        if season == "autumn" and random.random() < 0.35:
+            return "deer"
         return random.choice(["rabbit", "grouse"])
     if amount <= 35:
+        if season == "winter" and random.random() < 0.45:
+            return "beaver"
         return "beaver"
     if amount <= 60:
+        if season == "autumn" and random.random() < 0.5:
+            return "deer"
+        if season == "winter" and random.random() < 0.25:
+            return "beaver"
         return "deer"
+    if season == "autumn":
+        return "elk" if random.random() < 0.4 else "deer"
     return "elk"
 
 
@@ -253,7 +341,9 @@ def freshness_label(acquired_day: int, current_day: int, prey_key: str, *, rotti
     age = max(0, current_day - acquired_day)
     if rotting:
         left = max(0, PREY_ROTTEN_GRACE_DAYS - (age - rot_days))
-        return f"**rotting** ({left}d until spoiled)" if left else "**spoiled soon**"
+        if left <= 0:
+            return "**spoiled** (cleared next sunrise)"
+        return f"**rotting** ({left}d until spoiled)"
     left = max(0, rot_days - age)
     if left <= 1:
         return f"fresh (**rotting soon**; {left}d)"

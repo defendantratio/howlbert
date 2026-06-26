@@ -33,7 +33,12 @@ from engine.youth_lineage import (
     parse_litter_names,
     random_birth_sex,
 )
-from engine.courtship import apply_court_outcome, resolve_court_difficulty, run_court_check
+from engine.courtship import (
+    apply_court_outcome,
+    resolve_court_difficulty,
+    run_court_check,
+)
+from engine.pack_relations import court_relation_note
 from engine.adoption_consent import accept_pending_adoption, decline_pending_adoption
 from engine.mating import execute_mating, mating_embed_title
 from config import JUVENILE_MAX_MOONS
@@ -41,6 +46,7 @@ from utils.adoption_views import AdoptionConsentView
 from utils.mate_views import MateConsentView
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS, SKILLS, MAX_SKILL_RANK, XP_PER_TRAIT
 from engine.role_restrictions import young_wolf_block
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.notifications import notify_consent_request
 from utils.herb_autocomplete import herb_inventory_autocomplete
@@ -137,7 +143,7 @@ class Life(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return user
 
     @app_commands.command(
@@ -218,7 +224,7 @@ class Life(commands.Cog):
                     "Stabilize requires a **patient** packmate.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             await self._stabilize(interaction, patient, use_yarrow, use_cobwebs)
         elif action == "surgery":
@@ -228,7 +234,7 @@ class Life(commands.Cog):
                     "Surgery requires a **patient** wolf.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             await self._surgery(
                 interaction,
@@ -245,7 +251,7 @@ class Life(commands.Cog):
             if not herb:
                 await interaction.response.send_message(
                     "Provide an **herb** key or forage **stack:ID** from `/herbs action:bag`.",
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             await treat(interaction, herb, patient)
@@ -253,7 +259,7 @@ class Life(commands.Cog):
             if not patient:
                 await interaction.response.send_message(
                     embed=howlbert_embed("Pick a Patient", "Observe requires a **patient**.", color=ERROR_COLOR),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             await self._observe(interaction, patient)
@@ -288,13 +294,13 @@ class Life(commands.Cog):
         if not surgeon:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         target = db.get_user(patient.id)
         if not target:
             embed = howlbert_embed("Not Registered", "Patient is not on Howlbert.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         helper_row = None
@@ -302,7 +308,7 @@ class Life(commands.Cog):
             helper_row = db.get_user(helper.id)
             if not helper_row:
                 embed = howlbert_embed("Not Registered", "Helper is not on Howlbert.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         world = db.get_world(interaction.guild.id)
@@ -336,11 +342,11 @@ class Life(commands.Cog):
         if not medic:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
         target = db.get_user(patient.id)
         if not target:
-            await interaction.response.send_message("Patient is not on Howlbert.", ephemeral=True)
+            await interaction.response.send_message("Patient is not on Howlbert.", ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
         from engine.medical_care import run_observe_apprentice
@@ -366,12 +372,12 @@ class Life(commands.Cog):
         if not medic:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
         if not medic["pack_id"]:
             await interaction.response.send_message(
                 embed=howlbert_embed("No Pack", "Join a pack to walk den checkups.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         world = db.get_world(interaction.guild.id)
@@ -381,7 +387,7 @@ class Life(commands.Cog):
         if not ok:
             await interaction.response.send_message(
                 embed=howlbert_embed("Den Checkup", body, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         from engine.healer_refusal import healer_refusal_reminder
@@ -393,8 +399,10 @@ class Life(commands.Cog):
 
     async def _swim_therapy(self, interaction: discord.Interaction):
         user = await self._require_user(interaction)
-        if not user or not interaction.guild:
-            await interaction.response.send_message("Use `/register` in a server.", ephemeral=True)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use `/register` in a server.", ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
         from engine.medical_care import run_swim_therapy
@@ -414,12 +422,12 @@ class Life(commands.Cog):
                 "Death saves are only for wolves who are **dying** (0 HP; from combat, starvation, or thirst).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if user["condition"] == "dead":
             embed = howlbert_embed("Dead", "This wolf has already passed.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if user["death_save_round"] == 0:
@@ -466,7 +474,7 @@ class Life(commands.Cog):
         target = db.get_user(patient.id)
         if not target or (target["hp"] > 0 and target["condition"] != "dying"):
             embed = howlbert_embed("Not Dying", f"{patient.display_name} is not at 0 HP.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if interaction.guild:
@@ -477,14 +485,14 @@ class Life(commands.Cog):
             )
             if not ok_cross:
                 embed = howlbert_embed("Can't Stabilize", cross_msg, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         if use_cobwebs:
             item = db.get_item_by_key("herb_cobwebs")
             if not item or db.get_inventory_quantity(interaction.user.id, item["id"]) < 1:
                 embed = howlbert_embed("No Cobwebs", "You need **cobwebs** in inventory.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             db.consume_item(interaction.user.id, item["id"])
             db.stabilize_patient(patient.id)
@@ -502,7 +510,7 @@ class Life(commands.Cog):
             item = db.get_item_by_key("herb_yarrow")
             if not item or db.get_inventory_quantity(interaction.user.id, item["id"]) < 1:
                 embed = howlbert_embed("No Yarrow", "You need **yarrow** in inventory.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             db.consume_item(interaction.user.id, item["id"])
 
@@ -578,7 +586,7 @@ class Life(commands.Cog):
             await self._xp(interaction)
         elif action == "spend":
             if not purchase:
-                await interaction.response.send_message("Pick a **purchase** type.", ephemeral=True)
+                await interaction.response.send_message("Pick a **purchase** type.", ephemeral=reply_ephemeral())
                 return
             await self._spendxp(interaction, purchase, attribute, skill, role_feature)
 
@@ -596,7 +604,7 @@ class Life(commands.Cog):
             f"**{XP_PER_ROLE_FEATURE} XP**; gain another role's feature (**requires admin approval**)"
         )
         embed.set_footer(text="Earn XP from quests, daily ration, den chat, and RP milestones. Quests may grant skill trait experience.")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _spendxp(
         self,
@@ -612,16 +620,16 @@ class Life(commands.Cog):
 
         if purchase == "attribute":
             if not attribute:
-                await interaction.response.send_message("Pick an attribute.", ephemeral=True)
+                await interaction.response.send_message("Pick an attribute.", ephemeral=reply_ephemeral())
                 return
             err = spend_xp_attribute(user, attribute)
             if err:
                 embed = howlbert_embed("Cannot Spend", err, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if not db.spend_xp(interaction.user.id, XP_PER_ATTRIBUTE):
                 embed = howlbert_embed("Not Enough XP", f"Need {XP_PER_ATTRIBUTE} XP.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             key = f"attr_{attribute}"
             db.update_user(interaction.user.id, **{key: user[key] + 1})
@@ -631,23 +639,23 @@ class Life(commands.Cog):
 
         if purchase == "trait":
             if not skill:
-                await interaction.response.send_message("Pick a skill.", ephemeral=True)
+                await interaction.response.send_message("Pick a skill.", ephemeral=reply_ephemeral())
                 return
             err = spend_xp_trait_bonus(user, skill)
             if err:
                 embed = howlbert_embed("Cannot Spend", err, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if not db.spend_xp(interaction.user.id, XP_PER_TRAIT):
                 embed = howlbert_embed("Not Enough XP", f"Need {XP_PER_TRAIT} XP.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             from engine.character_traits import adjust_skill_trait_experience
 
             ok, msg = adjust_skill_trait_experience(user["id"], skill, 1)
             if not ok:
                 embed = howlbert_embed("Cannot Spend", msg, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             embed = howlbert_embed("Trait Raised", msg, color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
@@ -655,7 +663,7 @@ class Life(commands.Cog):
 
         if purchase == "role_feature":
             if not role_feature or role_feature not in ROLE_FEATURES:
-                await interaction.response.send_message("Pick a role feature.", ephemeral=True)
+                await interaction.response.send_message("Pick a role feature.", ephemeral=reply_ephemeral())
                 return
             existing_bonus = (
                 user["bonus_role_feature"]
@@ -668,7 +676,7 @@ class Life(commands.Cog):
                     f"**{user['wolf_name']}** already has the **{ROLE_LABELS[role_feature]}** bonus feature.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if db.get_open_pending_for_wolf(user["id"]):
                 embed = howlbert_embed(
@@ -676,13 +684,13 @@ class Life(commands.Cog):
                     "A role-feature request is already awaiting admin approval for this wolf.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             account = db.get_account(interaction.user.id)
             xp_val = account["xp"] if "xp" in account.keys() else 0
             if xp_val < XP_PER_ROLE_FEATURE:
                 embed = howlbert_embed("Not Enough XP", f"Need {XP_PER_ROLE_FEATURE} XP.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             guild_id = interaction.guild.id if interaction.guild else 0
             db.create_pending_role_feature(
@@ -697,7 +705,7 @@ class Life(commands.Cog):
                 "Request submitted; an **admin** must approve before XP is spent.",
                 color=SUCCESS_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(
         name="wolfset",
@@ -749,22 +757,22 @@ class Life(commands.Cog):
     ):
         if field == "birth_sex":
             if not birth_sex:
-                await interaction.response.send_message("Pick a **birth_sex**.", ephemeral=True)
+                await interaction.response.send_message("Pick a **birth_sex**.", ephemeral=reply_ephemeral())
                 return
             await self._setbirthsex(interaction, birth_sex)
         elif field == "sexuality":
             if not sexuality:
-                await interaction.response.send_message("Pick a **sexuality**.", ephemeral=True)
+                await interaction.response.send_message("Pick a **sexuality**.", ephemeral=reply_ephemeral())
                 return
             await self._setsexuality(interaction, sexuality)
         elif field == "maw_belief":
             if not maw_belief:
-                await interaction.response.send_message("Pick a **maw_belief**.", ephemeral=True)
+                await interaction.response.send_message("Pick a **maw_belief**.", ephemeral=reply_ephemeral())
                 return
             await self._setmawbelief(interaction, maw_belief)
         elif field == "size":
             if not size:
-                await interaction.response.send_message("Pick a **size**.", ephemeral=True)
+                await interaction.response.send_message("Pick a **size**.", ephemeral=reply_ephemeral())
                 return
             await self._setsize(interaction, size)
 
@@ -775,7 +783,7 @@ class Life(commands.Cog):
         ok, err = db.set_size_class(interaction.user.id, size)
         if not ok:
             embed = howlbert_embed("Cannot Update", err or "Invalid size.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         from engine.combat_size import format_size_class_profile
 
@@ -785,7 +793,7 @@ class Life(commands.Cog):
             format_size_class_profile(updated),
             color=SUCCESS_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _setbirthsex(self, interaction: discord.Interaction, birth_sex: str):
         user = await self._require_user(interaction)
@@ -794,7 +802,7 @@ class Life(commands.Cog):
         db.set_birth_sex(interaction.user.id, birth_sex)
         label = BIRTH_SEX_LABELS.get(birth_sex, birth_sex.title())
         embed = howlbert_embed("Birth Sex Updated", f"Recorded as **{label}**.", color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _setsexuality(self, interaction: discord.Interaction, sexuality: str):
         user = await self._require_user(interaction)
@@ -803,11 +811,11 @@ class Life(commands.Cog):
         ok, err = db.set_sexuality(interaction.user.id, sexuality)
         if not ok:
             embed = howlbert_embed("Cannot Update", err or "Invalid sexuality.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         label = SEXUALITY_LABELS.get(sexuality, sexuality.title())
         embed = howlbert_embed("Sexuality Updated", f"Recorded as **{label}**.", color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _setmawbelief(self, interaction: discord.Interaction, maw_belief: str):
         user = await self._require_user(interaction)
@@ -816,14 +824,14 @@ class Life(commands.Cog):
         ok, err = db.set_maw_belief(interaction.user.id, maw_belief)
         if not ok:
             embed = howlbert_embed("Cannot Update", err or "Invalid belief.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         from engine.maw_belief import format_maw_belief
 
         user = db.get_user(interaction.user.id)
         text = format_maw_belief(user) or maw_belief
         embed = howlbert_embed("Maw Belief Updated", text, color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _other_wolf_autocomplete(
         self,
@@ -964,7 +972,7 @@ class Life(commands.Cog):
         block = young_wolf_block(user, action="court")
         if block:
             embed = howlbert_embed("Forbidden", block, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.mental_effects import social_activity_block
@@ -972,7 +980,7 @@ class Life(commands.Cog):
         mind_block = social_activity_block(user)
         if mind_block:
             embed = howlbert_embed("Mind Lost", mind_block, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         target_user, err = _resolve_partner_wolf(
@@ -983,13 +991,13 @@ class Life(commands.Cog):
                 embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Target", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         tblock = young_wolf_block(target_user, action="court")
         if tblock:
             embed = howlbert_embed("Forbidden", tblock, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         partner_mind = social_activity_block(target_user)
@@ -999,26 +1007,45 @@ class Life(commands.Cog):
                 f"**{target_user['wolf_name']}**: {partner_mind}",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         u_orient = get_sexuality(user)
         allowed, reason = court_attraction_allowed(user, target_user)
         if not allowed:
             embed = howlbert_embed("No Attraction", reason or "Incompatible attraction.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id) if interaction.guild else None
         day = world["day_number"] if world else 1
+        from engine.herb_buffs import courtship_blocked
+
+        if courtship_blocked(user, day):
+            embed = howlbert_embed(
+                "Song Blocked",
+                f"**{user['wolf_name']}** was driven off in a vocal challenge and cannot court until the next sunrise.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if courtship_blocked(target_user, day):
+            embed = howlbert_embed(
+                "Approach Blocked",
+                f"**{target_user['wolf_name']}** lost a vocal rival challenge and cannot be courted until the next sunrise.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
         user_last = user["last_court_day"] if "last_court_day" in user.keys() else 0
         if user_last >= day:
             embed = howlbert_embed(
                 "Already Courted",
-                "You may court **once per rollover**.",
+                "You may court **once per rollover**.\n\n_Resets next sunrise · `/world action:cooldowns`_",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed.set_footer(text="/courtship action:mate · /courtship action:pregnancy")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if db.court_blocked_for_pair(user["id"], target_user["id"], day):
@@ -1027,7 +1054,7 @@ class Life(commands.Cog):
                 f"You already courted **{target_user['wolf_name']}** this sunrise.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         guild_id = interaction.guild.id if interaction.guild else None
@@ -1035,7 +1062,14 @@ class Life(commands.Cog):
             user, target_user, guild_id, difficulty
         )
         result = run_court_check(user, effective)
-        mood_line = apply_court_outcome(user, target_user, result, effective)
+        mood_line = apply_court_outcome(
+            user,
+            target_user,
+            result,
+            effective,
+            guild_id=guild_id,
+            day=day,
+        )
 
         if result["success"]:
             db.update_user(
@@ -1075,9 +1109,17 @@ class Life(commands.Cog):
             scandal = apply_medic_court_caught(user, target_user)
             if scandal:
                 lines.extend(scandal)
-        await interaction.response.send_message(
-            embed=howlbert_embed("Courtship", "\n".join(lines), color=SUCCESS_COLOR if result["success"] else ERROR_COLOR)
+        embed = howlbert_embed(
+            "Courtship",
+            "\n".join(lines),
+            color=SUCCESS_COLOR if result["success"] else ERROR_COLOR,
         )
+        rel_note = court_relation_note(user, target_user, guild_id, effective)
+        if rel_note:
+            embed.set_footer(text=rel_note.strip("_"))
+        else:
+            embed.set_footer(text="/courtship action:mate · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed)
 
     async def _rival_challenge(
         self,
@@ -1092,7 +1134,7 @@ class Life(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -1102,7 +1144,7 @@ class Life(commands.Cog):
                 "Rival challenges only occur during **mating season** (spring).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not defender_target:
@@ -1111,13 +1153,13 @@ class Life(commands.Cog):
                 "Pick a **target** player as the wolf defending mating access.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         defender = db.get_user(defender_target.id)
         if not defender:
             embed = howlbert_embed("Not Registered", "Defender is not on Howlbert.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if challenger_partner:
@@ -1134,7 +1176,7 @@ class Life(commands.Cog):
                 "Pick a **partner** as challenger or register another wolf.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if challenger["id"] == defender["id"]:
@@ -1143,7 +1185,7 @@ class Life(commands.Cog):
                 "Challenger and defender must be different wolves.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.rival_challenge import execute_rival_challenge
@@ -1176,14 +1218,14 @@ class Life(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         if respond in ("accept", "decline"):
             pending = db.get_pending_mate_for_partner(interaction.user.id)
             if not pending:
                 embed = howlbert_embed("No Request", "You have no pending mating request.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if respond == "decline":
                 db.set_pending_mate_status(pending["id"], "declined")
@@ -1196,7 +1238,7 @@ class Life(commands.Cog):
             if not initiator or not partner_user:
                 db.set_pending_mate_status(pending["id"], "expired")
                 embed = howlbert_embed("Expired", "One of the wolves no longer exists.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
             if world["season"] != "spring":
@@ -1205,15 +1247,27 @@ class Life(commands.Cog):
                     "Mating season ended before you could respond.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if partner_user["receptive_day"] < world["day_number"]:
                 embed = howlbert_embed(
                     "Not Receptive",
-                    "You are no longer receptive; they must `/court` you again.",
+                    "You are no longer receptive; they must `/courtship action:court` you again.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+            from engine.herb_buffs import courtship_blocked
+
+            day = world["day_number"]
+            if courtship_blocked(initiator, day) or courtship_blocked(partner_user, day):
+                blocked = initiator if courtship_blocked(initiator, day) else partner_user
+                embed = howlbert_embed(
+                    "Song Blocked",
+                    f"**{blocked['wolf_name']}** lost a vocal rival challenge and cannot mate until the next sunrise.",
+                    color=ERROR_COLOR,
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             ok, body, color, hard_fail = execute_mating(
                 initiator, partner_user, day_number=world["day_number"]
@@ -1229,7 +1283,7 @@ class Life(commands.Cog):
         block = young_wolf_block(user, action="mate")
         if block:
             embed = howlbert_embed("Forbidden", block, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.mental_effects import social_activity_block
@@ -1238,7 +1292,7 @@ class Life(commands.Cog):
             mind_block = social_activity_block(wolf)
             if mind_block:
                 embed = howlbert_embed("Mind Lost", mind_block, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         world = db.get_world(interaction.guild.id)
@@ -1248,7 +1302,7 @@ class Life(commands.Cog):
                 "Females can only conceive during **Newgrowth** (spring mating season).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         partner_user, err = _resolve_partner_wolf(
@@ -1259,13 +1313,13 @@ class Life(commands.Cog):
                 embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Partner", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         pblock = young_wolf_block(partner_user, action="mate")
         if pblock:
             embed = howlbert_embed("Forbidden", pblock, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         partner_mind = social_activity_block(partner_user)
@@ -1275,17 +1329,37 @@ class Life(commands.Cog):
                 f"**{partner_user['wolf_name']}**: {partner_mind}",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         same_owner = partner_user["discord_id"] == interaction.user.id
         if not same_owner and partner_user["receptive_day"] < world["day_number"]:
             embed = howlbert_embed(
                 "Not Receptive",
-                "Court them first with `/court`, or they may refuse.",
+                "Court them first with `/courtship action:court`, or they may refuse.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        from engine.herb_buffs import courtship_blocked
+
+        day = world["day_number"]
+        if courtship_blocked(user, day):
+            embed = howlbert_embed(
+                "Song Blocked",
+                f"**{user['wolf_name']}** was driven off in a vocal challenge and cannot mate until the next sunrise.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if courtship_blocked(partner_user, day):
+            embed = howlbert_embed(
+                "Approach Blocked",
+                f"**{partner_user['wolf_name']}** lost a vocal rival challenge and cannot mate until the next sunrise.",
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not same_owner:
@@ -1296,7 +1370,7 @@ class Life(commands.Cog):
                     "A mating request is already waiting for a response.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             pending_id = db.create_pending_mate(
                 guild_id=interaction.guild.id,
@@ -1311,7 +1385,7 @@ class Life(commands.Cog):
                 "Mating Request",
                 f"**{user['wolf_name']}** wants to mate with **{partner_user['wolf_name']}**.\n"
                 f"<@{partner_user['discord_id']}>; accept or decline below, or use "
-                f"`/mate respond:Accept pending request`.",
+                f"`/courtship action:mate respond:Accept pending request`.",
                 color=SUCCESS_COLOR,
             )
             await interaction.response.send_message(embed=embed, view=view)
@@ -1324,7 +1398,7 @@ class Life(commands.Cog):
                 body=(
                     f"**{user['wolf_name']}** wants to mate with **{partner_user['wolf_name']}**.\n"
                     "Check the channel for **Accept/Decline** buttons, or use "
-                    "`/mate respond:Accept pending request`."
+                    "`/courtship action:mate respond:Accept pending request`."
                 ),
             )
             return
@@ -1351,7 +1425,7 @@ class Life(commands.Cog):
                     role_note = f"Your mate **{as_father['wolf_name']}** is expecting."
             if not subject:
                 embed = howlbert_embed("Not Pregnant", "No active pregnancy on you or your mate.")
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
         else:
             subject = user
@@ -1372,10 +1446,25 @@ class Life(commands.Cog):
         embed.add_field(name="Days elapsed", value=str(elapsed), inline=True)
         embed.add_field(name="Days until birth", value=str(remaining), inline=True)
         embed.add_field(name="Mate", value=mate_name, inline=True)
+        from engine.pregnancy import in_late_pregnancy, LATE_PREGNANCY_SUNRISES
+
+        if subject["id"] == user["id"] and in_late_pregnancy(subject, day):
+            embed.add_field(
+                name="Den rest",
+                value=(
+                    f"Final **{LATE_PREGNANCY_SUNRISES}** sunrises — strenuous work blocked "
+                    f"(hunt, patrol, explore, combat, fishing, …)."
+                ),
+                inline=False,
+            )
         if remaining == 0:
             who = "she" if subject["id"] == user["id"] else subject["wolf_name"]
             embed.set_footer(text=f"Ready for `/pupcare action:birth names:…`; {who} can name the litter.")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        elif mate and not db.row_val(mate, "pack_id") and subject["id"] == user["id"]:
+            embed.set_footer(
+                text=f"Breeding mate **{mate['wolf_name']}** walks outside the den; pups stay with your pack."
+            )
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(
         name="pupcare",
@@ -1421,14 +1510,14 @@ class Life(commands.Cog):
             await self._pups(interaction)
         elif action == "birth":
             if not names:
-                await interaction.response.send_message("Provide **names** for the litter.", ephemeral=True)
+                await interaction.response.send_message("Provide **names** for the litter.", ephemeral=reply_ephemeral())
                 return
             await self._birth(interaction, names)
         elif action == "feed":
             await self._feedpups(interaction, name, own_wolf)
         elif action == "save":
             if not name:
-                await interaction.response.send_message("Provide the pup **name**.", ephemeral=True)
+                await interaction.response.send_message("Provide the pup **name**.", ephemeral=reply_ephemeral())
                 return
             await self._savepup(interaction, name)
         elif action == "adopt":
@@ -1439,12 +1528,12 @@ class Life(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         if not user["is_pregnant"]:
             embed = howlbert_embed("Not Pregnant", "This wolf is not expecting pups.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -1455,7 +1544,7 @@ class Life(commands.Cog):
                 f"**{GESTATION_DAYS - elapsed}** days of gestation remain.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         father = db.get_mate_wolf(user)
@@ -1473,7 +1562,7 @@ class Life(commands.Cog):
         parsed_names, name_err = parse_litter_names(names, pups_born)
         if name_err:
             embed = howlbert_embed("Invalid Names", name_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         for pup_name in parsed_names:
@@ -1483,7 +1572,7 @@ class Life(commands.Cog):
                     f"The name **{pup_name}** is already taken or reserved for neonatal care.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         born_names: list[str] = []
@@ -1564,6 +1653,15 @@ class Life(commands.Cog):
         father_line = ""
         if father:
             father_line = f"\n**{father['wolf_name']}** and **{user['wolf_name']}** named the litter."
+            if not db.row_val(father, "pack_id"):
+                father_line += (
+                    f"\n_**{father['wolf_name']}** is a lone wolf; pups inherit **{user['wolf_name']}**'s den "
+                    "unless you `/setfaction` or adopt them elsewhere._"
+                )
+            elif user["pack_id"] and int(father["pack_id"]) != int(user["pack_id"]):
+                father_line += (
+                    f"\n_**{father['wolf_name']}** is from another Great Pack; pups start in **{user['wolf_name']}**'s den._"
+                )
         body = (
             f"Birth check: **{result['total']}** vs DC 12; "
             f"**{len(born_names)}** pup(s) born: {name_line}."
@@ -1606,7 +1704,9 @@ class Life(commands.Cog):
             )
             return
 
-        await interaction.response.send_message(embed=howlbert_embed("Birth", body, color=SUCCESS_COLOR))
+        embed = howlbert_embed("Birth", body, color=SUCCESS_COLOR)
+        embed.set_footer(text="/pupcare action:feed · /pupcare action:list · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed)
 
     async def _feedpups(
         self,
@@ -1618,7 +1718,7 @@ class Life(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         feeder = user
@@ -1630,7 +1730,7 @@ class Life(commands.Cog):
                     f"You have no wolf named **{own_wolf.strip()}**.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             feeder = alt
 
@@ -1645,14 +1745,16 @@ class Life(commands.Cog):
         )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = "Nursing" if ok else "Cannot Feed"
-        await interaction.response.send_message(embed=howlbert_embed(title, msg, color=color))
+        embed = howlbert_embed(title, msg, color=color)
+        embed.set_footer(text="/pupcare action:list · once per sunrise · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed)
 
     async def _savepup(self, interaction: discord.Interaction, name: str):
         user = await self._require_user(interaction)
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -1676,7 +1778,7 @@ class Life(commands.Cog):
 
         if not children:
             embed = howlbert_embed("No Pups", "You have no biological or adopted young yet.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.nursing import pup_needs_milk_today
@@ -1697,9 +1799,15 @@ class Life(commands.Cog):
             footer = (
                 "\n\nPups marked **needs milk** want **`/pupcare action:feed`** this sunrise."
             )
-        await interaction.response.send_message(
-            embed=howlbert_embed("Your Pups", "\n".join(lines) + footer)
-        )
+        if not user["pack_id"] and day_number is not None and any(
+            pup_needs_milk_today(c, day_number) for c in children
+        ):
+            from engine.nursing import lone_nursing_note
+
+            footer += lone_nursing_note(user)
+        embed = howlbert_embed("Your Pups", "\n".join(lines) + footer)
+        embed.set_footer(text="/pupcare action:feed · /switchwolf · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed)
 
     async def _adoptpup(
         self,
@@ -1714,14 +1822,14 @@ class Life(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use in a server.", ephemeral=True)
+            await interaction.response.send_message("Use in a server.", ephemeral=reply_ephemeral())
             return
 
         if respond in ("accept", "decline"):
             pending = db.get_pending_adoption_for_owner(interaction.user.id)
             if not pending:
                 embed = howlbert_embed("No Request", "You have no pending adoption request.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if respond == "decline":
                 ok, msg = decline_pending_adoption(pending["id"])
@@ -1740,7 +1848,7 @@ class Life(commands.Cog):
                 embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Partner", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not are_bonded_mates(user, partner_user):
@@ -1749,7 +1857,7 @@ class Life(commands.Cog):
                 "You must be **mutually bonded** mates (`/mate` after courtship).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -1764,7 +1872,7 @@ class Life(commands.Cog):
                 "Each bonded pair may adopt **once per rollover**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         adoptee, adoptee_err = _resolve_adoptee(
@@ -1775,13 +1883,13 @@ class Life(commands.Cog):
                 embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Invalid Youth", adoptee_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         adopt_err = adoption_eligibility_error(adoptee, user, partner_user)
         if adopt_err:
             embed = howlbert_embed("Cannot Adopt", adopt_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         check = courtship_check(user, "friendly")
@@ -1836,7 +1944,7 @@ class Life(commands.Cog):
                 "You already have an adoption awaiting the youth's answer.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         pending_id = db.create_pending_adoption(
@@ -1854,7 +1962,7 @@ class Life(commands.Cog):
             "Adoption Request",
             f"**{user['wolf_name']}** and **{partner_user['wolf_name']}** want to adopt "
             f"**{adoptee['wolf_name']}** ({stage}).\n"
-            f"<@{adoptee['discord_id']}>; accept or decline below, or `/adoptpup respond:Accept pending adoption`.",
+            f"<@{adoptee['discord_id']}>; accept or decline below, or `/pupcare action:adopt respond:Accept pending adoption`.",
             color=SUCCESS_COLOR,
         )
         await interaction.response.send_message(embed=embed, view=view)
@@ -1868,7 +1976,7 @@ class Life(commands.Cog):
                 f"**{user['wolf_name']}** and **{partner_user['wolf_name']}** want to adopt "
                 f"**{adoptee['wolf_name']}** ({stage}).\n"
                 "Check the channel for **Accept/Decline** buttons, or use "
-                "`/adoptpup respond:Accept pending adoption`."
+                "`/pupcare action:adopt respond:Accept pending adoption`."
             ),
         )
 

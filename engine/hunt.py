@@ -92,6 +92,24 @@ PREY_HUNT_FLAVOR: dict[str, dict[str, tuple[str, ...]]] = {
             "A rare pale elk; myth made meat. The forest remembers.",
         ),
     },
+    "frog": {
+        "small": (
+            "A frog vanishes under your paw; quick jaws, muddy bank, honest bite.",
+            "Marsh frogs chorus at dusk; you silence one for the hoard.",
+        ),
+    },
+    "snake": {
+        "small": (
+            "A garter snake never sees the strike; scales and fresh-kill for the cache.",
+            "You pin a snake before it slides into the reeds.",
+        ),
+    },
+    "lizard": {
+        "small": (
+            "A skink warms on stone until your shadow falls; then it doesn't.",
+            "Sun-baked lizard; scant meat, but the den won't sniff at it.",
+        ),
+    },
 }
 
 

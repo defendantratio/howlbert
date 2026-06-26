@@ -26,6 +26,16 @@ def blooding_gate_message(user, *, action: str = "roleevent") -> str | None:
     return None
 
 
+def format_blooding_status(user) -> str | None:
+    """Reminder for unblooded juveniles on profile, vitals, and cooldowns."""
+    if not is_unblooded_juvenile(user):
+        return None
+    return (
+        "**Blooding:** not yet earned; first successful **`/bones action:hunt`** kill "
+        "unlocks **`/role action:event`** (+8 mood, +1 standing)."
+    )
+
+
 def award_blooding_on_hunt(user) -> str | None:
     """Mark blooded after first hunt kill. Returns a line for the hunt embed footer."""
     if not is_unblooded_juvenile(user):

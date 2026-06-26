@@ -253,6 +253,13 @@ HERBS = {
         "Preserves dried herbs 2 extra weeks.",
         cures=("mange",),
     ),
+    "jewelweed": _h(
+        "Jewelweed",
+        "common",
+        "Touch-me-not sap neutralizes poison-ivy rash; cools bee and nettle stings.",
+        habitat=("roadside", "wild"),
+        cures=("poison_ivy", "mild_poison"),
+    ),
     "juniper_berry": _h(
         "Juniper Berries",
         "common",
@@ -547,8 +554,8 @@ HERBS = {
     "witch_hazel": _h(
         "Witch Hazel",
         "common",
-        "Removes eye injury disadvantage 4h.",
-        cures=("torn_ear", "partial_blindness"),
+        "Astringent: reduces swelling; soothes insect stings and bruises; eases eye strain.",
+        cures=("torn_ear", "partial_blindness", "mild_poison", "fleas", "sprained_leg", "punctured_paw"),
     ),
     "wolfsbane": _h(
         "Wolfsbane",

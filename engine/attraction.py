@@ -119,7 +119,12 @@ def mate_pairing(user, partner) -> tuple[str, str | None]:
 
     if u_orient in BOND_FIRST_SEXUALITIES or p_orient in BOND_FIRST_SEXUALITIES:
         if not are_bonded_mates(user, partner):
-            return "bond", None
+            return (
+                "error",
+                "Demisexual and demiromantic wolves mate only after forming a bond "
+                "(court successfully, deepen ties with `/playpen action:socialize` & `action:groom`, "
+                "or mark kin with `/bonds`).",
+            )
 
     if u_orient == "asexual" or p_orient == "asexual":
         return "bond", None

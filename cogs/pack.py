@@ -18,17 +18,15 @@ from engine.pack_food import (
 )
 from engine.thirst import run_drinkall
 from engine.pack_unity import (
-    compute_howl_unity_gain,
     format_unity_meter,
-    pick_howl_flavor,
     standing_effect_text,
     unity_effect_text,
-    unity_is_broken,
 )
 from engine.character import attr_modifier, get_attr
-from config import CURRENCY_LABEL, MAX_PACK_TAX_RATE
+from config import CURRENCY_LABEL, GREAT_PACKS, MAX_PACK_TAX_RATE
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.permissions import is_howlbert_admin
 
@@ -87,7 +85,7 @@ class Pack(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return None, None
         if not user["pack_id"]:
             embed = howlbert_embed(
@@ -95,12 +93,12 @@ class Pack(commands.Cog):
                 "Join a Great Pack with `/register` or `/setfaction`, or walk as a lone wolf.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return None, None
         pack = db.get_pack(user["pack_id"])
         if not pack:
             embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return None, None
         return user, pack
 
@@ -130,7 +128,7 @@ class Pack(commands.Cog):
             goal_line = format_stash_goal_line(pack, world["day_number"])
             if goal_line:
                 embed.add_field(name="Season Goal", value=goal_line, inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name="deposit", description="Store bones in the pack treasury.")
     @app_commands.describe(amount="Bones to deposit")
@@ -141,12 +139,12 @@ class Pack(commands.Cog):
 
         if amount <= 0:
             embed = howlbert_embed("Invalid Amount", "Enter a positive number of bones.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.transfer_to_pack_treasury(interaction.user.id, pack["id"], amount):
             embed = howlbert_embed("Deposit Failed", "Not enough bones.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         updated_pack = db.get_pack(pack["id"])
@@ -156,7 +154,7 @@ class Pack(commands.Cog):
         embed.add_field(name="Treasury", value=format_bones(updated_pack["treasury"]), inline=True)
         embed.add_field(name="Your Balance", value=format_bones(updated_user["bones"]), inline=True)
         db.increment_quest_progress(interaction.user.id, "deposit")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name="withdraw", description="Take bones from the pack treasury (Alpha or Advisor).")
     @app_commands.describe(amount="Bones to withdraw")
@@ -167,17 +165,17 @@ class Pack(commands.Cog):
 
         if not _is_pack_officer(user, pack, discord_admin=is_howlbert_admin(interaction)):
             embed = howlbert_embed("Officers Only", "Alpha or Advisor role required.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if amount <= 0:
             embed = howlbert_embed("Invalid Amount", "Enter a positive number of bones.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.transfer_from_pack_treasury(interaction.user.id, pack["id"], amount):
             embed = howlbert_embed("Withdraw Failed", "Treasury is too light.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         updated_pack = db.get_pack(pack["id"])
@@ -186,7 +184,7 @@ class Pack(commands.Cog):
         embed.add_field(name="Amount", value=format_bones(amount), inline=True)
         embed.add_field(name="Treasury", value=format_bones(updated_pack["treasury"]), inline=True)
         embed.add_field(name="Your Balance", value=format_bones(updated_user["bones"]), inline=True)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     stash = app_commands.Group(
         name="stash",
@@ -200,7 +198,7 @@ class Pack(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -211,7 +209,7 @@ class Pack(commands.Cog):
                 "Empty; deposit carcasses with **`/pack stash deposit`**.\n"
                 "Reserve meat rots **slower** than personal hoard.",
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         lines = [format_pack_stash_line(s, world["day_number"]) for s in stacks]
@@ -223,7 +221,7 @@ class Pack(commands.Cog):
         embed.set_footer(
             text=f"Alpha: `/packlife action:feedall` · `action:drinkall`{fed_note}{drank_note}"
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @stash.command(name="deposit", description="Add a carcass from your hoard to the den reserve.")
     @app_commands.describe(prey="Stack ID from `/prey`")
@@ -233,12 +231,12 @@ class Pack(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
         try:
             stack_id = int(prey)
         except ValueError:
-            await interaction.response.send_message("Pick a carcass from `/prey`.", ephemeral=True)
+            await interaction.response.send_message("Pick a carcass from `/prey`.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -264,20 +262,12 @@ class Pack(commands.Cog):
         try:
             stack_id = int(prey)
         except ValueError:
-            await interaction.response.send_message("Pick a stack from `/pack stash list`.", ephemeral=True)
+            await interaction.response.send_message("Pick a stack from `/pack stash list`.", ephemeral=reply_ephemeral())
             return
 
         ok, msg = withdraw_from_pack_stash(user, stack_id, pack_id=pack["id"])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed("Food Reserve", msg, color=color))
-
-    @app_commands.command(
-        name="howl",
-        description="Raise a pack howl for unity, or a lone howl if you have no pack.",
-    )
-    @app_commands.describe(message="Optional line carried on the wind")
-    async def howl(self, interaction: discord.Interaction, message: str | None = None):
-        await self._howl(interaction, message)
 
     @app_commands.command(
         name="packlife",
@@ -297,14 +287,16 @@ class Pack(commands.Cog):
         elif action == "drinkall":
             await self._drinkall(interaction)
         elif action == "howl":
-            await self._howl(interaction, message)
+            from engine.howl import execute_howl
+
+            await execute_howl(interaction, message)
 
     async def _feedall(self, interaction: discord.Interaction):
         user, pack = await self._require_pack_member(interaction)
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -322,7 +314,7 @@ class Pack(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -345,7 +337,7 @@ class Pack(commands.Cog):
             f"{pack['name']} Tax",
             f"**{pack['tax_rate']}%** of hunt earnings go to the treasury.",
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name="settax", description="Set pack tax rate 0-25% (Alpha only).")
     @app_commands.describe(rate="Tax percentage on hunt earnings")
@@ -360,7 +352,7 @@ class Pack(commands.Cog):
                 "Your active wolf must have the **Alpha** role and lead this pack.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if rate < 0 or rate > MAX_PACK_TAX_RATE:
@@ -369,17 +361,17 @@ class Pack(commands.Cog):
                 f"Tax must be between 0 and {MAX_PACK_TAX_RATE}%.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.set_pack_tax_rate(pack["id"], rate)
         embed = howlbert_embed("Tax Updated", f"Pack tax is now **{rate}%**.", color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name="territory", description="View territory held across the wild.")
     async def pack_territory(self, interaction: discord.Interaction):
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         territories = db.get_territories(interaction.guild.id)
@@ -404,28 +396,28 @@ class Pack(commands.Cog):
                 "Your active wolf must have the **Alpha** role and lead this pack.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         terr = db.get_territory_by_key(interaction.guild.id, territory)
         if not terr:
             embed = howlbert_embed("Unknown Territory", "Check `/pack territory`.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if terr["owner_pack_id"] == pack["id"]:
             embed = howlbert_embed("Already Yours", "Your pack holds this ground.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if db.territory_has_active_war(interaction.guild.id, terr["id"]):
             embed = howlbert_embed("War Underway", "This territory is already contested.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if db.get_active_war_for_pack(interaction.guild.id, pack["id"]):
             embed = howlbert_embed("Already at War", "Your pack is in another conflict.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         day = db.get_world(interaction.guild.id)["day_number"]
@@ -462,13 +454,13 @@ class Pack(commands.Cog):
                 "Only the pack **Alpha** or a **Diplomat** can resolve a war.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         war = db.get_active_war_for_pack(interaction.guild.id, pack["id"])
         if not war:
             embed = howlbert_embed("No Active War", "Your pack isn't fighting for territory.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         status = db.resolve_war(war["id"])
@@ -478,7 +470,7 @@ class Pack(commands.Cog):
                 "This war can't be resolved yet (needs 2 rollovers or invalid state).",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         attacker = db.get_pack(war["attacker_pack_id"])
@@ -503,7 +495,7 @@ class Pack(commands.Cog):
 
     async def _war_action(self, interaction: discord.Interaction, day_column: str, action_label: str, points_fn):
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
         user, pack = await self._require_pack_member(interaction)
         if not user:
@@ -512,7 +504,7 @@ class Pack(commands.Cog):
         war = db.get_active_war_for_pack(interaction.guild.id, pack["id"])
         if not war:
             embed = howlbert_embed("No Active War", "Your pack isn't fighting for territory.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -520,7 +512,7 @@ class Pack(commands.Cog):
         user = db.get_user(interaction.user.id)
         if user[day_column] >= day:
             embed = howlbert_embed("Already Done", f"You've patrolled this rollover.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         points = points_fn(user)
@@ -574,7 +566,7 @@ class Pack(commands.Cog):
                 "Lone wolves have no pack unity. Join a Great Pack with `/setfaction`.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         pack = db.get_pack(user["pack_id"])
@@ -583,185 +575,17 @@ class Pack(commands.Cog):
         embed = howlbert_embed(f"{pack['name']}; Pack Unity", color=SUCCESS_COLOR)
         embed.add_field(name="Unity", value=format_unity_meter(unity), inline=True)
         embed.add_field(name="Effect", value=unity_effect_text(unity), inline=False)
+        if interaction.guild:
+            from engine.pack_season_goals import format_stash_goal_line
+
+            world = db.get_world(interaction.guild.id)
+            goal_line = format_stash_goal_line(pack, world["day_number"])
+            if goal_line:
+                embed.add_field(name="Season Goal", value=goal_line, inline=False)
         embed.set_footer(
-            text="Gain: /packlife action:howl, den charms, fresh-kill, pups, winning wars. "
+            text="Gain: /howl, den charms, fresh-kill, pups, winning wars. "
             "Loss: losing wars, declaring war. At −5: pack dissolves."
         )
-        await interaction.response.send_message(embed=embed)
-
-    async def _howl(self, interaction: discord.Interaction, message: str | None = None):
-        user = db.get_user(interaction.user.id)
-        if not user:
-            embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
-            return
-
-        world = db.get_world(interaction.guild.id)
-        day = world["day_number"]
-        wolf_name = user["wolf_name"]
-        if user["last_howl_day"] >= day:
-            embed = howlbert_embed(
-                "Already Howled",
-                "Your throat is raw; you already sang to the pack this sunrise.",
-                color=ERROR_COLOR,
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        from engine.character_traits import trait_blocks_howl
-
-        blocked, trait_name = trait_blocks_howl(user)
-        if blocked:
-            embed = howlbert_embed(
-                "Cannot Howl",
-                f"**{wolf_name}**'s throat will not answer the pack; **{trait_name}** silences the call.",
-                color=ERROR_COLOR,
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        echo_count = 0
-
-        if user["pack_id"]:
-            pack = db.get_pack(user["pack_id"])
-            if not pack:
-                embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-
-            unity_before = int(pack["pack_unity"])
-            echo_count = db.record_pack_howl(
-                pack["id"], interaction.guild.id, day, interaction.user.id
-            )
-            unity_gain = compute_howl_unity_gain(user, pack, unity_before, echo_count)
-            muted = unity_gain == 0 and unity_is_broken(unity_before)
-            from engine.plot_blinking import apply_plot_howl_mood_cost, plot_howl_unity_bonus
-
-            plot_unity = plot_howl_unity_bonus(interaction.guild.id)
-            if plot_unity and unity_gain and not muted:
-                unity_gain += plot_unity
-            mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
-            flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
-
-            dissolve = ""
-            if unity_gain:
-                dissolve = db.adjust_pack_unity(pack["id"], unity_gain)
-
-            pack = db.get_pack(pack["id"])
-            unity = int(pack["pack_unity"]) if pack else unity_before
-            standing_gain = 2 if echo_count >= 3 else 1
-            if muted:
-                standing_gain = 1
-
-            kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
-            db.update_user(interaction.user.id, last_howl_day=day)
-            db.increment_quest_progress(interaction.user.id, "howl", guild_id=interaction.guild.id)
-
-            if dissolve == "dissolved":
-                body = (
-                    f"**{wolf_name}** howls; and the den **fractures**.\n"
-                    f"{flavor}\n\n"
-                    "Unity hit **−5**. Every wolf is cast to **loner** until they `/setfaction` again."
-                )
-                if message:
-                    body += f"\n\n_{message.strip()}_"
-                embed = howlbert_embed("Pack Dissolved", body, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed)
-                return
-
-            body = f"**{wolf_name}** howls for **{pack['name'] if pack else 'the pack'}**.\n{flavor}"
-            if muted:
-                body += (
-                    "\n\n_The den is too broken for your howl to raise **unity**; "
-                    "an **Alpha** or **Beta (Advisor)** must rally first._"
-                )
-            if message:
-                body += f"\n\n_{message.strip()}_"
-            if mood_note:
-                body += f"\n\n_{mood_note}_"
-            from engine.plot_blinking import try_plot_witness
-
-            body += try_plot_witness(user, interaction.guild.id, day, action="howl")
-
-            from engine.role_features import can_grant_commanding_howl, grant_commanding_howl_buffs
-
-            if can_grant_commanding_howl(user, pack):
-                allies = grant_commanding_howl_buffs(pack["id"], exclude_wolf_id=user["id"])
-                if allies:
-                    body += (
-                        f"\n\n_**Commanding Howl**; **{allies}** packmate"
-                        f"{'s' if allies != 1 else ''} gain advantage on their next check or attack._"
-                    )
-
-            embed = howlbert_embed("Pack Howl", body, color=SUCCESS_COLOR)
-            if unity_gain:
-                embed.add_field(
-                    name="Pack Unity",
-                    value=f"+{unity_gain} → **{format_unity_meter(unity)}**",
-                    inline=True,
-                )
-            else:
-                embed.add_field(name="Pack Unity", value=format_unity_meter(unity), inline=True)
-            embed.add_field(
-                name="Standing",
-                value=(
-                    "**Cast out**; loner"
-                    if kick == "kicked"
-                    else ("**Rite of the Broken Canine**" if kick == "broken_rite" else f"+{standing_gain}")
-                ),
-                inline=True,
-            )
-            if echo_count >= 2:
-                embed.add_field(
-                    name="Chorus",
-                    value=f"**{echo_count}** wolves have howled this sunrise.",
-                    inline=False,
-                )
-            import random
-
-            from engine.character import attr_modifier
-            from engine.group_checks import pack_howl_range
-
-            howler_ids = db.get_pack_howl_discord_ids(pack["id"], interaction.guild.id, day)
-            best_total = 0
-            nat_20 = False
-            for hid in howler_ids:
-                w = db.get_user(hid)
-                if not w:
-                    continue
-                die = random.randint(1, 20)
-                total = die + attr_modifier(w["attr_cha"])
-                if total > best_total:
-                    best_total = total
-                    nat_20 = die == 20
-            if best_total:
-                pack_size = len(db.get_pack_den_wolves(pack["id"]))
-                reach = pack_howl_range(best_total, pack_size, natural_20=nat_20)
-                embed.add_field(
-                    name="Howl reach",
-                    value=f"**{reach}** ridge-units (Basil pack howl formula)",
-                    inline=True,
-                )
-            if pack:
-                embed.set_footer(text=unity_effect_text(unity))
-            await interaction.response.send_message(embed=embed)
-            return
-
-        kick = db.adjust_wolf_standing(interaction.user.id, 1)
-        db.update_user(interaction.user.id, last_howl_day=day)
-        body = (
-            f"**{wolf_name}** howls alone; no den answers, only wind.\n"
-            f"{pick_howl_flavor(echo_count=0)}"
-        )
-        if message:
-            body += f"\n\n_{message.strip()}_"
-        embed = howlbert_embed("Lone Howl", body, color=SUCCESS_COLOR)
-        embed.add_field(name="Standing", value="+1", inline=True)
-        embed.set_footer(text="Join a Great Pack with `/setfaction` to raise pack unity.")
         await interaction.response.send_message(embed=embed)
 
     @pack.command(name="relations", description="Rival standing with neighboring dens (0-10).")
@@ -769,10 +593,10 @@ class Pack(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user or not user["pack_id"]:
             embed = howlbert_embed("No Pack", "Join a Great Pack first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         rows = db.list_pack_relations(interaction.guild.id, user["pack_id"])
@@ -787,24 +611,23 @@ class Pack(commands.Cog):
         lines = []
         for row in rows:
             standing = row["standing"]
-            tag = "neutral"
-            if standing >= 8:
-                tag = "friendly"
-            elif standing <= 3:
-                tag = "hostile"
-            if standing == 0:
-                tag = "war"
+            from engine.pack_relations import relation_tag_label
+
+            tag = relation_tag_label(standing)
             lines.append(f"**{row['other_pack_name']}**; {standing}/10 ({tag})")
 
         lines.append(
-            "\n**Effects:** ≥8 friendly (share hunts) · ≤3 hostile (attack on sight) · 0 war (constant skirmishes)."
+            "\n**Effects:** ≥8 friendly (share hunts) · ≤3 hostile (attack on sight) · "
+            "**0 war** (constant skirmishes; auto territory war when no conflict is active)."
         )
         lines.append(
             "_Change standing: share territory (+1), help vs enemy (+2), diplomatic howl (+1); "
-            "fight over prey (−1), scent over-mark (−2), kill rival (−3)._"
+            "fight over prey (−1), scent over-mark (−2), kill rival (−3). "
+            "At **0**, a border war opens automatically unless your den is already at war._"
         )
 
         embed = howlbert_embed("Rival Relations", "\n".join(lines))
+        embed.set_footer(text="`/pack relation` · `/pack howl` · `/pack share` · `/pack aid`")
         await interaction.response.send_message(embed=embed)
 
     @pack.command(name="relation", description="Check standing with another Great Pack.")
@@ -813,31 +636,162 @@ class Pack(commands.Cog):
         user = db.get_user(interaction.user.id)
         if not user or not user["pack_id"]:
             embed = howlbert_embed("No Pack", "Join a Great Pack first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         other = db.get_pack_by_name(pack_name)
         if not other:
             embed = howlbert_embed("Unknown Den", f"No pack named **{pack_name}**.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         standing = db.get_pack_relation(interaction.guild.id, user["pack_id"], other["id"])
-        tag = "neutral"
-        if standing >= 8:
-            tag = "friendly; may share hunting grounds"
-        elif standing <= 3:
-            tag = "hostile; attacks on sight"
-        if standing == 0:
-            tag = "war; constant skirmishes"
+        from engine.pack_relations import relation_effect_text, relation_tag_label
+
         embed = howlbert_embed(
             f"Relation: {other['name']}",
-            f"Standing: **{standing}/10** ({tag})",
+            f"Standing: **{standing}/10** ({relation_tag_label(standing)})\n\n"
+            f"{relation_effect_text(standing)}",
         )
         await interaction.response.send_message(embed=embed)
+
+    async def _great_pack_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        choices = []
+        for key, info in GREAT_PACKS.items():
+            label = info["name"]
+            if current and current.lower() not in label.lower() and current.lower() not in key:
+                continue
+            choices.append(app_commands.Choice(name=label, value=key))
+        return choices[:25]
+
+    @pack.command(
+        name="howl",
+        description="Diplomatic howl to a rival Great Pack (+1 standing on success).",
+    )
+    @app_commands.describe(target_pack="Greyspire, Mistmoor, Thistlehide, or Silverrush")
+    @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
+    async def pack_diplomatic_howl(self, interaction: discord.Interaction, target_pack: str):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+            return
+
+        from engine.pack_diplomacy import diplomatic_howl
+
+        world = db.get_world(interaction.guild.id)
+        ok, msg = diplomatic_howl(
+            user,
+            pack,
+            guild_id=interaction.guild.id,
+            day=world["day_number"],
+            target_pack=target_pack,
+            weather=world["weather"],
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = "Diplomatic Howl" if ok else "Howl Unanswered"
+        embed = howlbert_embed(title, msg, color=color)
+        if ok:
+            from engine.pack_relations import relation_effect_text
+
+            target_row = db.get_pack_by_key(target_pack.strip().lower())
+            if target_row:
+                rel = db.get_pack_relation(
+                    interaction.guild.id, pack["id"], target_row["id"]
+                )
+                embed.set_footer(text=relation_effect_text(rel))
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=reply_ephemeral(),
+        )
+
+    @pack.command(
+        name="share",
+        description="Share hunting territory with a rival pack (+1 standing, once per sunrise per pair).",
+    )
+    @app_commands.describe(target_pack="Greyspire, Mistmoor, Thistlehide, or Silverrush")
+    @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
+    async def pack_share(self, interaction: discord.Interaction, target_pack: str):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+            return
+
+        from engine.pack_diplomacy import share_territory
+
+        world = db.get_world(interaction.guild.id)
+        ok, msg = share_territory(
+            user,
+            pack,
+            guild_id=interaction.guild.id,
+            day=world["day_number"],
+            target_pack=target_pack,
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        embed = howlbert_embed("Territory Shared" if ok else "Share Failed", msg, color=color)
+        if ok:
+            from engine.pack_relations import relation_effect_text
+
+            target_row = db.get_pack_by_key(target_pack.strip().lower())
+            if target_row:
+                rel = db.get_pack_relation(
+                    interaction.guild.id, pack["id"], target_row["id"]
+                )
+                embed.set_footer(text=relation_effect_text(rel))
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=reply_ephemeral(),
+        )
+
+    @pack.command(
+        name="aid",
+        description="Aid a rival pack at war (+2 standing when they have an active war).",
+    )
+    @app_commands.describe(target_pack="Greyspire, Mistmoor, Thistlehide, or Silverrush")
+    @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
+    async def pack_aid(self, interaction: discord.Interaction, target_pack: str):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+            return
+
+        from engine.pack_diplomacy import aid_rival_pack
+
+        world = db.get_world(interaction.guild.id)
+        ok, msg = aid_rival_pack(
+            user,
+            pack,
+            guild_id=interaction.guild.id,
+            day=world["day_number"],
+            target_pack=target_pack,
+        )
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        embed = howlbert_embed("Aid Sent" if ok else "Aid Failed", msg, color=color)
+        if ok:
+            from engine.pack_relations import relation_effect_text
+
+            target_row = db.get_pack_by_key(target_pack.strip().lower())
+            if target_row:
+                rel = db.get_pack_relation(
+                    interaction.guild.id, pack["id"], target_row["id"]
+                )
+                embed.set_footer(text=relation_effect_text(rel))
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=reply_ephemeral(),
+        )
 
     async def _clan_name_autocomplete(
         self,
@@ -892,7 +846,7 @@ class Pack(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         from engine.cat_pacts import (
@@ -925,7 +879,7 @@ class Pack(commands.Cog):
                     "Name a forest Clan; e.g. **ThunderClan**, **ShadowClan**, **WindClan**, **RiverClan**.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -933,7 +887,7 @@ class Pack(commands.Cog):
             if not pact_type:
                 await interaction.response.send_message(
                     embed=howlbert_embed("Pact Type", "Pick **truce**, **alliance**, or **hunting_rights**.", color=ERROR_COLOR),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             ok, msg = forge_cat_pact(
@@ -959,7 +913,7 @@ class Pack(commands.Cog):
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             await interaction.response.send_message(
                 embed=howlbert_embed("Renew Treaty" if ok else "Renewal Failed", msg, color=color),
-                ephemeral=not ok,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -980,7 +934,7 @@ class Pack(commands.Cog):
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             await interaction.response.send_message(
                 embed=howlbert_embed("Tribute Sent" if ok else "Gift Failed", msg, color=color),
-                ephemeral=not ok,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -989,10 +943,10 @@ class Pack(commands.Cog):
                 user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
             )
             color = SUCCESS_COLOR if ok else ERROR_COLOR
-            await interaction.response.send_message(
-                embed=howlbert_embed("Clan Barter" if ok else "Barter Failed", msg, color=color),
-                ephemeral=not ok,
-            )
+            embed = howlbert_embed("Clan Barter" if ok else "Barter Failed", msg, color=color)
+            if ok:
+                embed.set_footer(text="/pack pact action:view · /pack pact action:receive")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if action == "receive":
@@ -1000,10 +954,10 @@ class Pack(commands.Cog):
                 user, pack, guild_id=interaction.guild.id, clan_name=clan_name, day=day
             )
             color = SUCCESS_COLOR if ok else ERROR_COLOR
-            await interaction.response.send_message(
-                embed=howlbert_embed("Clan Goods" if ok else "Receive Failed", msg, color=color),
-                ephemeral=not ok,
-            )
+            embed = howlbert_embed("Clan Goods" if ok else "Receive Failed", msg, color=color)
+            if ok:
+                embed.set_footer(text="/prey · /herbs action:bag · /playpen action:toys")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(
         name="tradepack",
@@ -1023,13 +977,13 @@ class Pack(commands.Cog):
         if not user:
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         if wolf.bot or wolf.id == interaction.user.id:
             await interaction.response.send_message(
                 embed=howlbert_embed("Invalid Target", "Pick another wolf.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -1037,7 +991,7 @@ class Pack(commands.Cog):
         if not recipient:
             await interaction.response.send_message(
                 embed=howlbert_embed("Not Registered", "They have no wolf.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -1050,7 +1004,7 @@ class Pack(commands.Cog):
                         f"**{recipient['wolf_name']}** is not in **{pack_name}**.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
 
@@ -1065,10 +1019,10 @@ class Pack(commands.Cog):
             require_pack_trade=True,
         )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
-        await interaction.response.send_message(
-            embed=howlbert_embed("Pack Duplicate Trade" if ok else "Trade Failed", msg, color=color),
-            ephemeral=not ok,
-        )
+        embed = howlbert_embed("Pack Duplicate Trade" if ok else "Trade Failed", msg, color=color)
+        if ok:
+            embed.set_footer(text="/pack relation · /trade duplicates · packmates")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(
         name="brokenrite",
@@ -1091,7 +1045,7 @@ class Pack(commands.Cog):
                 "When an **Alpha**'s standing falls to **−5**, the pack holds a challenge; "
                 "every eligible wolf fights; the winner becomes Alpha.",
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         logs = json.loads(row["log_json"])

@@ -7,6 +7,7 @@ from discord.ext import commands
 import database as db
 from engine.explore import try_rescout
 from engine.scout_field import try_scout_survey, try_scout_trail
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, howlbert_embed
 
 
@@ -25,7 +26,7 @@ class Scout(commands.Cog):
         if embed:
             await interaction.response.send_message(
                 embed=embed,
-                ephemeral=embed.color == ERROR_COLOR,
+                ephemeral=reply_ephemeral(),
             )
 
     @scout.command(
@@ -45,7 +46,7 @@ class Scout(commands.Cog):
         if embed:
             await interaction.response.send_message(
                 embed=embed,
-                ephemeral=embed.color == ERROR_COLOR,
+                ephemeral=reply_ephemeral(),
             )
 
     @scout.command(
@@ -65,7 +66,7 @@ class Scout(commands.Cog):
         if embed:
             await interaction.response.send_message(
                 embed=embed,
-                ephemeral=embed.color == ERROR_COLOR,
+                ephemeral=reply_ephemeral(),
             )
 
 

@@ -8,6 +8,11 @@ import database as db
 from discord.ext import commands
 
 
+def fighter_val(fighter, key: str, default=None):
+    """Read a combat_fighters row column (sqlite3.Row has no .get())."""
+    return db.row_val(fighter, key, default)
+
+
 def is_npc_fighter(fighter) -> bool:
     return bool(fighter["npc_name"])
 
@@ -51,3 +56,36 @@ def current_fighter_for_enc(enc_id: int):
     if idx < 0 or idx >= len(order):
         return None
     return db.get_combat_fighter(enc_id, order[idx])
+
+
+def sole_living_opponent(enc_id: int, attacker_fighter_id: int) -> int | None:
+    """When only one enemy remains, return their fighter id (hunt prey, 1v1)."""
+    opponents = [
+        f["id"]
+        for f in db.get_combat_fighters(enc_id)
+        if f["hp"] > 0 and f["id"] != attacker_fighter_id
+    ]
+    if len(opponents) == 1:
+        return opponents[0]
+    return None
+
+
+def is_valid_attack_target(enc_id: int, attacker_fighter_id: int, target_id: int) -> bool:
+    defender = db.get_combat_fighter(enc_id, target_id)
+    if not defender or defender["hp"] <= 0:
+        return False
+    return defender["id"] != attacker_fighter_id
+
+
+def pick_combat_target(discord_id: int, enc_id: int, attacker_fighter_id: int) -> int | None:
+    """Locked target, or auto-lock the only living opponent."""
+    tid = db.get_combat_target(discord_id, enc_id)
+    if tid:
+        if is_valid_attack_target(enc_id, attacker_fighter_id, tid):
+            return tid
+        db.clear_combat_target(discord_id, enc_id)
+    sole = sole_living_opponent(enc_id, attacker_fighter_id)
+    if sole:
+        db.set_combat_target(discord_id, enc_id, sole)
+        return sole
+    return None

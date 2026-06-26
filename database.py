@@ -27,6 +27,20 @@ def utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def row_val(row, key: str, default=None):
+    """Read a column from sqlite3.Row (no .get()) or a mapping."""
+    if not row:
+        return default
+    if hasattr(row, "keys"):
+        if key in row.keys():
+            val = row[key]
+            return default if val is None else val
+        return default
+    if hasattr(row, "get"):
+        return row.get(key, default)
+    return default
+
+
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
@@ -381,6 +395,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
     collab_cols = {row[1] for row in conn.execute("PRAGMA table_info(collab_hunts)")}
     if collab_cols and "result_text" not in collab_cols:
         conn.execute("ALTER TABLE collab_hunts ADD COLUMN result_text TEXT")
+    member_cols = {row[1] for row in conn.execute("PRAGMA table_info(collab_hunt_members)")}
+    if member_cols and "hunt_role" not in member_cols:
+        conn.execute("ALTER TABLE collab_hunt_members ADD COLUMN hunt_role TEXT NOT NULL DEFAULT 'flank'")
 
     conn.execute(
         """
@@ -659,6 +676,33 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scent_marks (
+            guild_id INTEGER NOT NULL,
+            territory_key TEXT NOT NULL,
+            pack_key TEXT NOT NULL,
+            marker_wolf_id INTEGER NOT NULL,
+            marked_day INTEGER NOT NULL,
+            PRIMARY KEY (guild_id, territory_key, pack_key),
+            FOREIGN KEY (marker_wolf_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_diplomacy_log (
+            guild_id INTEGER NOT NULL,
+            pack_a_id INTEGER NOT NULL,
+            pack_b_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            action_day INTEGER NOT NULL,
+            PRIMARY KEY (guild_id, pack_a_id, pack_b_id, action, action_day),
+            FOREIGN KEY (pack_a_id) REFERENCES packs(id),
+            FOREIGN KEY (pack_b_id) REFERENCES packs(id)
+        )
+        """
+    )
     acct_cols = {row[1] for row in conn.execute("PRAGMA table_info(account_progress)")}
     if acct_cols and "xp" not in acct_cols:
         conn.execute("ALTER TABLE account_progress ADD COLUMN xp INTEGER NOT NULL DEFAULT 0")
@@ -691,6 +735,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "last_plot_healer_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_plot_healer_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_rest_omen_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_rest_omen_day INTEGER NOT NULL DEFAULT 0"
         )
     if "age_months" not in user_cols_late:
         conn.execute(
@@ -863,6 +911,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "last_sniff_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_sniff_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_mark_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_mark_day INTEGER NOT NULL DEFAULT 0"
         )
     if "sniff_bonus_day" not in user_cols_late:
         conn.execute(
@@ -1793,7 +1845,16 @@ def _resolve_wolf_id_conn(conn: sqlite3.Connection, discord_id: int) -> int | No
             (discord_id,),
         )
     if account and account["active_wolf_id"]:
-        return account["active_wolf_id"]
+        active = conn.execute(
+            "SELECT id FROM users WHERE id = ? AND discord_id = ?",
+            (account["active_wolf_id"], discord_id),
+        ).fetchone()
+        if active:
+            return int(active["id"])
+        conn.execute(
+            "UPDATE account_progress SET active_wolf_id = NULL WHERE discord_id = ?",
+            (discord_id,),
+        )
     row = conn.execute(
         "SELECT id FROM users WHERE discord_id = ? ORDER BY id ASC LIMIT 1",
         (discord_id,),
@@ -3972,9 +4033,26 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             hoard_audit = apply_restricted_hoard_audit_on_rollover(conn)
         if hoard_audit:
             condition_notes.extend(
-                f"**{row['wolf_name']}**: {row['note']}" for row in hoard_audit
+                {
+                    "wolf_name": row["wolf_name"],
+                    "discord_id": row.get("discord_id"),
+                    "line": row["note"],
+                }
+                for row in hoard_audit
             )
         _decay_vitals_on_rollover()
+        with get_db() as conn:
+            from engine.nursing import apply_reproduction_vitals_drain_on_rollover
+
+            repro_notes = apply_reproduction_vitals_drain_on_rollover(conn)
+        if repro_notes:
+            condition_notes.extend(repro_notes)
+        with get_db() as conn:
+            from engine.disease_contract import apply_mental_illness_rollover
+
+            mental_notes = apply_mental_illness_rollover(conn, new_day)
+        if mental_notes:
+            needs_crisis["mental_notes"] = mental_notes
         from engine.exhaustion_effects import (
             apply_exhaustion_death_on_rollover,
             apply_mood_exhaustion_on_rollover,
@@ -3998,12 +4076,22 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             old_age_deaths = apply_old_age_deaths_on_rollover(conn)
         needs_crisis["old_age_deaths"] = old_age_deaths
         needs_crisis["deaths"].extend(old_age_deaths)
+        grief_notes: list[dict] = []
+        for entry in needs_crisis.get("deaths", []):
+            grief = entry.pop("mate_grief", None) if isinstance(entry, dict) else None
+            if grief:
+                grief_notes.append(grief)
+        if grief_notes:
+            needs_crisis["grief_notes"] = grief_notes
     expel_wolves_below_standing_threshold(guild_id)
     close_prey_piles_for_guild(guild_id)
     close_collab_hunts_for_guild(guild_id)
     close_collab_patrols_for_guild(guild_id)
-    rot_prey_stacks(guild_id, new_day)
-    rot_pack_prey_stacks(guild_id, new_day)
+    prey_rot_notes = rot_prey_stacks(guild_id, new_day)
+    pack_prey_rot_notes = rot_pack_prey_stacks(guild_id, new_day)
+    prey_spoilage = prey_rot_notes + pack_prey_rot_notes
+    if prey_spoilage:
+        needs_crisis["prey_spoilage"] = prey_spoilage
     rot_herb_stacks(guild_id, new_day)
     from engine.patron import process_invite_rollovers
 
@@ -4030,19 +4118,19 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         needs_crisis.setdefault("season_notes", []).extend(season_lines)
     if cache_notes:
         needs_crisis.setdefault("food_cache", []).extend(cache_notes)
+    plot_phase = get_plot_phase(guild_id)
     if sacred_notes:
         if plot_phase == 5:
             needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes + sacred_notes)
         else:
             needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
-    plot_phase = get_plot_phase(guild_id)
     if plot_phase > 0:
         from engine.plot_blinking import apply_plot_rollover_effects, plot_den_news_line
 
         with get_db() as conn:
             plot_notes = apply_plot_rollover_effects(conn, guild_id, new_day, plot_phase)
         if plot_notes:
-            needs_crisis.setdefault("season_notes", []).extend(plot_notes)
+            needs_crisis.setdefault("plot_notes", []).extend(plot_notes)
         plot_news = plot_den_news_line(plot_phase, new_day)
         if plot_news:
             needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
@@ -4105,8 +4193,9 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
 
 def _progress_conditions(guild_id: int) -> list[dict]:
     """Daily disease and injury progression for all wolves. Returns rollover notes."""
-    from engine.conditions import progress_disease, progress_injuries
+    from engine.conditions import progress_disease, progress_injuries, progress_mental_overlay
     from engine.exhaustion_effects import consume_march_exhaustion_skip
+    from engine.herb_buffs import get_buffs
 
     notes: list[dict] = []
     with get_db() as conn:
@@ -4115,86 +4204,109 @@ def _progress_conditions(guild_id: int) -> list[dict]:
         ).fetchall()
         for user in rows:
             outcome = progress_disease(user)
-            if not outcome.get("changed"):
-                continue
-            new_hp = user["hp"]
-            exhaustion = user["exhaustion"]
-            disease = outcome["new_stage"]
-            if outcome.get("cleared"):
-                disease = None
-                conn.execute("UPDATE users SET quarantined = 0 WHERE id = ?", (user["id"],))
-            if outcome.get("hp_loss"):
-                new_hp = max(0, user["hp"] - outcome["hp_loss"])
-            if outcome.get("exhaustion_gain"):
-                gain = outcome["exhaustion_gain"]
-                gain, _ = consume_march_exhaustion_skip(conn, user, gain)
-                from engine.exhaustion_effects import consume_pain_exhaustion_skip
+            if outcome.get("changed"):
+                new_hp = user["hp"]
+                exhaustion = user["exhaustion"]
+                disease = outcome["new_stage"]
+                if outcome.get("cleared"):
+                    disease = None
+                    conn.execute("UPDATE users SET quarantined = 0 WHERE id = ?", (user["id"],))
+                if outcome.get("hp_loss"):
+                    new_hp = max(0, user["hp"] - outcome["hp_loss"])
+                if outcome.get("exhaustion_gain"):
+                    gain = outcome["exhaustion_gain"]
+                    gain, _ = consume_march_exhaustion_skip(conn, user, gain)
+                    from engine.exhaustion_effects import consume_pain_exhaustion_skip
 
-                gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
-                if gain:
-                    exhaustion = min(6, user["exhaustion"] + gain)
-            if outcome.get("hunger_loss"):
-                conn.execute(
-                    "UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id = ?",
-                    (outcome["hunger_loss"], user["id"]),
-                )
-            if outcome.get("thirst_loss"):
-                conn.execute(
-                    "UPDATE users SET thirst = MAX(0, thirst - ?) WHERE id = ?",
-                    (outcome["thirst_loss"], user["id"]),
-                )
-            if outcome.get("mood_loss"):
-                conn.execute(
-                    "UPDATE users SET mood = MAX(0, mood - ?) WHERE id = ?",
-                    (outcome["mood_loss"], user["id"]),
-                )
-            if outcome.get("consume_disease_buff"):
-                from engine.herb_buffs import consume_disease_save_after_roll
-
-                buff_updates = consume_disease_save_after_roll(user)
-                if buff_updates:
+                    gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
+                    if gain:
+                        exhaustion = min(6, user["exhaustion"] + gain)
+                if outcome.get("hunger_loss"):
                     conn.execute(
-                        "UPDATE users SET disease_save_buff = ? WHERE id = ?",
-                        (buff_updates.get("disease_save_buff", 0), user["id"]),
+                        "UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id = ?",
+                        (outcome["hunger_loss"], user["id"]),
                     )
-            cond = user["condition"] if "condition" in user.keys() else "healthy"
-            collapsed = new_hp <= 0 and cond not in ("dead", "dying")
-            if collapsed:
-                conn.execute(
-                    """
-                    UPDATE users SET disease = ?, hp = 0, exhaustion = ?,
-                        condition = 'dying', death_save_round = 1,
-                        death_save_fails = 0, death_save_successes = 0,
-                        herb_heals_today = 0
-                    WHERE id = ?
-                    """,
-                    (disease, exhaustion, user["id"]),
-                )
-            else:
-                conn.execute(
-                    """
-                    UPDATE users SET disease = ?, hp = ?, exhaustion = ?,
-                        herb_heals_today = 0
-                    WHERE id = ?
-                    """,
-                    (disease, new_hp, exhaustion, user["id"]),
-                )
-            for line in outcome.get("messages", []):
-                notes.append(
-                    {
-                        "wolf_name": user["wolf_name"],
-                        "discord_id": user["discord_id"],
-                        "line": line,
-                    }
-                )
-            if collapsed:
-                notes.append(
-                    {
-                        "wolf_name": user["wolf_name"],
-                        "discord_id": user["discord_id"],
-                        "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
-                    }
-                )
+                if outcome.get("thirst_loss"):
+                    conn.execute(
+                        "UPDATE users SET thirst = MAX(0, thirst - ?) WHERE id = ?",
+                        (outcome["thirst_loss"], user["id"]),
+                    )
+                if outcome.get("mood_loss"):
+                    conn.execute(
+                        "UPDATE users SET mood = MAX(0, mood - ?) WHERE id = ?",
+                        (outcome["mood_loss"], user["id"]),
+                    )
+                if outcome.get("consume_disease_buff"):
+                    from engine.herb_buffs import consume_disease_save_after_roll
+
+                    buff_updates = consume_disease_save_after_roll(user)
+                    if buff_updates:
+                        conn.execute(
+                            "UPDATE users SET disease_save_buff = ? WHERE id = ?",
+                            (buff_updates.get("disease_save_buff", 0), user["id"]),
+                        )
+                cond = user["condition"] if "condition" in user.keys() else "healthy"
+                collapsed = new_hp <= 0 and cond not in ("dead", "dying")
+                if collapsed:
+                    conn.execute(
+                        """
+                        UPDATE users SET disease = ?, hp = 0, exhaustion = ?,
+                            condition = 'dying', death_save_round = 1,
+                            death_save_fails = 0, death_save_successes = 0,
+                            herb_heals_today = 0
+                        WHERE id = ?
+                        """,
+                        (disease, exhaustion, user["id"]),
+                    )
+                else:
+                    conn.execute(
+                        """
+                        UPDATE users SET disease = ?, hp = ?, exhaustion = ?,
+                            herb_heals_today = 0
+                        WHERE id = ?
+                        """,
+                        (disease, new_hp, exhaustion, user["id"]),
+                    )
+                for line in outcome.get("messages", []):
+                    notes.append(
+                        {
+                            "wolf_name": user["wolf_name"],
+                            "discord_id": user["discord_id"],
+                            "line": line,
+                        }
+                    )
+                if collapsed:
+                    notes.append(
+                        {
+                            "wolf_name": user["wolf_name"],
+                            "discord_id": user["discord_id"],
+                            "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
+                        }
+                    )
+                user = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+
+            if user and get_buffs(user).get("mental_disease"):
+                overlay = progress_mental_overlay(user)
+                if overlay.get("changed"):
+                    if overlay.get("mood_loss"):
+                        conn.execute(
+                            "UPDATE users SET mood = MAX(0, mood - ?) WHERE id = ?",
+                            (overlay["mood_loss"], user["id"]),
+                        )
+                    buff_fields = overlay.get("buff_fields") or {}
+                    if buff_fields.get("herb_buffs") is not None:
+                        conn.execute(
+                            "UPDATE users SET herb_buffs = ? WHERE id = ?",
+                            (buff_fields["herb_buffs"], user["id"]),
+                        )
+                    for line in overlay.get("messages", []):
+                        notes.append(
+                            {
+                                "wolf_name": user["wolf_name"],
+                                "discord_id": user["discord_id"],
+                                "line": line,
+                            }
+                        )
 
         inj_rows = conn.execute(
             """
@@ -4900,12 +5012,19 @@ def _credit_daily_objectives_conn(
     if guild_id is not None:
         from engine.plot_quests import plot_quest_available
     done_today = {
-        "forage": int(user["last_forage_day"]) >= day,
-        "verge_forage": int(user["last_verge_forage_day"] if "last_verge_forage_day" in user.keys() else 0) >= day,
+        "forage": int(user["last_forage_day"]) >= day
+        or int(user["last_verge_forage_day"] if "last_verge_forage_day" in user.keys() else 0)
+        >= day,
         "hunt": int(user["last_hunt_day"]) >= day,
         "scavenge": int(user["last_scavenge_day"]) >= day,
         "track": int(user["last_track_day"]) >= day,
         "fishing": int(user["last_fishing_day"]) >= day,
+        "sniff": int(user["last_sniff_day"] if "last_sniff_day" in user.keys() else 0) >= day,
+        "patrol": int(user["last_patrol_day"] if "last_patrol_day" in user.keys() else 0) >= day,
+        "explore": int(user["last_explore_day"] if "last_explore_day" in user.keys() else 0) >= day,
+        "howl": int(user["last_howl_day"] if "last_howl_day" in user.keys() else 0) >= day,
+        "crime": int(user["last_crime_day"] if "last_crime_day" in user.keys() else 0) >= day,
+        "survey": int(user["last_survey_day"] if "last_survey_day" in user.keys() else 0) >= day,
     }
     for objective_type, completed in done_today.items():
         if not completed:
@@ -5114,7 +5233,7 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
             uq = conn.execute(
                 """
                 SELECT uq.*, q.key AS quest_key, q.title, q.reward_bones, q.standing_reward,
-                       q.objective_count, q.objective_type
+                       q.objective_count, q.objective_type, q.difficulty
                 FROM user_quests uq
                 JOIN quests q ON q.id = uq.quest_id
                 WHERE uq.wolf_id = ? AND uq.quest_id = ? AND uq.status = 'active'
@@ -5125,7 +5244,7 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
             uq = conn.execute(
                 """
                 SELECT uq.*, q.key AS quest_key, q.title, q.reward_bones, q.standing_reward,
-                       q.objective_count, q.objective_type
+                       q.objective_count, q.objective_type, q.difficulty
                 FROM user_quests uq
                 JOIN quests q ON q.id = uq.quest_id
                 WHERE uq.wolf_id = ? AND uq.status = 'active' AND uq.progress >= q.objective_count
@@ -5155,9 +5274,11 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
     if user and user["pack_id"]:
         adjust_pack_unity(user["pack_id"], 1)
 
-    from config import QUEST_SKILL_REWARDS, QUEST_XP_REWARDS
+    from config import QUEST_SKILL_REWARDS
+    from engine.quest_rewards import quest_xp_reward
 
-    xp_gain = QUEST_XP_REWARDS.get(uq["quest_key"], 1)
+    diff = uq["difficulty"] if "difficulty" in uq.keys() else None
+    xp_gain = quest_xp_reward(uq["quest_key"], difficulty=diff)
     add_xp(discord_id, xp_gain)
     skill_reward = QUEST_SKILL_REWARDS.get(uq["quest_key"])
     if skill_reward:
@@ -5268,6 +5389,21 @@ def get_active_war_for_pack(guild_id: int, pack_id: int) -> sqlite3.Row | None:
         ).fetchone()
 
 
+def get_active_war_between_packs(
+    guild_id: int, pack_a: int, pack_b: int
+) -> sqlite3.Row | None:
+    """Active territory war contested by both Great Packs, if any."""
+    if not pack_a or not pack_b or int(pack_a) == int(pack_b):
+        return None
+    war = get_active_war_for_pack(guild_id, int(pack_a))
+    if not war or not war["defender_pack_id"]:
+        return None
+    pair = {int(war["attacker_pack_id"]), int(war["defender_pack_id"])}
+    if pair == {int(pack_a), int(pack_b)}:
+        return war
+    return None
+
+
 def start_war(
     guild_id: int,
     territory_id: int,
@@ -5362,6 +5498,16 @@ def resolve_war(war_id: int) -> str | None:
             (war_id,),
         ).fetchone()
         if not war:
+            return None
+        world = conn.execute(
+            "SELECT day_number FROM world_state WHERE guild_id = ?",
+            (war["guild_id"],),
+        ).fetchone()
+        if (
+            world
+            and "end_day" in war.keys()
+            and int(world["day_number"]) < int(war["end_day"])
+        ):
             return None
         return _adjudicate_war(conn, war)
 
@@ -5788,7 +5934,13 @@ def adjust_pack_relation(guild_id: int, pack_a: int, pack_b: int, delta: int) ->
             """,
             (guild_id, a, b, standing),
         )
-        return standing
+    if standing <= 0:
+        from engine.pack_relations import maybe_declare_relation_war
+
+        world = get_world(guild_id)
+        day = int(world["day_number"]) if world else 0
+        maybe_declare_relation_war(guild_id, a, b, day)
+    return standing
 
 
 def list_pack_relations(guild_id: int, pack_id: int) -> list[sqlite3.Row]:
@@ -5805,6 +5957,78 @@ def list_pack_relations(guild_id: int, pack_id: int) -> list[sqlite3.Row]:
             """,
             (pack_id, pack_id, guild_id, pack_id, pack_id),
         ).fetchall()
+
+
+def upsert_scent_mark(
+    guild_id: int,
+    territory_key: str,
+    pack_key: str,
+    marker_wolf_id: int,
+    marked_day: int,
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO scent_marks (guild_id, territory_key, pack_key, marker_wolf_id, marked_day)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(guild_id, territory_key, pack_key)
+            DO UPDATE SET marker_wolf_id = excluded.marker_wolf_id,
+                          marked_day = excluded.marked_day
+            """,
+            (guild_id, territory_key.strip().lower(), pack_key, marker_wolf_id, marked_day),
+        )
+
+
+def get_scent_marks_for_pack(guild_id: int, pack_key: str, *, since_day: int = 0) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT sm.*, t.name AS territory_name
+            FROM scent_marks sm
+            LEFT JOIN territories t ON t.guild_id = sm.guild_id AND t.key = sm.territory_key
+            WHERE sm.guild_id = ? AND sm.pack_key = ? AND sm.marked_day >= ?
+            ORDER BY sm.marked_day DESC
+            """,
+            (guild_id, pack_key, since_day),
+        ).fetchall()
+
+
+def pack_diplomacy_done_today(
+    guild_id: int,
+    pack_a: int,
+    pack_b: int,
+    action: str,
+    day: int,
+) -> bool:
+    a, b = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT 1 FROM pack_diplomacy_log
+            WHERE guild_id = ? AND pack_a_id = ? AND pack_b_id = ? AND action = ? AND action_day = ?
+            """,
+            (guild_id, a, b, action, day),
+        ).fetchone()
+        return row is not None
+
+
+def record_pack_diplomacy(
+    guild_id: int,
+    pack_a: int,
+    pack_b: int,
+    action: str,
+    day: int,
+) -> None:
+    a, b = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO pack_diplomacy_log
+            (guild_id, pack_a_id, pack_b_id, action, action_day)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (guild_id, a, b, action, day),
+        )
 
 
 # --- Cat clan pacts (pack treaties) ---
@@ -6010,6 +6234,8 @@ def reconcile_encounter_if_broken(encounter_id: int) -> bool:
 
     fighters = get_combat_fighters(encounter_id)
     if not fighters:
+        if enc["status"] == "recruiting":
+            return False
         end_encounter(encounter_id)
         return True
 
@@ -6743,7 +6969,9 @@ def advance_combat_turn(encounter_id: int) -> None:
         enc = conn.execute(
             "SELECT * FROM combat_encounters WHERE id = ?", (encounter_id,)
         ).fetchone()
-        order = json.loads(enc["turn_order"])
+        if not enc:
+            return
+        order = json.loads(enc["turn_order"] or "[]")
         if not order:
             return
         hp_map = {
@@ -6831,13 +7059,27 @@ def yield_fighter(encounter_id: int, fighter_id: int) -> str:
                 (encounter_id,),
             ):
                 _sync_fighter_hp_to_user(conn, row, row["hp"])
+            from engine.ambush_activity import finalize_ambush_activity
+
+            finalize_ambush_activity(encounter_id)
             conn.execute(
                 "UPDATE combat_encounters SET status = 'ended' WHERE id = ?",
                 (encounter_id,),
             )
+            conn.execute(
+                "DELETE FROM combat_target_picks WHERE encounter_id = ?",
+                (encounter_id,),
+            )
             return "ended"
 
-        new_order = [row["id"] for row in remaining]
+        remaining_ids = [row["id"] for row in remaining]
+        # Preserve the established turn order minus the yielded fighter; append
+        # any fighters not yet placed (e.g. mid-join) in initiative order.
+        new_order = [fid for fid in old_order if fid in remaining_ids and fid != fighter_id]
+        for fid in remaining_ids:
+            if fid not in new_order:
+                new_order.append(fid)
+
         if enc["status"] != "active":
             conn.execute(
                 "UPDATE combat_encounters SET turn_order = ? WHERE id = ?",
@@ -7105,6 +7347,10 @@ def apply_death_save_result(discord_id: int, success: bool, nat20: bool = False)
 
     if not success:
         set_user_conditions(discord_id, condition="dead")
+        user = get_user(discord_id)
+        if user:
+            with get_db() as conn:
+                handle_mate_grief_on_wolf_death(conn, user["id"])
         return "died"
 
     round_num = user["death_save_round"] or 1
@@ -7300,6 +7546,33 @@ def clear_bonded_mates(wolf_id: int) -> None:
         partner = get_user_by_id(partner_id)
         if partner and partner["bonded_mate_id"] == wolf_id:
             update_user(partner["discord_id"], wolf_id=partner_id, bonded_mate_id=None)
+
+
+def handle_mate_grief_on_wolf_death(conn: sqlite3.Connection, dead_wolf_id: int) -> dict | None:
+    """Clear mate bond and roll grief for the surviving partner."""
+    dead = conn.execute("SELECT * FROM users WHERE id = ?", (dead_wolf_id,)).fetchone()
+    if not dead:
+        return None
+    partner_id = dead["bonded_mate_id"] if "bonded_mate_id" in dead.keys() else None
+    if not partner_id:
+        return None
+    partner = conn.execute("SELECT * FROM users WHERE id = ?", (partner_id,)).fetchone()
+    conn.execute(
+        "UPDATE users SET bonded_mate_id = NULL WHERE id IN (?, ?)",
+        (dead_wolf_id, partner_id),
+    )
+    if not partner or partner["condition"] in ("dead", "dying"):
+        return None
+    from engine.disease_contract import try_grief_on_bond_loss
+
+    note = try_grief_on_bond_loss(partner, bond_type="mate")
+    if not note:
+        return None
+    return {
+        "wolf_name": partner["wolf_name"],
+        "discord_id": partner["discord_id"],
+        "line": note,
+    }
 
 
 def clear_pregnancy(wolf_id: int) -> None:
@@ -8425,8 +8698,7 @@ def pick_prey_stack_for_pile(wolf_id: int, day: int) -> sqlite3.Row | None:
     if not stacks:
         return None
     fresh = [s for s in stacks if not s["is_rotting"]]
-    pool = fresh or list(stacks)
-    return pool[0]
+    return fresh[0] if fresh else None
 
 
 def update_prey_stack_uses(stack_id: int, uses_left: int) -> None:
@@ -8445,27 +8717,49 @@ def remove_prey_stack(stack_id: int) -> None:
         conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack_id,))
 
 
-def rot_prey_stacks(guild_id: int, day: int) -> int:
-    """Mark rotting prey and delete spoiled carcasses. Returns count removed."""
+def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
+    """Mark rotting prey, delete spoiled carcasses. Returns rollover notes for owners."""
     from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, prey_meta
 
-    removed = 0
+    notes: list[dict] = []
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT * FROM prey_stacks WHERE guild_id = ?", (guild_id,)
+            """
+            SELECT ps.*, u.wolf_name, u.discord_id
+            FROM prey_stacks ps
+            JOIN users u ON u.id = ps.wolf_id
+            WHERE ps.guild_id = ?
+            """,
+            (guild_id,),
         ).fetchall()
         for stack in rows:
             age = day - stack["acquired_day"]
             rot_days = prey_meta(stack["prey_key"]).get("rot_days", 5)
+            meta = prey_meta(stack["prey_key"])
             if age >= rot_days + PREY_ROTTEN_GRACE_DAYS:
                 conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack["id"],))
-                removed += 1
+                notes.append(
+                    {
+                        "wolf_name": stack["wolf_name"],
+                        "discord_id": stack["discord_id"],
+                        "line": f"**{meta['name']}** spoiled and was dragged from the hoard.",
+                    }
+                )
             elif age >= rot_days and not stack["is_rotting"]:
                 conn.execute(
                     "UPDATE prey_stacks SET is_rotting = 1 WHERE id = ?",
                     (stack["id"],),
                 )
-    return removed
+                notes.append(
+                    {
+                        "wolf_name": stack["wolf_name"],
+                        "discord_id": stack["discord_id"],
+                        "line": (
+                            f"**{meta['name']}** is **rotting** (`/prey` — eat at risk or `/salvage`)."
+                        ),
+                    }
+                )
+    return notes
 
 
 # --- Pack food reserve (shared den stash, slower rot) ---
@@ -8690,28 +8984,56 @@ def update_pack_season_goal(pack_id: int, **fields) -> None:
         )
 
 
-def rot_pack_prey_stacks(guild_id: int, day: int) -> int:
-    """Rot pack reserve carcasses; slower than personal hoard."""
+def rot_pack_prey_stacks(guild_id: int, day: int) -> list[dict]:
+    """Rot pack reserve carcasses; slower than personal hoard. Returns rollover notes."""
     from config import PACK_STASH_ROT_BONUS_DAYS
     from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, prey_meta
 
+    notes: list[dict] = []
     removed = 0
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT * FROM pack_prey_stacks WHERE guild_id = ?", (guild_id,)
+            """
+            SELECT ps.*, p.name AS pack_name
+            FROM pack_prey_stacks ps
+            JOIN packs p ON p.id = ps.pack_id
+            WHERE ps.guild_id = ?
+            """,
+            (guild_id,),
         ).fetchall()
         for stack in rows:
             age = day - stack["acquired_day"]
-            rot_days = prey_meta(stack["prey_key"]).get("rot_days", 5) + PACK_STASH_ROT_BONUS_DAYS
+            meta = prey_meta(stack["prey_key"])
+            rot_days = meta.get("rot_days", 5) + PACK_STASH_ROT_BONUS_DAYS
+            pack_label = stack["pack_name"] if stack["pack_name"] else "Den"
             if age >= rot_days + PREY_ROTTEN_GRACE_DAYS:
                 conn.execute("DELETE FROM pack_prey_stacks WHERE id = ?", (stack["id"],))
                 removed += 1
+                notes.append(
+                    {
+                        "wolf_name": pack_label,
+                        "discord_id": None,
+                        "line": (
+                            f"Den reserve **{meta['name']}** spoiled and was cleared from `/pack stash`."
+                        ),
+                    }
+                )
             elif age >= rot_days and not stack["is_rotting"]:
                 conn.execute(
                     "UPDATE pack_prey_stacks SET is_rotting = 1 WHERE id = ?",
                     (stack["id"],),
                 )
-    return removed
+                notes.append(
+                    {
+                        "wolf_name": pack_label,
+                        "discord_id": None,
+                        "line": (
+                            f"Den reserve **{meta['name']}** is **rotting** "
+                            "(`/pack stash` — communal feed at gut-sickness risk)."
+                        ),
+                    }
+                )
+    return notes
 
 
 # --- Amusement toys ---
@@ -9048,14 +9370,15 @@ def add_collab_hunt_member(
     wolf_id: int,
     wolf_name: str,
     discord_id: int,
+    hunt_role: str = "flank",
 ) -> None:
     with get_db() as conn:
         conn.execute(
             """
-            INSERT OR IGNORE INTO collab_hunt_members (hunt_id, wolf_id, wolf_name, discord_id)
-            VALUES (?, ?, ?, ?)
+            INSERT OR IGNORE INTO collab_hunt_members (hunt_id, wolf_id, wolf_name, discord_id, hunt_role)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (hunt_id, wolf_id, wolf_name, discord_id),
+            (hunt_id, wolf_id, wolf_name, discord_id, hunt_role),
         )
 
 

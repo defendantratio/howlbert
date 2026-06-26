@@ -63,6 +63,10 @@ def disease_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
         return 0, "attr_con" in attrs
     if key == "mange":
         return 0, "attr_dex" in attrs
+    if key == "mild_poison":
+        return 0, bool(attrs & {"attr_dex", "attr_con"})
+    if key == "poison_ivy":
+        return 0, "attr_dex" in attrs
     if key == "rabies":
         from engine.mental_effects import mental_check_adjustments
 

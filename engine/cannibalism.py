@@ -49,6 +49,17 @@ def cannibalism_eat_consequences(user, prey_key: str) -> str:
         return ""
     db.adjust_mood(user["id"], -CANNIBALISM_EAT_MOOD_PENALTY)
     msg = f"\nThe taste lingers; mood **−{CANNIBALISM_EAT_MOOD_PENALTY}**."
+    from engine.disease_contract import try_contract_disease
+
+    filth_roll = random.random()
+    if filth_roll < 0.18:
+        sick = try_contract_disease(user, "hepatitis", chance=1.0)
+        if sick:
+            msg += f"\nWolf flesh carries rot in the gut; {sick}"
+    elif filth_roll < 0.24:
+        sick = try_contract_disease(user, "wasting_sickness", "waning", chance=1.0)
+        if sick:
+            msg += f"\nSomething wrong settles in the marrow; {sick}"
     if random.randint(1, 100) > CANNIBALISM_CAUGHT_CHANCE:
         return msg
     if not user["pack_id"]:

@@ -308,3 +308,63 @@ def apply_unfed_pup_penalty_on_rollover(conn, day_ending: int) -> list[dict]:
                 }
             )
     return notes
+
+
+def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
+    """Nursing mothers and pregnant females burn extra calories each sunrise."""
+    from config import MOTHER_NURSE_HUNGER_COST_PER_PUP, PUP_MAX_MOONS
+
+    PREGNANCY_HUNGER = 5
+    PREGNANCY_THIRST = 4
+    NURSING_THIRST_PER_PUP = 2
+
+    notes: list[dict] = []
+    rows = conn.execute(
+        """
+        SELECT id, wolf_name, discord_id, hunger, thirst, is_pregnant
+        FROM users
+        WHERE condition NOT IN ('dead', 'dying')
+          AND birth_sex = 'female'
+        """
+    ).fetchall()
+    for row in rows:
+        hunger_loss = 0
+        thirst_loss = 0
+        parts: list[str] = []
+        if int(row["is_pregnant"]):
+            hunger_loss += PREGNANCY_HUNGER
+            thirst_loss += PREGNANCY_THIRST
+            parts.append("gestation")
+        pup_row = conn.execute(
+            """
+            SELECT COUNT(*) AS c FROM users
+            WHERE bio_parent_1_id = ?
+              AND age_months < ?
+              AND condition NOT IN ('dead', 'dying')
+            """,
+            (row["id"], PUP_MAX_MOONS),
+        ).fetchone()
+        pup_count = int(pup_row["c"]) if pup_row else 0
+        if pup_count:
+            hunger_loss += pup_count * MOTHER_NURSE_HUNGER_COST_PER_PUP
+            thirst_loss += pup_count * NURSING_THIRST_PER_PUP
+            parts.append(f"nursing {pup_count} pup(s)")
+        if not hunger_loss and not thirst_loss:
+            continue
+        new_hunger = max(0, int(row["hunger"]) - hunger_loss)
+        new_thirst = max(0, int(row["thirst"]) - thirst_loss)
+        conn.execute(
+            "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
+            (new_hunger, new_thirst, row["id"]),
+        )
+        notes.append(
+            {
+                "wolf_name": row["wolf_name"],
+                "discord_id": row["discord_id"],
+                "line": (
+                    f"extra drain from {' and '.join(parts)} "
+                    f"(hunger **−{hunger_loss}**, thirst **−{thirst_loss}**)."
+                ),
+            }
+        )
+    return notes

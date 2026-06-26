@@ -11,8 +11,19 @@ from engine.dice import format_roll_result, resolve_check
 from engine.role_content import pick_prophecy, pick_role_event
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.views import make_quest_accept_view
+
+
+def _standing_note(kick: str, user) -> str:
+    from engine.broken_canine import standing_expulsion_note
+
+    pack_id = user["pack_id"] if user and "pack_id" in user.keys() else None
+    note = standing_expulsion_note(kick, pack_id)
+    if note:
+        return note if note.startswith("\n") else f"\n\n{note}"
+    return ""
 
 
 class RoleCog(commands.Cog):
@@ -42,7 +53,7 @@ class RoleCog(commands.Cog):
     async def _rolequests(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
 
         role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
@@ -55,7 +66,8 @@ class RoleCog(commands.Cog):
                 "No role quests available right now. You may have finished them all, "
                 "or none are posted for your path yet.",
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed.set_footer(text="/role action:event · once per sunrise")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed(
@@ -75,15 +87,18 @@ class RoleCog(commands.Cog):
                 inline=False,
             )
         view = make_quest_accept_view(rows[:8])
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        feature = ROLE_FEATURES.get(role)
+        if feature:
+            embed.set_footer(text=f"{label} · {feature}")
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 
     async def _roleevent(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         from engine.blooding import blooding_gate_message
@@ -91,7 +106,8 @@ class RoleCog(commands.Cog):
         gate = blooding_gate_message(user)
         if gate:
             embed = howlbert_embed("Not Blooded", gate, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed.set_footer(text="/bones action:hunt · first kill earns blooding")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -102,7 +118,7 @@ class RoleCog(commands.Cog):
                 "Your role's story for this rollover has played out. Wait for the den to roll over.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
@@ -134,16 +150,14 @@ class RoleCog(commands.Cog):
             db.add_bones(interaction.user.id, event["bones"])
             if event.get("standing"):
                 kick = db.adjust_wolf_standing(interaction.user.id, event["standing"])
-                if kick == "kicked":
-                    outcome += "\n\n**Cast out**; your standing fell too low. You walk as a **loner** now."
+                outcome += _standing_note(kick, user)
             color = SUCCESS_COLOR
         else:
             outcome = event["failure"]
             color = ERROR_COLOR
             if event.get("standing_fail"):
                 kick = db.adjust_wolf_standing(interaction.user.id, event["standing_fail"])
-                if kick == "kicked":
-                    outcome += "\n\n**Cast out**; the den will not keep you. You are a **loner** now."
+                outcome += _standing_note(kick, user)
 
         db.update_user(interaction.user.id, wolf_id=user["id"], last_role_event_day=day)
 
@@ -170,12 +184,14 @@ class RoleCog(commands.Cog):
             if len(footer) > 256:
                 footer = footer[:253] + "…"
             embed.set_footer(text=footer)
+        else:
+            embed.set_footer(text="/world action:cooldowns · once per sunrise")
         await interaction.response.send_message(embed=embed)
 
     async def _prophecy(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
         if role != "drown_sick":
@@ -185,10 +201,10 @@ class RoleCog(commands.Cog):
                 f"Your role: **{ROLE_LABELS.get(role, role)}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(interaction.guild.id)
@@ -199,14 +215,14 @@ class RoleCog(commands.Cog):
                 "The Belly-Rip is quiet for you today. Return after the den rolls over.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.lexicon import season_display
 
         line = pick_prophecy()
-        season = season_display(world.get("season", "autumn"))
-        weather = world.get("weather", "fog")
+        season = season_display(db.row_val(world, "season", "autumn"))
+        weather = db.row_val(world, "weather", "fog")
         db.update_user(interaction.user.id, wolf_id=user["id"], last_prophecy_day=day)
         embed = howlbert_embed(
             "Prophecy from the Dark Water",

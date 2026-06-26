@@ -85,10 +85,10 @@ def main() -> None:
     back_ok = maneuver_pin_block(COMBAT_MANEUVERS["back_kick"], pinned, pinner)
     check("back kick allowed vs pinner", back_ok is None)
 
-    disadv, adv = attacker_roll_modifiers(_stats(), "bite", pinned, free)
+    disadv, adv, _ = attacker_roll_modifiers(_stats(), "bite", pinned, free)
     check("pinned attacker at disadvantage", disadv and not adv)
 
-    disadv2, adv2 = attacker_roll_modifiers(_stats(), "bite", free, pinned)
+    disadv2, adv2, _ = attacker_roll_modifiers(_stats(), "bite", free, pinned)
     check("attacks vs pinned have advantage", adv2 and not disadv2)
 
     reach = attack_target_block(pinned, free)

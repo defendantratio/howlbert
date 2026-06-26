@@ -26,7 +26,7 @@ from engine.hunt_combat import (
 )
 from engine.hunt_payout import grant_prey_carcass_canonical, hunt_flavor_for_payout, prey_key_for_payout
 from engine.injury_effects import hunt_blocked_by_injury
-from engine.role_privileges import can_hunt_again, hunts_remaining_today, is_hunter, record_hunt_use
+from engine.role_privileges import can_hunt_again, hunts_left_footer, is_hunter, record_hunt_use
 from engine.role_restrictions import young_wolf_block
 from engine.sniff import apply_sniff_bone_bonus
 from engine.vitals import full_activity_block
@@ -66,7 +66,7 @@ def _hunt_block_reason(user, day: int) -> str | None:
     inj = hunt_blocked_by_injury(user)
     if inj:
         return inj
-    vitals = full_activity_block(user)
+    vitals = full_activity_block(user, day, action="hunt")
     if vitals:
         return vitals
     if not can_hunt_again(user, day):
@@ -77,7 +77,7 @@ def _hunt_block_reason(user, day: int) -> str | None:
 
 
 def validate_start_collab_hunt(user, *, guild_id: int, day: int) -> str | None:
-    if not user.get("pack_id"):
+    if not db.row_val(user, "pack_id"):
         return "Join a Great Pack first; pack hunts are den business."
     reason = _hunt_block_reason(user, day)
     if reason:
@@ -91,7 +91,11 @@ def validate_join_collab_hunt(user, hunt, day: int) -> str | None:
     if hunt["status"] != "open":
         return "This pack hunt is no longer open."
     if user["pack_id"] != hunt["pack_id"]:
-        return "Only wolves in the same Great Pack can join."
+        from engine.pack_relations import can_join_friendly_pack_hunt
+
+        ok, _note = can_join_friendly_pack_hunt(user, hunt, guild_id=int(hunt["guild_id"]))
+        if not ok:
+            return "Only wolves in the same Great Pack can join (or **≥8** standing for allied hunts)."
     members = db.get_collab_hunt_members(hunt["id"])
     if any(m["wolf_id"] == user["id"] for m in members):
         return "This wolf is already on the hunt."
@@ -107,8 +111,6 @@ def wolves_eligible_to_join(discord_id: int, hunt_id: int, day: int) -> list:
     member_ids = {m["wolf_id"] for m in db.get_collab_hunt_members(hunt_id)}
     eligible = []
     for wolf in db.list_user_wolves(discord_id):
-        if wolf["pack_id"] != hunt["pack_id"]:
-            continue
         if wolf["id"] in member_ids:
             continue
         if validate_join_collab_hunt(wolf, hunt, day):
@@ -135,7 +137,9 @@ def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
             f"**Party** ({len(members)}/{COLLAB_HUNT_MAX_WOLVES}); need at least "
             f"**{COLLAB_HUNT_MIN_WOLVES}** to set out.\n"
             f"Each wolf spends one hunt this sunrise. "
-            f"+**{COLLAB_HUNT_BONUS_PCT_PER_WOLF}%** bones per extra hunter.\n"
+            f"+**{COLLAB_HUNT_BONUS_PCT_PER_WOLF}%** bones per extra hunter; "
+            "assign **leader / chaser / flank / scout / blocker** roles for chemistry.\n"
+            f"Allied dens at **≥8** standing may join. "
             f"Large prey and ambushes can still strike; the party fights together (+1 attack per ally, max +3)."
         )
         color = SUCCESS_COLOR
@@ -159,16 +163,37 @@ def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
     if members:
         lines = []
         for m in members:
+            role = m["hunt_role"] if "hunt_role" in m.keys() and m["hunt_role"] else "flank"
             tag = " (caller)" if m["wolf_id"] == hunt["leader_wolf_id"] else ""
             hunter = ""
             w = db.get_user_by_id(m["wolf_id"])
             if w and is_hunter(w):
                 hunter = " · Hunter"
-            lines.append(f"• **{m['wolf_name']}**{tag}{hunter}")
+            pack_tag = ""
+            if w and db.row_val(w, "pack_id") and int(w["pack_id"]) != int(hunt["pack_id"]):
+                ally = db.get_pack(int(w["pack_id"]))
+                if ally:
+                    pack_tag = f" · **{ally['name']}** ally"
+            lines.append(f"• **{m['wolf_name']}** · _{role}_{tag}{hunter}{pack_tag}")
         embed.add_field(name="Wolves", value="\n".join(lines), inline=False)
     if hunt["status"] == "open":
+        chemistry = ""
+        if len(members) >= 2:
+            from engine.hunt_party import collab_hunt_bond_modifiers
+
+            users = _party_users(hunt_id)
+            world = db.get_world(hunt["guild_id"])
+            season = world["season"] if world else None
+            bond_bonus, bond_note = collab_hunt_bond_modifiers(users, members, season=season)
+            if bond_note:
+                chemistry = f" · {bond_note.strip('_')}"
+            elif bond_bonus:
+                chemistry = f" · chemistry **+{bond_bonus}%**"
         embed.set_footer(
-            text=f"Join with the button · Caller sets out when ready · max {COLLAB_HUNT_MAX_WOLVES} wolves"
+            text=(
+                f"Join with the button · Caller sets out when ready · max {COLLAB_HUNT_MAX_WOLVES} wolves"
+                f"{chemistry}"
+            )
         )
     return embed
 
@@ -212,9 +237,20 @@ def payout_collab_hunt(
     weather = world["weather"]
     season = world["season"]
     users = _party_users(hunt_id)
+    members = db.get_collab_hunt_members(hunt_id)
     leader = db.get_user_by_id(hunt["leader_wolf_id"])
 
     base, bonus_pct = _compute_collab_base(users, fixed_base=fixed_base)
+    from engine.hunt_party import collab_hunt_bond_modifiers
+
+    bond_bonus, bond_note = collab_hunt_bond_modifiers(users, members, season=season)
+    if bond_bonus == -100:
+        base = 0
+        bonus_pct = 0
+    elif bond_bonus > 0:
+        bonus_pct += bond_bonus
+    elif bond_bonus < 0:
+        base = max(0, int(base * (100 + bond_bonus) / 100))
     share = base // len(users) if users else 0
     remainder = base - share * len(users)
 
@@ -238,13 +274,22 @@ def payout_collab_hunt(
             parts.append(f"sniff +{sniff_bonus}")
         if lucky_bonus:
             parts.append(f"lucky +{lucky_bonus}")
+        fresh = db.get_user(user["discord_id"])
+        from engine.activity_exhaustion import apply_activity_fatigue
+        from engine.role_privileges import hunts_used_today
+
+        fatigue = apply_activity_fatigue(
+            fresh, "hunt", "hunting", day, activity_count=hunts_used_today(fresh, day)
+        )
+        if fatigue:
+            parts.append(fatigue.replace("**", ""))
         lines.append(" · ".join(parts))
         if payout > 0:
             award_blooding_on_hunt(user)
 
     db.adjust_pack_unity(hunt["pack_id"], 1)
 
-    prey_key = prey_key_for_payout(total_payout) if total_payout > 0 else None
+    prey_key = prey_key_for_payout(total_payout, user=leader, season=season) if total_payout > 0 else None
     prey_name = None
     if prey_key and leader:
         prey_name = grant_prey_carcass_canonical(
@@ -266,6 +311,8 @@ def payout_collab_hunt(
         flavor = hunt_flavor_for_payout(total_payout, prey_key) + "\n\n" + flavor
     if encounter_note:
         flavor = encounter_note + "\n\n" + flavor
+    if bond_note:
+        flavor = bond_note + "\n\n" + flavor
 
     bonus_note = f"+{bonus_pct}% pack bonus"
     if users and all(is_hunter(u) for u in users):
@@ -278,15 +325,20 @@ def payout_collab_hunt(
     )
     if prey_name and leader:
         result_text += (
-            f"\n**{prey_name}** laid at the den; **fresh-kill cache** opens for the pack (`/preypile` style)."
+            f"\n**{prey_name}** in the caller's hoard (`/prey`) — "
+            f"use `/preypile` to lay fresh-kill out for the den."
         )
 
     db.set_collab_hunt_status(hunt_id, "done", result_text=result_text)
     embed = build_collab_hunt_embed(hunt_id)
-    if leader and is_hunter(leader):
-        left = hunts_remaining_today(leader, day)
-        if left > 0:
-            embed.set_footer(text=f"Hunter: {left} hunt(s) left this sunrise for the caller")
+    if leader:
+        leader = db.get_user_by_id(hunt["leader_wolf_id"])
+        footer = f"{hunts_left_footer(leader, day)} for the caller"
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(leader):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
+        embed.set_footer(text=footer)
     return embed
 
 
@@ -356,7 +408,7 @@ def try_set_out_collab_hunt(hunt_id: int) -> tuple[discord.Embed | None, str | N
         enc_id, template_key, flavor = ambush
         db.set_encounter_collab_hunt(enc_id, hunt_id)
         db.set_collab_hunt_status(hunt_id, "encounter")
-        embed = ambush_embed(template_key, flavor)
+        embed = ambush_embed(template_key, flavor, leader, activity="hunt")
         embed.set_footer(
             text=f"{party_note} · ~{HUNT_WILD_ENCOUNTER_CHANCE}% ambush · win to finish · flee keeps hunts"
         )
@@ -432,24 +484,6 @@ async def complete_collab_hunt_large_prey(
     )
     db.mark_hunt_prey_rewarded(enc_id)
     db.end_encounter(enc_id)
-
-    if leader:
-        from cogs.prey_pile import post_prey_pile_to_channel
-        from engine.prey_items import prey_meta
-
-        stack = db.pick_prey_stack_for_pile(leader["id"], world["day_number"])
-        pile_bones = stack["bone_value"] if stack else fixed_base
-        pile_label = prey_meta(stack["prey_key"])["label"] if stack else "large prey"
-        if stack:
-            db.remove_prey_stack(stack["id"])
-        await post_prey_pile_to_channel(
-            bot,
-            channel,
-            leader,
-            prey_bones=pile_bones,
-            prey_label=pile_label,
-            day_number=world["day_number"],
-        )
 
     hunt = db.get_collab_hunt(hunt_id)
     if hunt and hunt["message_id"]:

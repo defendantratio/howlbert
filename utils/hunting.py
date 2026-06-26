@@ -17,6 +17,13 @@ def apply_weather(amount: int, weather: str) -> int:
     return max(0, int(amount * (100 + modifier) / 100))
 
 
+def weather_hunt_modifier_label(weather: str) -> str | None:
+    mod = WEATHER_HUNT_MODIFIERS.get(weather, 0)
+    if mod == 0:
+        return None
+    return f"{mod:+d}% hunt bones ({weather})"
+
+
 def apply_pack_tax(amount: int, pack_id: int | None) -> tuple[int, int]:
     if amount <= 0 or not pack_id:
         return amount, 0
@@ -27,6 +34,17 @@ def apply_pack_tax(amount: int, pack_id: int | None) -> tuple[int, int]:
     if tax > 0:
         db.add_pack_treasury(pack_id, tax)
     return amount - tax, tax
+
+
+def pack_tax_treasury_note(tax: int, pack_id: int | None) -> str:
+    """Short footer fragment when hunt/work earnings include pack tax."""
+    if tax <= 0:
+        return ""
+    if pack_id:
+        pack = db.get_pack(pack_id)
+        if pack:
+            return f"**{tax}🦴** to **{pack['name']}** treasury (`/pack treasury`)"
+    return f"**{tax}🦴** to den treasury (`/pack treasury`)"
 
 
 def award_bones(
@@ -79,6 +97,9 @@ def award_bones(
         db.increment_quest_progress(user["discord_id"], activity, wolf_id=user["id"], guild_id=guild_id)
     if activity == "hunt":
         db.record_hunt(user["discord_id"])
+    tax_note = pack_tax_treasury_note(tax, user["pack_id"])
+    if tax_note:
+        season_note = f"{season_note} · {tax_note}" if season_note else tax_note
     return net, tax, amount, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note
 
 

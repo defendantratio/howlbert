@@ -44,6 +44,7 @@ from engine.cat_clans import (
 )
 from engine.character import parse_proficiencies
 from engine.dice import format_roll_result, resolve_check
+from engine.apprentice_roles import parent_role
 from engine.pack_leadership import can_forge_cat_pact, wolf_role_key
 
 PACT_TYPE_LABELS = {
@@ -161,10 +162,17 @@ def pick_border_cat_for_pack(
     return template, pick_rival_clan(allied), False
 
 
-def format_pact_line(pact) -> str:
+def format_pact_line(pact, *, current_day: int | None = None) -> str:
     label = PACT_TYPE_LABELS.get(pact["pact_type"], pact["pact_type"].title())
     trust = int(pact["trust"])
-    days_left = max(0, int(pact["expires_day"]) - int(pact.get("current_day", pact["expires_day"])))
+    if current_day is None:
+        if isinstance(pact, dict):
+            current_day = pact.get("current_day")
+        elif "current_day" in pact.keys():
+            current_day = int(pact["current_day"])
+    if current_day is None:
+        current_day = int(pact["forged_day"]) if "forged_day" in pact.keys() else 0
+    days_left = max(0, int(pact["expires_day"]) - int(current_day))
     tier = "steady" if trust >= CAT_PACT_TRUST_HIGH else ("strained" if trust < CAT_PACT_TRUST_LOW else "holding")
     note = f"; _{pact['terms_note']}_" if pact["terms_note"] else ""
     return (
@@ -180,9 +188,9 @@ def format_pacts_body(guild_id: int, pack_id: int, *, day: int) -> str:
             "No cat pacts on the scent-line.\n\n"
             f"**`/pack pact action:forge`**; Alpha or **Diplomat** negotiates with "
             f"{format_four_clans()}.\n"
-            "**`action:receive`**; collect border gifts from a **Clan patrol** "
+            "**`/pack pact action:receive`**; collect border gifts from a **Clan patrol** "
             "(trust **35+**, once per wolf per sunrise).\n"
-            "**`action:trade`**; barter duplicate hoard items for Clan prey, herbs, and toys.\n\n"
+            "**`/pack pact action:trade`**; barter duplicate hoard items for Clan prey, herbs, and toys.\n\n"
             f"{SETTING_TAGLINE}"
         )
     lines = []
@@ -200,7 +208,12 @@ def format_pacts_body(guild_id: int, pack_id: int, *, day: int) -> str:
 
 def _negotiate_check(user, dc: int, *, game_day: int | None = None) -> dict:
     profs = parse_proficiencies(user["skill_proficiencies"])
-    bonus = CAT_PACT_DIPLOMAT_NEGOTIATE_BONUS if wolf_role_key(user) == "diplomat" else 0
+    role = wolf_role_key(user)
+    bonus = 0
+    if role == "diplomat":
+        bonus = CAT_PACT_DIPLOMAT_NEGOTIATE_BONUS
+    elif parent_role(role) == "diplomat":
+        bonus = max(1, CAT_PACT_DIPLOMAT_NEGOTIATE_BONUS - 1)
     result = resolve_check(
         user,
         attr_keys=("attr_cha", "attr_wis"),

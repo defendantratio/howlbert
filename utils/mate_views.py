@@ -6,6 +6,7 @@ import discord
 
 import database as db
 from engine.mating import execute_mating, mating_embed_title
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -19,7 +20,7 @@ class MateConsentView(discord.ui.View):
         if not pending or pending["status"] != "pending":
             await interaction.response.send_message(
                 embed=howlbert_embed("Expired", "This mating request is no longer active.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -30,7 +31,7 @@ class MateConsentView(discord.ui.View):
                     "Only the invited partner can accept or decline.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -40,7 +41,7 @@ class MateConsentView(discord.ui.View):
             db.set_pending_mate_status(self.pending_id, "expired")
             await interaction.response.send_message(
                 embed=howlbert_embed("Invalid", "One of the wolves no longer exists.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -67,7 +68,7 @@ class MateConsentView(discord.ui.View):
                     "Mating season ended before you could respond.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -75,10 +76,10 @@ class MateConsentView(discord.ui.View):
             await interaction.response.send_message(
                 embed=howlbert_embed(
                     "Not Receptive",
-                    "You are no longer receptive; they must `/court` you again.",
+                    "You are no longer receptive; they must `/courtship action:court` you again.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 

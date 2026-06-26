@@ -19,10 +19,22 @@ def grant_amusement(wolf_id: int, item_key: str) -> int:
 
 def format_amusement_line(stack) -> str:
     meta = amusement_meta(stack["item_key"])
-    return f"`#{stack['id']}` **{meta['name']}**; {stack['uses_left']}/{meta['uses']} uses"
+    uses = int(stack["uses_left"])
+    max_uses = meta["uses"]
+    worn = " · _last use_" if uses == 1 else ""
+    return f"`#{stack['id']}` **{meta['name']}**; {uses}/{max_uses} uses{worn}"
 
 
-def play_amusement(user, stack_id: int) -> tuple[bool, str, int]:
+def play_amusement(user, stack_id: int, *, day: int | None = None) -> tuple[bool, str, int]:
+    if day is not None:
+        last = int(user["last_play_day"] if "last_play_day" in user.keys() else 0)
+        if last >= day:
+            return (
+                False,
+                "You already played with a toy this sunrise.\n\n"
+                "_Resets next sunrise · `/world action:cooldowns`_",
+                0,
+            )
     stack = db.get_amusement_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "You don't have that toy.", 0
@@ -35,17 +47,18 @@ def play_amusement(user, stack_id: int) -> tuple[bool, str, int]:
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:
         db.remove_amusement_stack(stack_id)
-        uses_note = "The toy falls apart; spent."
+        uses_note = f"The **{meta['name']}** falls apart; spent."
     else:
         db.update_amusement_stack_uses(stack_id, uses_left)
-        uses_note = f"**{uses_left}** uses left."
+        worn = " · _last use_" if uses_left == 1 else ""
+        uses_note = f"**{uses_left}/{meta['uses']}** uses left{worn}."
 
     msg = (
         f"You bat **{meta['name']}** around the den; **+{mood_gain} mood** "
         f"(now **{new_mood}**).\n{uses_note}"
     )
     if random.random() < POOP_PLAY_CHANCE:
-        filth = try_den_filth_exposure(user)
+        filth = try_den_filth_exposure(user, day=day)
         if filth:
             msg += f"\n\nYou tumble into something foul. {filth}"
     return True, msg, mood_gain

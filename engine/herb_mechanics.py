@@ -57,6 +57,27 @@ STATIC_HINTS: dict[str, str] = {
     "borage": "Courage **1 sunrise** for **anxiety** and **grief**; extra pup milk when nursing.",
     "purple_loosestrife": "Stanches **deep gash** bleeding; optional **+1** on stitch surgery.",
     "plantain": "Treats minor wounds; optional **+1** on extract surgery; **+1 HP** poultice if no match.",
+    "witch_hazel": (
+        "Astringent wash **1 sunrise**: eases **swelling**, **insect stings** (advantage on next venom save), "
+        "and **bruises/sprains** (recovery halved on treat); treats eye strain."
+    ),
+    "shepherds_purse": "Staunches oozing cuts; **+2** on the next stabilize or bleeding treatment check.",
+    "burdock_root": "Skin poultice: **infection ward 1 sunrise**; advantage on the next disease save.",
+    "mugwort": "Rub through pelt: **flea ward 3 sunrises**, +2 mood; clears **fleas/mange** on treat.",
+    "garlic_mustard": "Roadside rub: **flea ward 3 sunrises**; antimicrobial advantage on disease saves.",
+    "knotgrass": "Astringent gut herb; **flea ward 2 sunrises**; eases flea itch and nausea **1 sunrise**.",
+    "prickly_ash": "Warming bark clears **frostbite**; numbs tooth pain **1 sunrise**.",
+    "heather": "Sweetens bitter tonics; advantage on next disease save when ill.",
+    "lizards_tail": "Fever tonic: **−1 exhaustion** when ill; advantage on the next disease save.",
+    "mullein": "Lung tonic: advantage on next disease save for **yellowcough**, **rot-lung**, or **growth-sickness**.",
+    "lungwort": "Lung ally: same lung-course support as mullein when scarce.",
+    "marsh_mallow": "Soothes **rot-lung** fever and wheeze; pain relief **1 sunrise**.",
+    "belly_rip_fungus": "Glow-fungus: **infection ward 1 sunrise**; essential for **rot-lung necrosis** on treat.",
+    "pine_bark": "Inner bark tea suppresses cough until next sunrise; numbs frost-nipped paws.",
+    "celandine": "Milky sap eases **eye strain** and surface wounds **1 sunrise**; clears partial blindness on treat.",
+    "jewelweed": (
+        "Crushed stem sap clears **poison-ivy rash** on treat; soothes **insect stings** and nettle burn **1 sunrise**."
+    ),
     "catmint": "**2 doses/24h** clear **Blackcough (Severe)**; eases **anxiety (Uneasy)**.",
     "pine_needle": "**2 doses** before next sunrise to clear **Blackcough (Severe)**.",
     "chickweed": "**3 doses** to clear **Green-cough (Mild)**.",

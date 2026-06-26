@@ -25,6 +25,9 @@ NPC_TEMPLATE_PREY: dict[str, str] = {
     "rogue_cat": "cat_carcass",
     "loner_cat": "cat_carcass",
     "kittypet": "kittypet_carcass",
+    "water_snake": "snake",
+    "garter_snake": "snake",
+    "skink": "lizard",
 }
 
 

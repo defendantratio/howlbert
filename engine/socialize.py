@@ -113,9 +113,10 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
             unity_note = f"Den unity **{SOCIALIZE_UNITY_AWKWARD}**."
         from engine.disease_contract import try_den_filth_exposure
 
-        filth = try_den_filth_exposure(user)
-        if filth:
-            lines.append(filth)
+        for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):
+            filth = try_den_filth_exposure(wolf, day=day)
+            if filth:
+                lines.append(f"{label} tumble through old scat; {filth}")
 
     else:  # scrap
         lines.append(_pick(SCRAP_FLAVOR, name))
@@ -131,6 +132,12 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         if pack_id:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_SCRAP)
             unity_note = f"Den unity **{SOCIALIZE_UNITY_SCRAP}**."
+        from engine.disease_contract import try_den_filth_exposure
+
+        for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):
+            filth = try_den_filth_exposure(wolf, day=day)
+            if filth:
+                lines.append(f"{label} tumble through old scat; {filth}")
 
     from engine.disease_contract import try_spread_from_close_contact
 

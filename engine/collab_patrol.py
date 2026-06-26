@@ -90,7 +90,7 @@ def _scout_block_reason(user, day: int, *, kind: str = "survey") -> str | None:
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
         return inj
-    vitals = full_activity_block(user)
+    vitals = full_activity_block(user, day, action=kind if kind in ("survey", "trail") else "patrol")
     if vitals:
         return vitals
     if kind == "trail":
@@ -106,7 +106,7 @@ def _scout_block_reason(user, day: int, *, kind: str = "survey") -> str | None:
 def validate_start_collab_patrol(
     user, *, guild_id: int, day: int, kind: str = "survey"
 ) -> str | None:
-    if not user.get("pack_id"):
+    if not db.row_val(user, "pack_id"):
         label = "war patrols" if kind == "war_patrol" else "trails" if kind == "trail" else "patrols"
         return f"Join a Great Pack first; pack {label} are den business."
     if kind == "war_patrol":
@@ -219,19 +219,38 @@ def build_collab_patrol_embed(patrol_id: int) -> discord.Embed:
 
     embed = howlbert_embed(title, desc, color=color)
     if members:
+        field_name = "Party" if war else "Scouts"
         lines = [
             f"• **{m['wolf_name']}**" + (" (caller)" if m["wolf_id"] == patrol["leader_wolf_id"] else "")
             for m in members
         ]
-        embed.add_field(name="Scouts", value="\n".join(lines), inline=False)
+        embed.add_field(name=field_name, value="\n".join(lines), inline=False)
     if patrol["status"] == "open":
+        chemistry = ""
+        if len(members) >= 2 and not war:
+            from engine.hunt_party import collab_hunt_bond_modifiers
+
+            users = _party_users(patrol_id)
+            world = db.get_world(patrol["guild_id"])
+            season = world["season"] if world else None
+            bond_bonus, bond_note = collab_hunt_bond_modifiers(users, season=season)
+            if bond_note:
+                chemistry = f" · {bond_note.strip('_')}"
+            elif bond_bonus:
+                chemistry = f" · chemistry **+{bond_bonus}%**"
+        footer_role = "Packmates" if war else "Scouts"
         embed.set_footer(
-            text=f"Scouts join below · Caller sets out when ready · max {COLLAB_PATROL_MAX_WOLVES} wolves"
+            text=(
+                f"{footer_role} join below · Caller sets out when ready · "
+                f"max {COLLAB_PATROL_MAX_WOLVES} wolves{chemistry}"
+            )
         )
     return embed
 
 
-def _compute_party_base(users: list, *, kind: str, fixed_base: int | None = None) -> tuple[int, int]:
+def _compute_party_base(
+    users: list, *, kind: str, fixed_base: int | None = None, season: str | None = None
+) -> tuple[int, int, str]:
     if fixed_base is not None:
         base = fixed_base
     else:
@@ -239,9 +258,24 @@ def _compute_party_base(users: list, *, kind: str, fixed_base: int | None = None
     bonus_pct = (len(users) - 1) * COLLAB_PATROL_BONUS_PCT_PER_SCOUT if users else 0
     if users and all(is_scout(u) for u in users):
         bonus_pct += COLLAB_PATROL_ALL_SCOUTS_BONUS
+    chemistry_note = ""
+    if len(users) >= 2:
+        from engine.hunt_party import collab_hunt_bond_modifiers
+
+        bond_bonus, bond_note = collab_hunt_bond_modifiers(users, season=season)
+        if bond_bonus == -100:
+            base = 0
+            bonus_pct = 0
+            chemistry_note = bond_note.strip("_")
+        elif bond_bonus > 0:
+            bonus_pct += bond_bonus
+            chemistry_note = bond_note.strip("_") if bond_note else f"pack chemistry **+{bond_bonus}%**"
+        elif bond_bonus < 0:
+            base = max(0, int(base * (100 + bond_bonus) / 100))
+            chemistry_note = bond_note.strip("_")
     if base > 0 and bonus_pct:
         base = max(0, int(base * (100 + bonus_pct) / 100))
-    return base, bonus_pct
+    return base, bonus_pct, chemistry_note
 
 
 def _mark_survey_done(users: list, day: int, *, guild_id: int) -> None:
@@ -273,8 +307,11 @@ def payout_collab_survey(
     users = _party_users(patrol_id)
     world = db.get_world(patrol["guild_id"])
     day = world["day_number"]
+    season = world["season"] if world else None
 
-    base, bonus_pct = _compute_party_base(users, kind="survey", fixed_base=fixed_base)
+    base, bonus_pct, chemistry_note = _compute_party_base(
+        users, kind="survey", fixed_base=fixed_base, season=season
+    )
     share = base // len(users) if users else 0
     remainder = base - share * len(users)
 
@@ -306,6 +343,8 @@ def payout_collab_survey(
     bonus_note = f"+{bonus_pct}% patrol bonus"
     if users and all(is_scout(u) for u in users):
         bonus_note += " (all Scouts)"
+    if chemistry_note:
+        bonus_note += f" · _{chemistry_note}_"
 
     roll_block = ""
     if roll_lines:
@@ -340,9 +379,12 @@ def payout_collab_trail(
     users = _party_users(patrol_id)
     world = db.get_world(patrol["guild_id"])
     day = world["day_number"]
+    season = world["season"] if world else None
     leader = db.get_user_by_id(patrol["leader_wolf_id"])
 
-    base, bonus_pct = _compute_party_base(users, kind="trail", fixed_base=fixed_base)
+    base, bonus_pct, chemistry_note = _compute_party_base(
+        users, kind="trail", fixed_base=fixed_base, season=season
+    )
     share = base // len(users) if users else 0
     remainder = base - share * len(users)
 
@@ -385,6 +427,8 @@ def payout_collab_trail(
     bonus_note = f"+{bonus_pct}% trail bonus"
     if users and all(is_scout(u) for u in users):
         bonus_note += " (all Scouts)"
+    if chemistry_note:
+        bonus_note += f" · _{chemistry_note}_"
 
     roll_block = ""
     if roll_lines:
@@ -588,11 +632,17 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
 
     db.adjust_pack_unity(patrol["pack_id"], 1)
     war = db.get_active_war_for_pack(patrol["guild_id"], patrol["pack_id"])
+    war_line = ""
+    if war:
+        war_line = (
+            f"**{war['territory_name']}**; Attack **{war['attacker_score']}** · "
+            f"Defend **{war['defender_score']}**"
+        )
     result_text = (
         f"{random.choice(PATROL_FLAVOR)}\n\n"
         + "\n".join(lines)
-        + f"\n\n**+{total} war points** to the score (+{bonus_pct}% pack bonus)\n"
-        f"**{war['territory_name']}**; Attack **{war['attacker_score']}** · Defend **{war['defender_score']}**"
+        + f"\n\n**+{total} war points** to the score (+{bonus_pct}% pack bonus)"
+        + (f"\n{war_line}" if war_line else "")
     )
     db.set_collab_patrol_status(patrol_id, "done", result_text=result_text)
     return build_collab_patrol_embed(patrol_id), None
@@ -650,7 +700,7 @@ def try_set_out_collab_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
         enc_id, template_key, flavor = ambush
         db.set_encounter_collab_patrol(enc_id, patrol_id)
         db.set_collab_patrol_status(patrol_id, "encounter")
-        embed = ambush_embed(template_key, flavor)
+        embed = ambush_embed(template_key, flavor, leader, activity="collab_patrol")
         embed.set_footer(
             text=f"{party_note} · ~{COLLAB_PATROL_AMBUSH_CHANCE}% ambush · win to finish · flee keeps {slot}"
         )

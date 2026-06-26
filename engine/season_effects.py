@@ -5,6 +5,14 @@ from __future__ import annotations
 from config import SEASON_FORAGE_DC_MOD, SEASON_HUNT_MODIFIERS, WINTER_FORAGE_SPOIL_CHANCE
 from engine.lexicon import season_display
 
+# Tracking / small-prey hunt DC by season (matches season_activity_blurb)
+SEASON_TRACK_DC_MOD = {
+    "spring": 0,
+    "summer": -2,
+    "autumn": -1,
+    "winter": 2,
+}
+
 
 def apply_season_hunt(amount: int, season: str) -> int:
     if amount <= 0:
@@ -17,6 +25,20 @@ def apply_season_hunt(amount: int, season: str) -> int:
 
 def season_forage_dc_mod(season: str) -> int:
     return SEASON_FORAGE_DC_MOD.get(season, 0)
+
+
+def season_track_dc_mod(season: str) -> int:
+    return SEASON_TRACK_DC_MOD.get(season, 0)
+
+
+def season_track_dc_label(season: str) -> str | None:
+    mod = season_track_dc_mod(season)
+    if mod == 0:
+        return None
+    name = season_display(season)
+    if mod > 0:
+        return f"+{mod} track DC ({name})"
+    return f"{mod} track DC ({name})"
 
 
 def season_hunt_modifier_label(season: str) -> str:
@@ -46,7 +68,7 @@ def season_activity_blurb(season: str) -> str:
             "River crossings **+2 DC** (melt floods). Herbs plentiful (**−2** forage DC)."
         ),
         "summer": (
-            "Heat waves possible (`/hazard heat`). Small prey hunting **−2 DC**. "
+            "Heat waves possible (`/world action:hazard hazard:extreme_heat`). Small prey hunting **−2 DC**. "
             "Wildfire smoke may appear on travel rolls."
         ),
         "autumn": (

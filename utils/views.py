@@ -12,6 +12,7 @@ from engine.activities import (
     purchase_item,
 )
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, howlbert_embed
 
 
@@ -46,7 +47,10 @@ def build_shop_embed(items: list, page: int = 0) -> discord.Embed:
             value=f"`{item['key']}`; {desc}",
             inline=False,
         )
-    embed.set_footer(text=f"Page {page + 1} of {total_pages} · {len(items)} items")
+    embed.set_footer(
+        text=f"Page {page + 1} of {total_pages} · {len(items)} items · "
+        "/bones action:buy item:<key> · action:inventory"
+    )
     return embed
 
 
@@ -233,7 +237,7 @@ def make_hunt_followup_view() -> discord.ui.View:
         if err:
             await interaction.response.send_message(
                 embed=howlbert_embed("Can't Share", err, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         from cogs.prey_pile import open_prey_pile

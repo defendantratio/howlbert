@@ -228,9 +228,9 @@ def prepare_herb_from_inventory(
         return False, "Unknown herb item."
     qty = db.get_inventory_quantity(user["discord_id"], item["id"])
     if qty < 1:
-        return False, f"You don't have **{item['name']}** in `/inventory`."
+        return False, f"You don't have **{item['name']}** in `/bones action:inventory`."
     if not db.consume_item(user["discord_id"], item["id"], quantity=1):
-        return False, "Could not use herb from inventory."
+        return False, f"Could not use herb from `/bones action:inventory`."
 
     from engine.herb_storage import grant_fresh_herb
 
@@ -248,7 +248,7 @@ def prepare_herb_from_inventory(
         day=day,
         at_den=at_den,
     )
-    note = f"_Used **1× {item['name']}** from inventory → forage bag._\n\n"
+    note = f"_Used **1× {item['name']}** from `/bones action:inventory` → forage bag._\n\n"
     return ok, note + msg
 
 
@@ -279,7 +279,7 @@ def dry_all_fresh_herbs(
         return (
             False,
             "No herbs to dry in your **forage bag** (`/herbs action:bag`), "
-            "**inventory** (`/inventory`), or **healers' den store** (`/herbs action:store mode:list`).",
+            "**inventory** (`/bones action:inventory`), or **healers' den store** (`/herbs action:store mode:list`).",
         )
 
     dried = 0

@@ -96,33 +96,51 @@ def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBun
     if bundle.is_empty():
         return False, "Nothing duplicate to trade."
 
+    from database import _move_item_conn
+
     moved: list[str] = []
-    for item_id, qty, name in bundle.inventory:
-        if not db.transfer_item_by_wolf_id(from_wolf_id, to_wolf_id, item_id, qty):
-            return False, f"Transfer failed on **{name}**; try again."
-        moved.append(f"**{name}** x{qty}")
+    with db.get_db() as conn:
+        for item_id, qty, name in bundle.inventory:
+            if not _move_item_conn(conn, from_wolf_id, to_wolf_id, item_id, qty):
+                conn.rollback()
+                return False, f"Transfer failed on **{name}**; try again."
+            moved.append(f"**{name}** x{qty}")
 
-    for stack_id in bundle.amusement_ids:
-        stack = db.get_amusement_stack(stack_id)
-        if not stack or int(stack["wolf_id"]) != from_wolf_id:
-            continue
-        from engine.amusement_items import amusement_meta
+        for stack_id in bundle.amusement_ids:
+            stack = conn.execute(
+                "SELECT * FROM amusement_stacks WHERE id = ?", (stack_id,)
+            ).fetchone()
+            if not stack or int(stack["wolf_id"]) != from_wolf_id:
+                continue
+            from engine.amusement_items import amusement_meta
 
-        meta = amusement_meta(stack["item_key"])
-        if not db.transfer_amusement_stack(stack_id, to_wolf_id):
-            return False, f"Couldn't pass toy **{meta['name']}**."
-        moved.append(f"Toy **{meta['name']}**")
+            meta = amusement_meta(stack["item_key"])
+            cur = conn.execute(
+                "UPDATE amusement_stacks SET wolf_id = ? WHERE id = ? AND wolf_id = ?",
+                (to_wolf_id, stack_id, from_wolf_id),
+            )
+            if cur.rowcount != 1:
+                conn.rollback()
+                return False, f"Couldn't pass toy **{meta['name']}**."
+            moved.append(f"Toy **{meta['name']}**")
 
-    for stack_id in bundle.herb_ids:
-        stack = db.get_herb_stack(stack_id)
-        if not stack or int(stack["wolf_id"]) != from_wolf_id:
-            continue
-        from herbs import HERBS
+        for stack_id in bundle.herb_ids:
+            stack = conn.execute(
+                "SELECT * FROM herb_stacks WHERE id = ?", (stack_id,)
+            ).fetchone()
+            if not stack or int(stack["wolf_id"]) != from_wolf_id:
+                continue
+            from herbs import HERBS
 
-        label = HERBS.get(stack["herb_key"], {}).get("name", stack["herb_key"])
-        if not db.transfer_herb_stack(stack_id, to_wolf_id):
-            return False, f"Couldn't pass **{label}**."
-        moved.append(f"Herb **{label}** ({stack['form']})")
+            label = HERBS.get(stack["herb_key"], {}).get("name", stack["herb_key"])
+            cur = conn.execute(
+                "UPDATE herb_stacks SET wolf_id = ? WHERE id = ? AND wolf_id = ?",
+                (to_wolf_id, stack_id, from_wolf_id),
+            )
+            if cur.rowcount != 1:
+                conn.rollback()
+                return False, f"Couldn't pass **{label}**."
+            moved.append(f"Herb **{label}** ({stack['form']})")
 
     body = "\n".join(f"• {line}" for line in moved[:20])
     if len(moved) > 20:

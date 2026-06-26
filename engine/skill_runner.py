@@ -91,7 +91,7 @@ def _time_dc_mod(time_of_day: str, category: str) -> tuple[int, str]:
 def _apply_social_standing(attacker, defender, scenario_key: str, *, won: bool) -> str:
     if scenario_key != "social_dominance" or not won:
         return ""
-    if not attacker.get("pack_id") or attacker["pack_id"] != defender.get("pack_id"):
+    if not db.row_val(attacker, "pack_id") or db.row_val(attacker, "pack_id") != db.row_val(defender, "pack_id"):
         return ""
     db.adjust_wolf_standing(attacker["discord_id"], 1)
     db.adjust_wolf_standing(defender["discord_id"], -1)
@@ -106,6 +106,7 @@ def _run_opposed(
     day: int,
     weather: str,
     rained: bool,
+    guild_id: int | None = None,
 ) -> tuple[bool, str]:
     spec = OPPOSED_SPECS[scenario.key]
     att_name = attacker["wolf_name"]
@@ -128,6 +129,16 @@ def _run_opposed(
         ]
         if result["success"]:
             lines.append(scenario.success)
+            if scenario.key == "prep_taste_test":
+                _apply_herb_prep_mechanics(
+                    attacker,
+                    scenario.key,
+                    success=True,
+                    outcome=result.get("outcome", "success"),
+                    day=day,
+                    guild_id=guild_id,
+                    lines=lines,
+                )
             return True, "\n\n".join(lines)
         dmg = random.randint(1, 4)
         new_hp = max(0, int(attacker["hp"]) - dmg)
@@ -226,6 +237,290 @@ def _run_opposed(
     return False, "\n\n".join(lines)
 
 
+def apply_scenario_mechanics(
+    user,
+    scenario,
+    result: dict,
+    *,
+    day: int,
+    weather: str = "clear",
+    opponent=None,
+    guild_id: int | None = None,
+) -> tuple[bool, list[str]]:
+    """Apply DB outcomes from a resolved roll. Returns (success, extra lines)."""
+    lines: list[str] = []
+    success = bool(result.get("success"))
+    outcome = result.get("outcome", "failure")
+
+    if outcome == "critical_failure" and scenario.crit_fail:
+        lines.append(scenario.crit_fail)
+        if scenario.category == "spiritual" and scenario.key == "spirit_ancestors":
+            if scenario.fail_mood:
+                db.adjust_mood(user["id"], -scenario.fail_mood)
+            db.set_user_conditions(user["discord_id"], exhaustion=min(6, int(user["exhaustion"]) + 1))
+        if scenario.key == "surv_set_bone":
+            from engine.long_term_injuries import add_long_term_injury
+
+            add_long_term_injury(user["id"], "limp")
+            lines.append("_The bone sets wrong; a permanent **limp** may follow._")
+        if scenario.key == "track_faint":
+            db.update_user(user["discord_id"], wolf_id=user["id"], last_track_day=day)
+            lines.append("_Today's track is spent._")
+        if scenario.key == "nav_blizzard_camp":
+            db.set_user_conditions(
+                user["discord_id"],
+                exhaustion=min(6, int(user["exhaustion"]) + 2),
+            )
+            lines.append("+2 exhaustion; you crossed into hostile ground.")
+        _append_setback_on_failure(
+            user,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome="critical_failure",
+            day=day,
+            total=result.get("total"),
+            dc=result.get("dc"),
+        )
+        success = False
+    elif success:
+        lines.append(scenario.success)
+        if scenario.success_flag == "sneak_advantage":
+            db.update_user(user["discord_id"], wolf_id=user["id"], commanding_howl_buff=1)
+            lines.append("_Sneak success; next attack/check gains advantage._")
+        if scenario.key == "surv_stabilize":
+            cap = effective_max_hp(user)
+            db.set_user_conditions(user["discord_id"], hp=max(1, min(cap, 1)), condition="stable")
+        if scenario.key == "spirit_cleanse":
+            from engine.supernatural import lift_spirit_curse
+
+            if lift_spirit_curse(user["id"]):
+                lines.append("_Curse scent lifts from the pelt._")
+        if scenario.key == "surv_blizzard_shelter":
+            ex = max(0, int(user["exhaustion"]) - 1)
+            db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            db.adjust_mood(user["id"], 4)
+            lines.append("_Lee found; **−1 exhaustion**, **+4 mood**._")
+        if scenario.key == "nav_blizzard_camp":
+            ex = max(0, int(user["exhaustion"]) - 1)
+            db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            db.adjust_mood(user["id"], 3)
+            lines.append("_Camp found; **−1 exhaustion**, **+3 mood**._")
+        if scenario.category == "howling":
+            db.adjust_mood(user["id"], 2)
+            lines.append("_The song carries; **+2 mood**._")
+        if scenario.key == "spirit_vision":
+            db.adjust_mood(user["id"], 3)
+            lines.append("_Vision lingers; **+3 mood**._")
+        if scenario.key == "spirit_omen":
+            roll = random.random()
+            buff = "good" if roll > 0.45 else "bad"
+            db.update_user_by_id(user["id"], omen_buff=buff)
+            lines.append(
+                f"_Omen read **{buff}**; advantage on your first roll next sunrise._"
+                if buff == "good"
+                else "_Omen read **bad**; disadvantage on your first roll next sunrise._"
+            )
+        if scenario.key == "spirit_prophecy":
+            db.adjust_mood(user["id"], 2)
+            lines.append("_The ancestors whisper; **+2 mood**._")
+        if scenario.key == "craft_splint":
+            from engine.herb_buffs import merge_buff_fields
+
+            fields = merge_buff_fields(user, broom_splint=True, bone_heal_days_reduced=2)
+            db.update_user(user["discord_id"], wolf_id=user["id"], **fields)
+            lines.append("_Splint ready; bone injuries heal **2 days** faster._")
+        if scenario.key == "craft_travois":
+            ex = max(0, int(user["exhaustion"]) - 1)
+            db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            lines.append("_Travois lashed; **−1 exhaustion** hauling the wounded._")
+        if scenario.key == "surv_dig_den":
+            ex = max(0, int(user["exhaustion"]) - 1)
+            db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            lines.append("_Den scraped; **−1 exhaustion** from shelter work._")
+        if scenario.key == "surv_diagnose":
+            key, stage = parse_disease_from_user(user)
+            if key:
+                from engine.diseases import get_stage_info
+
+                info = get_stage_info(key, stage)
+                if info:
+                    lines.append(f"_Diagnosis: **{info['name']}** — {info['effect']}_")
+            else:
+                lines.append("_No active illness; vitals read clear._")
+        if scenario.key == "social_truce" and opponent:
+            db.adjust_mood(user["id"], 2)
+            db.adjust_mood(opponent["id"], 1)
+            lines.append("_Tension eases; mood **+2** (you), **+1** (them)._")
+            _maybe_cross_pack_relation(user, opponent, guild_id, delta=1, lines=lines)
+        if scenario.key == "social_intimidate" and opponent:
+            db.adjust_mood(opponent["id"], -2)
+            lines.append(f"_{opponent['wolf_name']} flinches; **−2 mood**._")
+        elif scenario.key == "social_intimidate":
+            db.adjust_mood(user["id"], 2)
+            lines.append("_They yield ground; **+2 mood**._")
+        if scenario.key == "howl_warning" and db.row_val(user, "pack_id"):
+            db.adjust_wolf_standing(user["discord_id"], 1)
+            lines.append("_Border claimed; standing **+1**._")
+        if scenario.key == "social_calm_pup":
+            db.adjust_mood(user["id"], 3)
+            lines.append("_Pup settles; **+3 mood**._")
+        if scenario.key == "social_challenge_alpha":
+            db.adjust_wolf_standing(user["discord_id"], 1)
+            lines.append("_Challenge lodged; standing **+1**._")
+        if scenario.key == "spirit_recall_patch":
+            db.adjust_mood(user["id"], 2)
+            lines.append("_The ground remembers; **+2 mood**._")
+        _append_success_recovery(user, lines, skill_key=scenario.skill_key, day=day, dc=scenario.dc)
+    else:
+        lines.append(scenario.failure)
+        success = False
+        if scenario.fail_mood:
+            db.adjust_mood(user["id"], -scenario.fail_mood)
+        if scenario.fail_damage:
+            dmg = random.randint(*scenario.fail_damage)
+            new_hp = max(0, int(user["hp"]) - dmg)
+            db.set_user_conditions(user["discord_id"], hp=new_hp)
+            lines.append(f"**−{dmg} HP**")
+        if scenario.key in ("social_persuade_alpha", "social_apologize") and db.row_val(user, "pack_id"):
+            db.adjust_wolf_standing(user["discord_id"], -1)
+            lines.append("_Pack standing **−1**._")
+        if scenario.key == "howl_storm":
+            db.set_user_conditions(
+                user["discord_id"],
+                exhaustion=min(6, int(user["exhaustion"]) + 1),
+            )
+            lines.append("+1 exhaustion; the gale swallows your song.")
+        if scenario.key == "spirit_cleanse":
+            from engine.supernatural import apply_spirit_curse
+
+            apply_spirit_curse(user["id"], source="botched cleansing ritual")
+            lines.append("_Smoke wrong; the curse clings._")
+        if scenario.key == "spirit_ancestors":
+            from engine.supernatural import apply_spirit_curse
+
+            if random.random() < 0.35:
+                apply_spirit_curse(user["id"], source="ancestor silence turned cruel")
+                lines.append("_The ancestors do not answer; something darker does._")
+        if scenario.key == "surv_set_bone":
+            from engine.long_term_injuries import add_long_term_injury
+
+            add_long_term_injury(user["id"], "limp")
+            lines.append("_Splint fails; risk of permanent **limp**._")
+        if scenario.key == "surv_blizzard_shelter":
+            db.set_user_conditions(
+                user["discord_id"],
+                exhaustion=min(6, int(user["exhaustion"]) + 1),
+            )
+            lines.append("+1 exhaustion from exposure.")
+        if scenario.key == "nav_blizzard_camp":
+            db.set_user_conditions(
+                user["discord_id"],
+                exhaustion=min(6, int(user["exhaustion"]) + 1),
+            )
+            lines.append("+1 exhaustion; you sleep exposed.")
+        if scenario.key == "surv_thorn":
+            from engine.disease_contract import try_contract_disease
+
+            note = try_contract_disease(user, "mild_poison", "stung", chance=0.4)
+            if note:
+                lines.append(f"Puncture festers: {note}")
+        if scenario.key == "stealth_no_scent":
+            db.adjust_mood(user["id"], -3)
+            lines.append("_Patrol catches your line; **−3 mood**._")
+        if scenario.key == "howl_imitate":
+            db.adjust_mood(user["id"], -2)
+            lines.append("_Caught in the lie; **−2 mood**._")
+        if scenario.key == "social_lie":
+            db.adjust_mood(user["id"], -2)
+            lines.append("_Ears twitch; **−2 mood**._")
+        if scenario.key == "nav_landmark_unknown":
+            db.set_user_conditions(
+                user["discord_id"],
+                exhaustion=min(6, int(user["exhaustion"]) + 1),
+            )
+            lines.append("+1 exhaustion; lost on the wrong ridge.")
+        if scenario.key == "stealth_leaves":
+            db.adjust_mood(user["id"], -2)
+            lines.append("_Twigs betray you; **−2 mood**._")
+        _append_setback_on_failure(
+            user,
+            lines,
+            skill_key=scenario.skill_key,
+            outcome=outcome,
+            day=day,
+            total=result.get("total"),
+            dc=result.get("dc"),
+            margin=result.get("margin"),
+        )
+
+    if scenario.category == "herb_prep" and scenario.key != "prep_taste_test":
+        _apply_herb_prep_mechanics(
+            user, scenario.key, success=success, outcome=outcome, day=day, guild_id=guild_id, lines=lines
+        )
+
+    from engine.activity_exhaustion import apply_activity_fatigue, skill_for_activity
+
+    if scenario.key.startswith("track_"):
+        act_key, sk = "track", "tracking"
+    else:
+        act_key, sk = "skill", scenario.skill_key
+    fresh = db.get_user(user["discord_id"])
+    if fresh:
+        fatigue = apply_activity_fatigue(fresh, act_key, sk or skill_for_activity(act_key, fresh), day)
+        if fatigue:
+            lines.append(fatigue)
+
+    return success, lines
+
+
+def _apply_herb_prep_mechanics(
+    user,
+    scenario_key: str,
+    *,
+    success: bool,
+    outcome: str,
+    day: int,
+    guild_id: int | None,
+    lines: list[str],
+) -> None:
+    from engine.herb_prep_batches import apply_herb_prep_outcome
+
+    user_fields, cond_fields, prep_lines = apply_herb_prep_outcome(
+        user,
+        scenario_key,
+        success=success,
+        outcome=outcome,
+        day=day,
+        guild_id=guild_id,
+    )
+    if user_fields:
+        db.update_user(user["discord_id"], wolf_id=user["id"], **user_fields)
+    if cond_fields:
+        db.set_user_conditions(user["discord_id"], wolf_id=user["id"], **cond_fields)
+    lines.extend(prep_lines)
+
+
+def parse_disease_from_user(user):
+    from engine.diseases import parse_disease
+
+    return parse_disease(user["disease"] if user and "disease" in user.keys() else None)
+
+
+def _maybe_cross_pack_relation(user, opponent, guild_id, *, delta: int, lines: list[str]) -> None:
+    if not guild_id:
+        return
+    gp_a = db.row_val(user, "great_pack") if user else None
+    gp_b = db.row_val(opponent, "great_pack") if opponent else None
+    if not gp_a or not gp_b or gp_a == gp_b:
+        return
+    pack_a = db.get_pack_by_key(gp_a)
+    pack_b = db.get_pack_by_key(gp_b)
+    if not pack_a or not pack_b:
+        return
+    new_standing = db.adjust_pack_relation(guild_id, pack_a["id"], pack_b["id"], delta)
+    lines.append(f"_Pack relations **{delta:+d}** (now **{new_standing}**)._")
+
+
 def run_skill_scenario(
     user,
     scenario_key: str,
@@ -236,6 +531,9 @@ def run_skill_scenario(
     rained: bool = False,
     yarrow_bonus: bool = False,
     opponent=None,
+    guild_id: int | None = None,
+    season: str | None = None,
+    sniff_dc_reduction: int = 0,
 ) -> tuple[bool, str, dict]:
     scenario = SKILL_SCENARIOS.get(scenario_key)
     if not scenario:
@@ -256,6 +554,7 @@ def run_skill_scenario(
             day=day,
             weather=weather,
             rained=rained,
+            guild_id=guild_id,
         )
         return ok, body, {}
 
@@ -269,6 +568,18 @@ def run_skill_scenario(
     if scenario.key == "track_blood" and rained:
         dc += 5
         extra_notes.append("blood trail washed (+5 DC)")
+    if scenario.category == "tracking" and season:
+        from engine.season_effects import season_track_dc_label, season_track_dc_mod
+
+        s_mod = season_track_dc_mod(season)
+        if s_mod:
+            dc += s_mod
+            label = season_track_dc_label(season)
+            if label:
+                extra_notes.append(label)
+    if scenario.category == "tracking" and sniff_dc_reduction > 0:
+        dc = max(5, dc - sniff_dc_reduction)
+        extra_notes.append(f"wind-read (−{sniff_dc_reduction} DC)")
     time_mod, time_note = _time_dc_mod(time_of_day, scenario.category)
     dc += time_mod
     if time_note:
@@ -304,76 +615,17 @@ def run_skill_scenario(
     if extra_notes:
         lines.append("_" + " · ".join(extra_notes) + "_")
 
-    if result["outcome"] == "critical_failure" and scenario.crit_fail:
-        lines.append(scenario.crit_fail)
-        if scenario.category == "spiritual" and scenario.key == "spirit_ancestors":
-            db.adjust_mood(user["id"], -scenario.fail_mood)
-            db.set_user_conditions(user["discord_id"], exhaustion=min(6, int(user["exhaustion"]) + 1))
-        if scenario.key == "surv_set_bone":
-            from engine.long_term_injuries import add_long_term_injury
-
-            add_long_term_injury(user["id"], "limp")
-            lines.append("_The bone sets wrong; a permanent **limp** may follow._")
-        success = False
-    elif result["success"]:
-        lines.append(scenario.success)
-        success = True
-        if scenario.success_flag == "sneak_advantage":
-            db.update_user(user["discord_id"], wolf_id=user["id"], commanding_howl_buff=1)
-            lines.append("_Sneak success; next attack/check gains advantage._")
-        if scenario.key == "surv_stabilize":
-            cap = effective_max_hp(user)
-            db.set_user_conditions(user["discord_id"], hp=max(1, min(cap, 1)), condition="stable")
-        if scenario.key == "spirit_cleanse":
-            from engine.supernatural import lift_spirit_curse
-
-            if lift_spirit_curse(user["id"]):
-                lines.append("_Curse scent lifts from the pelt._")
-        _append_success_recovery(
-            user, lines, skill_key=scenario.skill_key, day=day, dc=dc
-        )
-    else:
-        lines.append(scenario.failure)
-        success = False
-        if scenario.fail_mood:
-            db.adjust_mood(user["id"], -scenario.fail_mood)
-        if scenario.fail_damage:
-            dmg = random.randint(*scenario.fail_damage)
-            new_hp = max(0, int(user["hp"]) - dmg)
-            db.set_user_conditions(user["discord_id"], hp=new_hp)
-            lines.append(f"**−{dmg} HP**")
-        if scenario.key == "spirit_cleanse":
-            from engine.supernatural import apply_spirit_curse
-
-            apply_spirit_curse(user["id"], source="botched cleansing ritual")
-            lines.append("_Smoke wrong; the curse clings._")
-        if scenario.key == "spirit_ancestors" and not result["success"]:
-            from engine.supernatural import apply_spirit_curse
-
-            if random.random() < 0.35:
-                apply_spirit_curse(user["id"], source="ancestor silence turned cruel")
-                lines.append("_The ancestors do not answer; something darker does._")
-        if scenario.key == "surv_set_bone":
-            from engine.long_term_injuries import add_long_term_injury
-
-            add_long_term_injury(user["id"], "limp")
-            lines.append("_Splint fails; risk of permanent **limp** (GM may assign)._")
-        if scenario.key == "surv_blizzard_shelter":
-            db.set_user_conditions(
-                user["discord_id"],
-                exhaustion=min(6, int(user["exhaustion"]) + 1),
-            )
-            lines.append("+1 exhaustion from exposure.")
-
-    if not success:
-        _append_setback_on_failure(
-            user,
-            lines,
-            skill_key=scenario.skill_key,
-            outcome=result["outcome"],
-            day=day,
-            total=result["total"],
-            dc=dc,
-        )
+    result_with_dc = dict(result)
+    result_with_dc["dc"] = dc
+    success, mech_lines = apply_scenario_mechanics(
+        user,
+        scenario,
+        result_with_dc,
+        day=day,
+        weather=weather,
+        opponent=opponent,
+        guild_id=guild_id,
+    )
+    lines.extend(mech_lines)
 
     return success, "\n\n".join(lines), effects

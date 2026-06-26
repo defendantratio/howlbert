@@ -134,7 +134,9 @@ COMBAT_GUIDE_TOPICS: dict[str, tuple[str, str]] = {
 
         "**Hearth-hounds**; feral, guard, hunting, fighting (Twoleg allies)\n"
 
-        "**Clan cats**; warrior, deputy, rogue, loner, kittypet (Warrior Cats-style rivals)\n\n"
+        "**Clan cats**; warrior, deputy, rogue, loner, kittypet (Warrior Cats-style rivals)\n"
+
+        "**Reptiles & vermin**; water snake, garter snake, skink, wolf spider (pack-weighted on hunt/explore/patrol)\n\n"
 
         "Cats are quick (high Dexterity), use **claw** attacks, and fight with maneuvers "
         "(forepaw slash, Badger Defence, rakes); they **cannot pin** adult wolves. "
@@ -877,7 +879,7 @@ COMBAT_GUIDE_TOPICS["injuries"] = (
 
     "Deep gashes bleed each sunrise until bandaged. Infected wounds need a daily save. "
 
-    "Treat with `/medic action:treat` and herbs from `/inventory`.",
+    "Treat with `/medic action:treat` and herbs from `/bones action:inventory`.",
 
 )
 

@@ -35,7 +35,7 @@ SURVEY_INTEL = [
     "A loner scent crosses the border and fades south; worth a howl report.",
     "Smoke on the horizon; probably a human camp, not a den fire.",
     "The river ford is muddy; prey will avoid it until the next rain.",
-    "You spot raccoon activity near the stash trees; no theft yet.",
+    "You spot raccoon activity near the stash trees; den guards should watch `/pack stash`.",
 ]
 
 TRAIL_INTEL = [
@@ -77,16 +77,23 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
         return howlbert_embed("Too Injured", inj, color=ERROR_COLOR)
-    vitals_block = full_activity_block(user)
-    if vitals_block:
-        return howlbert_embed("Cannot Survey", vitals_block, color=ERROR_COLOR)
     if not interaction.guild:
         return howlbert_embed("Server Only", "Use this in a server channel.", color=ERROR_COLOR)
 
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
+    vitals_block = full_activity_block(user, day, action="survey")
+    if vitals_block:
+        return howlbert_embed("Cannot Survey", vitals_block, color=ERROR_COLOR)
     if int(user["last_survey_day"]) >= day:
-        return howlbert_embed("Already Surveyed", "You've mapped the border this sunrise.", color=ERROR_COLOR)
+        embed = howlbert_embed(
+            "Already Surveyed",
+            "You've mapped the border this sunrise.\n\n"
+            "_Resets next sunrise · try **`/scout trail`** · **`/scout rescout`** · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="Scouts · survey once per sunrise · rescout unlimited")
+        return embed
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     result = resolve_check(
@@ -99,6 +106,9 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         game_day=day,
     )
     db.update_user(interaction.user.id, last_survey_day=day)
+    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+
+    survey_fatigue = apply_activity_fatigue(db.get_user(interaction.user.id), "survey", "stealth", day)
 
     from engine.role_features import scout_hide_after_check
 
@@ -112,7 +122,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
 
     if result["outcome"] == "critical_failure":
         db.adjust_wolf_standing(interaction.user.id, -1)
-        return howlbert_embed(
+        embed = howlbert_embed(
             "🗺️ Survey",
             format_roll_result(result)
             + "\n\n"
@@ -120,6 +130,9 @@ def try_scout_survey(interaction) -> discord.Embed | None:
             + "\n\nYou were **spotted** on the ridge; standing **−1**.",
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Survey spent · `/scout trail` · /world action:cooldowns")
+        append_fatigue_to_footer(embed, survey_fatigue)
+        return embed
 
     if not result["success"]:
         plague_note = ""
@@ -128,7 +141,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         plague = try_sick_traveler_exposure(user)
         if plague:
             plague_note = f"\n\n{plague}"
-        return howlbert_embed(
+        embed = howlbert_embed(
             "🗺️ Survey",
             format_roll_result(result)
             + "\n\n"
@@ -137,6 +150,9 @@ def try_scout_survey(interaction) -> discord.Embed | None:
             + plague_note,
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Survey spent · `/scout rescout` · /world action:cooldowns")
+        append_fatigue_to_footer(embed, survey_fatigue)
+        return embed
 
     bones = random.randint(*SCOUT_SURVEY_BONES)
     if result["outcome"] == "critical_success":
@@ -169,6 +185,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     if witness:
         embed.description = (embed.description or "") + witness
     embed.set_footer(text="Scouts · once per sunrise · counts toward survey & patrol quests")
+    append_fatigue_to_footer(embed, survey_fatigue)
     return embed
 
 
@@ -182,16 +199,23 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
         return howlbert_embed("Too Injured", inj, color=ERROR_COLOR)
-    vitals_block = full_activity_block(user)
-    if vitals_block:
-        return howlbert_embed("Cannot Trail", vitals_block, color=ERROR_COLOR)
     if not interaction.guild:
         return howlbert_embed("Server Only", "Use this in a server channel.", color=ERROR_COLOR)
 
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
+    vitals_block = full_activity_block(user, day, action="trail")
+    if vitals_block:
+        return howlbert_embed("Cannot Trail", vitals_block, color=ERROR_COLOR)
     if int(user["last_trail_day"]) >= day:
-        return howlbert_embed("Already Trailed", "You've run a cold trail this sunrise.", color=ERROR_COLOR)
+        embed = howlbert_embed(
+            "Already Trailed",
+            "You've run a cold trail this sunrise.\n\n"
+            "_Resets next sunrise · try **`/scout survey`** · **`/scout rescout`** · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="Scouts · trail once per sunrise · rescout unlimited")
+        return embed
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     result = resolve_check(
@@ -204,10 +228,13 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         game_day=day,
     )
     db.update_user(interaction.user.id, last_trail_day=day)
+    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+
+    trail_fatigue = apply_activity_fatigue(db.get_user(interaction.user.id), "trail", "tracking", day)
 
     if result["outcome"] == "critical_failure":
         db.adjust_mood(user["id"], -2)
-        return howlbert_embed(
+        embed = howlbert_embed(
             "👣 Trail",
             format_roll_result(result)
             + "\n\n"
@@ -215,16 +242,29 @@ def try_scout_trail(interaction) -> discord.Embed | None:
             + "\n\nThe spoor vanishes in bog-water; **−2 mood**.",
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Trail spent · `/scout survey` · /world action:cooldowns")
+        append_fatigue_to_footer(embed, trail_fatigue)
+        return embed
 
     if not result["success"]:
-        return howlbert_embed(
+        hazard_note = ""
+        from engine.disease_contract import try_snake_venom_exposure
+
+        hazard = try_snake_venom_exposure(user, chance=0.06)
+        if hazard:
+            hazard_note = f"\n\n{hazard}"
+        embed = howlbert_embed(
             "👣 Trail",
             format_roll_result(result)
             + "\n\n"
             + random.choice(TRAIL_FLAVOR)
-            + "\n\nThe trail goes cold.",
+            + "\n\nThe trail goes cold."
+            + hazard_note,
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Trail spent · `/scout rescout` · /world action:cooldowns")
+        append_fatigue_to_footer(embed, trail_fatigue)
+        return embed
 
     bones = random.randint(*SCOUT_TRAIL_BONES)
     if result["outcome"] == "critical_success":
@@ -264,4 +304,5 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text="Scouts · once per sunrise · counts toward trail quests")
+    append_fatigue_to_footer(embed, trail_fatigue)
     return embed

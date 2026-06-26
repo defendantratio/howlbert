@@ -7,6 +7,7 @@ from config import CURRENCY_LABEL, GREAT_PACKS
 from engine.activities import try_daily, try_hunt, try_work, try_crime
 from engine.shop_items import RABBIT_PELT_GIFT_BONES, RABBIT_PELT_STANDING, USABLE_ITEM_KEYS
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from engine.trade import build_trade_embed
 from utils.trade_views import TRADE_DYNAMIC_ITEMS, make_trade_view
@@ -82,7 +83,7 @@ class Economy(commands.Cog):
                 "Use `/register` before using economy commands.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return None
         return user
 
@@ -137,6 +138,9 @@ class Economy(commands.Cog):
         quantity="Item quantity",
         new_name="Rename item (use)",
         collaborate="Call a pack hunt (hunt only; same Great Pack joins via buttons)",
+        target_pack="Rival Great Pack treasury to raid (crime only)",
+        scene="Optional RP scene note (work / crime)",
+        staff="Flag for staff to weave your RP scene (work / crime)",
     )
     @app_commands.choices(
         action=[
@@ -153,7 +157,10 @@ class Economy(commands.Cog):
             app_commands.Choice(name="Sell item", value="sell"),
             app_commands.Choice(name="Inventory", value="inventory"),
             app_commands.Choice(name="Use item", value="use"),
-        ]
+        ],
+        target_pack=[
+            app_commands.Choice(name=info["name"], value=key) for key, info in GREAT_PACKS.items()
+        ],
     )
     @app_commands.autocomplete(item=_inventory_item_autocomplete, own_wolf=_other_wolf_autocomplete)
     async def bones(
@@ -167,6 +174,9 @@ class Economy(commands.Cog):
         quantity: int = 1,
         new_name: str | None = None,
         collaborate: bool = False,
+        target_pack: str | None = None,
+        scene: str | None = None,
+        staff: bool = False,
     ):
         if action == "balance":
             await self._balance(interaction)
@@ -181,39 +191,39 @@ class Economy(commands.Cog):
                 await self._hunt(interaction)
         elif action == "give":
             if amount is None:
-                await interaction.response.send_message("Provide `amount`.", ephemeral=True)
+                await interaction.response.send_message("Provide `amount`.", ephemeral=reply_ephemeral())
                 return
             await self._give(interaction, amount, wolf, own_wolf)
         elif action == "giveitem":
             if not item:
-                await interaction.response.send_message("Provide `item`.", ephemeral=True)
+                await interaction.response.send_message("Provide `item`.", ephemeral=reply_ephemeral())
                 return
             await self._giveitem(interaction, item, wolf, own_wolf, quantity)
         elif action == "leaderboard":
             await self._leaderboard(interaction)
         elif action == "work":
-            await self._work(interaction)
+            await self._work(interaction, scene=scene, staff=staff)
         elif action == "crime":
-            await self._crime(interaction)
+            await self._crime(interaction, target_pack=target_pack, scene=scene, staff=staff)
         elif action == "shop":
             await self._shop(interaction)
         elif action == "buy":
             if not item:
-                await interaction.response.send_message("Provide `item`.", ephemeral=True)
+                await interaction.response.send_message("Provide `item`.", ephemeral=reply_ephemeral())
                 return
             await self._buy(interaction, item, quantity)
         elif action == "sell":
             if not item:
-                await interaction.response.send_message("Provide `item`.", ephemeral=True)
+                await interaction.response.send_message("Provide `item`.", ephemeral=reply_ephemeral())
                 return
             await self._sell(interaction, item, quantity)
         elif action == "inventory":
             await self._inventory(interaction)
         elif action == "use":
             if not item:
-                await interaction.response.send_message("Provide `item`.", ephemeral=True)
+                await interaction.response.send_message("Provide `item`.", ephemeral=reply_ephemeral())
                 return
-            await self._use(interaction, item, None, new_name)
+            await self._use(interaction, item, wolf, new_name)
 
     async def _balance(self, interaction: discord.Interaction):
         user = await self._require_registered(interaction)
@@ -222,25 +232,47 @@ class Economy(commands.Cog):
 
         embed = howlbert_embed("Your Stores", color=SUCCESS_COLOR)
         embed.add_field(name=CURRENCY_LABEL, value=format_bones(user["bones"]), inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.set_footer(text="/bones action:hunt · action:work · /world action:cooldowns")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _daily(self, interaction: discord.Interaction):
         embed = try_daily(interaction)
         if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=embed.color == ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _hunt(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Server Only", "Hunt in a server channel.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        await interaction.response.defer(thinking=False)
         embed, show_prey, combat_enc = try_hunt(interaction)
         if not embed:
+            await interaction.followup.send(
+                embed=howlbert_embed("Hunt Failed", "Something went wrong.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
             return
         if combat_enc:
             view = make_combat_view(combat_enc, self.bot)
-            await interaction.response.send_message(embed=embed, view=view)
+            if not view:
+                db.rebuild_encounter_initiative(combat_enc)
+                view = make_combat_view(combat_enc, self.bot)
+            if not view:
+                embed.description = (embed.description or "") + (
+                    f"\n\n_Combat panel failed to attach; use `/combat status encounter:{combat_enc}` "
+                    f"or `/combat attack encounter:{combat_enc}` on your turn._"
+                )
+                await interaction.followup.send(embed=embed)
+                return
+            await interaction.followup.send(embed=embed, view=view)
             return
         if show_prey and embed.color != ERROR_COLOR:
-            await interaction.response.send_message(embed=embed, view=make_hunt_followup_view())
+            await interaction.followup.send(embed=embed, view=make_hunt_followup_view())
         else:
-            await interaction.response.send_message(embed=embed, ephemeral=embed.color == ERROR_COLOR)
+            await interaction.followup.send(embed=embed)
 
     async def _give(
         self,
@@ -256,26 +288,27 @@ class Economy(commands.Cog):
         recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf)
         if err:
             embed = howlbert_embed("Invalid Target", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if amount <= 0:
             embed = howlbert_embed("Invalid Amount", "Give at least 1 bone.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if user["bones"] < amount:
             embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.transfer_bones_by_wolf_id(user["id"], recipient["id"], amount):
             embed = howlbert_embed("Transfer Failed", "Could not move bones to that wolf.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed("Bones Gifted", color=SUCCESS_COLOR)
         embed.add_field(name="To", value=recipient["wolf_name"], inline=True)
         embed.add_field(name="Amount", value=format_bones(amount), inline=True)
+        embed.set_footer(text="/bones action:balance · /trade offer")
         await interaction.response.send_message(embed=embed)
 
     async def _giveitem(
@@ -293,18 +326,18 @@ class Economy(commands.Cog):
         recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf)
         if err:
             embed = howlbert_embed("Invalid Target", err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if quantity <= 0:
             embed = howlbert_embed("Invalid Quantity", "Give at least 1.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         shop_item = db.get_item_by_key(item.strip())
         if not shop_item:
-            embed = howlbert_embed("Unknown Item", "Check `/inventory` for valid keys.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = howlbert_embed("Unknown Item", "Check `/bones action:inventory` for valid keys.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         owned = db.get_inventory_quantity(interaction.user.id, shop_item["id"])
@@ -314,12 +347,12 @@ class Economy(commands.Cog):
                 f"You only carry **{owned}**; can't give **{quantity}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if not db.transfer_item_by_wolf_id(user["id"], recipient["id"], shop_item["id"], quantity):
-            embed = howlbert_embed("Transfer Failed", "Could not move bones to that wolf.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = howlbert_embed("Transfer Failed", "Could not move that item to the recipient.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed("Item Gifted", color=SUCCESS_COLOR)
@@ -330,7 +363,7 @@ class Economy(commands.Cog):
     @trade.command(name="offer", description="Propose a trade; items and/or bones.")
     @app_commands.describe(
         wolf="Wolf to trade with",
-        offer_item="Item you give (key from /inventory)",
+        offer_item="Item you give (key from `/bones action:inventory`)",
         offer_quantity="How many you give (default 1)",
         offer_bones="Bones you give (default 0)",
         for_item="Item you want from them (optional)",
@@ -355,7 +388,7 @@ class Economy(commands.Cog):
 
         if wolf.bot or wolf.id == interaction.user.id:
             embed = howlbert_embed("Invalid Target", "Choose another wolf.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         target = db.get_user(wolf.id)
@@ -365,24 +398,24 @@ class Economy(commands.Cog):
                 f"{wolf.display_name} hasn't registered a wolf yet.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if offer_bones < 0 or for_bones < 0:
             embed = howlbert_embed("Invalid Amount", "Bones can't be negative.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         offer_row = db.get_item_by_key(offer_item.strip()) if offer_item else None
         if offer_item and not offer_row:
-            embed = howlbert_embed("Unknown Item", "Check `/inventory` for your offer item.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = howlbert_embed("Unknown Item", "Check `/bones action:inventory` for your offer item.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         want_row = db.get_item_by_key(for_item.strip()) if for_item else None
         if for_item and not want_row:
-            embed = howlbert_embed("Unknown Item", "Check item keys with `/inventory`.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = howlbert_embed("Unknown Item", "Check item keys with `/bones action:inventory`.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         gives_item = offer_row is not None and offer_quantity > 0
@@ -393,17 +426,17 @@ class Economy(commands.Cog):
                 "Include an `offer_item` and/or `offer_bones` greater than 0.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if offer_row and offer_quantity <= 0:
             embed = howlbert_embed("Invalid Quantity", "Offer quantity must be at least 1.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if want_row and for_quantity <= 0:
             embed = howlbert_embed("Invalid Quantity", "Requested quantity must be at least 1.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if offer_row:
@@ -414,12 +447,12 @@ class Economy(commands.Cog):
                     f"You only carry **{owned}** of that item.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
         if offer_bones > 0 and user["bones"] < offer_bones:
             embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         trade_id = db.create_pending_trade(
@@ -434,7 +467,7 @@ class Economy(commands.Cog):
         )
         if not trade_id:
             embed = howlbert_embed("Trade Failed", "That trade could not be completed.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         trade = db.get_pending_trade(trade_id)
@@ -458,12 +491,12 @@ class Economy(commands.Cog):
             return
         guild_id = self._require_guild(interaction)
         if not guild_id:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         if wolf.bot or wolf.id == interaction.user.id:
             embed = howlbert_embed("Invalid Target", "Choose another wolf.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         recipient = db.get_user(wolf.id)
@@ -473,7 +506,7 @@ class Economy(commands.Cog):
                 f"{wolf.display_name} hasn't registered a wolf yet.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         world = db.get_world(guild_id)
@@ -487,9 +520,12 @@ class Economy(commands.Cog):
             require_pack_trade=False,
         )
         color = SUCCESS_COLOR if ok else ERROR_COLOR
+        embed = howlbert_embed("Duplicate Trade" if ok else "Trade Failed", msg, color=color)
+        if ok:
+            embed.set_footer(text="/pack tradepack · cross-pack · /pack pact action:trade · cat barter")
         await interaction.response.send_message(
-            embed=howlbert_embed("Duplicate Trade" if ok else "Trade Failed", msg, color=color),
-            ephemeral=not ok,
+            embed=embed,
+            ephemeral=reply_ephemeral(),
         )
 
     @trade.command(name="cancel", description="Cancel your outgoing trade offer.")
@@ -504,7 +540,7 @@ class Economy(commands.Cog):
             "Your pending trade offers are cancelled.",
             color=SUCCESS_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _leaderboard(self, interaction: discord.Interaction):
         rows = db.get_leaderboard(10)
@@ -524,7 +560,7 @@ class Economy(commands.Cog):
     async def _work(self, interaction: discord.Interaction, scene: str | None = None, staff: bool = False):
         embed = try_work(interaction, scene=scene, staff=staff)
         if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=embed.color == ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _crime(
         self,
@@ -535,18 +571,18 @@ class Economy(commands.Cog):
     ):
         embed = try_crime(interaction, target_pack=target_pack, scene=scene, staff=staff)
         if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=embed.color == ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _shop(self, interaction: discord.Interaction):
         items = db.get_shop_items()
         if not items:
             embed = howlbert_embed("Trading Post", "The shelves are bare.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = build_shop_embed(items, page=0)
         view = make_shop_view(items, page=0)
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 
     async def _buy(self, interaction: discord.Interaction, item: str, quantity: int = 1):
         user = await self._require_registered(interaction)
@@ -556,7 +592,7 @@ class Economy(commands.Cog):
         shop_item = db.get_item_by_key(item)
         if not shop_item:
             embed = howlbert_embed("Unknown Item", "Check `/bones action:shop` for valid item keys.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if shop_item["price"] <= 0:
@@ -565,24 +601,34 @@ class Economy(commands.Cog):
                 "That isn't sold at the trading post. Wild herbs come from `/field action:forage`; food and toys use keys like `prey_vole` or `toy_bone`.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
-        if user["bones"] < shop_item["price"]:
+        if quantity <= 0:
+            embed = howlbert_embed("Invalid Quantity", "Buy at least 1.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        total_price = shop_item["price"] * quantity
+        if user["bones"] < total_price:
             embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.shop_purchase import purchase_shop_item
 
         guild_id = interaction.guild.id if interaction.guild else None
         day = db.get_world(guild_id)["day_number"] if guild_id else 0
-        ok, note, _ = purchase_shop_item(
-            interaction.user.id,
-            item,
-            guild_id=guild_id,
-            day=day,
-        )
+        note = ""
+        for _ in range(quantity):
+            ok, note, _ = purchase_shop_item(
+                interaction.user.id,
+                item,
+                guild_id=guild_id,
+                day=day,
+            )
+            if not ok:
+                break
         if not ok:
             if note == "Not enough bones.":
                 embed = howlbert_embed("Not Enough Bones", "Your stash is too light.", color=ERROR_COLOR)
@@ -590,14 +636,27 @@ class Economy(commands.Cog):
                 embed = howlbert_embed("Can't Buy", note, color=ERROR_COLOR)
             else:
                 embed = howlbert_embed("Purchase Failed", "That purchase could not be completed.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         updated = db.get_user(interaction.user.id)
         embed = howlbert_embed("Purchased", note, color=SUCCESS_COLOR)
         embed.add_field(name="Item", value=shop_item["name"], inline=True)
-        embed.add_field(name="Spent", value=format_bones(shop_item["price"]), inline=True)
+        embed.add_field(name="Spent", value=format_bones(total_price), inline=True)
+        if quantity > 1:
+            embed.add_field(name="Quantity", value=str(quantity), inline=True)
         embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
+        key = shop_item["key"]
+        footer_bits = ["/bones action:inventory"]
+        if key.startswith("prey_"):
+            footer_bits.append("/prey")
+        elif key.startswith("toy_"):
+            footer_bits.append("/playpen action:toys")
+        elif key.startswith("herb_"):
+            footer_bits.append("/herbs action:dryall · action:prepare")
+        elif key in ("herb_bundle", "prey_bundle", "den_charm"):
+            footer_bits.append("/bones action:use item:<key>")
+        embed.set_footer(text=" · ".join(footer_bits))
         await interaction.response.send_message(embed=embed)
 
     async def _sell(self, interaction: discord.Interaction, item: str, quantity: int = 1):
@@ -617,10 +676,10 @@ class Economy(commands.Cog):
                     "Use **`stack:ID`** from `/herbs action:bag`.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if not interaction.guild:
-                await interaction.response.send_message("Sell forage herbs in a server.", ephemeral=True)
+                await interaction.response.send_message("Sell forage herbs in a server.", ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
             ok, msg, price = sell_forage_herb_stack(user, sid, day=world["day_number"])
@@ -630,24 +689,25 @@ class Economy(commands.Cog):
                 updated = db.get_user(interaction.user.id)
                 embed.add_field(name="Received", value=format_bones(price, signed=True), inline=True)
                 embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
+                embed.set_footer(text="/herbs action:bag · /field action:forage · restricted → `/herbs action:turnin`")
             await interaction.response.send_message(embed=embed)
             return
 
         shop_item = db.get_item_by_key(item)
         if not shop_item:
             embed = howlbert_embed("Unknown Item", "Check `/bones action:shop` for valid keys.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         qty = db.get_inventory_quantity(interaction.user.id, shop_item["id"])
         if qty < 1:
             embed = howlbert_embed("Not In Pack", "You don't carry that item.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if shop_item["sell_price"] <= 0:
             embed = howlbert_embed("Can't Sell", "The den won't buy that back.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.sell_item(interaction.user.id, shop_item["id"], shop_item["sell_price"])
@@ -671,7 +731,7 @@ class Economy(commands.Cog):
 
         if not items and not stacks and not toys:
             embed = howlbert_embed("Your Pack", "You're carrying nothing but scent and grit.")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         sections = []
@@ -699,13 +759,13 @@ class Economy(commands.Cog):
             footer_bits.append("toys: /playpen action:play · action:toystore")
         if any(row["key"].startswith("herb_") for row in items):
             footer_bits.append(
-                "herbs: /herbs action:dryall · action:store mode:depositall"
+                "herbs: /herbs action:bag · action:dryall · `/bones action:sell item:stack:ID`"
             )
         if any(row["key"] in USABLE_ITEM_KEYS for row in items):
             footer_bits.append("/bones action:use item:<key>")
         if footer_bits:
             embed.set_footer(text=" · ".join(footer_bits))
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _use_item_autocomplete(
         self,
@@ -734,42 +794,43 @@ class Economy(commands.Cog):
             return
 
         key = item.strip().lower()
-        if key == "reincarnation":
-            key = "revive"
         shop_item = db.get_item_by_key(key)
         if not shop_item or key not in USABLE_ITEM_KEYS:
             embed = howlbert_embed(
                 "Can't Use That",
-                "Check `/inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, "
+                "Check `/bones action:inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, "
                 "`revive`, `reincarnation`. "
                 "`lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. "
                 "`extra_paw` works with `/bones action:work` or `/bones action:crime`.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if db.get_inventory_quantity(interaction.user.id, shop_item["id"]) < 1:
             embed = howlbert_embed("Not In Pack", f"You don't carry **{shop_item['name']}**.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if key == "herb_bundle":
-            from engine.shop_items import grant_herb_bundle
+            from engine.shop_items import use_herb_bundle
 
-            _, summary = grant_herb_bundle(interaction.user.id)
+            ok, msg, fields = use_herb_bundle(user, interaction.user.id)
+            if not ok:
+                embed = howlbert_embed("Herb Bundle", msg, color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
             db.consume_item(interaction.user.id, shop_item["id"])
-            embed = howlbert_embed(
-                "Herb Bundle",
-                f"You unpack dried herbs into your kit:\n{summary}",
-                color=SUCCESS_COLOR,
-            )
+            if fields:
+                db.update_user(interaction.user.id, **fields)
+            embed = howlbert_embed("Herb Bundle", msg, color=SUCCESS_COLOR)
+            embed.set_footer(text="/bones action:inventory · /herbs action:bag")
             await interaction.response.send_message(embed=embed)
             return
 
         if key == "prey_bundle":
             if not interaction.guild:
-                await interaction.response.send_message("Use this in a server.", ephemeral=True)
+                await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
                 return
             from engine.shop_items import grant_prey_bundle
 
@@ -790,7 +851,7 @@ class Economy(commands.Cog):
 
         if key == "den_charm":
             if not interaction.guild:
-                await interaction.response.send_message("Use this in a server.", ephemeral=True)
+                await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
                 return
             if not user["pack_id"]:
                 embed = howlbert_embed(
@@ -798,7 +859,7 @@ class Economy(commands.Cog):
                     "Lone wolves have no pack den to hang a charm at. Join a Great Pack first.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             day = db.get_world(interaction.guild.id)["day_number"]
@@ -808,10 +869,11 @@ class Economy(commands.Cog):
                     "Your charm already steadies the den this rollover.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             pack = db.get_pack(user["pack_id"])
+            db.consume_item(interaction.user.id, shop_item["id"])
             db.adjust_pack_unity(user["pack_id"], 1)
             db.update_user(interaction.user.id, last_den_charm_day=day)
             pack = db.get_pack(user["pack_id"])
@@ -822,6 +884,7 @@ class Economy(commands.Cog):
                 f"Pack unity rises to **{unity}/10**.",
                 color=SUCCESS_COLOR,
             )
+            embed.set_footer(text="/pack · once per sunrise")
             await interaction.response.send_message(embed=embed)
             return
 
@@ -829,10 +892,10 @@ class Economy(commands.Cog):
             if not recipient or recipient.bot or recipient.id == interaction.user.id:
                 embed = howlbert_embed(
                     "Need a Packmate",
-                    "Use `recipient:@wolf` to trade the pelt with another registered wolf.",
+                    "Use `/bones action:use item:rabbit_pelt wolf:@player` to trade the pelt.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             target = db.get_user(recipient.id)
@@ -842,7 +905,7 @@ class Economy(commands.Cog):
                     f"{recipient.display_name} hasn't registered a wolf yet.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             db.consume_item(interaction.user.id, shop_item["id"])
@@ -852,6 +915,7 @@ class Economy(commands.Cog):
             embed.add_field(name="To", value=target["wolf_name"], inline=True)
             embed.add_field(name="They Received", value=format_bones(RABBIT_PELT_GIFT_BONES), inline=True)
             embed.add_field(name="Your Standing", value=f"+{RABBIT_PELT_STANDING}", inline=True)
+            embed.set_footer(text="/bones action:balance · /profile")
             await interaction.response.send_message(embed=embed)
             return
 
@@ -863,7 +927,7 @@ class Economy(commands.Cog):
                     "Use `/vitals action:condition` to check; or `/rpg action:delete confirm:DELETE` / `/register` for a fresh wolf.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             wolf_name = user["wolf_name"]
@@ -871,7 +935,7 @@ class Economy(commands.Cog):
             err = db.revive_wolf(interaction.user.id)
             if err:
                 embed = howlbert_embed("Can't Revive", err, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             db.consume_item(interaction.user.id, shop_item["id"])
@@ -898,7 +962,7 @@ class Economy(commands.Cog):
                     "**Reincarnation** only works when your active wolf is **dead**.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if not new_name or not new_name.strip():
                 embed = howlbert_embed(
@@ -906,7 +970,7 @@ class Economy(commands.Cog):
                     "Use `/bones action:use item:reincarnation new_name:<name>`; a new identity for the same soul.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             old_name = user["wolf_name"]
@@ -917,7 +981,7 @@ class Economy(commands.Cog):
                     "**Reincarnation** only works when your active wolf is **dead**.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if err == "same_name":
                 embed = howlbert_embed(
@@ -925,7 +989,7 @@ class Economy(commands.Cog):
                     "Pick a **new** name; reincarnation is a new identity.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if err == "name_taken":
                 embed = howlbert_embed(
@@ -933,15 +997,15 @@ class Economy(commands.Cog):
                     "Another wolf already uses that name. Choose a different one.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if err and err.startswith("name:"):
                 embed = howlbert_embed("Invalid Name", err[5:], color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if err:
                 embed = howlbert_embed("Can't Reincarnate", str(err), color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
 
             db.consume_item(interaction.user.id, shop_item["id"])

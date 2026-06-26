@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+from engine.combat_display import fighter_val
 from engine.combat_guide import COMBAT_MANEUVERS
 from engine.combat_size import can_pin_target, can_scruff_target
 from engine.rolls import roll_d20
@@ -114,8 +115,8 @@ def attacker_roll_modifiers(
     defender_f,
     *,
     encounter_id: int | None = None,
-) -> tuple[bool, bool]:
-    """Return (disadvantage, advantage) for the attack roll."""
+) -> tuple[bool, bool, str]:
+    """Return (disadvantage, advantage, flavor_note) for the attack roll."""
     a_flags = parse_combat_flags(attacker_f)
     d_flags = parse_combat_flags(defender_f)
     disadvantage = False
@@ -154,7 +155,15 @@ def attacker_roll_modifiers(
     if attacker and disease_attack_disadvantage(attacker, attack_type):
         disadvantage = True
 
-    return disadvantage, advantage
+    from engine.reptile_fear import reptile_fear_roll_modifiers
+
+    rf_dis, rf_adv, rf_note = reptile_fear_roll_modifiers(attacker_f, defender_f)
+    if rf_dis:
+        disadvantage = True
+    if rf_adv:
+        advantage = True
+
+    return disadvantage, advantage, rf_note
 
 
 def maneuver_pin_block(
@@ -171,7 +180,7 @@ def maneuver_pin_block(
     name = spec["name"]
     a_flags = parse_combat_flags(attacker_f)
     d_flags = parse_combat_flags(defender_f)
-    encounter_id = attacker_f.get("encounter_id")
+    encounter_id = fighter_val(attacker_f, "encounter_id")
 
     if spec.get("requires_self_pinned") and not a_flags.get("pinned"):
         return f"**{name}** only works while you are **pinned**."
@@ -216,7 +225,7 @@ def attack_target_block(
         return None
     a_flags = parse_combat_flags(attacker_f)
     d_flags = parse_combat_flags(defender_f)
-    encounter_id = attacker_f.get("encounter_id")
+    encounter_id = fighter_val(attacker_f, "encounter_id")
 
     if a_flags.get("pinned"):
         pinner_id = get_pinner_fighter_id(attacker_f)
@@ -251,16 +260,16 @@ def apply_maneuver_pin_effects(
         return None
 
     notes: list[str] = []
-    if spec.get("applies_pin_on_hit") and defender_f.get("id"):
+    if spec.get("applies_pin_on_hit") and fighter_val(defender_f, "id"):
         if attacker_stats and defender_stats and not can_pin_target(attacker_stats, defender_stats):
             notes.append(
                 f"_You land on **{defender_name}**, but you're too light to force them **pinned**._"
             )
         else:
-            encounter_id = int(defender_f.get("encounter_id") or 0)
+            encounter_id = int(fighter_val(defender_f, "encounter_id") or 0)
             set_fighter_pinned(defender_f["id"], attacker_f["id"], encounter_id)
             notes.append(f"**{defender_name}** is **pinned** on their back.")
-    if spec.get("clears_self_pin_on_hit") and attacker_f.get("id"):
+    if spec.get("clears_self_pin_on_hit") and fighter_val(attacker_f, "id"):
         if parse_combat_flags(attacker_f).get("pinned"):
             clear_fighter_pin(attacker_f["id"])
             notes.append("You **break free** of the pin.")

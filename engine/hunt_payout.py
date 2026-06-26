@@ -6,15 +6,21 @@ from engine.hunt import hunt_flavor_for_prey
 from engine.prey_items import canonical_prey_bones, prey_key_from_hunt_amount, prey_meta
 
 
-def prey_key_for_payout(payout: int) -> str:
+def prey_key_for_payout(payout: int, user=None, *, season: str | None = None) -> str:
     """Map post-modifier bone payout to a carcass type."""
     if payout <= 0:
         return "vole"
-    return prey_key_from_hunt_amount(payout)
+    gp = None
+    if user is not None:
+        if hasattr(user, "keys") and "great_pack" in user.keys():
+            gp = user["great_pack"]
+        elif isinstance(user, dict):
+            gp = user.get("great_pack")
+    return prey_key_from_hunt_amount(payout, great_pack=gp, season=season)
 
 
-def hunt_flavor_for_payout(payout: int, prey_key: str | None = None) -> str:
-    key = prey_key or prey_key_for_payout(payout)
+def hunt_flavor_for_payout(payout: int, prey_key: str | None = None, user=None, *, season: str | None = None) -> str:
+    key = prey_key or prey_key_for_payout(payout, user=user, season=season)
     return hunt_flavor_for_prey(key, payout)
 
 

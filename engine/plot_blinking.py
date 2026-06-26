@@ -30,7 +30,7 @@ PHASES: dict[int, dict[str, Any]] = {
         "act": "Act I",
         "title": "Peak Bleeds",
         "news": "Greyspire scouts swear the high spur weeps rust down the stone.",
-        "mechanics": "Mountain `/wilderness action:travel` DC +2; Greyspire hunt/scavenge +10% bones.",
+        "mechanics": "Mountain `/world action:travel territory:mountain` DC +2; Greyspire hunt/scavenge +10% bones.",
     },
     4: {
         "act": "Act I",
@@ -54,7 +54,7 @@ PHASES: dict[int, dict[str, Any]] = {
         "act": "Act II",
         "title": "Iron Debt",
         "news": "Logging scars and outlaw scent thread toward the old paper mill.",
-        "mechanics": "Forest travel DC +2; `/pack catpact` forge DC +2; cross-pack steal caught standing −2 extra.",
+        "mechanics": "Forest travel DC +2; `/pack pact action:forge` DC +2; cross-pack steal caught standing −2 extra.",
     },
     8: {
         "act": "Act II",
@@ -182,7 +182,6 @@ def apply_plot_generic_healer_treat_rewards(
         return ""
     from config import PLOT_GENERIC_HEALER_MOOD, PLOT_GENERIC_HEALER_STANDING
 
-    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
     last = int(healer["last_plot_healer_day"]) if "last_plot_healer_day" in healer.keys() else 0
     if last >= day:
         return "\n\n_Healer's work counts toward **blink_healer_touch**._"
@@ -213,7 +212,6 @@ def apply_plot_generic_healer_observe_rewards(medic, *, guild_id: int, day: int)
         return ""
     from config import PLOT_GENERIC_HEALER_MOOD
 
-    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
     mood = db.adjust_mood(medic["id"], PLOT_GENERIC_HEALER_MOOD)
     return (
         f"\n\n_**+{PLOT_GENERIC_HEALER_MOOD} mood** (now **{mood}**). "
@@ -485,7 +483,6 @@ def try_plot_mill_investigate(
     bones = random.randint(15, 35)
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
     standing = db.adjust_wolf_standing(user["discord_id"], 2)
-    db.increment_quest_progress(user["discord_id"], "explore", guild_id=guild_id)
     kick = f" Standing **+2**" if standing != "kicked" else " (**cast out**)"
     return (
         f"\n\n_Under the mill timbers you uncover a **fossil tooth** wrapped in rust._\n"
@@ -664,7 +661,6 @@ def apply_plot_firepaw_treat_rewards(
 
     phase = plot_phase(guild_id)
     lines: list[str] = []
-    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
 
     if phase in HEALER_PLOT_PHASES:
         lines.append(
@@ -720,7 +716,6 @@ def apply_plot_soot_treat_rewards(
     if phase not in SOOT_PLOT_PHASES:
         return ""
     lines: list[str] = []
-    db.increment_quest_progress(healer["discord_id"], "treat", wolf_id=healer["id"], guild_id=guild_id)
 
     heal_note = f"**+{SOOT_PLOT_TREAT_HEAL_BONUS} HP** on healing outcomes"
     disease_raw = patient["disease"] if "disease" in patient.keys() else None
@@ -769,7 +764,6 @@ def apply_plot_firepaw_observe_rewards(medic, *, guild_id: int, day: int) -> str
         return ""
 
     mood = db.adjust_mood(medic["id"], FIREPAW_PLOT_OBSERVE_MOOD)
-    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
 
     strain_note = ""
     state = parse_skill_strain_state(
@@ -809,7 +803,6 @@ def apply_plot_soot_observe_rewards(medic, *, guild_id: int, day: int) -> str:
         return ""
 
     mood = db.adjust_mood(medic["id"], SOOT_PLOT_OBSERVE_MOOD)
-    db.increment_quest_progress(medic["discord_id"], "treat", wolf_id=medic["id"], guild_id=guild_id)
 
     strain_note = ""
     state = parse_skill_strain_state(

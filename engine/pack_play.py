@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import random
+
 import database as db
 from config import PLAYALL_MOOD_GAIN
 from engine.amusement_items import amusement_meta
+from engine.disease_contract import try_den_filth_exposure
 from engine.pack_leadership import PACK_BULK_ALPHA_ONLY_MSG, can_run_pack_bulk_action
+
+PLAYALL_FILTH_CHANCE = 0.08
 
 
 def run_playall(
@@ -19,14 +24,24 @@ def run_playall(
     if not can_run_pack_bulk_action(user, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG
     if int(user["last_playall_day"]) >= day:
-        return False, "You already rallied the den to play this sunrise."
+        return (
+            False,
+            "You already rallied the den to play this sunrise.\n\n"
+            "_Resets next sunrise · `/world action:cooldowns`_",
+        )
+
+    members = db.get_pack_den_wolves(pack_id)
+    if not members:
+        return False, "No wolves in the den."
 
     from_pack = False
-    stacks = db.get_amusement_stacks(user["id"])
+    stacks = [s for s in db.get_amusement_stacks(user["id"]) if int(s["uses_left"]) > 0]
     if stacks:
         stack = stacks[0]
     else:
-        pack_stacks = db.get_pack_amusement_stacks(pack_id)
+        pack_stacks = [
+            s for s in db.get_pack_amusement_stacks(pack_id) if int(s["uses_left"]) > 0
+        ]
         if not pack_stacks:
             return (
                 False,
@@ -50,16 +65,19 @@ def run_playall(
         else:
             db.update_amusement_stack_uses(stack["id"], uses_left)
         source = "den toy store" if from_pack else "your hoard"
-        toy_note = f"**{meta['name']}** ({source}); **{uses_left}** uses left."
-
-    members = db.get_pack_den_wolves(pack_id)
-    if not members:
-        return False, "No wolves in the den."
+        worn = " · _last use_" if uses_left == 1 else ""
+        toy_note = f"**{meta['name']}** ({source}); **{uses_left}/{meta['uses']}** uses left{worn}."
 
     lines: list[str] = []
+    filth_lines: list[str] = []
     for wolf in members:
         mood = db.adjust_mood(wolf["id"], PLAYALL_MOOD_GAIN)
         lines.append(f"**{wolf['wolf_name']}** → **{mood}** mood")
+        db.update_user_by_id(int(wolf["id"]), last_play_day=day)
+        if random.random() < PLAYALL_FILTH_CHANCE:
+            filth = try_den_filth_exposure(wolf, day=day)
+            if filth:
+                filth_lines.append(f"**{wolf['wolf_name']}** rolls in filth; {filth}")
 
     db.update_user(user["discord_id"], last_playall_day=day, wolf_id=user["id"])
     summary = "\n".join(lines[:15])
@@ -69,4 +87,9 @@ def run_playall(
         f"Den romp! Every packmate gains **+{PLAYALL_MOOD_GAIN} mood**.\n"
         f"{summary}\n\n{toy_note}"
     )
+    if filth_lines:
+        extra = "\n".join(filth_lines[:5])
+        if len(filth_lines) > 5:
+            extra += f"\n_…and {len(filth_lines) - 5} more caught the stink._"
+        msg += f"\n\n{extra}"
     return True, msg

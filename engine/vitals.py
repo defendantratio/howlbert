@@ -10,6 +10,47 @@ from engine.hunger import hunger_activity_block
 from engine.thirst import thirst_activity_block
 
 
+def apply_hp_damage(user, amount: int) -> tuple[int, list[str]]:
+    """Reduce HP; at 0 enter dying (death saves) and roll near-death trauma."""
+    if not user or amount <= 0:
+        return 0, []
+    import database as db
+
+    extras: list[str] = []
+    cond = user["condition"] if "condition" in user.keys() else "healthy"
+    new_hp = max(0, int(user["hp"]) - amount)
+    wolf_id = user["id"] if "id" in user.keys() else None
+    db.set_user_conditions(user["discord_id"], wolf_id=wolf_id, hp=new_hp)
+    user["hp"] = new_hp
+    if new_hp == 0 and cond not in ("dead", "dying"):
+        db.enter_dying_state(user["discord_id"])
+        user["condition"] = "dying"
+        extras.append(
+            "You collapse; roll **`/medic action:deathsaves`** "
+            "or ask a Medic for **`/medic action:stabilize`**."
+        )
+        from engine.chronic_conditions import try_near_death_mental_trauma
+
+        trauma = try_near_death_mental_trauma(user)
+        if trauma:
+            extras.append(f"**Mind fracture:** {trauma}")
+    return amount, extras
+
+
+def vitals_response_footer(user, *, default: str = "") -> str:
+    """Embed footer after hazard/combat damage; highlights dying state."""
+    hp = int(user["hp"]) if user and "hp" in user.keys() else 1
+    cond = user["condition"] if user and "condition" in user.keys() else "healthy"
+    if hp <= 0 or cond == "dying":
+        return (
+            "You are **dying** · `/medic action:deathsaves` or Medic "
+            "`/medic action:stabilize` · `/vitals action:condition`"
+        )
+    if default:
+        return default
+    return "/vitals action:condition · `/medic action:treat`"
+
+
 def living_wolf_block(user) -> str | None:
     cond = user["condition"] if "condition" in user.keys() else "healthy"
     if cond == "dead":
@@ -40,7 +81,7 @@ def vitals_activity_block(user) -> str | None:
     return thirst_activity_block(user)
 
 
-def full_activity_block(user) -> str | None:
+def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | None:
     """Vitals (living, exhaustion 5, hunger/thirst crisis) plus critical mood."""
     from engine.injury_effects import bone_rest_activity_block, has_paralysis, hunt_blocked_by_injury
     from engine.mental_effects import field_activity_block, mental_activity_block
@@ -50,13 +91,14 @@ def full_activity_block(user) -> str | None:
         return block
     from engine.herb_buffs import sedated_blocks_activity
 
-    day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
-    if sedated_blocks_activity(user, day):
+    game_day = day
+    rest_day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
+    if sedated_blocks_activity(user, rest_day):
         return (
             "**Sedated**; valerian or poppy holds you in deep rest. "
             "No hunting, tracking, or ranging until next sunrise."
         )
-    block = bone_rest_activity_block(user, day=day)
+    block = bone_rest_activity_block(user, day=rest_day)
     if block:
         return block
     block = field_activity_block(user)
@@ -75,6 +117,12 @@ def full_activity_block(user) -> str | None:
     block = quarantine_activity_block(user)
     if block:
         return block
+    from engine.pregnancy import pregnancy_activity_block
+
+    if game_day > 0:
+        block = pregnancy_activity_block(user, action, game_day)
+        if block:
+            return block
     return mood_activity_block(user)
 
 
@@ -136,6 +184,9 @@ def _apply_death_save_conn(conn: sqlite3.Connection, user: sqlite3.Row) -> str:
             "UPDATE users SET condition = 'dead', hp = 0 WHERE id = ?",
             (wolf_id,),
         )
+        import database as db
+
+        db.handle_mate_grief_on_wolf_death(conn, wolf_id)
         return "died"
 
     round_num = int(user["death_save_round"]) if user["death_save_round"] else 1

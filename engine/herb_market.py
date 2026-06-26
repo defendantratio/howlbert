@@ -18,7 +18,7 @@ def forage_herb_sell_price(herb_key: str, *, form: str, potency: int, spoiling: 
     if form == "dried" and potency < 100:
         base = max(1, int(base * potency / 100))
     elif form in ("poultice", "tonic", "decoction"):
-        base = max(base, base + 2)
+        base += 2
     if spoiling:
         base = max(1, base // 2)
     return base
