@@ -33,10 +33,13 @@ def _write(
     *,
     day: int | None = None,
     guild_id: int | None = None,
+    conn=None,
 ) -> None:
     if day is None:
         day = _day_for_wolf(wolf_id, guild_id)
-    db.add_wolf_journal_entry(wolf_id, event_key, summary, day=day, guild_id=guild_id)
+    db.add_wolf_journal_entry(
+        wolf_id, event_key, summary, day=day, guild_id=guild_id, conn=conn
+    )
 
 
 def log_registered(wolf_id: int, wolf_name: str, affiliation: str | None) -> None:
@@ -113,12 +116,22 @@ def log_blooded(wolf_id: int, wolf_name: str, *, ceremonial: bool = False) -> No
     _write(wolf_id, key, f"{verb} — **{wolf_name}** is blooded.")
 
 
-def log_died(wolf_id: int, wolf_name: str, cause: str, *, guild_id: int | None = None) -> None:
+def log_died(
+    wolf_id: int,
+    wolf_name: str,
+    cause: str,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+    conn=None,
+) -> None:
     _write(
         wolf_id,
         "died",
         f"**{wolf_name}** died ({cause}).",
         guild_id=guild_id,
+        day=day,
+        conn=conn,
     )
 
 
@@ -133,13 +146,53 @@ def log_rite(
     _write(wolf_id, rite_key, summary, guild_id=guild_id, day=day)
 
 
-def format_journal_embed_body(wolf_id: int, *, limit: int = 20) -> str:
-    rows = db.list_wolf_journal(wolf_id, limit=limit)
+def format_journal_embed_body(wolf_id: int, *, limit: int = 200) -> str:
+    chunks = format_journal_embed_chunks(wolf_id, limit=limit)
+    return chunks[0] if chunks else "_No journal entries yet — life events are recorded automatically._"
+
+
+def _journal_entry_tier(event_key: str) -> int:
+    if event_key.startswith("lore:") or event_key in ("born", "adopted"):
+        return 2
+    return 1
+
+
+def format_journal_bullet_lines(wolf_id: int, *, limit: int = 200) -> list[str]:
+    rows = db.list_wolf_journal(wolf_id, limit=limit, chronological=True)
     if not rows:
-        return "_No journal entries yet — life events are recorded automatically._"
+        return []
     lines: list[str] = []
+    last_tier: int | None = None
     for row in rows:
+        tier = _journal_entry_tier(str(row["event_key"]))
+        if tier == 2 and last_tier != 2:
+            lines.append("_**Earlier life — den records on file**_")
+        last_tier = tier
         day = row["day"]
         prefix = f"**Day {day}** · " if day is not None else ""
-        lines.append(f"{prefix}{row['summary']}")
-    return "\n".join(lines)
+        lines.append(f"✦ {prefix}{row['summary']}")
+    return lines
+
+
+def chunk_journal_lines(lines: list[str], *, max_chars: int = 3900) -> list[str]:
+    if not lines:
+        return ["_No journal entries yet — life events are recorded automatically._"]
+    chunks: list[str] = []
+    current: list[str] = []
+    current_len = 0
+    for line in lines:
+        line_len = len(line) + 1
+        if current and current_len + line_len > max_chars:
+            chunks.append("\n".join(current))
+            current = [line]
+            current_len = line_len
+        else:
+            current.append(line)
+            current_len += line_len
+    if current:
+        chunks.append("\n".join(current))
+    return chunks
+
+
+def format_journal_embed_chunks(wolf_id: int, *, limit: int = 200) -> list[str]:
+    return chunk_journal_lines(format_journal_bullet_lines(wolf_id, limit=limit))

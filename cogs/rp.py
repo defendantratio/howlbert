@@ -10,7 +10,8 @@ from discord.ext import commands
 
 import database as db
 from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY
-from engine.wolf_journal import format_journal_embed_body
+from engine.journal_backfill import backfill_wolf_journal
+from engine.wolf_journal import format_journal_embed_chunks
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.replies import reply_ephemeral
 
@@ -252,11 +253,27 @@ class Roleplay(commands.Cog):
                 ephemeral=reply_ephemeral(),
             )
             return
-        body = format_journal_embed_body(wolf["id"])
-        embed = howlbert_embed(f"📓 {wolf['wolf_name']}'s Journal", body, color=EMBED_COLOR)
-        embed.set_footer(text="Recorded automatically · births, bonds, pack moves, blooding, death, rites")
+        backfill_wolf_journal(wolf["id"])
+        chunks = format_journal_embed_chunks(wolf["id"], limit=200)
+        embeds: list[discord.Embed] = []
+        for i, body in enumerate(chunks[:10]):
+            title = (
+                f"📓 {wolf['wolf_name']}'s Journal"
+                if i == 0
+                else f"📓 {wolf['wolf_name']}'s Journal (cont.)"
+            )
+            embed = howlbert_embed(title, body, color=EMBED_COLOR)
+            embeds.append(embed)
+        if len(chunks) > 10:
+            embeds[-1].set_footer(
+                text="Showing first 10 pages · older entries omitted"
+            )
+        elif embeds:
+            embeds[-1].set_footer(
+                text="Recorded automatically · backfilled from lore and gameplay"
+            )
         await interaction.response.send_message(
-            embed=embed,
+            embeds=embeds,
             ephemeral=reply_ephemeral() if target != interaction.user else False,
         )
 

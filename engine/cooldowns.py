@@ -185,7 +185,9 @@ def build_cooldown_fields(
         )
     )
 
-    rest_long = _status(user, "rest", ready=not _used_today(user, day, "last_rest_day"))
+    from engine.conditions import manual_long_rest_used_today
+
+    rest_long = _status(user, "rest", ready=not manual_long_rest_used_today(user, day))
     used_heals = _col(user, "herb_heals_today")
     if is_medic(user):
         heal_line = "Short herb: **unlimited** comfrey (Green Tongue)"

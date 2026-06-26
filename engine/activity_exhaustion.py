@@ -95,6 +95,17 @@ def _exhaustion_gain(activity_count: int, total_count: int, proficient: bool, cu
     return min(gain, room)
 
 
+def clear_activity_fatigue(user, day: int) -> None:
+    """Reset strenuous-activity counters after a rest break (short or long)."""
+    if not user:
+        return
+    buffs = get_buffs(user)
+    buffs["activity_fatigue_day"] = day
+    buffs["activity_fatigue_total"] = 0
+    buffs["activity_fatigue_by_key"] = {}
+    db.update_user(user["discord_id"], wolf_id=user["id"], herb_buffs=buffs_json(buffs))
+
+
 def record_strenuous_activity(
     user,
     activity_key: str,

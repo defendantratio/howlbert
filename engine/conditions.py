@@ -223,17 +223,44 @@ def apply_short_rest_healing(user, herb_heal: int = 0) -> int:
 
 
 def apply_long_rest_healing(user) -> tuple[int, int]:
-    """1 HP without herbs; remove 1 exhaustion. Dying and dead wolves don't benefit."""
+    """HP and exhaustion recovery from a full sleep."""
+    benefits = apply_long_rest_benefits(user)
+    return benefits["hp"], benefits["exhaustion"]
+
+
+def apply_long_rest_benefits(user) -> dict[str, int]:
+    """Long rest: HP recovery, exhaustion relief, modest mood lift. Does not replace eating or drinking."""
+    from config import LONG_REST_EXHAUSTION_RELIEF, LONG_REST_HP_GAIN, LONG_REST_MOOD_GAIN
+
     cond = user["condition"] if "condition" in user.keys() else "healthy"
+    hp = int(user["hp"]) if user and "hp" in user.keys() and user["hp"] is not None else 0
+    exhaustion = int(user["exhaustion"]) if user and "exhaustion" in user.keys() and user["exhaustion"] is not None else 0
+    mood = int(user["mood"]) if user and "mood" in user.keys() and user["mood"] is not None else 50
     if cond in ("dead", "dying"):
-        hp = int(user["hp"]) if user["hp"] is not None else 0
-        ex = int(user["exhaustion"]) if user["exhaustion"] is not None else 0
-        return hp, ex
-    heal = 1
+        return {"hp": hp, "exhaustion": exhaustion, "mood": mood}
     cap = effective_max_hp(user)
-    new_hp = min(cap, user["hp"] + heal)
-    exhaustion = max(0, user["exhaustion"] - 1)
-    return new_hp, exhaustion
+    return {
+        "hp": min(cap, hp + LONG_REST_HP_GAIN),
+        "exhaustion": max(0, exhaustion - LONG_REST_EXHAUSTION_RELIEF),
+        "mood": min(100, mood + LONG_REST_MOOD_GAIN),
+    }
+
+
+def manual_long_rest_used_today(user, day: int) -> bool:
+    """True if the player already used `/vitals` long rest this sunrise (rollover rest does not count)."""
+    from engine.herb_buffs import get_buffs
+
+    buffs = get_buffs(user)
+    return int(buffs.get("manual_long_rest_day") or 0) == day
+
+
+def mark_manual_long_rest(user, day: int) -> None:
+    import database as db
+    from engine.herb_buffs import buffs_json, get_buffs
+
+    buffs = get_buffs(user)
+    buffs["manual_long_rest_day"] = day
+    db.update_user(user["discord_id"], wolf_id=user["id"], herb_buffs=buffs_json(buffs))
 
 
 def _survival_or_con_mod(user) -> int:

@@ -1040,6 +1040,11 @@ class Profile(commands.Cog):
             embed.add_field(name="Location", value=f"📍 {str(ic_loc).strip()}", inline=True)
 
         journal_preview = db.format_journal_preview(user["id"], limit=4)
+        if journal_preview is None:
+            from engine.journal_backfill import backfill_wolf_journal
+
+            backfill_wolf_journal(user["id"])
+            journal_preview = db.format_journal_preview(user["id"], limit=4)
         if journal_preview:
             if len(journal_preview) > 1024:
                 journal_preview = journal_preview[:1021] + "…\n_Use `/journal` for full timeline._"

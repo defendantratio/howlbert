@@ -135,14 +135,15 @@ def test_db_seed_and_planting_roundtrip():
     assert db.get_herb_seed_qty(wolf_id, "daisy") == 1
     assert not db.consume_herb_seed(wolf_id, "daisy", 5)
 
-    pid = db.add_herb_planting(wolf_id, "daisy", guild_id=1, day=3, season="spring")
-    assert db.count_herb_plantings(wolf_id) == 1
+    pid = db.add_herb_planting(wolf_id, "daisy", pack_id=1, guild_id=1, day=3, season="spring")
+    assert db.count_pack_herb_plantings(1) == 1
     planting = db.get_herb_planting(pid)
     assert planting["herb_key"] == "daisy"
+    assert int(planting["last_tended_day"]) == 2
     db.update_herb_planting(pid, health=20)
     assert db.get_herb_planting(pid)["health"] == 20
     db.remove_herb_planting(pid)
-    assert db.count_herb_plantings(wolf_id) == 0
+    assert db.count_pack_herb_plantings(1) == 0
 
 
 if __name__ == "__main__":
