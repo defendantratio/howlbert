@@ -1,0 +1,322 @@
+"""IC slash lines, whispers, location, journal (read-only), and server roster."""
+
+from __future__ import annotations
+
+import logging
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+import database as db
+from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY
+from engine.wolf_journal import format_journal_embed_body
+from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.replies import reply_ephemeral
+
+logger = logging.getLogger("howlbert")
+
+_MAX_SAY = 500
+_MAX_WHISPER = 1000
+_MAX_LOCATION = 120
+_ROSTER_LIMIT = 24
+
+
+def _active_wolf(interaction: discord.Interaction):
+    return db.get_user(interaction.user.id)
+
+
+def _wolf_avatar(wolf, member: discord.Member | None) -> str | None:
+    url = wolf["avatar_url"] if "avatar_url" in wolf.keys() else None
+    if url:
+        return url
+    if member:
+        return member.display_avatar.url
+    return None
+
+
+def _ic_location_line(wolf) -> str | None:
+    loc = wolf["ic_location"] if "ic_location" in wolf.keys() else None
+    if loc and str(loc).strip():
+        return f"📍 {str(loc).strip()}"
+    return None
+
+
+def _pack_short(affiliation: str | None) -> str:
+    if not affiliation or affiliation == LONER_KEY:
+        return "Lone"
+    if affiliation == ROGUE_KEY:
+        return "Rogue"
+    if affiliation in GREAT_PACKS:
+        return GREAT_PACKS[affiliation]["name"]
+    return str(affiliation).replace("_", " ").title()
+
+
+class Roleplay(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    location = app_commands.Group(
+        name="location",
+        description="Set where your wolf is in-character.",
+    )
+
+    @app_commands.command(name="say", description="Post a one-line in-character line (no proxy intent needed).")
+    @app_commands.describe(line="What your wolf says or does (one line)")
+    async def say(self, interaction: discord.Interaction, line: str):
+        wolf = _active_wolf(interaction)
+        if not wolf:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        text = line.strip()
+        if not text:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Empty", "Say something.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        if len(text) > _MAX_SAY:
+            text = text[: _MAX_SAY - 1] + "…"
+
+        embed = discord.Embed(description=f"*\"{text}\"*", color=EMBED_COLOR)
+        avatar = _wolf_avatar(wolf, interaction.user if isinstance(interaction.user, discord.Member) else None)
+        embed.set_author(name=wolf["wolf_name"], icon_url=avatar)
+        loc = _ic_location_line(wolf)
+        if loc:
+            embed.set_footer(text=loc)
+
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(
+        name="whisper",
+        description="Send an in-character private message to another player's DMs.",
+    )
+    @app_commands.describe(
+        member="Who receives the whisper",
+        message="In-character message",
+    )
+    async def whisper(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        message: str,
+    ):
+        if member.bot:
+            await interaction.response.send_message(
+                embed=howlbert_embed("No", "You can't whisper bots.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        if member.id == interaction.user.id:
+            await interaction.response.send_message(
+                embed=howlbert_embed("No", "Whisper someone else.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        wolf = _active_wolf(interaction)
+        if not wolf:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        text = message.strip()
+        if not text:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Empty", "Write a whisper.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        if len(text) > _MAX_WHISPER:
+            text = text[: _MAX_WHISPER - 1] + "…"
+
+        embed = discord.Embed(
+            title=f"🤫 Whisper from {wolf['wolf_name']}",
+            description=text,
+            color=EMBED_COLOR,
+        )
+        avatar = _wolf_avatar(wolf, interaction.user)
+        embed.set_author(name=wolf["wolf_name"], icon_url=avatar)
+        embed.set_footer(text=f"To {member.display_name} · reply in-character in server")
+
+        try:
+            await member.send(embed=embed)
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "DMs Closed",
+                    f"Couldn't reach **{member.display_name}** — their DMs may be off.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Whisper Sent",
+                f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.",
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
+
+    @location.command(name="set", description="Mark your wolf's current in-character location.")
+    @app_commands.describe(place="Where you are IC (e.g. Greyspire high ridge)")
+    async def location_set(self, interaction: discord.Interaction, place: str):
+        wolf = _active_wolf(interaction)
+        if not wolf:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        cleaned = place.strip()[:_MAX_LOCATION]
+        if not cleaned:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Empty", "Name a place.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        db.set_ic_location(interaction.user.id, wolf["id"], cleaned)
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Location Set",
+                f"**{wolf['wolf_name']}** is at **{cleaned}**.",
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
+
+    @location.command(name="clear", description="Clear your wolf's IC location.")
+    async def location_clear(self, interaction: discord.Interaction):
+        wolf = _active_wolf(interaction)
+        if not wolf:
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
+            return
+        db.set_ic_location(interaction.user.id, wolf["id"], None)
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Location Cleared",
+                f"**{wolf['wolf_name']}**'s whereabouts are unstated.",
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
+
+    @location.command(name="show", description="Show your or another wolf's IC location.")
+    @app_commands.describe(member="Whose wolf to check (defaults to you)")
+    async def location_show(
+        self, interaction: discord.Interaction, member: discord.Member | None = None
+    ):
+        target = member or interaction.user
+        wolf = db.get_user(target.id)
+        if not wolf:
+            msg = (
+                "You haven't registered yet."
+                if target == interaction.user
+                else f"{target.display_name} has no wolf."
+            )
+            await interaction.response.send_message(
+                embed=howlbert_embed("No Wolf", msg, color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        loc = wolf["ic_location"] if "ic_location" in wolf.keys() else None
+        if not loc:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "No Location",
+                    f"**{wolf['wolf_name']}** hasn't set a location (`/location set`).",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                f"📍 {wolf['wolf_name']}",
+                str(loc),
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral() if target != interaction.user else False,
+        )
+
+    @app_commands.command(
+        name="journal",
+        description="Read your wolf's automatic life journal (major events only).",
+    )
+    @app_commands.describe(member="Another player's active wolf (optional)")
+    async def journal(
+        self, interaction: discord.Interaction, member: discord.Member | None = None
+    ):
+        target = member or interaction.user
+        wolf = db.get_user(target.id)
+        if not wolf:
+            await interaction.response.send_message(
+                embed=howlbert_embed("No Wolf", "No registered wolf.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        body = format_journal_embed_body(wolf["id"])
+        embed = howlbert_embed(f"📓 {wolf['wolf_name']}'s Journal", body, color=EMBED_COLOR)
+        embed.set_footer(text="Recorded automatically · births, bonds, pack moves, blooding, death, rites")
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=reply_ephemeral() if target != interaction.user else False,
+        )
+
+    @app_commands.command(
+        name="roster",
+        description="Gallery of registered wolves in this server.",
+    )
+    @app_commands.describe(pack="Filter by Great Pack")
+    @app_commands.choices(
+        pack=[
+            app_commands.Choice(name="All packs", value="all"),
+            app_commands.Choice(name="Lone / Rogue", value="lone"),
+            *[app_commands.Choice(name=info["name"], value=key) for key, info in GREAT_PACKS.items()],
+        ]
+    )
+    async def roster(self, interaction: discord.Interaction, pack: str = "all"):
+        if not interaction.guild:
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+            return
+        member_ids = [m.id for m in interaction.guild.members if not m.bot]
+        wolves = db.list_guild_active_wolves(member_ids)
+        if pack != "all":
+            if pack == "lone":
+                wolves = [
+                    w
+                    for w in wolves
+                    if not w["great_pack"] or w["great_pack"] in (LONER_KEY, ROGUE_KEY)
+                ]
+            else:
+                wolves = [w for w in wolves if w["great_pack"] == pack]
+        if not wolves:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Empty Den",
+                    "No living registered wolves match that filter.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        shown = wolves[:_ROSTER_LIMIT]
+        lines: list[str] = []
+        for w in shown:
+            pack_lbl = _pack_short(w["great_pack"] if "great_pack" in w.keys() else None)
+            role = w["wolf_role"] if "wolf_role" in w.keys() else "hunter"
+            lines.append(
+                f"**{w['wolf_name']}** · {pack_lbl} · {role.title()} · <@{w['discord_id']}>"
+            )
+        body = "\n".join(lines)
+        if len(wolves) > _ROSTER_LIMIT:
+            body += f"\n\n_…and {len(wolves) - _ROSTER_LIMIT} more._"
+        embed = howlbert_embed(
+            f"🐺 Den Roster ({len(wolves)})",
+            body,
+            color=SUCCESS_COLOR,
+        )
+        embed.set_footer(text="/profile · /profile sheet:true for lore")
+        await interaction.response.send_message(embed=embed)
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Roleplay(bot))

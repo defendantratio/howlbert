@@ -190,7 +190,9 @@ def format_pacts_body(guild_id: int, pack_id: int, *, day: int) -> str:
             f"{format_four_clans()}.\n"
             "**`/pack pact action:receive`**; collect border gifts from a **Clan patrol** "
             "(trust **35+**, once per wolf per sunrise).\n"
-            "**`/pack pact action:trade`**; barter duplicate hoard items for Clan prey, herbs, and toys.\n\n"
+            "**`/pack pact action:trade`**; barter duplicate hoard items for Clan prey, herbs, and toys.\n"
+            "**`/pack pact action:tradefood`**; offer a carcass or forage stack; cats prize meat, "
+            "but take fruit and berries for a token (obligate carnivores).\n\n"
             f"{SETTING_TAGLINE}"
         )
     lines = []
@@ -488,6 +490,97 @@ def trade_duplicates_cat_pact(
         f"{barter_border_flavor(stored_clan)}\n"
         f"Trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
         f"**You gave up:**\n{detail}\n\n"
+        f"**From the Clan:**\n{loot_block}"
+    )
+
+
+def trade_food_cat_pact(
+    user,
+    pack,
+    *,
+    guild_id: int,
+    clan_name: str,
+    stack_id: int,
+    day: int,
+) -> tuple[bool, str]:
+    """
+    Offer a carcass or forage stack from your hoard to an allied Clan for goods
+    and trust (once per sunrise). Forest cats are obligate carnivores: meat is
+    prized, but berries/fruit/roots earn only a token (the cats barter them
+    onward or line kit nests).
+    """
+    from config import (
+        CAT_PACT_FOOD_FORAGE_TRUST_PER_USE,
+        CAT_PACT_FOOD_LOOT_MAX,
+        CAT_PACT_FOOD_MEAT_TRUST_PER_BONE,
+        CAT_PACT_FOOD_TRUST_MAX,
+    )
+    from engine.cat_clan_goods import grant_clan_loot, roll_clan_loot
+    from engine.prey_items import is_forage_food, prey_meta
+
+    clan, err = validate_clan_name(clan_name)
+    if err:
+        return False, err
+
+    if not user["pack_id"]:
+        return False, "Join a Great Pack to trade at the cat border."
+
+    pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
+    if not pact:
+        return False, f"No active pact with **{clan}**."
+
+    last_food_trade = int(user["last_cat_food_trade_day"]) if "last_cat_food_trade_day" in user.keys() else 0
+    if last_food_trade >= day:
+        return False, "You already traded food at the border this sunrise."
+
+    stack = db.get_prey_stack(stack_id)
+    if not stack or stack["wolf_id"] != user["id"]:
+        return False, "You don't carry that carcass or forage (`/prey` for stack IDs)."
+    uses_left = int(stack["uses_left"])
+    if uses_left <= 0:
+        return False, "There's nothing left of that to trade."
+
+    meta = prey_meta(stack["prey_key"])
+    forage = is_forage_food(stack["prey_key"])
+
+    if forage:
+        trust_gain = min(
+            CAT_PACT_FOOD_TRUST_MAX,
+            max(1, round(uses_left * CAT_PACT_FOOD_FORAGE_TRUST_PER_USE)),
+        )
+        loot_count = 1 if uses_left >= 2 else 0
+        flavor = (
+            f"The Clan cats sniff the **{meta['name']}** and wrinkle their noses; "
+            "prey-fed warriors have little taste for plants, but a queen takes it "
+            "for the nursery nests."
+        )
+    else:
+        bone_value = int(stack["bone_value"])
+        trust_gain = min(
+            CAT_PACT_FOOD_TRUST_MAX,
+            max(2, round(bone_value * CAT_PACT_FOOD_MEAT_TRUST_PER_BONE)),
+        )
+        loot_count = max(1, min(CAT_PACT_FOOD_LOOT_MAX, bone_value // 12))
+        flavor = (
+            f"Fresh meat at the border; the Clan accepts the **{meta['name']}** "
+            "eagerly. Carnivores know good prey when they smell it."
+        )
+
+    db.remove_prey_stack(stack_id)
+    db.adjust_cat_pact_trust(pack["id"], stored_clan, trust_gain)
+    db.update_user(user["discord_id"], last_cat_food_trade_day=day, wolf_id=user["id"])
+    new_trust = min(100, int(pact["trust"]) + trust_gain)
+
+    loot_lines: list[str] = []
+    if loot_count > 0:
+        entries = roll_clan_loot(stored_clan, pact_type=pact["pact_type"], count=loot_count)
+        loot_lines = grant_clan_loot(user, guild_id=guild_id, day=day, entries=entries)
+    loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_They offer nothing in return this time._"
+
+    return True, (
+        f"{flavor}\n"
+        f"Trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
+        f"**You gave up:** {meta['name']} ({uses_left} use(s))\n\n"
         f"**From the Clan:**\n{loot_block}"
     )
 

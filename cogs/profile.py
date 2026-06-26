@@ -28,6 +28,7 @@ from engine.character_lore import (
 )
 
 from engine.character import attr_modifier
+from engine.character_art import canonical_art_path
 
 from engine.pack_unity import standing_effect_text
 from engine.prestige import get_tier_info
@@ -183,7 +184,7 @@ class Profile(commands.Cog):
 
         starting_age="Starting age in moons, 0-120 (optional; defaults from role)",
 
-        genetic="Optional RP genetics; comma-separated: blind, half_blind, deaf, brachycephaly, albinism, melanism, missing_leg, no_tail",
+        genetic="Optional RP genetics; comma-separated: blind, half_blind, deaf, mute, brachycephaly, albinism, melanism, missing_leg, no_tail",
 
         maw_belief="Faith in the Maw (defaults to Orthodox for Great Pack wolves)",
 
@@ -444,6 +445,17 @@ class Profile(commands.Cog):
         if invite_note:
             embed.add_field(name="Invite Reward", value=invite_note, inline=False)
 
+        role_note = None
+        if interaction.guild and isinstance(interaction.user, discord.Member):
+            from engine.pack_roles import sync_member_pack_role
+
+            try:
+                role_note = await sync_member_pack_role(interaction.guild, interaction.user, pack)
+            except Exception:
+                pass
+        if role_note:
+            embed.add_field(name="Pack Role", value=role_note, inline=False)
+
         total = db.count_user_wolves(interaction.user.id)
         slots = db.count_slot_wolves(interaction.user.id)
         born = db.count_born_pups(interaction.user.id)
@@ -678,6 +690,16 @@ class Profile(commands.Cog):
 
             embed.set_footer(text=f"Paid {format_bones(SETFACTION_CHANGE_COST)} to change Great Packs.")
 
+        if interaction.guild and isinstance(interaction.user, discord.Member):
+            from engine.pack_roles import sync_member_pack_role
+
+            try:
+                role_note = await sync_member_pack_role(interaction.guild, interaction.user, pack)
+            except Exception:
+                role_note = None
+            if role_note:
+                embed.add_field(name="Pack Role", value=role_note, inline=False)
+
         await interaction.response.send_message(embed=embed)
 
 
@@ -758,7 +780,148 @@ class Profile(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(
+        name="character",
+        description="Set your wolf's RP identity: pronouns, bio, birthday, avatar, ref image.",
+    )
+    @app_commands.describe(
+        pronouns="Pronouns, e.g. she/her, they/them",
+        bio="Short character bio / description",
+        birthday="Birthday text, e.g. 'Early Greenleaf' or a date",
+        avatar="Direct image URL used as profile/proxy avatar",
+        ref_image="Direct image URL for a reference image shown on your profile",
+        clear="Clear a single field instead of setting it",
+        own_wolf="Which of your wolves (defaults to your active wolf)",
+    )
+    @app_commands.choices(
+        clear=[
+            app_commands.Choice(name="Pronouns", value="pronouns"),
+            app_commands.Choice(name="Bio", value="bio"),
+            app_commands.Choice(name="Birthday", value="birthday"),
+            app_commands.Choice(name="Avatar", value="avatar_url"),
+            app_commands.Choice(name="Ref image", value="ref_image_url"),
+        ]
+    )
+    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
+    async def character(
+        self,
+        interaction: discord.Interaction,
+        pronouns: str | None = None,
+        bio: str | None = None,
+        birthday: str | None = None,
+        avatar: str | None = None,
+        ref_image: str | None = None,
+        clear: str | None = None,
+        own_wolf: str | None = None,
+    ):
+        wolf = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else db.get_user(interaction.user.id)
+        if not wolf:
+            msg = "No wolf with that name on your account." if own_wolf else "Use `/register` first."
+            await interaction.response.send_message(
+                embed=howlbert_embed("No Wolf", msg, color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
 
+        if clear:
+            db.set_wolf_identity(wolf["id"], **{clear: None})
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    wolf["wolf_name"], f"Cleared **{clear.replace('_', ' ')}**.", color=SUCCESS_COLOR
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        fields: dict[str, str] = {}
+        for url_field, value in (("avatar_url", avatar), ("ref_image_url", ref_image)):
+            if value:
+                if not value.lower().startswith(("http://", "https://")):
+                    await interaction.response.send_message(
+                        embed=howlbert_embed("Bad URL", f"`{url_field}` needs a direct http(s) image link.", color=ERROR_COLOR),
+                        ephemeral=reply_ephemeral(),
+                    )
+                    return
+                fields[url_field] = value
+        if pronouns:
+            fields["pronouns"] = pronouns[:64]
+        if bio:
+            fields["bio"] = bio[:1900]
+        if birthday:
+            fields["birthday"] = birthday[:48]
+
+        if not fields:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Nothing to Update",
+                    "Set at least one of: pronouns, bio, birthday, avatar, ref_image (or use `clear`).",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        db.set_wolf_identity(wolf["id"], **fields)
+        updated = ", ".join(k.replace("_url", "").replace("_", " ") for k in fields)
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                wolf["wolf_name"],
+                f"Updated **{updated}**. See `/profile`.",
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
+
+    @app_commands.command(
+        name="family",
+        description="Show a wolf's family tree / relationship web as a diagram.",
+    )
+    @app_commands.describe(
+        member="Whose family to show (defaults to you)",
+        own_wolf="One of your wolves (defaults to your active wolf)",
+    )
+    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
+    async def family(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member | None = None,
+        own_wolf: str | None = None,
+    ):
+        if own_wolf:
+            wolf = db.find_user_wolf(interaction.user.id, own_wolf)
+        elif member:
+            wolf = db.get_user(member.id)
+        else:
+            wolf = db.get_user(interaction.user.id)
+        if not wolf:
+            await interaction.response.send_message(
+                embed=howlbert_embed("No Wolf", "No wolf found. Use `/register` first.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        from engine.family_tree import family_tree_image_url
+
+        url, rel = family_tree_image_url(wolf)
+        if not url:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    f"{wolf['wolf_name']}'s Family",
+                    "No recorded parents, mate, or offspring yet. Bonds form through `/courtship`, "
+                    "`/pupcare`, and `/bonds`.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        embed = howlbert_embed(f"{wolf['wolf_name']}'s Family Tree", color=SUCCESS_COLOR)
+        lineage = db.format_lineage_for_profile(wolf)
+        if lineage:
+            embed.description = lineage
+        embed.set_image(url=url)
+        embed.set_footer(text=f"{rel} relationship(s) · solid = blood, dashed = adopted")
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="profile", description="View a wolf's profile or character sheet.")
     @app_commands.describe(
@@ -816,7 +979,12 @@ class Profile(commands.Cog):
                 f"(owner <@{possess['owner_discord_id']}>) · `/wolfadmin release` to stop._"
             )
 
-        embed.set_thumbnail(url=target.display_avatar.url)
+        wolf_avatar = user["avatar_url"] if "avatar_url" in user.keys() else None
+        embed.set_thumbnail(url=wolf_avatar or target.display_avatar.url)
+
+        wolf_pronouns = user["pronouns"] if "pronouns" in user.keys() else None
+        if wolf_pronouns:
+            embed.add_field(name="Pronouns", value=wolf_pronouns, inline=True)
 
         wolf_role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
 
@@ -857,6 +1025,29 @@ class Profile(commands.Cog):
         belief_text = format_maw_belief(user)
         if belief_text:
             embed.add_field(name="Maw Belief", value=belief_text, inline=False)
+
+        wolf_birthday = user["birthday"] if "birthday" in user.keys() else None
+        if wolf_birthday:
+            embed.add_field(name="Birthday", value=str(wolf_birthday), inline=True)
+
+        wolf_bio = user["bio"] if "bio" in user.keys() else None
+        if wolf_bio:
+            bio_text = wolf_bio if len(wolf_bio) <= 1024 else wolf_bio[:1021] + "…"
+            embed.add_field(name="Bio", value=bio_text, inline=False)
+
+        ic_loc = user["ic_location"] if "ic_location" in user.keys() else None
+        if ic_loc and str(ic_loc).strip():
+            embed.add_field(name="Location", value=f"📍 {str(ic_loc).strip()}", inline=True)
+
+        journal_preview = db.format_journal_preview(user["id"], limit=4)
+        if journal_preview:
+            if len(journal_preview) > 1024:
+                journal_preview = journal_preview[:1021] + "…\n_Use `/journal` for full timeline._"
+            embed.add_field(name="Journal", value=journal_preview, inline=False)
+
+        wolf_ref = user["ref_image_url"] if "ref_image_url" in user.keys() else None
+        if wolf_ref:
+            embed.set_image(url=wolf_ref)
 
         if has_character_lore(user):
             embed.add_field(
@@ -1099,6 +1290,17 @@ class Profile(commands.Cog):
             return
 
         embed = howlbert_embed(f"{title_name}; Character Sheet")
+        art_path = canonical_art_path(title_name)
+        if art_path:
+            art_file = discord.File(art_path, filename=art_path.name)
+            art_url = f"attachment://{art_path.name}"
+            embed.set_image(url=art_url)
+            embed.set_thumbnail(url=avatar)
+            for name, value in fields:
+                embed.add_field(name=name, value=value, inline=False)
+            await interaction.response.send_message(embed=embed, files=[art_file])
+            return
+
         embed.set_thumbnail(url=avatar)
         for name, value in fields:
             embed.add_field(name=name, value=value, inline=False)

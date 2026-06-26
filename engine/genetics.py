@@ -196,6 +196,24 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     },
 
+    "muteness": {
+
+        "name": "Muteness",
+
+        "effect": "No voice; cannot howl, call for help, or rally the pack; relies on others to relay messages.",
+
+        "hunt_mult": 0.95,
+
+        "blocks_howl": True,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 8,
+
+        "random_weight": 3,
+
+    },
+
 }
 
 
@@ -230,6 +248,8 @@ REGISTERABLE_GENETIC = frozenset(
 
         "missing_tail",
 
+        "muteness",
+
     }
 
 )
@@ -259,6 +279,8 @@ HERB_INCURABLE_GENETICS = frozenset(
         "melanism",
 
         "conjoined",
+
+        "muteness",
 
     }
 
@@ -309,6 +331,14 @@ GENETIC_ALIASES: dict[str, str] = {
     "no_tail": "missing_tail",
 
     "tailless": "missing_tail",
+
+    "mute": "muteness",
+
+    "mutism": "muteness",
+
+    "voiceless": "muteness",
+
+    "no_voice": "muteness",
 
 }
 
@@ -510,6 +540,18 @@ def genetic_hunt_multiplier(user) -> tuple[float, str]:
 
 
 
+
+
+def genetic_blocks_howl(user) -> tuple[bool, str]:
+    """True when a genetic condition (e.g. muteness) forbids howling/rallying."""
+    keys = parse_genetic_conditions(
+        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
+    )
+    for key in keys:
+        info = GENETIC_CONDITIONS[key]
+        if info.get("blocks_howl"):
+            return True, info["name"]
+    return False, ""
 
 
 def genetic_perception_penalty(user) -> int:

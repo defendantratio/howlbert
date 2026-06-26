@@ -152,6 +152,8 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
     for label, key in (
 
+        ("🎂 Birthdays", "birthdays"),
+
         ("Age milestones", "age_ups"),
 
         ("Births ready", "births_ready"),
@@ -453,6 +455,13 @@ async def run_guild_rollover(
                 await channel.send(embed=embed)
             except discord.HTTPException as exc:
                 logger.warning("Could not announce rollover in guild %s: %s", guild_id, exc)
+        if world:
+            from engine.rp_ambience import post_rp_ambience
+
+            try:
+                await post_rp_ambience(bot, guild_id, world)
+            except Exception:
+                logger.exception("RP ambience failed for guild %s", guild_id)
         await notify_births_ready_after_rollover(bot, world["day_number"])
 
     if dm_den_news and world and crisis:

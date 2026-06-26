@@ -12,7 +12,7 @@ from rpg_rules import ROLE_FEATURES, ROLE_LABELS
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.notifications import try_dm_user
-from utils.permissions import is_howlbert_admin
+from engine.proxy import parse_bracket_string
 
 
 async def _wolfadmin_wolf_autocomplete(
@@ -41,6 +41,12 @@ def _wolf_not_found_embed(player: discord.User, wolf_name: str) -> discord.Embed
         player_label=player.display_name,
     )
     return howlbert_embed("Wolf Not Found", body, color=ERROR_COLOR)
+
+
+def _resolve_player_wolf(player: discord.User, wolf_name: str | None):
+    if wolf_name:
+        return db.find_user_wolf(player.id, wolf_name)
+    return db.get_user(player.id)
 
 
 class WolfAdmin(commands.Cog):
@@ -663,6 +669,180 @@ class WolfAdmin(commands.Cog):
             color=SUCCESS_COLOR,
         )
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
+    @wolfadmin.command(
+        name="proxy",
+        description="Set up a player's proxy tags or autoproxy (admin).",
+    )
+    @app_commands.describe(
+        player="Wolf owner",
+        action="set tag, clear tag, list proxies, or toggle autoproxy",
+        tag="Tag template for set (e.g. H:text or [text])",
+        wolf_name="Which wolf (defaults to their active wolf)",
+        mode="For autoproxy: on or off",
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="Set tag", value="set"),
+            app_commands.Choice(name="Clear tag", value="clear"),
+            app_commands.Choice(name="List", value="list"),
+            app_commands.Choice(name="Autoproxy", value="autoproxy"),
+        ],
+        mode=[
+            app_commands.Choice(name="On", value="on"),
+            app_commands.Choice(name="Off", value="off"),
+        ],
+    )
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_proxy(
+        self,
+        interaction: discord.Interaction,
+        player: discord.User,
+        action: app_commands.Choice[str],
+        tag: str | None = None,
+        wolf_name: str | None = None,
+        mode: app_commands.Choice[str] | None = None,
+    ):
+        if not await self._require_admin(interaction):
+            return
+        if player.bot:
+            await interaction.response.send_message(
+                embed=howlbert_embed("Invalid Player", "Bots cannot own wolves.", color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        if action.value == "list":
+            wolves = db.list_user_wolves(player.id)
+            if not wolves:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "No Wolves",
+                        f"**{player.display_name}** has no registered wolves.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+            auto_id = db.get_autoproxy_wolf_id(player.id)
+            lines = []
+            for w in wolves:
+                prefix = w["proxy_prefix"] or ""
+                suffix = w["proxy_suffix"] or ""
+                tag_label = f"`{prefix}text{suffix}`" if (prefix or suffix) else "_no tag_"
+                star = " ⭐ autoproxy" if auto_id == w["id"] else ""
+                av = " 🖼️" if w["avatar_url"] else ""
+                lines.append(f"**{w['wolf_name']}** — {tag_label}{av}{star}")
+            embed = howlbert_embed(
+                f"Proxies — {player.display_name}",
+                "\n".join(lines),
+                color=SUCCESS_COLOR,
+            )
+            embed.set_footer(text="Player uses /proxy avatar for crop · /proxy import for Tupperbox")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        wolf = _resolve_player_wolf(player, wolf_name)
+        if not wolf:
+            if wolf_name:
+                await interaction.response.send_message(
+                    embed=_wolf_not_found_embed(player, wolf_name),
+                    ephemeral=reply_ephemeral(),
+                )
+            else:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "No Wolf",
+                        f"**{player.display_name}** has no active wolf.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+            return
+
+        if action.value == "set":
+            if not tag:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "Need Tag",
+                        "Give a `tag` like `H:text` or `[text]` (use `text` as the placeholder).",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+            prefix, suffix = parse_bracket_string(tag)
+            if not prefix and not suffix:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "Bad Tag",
+                        "Use `text` as the placeholder, e.g. `H:text` or `[text]`.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+            db.set_wolf_proxy(wolf["id"], prefix, suffix)
+            example = f"{prefix or ''}hello{suffix or ''}"
+            embed = howlbert_embed(
+                "Proxy Tag Set",
+                (
+                    f"**{wolf['wolf_name']}** ({player.mention}) will speak when they type `{example}`.\n"
+                    f"They can set an avatar with `/proxy avatar`."
+                ),
+                color=SUCCESS_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        if action.value == "clear":
+            db.clear_wolf_proxy(wolf["id"])
+            if db.get_autoproxy_wolf_id(player.id) == wolf["id"]:
+                db.set_autoproxy_wolf(player.id, None)
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Proxy Cleared",
+                    f"Removed the proxy tag on **{wolf['wolf_name']}** ({player.mention}).",
+                    color=SUCCESS_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
+        # autoproxy
+        if not mode:
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Pick Mode",
+                    "Choose `mode:on` or `mode:off` for autoproxy.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        if mode.value == "off":
+            db.set_autoproxy_wolf(player.id, None)
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Autoproxy Off",
+                    f"Untagged messages from **{player.display_name}** stay as them.",
+                    color=SUCCESS_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        db.set_autoproxy_wolf(player.id, wolf["id"])
+        await interaction.response.send_message(
+            embed=howlbert_embed(
+                "Autoproxy On",
+                (
+                    f"**{player.display_name}**'s untagged messages now post as **{wolf['wolf_name']}**. "
+                    "They can escape once with `\\` at the start of a message."
+                ),
+                color=SUCCESS_COLOR,
+            ),
+            ephemeral=reply_ephemeral(),
+        )
 
     @wolfadmin.command(
         name="deaths",

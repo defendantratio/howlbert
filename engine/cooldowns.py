@@ -222,6 +222,20 @@ def build_cooldown_fields(
             True,
         )
     )
+    fields.append(
+        (
+            "/sign",
+            _status(user, "sign", ready=not _used_today(user, day, "last_sign_day")),
+            True,
+        )
+    )
+    fields.append(
+        (
+            "/sign read",
+            _status(user, "read den signs", ready=not _used_today(user, day, "last_sign_read_day")),
+            True,
+        )
+    )
     if wolf_role_key(user) == "medic":
         fields.append(
             (

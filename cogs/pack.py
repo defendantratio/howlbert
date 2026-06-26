@@ -807,6 +807,26 @@ class Pack(commands.Cog):
             choices.append(app_commands.Choice(name=name, value=name))
         return choices[:25]
 
+    async def _food_stack_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[int]]:
+        from engine.prey_items import is_forage_food, prey_meta
+
+        user = db.get_user(interaction.user.id)
+        if not user:
+            return []
+        choices: list[app_commands.Choice[int]] = []
+        for stack in db.get_prey_stacks(user["id"]):
+            meta = prey_meta(stack["prey_key"])
+            kind = "forage" if is_forage_food(stack["prey_key"]) else "meat"
+            label = f"#{stack['id']} {meta['name']} ({stack['uses_left']} use, {kind})"
+            if current and current.lower() not in label.lower():
+                continue
+            choices.append(app_commands.Choice(name=label[:100], value=int(stack["id"])))
+        return choices[:25]
+
     @pack.command(
         name="pact",
         description="Negotiate treaties with forest cat clans (Alpha or Diplomat).",
@@ -816,6 +836,7 @@ class Pack(commands.Cog):
         clan_name="Forest cat Clan (e.g. ThunderClan)",
         pact_type="Treaty type when forging",
         terms="Short RP terms (optional)",
+        stack="Prey/forage stack to trade (for 'Trade food')",
     )
     @app_commands.choices(
         action=[
@@ -825,6 +846,7 @@ class Pack(commands.Cog):
             app_commands.Choice(name="Break treaty", value="break"),
             app_commands.Choice(name="Send tribute gift", value="gift"),
             app_commands.Choice(name="Trade duplicates", value="trade"),
+            app_commands.Choice(name="Trade food to clan", value="tradefood"),
             app_commands.Choice(name="Receive clan goods", value="receive"),
         ],
         pact_type=[
@@ -833,7 +855,7 @@ class Pack(commands.Cog):
             app_commands.Choice(name="Hunting rights (8 sunrises)", value="hunting_rights"),
         ],
     )
-    @app_commands.autocomplete(clan_name=_clan_name_autocomplete)
+    @app_commands.autocomplete(clan_name=_clan_name_autocomplete, stack=_food_stack_autocomplete)
     async def pack_pact(
         self,
         interaction: discord.Interaction,
@@ -841,6 +863,7 @@ class Pack(commands.Cog):
         clan_name: str | None = None,
         pact_type: str | None = None,
         terms: str | None = None,
+        stack: int | None = None,
     ):
         user, pack = await self._require_pack_member(interaction)
         if not user:
@@ -856,6 +879,7 @@ class Pack(commands.Cog):
             gift_cat_pact,
             renew_cat_pact,
             trade_duplicates_cat_pact,
+            trade_food_cat_pact,
             receive_cat_goods,
         )
 
@@ -946,6 +970,34 @@ class Pack(commands.Cog):
             embed = howlbert_embed("Clan Barter" if ok else "Barter Failed", msg, color=color)
             if ok:
                 embed.set_footer(text="/pack pact action:view · /pack pact action:receive")
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        if action == "tradefood":
+            if stack is None:
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        "Pick Food to Trade",
+                        "Choose a carcass or forage stack with the **stack** option "
+                        "(see `/prey` for IDs). Cats prize meat; they'll take fruit and "
+                        "berries only for a token.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+            ok, msg = trade_food_cat_pact(
+                user,
+                pack,
+                guild_id=interaction.guild.id,
+                clan_name=clan_name,
+                stack_id=int(stack),
+                day=day,
+            )
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            embed = howlbert_embed("Border Food Trade" if ok else "Trade Failed", msg, color=color)
+            if ok:
+                embed.set_footer(text="/pack pact action:view · /prey · /herbs action:bag")
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
