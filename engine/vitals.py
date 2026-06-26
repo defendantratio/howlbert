@@ -21,19 +21,19 @@ def apply_hp_damage(user, amount: int) -> tuple[int, list[str]]:
     new_hp = max(0, int(user["hp"]) - amount)
     wolf_id = user["id"] if "id" in user.keys() else None
     db.set_user_conditions(user["discord_id"], wolf_id=wolf_id, hp=new_hp)
-    user["hp"] = new_hp
     if new_hp == 0 and cond not in ("dead", "dying"):
         db.enter_dying_state(user["discord_id"])
-        user["condition"] = "dying"
         extras.append(
             "You collapse; roll **`/medic action:deathsaves`** "
             "or ask a Medic for **`/medic action:stabilize`**."
         )
         from engine.chronic_conditions import try_near_death_mental_trauma
 
-        trauma = try_near_death_mental_trauma(user)
-        if trauma:
-            extras.append(f"**Mind fracture:** {trauma}")
+        fresh = db.get_user_by_id(wolf_id) if wolf_id else db.get_user(user["discord_id"])
+        if fresh:
+            trauma = try_near_death_mental_trauma(fresh)
+            if trauma:
+                extras.append(f"**Mind fracture:** {trauma}")
     return amount, extras
 
 

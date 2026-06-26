@@ -188,6 +188,58 @@ def init_db():
         _seed_prey_items(conn)
         _seed_amusement_items(conn)
         _seed_quests(conn)
+    _run_journal_backfill_once()
+    _run_canonical_bonds_once()
+
+
+def _run_canonical_bonds_once() -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'canonical_bonds_v2'"
+        ).fetchone()
+        if row:
+            return
+    from engine.canonical_bonds import backfill_all_canonical_bonds
+
+    added = backfill_all_canonical_bonds(refresh_notes=True)
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('canonical_bonds_v2', ?)",
+            (str(added),),
+        )
+
+
+def _run_journal_backfill_once() -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'wolf_journal_backfill_v1'"
+        ).fetchone()
+        if row:
+            return
+    from engine.journal_backfill import backfill_all_wolf_journals
+
+    inserted = backfill_all_wolf_journals()
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('wolf_journal_backfill_v1', ?)",
+            (str(inserted),),
+        )
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
@@ -914,6 +966,30 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN last_cat_pact_gift_day INTEGER NOT NULL DEFAULT 0"
         )
+    if pack_cols_late and "last_garden_tend_day" not in pack_cols_late:
+        conn.execute(
+            "ALTER TABLE packs ADD COLUMN last_garden_tend_day INTEGER NOT NULL DEFAULT 0"
+        )
+
+    garden_cols = {row[1] for row in conn.execute("PRAGMA table_info(herb_gardens)")}
+    if garden_cols and "pack_id" not in garden_cols:
+        conn.execute("ALTER TABLE herb_gardens ADD COLUMN pack_id INTEGER")
+        conn.execute(
+            """
+            UPDATE herb_gardens
+            SET pack_id = (
+                SELECT pack_id FROM users WHERE users.id = herb_gardens.wolf_id
+            )
+            WHERE pack_id IS NULL
+            """
+        )
+        conn.execute(
+            """
+            UPDATE herb_gardens
+            SET last_tended_day = planted_day - 1
+            WHERE last_tended_day = planted_day AND dead = 0
+            """
+        )
 
     world_cols = {row[1] for row in conn.execute("PRAGMA table_info(world_state)")}
     if world_cols and "plot_phase" not in world_cols:
@@ -1175,6 +1251,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
         """
         CREATE INDEX IF NOT EXISTS idx_wolf_journal_wolf
         ON wolf_journal_entries (wolf_id, id DESC)
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
         """
     )
     conn.execute(
@@ -1621,6 +1705,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
     _migrate_pending_stillborn_name_uniqueness(conn)
     _migrate_skill_ranks_to_traits(conn)
     _migrate_stick_item_key(conn)
+    _ensure_combat_fighters_wolf_id(conn)
 
 
 def _migrate_skill_ranks_to_traits(conn: sqlite3.Connection) -> None:
@@ -2138,20 +2223,25 @@ def _migrate_multi_wolf(conn: sqlite3.Connection) -> None:
     if uq_cols and "wolf_id" not in uq_cols:
         _migrate_user_quests_to_wolf_id(conn)
 
-    cf_cols = {row[1] for row in conn.execute("PRAGMA table_info(combat_fighters)")}
-    if cf_cols and "wolf_id" not in cf_cols:
-        conn.execute("ALTER TABLE combat_fighters ADD COLUMN wolf_id INTEGER")
-        for row in conn.execute(
-            "SELECT DISTINCT discord_id FROM combat_fighters WHERE discord_id IS NOT NULL"
-        ):
-            wid = _resolve_wolf_id_conn(conn, row["discord_id"])
-            if wid:
-                conn.execute(
-                    "UPDATE combat_fighters SET wolf_id = ? WHERE discord_id = ?",
-                    (wid, row["discord_id"]),
-                )
+    _ensure_combat_fighters_wolf_id(conn)
 
     _migrate_bond_ids_to_wolf_ids(conn)
+
+
+def _ensure_combat_fighters_wolf_id(conn: sqlite3.Connection) -> None:
+    cf_cols = {row[1] for row in conn.execute("PRAGMA table_info(combat_fighters)")}
+    if not cf_cols or "wolf_id" in cf_cols:
+        return
+    conn.execute("ALTER TABLE combat_fighters ADD COLUMN wolf_id INTEGER")
+    for row in conn.execute(
+        "SELECT DISTINCT discord_id FROM combat_fighters WHERE discord_id IS NOT NULL"
+    ):
+        wid = _resolve_wolf_id_conn(conn, row["discord_id"])
+        if wid:
+            conn.execute(
+                "UPDATE combat_fighters SET wolf_id = ? WHERE discord_id = ?",
+                (wid, row["discord_id"]),
+            )
 
 
 def _migrate_bond_ids_to_wolf_ids(conn: sqlite3.Connection) -> None:
@@ -2711,6 +2801,20 @@ def reassign_wolf_owner(
                 (remaining["id"] if remaining else None, old_discord_id),
             )
 
+        old_auto = conn.execute(
+            "SELECT autoproxy_wolf_id FROM account_progress WHERE discord_id = ?",
+            (old_discord_id,),
+        ).fetchone()
+        if old_auto and old_auto["autoproxy_wolf_id"] == wolf_id:
+            conn.execute(
+                "UPDATE account_progress SET autoproxy_wolf_id = NULL WHERE discord_id = ?",
+                (old_discord_id,),
+            )
+            conn.execute(
+                "UPDATE account_progress SET autoproxy_wolf_id = ? WHERE discord_id = ?",
+                (wolf_id, new_discord_id),
+            )
+
     return "ok"
 
 
@@ -2896,6 +3000,16 @@ def set_ic_location(discord_id: int, wolf_id: int, location: str | None) -> None
     update_user(discord_id, wolf_id=wolf_id, ic_location=location)
 
 
+JOURNAL_SUMMARY_MAX = 4000
+
+
+def _clip_journal_summary(summary: str) -> str:
+    summary = (summary or "").strip()
+    if len(summary) <= JOURNAL_SUMMARY_MAX:
+        return summary
+    return summary[: JOURNAL_SUMMARY_MAX - 1].rstrip() + "…"
+
+
 def add_wolf_journal_entry(
     wolf_id: int,
     event_key: str,
@@ -2903,43 +3017,175 @@ def add_wolf_journal_entry(
     *,
     day: int | None = None,
     guild_id: int | None = None,
+    conn: sqlite3.Connection | None = None,
 ) -> None:
-    summary = (summary or "").strip()
+    summary = _clip_journal_summary(summary)
     if not summary:
         return
+
+    def _insert(c: sqlite3.Connection) -> None:
+        c.execute(
+            """
+            INSERT INTO wolf_journal_entries (wolf_id, event_key, summary, day, guild_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (wolf_id, event_key, summary, day, guild_id),
+        )
+
+    if conn is not None:
+        _insert(conn)
+    else:
+        with get_db() as c:
+            _insert(c)
+
+
+def get_wolf_journal_event_keys(wolf_id: int) -> set[str]:
     with get_db() as conn:
+        rows = conn.execute(
+            "SELECT event_key FROM wolf_journal_entries WHERE wolf_id = ?",
+            (wolf_id,),
+        ).fetchall()
+        return {str(r["event_key"]) for r in rows}
+
+
+def add_wolf_journal_entry_if_new(
+    wolf_id: int,
+    event_key: str,
+    summary: str,
+    *,
+    day: int | None = None,
+    guild_id: int | None = None,
+) -> bool:
+    """Insert when this wolf does not already have the event_key. Returns True if inserted."""
+    summary = _clip_journal_summary(summary)
+    if not summary:
+        return False
+    with get_db() as conn:
+        exists = conn.execute(
+            """
+            SELECT 1 FROM wolf_journal_entries
+            WHERE wolf_id = ? AND event_key = ?
+            LIMIT 1
+            """,
+            (wolf_id, event_key),
+        ).fetchone()
+        if exists:
+            return False
         conn.execute(
             """
             INSERT INTO wolf_journal_entries (wolf_id, event_key, summary, day, guild_id)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (wolf_id, event_key, summary[:500], day, guild_id),
+            (wolf_id, event_key, summary, day, guild_id),
         )
+        return True
 
 
-def list_wolf_journal(wolf_id: int, *, limit: int = 25) -> list[sqlite3.Row]:
-    limit = max(1, min(limit, 50))
+def upsert_wolf_journal_entry(
+    wolf_id: int,
+    event_key: str,
+    summary: str,
+    *,
+    day: int | None = None,
+    guild_id: int | None = None,
+) -> None:
+    """Insert or replace summary for a stable event_key (e.g. lore backfill refresh)."""
+    summary = _clip_journal_summary(summary)
+    if not summary:
+        return
     with get_db() as conn:
-        return conn.execute(
+        row = conn.execute(
+            """
+            SELECT id FROM wolf_journal_entries
+            WHERE wolf_id = ? AND event_key = ?
+            LIMIT 1
+            """,
+            (wolf_id, event_key),
+        ).fetchone()
+        if row:
+            conn.execute(
+                """
+                UPDATE wolf_journal_entries
+                SET summary = ?, day = COALESCE(?, day), guild_id = COALESCE(?, guild_id)
+                WHERE id = ?
+                """,
+                (summary, day, guild_id, row["id"]),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO wolf_journal_entries (wolf_id, event_key, summary, day, guild_id)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (wolf_id, event_key, summary, day, guild_id),
+            )
+
+
+def list_wolf_journal(
+    wolf_id: int, *, limit: int = 200, chronological: bool = False
+) -> list[sqlite3.Row]:
+    limit = max(1, min(limit, 200))
+    with get_db() as conn:
+        rows = conn.execute(
             """
             SELECT * FROM wolf_journal_entries
             WHERE wolf_id = ?
-            ORDER BY id DESC
-            LIMIT ?
             """,
-            (wolf_id, limit),
+            (wolf_id,),
         ).fetchall()
+    if chronological:
+        rows = sorted(rows, key=_journal_sort_key)
+    else:
+        rows = sorted(rows, key=_journal_sort_key, reverse=True)
+    return rows[:limit]
+
+
+def _journal_sort_key(row: sqlite3.Row) -> tuple:
+    """In-game days first (oldest→newest), then pre-game den records at the end."""
+    key = str(row["event_key"])
+    day = row["day"]
+    row_id = int(row["id"])
+
+    if key.startswith("lore:") or key in ("born", "adopted"):
+        sub = {"lore:backstory": 0, "lore:family": 1, "born": 2, "adopted": 3}.get(key, 9)
+        return (2, 0, sub, row_id)
+
+    game_day = int(day) if day is not None else 0
+    if key == "registered":
+        game_day = 0
+
+    sub = {
+        "registered": 0,
+        "pack_joined": 1,
+        "pack_left": 2,
+        "bonded": 3,
+        "blooded": 4,
+        "rite_blooding": 5,
+        "rite_naming": 6,
+        "rite_mourning": 7,
+    }.get(key, 10)
+    if key.startswith("bond:"):
+        sub = 20
+    elif key.startswith("court:"):
+        sub = 21
+    elif key.startswith("family:"):
+        sub = 22
+    elif key == "died" or key.startswith("died"):
+        sub = 99
+
+    return (1, game_day, sub, row_id)
 
 
 def format_journal_preview(wolf_id: int, *, limit: int = 5) -> str | None:
-    rows = list_wolf_journal(wolf_id, limit=limit)
+    rows = list_wolf_journal(wolf_id, limit=200, chronological=True)
     if not rows:
         return None
+    preview = rows[-limit:]
     lines: list[str] = []
-    for row in reversed(rows):
+    for row in preview:
         day = row["day"]
         prefix = f"Day {day} · " if day is not None else ""
-        lines.append(f"• {prefix}{row['summary']}")
+        lines.append(f"✦ {prefix}{row['summary']}")
     return "\n".join(lines)
 
 
@@ -3274,6 +3520,9 @@ def register_user(
     from engine.wolf_journal import log_registered
 
     log_registered(wolf_id, wolf_name.strip(), great_pack or affiliation)
+    from engine.canonical_bonds import apply_canonical_bonds_for_wolf
+
+    apply_canonical_bonds_for_wolf(wolf_id, refresh_notes=True)
     return wolf_id
 
 
@@ -4407,7 +4656,7 @@ def _decay_mood_on_rollover() -> None:
 
 def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
     """Living wolves sleep through the rollover; same as a long rest."""
-    from engine.conditions import apply_long_rest_healing
+    from engine.conditions import apply_long_rest_benefits
 
     with get_db() as conn:
         rows = conn.execute(
@@ -4417,14 +4666,15 @@ def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
             """
         ).fetchall()
         for user in rows:
-            new_hp, exhaustion = apply_long_rest_healing(user)
+            rest = apply_long_rest_benefits(user)
             from engine.herb_buffs import tick_buffs_for_rollover
 
             tick_fields = tick_buffs_for_rollover(user, day_number)
             conn.execute(
                 """
                 UPDATE users
-                SET hp = ?, exhaustion = ?, herb_heals_today = 0, herb_treats_today = 0,
+                SET hp = ?, exhaustion = ?, mood = ?,
+                    herb_heals_today = 0, herb_treats_today = 0,
                     last_rest_day = ?,
                     jaw_meal_shield = 0, smoke_debuff = 0, cough_suppressed = 0,
                     hunger_exhaustion_skip = 0, march_exhaustion_skip = 0,
@@ -4432,8 +4682,9 @@ def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
                 WHERE id = ?
                 """,
                 (
-                    new_hp,
-                    exhaustion,
+                    rest["hp"],
+                    rest["exhaustion"],
+                    rest["mood"],
                     day_number,
                     tick_fields.get(
                         "disease_save_buff",
@@ -8165,7 +8416,14 @@ def mark_wolf_dead(
             result = None
         from engine.wolf_journal import log_died
 
-        log_died(wolf_id, row["wolf_name"], cause, guild_id=resolved_guild)
+        log_died(
+            wolf_id,
+            row["wolf_name"],
+            cause,
+            guild_id=resolved_guild,
+            day=resolved_day,
+            conn=c,
+        )
         return result
 
     if conn is not None:
@@ -8251,7 +8509,7 @@ def handle_mate_grief_on_wolf_death(conn: sqlite3.Connection, dead_wolf_id: int)
         return None
     from engine.disease_contract import try_grief_on_bond_loss
 
-    note = try_grief_on_bond_loss(partner, bond_type="mate")
+    note = try_grief_on_bond_loss(partner, bond_type="mate", conn=conn)
     if not note:
         return None
     return {
@@ -10050,6 +10308,7 @@ def add_herb_planting(
     wolf_id: int,
     herb_key: str,
     *,
+    pack_id: int,
     guild_id: int,
     day: int,
     season: str,
@@ -10058,21 +10317,49 @@ def add_herb_planting(
         cur = conn.execute(
             """
             INSERT INTO herb_gardens
-            (wolf_id, guild_id, herb_key, planted_day, season_planted,
+            (wolf_id, pack_id, guild_id, herb_key, planted_day, season_planted,
              last_tended_day, last_eval_day, health, dead)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 100, 0)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 100, 0)
             """,
-            (wolf_id, guild_id, herb_key, day, season, day, day),
+            (wolf_id, pack_id, guild_id, herb_key, day, season, day - 1, day),
         )
         return int(cur.lastrowid)
 
 
 def get_herb_plantings(wolf_id: int) -> list[sqlite3.Row]:
+    """Legacy: plantings by planter wolf id."""
     with get_db() as conn:
         return conn.execute(
             "SELECT * FROM herb_gardens WHERE wolf_id = ? ORDER BY planted_day ASC, id ASC",
             (wolf_id,),
         ).fetchall()
+
+
+def get_pack_herb_plantings(pack_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM herb_gardens WHERE pack_id = ? ORDER BY planted_day ASC, id ASC",
+            (pack_id,),
+        ).fetchall()
+
+
+def pack_garden_tended_today(pack_id: int, day: int) -> bool:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT last_garden_tend_day FROM packs WHERE id = ?",
+            (pack_id,),
+        ).fetchone()
+        if not row:
+            return False
+        return int(row["last_garden_tend_day"]) >= day
+
+
+def mark_pack_garden_tended(pack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE packs SET last_garden_tend_day = ? WHERE id = ?",
+            (day, pack_id),
+        )
 
 
 def get_herb_planting(planting_id: int) -> sqlite3.Row | None:
@@ -10107,6 +10394,15 @@ def count_herb_plantings(wolf_id: int) -> int:
         row = conn.execute(
             "SELECT COUNT(*) AS n FROM herb_gardens WHERE wolf_id = ? AND dead = 0",
             (wolf_id,),
+        ).fetchone()
+        return int(row["n"]) if row else 0
+
+
+def count_pack_herb_plantings(pack_id: int) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM herb_gardens WHERE pack_id = ? AND dead = 0",
+            (pack_id,),
         ).fetchone()
         return int(row["n"]) if row else 0
 

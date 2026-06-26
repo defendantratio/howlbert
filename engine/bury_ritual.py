@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import database as db
 from engine.herb_buffs import grant_burial_scent_mask
+from engine.mirewort_burial import is_mirewort, mirewort_carcass_burial_note
 from engine.prey_items import prey_meta
 from engine.surgery import consume_participant_herb, participant_has_herb
 from herbs import HERBS
@@ -55,9 +56,14 @@ def bury_carcass(
     if db_fields:
         db.update_user_by_id(user["id"], **db_fields)
 
+    mirewort_note = ""
+    if is_mirewort(user):
+        mirewort_note = mirewort_carcass_burial_note(ritual_herb_key=key if key else None)
+
     body = (
         f"You scrape earth over **{meta['label']}**; gone from your hoard.\n"
         f"_The den remembers the respect; mood **{new_mood}** (**+{mood_delta}**)._"
         f"{ritual_note}"
+        f"{mirewort_note}"
     )
     return True, body

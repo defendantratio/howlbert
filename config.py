@@ -329,7 +329,10 @@ HERB_PREPARED_FORMS = ("poultice", "tonic", "decoction")
 WINTER_FORAGE_SPOIL_CHANCE = 0.35
 
 # --- Grow-your-own herb garden ---
-GARDEN_MAX_PLOTS = 6            # living plantings a wolf can tend at once
+GARDEN_MAX_PLOTS = 6            # living plantings per pack garden at once
+LONG_REST_MOOD_GAIN = 6
+LONG_REST_HP_GAIN = 3
+LONG_REST_EXHAUSTION_RELIEF = 2
 GARDEN_SEED_BONE_COST = 12     # buy a seed packet from the den
 GARDEN_FORAGE_SEED_CHANCE = 0.40  # chance foraging also yields a seed
 GARDEN_HARVEST_SEED_MIN = 1    # seeds returned when harvesting a healthy plant

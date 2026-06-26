@@ -205,7 +205,7 @@ HELP_TOPICS = {
 
         "`/medic action:quarantine`; Medics, Alpha, or Advisor isolate sick wolves (blocks spread & activities)\n"
 
-        "`/vitals action:rest`; short rest (comfrey heal, 3/sunrise); long rest is automatic each rollover\n"
+        "`/vitals action:rest`; short rest clears strain (+ optional comfrey heal); long rest restores **3 HP**, **−2 exhaustion**, and mood\n"
 
         "`/medic action:treat herb:`; inventory herb **or** forage `stack:ID` (**Medics**: unlimited; **`patient:`** treats packmate from your bag)\n"
 
@@ -344,7 +344,8 @@ HELP_TOPICS = {
 
         "**Pack**; `/playpen action:socialize` · `action:groom` · `/pack stash` · `/packlife action:feedall` · `action:drinkall` (Alpha)\n"
 
-        "**Bonds**; `/bonds` friendships, rivalries, kin, mentors · found families (`/playpen action:socialize` & `action:groom` deepen ties)\n"
+        "**Bonds**; `/bonds` friendships, rivalries, kin, mentors · found families (`/playpen action:socialize` & `action:groom` deepen ties). "
+        "Canonical lore bonds seed automatically when both wolves are registered.\n"
 
         "**Raccoon**; `/raccoon sell` · `/raccoon buy` bundles · `/raccoon offer` acorn\n"
 
@@ -827,7 +828,9 @@ HELP_TOPICS = {
 
         "**Scenes**\n"
 
-        "`/scene start`; open an RP **thread** with a pinned living roster. "
+        "`/scene start`; opens a thread titled **YourWolf + Partner — Location** "
+        "(partner and location optional; location defaults to your `/location`). "
+        "`topic:` is the opening blurb, not the thread name. "
 
         "`/scene join` · `/scene here` · `/scene poke` · `/scene leave` · `/scene end` (opener or admin). "
 
@@ -839,7 +842,7 @@ HELP_TOPICS = {
 
         "`/location set` · `clear` · `show`; where your wolf is IC (shown on `/profile` and proxy footers).\n\n"
 
-        "**Journal**; `/journal` reads your wolf's **automatic** timeline (birth, pack, bonds, blooding, death, rites).\n\n"
+        "**Journal**; `/journal` reads your wolf's **automatic** timeline; backfills from lore sheets, birth line, bonds, courtship, found families, blooding, and death records.\n\n"
 
         "**Ceremonies**; `/rite naming` · `blooding` · `mourning`.\n\n"
 

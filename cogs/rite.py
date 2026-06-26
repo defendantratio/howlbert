@@ -10,6 +10,7 @@ from discord.ext import commands
 
 import database as db
 from engine.blooding import is_unblooded_juvenile
+from engine.mirewort_burial import is_mirewort, mirewort_grave_rite
 from engine.wolf_journal import log_blooded, log_rite
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.permissions import is_howlbert_admin
@@ -204,7 +205,15 @@ class Rite(commands.Cog):
 
         day = _world_day(interaction.guild.id)
         cause = target["cause_of_death"] if "cause_of_death" in target.keys() else "unknown"
-        speech = words.strip() if words else "_The den sits in silence._"
+        journal_note = f"Mourning rite led by **{actor['wolf_name']}**."
+        if is_mirewort(actor):
+            speech, grave_journal = mirewort_grave_rite(
+                target["wolf_name"],
+                custom_words=words,
+            )
+            journal_note = f"{journal_note} {grave_journal}"
+        else:
+            speech = words.strip() if words else "_The den sits in silence._"
         embed = howlbert_embed(
             f"🕯 Mourning — {target['wolf_name']}",
             (
@@ -216,7 +225,7 @@ class Rite(commands.Cog):
         log_rite(
             target["id"],
             "rite_mourning",
-            f"Mourning rite led by **{actor['wolf_name']}**.",
+            journal_note,
             guild_id=interaction.guild.id,
             day=day,
         )

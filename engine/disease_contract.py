@@ -107,10 +107,14 @@ def try_shock_emotional_from_trauma(user, chance: float = 0.15) -> str | None:
     return try_contract_disease(user, "shock_emotional", "active", chance=chance)
 
 
-def try_grief_on_bond_loss(user, bond_type: str = "mate", *, chance: float = 0.55) -> str | None:
+def try_grief_on_bond_loss(
+    user, bond_type: str = "mate", *, chance: float = 0.55, conn=None
+) -> str | None:
     if bond_type != "mate":
         return None
-    note = try_contract_disease(user, "grief_melancholy", "mourning", chance=chance)
+    note = try_contract_disease(
+        user, "grief_melancholy", "mourning", chance=chance, conn=conn
+    )
     if note:
         return f"Mate lost: {note}"
     return None

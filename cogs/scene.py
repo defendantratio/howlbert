@@ -28,9 +28,17 @@ class Scene(commands.Cog):
     scene = app_commands.Group(name="scene", description="Run roleplay scenes in threads with a roster.")
 
     @scene.command(name="start", description="Open an RP scene as a thread in this channel.")
-    @app_commands.describe(name="Scene title", topic="What's happening (optional)")
+    @app_commands.describe(
+        with_member="Another player in the scene (optional)",
+        location="Where the scene happens (defaults to your IC location)",
+        topic="What's happening — goes in the opening post, not the thread title",
+    )
     async def start(
-        self, interaction: discord.Interaction, name: str, topic: str | None = None
+        self,
+        interaction: discord.Interaction,
+        with_member: discord.Member | None = None,
+        location: str | None = None,
+        topic: str | None = None,
     ):
         if not interaction.guild:
             await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
@@ -55,7 +63,40 @@ class Scene(commands.Cog):
             return
 
         await interaction.response.defer(ephemeral=reply_ephemeral())
-        title = name.strip()[:90] or "Scene"
+
+        from engine.scene_titles import build_scene_thread_title
+
+        partner_wolf = None
+        if with_member:
+            if with_member.bot:
+                await interaction.followup.send(
+                    embed=howlbert_embed("No", "You can't scene with a bot.", color=ERROR_COLOR),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+            partner_wolf = db.get_user(with_member.id)
+            if not partner_wolf:
+                await interaction.followup.send(
+                    embed=howlbert_embed(
+                        "No Wolf",
+                        f"**{with_member.display_name}** hasn't registered a wolf yet.",
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
+
+        loc = (location or "").strip()
+        if not loc:
+            ic = wolf["ic_location"] if "ic_location" in wolf.keys() else None
+            if ic and str(ic).strip():
+                loc = str(ic).strip()
+
+        title = build_scene_thread_title(
+            wolf["wolf_name"],
+            partner_name=partner_wolf["wolf_name"] if partner_wolf else None,
+            location=loc or None,
+        )
         try:
             thread = await channel.create_thread(
                 name=title,
@@ -73,10 +114,22 @@ class Scene(commands.Cog):
         day = int(world["day_number"]) if world else 0
         scene_id = db.create_scene(interaction.guild.id, thread.id, title, topic, interaction.user.id, day)
         db.join_scene(scene_id, wolf["id"], wolf["wolf_name"], interaction.user.id)
+        if partner_wolf:
+            db.join_scene(
+                scene_id,
+                partner_wolf["id"],
+                partner_wolf["wolf_name"],
+                with_member.id,
+            )
 
         body = topic.strip() if topic else "_The scene is set. Wolves, take your places._"
         opening = howlbert_embed(f"🎬 {title}", body, color=SUCCESS_COLOR)
-        opening.add_field(name="Opened by", value=f"**{wolf['wolf_name']}**", inline=True)
+        opener_line = f"**{wolf['wolf_name']}**"
+        if partner_wolf:
+            opener_line += f" · with **{partner_wolf['wolf_name']}**"
+        if loc:
+            opener_line += f" · 📍 {loc}"
+        opening.add_field(name="Cast", value=opener_line, inline=False)
         opening.set_footer(text="/scene join · /scene here · /scene poke · /scene end")
         try:
             await thread.send(embed=opening)
