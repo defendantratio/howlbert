@@ -263,6 +263,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN death_save_fails INTEGER NOT NULL DEFAULT 0")
     if "death_save_successes" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN death_save_successes INTEGER NOT NULL DEFAULT 0")
+    if "cause_of_death" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN cause_of_death TEXT")
+    if "death_day" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN death_day INTEGER")
     if "receptive_day" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN receptive_day INTEGER NOT NULL DEFAULT 0")
     if "bonus_role_feature" not in user_cols:
@@ -359,6 +363,49 @@ def _migrate(conn: sqlite3.Connection) -> None:
             form TEXT NOT NULL DEFAULT 'fresh',
             acquired_day INTEGER NOT NULL,
             potency INTEGER NOT NULL DEFAULT 100,
+            FOREIGN KEY (wolf_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS herb_seeds (
+            wolf_id INTEGER NOT NULL,
+            herb_key TEXT NOT NULL,
+            qty INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (wolf_id, herb_key),
+            FOREIGN KEY (wolf_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS herb_gardens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wolf_id INTEGER NOT NULL,
+            guild_id INTEGER NOT NULL,
+            herb_key TEXT NOT NULL,
+            planted_day INTEGER NOT NULL,
+            season_planted TEXT NOT NULL DEFAULT 'spring',
+            last_tended_day INTEGER NOT NULL DEFAULT 0,
+            last_eval_day INTEGER NOT NULL DEFAULT 0,
+            health INTEGER NOT NULL DEFAULT 100,
+            dead INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (wolf_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS wolf_death_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wolf_id INTEGER NOT NULL,
+            discord_id INTEGER NOT NULL,
+            wolf_name TEXT NOT NULL,
+            guild_id INTEGER,
+            cause TEXT NOT NULL,
+            day INTEGER,
+            logged_at TEXT NOT NULL DEFAULT (datetime('now')),
             FOREIGN KEY (wolf_id) REFERENCES users(id)
         )
         """
@@ -4064,8 +4111,12 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             vitals_exhaustion = apply_needs_exhaustion_on_rollover(conn)
             mood_exhaustion = apply_mood_exhaustion_on_rollover(conn)
             clamp_hp_for_exhaustion_on_rollover(conn)
-            exhaustion_deaths = apply_exhaustion_death_on_rollover(conn)
-            needs_crisis = apply_needs_crisis_on_rollover(conn)
+            exhaustion_deaths = apply_exhaustion_death_on_rollover(
+                conn, guild_id=guild_id, day=new_day
+            )
+            needs_crisis = apply_needs_crisis_on_rollover(
+                conn, guild_id=guild_id, day=new_day
+            )
         needs_crisis["vitals_exhaustion"] = vitals_exhaustion + mood_exhaustion
         if exhaustion_deaths:
             needs_crisis["deaths"].extend(exhaustion_deaths)
@@ -4073,7 +4124,9 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         from engine.aging import apply_old_age_deaths_on_rollover
 
         with get_db() as conn:
-            old_age_deaths = apply_old_age_deaths_on_rollover(conn)
+            old_age_deaths = apply_old_age_deaths_on_rollover(
+                conn, guild_id=guild_id, day=new_day
+            )
         needs_crisis["old_age_deaths"] = old_age_deaths
         needs_crisis["deaths"].extend(old_age_deaths)
         grief_notes: list[dict] = []
@@ -4083,6 +4136,16 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
                 grief_notes.append(grief)
         if grief_notes:
             needs_crisis["grief_notes"] = grief_notes
+        with get_db() as conn:
+            from engine.season_rollover import apply_season_rollover_effects
+
+            season_lines, cache_notes = apply_season_rollover_effects(
+                conn, guild_id, new_season
+            )
+        if season_lines:
+            needs_crisis.setdefault("season_notes", []).extend(season_lines)
+        if cache_notes:
+            needs_crisis.setdefault("food_cache", []).extend(cache_notes)
     expel_wolves_below_standing_threshold(guild_id)
     close_prey_piles_for_guild(guild_id)
     close_collab_hunts_for_guild(guild_id)
@@ -4108,16 +4171,8 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     expired_pacts = expire_cat_pacts_for_day(guild_id, new_day)
     with get_db() as conn:
         from engine.sacred_visits import apply_sacred_visit_reminders
-        from engine.season_rollover import apply_season_rollover_effects
 
-        season_lines, cache_notes = apply_season_rollover_effects(
-            conn, guild_id, new_season
-        )
         sacred_notes = apply_sacred_visit_reminders(conn, new_day)
-    if season_lines:
-        needs_crisis.setdefault("season_notes", []).extend(season_lines)
-    if cache_notes:
-        needs_crisis.setdefault("food_cache", []).extend(cache_notes)
     plot_phase = get_plot_phase(guild_id)
     if sacred_notes:
         if plot_phase == 5:
@@ -5624,6 +5679,7 @@ def set_user_conditions(
     clear_disease: bool = False,
     herb_heals_today: int | None = None,
     last_rest_day: int | None = None,
+    death_cause: str | None = None,
 ) -> None:
     wid = wolf_id or _resolve_wolf_id(discord_id)
     if not wid:
@@ -5634,6 +5690,9 @@ def set_user_conditions(
                 "UPDATE users SET disease = NULL, quarantined = 0 WHERE id = ?",
                 (wid,),
             )
+        if condition == "dead":
+            mark_wolf_dead(wid, death_cause or "unknown", conn=conn)
+            return
         fields = {}
         if hp is not None:
             fields["hp"] = hp
@@ -7346,11 +7405,7 @@ def apply_death_save_result(discord_id: int, success: bool, nat20: bool = False)
         return "stabilized"
 
     if not success:
-        set_user_conditions(discord_id, condition="dead")
-        user = get_user(discord_id)
-        if user:
-            with get_db() as conn:
-                handle_mate_grief_on_wolf_death(conn, user["id"])
+        mark_wolf_dead(user["id"], "failed death saves")
         return "died"
 
     round_num = user["death_save_round"] or 1
@@ -7384,6 +7439,8 @@ def revive_wolf(discord_id: int) -> str | None:
                 death_save_round = 0,
                 death_save_fails = 0,
                 death_save_successes = 0,
+                cause_of_death = NULL,
+                death_day = NULL,
                 hunger = ?,
                 thirst = ?,
                 mood = MAX(?, mood),
@@ -7454,6 +7511,8 @@ def reincarnate_as_new_life(discord_id: int, new_name: str) -> str | None:
                 death_save_round = 0,
                 death_save_fails = 0,
                 death_save_successes = 0,
+                cause_of_death = NULL,
+                death_day = NULL,
                 hunger = ?,
                 thirst = ?,
                 mood = ?,
@@ -7546,6 +7605,138 @@ def clear_bonded_mates(wolf_id: int) -> None:
         partner = get_user_by_id(partner_id)
         if partner and partner["bonded_mate_id"] == wolf_id:
             update_user(partner["discord_id"], wolf_id=partner_id, bonded_mate_id=None)
+
+
+def _death_context_conn(
+    conn: sqlite3.Connection,
+    wolf_id: int,
+    *,
+    day: int | None,
+    guild_id: int | None,
+) -> tuple[sqlite3.Row | None, int | None, int | None]:
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
+    if not row:
+        return None, day, guild_id
+    gid = guild_id
+    if day is None and gid:
+        world = conn.execute(
+            "SELECT day_number FROM world_state WHERE guild_id = ?", (int(gid),)
+        ).fetchone()
+        if world:
+            day = int(world["day_number"])
+    return row, day, int(gid) if gid else None
+
+
+def mark_wolf_dead(
+    wolf_id: int,
+    cause: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+    day: int | None = None,
+    guild_id: int | None = None,
+    grief: bool = True,
+) -> dict | None:
+    """Mark a wolf dead, record cause, append death log, optionally trigger mate grief."""
+    cause = (cause or "unknown").strip() or "unknown"
+
+    def _apply(c: sqlite3.Connection) -> dict | None:
+        row, resolved_day, resolved_guild = _death_context_conn(
+            c, wolf_id, day=day, guild_id=guild_id
+        )
+        if not row:
+            return None
+        c.execute(
+            """
+            UPDATE users
+            SET condition = 'dead', hp = 0,
+                cause_of_death = ?, death_day = ?
+            WHERE id = ?
+            """,
+            (cause, resolved_day, wolf_id),
+        )
+        c.execute(
+            """
+            INSERT INTO wolf_death_log
+            (wolf_id, discord_id, wolf_name, guild_id, cause, day)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                wolf_id,
+                int(row["discord_id"]),
+                row["wolf_name"],
+                resolved_guild,
+                cause,
+                resolved_day,
+            ),
+        )
+        if grief:
+            return handle_mate_grief_on_wolf_death(c, wolf_id)
+        return None
+
+    if conn is not None:
+        return _apply(conn)
+    with get_db() as c:
+        return _apply(c)
+
+
+def list_death_log(
+    *,
+    guild_id: int | None = None,
+    discord_id: int | None = None,
+    wolf_id: int | None = None,
+    limit: int = 25,
+) -> list[sqlite3.Row]:
+    clauses: list[str] = []
+    params: list = []
+    if guild_id is not None:
+        clauses.append("guild_id = ?")
+        params.append(guild_id)
+    if discord_id is not None:
+        clauses.append("discord_id = ?")
+        params.append(discord_id)
+    if wolf_id is not None:
+        clauses.append("wolf_id = ?")
+        params.append(wolf_id)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(max(1, min(limit, 100)))
+    with get_db() as conn:
+        return conn.execute(
+            f"""
+            SELECT * FROM wolf_death_log
+            {where}
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            params,
+        ).fetchall()
+
+
+def list_current_dead_wolves(
+    *,
+    guild_id: int | None = None,
+    discord_id: int | None = None,
+) -> list[sqlite3.Row]:
+    clauses = ["u.condition = 'dead'"]
+    params: list = []
+    if discord_id is not None:
+        clauses.append("u.discord_id = ?")
+        params.append(discord_id)
+    if guild_id is not None:
+        clauses.append(
+            "u.id IN (SELECT wolf_id FROM wolf_death_log WHERE guild_id = ?)"
+        )
+        params.append(guild_id)
+    where = " AND ".join(clauses)
+    with get_db() as conn:
+        return conn.execute(
+            f"""
+            SELECT u.id, u.discord_id, u.wolf_name, u.cause_of_death, u.death_day
+            FROM users u
+            WHERE {where}
+            ORDER BY u.death_day DESC, u.wolf_name
+            """,
+            params,
+        ).fetchall()
 
 
 def handle_mate_grief_on_wolf_death(conn: sqlite3.Connection, dead_wolf_id: int) -> dict | None:
@@ -9295,6 +9486,120 @@ def transfer_herb_stack(stack_id: int, new_wolf_id: int) -> bool:
             (new_wolf_id, stack_id),
         )
         return True
+
+
+# --- Herb seeds & gardens (grow-your-own) ---
+
+
+def get_herb_seeds(wolf_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT herb_key, qty FROM herb_seeds WHERE wolf_id = ? AND qty > 0 ORDER BY herb_key",
+            (wolf_id,),
+        ).fetchall()
+
+
+def get_herb_seed_qty(wolf_id: int, herb_key: str) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT qty FROM herb_seeds WHERE wolf_id = ? AND herb_key = ?",
+            (wolf_id, herb_key),
+        ).fetchone()
+        return int(row["qty"]) if row else 0
+
+
+def add_herb_seeds(wolf_id: int, herb_key: str, qty: int = 1, *, conn=None) -> None:
+    sql = """
+        INSERT INTO herb_seeds (wolf_id, herb_key, qty)
+        VALUES (?, ?, ?)
+        ON CONFLICT(wolf_id, herb_key) DO UPDATE SET qty = qty + excluded.qty
+    """
+    params = (wolf_id, herb_key, qty)
+    if conn is not None:
+        conn.execute(sql, params)
+        return
+    with get_db() as c:
+        c.execute(sql, params)
+
+
+def consume_herb_seed(wolf_id: int, herb_key: str, qty: int = 1) -> bool:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT qty FROM herb_seeds WHERE wolf_id = ? AND herb_key = ?",
+            (wolf_id, herb_key),
+        ).fetchone()
+        if not row or int(row["qty"]) < qty:
+            return False
+        conn.execute(
+            "UPDATE herb_seeds SET qty = qty - ? WHERE wolf_id = ? AND herb_key = ?",
+            (qty, wolf_id, herb_key),
+        )
+        return True
+
+
+def add_herb_planting(
+    wolf_id: int,
+    herb_key: str,
+    *,
+    guild_id: int,
+    day: int,
+    season: str,
+) -> int:
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO herb_gardens
+            (wolf_id, guild_id, herb_key, planted_day, season_planted,
+             last_tended_day, last_eval_day, health, dead)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 100, 0)
+            """,
+            (wolf_id, guild_id, herb_key, day, season, day, day),
+        )
+        return int(cur.lastrowid)
+
+
+def get_herb_plantings(wolf_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM herb_gardens WHERE wolf_id = ? ORDER BY planted_day ASC, id ASC",
+            (wolf_id,),
+        ).fetchall()
+
+
+def get_herb_planting(planting_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM herb_gardens WHERE id = ?", (planting_id,)
+        ).fetchone()
+
+
+def update_herb_planting(planting_id: int, **fields) -> None:
+    if not fields:
+        return
+    allowed = {"last_tended_day", "last_eval_day", "health", "dead"}
+    sets = {k: v for k, v in fields.items() if k in allowed}
+    if not sets:
+        return
+    cols = ", ".join(f"{k} = ?" for k in sets)
+    with get_db() as conn:
+        conn.execute(
+            f"UPDATE herb_gardens SET {cols} WHERE id = ?",
+            (*sets.values(), planting_id),
+        )
+
+
+def remove_herb_planting(planting_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("DELETE FROM herb_gardens WHERE id = ?", (planting_id,))
+
+
+def count_herb_plantings(wolf_id: int) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM herb_gardens WHERE wolf_id = ? AND dead = 0",
+            (wolf_id,),
+        ).fetchone()
+        return int(row["n"]) if row else 0
 
 
 def rot_herb_stacks(guild_id: int, day: int) -> int:

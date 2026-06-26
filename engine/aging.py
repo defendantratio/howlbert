@@ -135,8 +135,15 @@ def check_age_milestones(old_age: int, new_age: int, current_role: str) -> list[
     return notes
 
 
-def apply_old_age_deaths_on_rollover(conn) -> list[dict]:
+def apply_old_age_deaths_on_rollover(
+    conn,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> list[dict]:
     """Wolves at max age die peacefully of old age each sunrise."""
+    import database as db
+
     rows = conn.execute(
         """
         SELECT id, discord_id, wolf_name, age_months
@@ -148,13 +155,13 @@ def apply_old_age_deaths_on_rollover(conn) -> list[dict]:
     ).fetchall()
     deaths: list[dict] = []
     for row in rows:
-        conn.execute(
-            "UPDATE users SET condition = 'dead', hp = 0 WHERE id = ?",
-            (row["id"],),
+        grief = db.mark_wolf_dead(
+            row["id"],
+            f"old age ({row['age_months']} moons)",
+            conn=conn,
+            guild_id=guild_id,
+            day=day,
         )
-        import database as db
-
-        grief = db.handle_mate_grief_on_wolf_death(conn, row["id"])
         deaths.append(
             {
                 "wolf_name": row["wolf_name"],

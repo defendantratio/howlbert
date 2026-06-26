@@ -300,6 +300,14 @@ HERB_PREPARED_STORAGE_DAYS = 5
 HERB_PREPARED_FORMS = ("poultice", "tonic", "decoction")
 # Failed winter forage may spoil a random herb stack in the bag
 WINTER_FORAGE_SPOIL_CHANCE = 0.35
+
+# --- Grow-your-own herb garden ---
+GARDEN_MAX_PLOTS = 6            # living plantings a wolf can tend at once
+GARDEN_SEED_BONE_COST = 12     # buy a seed packet from the den
+GARDEN_FORAGE_SEED_CHANCE = 0.40  # chance foraging also yields a seed
+GARDEN_HARVEST_SEED_MIN = 1    # seeds returned when harvesting a healthy plant
+GARDEN_HARVEST_SEED_MAX = 2
+GARDEN_TEND_HEALTH_RESTORE = 15   # health regained per tending
 # Bone splint rest after successful set_bone surgery (sunrises)
 BONE_REST_DAYS = 7
 HERB_PREP_DC = {

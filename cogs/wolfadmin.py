@@ -664,6 +664,68 @@ class WolfAdmin(commands.Cog):
         )
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
+    @wolfadmin.command(
+        name="deaths",
+        description="Death log: recent deaths and current dead wolves with causes.",
+    )
+    @app_commands.describe(
+        player="Filter to one player's wolves (optional)",
+        limit="How many log entries to show (default 20, max 50)",
+    )
+    async def wolfadmin_deaths(
+        self,
+        interaction: discord.Interaction,
+        player: discord.User | None = None,
+        limit: app_commands.Range[int, 1, 50] = 20,
+    ):
+        if not await self._require_admin(interaction):
+            return
+
+        guild_id = interaction.guild.id if interaction.guild else None
+        discord_id = player.id if player else None
+
+        current = db.list_current_dead_wolves(guild_id=guild_id, discord_id=discord_id)
+        log_rows = db.list_death_log(
+            guild_id=guild_id,
+            discord_id=discord_id,
+            limit=limit,
+        )
+
+        sections: list[str] = []
+        if current:
+            lines = []
+            for row in current:
+                cause = row["cause_of_death"] or "unknown"
+                day = row["death_day"]
+                day_bit = f" · day **{day}**" if day else ""
+                lines.append(
+                    f"**{row['wolf_name']}** (<@{row['discord_id']}>) — {cause}{day_bit}"
+                )
+            sections.append("**Currently dead**\n" + "\n".join(lines))
+        else:
+            sections.append("_No wolves are dead right now._")
+
+        if log_rows:
+            log_lines = []
+            for row in log_rows:
+                day = row["day"]
+                day_bit = f"day **{day}** · " if day else ""
+                log_lines.append(
+                    f"`#{row['id']}` {day_bit}**{row['wolf_name']}** "
+                    f"(<@{row['discord_id']}>) — {row['cause']}"
+                )
+            sections.append("**Death log**\n" + "\n".join(log_lines))
+        else:
+            sections.append("_Death log is empty._")
+
+        title = "Death Log"
+        if player:
+            title = f"Death Log — {player.display_name}"
+
+        embed = howlbert_embed(title, "\n\n".join(sections), color=SUCCESS_COLOR)
+        embed.set_footer(text="Cause is recorded at death; log persists after revive.")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(WolfAdmin(bot))
