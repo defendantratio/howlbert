@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 import database as db
-from config import DISCORD_TOKEN, STATUS_CHANNEL_ID, BOT_DISPLAY_NAME
+from config import DISCORD_TOKEN, STATUS_CHANNEL_ID, BOT_DISPLAY_NAME, ENABLE_MESSAGE_CONTENT_INTENT
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, howlbert_embed
 
@@ -18,6 +18,8 @@ logger = logging.getLogger("howlbert")
 INTENTS = discord.Intents.default()
 INTENTS.members = True
 INTENTS.guilds = True
+if ENABLE_MESSAGE_CONTENT_INTENT:
+    INTENTS.message_content = True
 def _parse_test_guild_ids() -> list[int]:
     raw = os.getenv("TEST_GUILD_IDS") or os.getenv("TEST_GUILD_ID") or ""
     ids: list[int] = []
@@ -78,10 +80,24 @@ class HowlbertBot(commands.Bot):
 
     async def setup_hook(self):
         db.init_db()
+        if ENABLE_MESSAGE_CONTENT_INTENT:
+            logger.info("Message Content intent ON (`/proxy` can read typed messages).")
+        else:
+            logger.info(
+                "Message Content intent OFF; `/proxy` slash commands work but typed tags won't "
+                "until you enable the intent in the Developer Portal and set "
+                "ENABLE_MESSAGE_CONTENT_INTENT=true in .env."
+            )
         await self.load_extension("cogs.profile")
         await self.load_extension("cogs.economy")
         await self.load_extension("cogs.pack")
         await self.load_extension("cogs.howl")
+        await self.load_extension("cogs.sign")
+        await self.load_extension("cogs.proxy")
+        await self.load_extension("cogs.scene")
+        await self.load_extension("cogs.rp")
+        await self.load_extension("cogs.npc")
+        await self.load_extension("cogs.rite")
         await self.load_extension("cogs.world")
         await self.load_extension("cogs.hunting")
         await self.load_extension("cogs.explore")

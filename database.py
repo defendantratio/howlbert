@@ -277,6 +277,20 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN maw_belief TEXT")
     if "character_lore" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN character_lore TEXT")
+    if "avatar_url" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+    if "pronouns" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
+    if "ref_image_url" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN ref_image_url TEXT")
+    if "bio" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN bio TEXT")
+    if "birthday" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN birthday TEXT")
+    if "proxy_prefix" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN proxy_prefix TEXT")
+    if "proxy_suffix" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN proxy_suffix TEXT")
     if "bonded_mate_id" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN bonded_mate_id INTEGER")
     if "last_adopt_day" not in user_cols:
@@ -767,6 +781,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_cat_receive_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_cat_food_trade_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_cat_food_trade_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_firepaw_reward_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_firepaw_reward_day INTEGER NOT NULL DEFAULT 0"
@@ -949,8 +967,58 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_signals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            pack_id INTEGER NOT NULL,
+            signaler_id INTEGER NOT NULL,
+            signal_key TEXT NOT NULL,
+            target_id INTEGER,
+            day INTEGER NOT NULL,
+            responders TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rp_scenes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            thread_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            topic TEXT,
+            owner_discord_id INTEGER NOT NULL,
+            day INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'open',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rp_scene_members (
+            scene_id INTEGER NOT NULL,
+            wolf_id INTEGER NOT NULL,
+            wolf_name TEXT NOT NULL,
+            discord_id INTEGER NOT NULL,
+            joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (scene_id, wolf_id)
+        )
+        """
+    )
 
     user_cols_late = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
+    if "last_sign_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_sign_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_sign_read_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_sign_read_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_howl_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_howl_day INTEGER NOT NULL DEFAULT 0"
@@ -1083,6 +1151,48 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_court_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "ic_location" not in user_cols_late:
+        conn.execute("ALTER TABLE users ADD COLUMN ic_location TEXT")
+
+    scene_cols = {row[1] for row in conn.execute("PRAGMA table_info(rp_scenes)")}
+    if "roster_message_id" not in scene_cols:
+        conn.execute("ALTER TABLE rp_scenes ADD COLUMN roster_message_id INTEGER")
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS wolf_journal_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            wolf_id INTEGER NOT NULL,
+            event_key TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            day INTEGER,
+            guild_id INTEGER,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_wolf_journal_wolf
+        ON wolf_journal_entries (wolf_id, id DESC)
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS server_npcs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            avatar_url TEXT,
+            bio TEXT,
+            proxy_prefix TEXT,
+            proxy_suffix TEXT,
+            created_by INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(guild_id, name)
+        )
+        """
+    )
 
     conn.execute(
         """
@@ -2000,6 +2110,8 @@ def _migrate_multi_wolf(conn: sqlite3.Connection) -> None:
         _rebuild_users_with_id_pk(conn)
 
     account_cols = {row[1] for row in conn.execute("PRAGMA table_info(account_progress)")}
+    if account_cols and "autoproxy_wolf_id" not in account_cols:
+        conn.execute("ALTER TABLE account_progress ADD COLUMN autoproxy_wolf_id INTEGER")
     if account_cols and "active_wolf_id" not in account_cols:
         conn.execute("ALTER TABLE account_progress ADD COLUMN active_wolf_id INTEGER")
         for row in conn.execute("SELECT DISTINCT discord_id FROM users"):
@@ -2415,6 +2527,22 @@ def get_user_by_id(wolf_id: int) -> sqlite3.Row | None:
         return conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
 
 
+def get_wolf_by_name(wolf_name: str) -> sqlite3.Row | None:
+    cleaned = (wolf_name or "").strip()
+    if not cleaned:
+        return None
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM users
+            WHERE LOWER(wolf_name) = LOWER(?)
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (cleaned,),
+        ).fetchone()
+
+
 def get_user(discord_id: int) -> sqlite3.Row | None:
     wolf_id = _resolve_wolf_id(discord_id)
     if not wolf_id:
@@ -2634,6 +2762,291 @@ def has_used_secondary_switch(discord_id: int) -> bool:
 
 def get_active_wolf_id(discord_id: int) -> int | None:
     return _resolve_wolf_id(discord_id)
+
+
+# --- Wolf identity (avatar / bio / pronouns) and message proxying ---
+
+_IDENTITY_FIELDS = frozenset(
+    {"avatar_url", "pronouns", "ref_image_url", "bio", "birthday"}
+)
+
+
+def set_wolf_identity(wolf_id: int, **fields) -> None:
+    """Update a wolf's RP identity fields (avatar, bio, pronouns, ref image, birthday)."""
+    clean = {k: v for k, v in fields.items() if k in _IDENTITY_FIELDS}
+    if not clean or not wolf_id:
+        return
+    update_user_by_id(wolf_id, **clean)
+
+
+def set_wolf_proxy(wolf_id: int, prefix: str | None, suffix: str | None) -> None:
+    update_user_by_id(
+        wolf_id,
+        proxy_prefix=(prefix or None),
+        proxy_suffix=(suffix or None),
+    )
+
+
+def clear_wolf_proxy(wolf_id: int) -> None:
+    update_user_by_id(wolf_id, proxy_prefix=None, proxy_suffix=None)
+
+
+def get_proxy_wolves(discord_id: int) -> list[sqlite3.Row]:
+    """Wolves on this account that have a proxy tag configured."""
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM users
+            WHERE discord_id = ?
+              AND (proxy_prefix IS NOT NULL OR proxy_suffix IS NOT NULL)
+            ORDER BY id ASC
+            """,
+            (discord_id,),
+        ).fetchall()
+
+
+def get_autoproxy_wolf_id(discord_id: int) -> int | None:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT autoproxy_wolf_id FROM account_progress WHERE discord_id = ?",
+            (discord_id,),
+        ).fetchone()
+    if not row or not row["autoproxy_wolf_id"]:
+        return None
+    return int(row["autoproxy_wolf_id"])
+
+
+def set_autoproxy_wolf(discord_id: int, wolf_id: int | None) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO account_progress (discord_id) VALUES (?)",
+            (discord_id,),
+        )
+        conn.execute(
+            "UPDATE account_progress SET autoproxy_wolf_id = ? WHERE discord_id = ?",
+            (wolf_id, discord_id),
+        )
+
+
+def create_scene(
+    guild_id: int, thread_id: int, name: str, topic: str | None, owner_discord_id: int, day: int
+) -> int:
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO rp_scenes (guild_id, thread_id, name, topic, owner_discord_id, day)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (guild_id, thread_id, name, topic, owner_discord_id, day),
+        )
+        return int(cur.lastrowid)
+
+
+def get_scene_by_thread(thread_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM rp_scenes WHERE thread_id = ? ORDER BY id DESC LIMIT 1",
+            (thread_id,),
+        ).fetchone()
+
+
+def join_scene(scene_id: int, wolf_id: int, wolf_name: str, discord_id: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO rp_scene_members (scene_id, wolf_id, wolf_name, discord_id)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(scene_id, wolf_id) DO UPDATE SET wolf_name = excluded.wolf_name
+            """,
+            (scene_id, wolf_id, wolf_name, discord_id),
+        )
+
+
+def leave_scene(scene_id: int, wolf_id: int) -> bool:
+    with get_db() as conn:
+        cur = conn.execute(
+            "DELETE FROM rp_scene_members WHERE scene_id = ? AND wolf_id = ?",
+            (scene_id, wolf_id),
+        )
+        return cur.rowcount > 0
+
+
+def get_scene_members(scene_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM rp_scene_members WHERE scene_id = ? ORDER BY joined_at ASC",
+            (scene_id,),
+        ).fetchall()
+
+
+def close_scene(scene_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE rp_scenes SET status = 'closed' WHERE id = ?", (scene_id,))
+
+
+def set_scene_roster_message_id(scene_id: int, message_id: int | None) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE rp_scenes SET roster_message_id = ? WHERE id = ?",
+            (message_id, scene_id),
+        )
+
+
+def set_ic_location(discord_id: int, wolf_id: int, location: str | None) -> None:
+    update_user(discord_id, wolf_id=wolf_id, ic_location=location)
+
+
+def add_wolf_journal_entry(
+    wolf_id: int,
+    event_key: str,
+    summary: str,
+    *,
+    day: int | None = None,
+    guild_id: int | None = None,
+) -> None:
+    summary = (summary or "").strip()
+    if not summary:
+        return
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO wolf_journal_entries (wolf_id, event_key, summary, day, guild_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (wolf_id, event_key, summary[:500], day, guild_id),
+        )
+
+
+def list_wolf_journal(wolf_id: int, *, limit: int = 25) -> list[sqlite3.Row]:
+    limit = max(1, min(limit, 50))
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM wolf_journal_entries
+            WHERE wolf_id = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (wolf_id, limit),
+        ).fetchall()
+
+
+def format_journal_preview(wolf_id: int, *, limit: int = 5) -> str | None:
+    rows = list_wolf_journal(wolf_id, limit=limit)
+    if not rows:
+        return None
+    lines: list[str] = []
+    for row in reversed(rows):
+        day = row["day"]
+        prefix = f"Day {day} · " if day is not None else ""
+        lines.append(f"• {prefix}{row['summary']}")
+    return "\n".join(lines)
+
+
+def list_guild_active_wolves(discord_ids: list[int]) -> list[sqlite3.Row]:
+    if not discord_ids:
+        return []
+    placeholders = ",".join("?" * len(discord_ids))
+    with get_db() as conn:
+        return conn.execute(
+            f"""
+            SELECT u.*
+            FROM users u
+            INNER JOIN account_progress ap
+                ON ap.discord_id = u.discord_id AND ap.active_wolf_id = u.id
+            WHERE u.discord_id IN ({placeholders})
+              AND u.condition != 'dead'
+            ORDER BY COALESCE(u.great_pack, 'zzz'), u.wolf_name COLLATE NOCASE
+            """,
+            discord_ids,
+        ).fetchall()
+
+
+def create_server_npc(
+    guild_id: int,
+    name: str,
+    *,
+    avatar_url: str | None = None,
+    bio: str | None = None,
+    prefix: str | None = None,
+    suffix: str | None = None,
+    created_by: int,
+) -> int | None:
+    name = name.strip()[:80]
+    if not name:
+        return None
+    with get_db() as conn:
+        try:
+            cur = conn.execute(
+                """
+                INSERT INTO server_npcs
+                (guild_id, name, avatar_url, bio, proxy_prefix, proxy_suffix, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (guild_id, name, avatar_url, bio, prefix, suffix, created_by),
+            )
+            return int(cur.lastrowid)
+        except sqlite3.IntegrityError:
+            return None
+
+
+def get_server_npc(guild_id: int, name: str) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM server_npcs
+            WHERE guild_id = ? AND LOWER(name) = LOWER(?)
+            """,
+            (guild_id, name.strip()),
+        ).fetchone()
+
+
+def list_server_npcs(guild_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM server_npcs
+            WHERE guild_id = ?
+            ORDER BY name COLLATE NOCASE
+            """,
+            (guild_id,),
+        ).fetchall()
+
+
+def delete_server_npc(guild_id: int, name: str) -> bool:
+    with get_db() as conn:
+        cur = conn.execute(
+            "DELETE FROM server_npcs WHERE guild_id = ? AND LOWER(name) = LOWER(?)",
+            (guild_id, name.strip()),
+        )
+        return cur.rowcount > 0
+
+
+def match_proxy(discord_id: int, content: str) -> tuple[sqlite3.Row, str] | None:
+    """Return (wolf, inner_text) if content matches a wolf's proxy tag, else None.
+
+    Longest matching prefix+suffix wins so overlapping tags resolve predictably.
+    """
+    if not content:
+        return None
+    best: tuple[sqlite3.Row, str] | None = None
+    best_len = -1
+    for wolf in get_proxy_wolves(discord_id):
+        prefix = wolf["proxy_prefix"] or ""
+        suffix = wolf["proxy_suffix"] or ""
+        if not prefix and not suffix:
+            continue
+        if prefix and not content.startswith(prefix):
+            continue
+        if suffix and not content.endswith(suffix):
+            continue
+        inner = content[len(prefix): len(content) - len(suffix) if suffix else None]
+        # Require some inner text unless this is a bare/sticker proxy.
+        score = len(prefix) + len(suffix)
+        if score > best_len:
+            best = (wolf, inner.strip())
+            best_len = score
+    return best
 
 
 def get_possess_wolf_id(admin_discord_id: int) -> int | None:
@@ -2858,6 +3271,9 @@ def register_user(
     _apply_canonical_character_lore(discord_id, wolf_id, wolf_name.strip())
     _apply_canonical_character_traits(discord_id, wolf_id, wolf_name.strip())
     _apply_canonical_character_defaults(discord_id, wolf_id, wolf_name.strip())
+    from engine.wolf_journal import log_registered
+
+    log_registered(wolf_id, wolf_name.strip(), great_pack or affiliation)
     return wolf_id
 
 
@@ -3255,6 +3671,10 @@ def assign_pack_affiliation(discord_id: int, affiliation: str) -> str | None:
                 """,
                 (None if affiliation == LONER_KEY else ROGUE_KEY, wolf_id),
             )
+            new_key = None if affiliation == LONER_KEY else ROGUE_KEY
+            from engine.wolf_journal import log_pack_change
+
+            log_pack_change(wolf_id, user["wolf_name"], old_great_pack, new_key)
             return None
 
         pack = conn.execute(
@@ -3275,6 +3695,9 @@ def assign_pack_affiliation(discord_id: int, affiliation: str) -> str | None:
         _claim_pack_alpha_if_eligible(conn, pack["id"], discord_id, wolf_role)
     if not old_great_pack and affiliation in GREAT_PACKS:
         grant_great_pack_starting_herbs(wolf_id, affiliation)
+    from engine.wolf_journal import log_pack_change
+
+    log_pack_change(wolf_id, user["wolf_name"], old_great_pack, affiliation)
     return None
 
 
@@ -4094,6 +4517,10 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             repro_notes = apply_reproduction_vitals_drain_on_rollover(conn)
         if repro_notes:
             condition_notes.extend(repro_notes)
+        with get_db() as conn:
+            from engine.pack_food import auto_feed_wolves_on_rollover
+
+            auto_feed_wolves_on_rollover(conn, new_day, new_season)
         with get_db() as conn:
             from engine.disease_contract import apply_mental_illness_rollover
 
@@ -5951,6 +6378,66 @@ def get_pack_howl_discord_ids(pack_id: int, guild_id: int, howl_day: int) -> lis
     return [int(r["discord_id"]) for r in rows]
 
 
+def record_pack_signal(
+    guild_id: int,
+    pack_id: int,
+    signaler_id: int,
+    signal_key: str,
+    day: int,
+    target_id: int | None = None,
+) -> int:
+    """Log a body-language signal in the den; return the new signal id."""
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO pack_signals
+                (guild_id, pack_id, signaler_id, signal_key, target_id, day)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (guild_id, pack_id, signaler_id, signal_key, target_id, day),
+        )
+        return int(cur.lastrowid)
+
+
+def get_readable_pack_signal(
+    guild_id: int, pack_id: int, day: int, reader_wolf_id: int
+) -> sqlite3.Row | None:
+    """Most recent signal in this den today that `reader` did not post or already answer."""
+    reader = str(int(reader_wolf_id))
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT * FROM pack_signals
+            WHERE guild_id = ? AND pack_id = ? AND day = ? AND signaler_id != ?
+            ORDER BY id DESC
+            """,
+            (guild_id, pack_id, day, reader_wolf_id),
+        ).fetchall()
+    for row in rows:
+        responders = {r for r in str(row["responders"]).split(",") if r}
+        if reader not in responders:
+            return row
+    return None
+
+
+def mark_signal_responded(signal_id: int, reader_wolf_id: int) -> None:
+    reader = str(int(reader_wolf_id))
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT responders FROM pack_signals WHERE id = ?", (signal_id,)
+        ).fetchone()
+        if not row:
+            return
+        responders = [r for r in str(row["responders"]).split(",") if r]
+        if reader in responders:
+            return
+        responders.append(reader)
+        conn.execute(
+            "UPDATE pack_signals SET responders = ? WHERE id = ?",
+            (",".join(responders), signal_id),
+        )
+
+
 def _normalize_pack_pair(pack_a: int, pack_b: int) -> tuple[int, int]:
     return (pack_a, pack_b) if pack_a < pack_b else (pack_b, pack_a)
 
@@ -7593,6 +8080,9 @@ def set_bonded_mates(wolf_a_id: int, wolf_b_id: int) -> None:
         return
     update_user(wolf_a["discord_id"], wolf_id=wolf_a_id, bonded_mate_id=wolf_b_id)
     update_user(wolf_b["discord_id"], wolf_id=wolf_b_id, bonded_mate_id=wolf_a_id)
+    from engine.wolf_journal import log_bonded
+
+    log_bonded(wolf_a_id, wolf_b_id)
 
 
 def clear_bonded_mates(wolf_id: int) -> None:
@@ -7670,8 +8160,13 @@ def mark_wolf_dead(
             ),
         )
         if grief:
-            return handle_mate_grief_on_wolf_death(c, wolf_id)
-        return None
+            result = handle_mate_grief_on_wolf_death(c, wolf_id)
+        else:
+            result = None
+        from engine.wolf_journal import log_died
+
+        log_died(wolf_id, row["wolf_name"], cause, guild_id=resolved_guild)
+        return result
 
     if conn is not None:
         return _apply(conn)
@@ -7979,6 +8474,16 @@ def register_born_wolf(
             _claim_pack_alpha_if_eligible(conn, pack_id, discord_id, role)
     if great_pack and great_pack in GREAT_PACKS:
         grant_great_pack_starting_herbs(wolf_id, great_pack)
+    mother = get_user_by_id(mother_wolf_id)
+    father = get_user_by_id(father_wolf_id) if father_wolf_id else None
+    from engine.wolf_journal import log_born
+
+    log_born(
+        wolf_id,
+        wolf_name.strip(),
+        mother_name=mother["wolf_name"] if mother else None,
+        father_name=father["wolf_name"] if father else None,
+    )
     return wolf_id
 
 
@@ -8910,7 +9415,7 @@ def remove_prey_stack(stack_id: int) -> None:
 
 def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
     """Mark rotting prey, delete spoiled carcasses. Returns rollover notes for owners."""
-    from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, prey_meta
+    from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, is_forage_food, prey_meta, spoilage_terms
 
     notes: list[dict] = []
     with get_db() as conn:
@@ -8927,13 +9432,16 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
             age = day - stack["acquired_day"]
             rot_days = prey_meta(stack["prey_key"]).get("rot_days", 5)
             meta = prey_meta(stack["prey_key"])
+            terms = spoilage_terms(stack["prey_key"])
+            forage = is_forage_food(stack["prey_key"])
             if age >= rot_days + PREY_ROTTEN_GRACE_DAYS:
                 conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack["id"],))
+                gone = "rotted to mush and was left for the flies" if forage else "spoiled and was dragged from the hoard"
                 notes.append(
                     {
                         "wolf_name": stack["wolf_name"],
                         "discord_id": stack["discord_id"],
-                        "line": f"**{meta['name']}** spoiled and was dragged from the hoard.",
+                        "line": f"**{meta['name']}** {gone}.",
                     }
                 )
             elif age >= rot_days and not stack["is_rotting"]:
@@ -8941,12 +9449,13 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
                     "UPDATE prey_stacks SET is_rotting = 1 WHERE id = ?",
                     (stack["id"],),
                 )
+                tail = "eat soon" if forage else "eat at risk or `/salvage`"
                 notes.append(
                     {
                         "wolf_name": stack["wolf_name"],
                         "discord_id": stack["discord_id"],
                         "line": (
-                            f"**{meta['name']}** is **rotting** (`/prey` — eat at risk or `/salvage`)."
+                            f"**{meta['name']}** is **{terms['rotting']}** (`/prey` — {tail})."
                         ),
                     }
                 )

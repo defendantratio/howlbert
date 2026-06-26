@@ -63,7 +63,10 @@ def apply_thirst_bone_penalty(amount: int, thirst: int) -> tuple[int, str]:
 
 
 def meal_thirst_gain(prey_key: str, uses_consumed: int = 1) -> int:
-    per_use = _PREY_THIRST.get(prey_key, 8)
+    from engine.prey_items import prey_meta
+
+    meta = prey_meta(prey_key)
+    per_use = meta.get("thirst", _PREY_THIRST.get(prey_key, 8))
     return min(THIRST_MAX, per_use * uses_consumed)
 
 

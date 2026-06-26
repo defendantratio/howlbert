@@ -46,8 +46,11 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         return
 
     from engine.character_traits import trait_blocks_howl
+    from engine.genetics import genetic_blocks_howl
 
     blocked, trait_name = trait_blocks_howl(user)
+    if not blocked:
+        blocked, trait_name = genetic_blocks_howl(user)
     if blocked:
         embed = howlbert_embed(
             "Cannot Howl",

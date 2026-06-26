@@ -437,6 +437,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "scavenge", day)
     gid = interaction.guild.id if interaction.guild else None
     db.increment_quest_progress(interaction.user.id, "scavenge", guild_id=gid)
+    scavenge_food_note = ""
     if net > 0:
         grant_prey_carcass_canonical(
             user["id"],
@@ -444,6 +445,12 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
             day=day,
             prey_key="carrion",
         )
+        if random.random() < 0.30:
+            food_key = random.choice(["berries", "windfall_fruit", "roots", "forage_greens"])
+            food_name = grant_prey_carcass_canonical(
+                user["id"], guild_id=guild_id, day=day, prey_key=food_key
+            )
+            scavenge_food_note = f"nosed out **{food_name}** too (`/eat`)"
     updated = db.get_user(interaction.user.id)
     title = "Empty Paws" if net == 0 else random.choice(SCAVENGE_TEXT)
     embed = howlbert_embed(title, color=SUCCESS_COLOR if net else ERROR_COLOR)
@@ -455,7 +462,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth) if n]
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth) if n]
         footer = "**Old carrion** in hoard (`/prey`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
@@ -824,6 +831,19 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     if can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
         db.add_herb_seeds(user["id"], herb_key)
         seed_note = f"\n\nYou also pocket a few **{meta['name']} seeds** for the den garden (`/garden plant`)."
+    food_note = ""
+    from engine.prey_items import seasonal_forage_food
+
+    food_chance = 0.65 if result["outcome"] == "critical_success" else 0.45
+    if random.random() < food_chance:
+        food_key = seasonal_forage_food(world["season"])
+        if food_key:
+            from engine.hunt_payout import grant_prey_carcass_canonical
+
+            food_name = grant_prey_carcass_canonical(
+                user["id"], guild_id=guild_id, day=day, prey_key=food_key
+            )
+            food_note = f"\n\nYou also browse **{food_name}** to eat (`/prey` · `/eat`)."
     from engine.disease_contract import try_insect_sting_exposure
 
     insect_chance = 0.11 if world["season"] == "summer" else 0.07
@@ -843,6 +863,7 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         + rare_note
         + auto_note
         + seed_note
+        + food_note
         + season_suffix
         + (f"\n\n{sting_note}" if sting_note else "")
         + (f"\n\n{nettle_note}" if nettle_note else ""),

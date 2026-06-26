@@ -201,7 +201,88 @@ PREY_CATALOG: dict[str, dict] = {
         "bones": 6,
         "rot_days": 4,
     },
+    # Forage food; wolves are facultative carnivores and will eat plant matter to
+    # get by. Low bone value (you can't really salvage mush), restores hunger and
+    # some thirst, and overripens/rots faster than meat.
+    "berries": {
+        "name": "Mouthful of Berries",
+        "label": "a mouthful of berries",
+        "uses": 2,
+        "bones": 1,
+        "hunger": 14,
+        "thirst": 12,
+        "rot_days": 3,
+        "category": "forage",
+    },
+    "windfall_fruit": {
+        "name": "Windfall Fruit",
+        "label": "fallen fruit",
+        "uses": 3,
+        "bones": 2,
+        "hunger": 18,
+        "thirst": 14,
+        "rot_days": 4,
+        "category": "forage",
+    },
+    "roots": {
+        "name": "Roots & Tubers",
+        "label": "roots",
+        "uses": 3,
+        "bones": 2,
+        "hunger": 20,
+        "thirst": 4,
+        "rot_days": 9,
+        "category": "forage",
+    },
+    "forage_greens": {
+        "name": "Tender Greens",
+        "label": "greens",
+        "uses": 1,
+        "bones": 1,
+        "hunger": 8,
+        "thirst": 8,
+        "rot_days": 2,
+        "category": "forage",
+    },
 }
+
+# Spoilage wording per food category: meat rots, forage food overripens.
+_SPOILAGE_TERMS = {
+    "meat": {"fresh": "fresh", "rotting": "rotting", "spoiled": "spoiled"},
+    "forage": {"fresh": "ripe", "rotting": "overripe", "spoiled": "rotted to mush"},
+}
+
+
+def prey_category(prey_key: str) -> str:
+    """'meat' (default) or 'forage' for berries, fruit, roots, and greens."""
+    return prey_meta(prey_key).get("category", "meat")
+
+
+def is_forage_food(prey_key: str) -> bool:
+    return prey_category(prey_key) == "forage"
+
+
+def spoilage_terms(prey_key: str) -> dict:
+    return _SPOILAGE_TERMS.get(prey_category(prey_key), _SPOILAGE_TERMS["meat"])
+
+
+# What plant food a wolf can turn up while foraging, weighted by season. Returns
+# a forage-food key or None (nothing edible found this time).
+_SEASON_FORAGE_FOOD: dict[str, list] = {
+    # (key_or_None, weight)
+    "spring": [("forage_greens", 4), ("roots", 2), ("berries", 1), (None, 3)],
+    "summer": [("berries", 5), ("forage_greens", 2), ("windfall_fruit", 1), (None, 2)],
+    "autumn": [("windfall_fruit", 4), ("berries", 3), ("roots", 3), (None, 2)],
+    "winter": [("roots", 2), (None, 8)],
+}
+
+
+def seasonal_forage_food(season: str | None) -> str | None:
+    """Pick a plant food appropriate to the season, or None for a lean find."""
+    table = _SEASON_FORAGE_FOOD.get((season or "spring").lower(), _SEASON_FORAGE_FOOD["spring"])
+    keys = [k for k, _ in table]
+    weights = [w for _, w in table]
+    return random.choices(keys, weights=weights, k=1)[0]
 
 SNIFF_FLAVORS = (
     "You nose the wind; rabbit somewhere east of the creek.",
@@ -338,16 +419,17 @@ def prey_key_from_hunt_amount(
 def freshness_label(acquired_day: int, current_day: int, prey_key: str, *, rotting: bool) -> str:
     meta = prey_meta(prey_key)
     rot_days = meta.get("rot_days", PREY_FRESH_DAYS)
+    terms = spoilage_terms(prey_key)
     age = max(0, current_day - acquired_day)
     if rotting:
         left = max(0, PREY_ROTTEN_GRACE_DAYS - (age - rot_days))
         if left <= 0:
-            return "**spoiled** (cleared next sunrise)"
-        return f"**rotting** ({left}d until spoiled)"
+            return f"**{terms['spoiled']}** (cleared next sunrise)"
+        return f"**{terms['rotting']}** ({left}d until {terms['spoiled']})"
     left = max(0, rot_days - age)
     if left <= 1:
-        return f"fresh (**rotting soon**; {left}d)"
-    return f"fresh ({left}d)"
+        return f"{terms['fresh']} (**{terms['rotting']} soon**; {left}d)"
+    return f"{terms['fresh']} ({left}d)"
 
 
 def salvage_bones(prey_key: str, uses_left: int, bone_value: int) -> int:

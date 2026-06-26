@@ -546,6 +546,10 @@ HELP_TOPICS = {
 
         "**Alpha** howls grant **Commanding Howl**; packmates gain advantage on their next check or attack.\n"
 
+        "`/sign`; body/visual language (once per sunrise); **alert · rally · play · submit · soothe · threaten**. "
+        "**Mute** wolves can't `/howl`, so their **rally** sign builds extra unity instead. "
+        "Denmates answer with `/sign signal:read`.\n"
+
         "`/pack relations` `/relation`; rival den standing\n"
 
         "`/pack pact`; **Warrior Cats** clan treaties (Alpha or **Diplomat**): "
@@ -790,6 +794,65 @@ HELP_TOPICS = {
 
     ),
 
+    "roleplay": (
+
+        "Roleplay & proxying",
+
+        "**Speak as your wolf (tupperbox-style)**\n"
+
+        "`/proxy set tag:H:text`; register a proxy tag (use `text` as the placeholder, e.g. `H:text`, `[text]`, `text-h`). "
+
+        "Then typing `H:hello` reposts as that wolf and deletes your message.\n"
+
+        "`/proxy avatar`; upload an image or paste a URL, then pan/zoom in the crop editor and **Save**. "
+        "`/proxy list`; see your tags. `/proxy clear`; remove a tag.\n"
+
+        "`/proxy autoproxy mode:on`; proxy **all** your untagged messages as one wolf (start a line with `\\` to send as yourself once).\n"
+
+        "`/proxy import`; migrate from a **Tupperbox** (`tul!export` in DMs) or **PluralKit** export; auto-links to wolves by name.\n"
+
+        "_Needs the **Message Content Intent** plus **Manage Webhooks** + **Manage Messages** in the channel._\n\n"
+
+        "**Character identity**\n"
+
+        "`/character`; set pronouns, bio, birthday, avatar, and ref image (shown on `/profile`).\n"
+
+        "`/family`; render a wolf's family tree / relationship web as a diagram.\n\n"
+
+        "**Body language**\n"
+
+        "`/sign`; visual signals **alert · rally · play · submit · soothe · threaten · read**. "
+
+        "**Mute** wolves can't `/howl`, so their **rally** sign builds extra unity instead; denmates answer with `/sign signal:read`.\n\n"
+
+        "**Scenes**\n"
+
+        "`/scene start`; open an RP **thread** with a pinned living roster. "
+
+        "`/scene join` · `/scene here` · `/scene poke` · `/scene leave` · `/scene end` (opener or admin). "
+
+        "Posting in an open scene **auto-joins** you. _Needs **Create Public Threads**._\n\n"
+
+        "**Quick IC (no proxy intent)**\n"
+
+        "`/say`; one-line IC embed as your wolf. `/whisper`; styled IC DM to another player.\n"
+
+        "`/location set` · `clear` · `show`; where your wolf is IC (shown on `/profile` and proxy footers).\n\n"
+
+        "**Journal**; `/journal` reads your wolf's **automatic** timeline (birth, pack, bonds, blooding, death, rites).\n\n"
+
+        "**Ceremonies**; `/rite naming` · `blooding` · `mourning`.\n\n"
+
+        "**NPCs**; admins `/npc add` · `remove` · `list`; anyone `/npc say`.\n\n"
+
+        "`/roster`; server gallery of living wolves. "
+
+        "Proxy OOC: wrap `((out of character))` or start a line with `//`.\n\n"
+
+        "**Birthdays**; wolves are celebrated automatically in the sunrise den news whenever they cross a full year (12 moons).",
+
+    ),
+
     "admin": (
 
         "Admin",
@@ -807,6 +870,8 @@ HELP_TOPICS = {
         "`/wolfadmin list`; inspect a player's wolves\n"
 
         "`/wolfadmin setage`; set a wolf's age in moons (0-120)\n"
+
+        "`/wolfadmin proxy`; set/clear/list a player's proxy tags or autoproxy (they set avatars with `/proxy avatar`)\n"
 
         "`/wolfadmin featurepending`; list pending bonus role-feature requests\n"
 
@@ -946,6 +1011,8 @@ class Help(commands.Cog):
             app_commands.Choice(name="Skill checks", value="skills"),
 
             app_commands.Choice(name="Life & advancement", value="life"),
+
+            app_commands.Choice(name="Roleplay & proxying", value="roleplay"),
 
             app_commands.Choice(name="Admin", value="admin"),
 

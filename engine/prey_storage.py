@@ -124,28 +124,43 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
         exhaustion=new_exhaustion,
     )
 
+    from engine.prey_items import is_forage_food
+
+    forage = is_forage_food(stack["prey_key"])
+
     disease_note = ""
     if stack["is_rotting"]:
-        from engine.disease_contract import try_rotting_meat_exposure
-        from engine.prey_items import PREY_ROTTING_EAT_DISEASE_CHANCE
+        if forage:
+            disease_note = "\n_The fruit is **overripe**, fermented and sour; your gut churns._"
+            from engine.disease_contract import try_contract_disease
 
-        disease_note = "\n_You choke down **rotting** flesh; gut twists._"
-        if random.random() < PREY_ROTTING_EAT_DISEASE_CHANCE:
-            note = try_rotting_meat_exposure(user)
-            if note:
-                disease_note += f"\n{note}"
+            if random.random() < 0.15:
+                note = try_contract_disease(user, "diarrhea", chance=1.0)
+                if note:
+                    disease_note += f"\n{note}"
+        else:
+            from engine.disease_contract import try_rotting_meat_exposure
+            from engine.prey_items import PREY_ROTTING_EAT_DISEASE_CHANCE
+
+            disease_note = "\n_You choke down **rotting** flesh; gut twists._"
+            if random.random() < PREY_ROTTING_EAT_DISEASE_CHANCE:
+                note = try_rotting_meat_exposure(user)
+                if note:
+                    disease_note += f"\n{note}"
 
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:
         db.remove_prey_stack(stack_id)
-        uses_note = "The carcass is finished."
+        uses_note = "It's all gone." if forage else "The carcass is finished."
     else:
+        unit = "this forage" if forage else "this carcass"
         db.update_prey_stack_uses(stack_id, uses_left)
-        uses_note = f"**{uses_left}** uses left on this carcass."
+        uses_note = f"**{uses_left}** uses left on {unit}."
 
     old_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
+    verb = "graze on" if forage else "tear into"
     msg = (
-        f"You tear into **{meta['label']}**; +{hp_gain} HP, "
+        f"You {verb} **{meta['label']}**; +{hp_gain} HP, "
         f"hunger **{new_hunger}** (+{hunger_gain}), thirst **{new_thirst}** (+{thirst_gain})"
     )
     from engine.cannibalism import cannibalism_eat_consequences
@@ -161,6 +176,10 @@ def salvage_prey_carcass(user, stack_id: int) -> tuple[bool, str, int]:
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "You don't carry that carcass.", 0
+    from engine.prey_items import is_forage_food
+
+    if is_forage_food(stack["prey_key"]):
+        return False, "Spoiled forage rots to mush; there's nothing to salvage. `/bury` it instead.", 0
     if not stack["is_rotting"]:
         return False, "Only **rotting** carcasses can be salvaged; eat them fresh or wait.", 0
 

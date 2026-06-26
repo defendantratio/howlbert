@@ -204,6 +204,178 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
     return True, msg + disease_note
 
 
+def _passive_forage_chance(wolf, season: str | None) -> float:
+    """
+    Odds a hungry wolf scrapes together enough food on its own at sunrise.
+    Wolves are facultative carnivores; berries, roots, fallen fruit, and
+    scavenged scraps tide them over. Foragers and scouts do best; pups, the
+    injured, elders, and winter do worst, so starvation stays a real risk.
+    """
+    from config import ROLLOVER_SCAVENGE_BASE_CHANCE
+    from engine.aging import stage_for_age
+    from engine.role_restrictions import wolf_role
+
+    chance = ROLLOVER_SCAVENGE_BASE_CHANCE
+
+    role = wolf_role(wolf)
+    role_mod = {
+        "forager": 0.20,
+        "forager_apprentice": 0.14,
+        "scout": 0.12,
+        "scout_apprentice": 0.08,
+        "hunter": 0.08,
+        "hunter_apprentice": 0.05,
+        "bog_born": 0.10,
+        "lowbelly": 0.06,
+        "elder": -0.15,
+        "juvenile": -0.10,
+        "pup": -0.35,
+        "drown_sick": -0.05,
+    }.get(role, 0.0)
+    chance += role_mod
+
+    age_moons = int(wolf["age_months"]) if "age_months" in wolf.keys() else 24
+    stage = stage_for_age(age_moons)
+    if stage == "pup" and role != "pup":
+        chance -= 0.30
+    elif stage == "elder" and role != "elder":
+        chance -= 0.10
+
+    if _is_sick(wolf):
+        chance -= 0.20
+
+    season_mod = {
+        "spring": 0.05,
+        "summer": 0.10,
+        "autumn": 0.15,
+        "winter": -0.30,
+    }.get((season or "").lower(), 0.0)
+    chance += season_mod
+
+    return max(0.05, min(0.95, chance))
+
+
+def auto_feed_wolves_on_rollover(conn, day: int, season: str | None = None) -> list[dict]:
+    """
+    Sunrise feeding, two stages:
+
+    1. Each pack feeds its living members from its food reserve in lore order
+       (elders, pups, den-keepers, and sick wolves first), consuming stored prey.
+    2. Any still-hungry wolf with nothing left in the reserve forages/scavenges
+       for itself. The roll is modified by role, life stage, illness, and season;
+       it usually succeeds but CAN fail, so neglect and bad seasons still starve
+       the vulnerable. No magic floor; hunts and a stocked den still matter.
+
+    Operates entirely on the given connection so it never opens a second
+    connection (which would deadlock against the rollover transaction).
+    """
+    import random
+
+    from config import (
+        HUNGER_LOW_THRESHOLD,
+        HUNGER_MAX,
+        ROLLOVER_SCAVENGE_HUNGER,
+        ROLLOVER_SCAVENGE_THIRST,
+        THIRST_LOW_THRESHOLD,
+        THIRST_MAX,
+    )
+    from engine.hunger import meal_hunger_gain
+    from engine.thirst import meal_thirst_gain
+
+    notes: list[dict] = []
+    fed_from_reserve: set[int] = set()
+
+    pack_ids = [r["id"] for r in conn.execute("SELECT id FROM packs").fetchall()]
+    for pack_id in pack_ids:
+        members = conn.execute(
+            """
+            SELECT * FROM users
+            WHERE pack_id = ? AND condition NOT IN ('dead', 'dying')
+            """,
+            (pack_id,),
+        ).fetchall()
+        if not members:
+            continue
+        members = sorted(members, key=_feed_priority)
+
+        stacks = conn.execute(
+            """
+            SELECT * FROM pack_prey_stacks
+            WHERE pack_id = ? AND uses_left > 0
+            ORDER BY is_rotting ASC, acquired_day DESC, id DESC
+            """,
+            (pack_id,),
+        ).fetchall()
+        reserve = [[s, int(s["uses_left"])] for s in stacks]
+        ri = 0
+
+        for wolf in members:
+            hunger = int(wolf["hunger"]) if wolf["hunger"] is not None else 0
+            thirst = int(wolf["thirst"]) if wolf["thirst"] is not None else 0
+            if hunger >= HUNGER_MAX and thirst >= THIRST_MAX:
+                continue
+            while ri < len(reserve) and reserve[ri][1] <= 0:
+                ri += 1
+            if ri >= len(reserve):
+                break
+            stack = reserve[ri][0]
+            reserve[ri][1] -= 1
+            new_hunger = min(HUNGER_MAX, hunger + meal_hunger_gain(stack["prey_key"]))
+            new_thirst = min(THIRST_MAX, thirst + meal_thirst_gain(stack["prey_key"]))
+            conn.execute(
+                "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
+                (new_hunger, new_thirst, wolf["id"]),
+            )
+            fed_from_reserve.add(int(wolf["id"]))
+
+        for stack, left in reserve:
+            if left == int(stack["uses_left"]):
+                continue
+            if left <= 0:
+                conn.execute("DELETE FROM pack_prey_stacks WHERE id = ?", (stack["id"],))
+            else:
+                conn.execute(
+                    "UPDATE pack_prey_stacks SET uses_left = ? WHERE id = ?",
+                    (left, stack["id"]),
+                )
+
+    # Stage 2: wolves the reserve couldn't reach forage/scavenge for themselves.
+    hungry = conn.execute(
+        """
+        SELECT * FROM users
+        WHERE condition NOT IN ('dead', 'dying')
+          AND (hunger < ? OR thirst < ?)
+        """,
+        (HUNGER_LOW_THRESHOLD, THIRST_LOW_THRESHOLD),
+    ).fetchall()
+
+    for wolf in hungry:
+        if int(wolf["id"]) in fed_from_reserve:
+            continue
+        if random.random() > _passive_forage_chance(wolf, season):
+            continue  # foraging failed; the wolf goes hungry and stakes hold
+        hunger = int(wolf["hunger"]) if wolf["hunger"] is not None else 0
+        thirst = int(wolf["thirst"]) if wolf["thirst"] is not None else 0
+        # A successful forage gets the wolf by: at least a sustainable level (so
+        # it isn't slowly killed by exhaustion despite foraging), plus a little
+        # more if it was already close. It does not let a wolf thrive; only real
+        # meals (hunts, a stocked reserve) push vitals high.
+        if hunger < HUNGER_LOW_THRESHOLD:
+            new_hunger = min(HUNGER_MAX, max(HUNGER_LOW_THRESHOLD, hunger + ROLLOVER_SCAVENGE_HUNGER))
+        else:
+            new_hunger = hunger
+        if thirst < THIRST_LOW_THRESHOLD:
+            new_thirst = min(THIRST_MAX, max(THIRST_LOW_THRESHOLD, thirst + ROLLOVER_SCAVENGE_THIRST))
+        else:
+            new_thirst = thirst
+        conn.execute(
+            "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
+            (new_hunger, new_thirst, wolf["id"]),
+        )
+
+    return notes
+
+
 def run_feedall(
     pack_id: int,
     day: int,

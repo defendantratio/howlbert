@@ -33,6 +33,22 @@ LUNAR_BIRTH_AGING = os.getenv("LUNAR_BIRTH_AGING", "true").strip().lower() not i
     "no",
 )
 
+# Tupperbox-style `/proxy` message listening. Requires BOTH this flag AND the
+# "Message Content Intent" toggle in the Discord Developer Portal (Bot tab).
+ENABLE_MESSAGE_CONTENT_INTENT = os.getenv(
+    "ENABLE_MESSAGE_CONTENT_INTENT", "false"
+).strip().lower() in ("1", "true", "yes", "on")
+
+_avatar_cache_ch = os.getenv("AVATAR_CACHE_CHANNEL_ID", "").strip()
+AVATAR_CACHE_CHANNEL_ID = int(_avatar_cache_ch) if _avatar_cache_ch.isdigit() else None
+
+_rp_ambience_raw = os.getenv("RP_AMBIENCE_CHANNEL_IDS", "").strip()
+RP_AMBIENCE_CHANNEL_IDS: list[int] = []
+for _part in _rp_ambience_raw.replace(";", ",").split(","):
+    _part = _part.strip()
+    if _part.isdigit():
+        RP_AMBIENCE_CHANNEL_IDS.append(int(_part))
+
 # Slash replies: when true, bot posts to the channel (profiles, hunts, errors, everything)
 PUBLIC_GAMEPLAY_MESSAGES = os.getenv("PUBLIC_GAMEPLAY_MESSAGES", "true").strip().lower() in (
     "1",
@@ -242,6 +258,17 @@ HUNGER_CRITICAL_THRESHOLD = 15
 HUNGER_HUNT_PENALTY_PCT = 20
 HUNGER_SICK_EXTRA_DECAY = 6
 
+# Sunrise auto-feeding: each pack first feeds its members from the food reserve
+# (lore order: elders, pups, den-keepers, sick first). Wolves left with no
+# reserve then forage/scavenge for themselves. Wolves are opportunistic omnivores
+# (facultative carnivores): they scrape by on berries, roots, and fallen fruit in
+# growing seasons, or scavenged scraps and carrion in lean ones. The roll usually
+# succeeds but CAN fail; pups, the injured, elders, and winter all make
+# starvation a real risk, so neglect and bad seasons still bite.
+ROLLOVER_SCAVENGE_BASE_CHANCE = 0.70
+ROLLOVER_SCAVENGE_HUNGER = 14  # small; enough to get by, not to thrive
+ROLLOVER_SCAVENGE_THIRST = 6
+
 # Nursing; mothers feed milk until pups reach juvenile stage (PUP_MAX_MOONS)
 MILK_HUNGER_GAIN = 28
 MILK_THIRST_GAIN = 12
@@ -348,6 +375,32 @@ SOCIALIZE_UNITY_AWKWARD = -1
 SOCIALIZE_UNITY_SCRAP = -2
 SOCIALIZE_STANDING_GOOD = 1
 SOCIALIZE_STANDING_SCRAP = -1
+
+# Body / visual language (`/sign`); how wolves "speak" without howling.
+# Rally is the mute wolf's stand-in for a howl, so it pays out more for the silenced.
+SIGN_RALLY_UNITY_MUTE = 3
+SIGN_RALLY_UNITY_NORMAL = 1
+SIGN_RALLY_STANDING = 1
+SIGN_ALERT_UNITY = 1
+SIGN_ALERT_STANDING = 1
+SIGN_PLAY_MOOD = 6
+SIGN_PLAY_UNITY = 1
+SIGN_SUBMIT_MOOD_SELF = 3
+SIGN_SUBMIT_MOOD_TARGET = 4
+SIGN_SUBMIT_UNITY = 1
+SIGN_SOOTHE_MOOD_TARGET = 10
+SIGN_SOOTHE_MOOD_SELF = 3
+SIGN_SOOTHE_UNITY = 1
+SIGN_THREATEN_STANDING = 1
+SIGN_THREATEN_TARGET_MOOD = -5
+SIGN_THREATEN_UNITY = -1
+SIGN_THREATEN_BACKFIRE_CHANCE = 0.30
+SIGN_THREATEN_BACKFIRE_MOOD = -5
+SIGN_THREATEN_BACKFIRE_STANDING = -1
+# Reading/answering a denmate's signal (the back-and-forth half of the system).
+SIGN_READ_MOOD = 4
+SIGN_READ_RALLY_UNITY = 1
+SIGN_READ_STANDING = 1
 RACCOON_DAILY_SELLS = 5
 RACCOON_DAILY_BUYS = 3
 RACCOON_BUNDLES = {
@@ -731,6 +784,14 @@ CAT_PACT_DUP_TRUST_PER_ITEM = 2
 CAT_PACT_DUP_TRUST_MAX = 14
 CAT_PACT_BARTER_PER_DUPES = 2
 CAT_PACT_BARTER_LOOT_MAX = 6
+# Food barter: forest cats are OBLIGATE carnivores (taurine, vitamin A, etc. only
+# from meat). They prize a carcass and have little use for plant food, taking
+# fruit/berries/greens only to barter onward or line kit nests. So meat earns
+# real trust/loot; forage earns a token amount.
+CAT_PACT_FOOD_MEAT_TRUST_PER_BONE = 0.30
+CAT_PACT_FOOD_FORAGE_TRUST_PER_USE = 1
+CAT_PACT_FOOD_TRUST_MAX = 16
+CAT_PACT_FOOD_LOOT_MAX = 6
 CAT_PACT_RECEIVE_MIN_TRUST = 35
 PACK_DUP_TRADE_MIN_RELATION = 5
 PACK_DUP_TRADE_RELATION_GAIN = 1

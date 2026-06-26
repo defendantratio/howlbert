@@ -547,6 +547,13 @@ class World(commands.Cog):
         embed = build_rollover_embed(world, crisis)
         await interaction.response.send_message(embed=embed)
 
+        from engine.rp_ambience import post_rp_ambience
+
+        try:
+            await post_rp_ambience(self.bot, guild_id, world)
+        except Exception:
+            pass
+
         from utils.notifications import notify_births_ready_after_rollover
 
         await notify_births_ready_after_rollover(self.bot, world["day_number"])

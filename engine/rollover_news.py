@@ -170,6 +170,22 @@ def format_age_milestone_line(
 
 
 
+def birthday_lines(age_milestones: list[dict]) -> list[str]:
+    """Celebrate wolves who cross a full year (multiple of 12 moons) this rollover."""
+    out: list[str] = []
+    for m in age_milestones:
+        old_age = int(m["old_age"])
+        new_age = int(m["new_age"])
+        years = [y for y in range(old_age + 1, new_age + 1) if y % 12 == 0]
+        if not years:
+            continue
+        year = years[-1] // 12
+        out.append(
+            f"🎂 **{m['wolf_name']}** turns **{year} year{'s' if year != 1 else ''}** old!"
+        )
+    return out
+
+
 def collect_den_news(day_number: int, age_milestones: list[dict]) -> dict[str, list[str]]:
 
     from engine.pack_events import collect_pack_event_lines
@@ -177,6 +193,8 @@ def collect_den_news(day_number: int, age_milestones: list[dict]) -> dict[str, l
 
 
     return {
+
+        "birthdays": birthday_lines(age_milestones),
 
         "age_ups": [
 
