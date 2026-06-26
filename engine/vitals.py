@@ -162,8 +162,17 @@ def _enter_needs_dying_conn(conn: sqlite3.Connection, wolf_id: int) -> None:
     )
 
 
-def _apply_death_save_conn(conn: sqlite3.Connection, user: sqlite3.Row) -> str:
+def _apply_death_save_conn(
+    conn: sqlite3.Connection,
+    user: sqlite3.Row,
+    *,
+    cause: str = "failed death saves",
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> str:
     """Run one death save on conn. Returns stabilized | died | continue."""
+    import database as db
+
     result = roll_death_save(user)
     wolf_id = user["id"]
     if result.get("consume_fields"):
@@ -180,13 +189,7 @@ def _apply_death_save_conn(conn: sqlite3.Connection, user: sqlite3.Row) -> str:
         return "stabilized"
 
     if not result["success"]:
-        conn.execute(
-            "UPDATE users SET condition = 'dead', hp = 0 WHERE id = ?",
-            (wolf_id,),
-        )
-        import database as db
-
-        db.handle_mate_grief_on_wolf_death(conn, wolf_id)
+        db.mark_wolf_dead(user["id"], cause, conn=conn, guild_id=guild_id, day=day)
         return "died"
 
     round_num = int(user["death_save_round"]) if user["death_save_round"] else 1
@@ -268,7 +271,12 @@ def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
     return notes
 
 
-def apply_needs_crisis_on_rollover(conn: sqlite3.Connection) -> dict:
+def apply_needs_crisis_on_rollover(
+    conn: sqlite3.Connection,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> dict:
     """
     Wolves at 0 hunger or thirst collapse into dying (death saves) instead of instant death.
     Wolves already dying from depleted vitals get one automatic death save each sunrise.
@@ -313,7 +321,9 @@ def apply_needs_crisis_on_rollover(conn: sqlite3.Connection) -> dict:
         if int(row["hunger"]) > 0 and int(row["thirst"]) > 0:
             continue
         cause = _needs_cause(row["hunger"], row["thirst"])
-        outcome = _apply_death_save_conn(conn, row)
+        outcome = _apply_death_save_conn(
+            conn, row, cause=cause, guild_id=guild_id, day=day
+        )
         entry = {
             "wolf_name": row["wolf_name"],
             "discord_id": row["discord_id"],

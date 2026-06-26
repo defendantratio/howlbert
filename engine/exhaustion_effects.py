@@ -230,9 +230,15 @@ def apply_mood_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
 
 
 
-def apply_exhaustion_death_on_rollover(conn: sqlite3.Connection) -> list[dict]:
+def apply_exhaustion_death_on_rollover(
+    conn: sqlite3.Connection,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> list[dict]:
 
     """Exhaustion 6: death at sunrise."""
+    import database as db
 
     rows = conn.execute(
 
@@ -255,35 +261,17 @@ def apply_exhaustion_death_on_rollover(conn: sqlite3.Connection) -> list[dict]:
     deaths: list[dict] = []
 
     for row in rows:
-
-        conn.execute(
-
-            "UPDATE users SET condition = 'dead', hp = 0 WHERE id = ?",
-
-            (row["id"],),
-
+        grief = db.mark_wolf_dead(
+            row["id"], "exhaustion", conn=conn, guild_id=guild_id, day=day
         )
-
-        import database as db
-
-        grief = db.handle_mate_grief_on_wolf_death(conn, row["id"])
-
         deaths.append(
-
             {
-
                 "wolf_name": row["wolf_name"],
-
                 "discord_id": row["discord_id"],
-
                 "cause": "exhaustion",
-
                 "mate_grief": grief,
-
             }
-
         )
-
     return deaths
 
 

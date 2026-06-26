@@ -533,7 +533,13 @@ async def treat(
         kind = supplemental["kind"]
         sfields = supplemental.get("fields") or {}
         if kind == "mercy":
-            db.set_user_conditions(subject_did, wolf_id=subject_id, condition="dead", hp=0)
+            db.set_user_conditions(
+                subject_did,
+                wolf_id=subject_id,
+                condition="dead",
+                hp=0,
+                death_cause=f"mercy ({item['name']})",
+            )
             msg = f"**{item['name']}**: {supplemental['message']}"
         elif kind == "stabilize" and outcome != "stabilized":
             db.set_user_conditions(subject_did, wolf_id=subject_id, hp=1, condition="stable")

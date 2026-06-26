@@ -290,7 +290,13 @@ def treat_from_herb_stack(
         kind = supplemental["kind"]
         sfields = supplemental.get("fields") or {}
         if kind == "mercy":
-            db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], condition="dead", hp=0)
+            db.set_user_conditions(
+                patient["discord_id"],
+                wolf_id=patient["id"],
+                condition="dead",
+                hp=0,
+                death_cause=f"mercy ({name})",
+            )
             msg = f"**{name}**{form_tag}{target_note}; {supplemental['message']}"
         elif kind == "stabilize" and outcome != "stabilized":
             db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=1, condition="stable")

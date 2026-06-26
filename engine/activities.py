@@ -817,6 +817,13 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
             )
     db.increment_quest_progress(interaction.user.id, "forage")
     auto_note = forager_note
+    seed_note = ""
+    from config import GARDEN_FORAGE_SEED_CHANCE
+    from engine.herb_growing import can_cultivate
+
+    if can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
+        db.add_herb_seeds(user["id"], herb_key)
+        seed_note = f"\n\nYou also pocket a few **{meta['name']} seeds** for the den garden (`/garden plant`)."
     from engine.disease_contract import try_insect_sting_exposure
 
     insect_chance = 0.11 if world["season"] == "summer" else 0.07
@@ -835,6 +842,7 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         + (f"\n\n{hoard_note}" if hoard_note else "")
         + rare_note
         + auto_note
+        + seed_note
         + season_suffix
         + (f"\n\n{sting_note}" if sting_note else "")
         + (f"\n\n{nettle_note}" if nettle_note else ""),

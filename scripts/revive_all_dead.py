@@ -35,6 +35,8 @@ def main() -> None:
                     death_save_round = 0,
                     death_save_fails = 0,
                     death_save_successes = 0,
+                    cause_of_death = NULL,
+                    death_day = NULL,
                     exhaustion = 0,
                     hunger = ?,
                     thirst = ?,

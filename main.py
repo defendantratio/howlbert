@@ -93,6 +93,7 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.prestige")
         await self.load_extension("cogs.rpg")
         await self.load_extension("cogs.herbs")
+        await self.load_extension("cogs.garden")
         await self.load_extension("cogs.combat")
         await self.load_extension("cogs.life")
         await self.load_extension("cogs.prey_pile")

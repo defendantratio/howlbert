@@ -19,10 +19,14 @@ def try_contract_disease(
     stage: str | None = None,
     *,
     chance: float = 1.0,
+    conn=None,
 ) -> str | None:
     """
     Attempt to give a wolf a disease. Returns a player-facing note, or None.
     Won't replace an existing illness with a different one.
+
+    Pass ``conn`` to write through an already-open connection (avoids a
+    second connection deadlocking on the same database during rollover).
     """
     if not user or user["condition"] in ("dead", "dying"):
         return None
@@ -47,7 +51,13 @@ def try_contract_disease(
         return None
 
     encoded = encode_disease(disease_key, stage)
-    db.set_user_conditions(user["discord_id"], wolf_id=user["id"], disease=encoded)
+    if conn is not None:
+        conn.execute(
+            "UPDATE users SET disease = ? WHERE id = ?",
+            (encoded, user["id"]),
+        )
+    else:
+        db.set_user_conditions(user["discord_id"], wolf_id=user["id"], disease=encoded)
     return f"**{info['name']}**; {info['effect']}"
 
 
@@ -106,28 +116,30 @@ def try_grief_on_bond_loss(user, bond_type: str = "mate", *, chance: float = 0.5
     return None
 
 
-def try_insomnia_from_distress(user, *, chance: float = 0.12) -> str | None:
+def try_insomnia_from_distress(user, *, chance: float = 0.12, conn=None) -> str | None:
     mood = int(user["mood"]) if user and "mood" in user.keys() else 50
     distressed = int(user["distressed"]) if user and "distressed" in user.keys() else 0
     if mood >= 25 and not distressed:
         return None
     if distressed:
         chance = min(0.22, chance * 1.35)
-    return try_contract_disease(user, "insomnia", "restless", chance=chance)
+    return try_contract_disease(user, "insomnia", "restless", chance=chance, conn=conn)
 
 
 def try_night_terrors_from_trauma(user, chance: float = 0.12) -> str | None:
     return try_contract_disease(user, "night_terrors", "restless_nights", chance=chance)
 
 
-def try_chronic_stress_from_low_mood(user, low_mood_days: int, *, chance: float = 0.12) -> str | None:
+def try_chronic_stress_from_low_mood(
+    user, low_mood_days: int, *, chance: float = 0.12, conn=None
+) -> str | None:
     if low_mood_days < 3:
         return None
     adjusted = min(0.45, chance + max(0, low_mood_days - 3) * 0.04)
-    return try_contract_disease(user, "chronic_stress", "tense", chance=adjusted)
+    return try_contract_disease(user, "chronic_stress", "tense", chance=adjusted, conn=conn)
 
 
-def try_eating_distress_from_hunger(user, *, chance: float = 0.14) -> str | None:
+def try_eating_distress_from_hunger(user, *, chance: float = 0.14, conn=None) -> str | None:
     from config import HUNGER_LOW_THRESHOLD
 
     hunger = int(user["hunger"]) if user and "hunger" in user.keys() else 50
@@ -137,7 +149,7 @@ def try_eating_distress_from_hunger(user, *, chance: float = 0.14) -> str | None
         chance = min(0.35, chance * 2.0)
     elif hunger < HUNGER_LOW_THRESHOLD:
         chance = min(0.25, chance * 1.4)
-    return try_contract_disease(user, "eating_distress", "picky", chance=chance)
+    return try_contract_disease(user, "eating_distress", "picky", chance=chance, conn=conn)
 
 
 def try_delirium_with_fever(user, *, chance: float = 0.35) -> str | None:
@@ -162,14 +174,16 @@ def try_delirium_with_fever(user, *, chance: float = 0.35) -> str | None:
     return f"**{info['name']}**; {info['effect']}"
 
 
-def try_pack_madness_from_den_stress(user, pack_unity: int, *, chance: float = 0.08) -> str | None:
+def try_pack_madness_from_den_stress(
+    user, pack_unity: int, *, chance: float = 0.08, conn=None
+) -> str | None:
     if pack_unity > 2:
         return None
     if pack_unity <= 0:
         chance = min(0.22, chance * 2.2)
     elif pack_unity <= 2:
         chance = min(0.15, chance * 1.5)
-    note = try_contract_disease(user, "pack_madness", "wary", chance=chance)
+    note = try_contract_disease(user, "pack_madness", "wary", chance=chance, conn=conn)
     if note:
         return f"Den stress: {note}"
     return None
@@ -440,17 +454,17 @@ def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
         if not user:
             continue
 
-        note = try_insomnia_from_distress(user)
+        note = try_insomnia_from_distress(user, conn=conn)
         if not note:
-            note = try_chronic_stress_from_low_mood(user, low_mood_days)
+            note = try_chronic_stress_from_low_mood(user, low_mood_days, conn=conn)
         if not note:
-            note = try_eating_distress_from_hunger(user)
+            note = try_eating_distress_from_hunger(user, conn=conn)
         if not note and user["pack_id"]:
             pack = conn.execute(
                 "SELECT pack_unity FROM packs WHERE id = ?", (user["pack_id"],)
             ).fetchone()
             unity = int(pack["pack_unity"]) if pack else 5
-            note = try_pack_madness_from_den_stress(user, unity)
+            note = try_pack_madness_from_den_stress(user, unity, conn=conn)
         if note:
             notes.append(
                 {

@@ -124,6 +124,44 @@ def _pick_feed_stack(pack_id: int):
     return (fresh or stacks)[0]
 
 
+def _is_sick(wolf) -> bool:
+    """Carrying an illness or in any non-healthy condition counts as sick."""
+    keys = wolf.keys()
+    disease = wolf["disease"] if "disease" in keys else None
+    if disease:
+        return True
+    condition = wolf["condition"] if "condition" in keys else "healthy"
+    return bool(condition) and condition != "healthy"
+
+
+def _feed_priority(wolf) -> tuple[int, int]:
+    """
+    Lore feeding order (Fresh-kill custom): elders, pups, den-keepers, and sick
+    wolves eat first, then hunters and yearlings. Within a tier the hungriest
+    eat first so a short reserve reaches those who need it most.
+
+    Returns a sort key; lower sorts (and eats) first.
+    """
+    from engine.aging import stage_for_age
+    from engine.role_restrictions import wolf_role
+
+    role = wolf_role(wolf)
+    age_moons = int(wolf["age_months"]) if "age_months" in wolf.keys() else 24
+    stage = stage_for_age(age_moons)
+
+    eats_first = (
+        role == "elder"
+        or stage == "elder"
+        or role == "pup"
+        or stage == "pup"
+        or role in ("caretaker", "caretaker_apprentice")
+        or _is_sick(wolf)
+    )
+    tier = 0 if eats_first else 1
+    hunger = int(wolf["hunger"]) if "hunger" in wolf.keys() and wolf["hunger"] is not None else 50
+    return (tier, hunger)
+
+
 def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
     block = meal_blocked_by_injury(wolf)
     if block:
@@ -187,6 +225,8 @@ def run_feedall(
     members = db.get_pack_den_wolves(pack_id)
     if not members:
         return False, "No wolves in the den.", 0
+
+    members = sorted(members, key=_feed_priority)
 
     fed = 0
     lines: list[str] = []

@@ -814,6 +814,8 @@ HELP_TOPICS = {
 
         "`/wolfadmin denyfeature`; deny a request (no XP spent)\n"
 
+        "`/wolfadmin deaths`; death log and causes (optional player filter)\n"
+
         "`/questadmin create`; post a custom quest\n"
 
         "`/questadmin list`; all board quests\n"

@@ -10,15 +10,13 @@ from engine.hunger import meal_hunger_gain
 import database as db
 
 
-def _pack_member_ids(conn: sqlite3.Connection, guild_id: int) -> list[int]:
+def _rollover_wolf_ids(conn: sqlite3.Connection) -> list[int]:
+    """Living wolves for global sunrise season hooks (packs are not per-guild)."""
     rows = conn.execute(
         """
-        SELECT u.id FROM users u
-        JOIN packs p ON p.id = u.pack_id
-        WHERE p.guild_id = ?
-          AND u.condition NOT IN ('dead', 'dying')
-        """,
-        (guild_id,),
+        SELECT id FROM users
+        WHERE condition NOT IN ('dead', 'dying')
+        """
     ).fetchall()
     return [int(r["id"]) for r in rows]
 
@@ -26,11 +24,12 @@ def _pack_member_ids(conn: sqlite3.Connection, guild_id: int) -> list[int]:
 def apply_winter_hunger_stress(
     conn: sqlite3.Connection, guild_id: int, *, season: str
 ) -> list[str]:
-    """Winter; wolves need ~1.5× food; extra hunger decay for this guild's dens."""
+    """Winter; wolves need ~1.5× food; extra hunger decay at sunrise."""
+    del guild_id  # global wolf tick; guild only scopes den-news routing
     if season != "winter":
         return []
     extra = max(1, int(HUNGER_ROLLOVER_DECAY * 0.5))
-    ids = _pack_member_ids(conn, guild_id)
+    ids = _rollover_wolf_ids(conn)
     if not ids:
         return []
     placeholders = ",".join("?" * len(ids))
@@ -43,7 +42,8 @@ def apply_winter_hunger_stress(
 
 def apply_food_cache_on_rollover(conn: sqlite3.Connection, guild_id: int) -> list[dict]:
     """Spend cached autumn hunt meals (+hunger per cache)."""
-    ids = _pack_member_ids(conn, guild_id)
+    del guild_id
+    ids = _rollover_wolf_ids(conn)
     if not ids:
         return []
     notes: list[dict] = []
