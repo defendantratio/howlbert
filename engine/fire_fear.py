@@ -131,10 +131,10 @@ def wildfire_heat_save(user, *, day: int) -> tuple[bool, str, int]:
     if result["success"]:
         return True, format_roll_result(result) + "\nSmoke stings but you keep breathing.", 0
     dmg = random.randint(1, 4)
-    new_hp = max(0, int(user["hp"]) - dmg)
-    db.set_user_conditions(user["discord_id"], hp=new_hp)
-    return (
-        False,
-        format_roll_result(result) + f"\nSmoke sears the lungs; **−{dmg} HP**.",
-        dmg,
-    )
+    from engine.vitals import apply_hp_damage
+
+    _, extras = apply_hp_damage(user, dmg)
+    body = format_roll_result(result) + f"\nSmoke sears the lungs; **−{dmg} HP**."
+    if extras:
+        body += "\n" + "\n".join(extras)
+    return False, body, dmg

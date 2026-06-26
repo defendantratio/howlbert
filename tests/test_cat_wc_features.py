@@ -73,9 +73,12 @@ def test_starclan_omen_kinds():
 
 def test_twolegplace_territory():
     assert "twolegplace" in TERRITORY_HAZARDS
-    kind, body = roll_wilderness_encounter()
+    from tests.test_combat_hazards import _mock_user
+
+    kind, body, enc_id = roll_wilderness_encounter(_mock_user(), day=1, guild_id=1)
     assert kind in ("encounter", "quiet", "find")
     assert body
+    assert enc_id is None or isinstance(enc_id, int)
 
 
 if __name__ == "__main__":

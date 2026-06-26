@@ -9,7 +9,7 @@ PREY_CHOICES = {
     "eat": {
         "label": "Eat your fill",
         "emoji": "🍖",
-        "description": "Take a portion; restores energy (−1 exhaustion, +HP).",
+        "description": "Take a portion; restores hunger, thirst, +HP, and −1 exhaustion.",
     },
     "share": {
         "label": "Share fairly",
@@ -62,6 +62,8 @@ def choice_outcome_message(
     treasury: int = 0,
     hp_gain: int = 0,
     exhaustion_delta: int = 0,
+    hunger_gain: int = 0,
+    thirst_gain: int = 0,
 ) -> str:
     base = PREY_CHOICES[choice]
     parts = [f"**{base['emoji']} {base['label']}**; {base['description']}"]
@@ -69,10 +71,14 @@ def choice_outcome_message(
         parts.append(f"+{bones} {CURRENCY_LABEL}")
     if hp_gain > 0:
         parts.append(f"+{hp_gain} HP")
+    if hunger_gain > 0:
+        parts.append(f"+{hunger_gain} hunger")
+    if thirst_gain > 0:
+        parts.append(f"+{thirst_gain} thirst")
     if exhaustion_delta < 0:
         parts.append(f"{exhaustion_delta} exhaustion (energy restored)")
-    elif choice == "eat":
-        parts.append("Belly full; no exhaustion to shed.")
+    elif choice == "eat" and hp_gain == 0 and hunger_gain == 0 and exhaustion_delta == 0:
+        parts.append("Belly already full; no energy or hunger left to restore.")
     if standing > 0:
         parts.append(f"+{standing} standing")
     if treasury > 0:

@@ -264,6 +264,10 @@ def apply_exhaustion_death_on_rollover(conn: sqlite3.Connection) -> list[dict]:
 
         )
 
+        import database as db
+
+        grief = db.handle_mate_grief_on_wolf_death(conn, row["id"])
+
         deaths.append(
 
             {
@@ -273,6 +277,8 @@ def apply_exhaustion_death_on_rollover(conn: sqlite3.Connection) -> list[dict]:
                 "discord_id": row["discord_id"],
 
                 "cause": "exhaustion",
+
+                "mate_grief": grief,
 
             }
 

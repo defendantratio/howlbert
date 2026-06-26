@@ -128,7 +128,7 @@ def _attack_roll_modifiers(attacker, attack_type, attacker_f, defender_f):
     encounter_id = None
     if attacker_f is not None and "encounter_id" in attacker_f.keys():
         encounter_id = attacker_f["encounter_id"]
-    disadvantage, advantage = attacker_roll_modifiers(
+    disadvantage, advantage, fear_note = attacker_roll_modifiers(
         attacker,
         attack_type,
         attacker_f,
@@ -142,7 +142,7 @@ def _attack_roll_modifiers(attacker, attack_type, attacker_f, defender_f):
             advantage = False
         elif not disadvantage:
             advantage = True
-    return disadvantage, advantage
+    return disadvantage, advantage, fear_note
 
 
 def _resolve_attack_profile(
@@ -155,7 +155,7 @@ def _resolve_attack_profile(
     defender_f=None,
 ) -> dict:
     """Opposed attack using a bestiary NPC attack profile."""
-    disadvantage, advantage = _attack_roll_modifiers(
+    disadvantage, advantage, fear_note = _attack_roll_modifiers(
         attacker, profile.get("type", attack_type), attacker_f, defender_f
     )
     a_die = roll_attack_die(disadvantage=disadvantage, advantage=advantage)
@@ -205,6 +205,9 @@ def _resolve_attack_profile(
             extra = (extra + " " + profile["on_hit"]).strip()
     elif fumble:
         fumble_effect, extra, fumble_self_damage = _roll_fumble()
+
+    if fear_note:
+        extra = (extra + " " + fear_note).strip() if extra else fear_note.strip("_")
 
     if hit:
         damage, extra = _apply_defender_damage_reduction(defender, damage, extra)
@@ -258,7 +261,7 @@ def resolve_attack(
             attacker_f=attacker_f, defender_f=defender_f,
         )
 
-    disadvantage, advantage = _attack_roll_modifiers(
+    disadvantage, advantage, fear_note = _attack_roll_modifiers(
         attacker, attack_type, attacker_f, defender_f
     )
     a_die = roll_attack_die(disadvantage=disadvantage, advantage=advantage)
@@ -338,6 +341,9 @@ def resolve_attack(
     if hit:
         damage, extra = _apply_defender_damage_reduction(defender, damage, extra)
 
+    if fear_note:
+        extra = (extra + " " + fear_note).strip() if extra else fear_note.strip("_")
+
     result = _attack_result_base(attack_name)
     result.update(
         {
@@ -407,7 +413,7 @@ def resolve_maneuver(
             "extra": "",
         }
 
-    disadvantage, advantage = _attack_roll_modifiers(
+    disadvantage, advantage, _ = _attack_roll_modifiers(
         attacker, "claw", attacker_f, defender_f
     )
     a_die = roll_attack_die(disadvantage=disadvantage, advantage=advantage)
@@ -522,3 +528,47 @@ def format_attack(result: dict, attacker_name: str, defender_name: str) -> str:
     else:
         lines.append("**Miss.**")
     return "\n".join(lines)
+
+
+def finalize_cross_pack_pvp_death(
+    guild_id: int,
+    killer_discord_id: int | None,
+    victim_discord_id: int | None,
+) -> str | None:
+    """
+    When a player wolf drops to 0 HP from another player's attack,
+    worsen Great Pack standing if killer and victim belong to different dens.
+    """
+    import database as db
+    from config import GREAT_PACKS
+
+    if not killer_discord_id or not victim_discord_id:
+        return None
+    if killer_discord_id == victim_discord_id:
+        return None
+
+    killer = db.get_user(killer_discord_id)
+    victim = db.get_user(victim_discord_id)
+    if not killer or not victim:
+        return None
+
+    k_pack = int(killer["pack_id"]) if killer["pack_id"] else 0
+    v_pack = int(victim["pack_id"]) if victim["pack_id"] else 0
+    if not k_pack or not v_pack or k_pack == v_pack:
+        return None
+
+    k_gp = killer["great_pack"] if "great_pack" in killer.keys() else None
+    v_gp = victim["great_pack"] if "great_pack" in victim.keys() else None
+    if not k_gp or not v_gp or k_gp == v_gp:
+        return None
+    if k_gp not in GREAT_PACKS or v_gp not in GREAT_PACKS:
+        return None
+
+    from engine.pack_relations import format_standing_war_flash
+
+    new_standing = db.adjust_pack_relation(guild_id, k_pack, v_pack, -3)
+    victim_den = db.get_pack(v_pack)
+    name = victim_den["name"] if victim_den else GREAT_PACKS[v_gp]["name"]
+    note = f"Pack standing with **{name}** **−3** (now **{new_standing}/10**)."
+    note += format_standing_war_flash(guild_id, k_pack, v_pack, new_standing)
+    return note

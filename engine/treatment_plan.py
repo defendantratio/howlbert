@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from engine.conditions import parse_injuries
-from engine.diseases import disease_display, parse_disease
+from engine.diseases import illness_displays, is_mental_disease, parse_disease
 from engine.surgery import SURGERY_PROCEDURES, matching_injury
 from herbs import HERBS, INJURIES
 
@@ -53,14 +53,32 @@ def _rest_step(injury_key: str | None, disease_key: str | None) -> str:
         return "Strict rest; mullein or marsh-mallow course; no ranging in cold air."
     if disease_key == "shock_emotional":
         return "Quiet den; comfort and ritual herbs; no forced activity."
+    if disease_key == "shock_physical":
+        return "Stabilize immediately; warm den, no ranging until pulse steadies."
+    if disease_key == "grief_melancholy":
+        return "Den rest with pack comfort; chamomile, lavender, or borage; no forced hunts."
     return "Long rest this sunrise; re-check after `/rollover`."
 
 
 def build_treatment_checklist(user, *, day: int | None = None) -> str:
     """Return markdown for a 3-step care plan (herbs, surgery, rest)."""
+    cond = user["condition"] if "condition" in user.keys() else "healthy"
+    hp = int(user["hp"]) if "hp" in user.keys() else 1
+    if cond == "dying" or (hp <= 0 and cond != "dead"):
+        return (
+            "**Care plan: Dying**\n"
+            "1. **Death saves**: `/medic action:deathsaves` (3 rounds, CON saves)\n"
+            "2. **Stabilize**: Medic uses `/medic action:stabilize` (emergency cross-pack OK)\n"
+            "3. **Rest**: Den confinement after stabilization; no hunt or combat"
+        )
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
+    from engine.diseases import illness_displays, parse_disease
+    from engine.herb_buffs import get_buffs
+
     raw = user["disease"] if "disease" in user.keys() else None
     disease_key, stage = parse_disease(raw)
+    overlay = get_buffs(user).get("mental_disease")
+    o_key, o_stage = parse_disease(str(overlay)) if overlay else (None, None)
 
     primary_injury: str | None = None
     if injuries:
@@ -82,10 +100,13 @@ def build_treatment_checklist(user, *, day: int | None = None) -> str:
 
     cure_keys: tuple[str, ...] = ()
     headline = "General wellness"
-    if disease_key and stage:
-        display = disease_display(user)
-        headline = display[0] if display else disease_key
-        cure_keys = (disease_key, stage)
+    displays = illness_displays(user)
+    if displays:
+        headline = displays[0][0]
+        if disease_key and stage:
+            cure_keys = (disease_key, stage)
+        if o_key and o_stage and is_mental_disease(o_key):
+            cure_keys = cure_keys + (o_key, o_stage)
     elif primary_injury:
         headline = INJURIES.get(primary_injury, {}).get("name", primary_injury)
         cure_keys = (primary_injury,)

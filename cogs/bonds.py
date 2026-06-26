@@ -6,6 +6,7 @@ from discord.ext import commands
 
 import database as db
 from engine.bonds import BOND_LABELS, FAMILY_ROLE_LABELS, format_bonds_embed_body
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -127,25 +128,27 @@ class BondsCog(commands.Cog):
     ):
         subject, err = _resolve_subject(interaction, own_wolf)
         if err == "__not_registered__":
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if err:
             await interaction.response.send_message(
                 embed=howlbert_embed("Unknown Wolf", err, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         if action == "view":
             body = format_bonds_embed_body(subject)
-            await interaction.response.send_message(
-                embed=howlbert_embed(f"{subject['wolf_name']}; Bonds", body),
+            embed = howlbert_embed(f"{subject['wolf_name']}; Bonds", body)
+            embed.set_footer(
+                text="/playpen action:socialize · action:groom · /bonds action:Set · /world action:cooldowns"
             )
+            await interaction.response.send_message(embed=embed)
             return
 
         if action == "family":
             if not interaction.guild:
-                await interaction.response.send_message("Use this in a server.", ephemeral=True)
+                await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
             day = world["day_number"]
@@ -155,7 +158,7 @@ class BondsCog(commands.Cog):
                 if not ok:
                     await interaction.response.send_message(
                         embed=howlbert_embed("Found Family", msg or "Could not leave.", color=ERROR_COLOR),
-                        ephemeral=True,
+                        ephemeral=reply_ephemeral(),
                     )
                     return
                 await interaction.response.send_message(
@@ -178,7 +181,7 @@ class BondsCog(commands.Cog):
                         "• **Leave**; `/bonds action:Found family leave:true`",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
 
@@ -192,7 +195,7 @@ class BondsCog(commands.Cog):
                 if not family:
                     await interaction.response.send_message(
                         embed=howlbert_embed("Found Family", msg or "Could not join.", color=ERROR_COLOR),
-                        ephemeral=True,
+                        ephemeral=reply_ephemeral(),
                     )
                     return
                 role_label = FAMILY_ROLE_LABELS.get(family_role or "member", "Member")
@@ -209,7 +212,7 @@ class BondsCog(commands.Cog):
             if not family:
                 await interaction.response.send_message(
                     embed=howlbert_embed("Found Family", msg or "Could not create family.", color=ERROR_COLOR),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             await interaction.response.send_message(
@@ -225,19 +228,19 @@ class BondsCog(commands.Cog):
             subject, interaction, wolf=wolf, target_own_wolf=target_own_wolf
         )
         if terr == "__not_registered__":
-            await interaction.response.send_message("They haven't registered a wolf.", ephemeral=True)
+            await interaction.response.send_message("They haven't registered a wolf.", ephemeral=reply_ephemeral())
             return
         if terr:
             await interaction.response.send_message(
                 embed=howlbert_embed("Pick a Wolf", terr, color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
         if not bond_type:
             await interaction.response.send_message(
                 embed=howlbert_embed("Bond Type", "Pick a **bond_type**.", color=ERROR_COLOR),
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -252,7 +255,7 @@ class BondsCog(commands.Cog):
                         f"No **{label.lower()}** between **{subject['wolf_name']}** and **{target['wolf_name']}**.",
                         color=ERROR_COLOR,
                     ),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             await interaction.response.send_message(
@@ -266,7 +269,7 @@ class BondsCog(commands.Cog):
 
         if action == "set":
             if not interaction.guild:
-                await interaction.response.send_message("Use this in a server.", ephemeral=True)
+                await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
             row = db.set_bond(
@@ -280,15 +283,20 @@ class BondsCog(commands.Cog):
             if not row:
                 await interaction.response.send_message(
                     embed=howlbert_embed("Set Bond", "Could not save bond.", color=ERROR_COLOR),
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             note_line = f"\n_{row['note']}_" if row["note"] else ""
+            from engine.bonds import strength_bar, strength_tier
+
+            rival = bond_type == "rivalry"
+            tier = strength_tier(row["strength"], rivalry=rival)
+            bar = strength_bar(row["strength"])
             await interaction.response.send_message(
                 embed=howlbert_embed(
                     "Set Bond",
                     f"**{subject['wolf_name']}** ↔ **{target['wolf_name']}**; **{label}** "
-                    f"**{row['strength']}/100**{note_line}",
+                    f"**{bar}** ({tier}){note_line}",
                     color=SUCCESS_COLOR,
                 ),
             )

@@ -16,7 +16,7 @@ from config import (
 )
 from engine.cat_pacts import pact_border_chance_multiplier
 from engine.prey_items import SNIFF_FLAVORS, SNIFF_HUNT_HINT
-from utils.embeds import SUCCESS_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
 SNIFF_ENCOUNTER_PACKMATE = (
@@ -53,7 +53,7 @@ def apply_sniff_bone_bonus(user, amount: int, day: int) -> tuple[int, int, str]:
 
 
 def sniff_track_fail_reduction(user, day: int) -> int:
-    """Points subtracted from track fail threshold when sniff bonus is active."""
+    """Points subtracted from tracking DC when sniff bonus is active."""
     if not sniff_bonus_active(user, day):
         return 0
     return max(5, int(SNIFF_HUNT_BONUS_PCT / 2))
@@ -86,7 +86,9 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
     if int(user["last_sniff_day"]) >= day:
-        return howlbert_embed("Already Sniffed", "You've read the wind this sunrise."), None
+        embed = howlbert_embed("Already Sniffed", "You've read the wind this sunrise.", color=ERROR_COLOR)
+        embed.set_footer(text="Resets at next `/rollover` · `/world action:cooldowns`")
+        return embed, None
 
     db.update_user(interaction.user.id, last_sniff_day=day)
     flavor = random.choice(SNIFF_FLAVORS)
@@ -94,9 +96,17 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     footer_bits: list[str] = [f"Season: {world['season']} · {world['weather']}"]
     combat_enc_id: int | None = None
 
+    gp = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else None
+    if gp and gp in GREAT_PACKS:
+        from engine.territory_marking import read_marks_for_sniff
+
+        marks = read_marks_for_sniff(gp, guild_id=interaction.guild.id, day=day)
+        if marks:
+            body += "\n\n**Scent marks on the wind:**\n" + "\n".join(f"· {m}" for m in marks[:4])
+            footer_bits.append("Border marks")
+
     encounter = None
     if random.random() < SNIFF_WOLF_ENCOUNTER_CHANCE:
-        gp = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else None
         encounter = db.pick_sniff_encounter_wolf(
             exclude_wolf_id=user["id"],
             exclude_discord_id=interaction.user.id,
@@ -105,11 +115,28 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         )
 
     if encounter:
-        body += f"\n\n{_encounter_flavor(user, encounter)}"
-        new_mood = db.adjust_mood(user["id"], SNIFF_WOLF_ENCOUNTER_MOOD)
-        body += f"\n\n**+{SNIFF_WOLF_ENCOUNTER_MOOD} mood** (now **{new_mood}**)."
-        if user["pack_id"] and user["pack_id"] == encounter["pack_id"]:
-            body += "\nPackmate on the trail; try **`/playpen action:socialize`** if you haven't mingled today."
+        from engine.pack_relations import sniff_encounter_lines
+
+        relation_body, skirmish_id = sniff_encounter_lines(
+            user,
+            encounter,
+            guild_id=interaction.guild.id,
+            channel_id=interaction.channel_id,
+        )
+        if relation_body:
+            body += relation_body
+            if skirmish_id:
+                combat_enc_id = skirmish_id
+                footer_bits.append("Hostile rival; combat panel below")
+        else:
+            body += f"\n\n{_encounter_flavor(user, encounter)}"
+            new_mood = db.adjust_mood(user["id"], SNIFF_WOLF_ENCOUNTER_MOOD)
+            body += f"\n\n**+{SNIFF_WOLF_ENCOUNTER_MOOD} mood** (now **{new_mood}**)."
+            if user["pack_id"] and user["pack_id"] == encounter["pack_id"]:
+                body += (
+                    "\nPackmate on the trail; try **`/playpen action:socialize`** "
+                    "if you haven't mingled today."
+                )
         footer_bits.append("Wolf encounter")
     else:
         border_odds = SNIFF_CAT_ENCOUNTER_CHANCE * pact_border_chance_multiplier(

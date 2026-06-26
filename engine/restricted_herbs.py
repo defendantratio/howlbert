@@ -195,8 +195,9 @@ def herbbag_hoard_warning(user) -> str:
         return ""
     names = format_herb_names(held)
     return (
-        f"\n\n⚠ **Restricted in bag:** {names}. "
-        f"{RESTRICTED_HERB_HOARD_WARN.strip('_')}"
+        f"\n\n⚠ **Restricted in bag:** {names}.\n"
+        f"{RESTRICTED_HERB_HOARD_WARN}\n"
+        "_Use `/herbs action:turnin` before a patrol catches the scent._"
     )
 
 

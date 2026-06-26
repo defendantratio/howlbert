@@ -87,6 +87,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/field`     | `forage`, `verge`, `scavenge`, `track`, `fishing`, `sniff`                                                    |
 | `/hoarding`  | `hoard`, `gift`, `shred`                                                                                      |
 | `/playpen`   | `toys`, `play`, `playall`, `toystore`, `socialize`, `groom`                                                   |
+| `/raccoon`   | `sell`, `buy`, `offer`                                                                                        |
 | `/packlife`  | `feedall`, `drinkall`, `howl`                                                                                 |
 | `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`                                                                    |
@@ -100,6 +101,8 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe` |
 | `/herbs`     | `bag`, `guide`, `prepare`, `dryall`, `store`, `turnin`                                                      |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
+| `/skills`    | catalogued Basil checks (`category:` · `check:` · `group:` · `helper:` · `opponent:`)                         |
+| `/skilllist` | reference DCs by category                                                                                     |
 | `/vitals`    | `condition`, `rest`                                                                                           |
 
 
@@ -121,6 +124,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/trade`                                               | player item and bone trades                            |
 | `/patron` `/redeem`                                    | boosts, invites, supporter perks                       |
 | `/help topic:<category>`                               | full command guide                                     |
+| `/skills` `/skilllist`                                 | Basil skill checks and DC reference                    |
 | `/ping`                                                | bot health check                                       |
 
 
@@ -167,7 +171,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 | feature              | commands                                                                       |
 | -------------------- | ------------------------------------------------------------------------------ |
 | attributes and roles | `/register`, `/rpg action:setstats`, `/profile`                                |
-| skill checks         | `/rpg action:roll`                                                             |
+| skill checks         | `/skills`, `/skilllist`, `/rpg action:roll`                                    |
 | combat               | `/combat start`, `join`, `begin`, `attack`, `status`, `end`                    |
 | herbs                | `/field action:forage`, `action:verge`, `/herbs`, `/medic action:treat`        |
 | conditions           | `/vitals action:condition`, `action:rest`; disease progresses each rollover    |
@@ -181,7 +185,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **herb compendium:** 90+ plants. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide.
 
-illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:vitals` in discord for the full list.
+illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:profile` in discord for the full list.
 
 ## territory wars
 

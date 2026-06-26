@@ -34,6 +34,7 @@ from engine.prestige import get_tier_info
 
 from utils.currency import format_bones
 
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, trim_embed_fields
 
 from utils.names import validate_display_name
@@ -65,7 +66,7 @@ class _EmbedPaginator(discord.ui.View):
 
     @discord.ui.button(label="1/1", style=discord.ButtonStyle.gray, disabled=True)
     async def page_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
+        await interaction.response.defer_update()
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -163,7 +164,10 @@ class Profile(commands.Cog):
 
 
 
-    @app_commands.command(name="register", description="Create a wolf (up to 3 per player; admins unlimited).")
+    @app_commands.command(
+        name="register",
+        description=f"Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).",
+    )
 
     @app_commands.describe(
 
@@ -249,14 +253,14 @@ class Profile(commands.Cog):
                 "Use `/switchwolf` to change active character, or `/rpg action:delete confirm:DELETE` to remove one.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         wolf_name, name_err = db.validate_wolf_name_available(name, label="Wolf names")
         if name_err:
             title = "Name Taken" if "already taken" in name_err else "Invalid Name"
             embed = howlbert_embed(title, name_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         age_months = starting_age
@@ -266,7 +270,7 @@ class Profile(commands.Cog):
         genetic_keys, genetic_err = parse_genetic_register_input(genetic)
         if genetic_err:
             embed = howlbert_embed("Invalid Genetics", genetic_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         try:
@@ -299,7 +303,7 @@ class Profile(commands.Cog):
                 else "Invalid Name"
             )
             embed = howlbert_embed(title, msg, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         from engine.patron import on_wolf_registered
@@ -370,15 +374,31 @@ class Profile(commands.Cog):
                 inline=False,
             )
         elif user["wolf_role"] == "juvenile":
+            from engine.blooding import format_blooding_status, is_unblooded_juvenile
+
+            blooding_line = format_blooding_status(user)
+            juvenile_path = (
+                "You are **6-24 moons**; practice hunting; your **blooding** comes on your first kill. "
+                "Forbidden to mate. "
+                "Complete role quests and `/role action:event` to grow toward an adult role."
+            )
+            if blooding_line:
+                juvenile_path = blooding_line
+            elif not is_unblooded_juvenile(user):
+                juvenile_path = (
+                    "You are **6-24 moons** and **blooded**; role quests and `/role action:event` "
+                    "mark your path toward an adult role. Forbidden to mate."
+                )
             embed.add_field(
                 name="Juvenile's Path",
-                value=(
-                    "You are **6-24 moons**; practice hunting; your **blooding** comes on your first kill. "
-                    "Forbidden to mate. "
-                    "Complete role quests and `/role action:event` to grow toward an adult role."
-                ),
+                value=juvenile_path,
                 inline=False,
             )
+
+        if genetic_keys:
+            from engine.genetics import format_genetic_conditions
+
+            embed.add_field(name="Genetics", value=format_genetic_conditions(user), inline=False)
 
         if pack in GREAT_PACKS:
 
@@ -392,7 +412,7 @@ class Profile(commands.Cog):
                 HERBS[k]["name"] if k in HERBS else k.replace("_", " ").title()
                 for k in faction["starting_herbs"]
             )
-            embed.add_field(name="Starting Herbs", value=f"{herbs}\n_Added to `/inventory`._", inline=False)
+            embed.add_field(name="Starting Herbs", value=f"{herbs}\n_Added to `/bones action:inventory` (stable shop herbs). Foraged stacks use `/herbs action:bag`._", inline=False)
 
         else:
 
@@ -453,7 +473,7 @@ class Profile(commands.Cog):
                 "Use `/register` to create your first wolf.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         active_id = db.get_active_wolf_id(interaction.user.id)
@@ -478,7 +498,7 @@ class Profile(commands.Cog):
         if len(lines) <= page_size:
             embed = howlbert_embed("Your Wolves", "\n".join(lines))
             embed.set_footer(text=footer)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         pages: list[discord.Embed] = []
@@ -493,7 +513,7 @@ class Profile(commands.Cog):
             embed.set_footer(text=footer)
             pages.append(embed)
         view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
-        await interaction.response.send_message(embed=pages[0], view=view, ephemeral=True)
+        await interaction.response.send_message(embed=pages[0], view=view, ephemeral=reply_ephemeral())
 
     async def _own_wolf_autocomplete(
         self,
@@ -526,7 +546,7 @@ class Profile(commands.Cog):
         rows = db.list_user_wolves(interaction.user.id)
         if not rows:
             embed = howlbert_embed("No Wolves", "Use `/register` first.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         match = next(
@@ -539,7 +559,7 @@ class Profile(commands.Cog):
                 "No wolf with that name on your account. Check `/wolves`.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if match["id"] == db.get_active_wolf_id(interaction.user.id):
@@ -548,7 +568,7 @@ class Profile(commands.Cog):
                 f"You're already playing as **{match['wolf_name']}**.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         db.set_active_wolf(interaction.user.id, match["id"])
@@ -582,7 +602,7 @@ class Profile(commands.Cog):
 
             embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -602,7 +622,7 @@ class Profile(commands.Cog):
 
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -622,7 +642,7 @@ class Profile(commands.Cog):
 
                 )
 
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
                 return
 
@@ -636,7 +656,7 @@ class Profile(commands.Cog):
 
             embed = howlbert_embed("Cannot Change Pack", err, color=ERROR_COLOR)
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -682,7 +702,7 @@ class Profile(commands.Cog):
 
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -694,7 +714,7 @@ class Profile(commands.Cog):
 
             embed = howlbert_embed("Invalid Name", error, color=ERROR_COLOR)
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -712,7 +732,7 @@ class Profile(commands.Cog):
 
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -723,7 +743,7 @@ class Profile(commands.Cog):
             body = err[5:]
             title = "Name Taken" if "already taken" in body else "Invalid Name"
             embed = howlbert_embed(title, body, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         old_name = user["wolf_name"]
@@ -778,7 +798,7 @@ class Profile(commands.Cog):
 
             embed = howlbert_embed("No Profile Found", message, color=ERROR_COLOR)
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
             return
 
@@ -862,8 +882,14 @@ class Profile(commands.Cog):
         bonds_preview = format_bonds_embed_body(user)
         if bonds_preview and "No bonds recorded yet" not in bonds_preview:
             if len(bonds_preview) > 1024:
-                bonds_preview = bonds_preview[:1021] + "…"
+                bonds_preview = bonds_preview[:1021] + "…\n_Use `/bonds` for the full list._"
             embed.add_field(name="Bonds", value=bonds_preview, inline=False)
+        elif target == interaction.user:
+            embed.add_field(
+                name="Bonds",
+                value="No bonds yet — `/playpen action:socialize`, `action:groom`, or `/bonds action:Set`.",
+                inline=False,
+            )
 
         embed.add_field(name="Condition", value=user["condition"].title(), inline=True)
 
@@ -971,8 +997,15 @@ class Profile(commands.Cog):
         account = db.get_account(target.id)
 
         tier = get_tier_info(account["prestige_tier"])
+        xp = int(account["xp"]) if account and "xp" in account.keys() else 0
+        prestige_value = f"Tier {tier['tier']}; {tier['name']} · **{xp}** account XP"
+        if target == interaction.user and interaction.guild_id:
+            from engine.chat_xp import format_chat_xp_status
 
-        embed.add_field(name="Prestige", value=f"Tier {tier['tier']}; {tier['name']}", inline=False)
+            world = db.get_world(interaction.guild_id)
+            if world:
+                prestige_value += f"\n_{format_chat_xp_status(target.id, interaction.guild_id, world['day_number'])}_"
+        embed.add_field(name="Prestige", value=prestige_value, inline=False)
 
         if target == interaction.user:
             slots = db.count_slot_wolves(target.id)
@@ -1023,7 +1056,7 @@ class Profile(commands.Cog):
                 "Use **member** for another player's active wolf, or **own_wolf** for one of yours — not both.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         if own_wolf:
@@ -1034,10 +1067,10 @@ class Profile(commands.Cog):
                     f"No wolf named **{own_wolf}** on your account. Check `/wolves`.",
                     color=ERROR_COLOR,
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             user = db.get_user_by_id(match["id"])
-            title_name = user["wolf_name"]
+            title_name = user["wolf_name"] if user else ""
             avatar = interaction.user.display_avatar.url
         else:
             target = member or interaction.user
@@ -1052,7 +1085,7 @@ class Profile(commands.Cog):
                 else f"{(member or interaction.user).display_name} hasn't registered a wolf yet."
             )
             embed = howlbert_embed("No Profile Found", message, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         fields = lore_embed_fields(user)
@@ -1062,7 +1095,7 @@ class Profile(commands.Cog):
                 f"**{title_name}** has no character sheet on file yet.",
                 color=ERROR_COLOR,
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
         embed = howlbert_embed(f"{title_name}; Character Sheet")

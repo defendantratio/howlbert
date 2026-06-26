@@ -1,6 +1,7 @@
 """Pack leadership checks; role only (no separate rank)."""
 
 from config import GREAT_PACKS
+from engine.apprentice_roles import matches_parent_role
 
 PACK_OFFICER_ROLES = frozenset({"alpha", "advisor"})
 BETA_ROLE = "advisor"  # Beta wolves use the Advisor role
@@ -80,11 +81,10 @@ def is_pack_beta(user, pack) -> bool:
 
 
 def can_forge_cat_pact(user, pack) -> bool:
-    """Alpha or Diplomat in the same pack."""
+    """Alpha or Diplomat (incl. apprentice) in the same pack."""
     if not user or not pack or user["pack_id"] != pack["id"]:
         return False
-    role = wolf_role_key(user)
-    if role == "diplomat":
+    if matches_parent_role(wolf_role_key(user), "diplomat"):
         return True
     return is_pack_alpha(user, pack)
 
@@ -95,6 +95,6 @@ def can_resolve_war(user, pack, *, discord_admin: bool = False) -> bool:
         return True
     if not user or not pack or user["pack_id"] != pack["id"]:
         return False
-    if wolf_role_key(user) == "diplomat":
+    if matches_parent_role(wolf_role_key(user), "diplomat"):
         return True
     return is_pack_alpha(user, pack)

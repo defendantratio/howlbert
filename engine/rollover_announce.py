@@ -52,6 +52,18 @@ logger = logging.getLogger("howlbert")
 
 
 
+def _format_crisis_lines(entries: list, *, limit: int = 12) -> str:
+    """Format rollover note dicts (or legacy plain strings)."""
+    lines: list[str] = []
+    for entry in entries[:limit]:
+        if isinstance(entry, dict):
+            name = entry.get("wolf_name") or "Den"
+            lines.append(f"**{name}**; {entry.get('line', '')}")
+        else:
+            lines.append(str(entry))
+    if len(entries) > limit:
+        lines.append(f"_…and {len(entries) - limit} more._")
+    return "\n".join(lines)
 
 
 def build_rollover_embed(world, crisis: dict) -> discord.Embed:
@@ -118,7 +130,21 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
             loss_lines.append(f"_…and {len(deaths) - 10} more._")
 
+        loss_lines.append(
+            "_Medics: `/medic action:lay_to_rest` · mates may need comfort and herbs._"
+        )
+
         embed.add_field(name="Losses", value="\n".join(loss_lines), inline=False)
+
+    grief_notes = crisis.get("grief_notes", [])
+
+    if grief_notes:
+
+        embed.add_field(
+            name="Grief in the den",
+            value=_format_crisis_lines(grief_notes, limit=8),
+            inline=False,
+        )
 
 
 
@@ -175,14 +201,27 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
     condition_notes = crisis.get("condition_notes", [])
 
     if condition_notes:
+        embed.add_field(
+            name="Injuries & disease",
+            value=_format_crisis_lines(condition_notes, limit=12),
+            inline=False,
+        )
 
-        lines = [f"**{n['wolf_name']}**; {n['line']}" for n in condition_notes[:12]]
+    mental_notes = crisis.get("mental_notes", [])
+    if mental_notes:
+        embed.add_field(
+            name="Mind & stress",
+            value=_format_crisis_lines(mental_notes, limit=8),
+            inline=False,
+        )
 
-        if len(condition_notes) > 12:
-
-            lines.append(f"_…and {len(condition_notes) - 12} more._")
-
-        embed.add_field(name="Injuries & disease", value="\n".join(lines), inline=False)
+    prey_spoilage = crisis.get("prey_spoilage", [])
+    if prey_spoilage:
+        embed.add_field(
+            name="Rotting prey",
+            value=_format_crisis_lines(prey_spoilage, limit=8),
+            inline=False,
+        )
 
 
 
@@ -205,6 +244,13 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
     if season_notes:
 
         embed.add_field(name="Season", value="\n".join(season_notes), inline=False)
+
+    plot_notes = crisis.get("plot_notes", [])
+    if plot_notes:
+        text = "\n".join(plot_notes[:8])
+        if len(plot_notes) > 8:
+            text += f"\n_…and {len(plot_notes) - 8} more._"
+        embed.add_field(name="The Blinking", value=text, inline=False)
 
 
 

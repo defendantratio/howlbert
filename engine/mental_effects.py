@@ -6,15 +6,23 @@ from engine.diseases import (
     blocks_field,
     blocks_social,
     get_stage_info,
-    parse_disease,
 )
 
 MENTAL_ATTRS = frozenset({"attr_int", "attr_wis", "attr_cha"})
 
 
 def _parsed(user) -> tuple[str | None, str | None]:
+    from engine.diseases import is_mental_disease, parse_disease
+    from engine.herb_buffs import get_buffs
+
+    overlay = get_buffs(user).get("mental_disease") if user else None
+    if overlay:
+        return parse_disease(str(overlay))
     raw = user["disease"] if user and "disease" in user.keys() else None
-    return parse_disease(raw)
+    key, stage = parse_disease(raw)
+    if is_mental_disease(key):
+        return key, stage
+    return None, None
 
 
 def mental_activity_block(user) -> str | None:

@@ -6,16 +6,67 @@ import random
 
 import database as db
 
-PACK_EVENT_TEMPLATES = [
-    "Border tension; scouts report unfamiliar scent on the ridge.",
-    "Den warmth; pups and elders sleep closer tonight.",
-    "Stash watch; the food reserve draws curious raccoons.",
-    "Unity beat; the pack howls together at dusk.",
-    "River rise; crossing places run fast after the rain.",
-    "Rival wind; scent from a neighboring territory lingers.",
-    "Gathering mood; wolves trade stories of last season's hunts.",
-    "Thin prey; hunters return early; the den shares smaller meals.",
+# (flavor line, optional mechanical effect key)
+PACK_EVENT_SPECS: list[tuple[str, str | None]] = [
+    ("Border tension; scouts report unfamiliar scent on the ridge.", None),
+    ("Den warmth; pups and elders sleep closer tonight.", None),
+    ("Stash watch; the food reserve draws curious raccoons.", "raccoon"),
+    ("Unity beat; the pack howls together at dusk.", "unity"),
+    ("River rise; crossing places run fast after the rain.", None),
+    ("Rival wind; scent from a neighboring territory lingers.", None),
+    ("Gathering mood; wolves trade stories of last season's hunts.", None),
+    ("Thin prey; hunters return early; the den shares smaller meals.", "thin_prey"),
 ]
+
+
+def _apply_pack_event_effect(conn, pack_id: int, effect: str | None) -> str:
+    """Apply a light mechanical bite; return suffix for den news."""
+    if not effect:
+        return ""
+
+    if effect == "raccoon":
+        row = conn.execute(
+            """
+            SELECT id, prey_key, uses_left FROM pack_prey_stacks
+            WHERE pack_id = ? AND uses_left > 0
+            ORDER BY RANDOM() LIMIT 1
+            """,
+            (pack_id,),
+        ).fetchone()
+        if not row:
+            return " Guards held the line; **no theft**."
+        from engine.prey_items import prey_meta
+
+        name = prey_meta(row["prey_key"])["name"]
+        uses = int(row["uses_left"])
+        if uses <= 1:
+            conn.execute("DELETE FROM pack_prey_stacks WHERE id = ?", (row["id"],))
+        else:
+            conn.execute(
+                "UPDATE pack_prey_stacks SET uses_left = uses_left - 1 WHERE id = ?",
+                (row["id"],),
+            )
+        return f" A raccoon **stole** a bite of reserve **{name}** (`/pack stash`)."
+
+    if effect == "unity":
+        outcome = db.adjust_pack_unity(pack_id, 1)
+        if outcome == "dissolved":
+            return " The dusk howl couldn't hold the fractured den."
+        return " Dusk howl; **+1 unity**."
+
+    if effect == "thin_prey":
+        row = conn.execute("SELECT treasury FROM packs WHERE id = ?", (pack_id,)).fetchone()
+        if not row:
+            return ""
+        treasury = int(row["treasury"])
+        if treasury < 3:
+            return ""
+        loss = min(8, max(3, treasury // 10))
+        if not db.deduct_pack_treasury(pack_id, loss):
+            return ""
+        return f" Shared rations; treasury **−{loss}** bones."
+
+    return ""
 
 
 def roll_pack_event_for_rollover(pack_id: int, day_number: int) -> str | None:
@@ -29,12 +80,13 @@ def roll_pack_event_for_rollover(pack_id: int, day_number: int) -> str | None:
             return None
         if random.random() > 0.25:
             return None
-        text = random.choice(PACK_EVENT_TEMPLATES)
+        text, effect = random.choice(PACK_EVENT_SPECS)
+        suffix = _apply_pack_event_effect(conn, pack_id, effect)
         conn.execute(
             "UPDATE packs SET last_pack_event_day = ? WHERE id = ?",
             (day_number, pack_id),
         )
-        return text
+        return f"{text}{suffix}"
 
 
 def collect_pack_event_lines(day_number: int) -> list[str]:

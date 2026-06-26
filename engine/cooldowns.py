@@ -249,7 +249,12 @@ def build_cooldown_fields(
     fields.append(
         (
             "/explore venture",
-            _status(user, "explore", ready=can_explore_again(user, day)),
+            _status(user, "explore", ready=can_explore_again(user, day))
+            + (
+                "\n_Explore + rescout unlimited · survey/trail once each_"
+                if is_scout(user)
+                else ("\n_Resets next sunrise_" if not can_explore_again(user, day) else "")
+            ),
             True,
         )
     )
@@ -259,9 +264,9 @@ def build_cooldown_fields(
                 "/scout",
                 "\n".join(
                     (
-                        f"Rescout: {_status(user, 'rescout', ready=can_rescout_again(user, day))}",
-                        f"Survey: {_status(user, 'survey', ready=not _used_today(user, day, 'last_survey_day'))}",
-                        f"Trail: {_status(user, 'trail', ready=not _used_today(user, day, 'last_trail_day'))}",
+                        f"Rescout: {_status(user, 'rescout', ready=can_rescout_again(user, day))} · unlimited",
+                        f"Survey: {_status(user, 'survey', ready=not _used_today(user, day, 'last_survey_day'))} · once/sunrise",
+                        f"Trail: {_status(user, 'trail', ready=not _used_today(user, day, 'last_trail_day'))} · once/sunrise",
                     )
                 ),
                 False,
@@ -281,7 +286,12 @@ def build_cooldown_fields(
         )
         if pack_id:
             feedall_ready = bool(pack) and int(pack["last_feedall_day"]) < day
-            drinkall_ready = bool(pack) and int(pack.get("last_drinkall_day", 0)) < day
+            drinkall_day = (
+                int(pack["last_drinkall_day"])
+                if "last_drinkall_day" in pack.keys()
+                else 0
+            )
+            drinkall_ready = bool(pack) and drinkall_day < day
             fields.append(
                 (
                     "/packlife action:feedall",
@@ -305,6 +315,13 @@ def build_cooldown_fields(
                 False,
             )
         )
+    fields.append(
+        (
+            "/playpen action:play",
+            _status(user, "play", ready=not _used_today(user, day, "last_play_day")),
+            True,
+        )
+    )
     fields.append(
         (
             "/playpen action:socialize",
@@ -352,6 +369,12 @@ def build_cooldown_fields(
             True,
         )
     )
+
+    from engine.blooding import format_blooding_status
+
+    blooding = format_blooding_status(user)
+    if blooding:
+        fields.append(("/bones action:hunt", f"needed for blooding\n{blooding}", False))
 
     role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
     if role == DROWN_SICK_ROLE:
@@ -403,6 +426,13 @@ def build_cooldown_fields(
     )
     fields.append(
         (
+            "/pupcare action:feed",
+            _status(user, "nurse", ready=not _used_today(user, day, "last_nurse_day")),
+            True,
+        )
+    )
+    fields.append(
+        (
             "Den charm",
             _status(user, "den_charm", ready=not _used_today(user, day, "last_den_charm_day")),
             True,
@@ -420,5 +450,23 @@ def build_cooldown_fields(
             False,
         )
     )
+
+    if pack_id and guild_id:
+        from config import CAT_PACT_RECEIVE_MIN_TRUST
+
+        receive_ready = not _used_today(user, day, "last_cat_receive_day")
+        trade_ready = not _used_today(user, day, "last_duplicate_trade_day")
+        fields.append(
+            (
+                "/pack pact",
+                "\n".join(
+                    (
+                        f"Receive: {_status(user, 'cat receive', ready=receive_ready)} · trust **{CAT_PACT_RECEIVE_MIN_TRUST}+**",
+                        f"Trade duplicates: {_status(user, 'cat trade', ready=trade_ready)} · once/sunrise",
+                    )
+                ),
+                False,
+            )
+        )
 
     return fields

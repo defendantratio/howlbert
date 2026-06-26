@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import database as db
 from engine.dice import format_contest_roll, roll_contest
 from engine.character import parse_proficiencies
+from engine.herb_buffs import grant_courtship_block
 from rpg_rules import ROLE_PROFICIENCIES
 
 
@@ -50,6 +52,8 @@ def execute_rival_challenge(
             f"{favor_note}"
         )
         if att["contest_total"] > defn["contest_total"]:
+            fields = grant_courtship_block(defender, day=day)
+            db.update_user_by_id(defender["id"], **fields)
             body += (
                 f"\n**{challenger['wolf_name']}** dominates the song. "
                 f"**{defender['wolf_name']}** cannot approach the female for the rest of this sunrise."
@@ -85,9 +89,11 @@ def execute_rival_challenge(
         f"{favor_note}"
     )
     if att["contest_total"] > defn["contest_total"]:
+        fields = grant_courtship_block(defender, day=day)
+        db.update_user_by_id(defender["id"], **fields)
         body += (
             f"\n**{challenger['wolf_name']}** pins **{defender['wolf_name']}**. "
-            "The loser must retreat or submit."
+            f"**{defender['wolf_name']}** cannot approach the female for the rest of this sunrise."
         )
         return challenger["wolf_name"], body
     if defn["contest_total"] > att["contest_total"]:

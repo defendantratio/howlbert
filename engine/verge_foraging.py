@@ -91,25 +91,78 @@ def _pick_verge_herb(user, site: str) -> str:
     return random.choice(pool)
 
 
-def _verge_risk_note(site: str, *, critical: bool = False) -> str:
+def _verge_compound_dog_risk(
+    user,
+    *,
+    guild_id: int,
+    channel_id: int,
+    day: int,
+    critical: bool,
+) -> tuple[str, int | None]:
+    """Mechanical compound dog charge; ambush or bite."""
+    from engine.wild_encounters import start_verge_dog_ambush, verge_dog_bite_fallback
+
+    ambush = start_verge_dog_ambush(
+        user,
+        guild_id=guild_id,
+        channel_id=channel_id,
+        activity="verge",
+    )
+    if ambush:
+        enc_id, _key, flavor = ambush
+        return (
+            f"_{flavor}_\n\n"
+            f"A **guard hearth-hound** breaks the fence-line; combat **#{enc_id}** is live in-channel.",
+            enc_id,
+        )
+    bite = verge_dog_bite_fallback(user, day=day)
+    mood = VERGE_CRIT_FAIL_MOOD if critical else VERGE_FAIL_MOOD
+    return (
+        random.choice(VERGE_SITES["compound"]["risk_flavor"]).format(mood=mood)
+        + f"\n\n_{bite}_",
+        None,
+    )
+
+
+def _verge_risk_note(
+    site: str,
+    *,
+    critical: bool = False,
+    user=None,
+    guild_id: int | None = None,
+    channel_id: int | None = None,
+    day: int = 1,
+) -> tuple[str, int | None]:
     spec = VERGE_SITES[site]
     mood = VERGE_CRIT_FAIL_MOOD if critical else VERGE_FAIL_MOOD
     if site == "roadside":
         if critical and random.random() < VERGE_TOXIC_MISID_CHANCE:
+            from engine.disease_contract import try_verge_toxic_misid_exposure
+
+            toxic = try_verge_toxic_misid_exposure(user) if user else None
             db_note = (
-                "\n\n_You grabbed a toxic look-alike in the ditch; spit it out fast. "
+                f"\n\n_{toxic}_" if toxic else "\n\n_You grabbed a toxic look-alike in the ditch; spit it out fast. "
                 "Get a Medic to check you._"
             )
         else:
             db_note = ""
         if random.random() < VERGE_MONSTER_NEAR_MISS_CHANCE or critical:
-            return random.choice(spec["risk_flavor"]).format(mood=mood) + db_note
-        return ""
+            return random.choice(spec["risk_flavor"]).format(mood=mood) + db_note, None
+        stripped = db_note.lstrip("\n\n") if db_note and not critical else ""
+        return stripped, None
     if site == "compound":
         if random.random() < VERGE_COMPOUND_DOG_CHANCE or critical:
-            return random.choice(spec["risk_flavor"]).format(mood=mood)
-        return ""
-    return ""
+            if user and guild_id and channel_id:
+                return _verge_compound_dog_risk(
+                    user,
+                    guild_id=guild_id,
+                    channel_id=channel_id,
+                    day=day,
+                    critical=critical,
+                )
+            return random.choice(spec["risk_flavor"]).format(mood=mood), None
+        return "", None
+    return "", None
 
 
 def try_verge_forage(interaction, site: str = "roadside"):
@@ -118,17 +171,17 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
+        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), None
     if site not in VERGE_SITES:
-        return howlbert_embed("Unknown Verge", "Pick **roadside** or **compound**.", color=ERROR_COLOR)
+        return howlbert_embed("Unknown Verge", "Pick **roadside** or **compound**.", color=ERROR_COLOR), None
     if not interaction.guild:
-        return howlbert_embed("Server Only", "Edge-forage in a server channel.", color=ERROR_COLOR)
+        return howlbert_embed("Server Only", "Edge-forage in a server channel.", color=ERROR_COLOR), None
 
     from engine.activities import _activity_block_embed, _need_guild
 
     guild_id = _need_guild(interaction)
     if not guild_id:
-        return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR)
+        return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR), None
 
     world = db.get_world(guild_id)
     day = world["day_number"]
@@ -137,23 +190,31 @@ def try_verge_forage(interaction, site: str = "roadside"):
             "Already Edged",
             "You've foraged the **verge** this sunrise; territory forage is separate (`/field action:forage`).",
             color=ERROR_COLOR,
-        )
+        ), None
+
+    from engine.forager_perk import grant_forager_auto_herb
+
+    auto_herb = grant_forager_auto_herb(user, day=day, guild_id=guild_id)
+    forager_note = (
+        f"\n\n_Forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
+    )
 
     blocked = _activity_block_embed(user, title="Cannot Edge-Forage")
     if blocked:
-        return blocked
+        return blocked, None
 
     spec = VERGE_SITES[site]
     pool = herbs_for_verge(site)
     if not pool:
-        return howlbert_embed("No Verge Herbs", "Nothing configured for this site.", color=ERROR_COLOR)
+        return howlbert_embed("No Verge Herbs", "Nothing configured for this site.", color=ERROR_COLOR), None
 
     profs = parse_proficiencies(user["skill_proficiencies"])
-    dc = spec["dc"] + season_forage_dc_mod(world["season"])
+    season_mod = season_forage_dc_mod(world["season"])
+    dc = spec["dc"] + season_mod
     season_suffix = (
-        f"\n_{season_forage_modifier_label(world['season'])}_"
-        if season_forage_dc_mod(world["season"])
-        else ""
+        f"\n_{season_forage_modifier_label(world['season'])} · effective DC **{dc}**._"
+        if season_mod
+        else f"\n_Effective DC **{dc}**._"
     )
     proficient = spec["skill_key"] in profs or "herblore" in profs
     result = resolve_check(
@@ -166,33 +227,49 @@ def try_verge_forage(interaction, site: str = "roadside"):
         game_day=day,
     )
     db.update_user(interaction.user.id, last_verge_forage_day=day)
+    combat_enc: int | None = None
 
     if result["outcome"] == "critical_failure":
-        risk = _verge_risk_note(site, critical=True)
-        if risk:
+        risk, combat_enc = _verge_risk_note(
+            site,
+            critical=True,
+            user=user,
+            guild_id=guild_id,
+            channel_id=interaction.channel_id,
+            day=day,
+        )
+        if risk and combat_enc is None:
             db.adjust_mood(user["id"], -VERGE_CRIT_FAIL_MOOD)
         return howlbert_embed(
             "Spooked at the Verge",
             format_roll_result(result)
             + f"\n\n{spec['intro']}\n\n"
             "**Critical failure**; wrong patch, barking hearth-hound, or monster wind. Nothing gathered."
+            + forager_note
             + (f"\n\n{risk}" if risk else "")
             + season_suffix,
             color=ERROR_COLOR,
-        )
+        ), combat_enc
 
     if not result["success"]:
-        risk = _verge_risk_note(site)
-        if risk:
+        risk, combat_enc = _verge_risk_note(
+            site,
+            user=user,
+            guild_id=guild_id,
+            channel_id=interaction.channel_id,
+            day=day,
+        )
+        if risk and combat_enc is None:
             db.adjust_mood(user["id"], -VERGE_FAIL_MOOD)
         return howlbert_embed(
             "Verge Empty",
             format_roll_result(result)
             + f"\n\n{spec['intro']}\n\n{random.choice(spec['fail_flavor'])}"
+            + forager_note
             + (f"\n\n{risk}" if risk else "")
             + season_suffix,
             color=ERROR_COLOR,
-        )
+        ), combat_enc
 
     herb_key = _pick_verge_herb(user, site)
     from engine.herb_storage import fresh_herb_warning, grant_fresh_herb
@@ -217,6 +294,13 @@ def try_verge_forage(interaction, site: str = "roadside"):
         qty_note = " (double yield!)"
     db.increment_quest_progress(interaction.user.id, "forage")
 
+    from engine.disease_contract import try_insect_sting_exposure, try_poison_ivy_exposure
+
+    if site == "compound":
+        hazard = try_poison_ivy_exposure(user, chance=0.10) or ""
+    else:
+        hazard = try_insect_sting_exposure(user, chance=0.07) or ""
+
     site_note = (
         "_Roadside herbs only grow on disturbed ground; never in deep territory._"
         if site == "roadside"
@@ -229,9 +313,14 @@ def try_verge_forage(interaction, site: str = "roadside"):
         f"Found **{meta['name']}**{qty_note}; fresh stack `#{stack_id}` in herb bag.\n_{meta['effect']}_"
         + fresh_herb_warning(herb_key)
         + (f"\n\n{hoard_note}" if hoard_note else "")
+        + forager_note
+        + (f"\n\n{hazard}" if hazard else "")
         + f"\n\n{site_note}"
         + season_suffix,
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="/field action:verge · once per sunrise · Foragers unlimited")
-    return embed
+    footer = "/field action:verge · once per sunrise"
+    if season_mod:
+        footer += f" · {season_forage_modifier_label(world['season'])}"
+    embed.set_footer(text=footer)
+    return embed, combat_enc

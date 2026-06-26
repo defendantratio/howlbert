@@ -31,6 +31,29 @@ WILD_ENCOUNTER_WEIGHTS: tuple[tuple[str, int], ...] = (
     ("black_bear", 1),
 )
 
+# Extra ambush weights merged in pick_wild_encounter_template by great pack.
+REPTILE_ENCOUNTER_BY_PACK: dict[str, tuple[tuple[str, int], ...]] = {
+    "mistmoor": (
+        ("water_snake", 14),
+        ("garter_snake", 8),
+        ("spider", 6),
+    ),
+    "silverrush": (
+        ("water_snake", 12),
+        ("garter_snake", 10),
+        ("spider", 5),
+    ),
+    "thistlehide": (
+        ("garter_snake", 10),
+        ("skink", 12),
+        ("spider", 5),
+    ),
+}
+DEFAULT_REPTILE_ENCOUNTER_WEIGHTS: tuple[tuple[str, int], ...] = (
+    ("garter_snake", 4),
+    ("spider", 3),
+)
+
 ACTIVITY_ENCOUNTER_CHANCE: dict[str, int] = {
     "hunt": HUNT_WILD_ENCOUNTER_CHANCE,
     "explore": EXPLORE_WILD_ENCOUNTER_CHANCE,
@@ -90,11 +113,36 @@ WILD_ENCOUNTER_FLAVOR: dict[str, tuple[str, ...]] = {
         "Collar-bells and milk-scent; a lost **kittypet** yowls when it sees you.",
         "A plump **kittypet** wandered too far from the Twoleg nests.",
     ),
+    "water_snake": (
+        "Reed-rustle; a **water snake** uncoils from the mud and strikes without warning.",
+        "Warm bank, cold eyes; a **water snake** blocks the shallows.",
+    ),
+    "garter_snake": (
+        "A **garter snake** suns on the trail and won't yield until you pass too close.",
+        "Striped scales in the grass; a **garter snake** rears, hissing.",
+    ),
+    "skink": (
+        "A **skink** bolts from sun-warmed stone, then turns to snap when cornered.",
+        "Dry gulch flicker; a **skink** darts between your paws.",
+    ),
+    "spider": (
+        "Leaf-litter shifts; a **wolf spider** the size of your paw rushes your muzzle.",
+        "Too many legs at once; a **spider** drops from a web-strand onto your shoulder.",
+    ),
 }
 
 
-def pick_wild_encounter_template() -> str:
-    keys, weights = zip(*WILD_ENCOUNTER_WEIGHTS)
+def pick_wild_encounter_template(user=None) -> str:
+    table = list(WILD_ENCOUNTER_WEIGHTS)
+    gp = None
+    if user is not None:
+        if hasattr(user, "keys") and "great_pack" in user.keys():
+            gp = user["great_pack"]
+        elif isinstance(user, dict):
+            gp = user.get("great_pack")
+    extras = REPTILE_ENCOUNTER_BY_PACK.get(gp or "", DEFAULT_REPTILE_ENCOUNTER_WEIGHTS)
+    table.extend(extras)
+    keys, weights = zip(*table)
     return random.choices(keys, weights=weights, k=1)[0]
 
 
@@ -136,15 +184,49 @@ def maybe_start_activity_ambush(
     )
 
 
+def start_verge_dog_ambush(
+    user,
+    *,
+    guild_id: int,
+    channel_id: int,
+    activity: str = "verge",
+) -> tuple[int, str, str] | None:
+    """Force a guard hearth-hound ambush when compound dogs charge."""
+    if not channel_id or not can_trigger_wild_encounter(user, channel_id):
+        return None
+    return start_wild_encounter(
+        user,
+        guild_id=guild_id,
+        channel_id=channel_id,
+        activity=activity,
+        template_key="dog_guard",
+    )
+
+
+def verge_dog_bite_fallback(user, *, day: int) -> str:
+    """Bite damage when ambush cannot start (cooldown or no channel)."""
+    from engine.disease_contract import try_contract_disease
+
+    dmg = random.randint(2, 8)
+    new_hp = max(0, int(user["hp"]) - dmg)
+    db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=new_hp)
+    lines = [f"Teeth rake your haunches; **−{dmg} HP**."]
+    distemper = try_contract_disease(user, "distemper", chance=0.12)
+    if distemper:
+        lines.append(f"Canid bite: {distemper}")
+    return "\n".join(lines)
+
+
 def start_wild_encounter(
     user,
     *,
     guild_id: int,
     channel_id: int,
     activity: str = "",
+    template_key: str | None = None,
 ) -> tuple[int, str, str]:
     """Begin an active ambush vs a random wilderness threat."""
-    template_key = pick_wild_encounter_template()
+    template_key = template_key or pick_wild_encounter_template(user)
     template = BESTIARY_NPCS[template_key]
     threat_hp = npc_hp(template)
 
@@ -168,14 +250,26 @@ def start_wild_encounter(
     return enc_id, template_key, wild_encounter_flavor(template_key)
 
 
-def ambush_embed(template_key: str, flavor: str):
+def ambush_embed(template_key: str, flavor: str, user=None, *, activity: str = ""):
     """Build the ambush announcement embed."""
-    from utils.embeds import SUCCESS_COLOR, howlbert_embed
+    from utils.embeds import ERROR_COLOR, howlbert_embed
 
-    from engine.bestiary import format_npc_summary
+    from engine.bestiary import format_npc_category, format_npc_summary
+    from engine.reptile_fear import reptile_ambush_fear_note
 
     template = BESTIARY_NPCS[template_key]
-    body = f"{flavor}\n\n{format_npc_summary(template_key)}"
-    embed = howlbert_embed(f"Ambush; {template['name']}", body, color=SUCCESS_COLOR)
-    embed.set_footer(text="Combat started; use the panel below.")
+    fear = reptile_ambush_fear_note(user, template_key) if user else ""
+    body = f"{flavor}{fear}\n\n{format_npc_summary(template_key)}"
+    embed = howlbert_embed(f"Ambush; {template['name']}", body, color=ERROR_COLOR)
+    footer = f"{format_npc_category(template_key)} · combat started; use the panel below"
+    if activity:
+        activity_labels = {
+            "hunt": "rolled on hunt",
+            "explore": "rolled on explore",
+            "collab_patrol": "rolled on patrol",
+            "verge": "verge dogs",
+        }
+        label = activity_labels.get(activity, activity.replace("_", " "))
+        footer += f" · {label}"
+    embed.set_footer(text=footer)
     return embed

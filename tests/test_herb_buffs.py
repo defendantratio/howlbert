@@ -46,5 +46,30 @@ def test_disease_save_advantage_flag():
     assert disease_save_uses_advantage(user)
 
 
-def test_parse_stack_id():
-    assert parse_herb_stack_id("stack:3") == 3
+def test_witch_hazel_astringent():
+    user = Row(
+        disease="",
+        active_injuries='["sprained_leg"]',
+        herb_buffs="{}",
+        last_rest_day=5,
+        mood=50,
+        exhaustion=0,
+    )
+    effect = apply_supplemental_herb("witch_hazel", user, day=10, outcome="symptom_ease")
+    assert effect is not None
+    assert "swelling" in effect["message"].lower()
+    assert effect["fields"].get("herb_buffs")
+    assert "venom_save_advantage" in effect["fields"]["herb_buffs"] or "pain_relief" in effect["fields"]["herb_buffs"]
+
+
+def test_lung_herbs_grant_save():
+    user = Row(
+        disease="rot_lung:fever",
+        herb_buffs="{}",
+        last_rest_day=5,
+        mood=50,
+        exhaustion=2,
+    )
+    effect = apply_supplemental_herb("marsh_mallow", user, day=10, outcome="symptom_ease")
+    assert effect is not None
+    assert effect["fields"].get("disease_save_buff") == 1

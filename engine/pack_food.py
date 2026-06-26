@@ -12,6 +12,24 @@ from engine.injury_effects import meal_blocked_by_injury
 from engine.prey_items import is_cannibal_prey, prey_meta
 
 
+def pack_treasury_pinch_line(pack_id: int) -> str:
+    """Nudge when communal bones may not cover sunrise stipends."""
+    pack = db.get_pack(pack_id)
+    if not pack:
+        return ""
+    treasury = int(pack["treasury"])
+    from config import DAILY_REWARD
+    from utils.currency import format_bones
+
+    if treasury >= DAILY_REWARD:
+        return ""
+    return (
+        f"\n\n_Treasury pinch: **{format_bones(treasury)}** in communal bones "
+        f"(stipends draw ~**{format_bones(DAILY_REWARD)}**+). "
+        "Hunt tax, `/pack deposit`, or `/preypile` → **Leave for the den**._"
+    )
+
+
 def format_pack_stash_line(stack, current_day: int) -> str:
     meta = prey_meta(stack["prey_key"])
     from engine.prey_items import freshness_label
@@ -34,6 +52,11 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
         return False, "You don't carry that carcass."
     if stack["uses_left"] <= 0:
         return False, "That carcass is picked clean."
+    if stack["is_rotting"]:
+        return (
+            False,
+            "Only **fresh** carcasses go in the den reserve; eat or `/salvage` this one first.",
+        )
 
     db.add_pack_prey_stack(
         pack_id,
@@ -68,6 +91,7 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
     from engine.cannibalism import cannibalism_public_exposure
 
     msg += cannibalism_public_exposure(user, stack["prey_key"], action="stash")
+    msg += pack_treasury_pinch_line(pack_id)
     return True, msg
 
 
@@ -171,7 +195,12 @@ def run_feedall(
         stack = _pick_feed_stack(pack_id)
         if not stack:
             if fed == 0:
-                return False, "The food reserve is empty; `/pack stash deposit` first.", 0
+                pinch = pack_treasury_pinch_line(pack_id)
+                return (
+                    False,
+                    "The food reserve is empty; `/pack stash deposit` first." + pinch,
+                    0,
+                )
             break
         if is_cannibal_prey(stack["prey_key"]):
             served_wolf = True

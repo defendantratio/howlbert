@@ -5,6 +5,7 @@ from discord.ext import commands
 import database as db
 from engine.skill_checks import SKILL_CATEGORIES, SKILL_SCENARIOS, opponent_required, scenario_keys_for_category
 from engine.skill_runner import run_skill_scenario
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -108,17 +109,17 @@ class Skills(commands.Cog):
     ):
         user = db.get_user(interaction.user.id)
         if not user:
-            await interaction.response.send_message("Use `/register` first.", ephemeral=True)
+            await interaction.response.send_message("Use `/register` first.", ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
-            await interaction.response.send_message("Use this in a server.", ephemeral=True)
+            await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
             return
 
         scenario = SKILL_SCENARIOS.get(check)
         if not scenario or scenario.category != category:
             await interaction.response.send_message(
                 "Pick a **check** that matches the **category**.",
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
 
@@ -127,28 +128,44 @@ class Skills(commands.Cog):
             try:
                 opp_id = int(opponent)
             except ValueError:
-                await interaction.response.send_message("Invalid opponent.", ephemeral=True)
+                await interaction.response.send_message("Invalid opponent.", ephemeral=reply_ephemeral())
                 return
             if opp_id == interaction.user.id:
                 await interaction.response.send_message(
                     "Pick another wolf; not yourself.",
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             opponent_row = db.get_user(opp_id)
             if not opponent_row:
                 await interaction.response.send_message(
                     "Opponent isn't registered on Howlbert.",
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
 
         world = db.get_world(interaction.guild.id)
 
+        from engine.herb_buffs import sedated_blocks_activity
+
+        if category in ("tracking", "stealth", "navigation") and sedated_blocks_activity(
+            user, world["day_number"]
+        ):
+            await interaction.response.send_message(
+                embed=howlbert_embed(
+                    "Sedated",
+                    "**Sedated**; valerian or poppy holds you in deep rest. "
+                    "No tracking, stealth, or ranging until next sunrise.",
+                    color=ERROR_COLOR,
+                ),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+
         if group:
             if not user["pack_id"]:
                 await interaction.response.send_message(
-                    "Join a pack for **group** checks.", ephemeral=True
+                    "Join a pack for **group** checks.", ephemeral=reply_ephemeral()
                 )
                 return
             from engine.group_checks import run_group_check
@@ -160,7 +177,7 @@ class Skills(commands.Cog):
             ]
             scenario = SKILL_SCENARIOS.get(check)
             if not scenario:
-                await interaction.response.send_message("Unknown check.", ephemeral=True)
+                await interaction.response.send_message("Unknown check.", ephemeral=reply_ephemeral())
                 return
             ok, body = run_group_check(
                 wolves,
@@ -170,6 +187,24 @@ class Skills(commands.Cog):
                 skill_label=scenario.skill_label,
                 day=world["day_number"],
             )
+            from engine.skill_runner import apply_scenario_mechanics
+
+            synth = {
+                "success": ok,
+                "outcome": "success" if ok else "failure",
+                "total": None,
+                "dc": scenario.dc,
+            }
+            _, mech = apply_scenario_mechanics(
+                user,
+                scenario,
+                synth,
+                day=world["day_number"],
+                weather=world["weather"],
+                guild_id=interaction.guild.id,
+            )
+            if mech:
+                body += "\n\n" + "\n\n".join(mech)
             embed = howlbert_embed(
                 f"Group: {scenario.label}",
                 body,
@@ -183,7 +218,7 @@ class Skills(commands.Cog):
         if helper:
             helper_row = db.get_user(helper.id)
             if not helper_row:
-                await interaction.response.send_message("Helper isn't registered.", ephemeral=True)
+                await interaction.response.send_message("Helper isn't registered.", ephemeral=reply_ephemeral())
                 return
 
         if helper_row and not opponent_row:
@@ -192,7 +227,7 @@ class Skills(commands.Cog):
             scenario = SKILL_SCENARIOS.get(check)
             if not scenario or scenario.category != category:
                 await interaction.response.send_message(
-                    "Pick a **check** that matches the **category**.", ephemeral=True
+                    "Pick a **check** that matches the **category**.", ephemeral=reply_ephemeral()
                 )
                 return
             ok, body = run_assisted_check(
@@ -204,6 +239,24 @@ class Skills(commands.Cog):
                 skill_label=scenario.skill_label,
                 day=world["day_number"],
             )
+            from engine.skill_runner import apply_scenario_mechanics
+
+            synth = {
+                "success": ok,
+                "outcome": "success" if ok else "failure",
+                "total": None,
+                "dc": scenario.dc,
+            }
+            _, mech = apply_scenario_mechanics(
+                user,
+                scenario,
+                synth,
+                day=world["day_number"],
+                weather=world["weather"],
+                guild_id=interaction.guild.id,
+            )
+            if mech:
+                body += "\n\n" + "\n\n".join(mech)
             embed = howlbert_embed(scenario.label, body, color=SUCCESS_COLOR if ok else ERROR_COLOR)
             embed.set_footer(text="/skills helper: · assisted check")
             await interaction.response.send_message(embed=embed)
@@ -218,6 +271,7 @@ class Skills(commands.Cog):
             rained=rained,
             yarrow_bonus=yarrow,
             opponent=opponent_row,
+            guild_id=interaction.guild.id,
         )
         embed = howlbert_embed(scenario.label, body, color=SUCCESS_COLOR if ok else ERROR_COLOR)
         footer = f"/skills · {SKILL_CATEGORIES.get(category, category)}"
@@ -234,7 +288,7 @@ class Skills(commands.Cog):
     @app_commands.autocomplete(category=_category_autocomplete)
     async def skilllist(self, interaction: discord.Interaction, category: str):
         if category not in SKILL_CATEGORIES:
-            await interaction.response.send_message("Unknown category.", ephemeral=True)
+            await interaction.response.send_message("Unknown category.", ephemeral=reply_ephemeral())
             return
         lines = []
         for sc in SKILL_SCENARIOS.values():
@@ -247,7 +301,7 @@ class Skills(commands.Cog):
             "\n".join(lines) or "None.",
         )
         embed.set_footer(text="Opposed checks need `/skills opponent:` · Night adds +2 DC to tracking/stealth")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
 async def setup(bot: commands.Bot):

@@ -137,6 +137,9 @@ def tick_buffs_for_rollover(user, new_day: int) -> dict:
         "infection_ward_until_day",
         "herb_storage_bonus_until_day",
         "frostbite_until_day",
+        "flea_ward_until_day",
+        "death_scent_masked_until_day",
+        "courtship_blocked_until_day",
     )
     for key in until_keys:
         if buffs.get(key) and int(buffs[key]) < new_day:
@@ -173,6 +176,43 @@ def frostbite_dex_penalty(user, day: int) -> int:
 
 def grant_frostbite(user, *, day: int, duration: int = 7) -> dict:
     return merge_buff_fields(user, frostbite_until_day=day + duration)
+
+
+def clear_frostbite(user) -> dict:
+    buffs = get_buffs(user)
+    if "frostbite_until_day" not in buffs:
+        return {}
+    buffs.pop("frostbite_until_day", None)
+    return {"herb_buffs": buffs_json(buffs)}
+
+
+def grant_flea_ward(user, *, day: int, duration: int = 3) -> dict:
+    """Insect-repellent oils (mugwort, garlic mustard, knotgrass)."""
+    return merge_buff_fields(user, flea_ward_until_day=day + duration)
+
+
+def flea_ward_active(user, day: int) -> bool:
+    until = get_buffs(user).get("flea_ward_until_day")
+    return bool(until and int(until) >= day)
+
+
+def burial_scent_masked(user, day: int) -> bool:
+    until = get_buffs(user).get("death_scent_masked_until_day")
+    return bool(until and int(until) >= day)
+
+
+def grant_burial_scent_mask(user, *, day: int, duration: int = 3) -> dict:
+    return merge_buff_fields(user, death_scent_masked_until_day=day + duration)
+
+
+def courtship_blocked(user, day: int) -> bool:
+    until = get_buffs(user).get("courtship_blocked_until_day")
+    return bool(until and int(until) >= day)
+
+
+def grant_courtship_block(user, *, day: int) -> dict:
+    """Block courtship approaches until next sunrise (end of current day)."""
+    return merge_buff_fields(user, courtship_blocked_until_day=day)
 
 
 def is_cough_suppression_herb(herb_key: str) -> bool:
@@ -669,14 +709,6 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key == "stinging_nettle" and injury_set & BONE_INJURY_KEYS:
-        fields.update(merge_buff_fields(user, bone_heal_days_reduced=1))
-        return {
-            "kind": "minor_relief",
-            "message": "With comfrey binding: **−1 day** off broken-bone healing.",
-            "fields": fields,
-        }
-
     if herb_key == "daisy" and injury_set & {"sprained_leg", "fractured_rib"}:
         fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
         return {
@@ -708,14 +740,6 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key == "garlic_mustard":
-        fields.update(grant_disease_save_advantage(user))
-        return {
-            "kind": "disease_save_buff",
-            "message": "Wild-garlic bite: advantage on the next disease save.",
-            "fields": fields,
-        }
-
     if herb_key == "sweet_sedge":
         fields.update(grant_disease_save_advantage(user))
         return {
@@ -738,13 +762,24 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": {"hp": 1, "condition": "stable"},
         }
 
-    if herb_key == "mugwort":
+    if herb_key in ("mugwort", "garlic_mustard"):
+        label = "Mugwort" if herb_key == "mugwort" else "Garlic mustard"
+        ward_updates: dict = {"flea_ward_until_day": day + 3}
+        if herb_key == "mugwort":
+            ward_updates["infection_ward_until_day"] = day + 1
+        fields.update(merge_buff_fields(user, **ward_updates))
         fields["mood"] = min(100, mood + 2)
-        return {
-            "kind": "minor_relief",
-            "message": "Rubbed through pelt: fleas and mites scatter (**+2 mood**).",
-            "fields": fields,
-        }
+        msg = (
+            f"**{label}** rubbed through the pelt: fleas and mites scatter "
+            "(**+2 mood**); **flea ward 3 sunrises**."
+        )
+        if disease_key in ("fleas", "mange"):
+            fields.update(grant_disease_save_advantage(user))
+            msg += " Antifungal oils ease the infestation."
+        elif herb_key == "garlic_mustard" and disease_key:
+            fields.update(grant_disease_save_advantage(user))
+            msg += " Wild-garlic bite: advantage on the next disease save."
+        return {"kind": "minor_relief", "message": msg, "fields": fields}
 
     if herb_key == "rosemary":
         fields["mood"] = min(100, mood + 3)
@@ -870,10 +905,15 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
         }
 
     if herb_key == "prickly_ash":
-        fields.update(merge_buff_fields(user, pain_relief_until_day=day))
+        buffs = get_buffs(user)
+        buffs.pop("frostbite_until_day", None)
+        buffs["pain_relief_until_day"] = day
+        fields["herb_buffs"] = buffs_json(buffs)
         return {
             "kind": "minor_relief",
-            "message": "Frozen-paw numbness ends; tooth pain numbed for the sunrise.",
+            "message": (
+                "Warming bark ends frozen-paw numbness; tooth pain numbed for the sunrise."
+            ),
             "fields": fields,
         }
 
@@ -895,36 +935,248 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key == "celandine" and outcome == "cured_genetic":
+    if herb_key == "celandine":
+        fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
+        if outcome == "cured_genetic":
+            return {
+                "kind": "minor_relief",
+                "message": "Eye clouding clears within the sunrise.",
+                "fields": fields,
+            }
         return {
             "kind": "minor_relief",
-            "message": "Eye clouding clears within the sunrise.",
-            "fields": {},
+            "message": "Milky sap eases eye strain and surface wounds **1 sunrise**.",
+            "fields": fields,
         }
 
     if herb_key == "witch_hazel":
+        buff_updates = {
+            "pain_relief_until_day": day + 1,
+            "venom_save_advantage": True,
+        }
+        if injury_set & {"sprained_leg", "punctured_paw", "torn_ear"}:
+            buff_updates["injury_heal_halved"] = True
+        fields.update(merge_buff_fields(user, **buff_updates))
+        msg = (
+            "Astringent wash: **swelling eases 1 sunrise**; insect stings soothed "
+            "(advantage on next venom save); bruises fade faster with rest."
+        )
+        return {
+            "kind": "minor_relief",
+            "message": msg,
+            "fields": fields,
+        }
+
+    if herb_key == "jewelweed":
+        fields.update(
+            merge_buff_fields(
+                user,
+                pain_relief_until_day=day + 1,
+                venom_save_advantage=True,
+                calm_until_day=day + 1,
+            )
+        )
+        if disease_key in ("poison_ivy", "mild_poison"):
+            fields.update(grant_disease_save_advantage(user))
+        msg = "Touch-me-not sap cools the rash and sting; itch eases **1 sunrise**."
+        if disease_key == "poison_ivy":
+            msg = "Jewelweed sap clears the **poison-ivy** oils; itch eases **1 sunrise**."
+        return {
+            "kind": "minor_relief",
+            "message": msg,
+            "fields": fields,
+        }
+
+    if herb_key == "shepherds_purse":
+        fields.update(merge_buff_fields(user, medicine_bonus_next=2, pain_relief_until_day=day))
+        return {
+            "kind": "minor_relief",
+            "message": "Seed-pods staunched the bleed; **+2** on the next stabilize or bleeding treatment.",
+            "fields": fields,
+        }
+
+    if herb_key == "burdock_root":
+        fields.update(
+            merge_buff_fields(
+                user,
+                infection_ward_until_day=day + 1,
+            )
+        )
+        fields.update(grant_disease_save_advantage(user))
+        return {
+            "kind": "infection_ward",
+            "message": "Root poultice draws infection; **infection ward 1 sunrise**; advantage on next disease save.",
+            "fields": fields,
+        }
+
+    if herb_key == "knotgrass":
+        fields.update(
+            merge_buff_fields(
+                user,
+                pain_relief_until_day=day,
+                flea_ward_until_day=day + 2,
+            )
+        )
+        fields["mood"] = min(100, mood + 2)
+        msg = (
+            "Astringent leaves settle the gut; flea itch and nausea ease **1 sunrise** "
+            "(**flea ward 2 sunrises**)."
+        )
+        if disease_key == "fleas":
+            fields.update(grant_disease_save_advantage(user))
+            msg += " Advantage on the next save to shed the mites."
+        return {"kind": "minor_relief", "message": msg, "fields": fields}
+
+    if herb_key == "lizards_tail":
+        fields.update(grant_disease_save_advantage(user))
+        if disease_key:
+            ex = max(0, int(user["exhaustion"] if "exhaustion" in user.keys() else 0) - 1)
+            fields["exhaustion"] = ex
+            return {
+                "kind": "minor_relief",
+                "message": "Fever tonic: **−1 exhaustion**; advantage on the next disease save.",
+                "fields": fields,
+            }
+        return {
+            "kind": "disease_save_buff",
+            "message": "Bitter root: advantage on the next disease save.",
+            "fields": fields,
+        }
+
+    if herb_key in ("mullein", "lungwort"):
+        label = "Mullein" if herb_key == "mullein" else "Lungwort"
+        if disease_key in ("yellowcough", "rot_lung", "cancer"):
+            fields.update(grant_disease_save_advantage(user))
+            fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
+            return {
+                "kind": "disease_save_buff",
+                "message": (
+                    f"**{label}** lung course: advantage on the next disease save; "
+                    "wheeze and chest pain ease **1 sunrise**."
+                ),
+                "fields": fields,
+            }
+        if disease_key in ("cough",):
+            fields["cough_suppressed"] = 1
+            return {
+                "kind": "symptom_relief",
+                "message": f"**{label}** tea eases coughing until next sunrise.",
+                "fields": fields,
+            }
         fields.update(merge_buff_fields(user, pain_relief_until_day=day))
         return {
             "kind": "minor_relief",
-            "message": "Eye injury penalties fade for the sunrise.",
+            "message": f"**{label}** poultice soothes irritated lungs **1 sunrise**.",
             "fields": fields,
         }
 
-    if herb_key == "heather" and disease_key:
-        return None
-
-    if herb_key == "heather":
+    if herb_key == "marsh_mallow":
+        fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
+        if disease_key == "rot_lung":
+            fields.update(grant_disease_save_advantage(user))
+            fields["mood"] = min(100, mood + 3)
+            return {
+                "kind": "disease_save_buff",
+                "message": "Marsh root soothes rot-lung fever; advantage on the next disease save.",
+                "fields": fields,
+            }
         fields["mood"] = min(100, mood + 2)
         return {
             "kind": "minor_relief",
-            "message": "Bitter mixture sweetened: easier to keep down.",
+            "message": "Slippery root eases gut and chest irritation **1 sunrise**.",
             "fields": fields,
         }
+
+    if herb_key == "belly_rip_fungus":
+        fields.update(
+            merge_buff_fields(
+                user,
+                infection_ward_until_day=day + 1,
+            )
+        )
+        if disease_key == "rot_lung":
+            fields.update(grant_disease_save_advantage(user))
+            return {
+                "kind": "infection_ward",
+                "message": (
+                    "Glow-fungus ward **1 sunrise**; advantage on the next rot-lung save "
+                    "(necrosis clears only on matched treat)."
+                ),
+                "fields": fields,
+            }
+        return {
+            "kind": "infection_ward",
+            "message": "Glow-fungus poultice: **infection ward 1 sunrise**.",
+            "fields": fields,
+        }
+
+    if herb_key == "pine_bark":
+        if disease_key in ("cough", "yellowcough", "rot_lung"):
+            fields["cough_suppressed"] = 1
+            fields.update(merge_buff_fields(user, pain_relief_until_day=day))
+            return {
+                "kind": "symptom_relief",
+                "message": "Bark tea suppresses cough and eases frost-nipped paws **1 sunrise**.",
+                "fields": fields,
+            }
+        if "punctured_paw" in injury_set:
+            fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
+            return {
+                "kind": "minor_relief",
+                "message": "Inner bark numbs cracked pads **1 sunrise**.",
+                "fields": fields,
+            }
+        fields.update(merge_buff_fields(user, pain_relief_until_day=day))
+        return {
+            "kind": "minor_relief",
+            "message": "Bitter bark eases throat and paw soreness **1 sunrise**.",
+            "fields": fields,
+        }
+
+    if herb_key == "heather":
+        fields.update(grant_disease_save_advantage(user))
+        fields["mood"] = min(100, mood + 3)
+        msg = "Bitter mixture sweetened: tonic stays down; advantage on the next disease save."
+        if disease_key in ("mild_poison", "diarrhea", "influenza"):
+            msg = (
+                "Heather honeying steadies a queasy gut; advantage on the next disease save."
+            )
+        return {"kind": "minor_relief", "message": msg, "fields": fields}
 
     if outcome in ("cured_disease", "cured_injury", "cured_genetic", "healed", "stabilized", "rabies_ease"):
         return None
 
     return None
+
+
+def format_active_herb_buffs(user, day: int) -> str:
+    """Player-facing summary of timed herb effects."""
+    lines: list[str] = []
+    if pain_relief_active(user, day):
+        lines.append("**Pain relief**; wounds and strain hurt less this sunrise.")
+    if sedated_blocks_activity(user, day):
+        lines.append("**Sedated**; drowsy from herbs — strenuous activity blocked.")
+    if infection_ward_active(user, day):
+        lines.append("**Infection ward**; treated wounds resist festering.")
+    if flea_ward_active(user, day):
+        lines.append("**Flea ward**; insect-repellent oils on the pelt.")
+    if burial_scent_masked(user, day):
+        lines.append("**Burial scent masked**; carrion and filth exposure reduced.")
+    pen = frostbite_dex_penalty(user, day)
+    if pen:
+        lines.append(f"**Frostbitten paws**; dexterity penalty until herbs wear off.")
+    if disease_save_uses_advantage(user):
+        days = int(user["disease_save_buff_days"]) if "disease_save_buff_days" in user.keys() else 0
+        if days > 0:
+            lines.append(f"**Disease save advantage**; illness saves roll twice ({days}d left).")
+        else:
+            lines.append("**Disease save advantage**; next illness save rolls twice.")
+    buffs = get_buffs(user)
+    if buffs.get("cough_suppressed_until_day") and int(buffs["cough_suppressed_until_day"]) >= day:
+        lines.append("**Cough suppressed**; breathing eased by herbs.")
+    if buffs.get("medicine_bonus_next"):
+        lines.append(f"**Medicine boost**; next treat gets +{buffs['medicine_bonus_next']} to the roll.")
+    return "\n".join(lines)
 
 
 def sedated_blocks_activity(user, day: int) -> bool:

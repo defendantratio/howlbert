@@ -90,12 +90,12 @@ def test_splinter_stealth_bonus():
 
 
 def test_resolve_check_includes_trait_modifier():
+    from unittest.mock import patch
+
     import engine.dice as dice_mod
 
     user = _row()
-    original = dice_mod.roll_d20
-    dice_mod.roll_d20 = lambda: 10
-    try:
+    with patch.object(dice_mod, "roll_d20", return_value=10):
         result = resolve_check(
             user,
             attr_keys=("attr_int",),
@@ -104,10 +104,8 @@ def test_resolve_check_includes_trait_modifier():
             proficient=True,
             skill_key="herblore",
         )
-    finally:
-        dice_mod.roll_d20 = original
     assert result["trait_modifier"] == 6
-    assert result["total"] == 18
+    assert result["total"] == 16
     assert result["success"] is True
 
 

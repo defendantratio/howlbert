@@ -6,6 +6,7 @@ import discord
 
 import database as db
 from utils.currency import format_bones
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 TRADE_ERROR_MESSAGES = {
@@ -79,19 +80,19 @@ async def handle_trade_accept(interaction: discord.Interaction, trade_id: int) -
             TRADE_ERROR_MESSAGES.get("not_pending", "Unavailable."),
             color=ERROR_COLOR,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if interaction.user.id != trade["to_discord_id"]:
         await interaction.response.send_message(
-            "Only the recipient can accept this trade.", ephemeral=True
+            "Only the recipient can accept this trade.", ephemeral=reply_ephemeral()
         )
         return
 
     result = db.complete_pending_trade(trade_id)
     if result != "ok":
         msg = TRADE_ERROR_MESSAGES.get(result, "Trade failed.")
-        await interaction.response.send_message(msg, ephemeral=True)
+        await interaction.response.send_message(msg, ephemeral=reply_ephemeral())
         return
 
     trade = db.get_pending_trade(trade_id)
@@ -103,13 +104,13 @@ async def handle_trade_decline(interaction: discord.Interaction, trade_id: int) 
     trade = db.get_pending_trade(trade_id)
     if not trade or trade["status"] != "pending":
         await interaction.response.send_message(
-            "This trade is no longer active.", ephemeral=True
+            "This trade is no longer active.", ephemeral=reply_ephemeral()
         )
         return
 
     if interaction.user.id not in (trade["from_discord_id"], trade["to_discord_id"]):
         await interaction.response.send_message(
-            "This trade isn't yours.", ephemeral=True
+            "This trade isn't yours.", ephemeral=reply_ephemeral()
         )
         return
 

@@ -129,8 +129,8 @@ def check_age_milestones(old_age: int, new_age: int, current_role: str) -> list[
         )
     if old_age < MAX_WOLF_AGE_MOONS <= new_age:
         notes.append(
-            f"**Ancient**; at **{format_wolf_age(MAX_WOLF_AGE_MOONS)}** the body can no longer "
-            "outrun the seasons. Expect to pass peacefully on a future sunrise."
+            f"**Ancient**; at **{format_wolf_age(MAX_WOLF_AGE_MOONS)}** the seasons finally catch up. "
+            "You pass peacefully of old age this sunrise."
         )
     return notes
 
@@ -152,11 +152,15 @@ def apply_old_age_deaths_on_rollover(conn) -> list[dict]:
             "UPDATE users SET condition = 'dead', hp = 0 WHERE id = ?",
             (row["id"],),
         )
+        import database as db
+
+        grief = db.handle_mate_grief_on_wolf_death(conn, row["id"])
         deaths.append(
             {
                 "wolf_name": row["wolf_name"],
                 "discord_id": row["discord_id"],
                 "cause": f"old age ({row['age_months']} moons)",
+                "mate_grief": grief,
             }
         )
     return deaths

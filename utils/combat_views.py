@@ -7,13 +7,26 @@ from discord import ui
 from discord.ext import commands
 
 import database as db
+from utils.replies import reply_ephemeral
 from engine.combat_display import current_fighter_for_enc, fighter_name, is_npc_fighter
 
 
-def _target_options(enc_id: int, bot: commands.Bot) -> list[discord.SelectOption]:
+def _attack_target_options(enc_id: int, bot: commands.Bot) -> list[discord.SelectOption]:
+    """Living enemies for the wolf whose turn it is (never includes your own fighter)."""
+    current = current_fighter_for_enc(enc_id)
+    actor_id = current["id"] if current and not is_npc_fighter(current) else None
+    actor_discord = current["discord_id"] if current and not is_npc_fighter(current) else None
     options: list[discord.SelectOption] = []
     for fighter in db.get_combat_fighters(enc_id):
         if fighter["hp"] <= 0:
+            continue
+        if actor_id and fighter["id"] == actor_id:
+            continue
+        if (
+            actor_discord
+            and fighter["discord_id"] == actor_discord
+            and not is_npc_fighter(fighter)
+        ):
             continue
         name = fighter_name(fighter, bot)
         options.append(
@@ -44,10 +57,13 @@ def _player_target_options(enc_id: int, bot: commands.Bot) -> list[discord.Selec
 
 class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):target$"):
     def __init__(self, enc_id: int, bot: commands.Bot):
-        options = _target_options(enc_id, bot)
+        options = _attack_target_options(enc_id, bot)
+        placeholder = "Pick a target…"
+        if len(options) == 1:
+            placeholder = f"Target: {options[0].label[:40]} (optional)"
         super().__init__(
             ui.Select(
-                placeholder="Pick a target…",
+                placeholder=placeholder,
                 options=options or [discord.SelectOption(label="No targets", value="0")],
                 min_values=1,
                 max_values=1,
@@ -66,7 +82,14 @@ class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
         tid = int(interaction.data["values"][0])
         if tid == 0:
             await interaction.response.send_message(
-                "No valid targets in this fight.", ephemeral=True
+                "No valid targets in this fight.", ephemeral=reply_ephemeral()
+            )
+            return
+        attacker = db.resolve_player_fighter(self.enc_id, interaction.user.id)
+        if attacker and tid == attacker["id"]:
+            await interaction.response.send_message(
+                "You can't target yourself — pick an **enemy** from the menu.",
+                ephemeral=reply_ephemeral(),
             )
             return
         db.set_combat_target(interaction.user.id, self.enc_id, tid)
@@ -74,7 +97,7 @@ class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
         label = fighter_name(defender, self.bot) if defender else "target"
         await interaction.response.send_message(
             f"**{label}** locked. Choose **Bite**, **Claw**, or a **Maneuver**.",
-            ephemeral=True,
+            ephemeral=reply_ephemeral(),
         )
 
 
@@ -107,7 +130,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
         tid = int(interaction.data["values"][0])
         if tid == 0:
             await interaction.response.send_message(
-                "No player wolves left to target.", ephemeral=True
+                "No player wolves left to target.", ephemeral=reply_ephemeral()
             )
             return
         from cogs.combat import execute_npc_attack
@@ -159,7 +182,7 @@ class CombatManeuverSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\
         ]
         super().__init__(
             ui.Select(
-                placeholder="Maneuver (pick target first)…",
+                placeholder="Maneuver…",
                 options=maneuver_options,
                 min_values=1,
                 max_values=1,
@@ -175,10 +198,15 @@ class CombatManeuverSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\
     async def callback(self, interaction: discord.Interaction):
         from cogs.combat import handle_combat_button
 
-        if not db.get_combat_target(interaction.user.id, self.enc_id):
+        from engine.combat_display import pick_combat_target
+
+        attacker = db.resolve_player_fighter(self.enc_id, interaction.user.id)
+        if not attacker or not pick_combat_target(
+            interaction.user.id, self.enc_id, attacker["id"]
+        ):
             await interaction.response.send_message(
                 "Pick a **target** from the menu above first, then choose a maneuver.",
-                ephemeral=True,
+                ephemeral=reply_ephemeral(),
             )
             return
         key = interaction.data["values"][0]
@@ -221,3 +249,25 @@ def make_combat_view(enc_id: int, bot: commands.Bot) -> discord.ui.View | None:
         return _make_npc_turn_view(enc_id, bot, current["npc_name"])
 
     return _make_player_turn_view(enc_id, bot)
+
+
+async def refresh_combat_panel(
+    interaction: discord.Interaction,
+    enc_id: int,
+    bot: commands.Bot,
+) -> None:
+    """Sync the message's buttons with whose turn it is (avoids stale bite menus on NPC turns)."""
+    if not interaction.message:
+        return
+    enc = db.get_encounter(enc_id)
+    if not enc or enc["status"] != "active":
+        try:
+            await interaction.message.edit(view=discord.ui.View())
+        except discord.HTTPException:
+            pass
+        return
+    view = make_combat_view(enc_id, bot)
+    try:
+        await interaction.message.edit(view=view or discord.ui.View())
+    except discord.HTTPException:
+        pass

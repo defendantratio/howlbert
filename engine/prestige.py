@@ -40,8 +40,40 @@ def legacy_from_quest(reward_bones: int, standing_reward: int) -> int:
     return standing_reward * 5 + reward_bones // 2
 
 
+def format_retirement_breakdown(standing: int, bones: int, quests_done: int) -> str:
+    """Preview legacy from retiring the active wolf."""
+    standing_pts = standing * 15
+    bone_pts = bones // 3
+    quest_pts = quests_done * 25
+    total = legacy_from_retirement(standing, bones, quests_done)
+    return (
+        f"Standing **{standing}** × 15 = **{standing_pts}**\n"
+        f"Bones **{bones}** ÷ 3 = **{bone_pts}**\n"
+        f"Quests **{quests_done}** × 25 = **{quest_pts}**\n"
+        f"→ **{total}** legacy if you retire now"
+    )
+
+
 def next_tier_requirements(current_tier: int) -> dict | None:
     for info in PRESTIGE_TIERS:
         if info["tier"] == current_tier + 1:
             return info
     return None
+
+
+def format_requirement_progress(current: int, required: int) -> str:
+    """Player-facing progress line with a check when met."""
+    mark = "✓" if current >= required else "·"
+    return f"{mark} {current} / {required}"
+
+
+def unlocked_tier_lines(current_tier: int) -> list[str]:
+    """Summarize bone bonuses from tiers already reached."""
+    lines: list[str] = []
+    for info in PRESTIGE_TIERS:
+        tier = info["tier"]
+        if tier <= 0 or tier > current_tier:
+            continue
+        bonus = info["bone_bonus_pct"]
+        lines.append(f"**Tier {tier} {info['name']}**; +{bonus}% bones")
+    return lines

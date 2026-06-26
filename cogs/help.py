@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from config import BOT_DISPLAY_NAME
 
+from utils.replies import reply_ephemeral
 from utils.embeds import EMBED_COLOR, embed_footer, howlbert_embed
 
 
@@ -127,6 +128,7 @@ HELP_TOPICS = {
         "Hunger **−12** and thirst **−14** each sunrise; below **30** each adds **+1 exhaustion** (both low = +2). "
 
         "Low mood below **30** also adds **+1 exhaustion**. Exhaustion **6 = death**. "
+        "Repeating the same field work in one sunrise adds exhaustion — especially if you lack training in that skill (2nd+ hunt, forage, explore, rescout, etc.). "
 
         "At **0** hunger or thirst, wolves **collapse** into dying.\n"
 
@@ -146,9 +148,12 @@ HELP_TOPICS = {
 
         "• **Diarrhea**; rotting meat or rolling in filth (`/playpen`, awkward `/playpen action:socialize`, bad explore)\n"
 
-        "• **Influenza** (50% den spread); failed blizzard, freezing rain, or deep snow `/hazard`\n"
+        "• **Influenza** (50% den spread); failed blizzard, freezing rain, or deep snow `/world action:hazard`\n"
 
-        "• **Fleas / hepatitis / distemper**; carrion and `/field action:scavenge`; **mange**; mangy den sites\n"
+        "• **Fleas / insect stings / poison ivy**; hunt, forage, explore, verge edge-forage; **nettle welts** when gathering stinging nettle; **mild venom** from creek fishing and snake ambushes (Mistmoor/Silverrush)\n"
+        "• **Snakes, skinks, spiders**; ambush on hunt/explore/patrol (pack-weighted); venomous bites in combat; **Fear of Reptiles and Insects** (Sypha) hurts your rolls vs them\n"
+
+        "• **Hepatitis / distemper**; carrion and `/field action:scavenge`; **mange**; mangy den sites\n"
 
         "• **Pox**; den filth; hits pups harder; spreads by den contact\n"
 
@@ -213,7 +218,7 @@ HELP_TOPICS = {
 
         "`/herbs action:prepare`; dry / poultice / tonic / decoction on a forage stack or inventory herb\n"
 
-        "`/herbs action:dryall`; dry every fresh forage stack, `herb_*` in `/inventory`, and fresh den store stacks\n"
+        "`/herbs action:dryall`; dry every fresh forage stack, `herb_*` in `/bones action:inventory`, and fresh den store stacks\n"
 
         "`/herbs action:bag`; fresh & prepared herbs (foraged; rot if not dried)\n"
 
@@ -245,7 +250,7 @@ HELP_TOPICS = {
 
         "`/bones action:sell item:stack:ID`; sell a forage herb stack for bones (rarity-based; poison herbs use turn-in)\n"
 
-        "`/bones action:work` · `action:crime`; earn bones once per rollover\n"
+        "`/bones action:work` · `action:crime` (`target_pack:` rival Great Pack treasury; optional `scene:` · `staff:true` for RP); earn bones once per rollover\n"
 
         "Shop: utility items plus **prey carcasses** (`prey_vole`, `prey_hare`, …) and **toys** "
 
@@ -269,15 +274,15 @@ HELP_TOPICS = {
 
         "Hunting & foraging",
 
-        "All once per rollover. Weather and **season** affect bone payouts; check `/world action:weather` and `action:time`.\n\n"
+        "All roles **1 hunt per sunrise** except **Hunters** (**10**). Weather and **season** affect bone payouts; check `/world action:weather` and `action:time`.\n\n"
 
         "`/bones action:hunt`; main hunt; carcass goes to **prey hoard** (`/prey`)\n"
 
-        "`/bones action:hunt collaborate:true`; **pack hunt**: call the den, packmates join via buttons, set out together "
+        "`/bones action:hunt collaborate:true`; **pack hunt**: call the den, packmates join via buttons (roles: leader/chaser/flank/scout/blocker), set out together "
 
         f"(+bones per extra wolf; large prey & ambushes possible; party fights together; fresh-kill to `/preypile`)\n"
 
-        "`/scout survey collaborate:true`; **pack patrol**: scouts join via buttons, stealth sweep together "
+        "`/scout survey collaborate:true`; **Scout border sweep**: scouts join via buttons, stealth sweep together "
 
         f"(+bones per extra scout; ambushes possible; counts as survey)\n"
 
@@ -293,9 +298,14 @@ HELP_TOPICS = {
 
         "`/field action:track`; trail-age Tracking DC (fresh DC 8 → faint DC 25); weather affects scent\n"
 
-        "`/field action:fishing` · `action:scavenge`; more carcasses\n"
+        "`/field action:fishing` · pack-specific fish & turtles; rain/dawn/night gate legendaries (`/world`) · `action:scavenge`; more carcasses\n"
 
-        "`/prey`; view hoard · `/eat` · `/drink` (hourly) · `/salvage` rotting meat · `/field action:sniff` once per sunrise\n"
+        "`/field action:sniff` once per sunrise; rival wolves at **≤3** standing may trigger border skirmishes\n\n"
+
+        "`/field action:mark territory:`; refresh your den's scent on shared borders (once/sunrise). "
+        "Over-marking rival-held ground costs **−2** pack standing and can open war at **0**.\n"
+
+        "`/prey`; view hoard · `/eat` · `/drink` (hourly) · `/salvage` rotting meat\n"
 
         "Combat kills (coyotes, cats, hearth-hounds, …) go to your hoard too. **Wolf carcasses** are edible; "
 
@@ -305,7 +315,7 @@ HELP_TOPICS = {
 
         "`/preypile`; lay a **today's** fresh carcass at the den cache for the pack\n"
 
-        "`/field action:forage`; gather herbs in pack territory (**Foragers** unlimited; harder in Leaf-bare; crit → rare herb + season blurb)\n"
+        "`/field action:forage`; gather herbs in pack territory (**full Foragers** unlimited; apprentices once/sunrise; harder in Leaf-bare; crit → rare herb + season blurb)\n"
 
         "`/field action:compendium`; read-only herb browser (same data as `/herbs action:guide`)\n"
 
@@ -321,15 +331,16 @@ HELP_TOPICS = {
 
         "Inspired by [Wolvden](https://www.wolvden.com/); explore, hoard, mood, and trade.\n\n"
 
-        "**Prey hoard**; `/prey` `/eat` `/drink` `/preypile` `/salvage` `/bury` · **hunger & thirst** slip each sunrise\n"
+        "**Prey hoard**; `/prey` `/eat` `/drink` `/bury` `/preypile` `/salvage` "
+        "(bury: optional **lavender/rosemary/meadowsweet/mint** masks death-scent) · **hunger & thirst** slip each sunrise\n"
 
-        "**Hoard**; `/hoarding action:hoard` · `action:shred` toys → remnants\n"
+        "**Hoard**; `/hoarding action:hoard` · `action:shred` toys → remnants · `action:craft` (bone toy **8**, stick bundle **6**)\n"
 
         "**Explore**; `/explore venture` (dig · follow · investigate; **Scouts: unlimited**)\n"
 
         "**Scout**; `/scout rescout` · `/scout survey` · `/scout trail` · `collaborate:true` on survey/trail for pack parties\n"
 
-        "**Amusement**; `/playpen action:toys` · `action:play` · `action:toystore` · `action:playall` (Alpha) · `/hoarding action:gift`\n"
+        "**Amusement**; `/playpen action:toys` · `action:play` (**once per sunrise** per wolf) · `action:toystore` · `action:playall` (Alpha; also counts as play) · `/hoarding action:gift`\n"
 
         "**Pack**; `/playpen action:socialize` · `action:groom` · `/pack stash` · `/packlife action:feedall` · `action:drinkall` (Alpha)\n"
 
@@ -343,6 +354,18 @@ HELP_TOPICS = {
 
         "**Sniff**; `/field action:sniff` wind-read once per sunrise\n"
 
+        "**Wolvden parity** (ported vs different):\n"
+
+        "✓ prey hoard · hunger/thirst/mood · explore · diseases · nursing · genetics · raccoon trader\n"
+
+        "✓ **late pregnancy den rest**; final third of gestation blocks hunt, patrol, explore, etc.\n"
+
+        "✓ **pack hunt roles**; leader/chaser/flank/scout/blocker auto-assigned; full five-role party **+8%** chemistry\n"
+
+        "✓ **spring breeding pair**; mated male + pregnant female in party adds hunt drive bonus\n"
+
+        "✓ **Hunter hunt cap**; **10 hunts per sunrise** (Wolvden parity); other roles **1** hunt per sunrise\n\n"
+
         "**Patron**; `/patron` invites, boost & donor status · Kickstarter backer badge · `/redeem` gift codes",
 
     ),
@@ -355,7 +378,7 @@ HELP_TOPICS = {
 
         "**Balance**; `/bones action:balance` · `action:leaderboard`\n"
 
-        "**Income**; `action:hunt` · `action:work` · `action:crime` (once per sunrise each)\n"
+        "**Income**; `action:hunt` (**Hunter** 10/sunrise, others 1) · `action:work` · `action:crime` (once per sunrise each)\n"
 
         "**Pack pay**; `/bones action:daily` draws from **pack treasury** (Great Pack members only)\n"
 
@@ -435,7 +458,7 @@ HELP_TOPICS = {
 
         "**Guard**; **Defender's Resolve**: attackers have disadvantage when striking anyone else in the same combat.\n"
 
-        "**Hunter**; **Killer's Instinct**: +1d6 damage vs prone/pinned foes; **3 hunts per sunrise**.\n"
+        "**Hunter**; **Killer's Instinct**: +1d6 damage vs prone/pinned foes; **10 hunts per sunrise**.\n"
 
         "**Medic**; **Green Tongue**: unlimited `/medic action:treat` and comfrey heals per sunrise.\n"
 
@@ -443,7 +466,7 @@ HELP_TOPICS = {
 
         "attackers have disadvantage against hidden scouts in combat.\n"
 
-        "**Forager**; **Nose of the Land**: auto-herb each sunrise; unlimited forage.\n"
+        "**Forager**; **Nose of the Land**: auto-herb each sunrise; **full Foragers** unlimited forage (apprentices once/sunrise).\n"
 
         "**Caretaker**; **Soothing Lick**: `/playpen action:groom` clears **distressed** and gives **+12 mood** when target mood is below 30.\n"
 
@@ -471,6 +494,9 @@ HELP_TOPICS = {
 
         "`/role action:prophecy`; Drown-Sick only: draw a cryptic prophecy (once per rollover)\n\n"
 
+        "**Spirit curse**; rare from Belly-Rip whispers in fog (Mistmoor/Drown-Sick); **−1** on spiritual checks. "
+        "Lift with wolfsbane, swamp milkweed, Medic cleansing, or `/skills category:spiritual check:spirit_cleanse`.\n\n"
+
         "_When the Teeth drink the Tears, when the Fur chokes the Belly…_",
 
     ),
@@ -495,7 +521,7 @@ HELP_TOPICS = {
 
         "`/packlife action:drinkall`; creek drink for whole den — **Alpha** (once per pack per sunrise)\n"
 
-        "`/playpen action:playall`; den romp mood boost — **Alpha** (uses your toys or den toy store)\n"
+        "`/playpen action:playall`; den romp mood boost — **Alpha** (uses your toys or den toy store; marks **play** used for every denmate)\n"
 
         "`/playpen action:toystore mode:`; den toy store (list · deposit · depositall · withdraw)\n"
 
@@ -507,7 +533,10 @@ HELP_TOPICS = {
 
         "`/pack brokenrite`; latest **Rite of the Broken Canine** (leadership challenge)\n"
 
-        "`/pack patrol` `/pack patrol collaborate:true` `/scout`; earn war points during conflict\n"
+        "`/pack patrol` `/pack patrol collaborate:true` `/pack scout`; earn war points during conflict\n"
+        "`/pack howl` `/pack share` `/pack aid`; diplomatic standing with rival Great Packs "
+        "(**≥8** friendly: allied pack hunts · **≤3** hostile: sniff skirmishes & fresh-kill fights · **0** war: "
+        "auto territory war when no conflict is active)\n"
 
         "`/pack resolvewar`; **Alpha** or **Diplomat** ends an active war and awards territory by score\n"
 
@@ -523,7 +552,8 @@ HELP_TOPICS = {
         "ThunderClan, ShadowClan, WindClan, RiverClan\n"
         "`action:receive`; collect **Clan patrol** goods at the scent-line (trust 35+, once/sunrise)\n"
         "`action:trade`; barter **duplicates** for Clan prey, herbs, toys + trust\n"
-        "`/trade duplicates`; give all extras to another wolf (once per sunrise)\n\n"
+        "`/trade duplicates`; give all extras to another wolf (once per sunrise)\n"
+        "`/pack tradepack`; cross-pack duplicate trade (+standing when relations allow)\n\n"
 
         "Lake territory · warrior patrols, deputies, rogues, loners, kittypets · "
         "seasonal **Gathering** at Fourtrees (unity/standing when treaties active)\n"
@@ -545,7 +575,7 @@ HELP_TOPICS = {
 
         "`/world action:cooldowns`; what's ready this sunrise\n"
 
-        "`/wilderness action:travel` · `action:encounter` · `action:omen`; travel hazards, border encounters, **StarClan** omens\n"
+        "`/world action:travel` · `action:encounter` · `action:omen`; travel hazards, border encounters (**loot/damage/combat**), **StarClan** omens\n"
         "`territory:twolegplace`; Thunderpath monsters, Twoleg nests, pet dogs\n\n"
 
         "`/medic action:sacred`: Medic half-moon visit; ancestors speak + **+2 standing**, "
@@ -553,7 +583,7 @@ HELP_TOPICS = {
 
         "`/rollover`; advance one sunrise (admin)\n"
 
-        "`/hazard`; weather hazard opposed roll\n"
+        "`/world action:hazard`; weather hazard opposed roll (`/hazard` still works)\n"
 
         "`/terms` · `/help topic:terms`; wolf tongue glossary\n"
 
@@ -597,7 +627,7 @@ HELP_TOPICS = {
 
         "`/prestige action:halloffame`; top legacy scores\n\n"
 
-        "Higher tiers grant permanent +% bones on hunts and daily.",
+        "Higher tiers grant permanent +% bones on hunts and daily. Legacy persists across wolves on your account.",
 
     ),
 
@@ -626,11 +656,11 @@ HELP_TOPICS = {
 
         "Yielding may be **caught** (~35%); **−2 standing** if you're still in a den.\n"
 
-        "`/combat npc`; add a predator, **clan cat**, hearth-hound, fox, or badger from the bestiary (not custom HP)\n"
+        "`/combat npc`; add a predator, **clan cat**, hearth-hound, fox, badger, or reptile from the bestiary (not custom HP)\n"
 
-        "`/combat hazard topic:`; Two-Legs, Thunderpath, traps, fences, **fire fear**, wildfire\n"
+        "`/combat hazard topic:`; Two-Legs, Thunderpath, traps, fences, **fire fear**, wildfire — **rolled** (damage, injury, disease)\n"
 
-        "`/combat guide topic:bestiary`; cats, foxes, badgers, border patrols\n"
+        "`/combat guide topic:bestiary`; cats, foxes, badgers, reptiles, border patrols\n"
 
         "`/combat guide topic:`; vulnerable areas, stance, maneuvers, injuries, crits\n"
 
@@ -689,11 +719,19 @@ HELP_TOPICS = {
 
         "**Herb loop:** `/field action:forage` → fresh stack in `/herbs action:bag` → "
 
-        "`/herbs action:prepare` or **`action:dryall`** (bag + `/inventory` + den store) → `/medic action:treat` with `stack:ID`.\n"
+        "`/herbs action:prepare` or **`action:dryall`** (bag + `/bones action:inventory` + den store) → `/medic action:treat` with `stack:ID`.\n"
 
         "Stock the healers' den: `/herbs action:store mode:depositall`. Fresh forage stacks rot after **1 sunrise** if not dried.\n"
 
-        "Shop/inventory herbs are stable; dry or deposit them when ready.",
+        "Shop items (`/bones action:inventory`) stay stable; dry or deposit forage herbs when ready.\n\n"
+
+        "**Herb prep checks** (`/skills category:herb_prep`); success promotes **fresh** bag herbs into "
+        "**poultice / tonic / dried / decoction** stacks and grants timed buffs (pain relief, disease-save advantage, storage bonus). "
+        "No fresh stacks → buffs still apply but nothing is stored. **`prep_taste_test`** is opposed (plant poison DC). "
+        "**`prep_incomplete_antidote`** halves poison and stores a weak tonic when herbs allow.\n\n"
+
+        "**Filth**; awkward `/playpen action:socialize`, toy play, or bad explore can contract **diarrhea** or **pox**. "
+        "**Burial scent mask** (rosemary, bury ritual) halves den filth rolls.",
 
     ),
 
@@ -707,7 +745,7 @@ HELP_TOPICS = {
 
         "`/medic action:surgery`; **Medic** or **medic apprentice** (+2 DC): stitch, set bone, extract, amputate "
 
-        "(herbs from bag/inventory; **stick** from patient or Medic: **2 sticks** for set bone; "
+        "(herbs from `/herbs action:bag` or `/bones action:inventory`; **stick** from patient or Medic: **2 sticks** for set bone; "
 
         "optional `use_meadowsweet`, `use_loosestrife`, `use_plantain`, `use_poppy`, `use_rush_stalks`; "
 
@@ -731,7 +769,8 @@ HELP_TOPICS = {
 
         "**Mating**; `/courtship action:court` then `action:mate` (spring). "
 
-        "`/courtship action:rival`; spring physical or vocal challenge for mating access.\n"
+        "`/courtship action:rival`; spring physical or vocal challenge for mating access. "
+        "Losing a **vocal** rival challenge blocks court **and** mate until next sunrise.\n"
 
         "**Medics**; Healer's Code is not enforced by the bot; if caught courting/mating **−3 standing**. "
 
@@ -799,6 +838,21 @@ HELP_TOPICS = {
 
 }
 
+HELP_TOPIC_FOOTERS = {
+    "overview": "Try /help topic:getting-started · /world action:cooldowns",
+    "getting-started": "/world action:cooldowns · /help topic:hunting",
+    "economy": "/bones action:shop · /world action:cooldowns",
+    "hunting": "/world action:cooldowns · /help topic:wolvden",
+    "wolvden": "/explore venture · /scout survey · /playpen action:toys",
+    "skills": "/skills category:tracking · /skilllist · /rpg action:roll",
+    "pack": "/howl · /pack patrol · /help topic:roles",
+    "world": "/world action:cooldowns · /world action:time",
+    "rpg": "/skills · /combat start · /help topic:skills",
+    "prestige": "/prestige action:view · /prestige action:require",
+    "roles": "/role action:event · /help topic:lore",
+    "lore": "/role action:prophecy · /medic action:sacred",
+}
+
 
 
 
@@ -837,7 +891,7 @@ class Help(commands.Cog):
 
         embed.set_footer(text=embed_footer("Use /help for commands"))
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
 
@@ -912,8 +966,10 @@ class Help(commands.Cog):
         title, body = HELP_TOPICS.get(topic or "overview", HELP_TOPICS["overview"])
 
         embed = howlbert_embed(title, body, color=EMBED_COLOR)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        footer_extra = HELP_TOPIC_FOOTERS.get(topic or "overview")
+        if footer_extra:
+            embed.set_footer(text=embed_footer(footer_extra))
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 
 

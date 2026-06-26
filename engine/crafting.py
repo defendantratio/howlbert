@@ -7,7 +7,41 @@ from engine.amusement_items import amusement_meta
 from engine.amusement_storage import format_amusement_line
 
 
-CRAFT_RECIPES: dict[str, dict] = {}
+CRAFT_RECIPES: dict[str, dict] = {
+    "bone_toy": {
+        "name": "Bone Toy",
+        "remnants": 8,
+        "output_key": "bone",
+        "uses": 3,
+    },
+    "stick_bundle": {
+        "name": "Stick Bundle",
+        "remnants": 6,
+        "output_key": "stick",
+        "uses": 4,
+    },
+}
+
+
+def craft_from_remnants(user, recipe_key: str) -> tuple[bool, str]:
+    recipe = CRAFT_RECIPES.get(recipe_key)
+    if not recipe:
+        return False, "Unknown recipe."
+    have = db.get_remnants(user["id"])
+    cost = int(recipe["remnants"])
+    if have < cost:
+        return False, f"Need **{cost}** remnants (you have **{have}**)."
+    if not db.spend_remnants(user["id"], cost):
+        return False, f"Need **{cost}** remnants (you have **{have}**)."
+    from engine.amusement_storage import grant_amusement
+
+    grant_amusement(user["id"], recipe["output_key"])
+    meta = amusement_meta(recipe["output_key"])
+    left = db.get_remnants(user["id"])
+    return (
+        True,
+        f"Crafted **{recipe['name']}** → **{meta['name']}**. **{left}** remnants left (`/playpen action:toys`).",
+    )
 
 
 def shred_amusement_stack(user, stack_id: int) -> tuple[bool, str, int]:
@@ -33,7 +67,7 @@ def format_hoard_summary(user, *, day: int) -> str:
 
     lines: list[str] = []
     remnants = db.get_remnants(user["id"])
-    lines.append(f"**Remnants:** {remnants} _(from `/hoarding action:shred`; save for future crafts)_")
+    lines.append(f"**Remnants:** {remnants} _(shred toys; craft: bone toy **8**, stick bundle **6** via `/hoarding action:craft`)_")
 
     prey = db.get_prey_stacks(user["id"])
     if prey:

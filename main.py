@@ -9,6 +9,7 @@ from discord.ext import commands
 
 import database as db
 from config import DISCORD_TOKEN, STATUS_CHANNEL_ID, BOT_DISPLAY_NAME
+from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, howlbert_embed
 
 logging.basicConfig(level=logging.INFO)
@@ -80,6 +81,7 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.profile")
         await self.load_extension("cogs.economy")
         await self.load_extension("cogs.pack")
+        await self.load_extension("cogs.howl")
         await self.load_extension("cogs.world")
         await self.load_extension("cogs.hunting")
         await self.load_extension("cogs.explore")
@@ -112,9 +114,9 @@ class HowlbertBot(commands.Bot):
 
         message = f"Something went wrong on {BOT_DISPLAY_NAME}'s side. Check the bot terminal for details."
         if interaction.response.is_done():
-            await interaction.followup.send(message, ephemeral=True)
+            await interaction.followup.send(message, ephemeral=reply_ephemeral())
         else:
-            await interaction.response.send_message(message, ephemeral=True)
+            await interaction.response.send_message(message, ephemeral=reply_ephemeral())
 
 
 async def main():
@@ -165,9 +167,9 @@ async def main():
         embed = howlbert_embed("Command Failed", message, color=ERROR_COLOR)
         try:
             if interaction.response.is_done():
-                await interaction.followup.send(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
             else:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         except discord.HTTPException:
             pass
 

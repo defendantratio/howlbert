@@ -9,9 +9,12 @@ from engine.amusement_storage import format_amusement_line
 
 def format_pack_amusement_line(stack) -> str:
     meta = amusement_meta(stack["item_key"])
+    uses = int(stack["uses_left"])
+    max_uses = meta["uses"]
+    worn = " · _last use_" if uses == 1 else ""
     return (
         f"`#{stack['id']}` **{meta['name']}**; "
-        f"{stack['uses_left']}/{meta['uses']} uses · **den toy store**"
+        f"{uses}/{max_uses} uses · **den toy store**{worn}"
     )
 
 

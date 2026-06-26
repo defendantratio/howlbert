@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 
 import database as db
-from engine.role_privileges import hunts_remaining_today, is_hunter, record_hunt_use
+from engine.role_privileges import hunts_left_footer, record_hunt_use
 from utils.currency import format_bones
 from utils.embeds import SUCCESS_COLOR, howlbert_embed
 from utils.hunting import award_bones
@@ -47,7 +47,9 @@ def _is_finalized(enc) -> bool:
 
 
 def _is_hunt_prey_enc(enc) -> bool:
-    return bool(enc and enc["is_hunt_prey"] if "is_hunt_prey" in enc.keys() else False)
+    if not enc:
+        return False
+    return bool(enc["is_hunt_prey"] if "is_hunt_prey" in enc.keys() else False)
 
 
 def finalize_ambush_activity(encounter_id: int, *, won: bool | None = None) -> None:
@@ -137,6 +139,20 @@ def finalize_ambush_activity(encounter_id: int, *, won: bool | None = None) -> N
         db.update_user(user["discord_id"], wolf_id=user["id"], last_explore_day=day)
 
 
+def _ambush_fatigue_note(user, activity: str, day: int) -> str | None:
+    from engine.activity_exhaustion import apply_activity_fatigue
+
+    if activity == "hunt":
+        from engine.role_privileges import hunts_used_today
+
+        return apply_activity_fatigue(
+            user, "hunt", "hunting", day, activity_count=hunts_used_today(user, day)
+        )
+    if activity == "explore":
+        return apply_activity_fatigue(user, "explore", "survival", day)
+    return None
+
+
 def ambush_victory_embed(encounter_id: int):
     """Embed when the hunter downs an ambush NPC."""
     enc = db.get_encounter(encounter_id)
@@ -191,6 +207,8 @@ def ambush_victory_embed(encounter_id: int):
     )
     finalize_ambush_activity(encounter_id, won=True)
     db.end_encounter(encounter_id)
+    user = db.get_user(user["discord_id"])
+    fatigue = _ambush_fatigue_note(user, activity, world["day_number"])
 
     if activity == "hunt":
         title = "Threat Driven Off"
@@ -201,15 +219,12 @@ def ambush_victory_embed(encounter_id: int):
         if tax > 0:
             body += f" · pack tax **{format_bones(tax)}**"
         body += " · your hunt for this sunrise is spent."
-        if is_hunter(user):
-            left = hunts_remaining_today(user, world["day_number"])
-            footer = (
-                f"Hunter; **{left}** hunt(s) left this sunrise."
-                if left > 0
-                else "Hunter; no hunts left this sunrise."
-            )
-        else:
-            footer = "You can hunt again tomorrow."
+        user = db.get_user(user["discord_id"])
+        footer = hunts_left_footer(user, world["day_number"])
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(user):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
     else:
         title = "Ambush Survived"
         body = (
@@ -221,5 +236,8 @@ def ambush_victory_embed(encounter_id: int):
         footer = "Scouts may still range out again today."
 
     embed = howlbert_embed(title, body, color=SUCCESS_COLOR)
+    from engine.activity_exhaustion import append_fatigue_to_footer
+
     embed.set_footer(text=footer)
+    append_fatigue_to_footer(embed, fatigue)
     return embed

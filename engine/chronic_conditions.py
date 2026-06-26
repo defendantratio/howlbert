@@ -7,6 +7,7 @@ import sqlite3
 
 import database as db
 from config import ELDER_MIN_MOONS
+from engine.combat_display import fighter_val
 from engine.conditions import parse_injuries
 from engine.disease_contract import try_contract_disease
 from engine.diseases import parse_disease
@@ -74,23 +75,54 @@ def try_combat_bite_disease(
         if distemper:
             notes.append(f"Canid bite: {distemper}")
 
-    if not attacker_f.get("discord_id"):
-        return notes[0] if notes else None
+    from engine.reptile_fear import VENOMOUS_REPTILE_TEMPLATES
+
+    if npc_template in VENOMOUS_REPTILE_TEMPLATES:
+        from engine.disease_contract import try_snake_venom_exposure
+
+        chance = 0.45 if npc_template == "water_snake" else 0.28
+        venom = try_snake_venom_exposure(defender_user, chance=chance)
+        if venom:
+            notes.append(venom)
+    elif npc_template == "skink":
+        from engine.disease_contract import try_insect_sting_exposure
+
+        sting = try_insect_sting_exposure(defender_user, chance=0.22)
+        if sting:
+            notes.append(sting)
+
+    if not fighter_val(attacker_f, "discord_id"):
+        return "; ".join(notes) if notes else None
 
     attacker = db.get_user(attacker_f["discord_id"])
     if not attacker:
-        return notes[0] if notes else None
+        return "; ".join(notes) if notes else None
     a_key, a_stage = parse_disease(attacker["disease"] if "disease" in attacker.keys() else None)
     if a_key == "rabies" and a_stage in ("frenzy", "terminal"):
         note = try_rabies_bite_exposure(defender_user, chance=0.55)
         if note:
             notes.append(f"Rabid bite: {note}")
-    return notes[0] if notes else None
+    return "; ".join(notes) if notes else None
 
 
 def try_near_death_mental_trauma(user) -> str | None:
     """Dropping to dying can fracture the mind toward the wild."""
-    return try_feral_shift_from_trauma(user, chance=0.08)
+    from engine.disease_contract import (
+        try_night_terrors_from_trauma,
+        try_shock_emotional_from_trauma,
+    )
+
+    notes: list[str] = []
+    shock = try_shock_emotional_from_trauma(user, chance=0.15)
+    if shock:
+        notes.append(shock)
+    terrors = try_night_terrors_from_trauma(user, chance=0.12)
+    if terrors:
+        notes.append(terrors)
+    feral = try_feral_shift_from_trauma(user, chance=0.08)
+    if feral:
+        notes.append(feral)
+    return "; ".join(notes) if notes else None
 
 
 def apply_elder_chronic_on_rollover(conn: sqlite3.Connection) -> list[dict]:
@@ -116,6 +148,10 @@ def apply_elder_chronic_on_rollover(conn: sqlite3.Connection) -> list[dict]:
             note = try_dementia_from_age(user, chance=1.0)
         elif roll < 0.20:
             note = try_dementia_from_concussion(user)
+            if not note and "concussion" in parse_injuries(
+                user["active_injuries"] if "active_injuries" in user.keys() else None
+            ):
+                note = try_contract_disease(user, "dementia", "forgetful", chance=1.0)
         if note:
             notes.append(
                 {

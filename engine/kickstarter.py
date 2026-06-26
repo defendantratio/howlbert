@@ -45,6 +45,11 @@ def grant_tier2_rewards(
     if not user:
         return False, "Player must `/register` a wolf before Tier 2 rewards."
 
+    item = db.get_item_by_key(bonus_item)
+    if not item:
+        allowed = ", ".join(KICKSTARTER_TIER2_BONUS_ITEMS)
+        return False, f"Shop item `{bonus_item}` not found in database. Pick one of: {allowed}."
+
     notes: list[str] = []
     if grant_badge:
         if db.grant_kickstarter_backer(discord_id):
@@ -56,10 +61,7 @@ def grant_tier2_rewards(
         db.add_bones(discord_id, KICKSTARTER_TIER2_BONES, wolf_id=user["id"])
         notes.append(f"**+{KICKSTARTER_TIER2_BONES}** bones")
 
-    item = db.get_item_by_key(bonus_item)
-    if not item:
-        return False, f"Shop item `{bonus_item}` not found in database."
     db.grant_item(discord_id, item["id"])
-    notes.append(f"**{item['name']}** in `/inventory`")
+    notes.append(f"**{item['name']}** in `/bones action:inventory`")
 
     return True, " · ".join(notes)

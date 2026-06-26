@@ -27,12 +27,17 @@ SIZE_BY_TEMPLATE: dict[str, str] = {
     "large_prey": "large",
     "fox": "small",
     "badger": "small",
+    "water_snake": "small",
+    "garter_snake": "small",
+    "skink": "small",
+    "spider": "small",
 }
 
 CATEGORY_DEFAULT_SIZE: dict[str, str] = {
     "cats": "small",
     "dogs": "medium",
     "predators": "medium",
+    "reptiles": "small",
 }
 
 

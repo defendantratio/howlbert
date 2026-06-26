@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import discord
+from utils.replies import reply_ephemeral
 from discord import app_commands
 from discord.ext import commands
 
@@ -88,8 +89,8 @@ class Herbs(commands.Cog):
 
             if not herb:
                 await interaction.response.send_message(
-                    "Pick a **forage bag** stack or an **inventory** herb from autocomplete.",
-                    ephemeral=True,
+                    "Pick a **forage bag** stack or a **`/bones action:inventory`** herb from autocomplete.",
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             if herb.strip().lower().startswith("herb_"):
@@ -99,12 +100,12 @@ class Herbs(commands.Cog):
             if stack_id is None:
                 await interaction.response.send_message(
                     "Pick from autocomplete, or enter **`stack:ID`** or **`herb_arnica`**.",
-                    ephemeral=True,
+                    ephemeral=reply_ephemeral(),
                 )
                 return
             await prepare_herb(interaction, stack_id, prep_method)
         else:
-            await interaction.response.send_message("Pick a valid **action**.", ephemeral=True)
+            await interaction.response.send_message("Pick a valid **action**.", ephemeral=reply_ephemeral())
 
 
 async def setup(bot: commands.Bot):

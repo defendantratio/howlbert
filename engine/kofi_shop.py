@@ -186,9 +186,9 @@ def process_kofi_shop_order(
                     continue
                 if discord_id and db.get_user(discord_id):
                     db.grant_item(discord_id, item_row["id"])
-                    lines.append(f"**{label}** → **{item_row['name']}** in `/inventory`")
+                    lines.append(f"**{label}** → **{item_row['name']}** in `/bones action:inventory`")
                     dm_parts.append(
-                        f"**{item_row['name']}** is in your inventory.\n"
+                        f"**{item_row['name']}** is in `/bones action:inventory`.\n"
                         + (
                             "When your wolf dies, use `/bones action:use item:revive` to bring them back as-is."
                             if grant_item_key == "revive"

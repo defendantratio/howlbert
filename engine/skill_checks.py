@@ -202,7 +202,7 @@ _reg(
     _s("prep_dry_storage", "Dry herbs for winter storage", "herb_prep", 10, "herblore", ("attr_int",), "Herblore",
        "Stores months.", "Poor dry; potency lost in 1 month."),
     _s("prep_decoct", "Decoct in hot spring water", "herb_prep", 15, "herblore", ("attr_int",), "Herblore",
-       "Double potency.", "Ruined batch."),
+       "Double potency.", "Ruined batch.", crit_fail="Batch boiled over; stores ruined."),
     _s("prep_antidote", "Administer antidote in time", "herb_prep", 18, "medicine", ("attr_wis",), "Medicine",
        "Venom checked.", "Too slow."),
     _s("prep_sedative", "Mix sedative (poppy + honey)", "herb_prep", 8, "herblore", ("attr_int",), "Herblore",
@@ -229,7 +229,7 @@ _reg(
     _s("nav_scent_marker", "Recognize neighbor scent marker", "navigation", 10, "tracking", ("attr_int",), "Tracking",
        "Pack and border known.", "Unfamiliar mark."),
     _s("nav_trap_detect", "Detect herding into trap", "navigation", 15, "survival", ("attr_int",), "Survival",
-       "Ambush smelled.", "Walked into it.", opposed=True),
+       "Ambush smelled.", "Walked into it.", opposed=True, fail_damage=(2, 8)),
     _s("nav_blizzard_camp", "Find camp after blizzard chase", "navigation", 18, "survival", ("attr_wis",), "Survival",
        "Den warmth.", "Sleep outside.", crit_fail="Crossed into enemy territory."),
 )

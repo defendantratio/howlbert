@@ -1,0 +1,207 @@
+"""Pack and lone howls; unity, standing, Commanding Howl buffs."""
+
+from __future__ import annotations
+
+import random
+
+import discord
+
+import database as db
+from engine.character import attr_modifier
+from engine.group_checks import pack_howl_range
+from engine.pack_unity import (
+    compute_howl_unity_gain,
+    format_unity_meter,
+    pick_howl_flavor,
+    unity_effect_text,
+    unity_is_broken,
+)
+from utils.replies import reply_ephemeral
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+
+
+async def execute_howl(interaction: discord.Interaction, message: str | None = None) -> None:
+    """Run `/howl` or `/packlife action:howl` logic."""
+    user = db.get_user(interaction.user.id)
+    if not user:
+        embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        return
+
+    if not interaction.guild:
+        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+        return
+
+    world = db.get_world(interaction.guild.id)
+    day = world["day_number"]
+    wolf_name = user["wolf_name"]
+    if user["last_howl_day"] >= day:
+        embed = howlbert_embed(
+            "Already Howled",
+            "Your throat is raw; you already sang to the pack this sunrise.",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns · once per sunrise")
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        return
+
+    from engine.character_traits import trait_blocks_howl
+
+    blocked, trait_name = trait_blocks_howl(user)
+    if blocked:
+        embed = howlbert_embed(
+            "Cannot Howl",
+            f"**{wolf_name}**'s throat will not answer the pack; **{trait_name}** silences the call.",
+            color=ERROR_COLOR,
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        return
+
+    echo_count = 0
+
+    if user["pack_id"]:
+        pack = db.get_pack(user["pack_id"])
+        if not pack:
+            embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+
+        unity_before = int(pack["pack_unity"])
+        echo_count = db.record_pack_howl(
+            pack["id"], interaction.guild.id, day, interaction.user.id
+        )
+        unity_gain = compute_howl_unity_gain(user, pack, unity_before, echo_count)
+        muted = unity_gain == 0 and unity_is_broken(unity_before)
+        from engine.plot_blinking import apply_plot_howl_mood_cost, plot_howl_unity_bonus
+
+        plot_unity = plot_howl_unity_bonus(interaction.guild.id)
+        if plot_unity and unity_gain and not muted:
+            unity_gain += plot_unity
+        _mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
+        flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
+
+        dissolve = ""
+        if unity_gain:
+            dissolve = db.adjust_pack_unity(pack["id"], unity_gain)
+
+        pack = db.get_pack(pack["id"])
+        unity = int(pack["pack_unity"]) if pack else unity_before
+        standing_gain = 2 if echo_count >= 3 else 1
+        if muted:
+            standing_gain = 1
+
+        kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
+        db.update_user(interaction.user.id, last_howl_day=day)
+        db.increment_quest_progress(interaction.user.id, "howl", guild_id=interaction.guild.id)
+
+        if dissolve == "dissolved":
+            body = (
+                f"**{wolf_name}** howls; and the den **fractures**.\n"
+                f"{flavor}\n\n"
+                "Unity hit **−5**. Every wolf is cast to **loner** until they `/setfaction` again."
+            )
+            if message:
+                body += f"\n\n_{message.strip()}_"
+            embed = howlbert_embed("Pack Dissolved", body, color=ERROR_COLOR)
+            embed.set_footer(text="/setfaction to rejoin a Great Pack")
+            await interaction.response.send_message(embed=embed)
+            return
+
+        body = f"**{wolf_name}** howls for **{pack['name'] if pack else 'the pack'}**.\n{flavor}"
+        if muted:
+            body += (
+                "\n\n_The den is too broken for your howl to raise **unity**; "
+                "an **Alpha** or **Beta (Advisor)** must rally first._"
+            )
+        if message:
+            body += f"\n\n_{message.strip()}_"
+        if mood_note:
+            body += f"\n\n_{mood_note}_"
+        from engine.plot_blinking import try_plot_witness
+
+        body += try_plot_witness(user, interaction.guild.id, day, action="howl")
+
+        from engine.role_features import can_grant_commanding_howl, grant_commanding_howl_buffs
+
+        commanding_note = ""
+        if can_grant_commanding_howl(user, pack):
+            allies = grant_commanding_howl_buffs(pack["id"], exclude_wolf_id=user["id"])
+            if allies:
+                commanding_note = (
+                    f"\n\n_**Commanding Howl**; **{allies}** packmate"
+                    f"{'s' if allies != 1 else ''} gain advantage on their next check or attack._"
+                )
+                body += commanding_note
+
+        embed = howlbert_embed("Pack Howl", body, color=SUCCESS_COLOR)
+        if unity_gain:
+            embed.add_field(
+                name="Pack Unity",
+                value=f"+{unity_gain} → **{format_unity_meter(unity)}**",
+                inline=True,
+            )
+        else:
+            embed.add_field(name="Pack Unity", value=format_unity_meter(unity), inline=True)
+        embed.add_field(
+            name="Standing",
+            value=(
+                "**Cast out**; loner"
+                if kick == "kicked"
+                else ("**Rite of the Broken Canine**" if kick == "broken_rite" else f"+{standing_gain}")
+            ),
+            inline=True,
+        )
+        if echo_count >= 2:
+            embed.add_field(
+                name="Chorus",
+                value=f"**{echo_count}** wolves have howled this sunrise.",
+                inline=False,
+            )
+
+        howler_ids = db.get_pack_howl_discord_ids(pack["id"], interaction.guild.id, day)
+        best_total = 0
+        nat_20 = False
+        for hid in howler_ids:
+            w = db.get_user(hid)
+            if not w:
+                continue
+            die = random.randint(1, 20)
+            total = die + attr_modifier(w["attr_cha"])
+            if total > best_total:
+                best_total = total
+                nat_20 = die == 20
+        if best_total:
+            pack_size = len(db.get_pack_den_wolves(pack["id"]))
+            reach = pack_howl_range(best_total, pack_size, natural_20=nat_20)
+            embed.add_field(
+                name="Howl reach",
+                value=f"**{reach}** ridge-units (Basil pack howl formula)",
+                inline=True,
+            )
+        footer = unity_effect_text(unity)
+        if commanding_note:
+            footer += " · Commanding Howl buff active for packmates"
+        embed.set_footer(text=footer)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    kick = db.adjust_wolf_standing(interaction.user.id, 1)
+    db.update_user(interaction.user.id, last_howl_day=day)
+    body = (
+        f"**{wolf_name}** howls alone; no den answers, only wind.\n"
+        f"{pick_howl_flavor(echo_count=0)}"
+    )
+    if message:
+        body += f"\n\n_{message.strip()}_"
+    embed = howlbert_embed("Lone Howl", body, color=SUCCESS_COLOR)
+    embed.add_field(
+        name="Standing",
+        value=(
+            "**Cast out**; loner"
+            if kick == "kicked"
+            else ("**Rite of the Broken Canine**" if kick == "broken_rite" else "+1")
+        ),
+        inline=True,
+    )
+    embed.set_footer(text="Join a Great Pack with `/setfaction` to raise pack unity.")
+    await interaction.response.send_message(embed=embed)

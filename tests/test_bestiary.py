@@ -23,8 +23,11 @@ def main() -> None:
     db.init_db()
 
     check("cats category label", "cats" in NPC_CATEGORY_LABELS)
+    check("reptiles category label", "reptiles" in NPC_CATEGORY_LABELS)
     cat_keys = [k for k, v in BESTIARY_NPCS.items() if v["category"] == "cats"]
     check("five cat types", len(cat_keys) == 5, str(cat_keys))
+    reptile_keys = [k for k, v in BESTIARY_NPCS.items() if v["category"] == "reptiles"]
+    check("four reptile types", len(reptile_keys) == 4, str(reptile_keys))
 
     for key in ("fox", "badger"):
         check(f"{key} in predators", BESTIARY_NPCS[key]["category"] == "predators")

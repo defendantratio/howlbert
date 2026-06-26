@@ -17,7 +17,17 @@ def test_forage_dc_winter_harder() -> None:
     assert SEASON_FORAGE_DC_MOD["winter"] >= 5
 
 
+def test_track_dc_by_season() -> None:
+    from engine.season_effects import season_track_dc_mod
+
+    assert season_track_dc_mod("summer") == -2
+    assert season_track_dc_mod("autumn") == -1
+    assert season_track_dc_mod("winter") == 2
+    assert season_track_dc_mod("spring") == 0
+
+
 if __name__ == "__main__":
     test_hunt_modifiers_configured()
     test_forage_dc_winter_harder()
+    test_track_dc_by_season()
     print("OK")

@@ -21,9 +21,11 @@ def _leadership_roll(user) -> tuple[int, dict]:
     from engine.character_traits import trait_check_adjustments
 
     die = roll_d20()
-    mod = attr_modifier(int(user["attr_str"]))
+    str_mod = attr_modifier(int(user["attr_str"]))
+    cha_mod = attr_modifier(int(user["attr_cha"]))
+    mod = (str_mod + cha_mod) // 2
     trait_mod, _ = trait_check_adjustments(
-        user, ("attr_cha",), skill_key="intimidation", skill_label="Intimidation"
+        user, ("attr_cha", "attr_str"), skill_key="intimidation", skill_label="Intimidation"
     )
     total = die + mod + trait_mod
     return total, {"die": die, "mod": mod, "prof": trait_mod, "total": total}

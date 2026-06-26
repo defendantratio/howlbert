@@ -25,7 +25,7 @@ from herbs import FORAGE_RARITY_DC, HERBS
 from engine.herb_storage import fresh_herb_warning, grant_fresh_herb
 from engine.season_effects import season_forage_dc_mod, season_forage_modifier_label
 from utils.currency import format_bones
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, embed_footer, howlbert_embed
 from engine.infractions import (
     crime_caught_standing,
     cross_pack_steal_caught_standing,
@@ -35,7 +35,14 @@ from engine.infractions import (
     roll_crime_caught,
     roll_cross_pack_steal_caught,
 )
-from engine.role_privileges import can_forage_again, can_hunt_again, hunts_remaining_today, is_hunter, record_hunt_use
+from engine.role_privileges import (
+    can_forage_again,
+    can_hunt_again,
+    hunts_left_footer,
+    hunts_used_today,
+    is_hunter,
+    record_hunt_use,
+)
 from engine.injury_effects import hunt_blocked_by_injury, strenuous_activity_blocked_by_injury
 from engine.vitals import full_activity_block
 from engine.role_restrictions import young_wolf_block
@@ -46,6 +53,7 @@ from engine.hunt_payout import grant_prey_carcass_canonical, hunt_flavor_for_pay
 from engine.sniff import apply_sniff_bone_bonus, sniff_track_fail_reduction
 from engine.hunt_combat import (
     LARGE_PREY_ENCOUNTER_TEXT,
+    enrich_large_prey_embed,
     roll_large_prey_encounter,
     start_large_prey_fight,
 )
@@ -85,6 +93,18 @@ FISH_TEXT = [
     "The current runs cold, but your haul runs true.",
 ]
 
+TRACK_MISS_FLAVOR = (
+    "The sign was old; whatever made it is already miles off.",
+    "You lose the trail in wet stone and turn back empty-pawed.",
+    "Prey scent fades into pine; nothing worth the chase today.",
+)
+
+FISHING_FAIL_FLAVOR = (
+    "The river runs empty; your jaws close on nothing but cold water.",
+    "Minnows scatter; no honest haul today.",
+    "Current too fast; the bank keeps its fish.",
+)
+
 
 def _strenuous_injury_embed(user) -> discord.Embed | None:
     block = strenuous_activity_blocked_by_injury(user)
@@ -97,8 +117,10 @@ def _need_guild(interaction: discord.Interaction) -> int | None:
     return interaction.guild.id if interaction.guild else None
 
 
-def _activity_block_embed(user, *, title: str) -> discord.Embed | None:
-    block = full_activity_block(user)
+def _activity_block_embed(
+    user, *, title: str, day: int = 0, action: str = "hunt"
+) -> discord.Embed | None:
+    block = full_activity_block(user, day, action=action)
     if block:
         return howlbert_embed(title, block, color=ERROR_COLOR)
     return None
@@ -191,6 +213,23 @@ def try_daily(interaction: discord.Interaction) -> discord.Embed | None:
     return embed
 
 
+def _activity_fatigue_note(user, activity_key: str, day: int, **kwargs) -> str | None:
+    from engine.activity_exhaustion import apply_activity_fatigue, skill_for_activity
+
+    return apply_activity_fatigue(
+        user, activity_key, skill_for_activity(activity_key, user), day, **kwargs
+    )
+
+
+def _append_notes_to_footer(embed, *notes: str | None) -> None:
+    parts = [n for n in notes if n]
+    if not parts or not embed:
+        return
+    footer = embed.footer.text if embed.footer and embed.footer.text else ""
+    extra = " · ".join(parts)
+    embed.set_footer(text=f"{footer} · {extra}" if footer else extra)
+
+
 def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bool, int | None]:
     """Returns (embed, show_prey_buttons, hunt_combat_encounter_id)."""
     user = db.get_user(interaction.user.id)
@@ -202,16 +241,28 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     inj_block = hunt_blocked_by_injury(user)
     if inj_block:
         return howlbert_embed("Cannot Hunt", inj_block, color=ERROR_COLOR), False, None
-    blocked = _activity_block_embed(user, title="Cannot Hunt")
-    if blocked:
-        return blocked, False, None
     guild_id = _need_guild(interaction)
     if not guild_id:
         return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR), False, None
     world = db.get_world(guild_id)
     day = world["day_number"]
+    blocked = _activity_block_embed(user, title="Cannot Hunt", day=day, action="hunt")
+    if blocked:
+        return blocked, False, None
     if not can_hunt_again(user, day):
-        return howlbert_embed("Already Hunted", "You've hunted this rollover.", color=ERROR_COLOR), False, None
+        if is_hunter(user):
+            body = (
+                f"You've used all **{hunts_used_today(user, day)}** hunts this sunrise.\n\n"
+                "_Resets next sunrise · `/world action:cooldowns`_"
+            )
+        else:
+            body = (
+                "You've hunted this sunrise.\n\n"
+                "_Hunters get more daily hunts · `/world action:cooldowns`_"
+            )
+        embed = howlbert_embed("Already Hunted", body, color=ERROR_COLOR)
+        embed.set_footer(text="/world action:cooldowns · pack hunt: `/bones action:hunt collaborate:true`")
+        return embed, False, None
 
     if roll_large_prey_encounter():
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
@@ -222,9 +273,12 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         )
         flavor = random.choice(LARGE_PREY_ENCOUNTER_TEXT)
         embed = howlbert_embed("Large Prey!", flavor, color=SUCCESS_COLOR)
-        embed.set_footer(
-            text=f"~{LARGE_PREY_ENCOUNTER_CHANCE}% hunt chance · down the prey to open the fresh-kill cache"
+        updated = db.get_user(interaction.user.id)
+        embed = enrich_large_prey_embed(embed, enc_id, updated, day=day)
+        fatigue = _activity_fatigue_note(
+            updated, "hunt", day, activity_count=hunts_used_today(updated, day)
         )
+        _append_notes_to_footer(embed, fatigue)
         return embed, False, enc_id
 
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
@@ -237,7 +291,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     )
     if ambush:
         enc_id, template_key, flavor = ambush
-        embed = ambush_embed(template_key, flavor)
+        embed = ambush_embed(template_key, flavor, user, activity="hunt")
         from config import HUNT_WILD_ENCOUNTER_CHANCE
 
         embed.set_footer(
@@ -250,11 +304,17 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     aborted, omen_trait = roll_trait_hunt_abort(user)
     if aborted:
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
+        updated = db.get_user(interaction.user.id)
+        fatigue = _activity_fatigue_note(
+            updated, "hunt", day, activity_count=hunts_used_today(updated, day)
+        )
         flavor = (
             f"A bad omen stops you cold; **{omen_trait}** sends you back to the den empty-pawed."
         )
         embed = howlbert_embed("Hunt Aborted", flavor, color=ERROR_COLOR)
-        embed.set_footer(text="Today's hunt is spent; try again after the next sunrise.")
+        updated = db.get_user(interaction.user.id)
+        embed.set_footer(text=hunts_left_footer(updated, day))
+        _append_notes_to_footer(embed, fatigue)
         return embed, False, None
 
     dex_bonus = max(0, attr_modifier(get_attr(user, "dex")))
@@ -265,9 +325,13 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id
     )
-    prey_key = prey_key_for_payout(payout) if payout > 0 else None
+    prey_key = prey_key_for_payout(payout, user=user, season=world["season"]) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
     record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
+    updated = db.get_user(interaction.user.id)
+    fatigue = _activity_fatigue_note(
+        updated, "hunt", day, activity_count=hunts_used_today(updated, day)
+    )
     db.update_user(
         interaction.user.id,
         last_hunt_yield=payout if payout > 0 else 0,
@@ -298,10 +362,17 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         blooding_note = award_blooding_on_hunt(user)
         if blooding_note:
             footer = f"{blooding_note} · {footer}"
-        left = hunts_remaining_today(user, day)
-        if is_hunter(user) and left > 0:
-            footer += f" · Hunter: **{left}** hunt(s) left this sunrise"
+        footer += f" · {hunts_left_footer(updated, day)}"
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(updated):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
         notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        from utils.hunting import weather_hunt_modifier_label
+
+        weather_note = weather_hunt_modifier_label(world["weather"])
+        if weather_note:
+            notes.insert(0, weather_note)
         if net_amount > 0:
             from engine.season_rollover import try_autumn_hunt_cache
 
@@ -311,6 +382,27 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
+    elif net_amount == 0:
+        footer = hunts_left_footer(updated, day)
+        from utils.hunting import weather_hunt_modifier_label
+
+        notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        weather_note = weather_hunt_modifier_label(world["weather"])
+        if weather_note:
+            notes.insert(0, weather_note)
+        if notes:
+            footer += " · " + " · ".join(notes)
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(updated):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
+        embed.set_footer(text=footer)
+    _append_notes_to_footer(embed, fatigue)
+    from engine.disease_contract import try_hunt_flea_exposure, try_insect_sting_exposure
+
+    hazard = try_hunt_flea_exposure(user, day=day) or try_insect_sting_exposure(user, chance=0.05)
+    if hazard:
+        embed.description = (embed.description or "") + f"\n\n{hazard}"
     return embed, net_amount > 0, None
 
 
@@ -324,11 +416,17 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     world = db.get_world(guild_id)
     day = world["day_number"]
     if user["last_scavenge_day"] >= day:
-        return howlbert_embed("Already Done", "Scavenged this rollover.", color=ERROR_COLOR)
+        embed = howlbert_embed(
+            "Already Done",
+            "You've scavenged this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns")
+        return embed
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured
-    blocked = _activity_block_embed(user, title="Cannot Scavenge")
+    blocked = _activity_block_embed(user, title="Cannot Scavenge", day=day, action="scavenge")
     if blocked:
         return blocked
     gross = roll_range(SCAVENGE_BONES)
@@ -336,6 +434,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
     db.update_user(interaction.user.id, last_scavenge_day=day)
+    fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "scavenge", day)
     gid = interaction.guild.id if interaction.guild else None
     db.increment_quest_progress(interaction.user.id, "scavenge", guild_id=gid)
     if net > 0:
@@ -346,7 +445,8 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
             prey_key="carrion",
         )
     updated = db.get_user(interaction.user.id)
-    embed = howlbert_embed(random.choice(SCAVENGE_TEXT), color=SUCCESS_COLOR if net else ERROR_COLOR)
+    title = "Empty Paws" if net == 0 else random.choice(SCAVENGE_TEXT)
+    embed = howlbert_embed(title, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
@@ -354,12 +454,19 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     if net > 0:
         from engine.disease_contract import try_scavenge_filth_exposure
 
-        filth = try_scavenge_filth_exposure(user)
+        filth = try_scavenge_filth_exposure(user, day=day)
         notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth) if n]
+        footer = "**Old carrion** in hoard (`/prey`) · rotting meat risks gut sickness"
         if notes:
-            embed.set_footer(text=" · ".join(notes))
-    elif season_note or mood_note or hunger_note or thirst_note:
-        embed.set_footer(text=" · ".join(n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n))
+            footer += " · " + " · ".join(notes)
+        embed.set_footer(text=footer)
+    else:
+        footer = "Today's scavenge is spent; try again after the next sunrise."
+        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        if notes:
+            footer += " · " + " · ".join(notes)
+        embed.set_footer(text=footer)
+    _append_notes_to_footer(embed, fatigue)
     return embed
 
 
@@ -377,11 +484,17 @@ def try_track(
     world = db.get_world(guild_id)
     day = world["day_number"]
     if user["last_track_day"] >= day:
-        return howlbert_embed("Already Done", "Tracked this rollover.", color=ERROR_COLOR), False
+        embed = howlbert_embed(
+            "Already Done",
+            "You've tracked this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns · try `/field action:sniff` before next track")
+        return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured, False
-    blocked = _activity_block_embed(user, title="Cannot Track")
+    blocked = _activity_block_embed(user, title="Cannot Track", day=day, action="track")
     if blocked:
         return blocked, False
 
@@ -396,6 +509,7 @@ def try_track(
     from engine.skill_runner import run_skill_scenario
 
     rained = world["weather"] in ("rain", "sleet", "storm", "thunderstorm", "snow")
+    sniff_red = sniff_track_fail_reduction(user, day)
     ok, track_msg, _ = run_skill_scenario(
         user,
         scenario_key,
@@ -403,21 +517,28 @@ def try_track(
         weather=world["weather"],
         time_of_day=world["time_of_day"],
         rained=rained,
+        season=world["season"],
+        sniff_dc_reduction=sniff_red,
     )
     if not ok:
         db.update_user(interaction.user.id, last_track_day=day)
-        return (
-            howlbert_embed("Trail Lost", track_msg, color=ERROR_COLOR),
-            False,
+        embed = howlbert_embed("Trail Lost", track_msg, color=ERROR_COLOR)
+        embed.set_footer(
+            text="Today's track is spent; try `/field action:sniff` before tracking next sunrise."
         )
+        return embed, False
 
     wis_bonus = max(0, attr_modifier(get_attr(user, "wis")))
-    flavor, track_prey_key = random.choice(TRACK_OUTCOMES)
     gross = roll_range(TRACK_BONES) + wis_bonus
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "track", season=world["season"], guild_id=guild_id
     )
+    if net > 0:
+        flavor, track_prey_key = random.choice(TRACK_OUTCOMES)
+    else:
+        flavor = random.choice(TRACK_MISS_FLAVOR)
+        track_prey_key = None
     db.update_user(
         interaction.user.id,
         last_track_day=day,
@@ -433,7 +554,8 @@ def try_track(
             prey_key=track_prey_key,
         )
     updated = db.get_user(interaction.user.id)
-    embed = howlbert_embed(flavor, color=SUCCESS_COLOR)
+    title = "Track Success" if net > 0 else "Empty Paws"
+    embed = howlbert_embed(title, color=SUCCESS_COLOR if net > 0 else ERROR_COLOR)
     embed.description = f"{track_msg}\n\n_{flavor}_"
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if sniff_bonus > 0:
@@ -446,9 +568,22 @@ def try_track(
         notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if notes:
             footer += " · " + " · ".join(notes)
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(updated):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
         embed.set_footer(text=footer)
-    elif sniff_note or season_note or mood_note or hunger_note or thirst_note:
-        embed.set_footer(text=" · ".join(n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n))
+    else:
+        footer = "Today's track is spent; try again after the next sunrise."
+        notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        if notes:
+            footer += " · " + " · ".join(notes)
+        embed.set_footer(text=footer)
+    from engine.disease_contract import try_insect_sting_exposure
+
+    sting = try_insect_sting_exposure(user, chance=0.06)
+    if sting:
+        embed.description = (embed.description or "") + f"\n\n{sting}"
     return embed, net > 0
 
 
@@ -462,47 +597,91 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
     world = db.get_world(guild_id)
     day = world["day_number"]
     if user["last_fishing_day"] >= day:
-        return howlbert_embed("Already Done", "Fished this rollover.", color=ERROR_COLOR), False
+        embed = howlbert_embed(
+            "Already Done",
+            "You've fished this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns · waters shift with `/world` weather & time")
+        return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured, False
-    blocked = _activity_block_embed(user, title="Cannot Fish")
+    blocked = _activity_block_embed(user, title="Cannot Fish", day=day, action="fishing")
     if blocked:
         return blocked, False
     gross = roll_range(FISHING_BONES)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "fishing", season=world["season"], guild_id=guild_id
     )
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    from engine.fishing import pick_fishing_catch
+
+    catch = None
+    if net > 0:
+        catch = pick_fishing_catch(
+            great_pack=gp,
+            time_of_day=world["time_of_day"],
+            weather=world["weather"],
+        )
     db.update_user(
         interaction.user.id,
         last_fishing_day=day,
         last_hunt_yield=payout if payout > 0 else 0,
-        last_prey_label=PREY_LABEL_FISH,
+        last_prey_label=catch["label"] if catch else PREY_LABEL_FISH,
     )
+    fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "fish", day)
     gid = interaction.guild.id if interaction.guild else None
     db.increment_quest_progress(interaction.user.id, "fishing", guild_id=gid)
-    if net > 0:
+    prey_name = None
+    if net > 0 and catch:
         prey_name = grant_prey_carcass_canonical(
             user["id"],
             guild_id=guild_id,
             day=day,
-            prey_key="fish",
+            prey_key=catch["prey_key"],
         )
     updated = db.get_user(interaction.user.id)
-    embed = howlbert_embed(random.choice(FISH_TEXT), color=SUCCESS_COLOR if net else ERROR_COLOR)
+    if net > 0 and catch:
+        title = "Legendary Catch!" if catch["rarity"] == "legendary" else "River Catch"
+        body = catch["flavor"]
+    else:
+        title = "Empty Paws"
+        body = random.choice(FISHING_FAIL_FLAVOR)
+    embed = howlbert_embed(title, body, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
     embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
-    if net > 0:
-        footer = f"**{prey_name}** in hoard (`/prey`) · `/preypile` to share at the den"
-        if season_note or mood_note or hunger_note or thirst_note:
+    if net > 0 and prey_name:
+        wx = world["weather"]
+        tod = world["time_of_day"]
+        footer = (
+            f"**{prey_name}** in hoard (`/prey`) · `/preypile` to share · "
+            f"_{tod} · {wx}_"
+        )
+        if season_note or mood_note or hunger_note or thirst_note or exhaustion_note:
             footer += " · " + " · ".join(
                 n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n
             )
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(updated):
+            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
         embed.set_footer(text=footer)
-    elif season_note or mood_note or hunger_note or thirst_note:
-        embed.set_footer(text=" · ".join(n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n))
+        from engine.disease_contract import try_snake_venom_exposure
+
+        snake = try_snake_venom_exposure(user, chance=0.07)
+        if snake:
+            embed.description = (embed.description or "") + f"\n\n{snake}"
+    else:
+        footer = "Today's fishing is spent; pack waters shift with weather and time (`/world`)."
+        if season_note or mood_note or hunger_note or thirst_note:
+            footer = " · ".join(
+                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n
+            ) + " · " + footer
+        embed.set_footer(text=footer)
+    _append_notes_to_footer(embed, fatigue)
     return embed, net > 0
 
 
@@ -516,7 +695,13 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     world = db.get_world(guild_id)
     day = world["day_number"]
     if not can_forage_again(user, day):
-        return howlbert_embed("Already Foraged", "You've foraged this rollover.", color=ERROR_COLOR)
+        embed = howlbert_embed(
+            "Already Foraged",
+            "You've foraged this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns")
+        return embed
     blocked = _activity_block_embed(user, title="Cannot Forage")
     if blocked:
         return blocked
@@ -540,24 +725,35 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         game_day=day,
     )
     db.update_user(interaction.user.id, last_forage_day=day)
+    fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "forage", day)
     if result["outcome"] == "critical_failure":
-        return howlbert_embed(
+        from engine.disease_contract import try_nettle_sting_exposure
+
+        nettle_note = try_nettle_sting_exposure(user, chance=0.35) or ""
+        embed = howlbert_embed(
             "Misidentified!",
             format_roll_result(result)
             + "\n\nYou damaged the patch or gathered something toxic."
+            + (f"\n\n{nettle_note}" if nettle_note else "")
             + forager_note
             + season_suffix,
             color=ERROR_COLOR,
         )
+        embed.set_footer(text=embed_footer("Today's forage is spent; try again after the next sunrise."))
+        _append_notes_to_footer(embed, fatigue)
+        return embed
     if not result["success"]:
         from engine.season_effects import maybe_spoil_herb_on_forage_fail
 
         spoil_note = maybe_spoil_herb_on_forage_fail(user, season=world["season"])
-        return howlbert_embed(
+        embed = howlbert_embed(
             "Forage Failed",
             format_roll_result(result) + forager_note + season_suffix + spoil_note,
             color=ERROR_COLOR,
         )
+        embed.set_footer(text=embed_footer("Today's forage is spent; try again after the next sunrise."))
+        _append_notes_to_footer(embed, fatigue)
+        return embed
     pool = [
         k
         for k, m in HERBS.items()
@@ -621,7 +817,16 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
             )
     db.increment_quest_progress(interaction.user.id, "forage")
     auto_note = forager_note
-    return howlbert_embed(
+    from engine.disease_contract import try_insect_sting_exposure
+
+    insect_chance = 0.11 if world["season"] == "summer" else 0.07
+    sting_note = try_insect_sting_exposure(user, chance=insect_chance) or ""
+    nettle_note = ""
+    if herb_key == "stinging_nettle":
+        from engine.disease_contract import try_nettle_sting_exposure
+
+        nettle_note = try_nettle_sting_exposure(user, chance=0.5) or ""
+    embed = howlbert_embed(
         "Forage Success",
         format_roll_result(result)
         + f"\n\nFound **{meta['name']}**{qty_note}: fresh stack `#{stack_id}` in your herb bag."
@@ -630,9 +835,18 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         + (f"\n\n{hoard_note}" if hoard_note else "")
         + rare_note
         + auto_note
-        + season_suffix,
+        + season_suffix
+        + (f"\n\n{sting_note}" if sting_note else "")
+        + (f"\n\n{nettle_note}" if nettle_note else ""),
         color=SUCCESS_COLOR,
     )
+    embed.set_footer(
+        text=embed_footer(
+            "Stack in `/herbs action:bag` · `/medic action:treat stack:ID` · today's forage spent"
+        )
+    )
+    _append_notes_to_footer(embed, fatigue)
+    return embed
 
 
 def purchase_item(interaction: discord.Interaction, item_key: str) -> discord.Embed | None:
@@ -660,6 +874,17 @@ def purchase_item(interaction: discord.Interaction, item_key: str) -> discord.Em
     embed.add_field(name="Item", value=item_name or shop_item["name"], inline=True)
     embed.add_field(name="Spent", value=format_bones(shop_item["price"]), inline=True)
     embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
+    key = shop_item["key"]
+    footer_bits = ["/bones action:inventory"]
+    if key.startswith("prey_"):
+        footer_bits.append("/prey")
+    elif key.startswith("toy_"):
+        footer_bits.append("/playpen action:toys")
+    elif key.startswith("herb_"):
+        footer_bits.append("/herbs action:dryall · action:prepare")
+    elif key in ("herb_bundle", "prey_bundle", "den_charm"):
+        footer_bits.append("/bones action:use item:<key>")
+    embed.set_footer(text=" · ".join(footer_bits))
     return embed
 
 
@@ -670,6 +895,15 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
     q = db.get_quest_by_key(quest_key)
     if not q or q["quest_type"] == "daily":
         return howlbert_embed("Unknown Quest", "That key isn't on the den board.", color=ERROR_COLOR)
+    req_pack = q["required_pack"] if "required_pack" in q.keys() else None
+    if req_pack:
+        wolf_pack = user["great_pack"] if "great_pack" in user.keys() else None
+        if wolf_pack != req_pack:
+            return howlbert_embed(
+                "Wrong Pack",
+                f"This Mistmoor tradition requires the **{req_pack.title()}** Great Pack.",
+                color=ERROR_COLOR,
+            )
     req_role = q["required_role"] if "required_role" in q.keys() else None
     if req_role:
         from engine.apprentice_roles import quest_role_matches
@@ -681,13 +915,6 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
             return howlbert_embed(
                 "Wrong Role",
                 f"This quest is for **{ROLE_LABELS.get(req_role, req_role)}** wolves only.",
-                color=ERROR_COLOR,
-            )
-        req_pack = q["required_pack"] if "required_pack" in q.keys() else None
-        if req_pack and user["great_pack"] != req_pack:
-            return howlbert_embed(
-                "Wrong Pack",
-                f"This Mistmoor tradition requires the **{req_pack.title()}** Great Pack.",
                 color=ERROR_COLOR,
             )
     elif q["quest_type"] == "role":
@@ -748,7 +975,10 @@ def complete_quest(interaction: discord.Interaction, quest_key: str | None = Non
     embed.add_field(name="Standing", value=f"+{result['standing_reward']}", inline=True)
     from engine.quest_rewards import format_quest_reward_suffix, quest_xp_reward, quest_skill_reward
 
-    xp_gain = quest_xp_reward(result["quest_key"])
+    xp_gain = quest_xp_reward(
+        result["quest_key"],
+        difficulty=result["difficulty"] if "difficulty" in result.keys() else None,
+    )
     embed.add_field(name="XP", value=f"+{xp_gain}", inline=True)
     skill_reward = quest_skill_reward(result["quest_key"])
     if skill_reward:
@@ -761,7 +991,10 @@ def complete_quest(interaction: discord.Interaction, quest_key: str | None = Non
             value=f"**{label}** rank +{rank_gain} (+{SKILL_RANK_BONUS}/rank on checks)",
             inline=False,
         )
-    extra = format_quest_reward_suffix(result["quest_key"])
+    extra = format_quest_reward_suffix(
+        result["quest_key"],
+        difficulty=result["difficulty"] if "difficulty" in result.keys() else None,
+    )
     if extra:
         embed.set_footer(text=f"Rewards: {extra}")
     return embed
@@ -821,11 +1054,14 @@ def try_work(
     net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)
-    embed = howlbert_embed(random.choice(WORK_TEXT), color=SUCCESS_COLOR if net else ERROR_COLOR)
+    title = "Empty Paws" if net == 0 else random.choice(WORK_TEXT)
+    embed = howlbert_embed(title, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
     embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
+    if net == 0:
+        embed.set_footer(text=embed_footer("Today's work is spent; try again after the next sunrise."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 
@@ -899,11 +1135,14 @@ def try_crime(
     body = random.choice(CRIME_TEXT)
     if plot_suffix:
         body += plot_suffix
-    embed = howlbert_embed(body, color=SUCCESS_COLOR if net else ERROR_COLOR)
+    title = "Empty Paws" if net == 0 else "Score Pulled"
+    embed = howlbert_embed(title, body, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="Earned", value=format_bones(net, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
     embed.add_field(name="Balance", value=format_bones(updated["bones"]), inline=True)
+    if net == 0:
+        embed.set_footer(text=embed_footer("Today's score is spent; try again after the next sunrise."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 
@@ -959,9 +1198,14 @@ def _try_cross_pack_steal(
 
         penalty += plot_cross_pack_caught_standing_extra(interaction.guild.id)
         kick = db.adjust_wolf_standing(interaction.user.id, penalty)
+        guild_id = interaction.guild.id if interaction.guild else None
+        relation_note = ""
+        if guild_id and user["pack_id"]:
+            new_rel = db.adjust_pack_relation(guild_id, user["pack_id"], victim["id"], -1)
+            relation_note = f"\nPack standing with **{victim_name}** **−1** (now **{new_rel}/10**)."
         embed = howlbert_embed(
             "Caught at the Border",
-            pick_cross_pack_steal_caught_flavor(victim_name),
+            pick_cross_pack_steal_caught_flavor(victim_name) + relation_note,
             color=ERROR_COLOR,
         )
         embed.add_field(
@@ -983,11 +1227,16 @@ def _try_cross_pack_steal(
 
     standing_gain = cross_pack_steal_standing()
     db.adjust_wolf_standing(interaction.user.id, standing_gain)
+    guild_id = interaction.guild.id if interaction.guild else None
+    relation_note = ""
+    if guild_id and user["pack_id"]:
+        new_rel = db.adjust_pack_relation(guild_id, user["pack_id"], victim["id"], 1)
+        relation_note = f"\nPack standing with **{victim_name}** **+1** (now **{new_rel}/10**)."
     updated = db.get_user(interaction.user.id)
     victim_after = db.get_pack(victim["id"])
 
     flavor = random.choice(CROSS_PACK_STEAL_TEXT).format(pack=victim_name)
-    embed = howlbert_embed("Raid Successful", flavor, color=SUCCESS_COLOR)
+    embed = howlbert_embed("Raid Successful", flavor + relation_note, color=SUCCESS_COLOR)
     embed.add_field(name="Stolen", value=format_bones(stolen, signed=True), inline=True)
     embed.add_field(name="Standing", value=f"+{standing_gain}", inline=True)
     embed.add_field(name="Your balance", value=format_bones(updated["bones"]), inline=True)
@@ -1021,6 +1270,11 @@ def preypile_error(interaction: discord.Interaction) -> str | None:
             _migrate_legacy_prey_to_hoard(user, interaction.guild.id, day)
             stack = db.pick_prey_stack_for_pile(user["id"], day)
     if not stack:
+        from engine.prey_storage import fresh_kill_pile_block_message
+
+        rotting_msg = fresh_kill_pile_block_message(user["id"], day)
+        if rotting_msg:
+            return rotting_msg
         return (
             "No fresh carcass in your hoard; hunt, track, or fish first (`/prey` to check)."
         )
@@ -1033,14 +1287,18 @@ def _migrate_legacy_prey_to_hoard(user, guild_id: int, day: int) -> None:
     """One-time bridge: old last_hunt_yield → prey stack."""
     label = user["last_prey_label"] if "last_prey_label" in user.keys() else None
     bones = int(user["last_hunt_yield"])
-    if label == PREY_LABEL_FISH:
+    from engine.prey_items import prey_key_from_hunt_amount, prey_key_from_label
+
+    prey_key = prey_key_from_label(label)
+    if prey_key:
+        pass
+    elif label == PREY_LABEL_FISH:
         prey_key = "fish"
     elif label == PREY_LABEL_HARE:
         prey_key = "hare"
     else:
-        from engine.prey_items import prey_key_from_hunt_amount
-
-        prey_key = prey_key_from_hunt_amount(bones)
+        gp = user["great_pack"] if "great_pack" in user.keys() else None
+        prey_key = prey_key_from_hunt_amount(bones, great_pack=gp)
     grant_prey_from_hunt(
         user["id"],
         guild_id=guild_id,

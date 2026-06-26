@@ -26,11 +26,16 @@ def list_pack_herb_store(pack_id: int, day: int) -> str:
         return (
             "No herbs in the **healers' store**; "
             "any wolf may `/herbs action:store mode:deposit` or `mode:depositall` "
-            "(forage bag + `/inventory` herbs); "
+            "(forage bag + `/bones action:inventory` herbs); "
             "fresh stacks: `/herbs action:dryall`; "
-            "use `/herbs action:turnin` for restricted poison herbs."
+            "use `/herbs action:turnin` for restricted poison herbs.\n\n"
+            "_Withdraw: **Medics** and **Foragers** only (`/herbs action:store mode:withdraw`)._"
         )
-    return "\n".join(format_pack_herb_line(s, day) for s in stacks)
+    lines = "\n".join(format_pack_herb_line(s, day) for s in stacks)
+    return (
+        f"{lines}\n\n"
+        "_Withdraw: **Medics** and **Foragers** only · anyone may deposit or turn in poison herbs._"
+    )
 
 
 def _deposit_herb_stack_to_store(
@@ -98,9 +103,9 @@ def deposit_inventory_herb_to_store(
     if not item:
         return False, "Unknown herb item."
     if db.get_inventory_quantity(user["discord_id"], item["id"]) < 1:
-        return False, f"You don't have **{item['name']}** in `/inventory`."
+        return False, f"You don't have **{item['name']}** in `/bones action:inventory`."
     if not db.consume_item(user["discord_id"], item["id"], quantity=1):
-        return False, "Could not use herb from inventory."
+        return False, f"Could not use herb from `/bones action:inventory`."
     meta = HERBS.get(herb_key, {})
     name = meta.get("name", herb_key)
     db.add_pack_herb_stack(
@@ -115,7 +120,7 @@ def deposit_inventory_herb_to_store(
     )
     return (
         True,
-        f"**{name}** (dried) from inventory added to the den herb store "
+        f"**{name}** (dried) from `/bones action:inventory` added to the den herb store "
         f"(`/herbs action:store mode:list`).",
     )
 
@@ -153,7 +158,7 @@ def deposit_all_herbs_to_store(
         return (
             False,
             "No herbs to deposit in your **forage bag** (`/herbs action:bag`) "
-            "or **inventory** (`/inventory`).",
+            "or **inventory** (`/bones action:inventory`).",
         )
 
     deposited = 0

@@ -68,8 +68,12 @@ def parse_herb_stack_id(raw: str | None) -> int | None:
 
 
 def format_herb_stack_line(stack, current_day: int, *, user=None) -> str:
+    from engine.restricted_herbs import is_restricted_herb
+
     meta = HERBS.get(stack["herb_key"], {})
     name = meta.get("name", stack["herb_key"].replace("_", " ").title())
+    if is_restricted_herb(stack["herb_key"]):
+        name = f"⚠ {name}"
     form = form_label(stack["form"])
     potency = int(stack["potency"])
     age = current_day - int(stack["acquired_day"])
@@ -103,9 +107,16 @@ def format_herb_stack_line(stack, current_day: int, *, user=None) -> str:
 def list_herb_bag_summary(wolf_id: int, day: int) -> str:
     stacks = db.get_herb_stacks(wolf_id)
     if not stacks:
-        return "No foraged herb stacks; gather with `/field action:forage`."
+        return "No foraged herb stacks; gather with `/field action:forage` or `action:verge`."
     user = db.get_user_by_id(wolf_id)
     return "\n".join(format_herb_stack_line(s, day, user=user) for s in stacks)
+
+
+def herb_bag_footer() -> str:
+    return (
+        "/herbs action:prepare · action:dryall · `/bones action:sell item:stack:ID` · "
+        "/medic action:treat herb:stack:ID"
+    )
 
 
 def has_yarrow(user) -> bool:

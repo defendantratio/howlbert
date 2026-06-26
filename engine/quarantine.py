@@ -26,5 +26,6 @@ def quarantine_activity_block(user) -> str | None:
         return None
     return (
         "**Quarantined**; you stay in the sick den. No hunting, grooming, or mingling "
-        "until a Medic or pack officer releases you with `/quarantine release:true`."
+        "until a **Medic**, **Alpha**, or **Advisor** releases you with "
+        "`/medic action:quarantine release:true`."
     )

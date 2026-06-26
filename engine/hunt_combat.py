@@ -44,7 +44,7 @@ def start_large_prey_fight(user, *, guild_id: int, channel_id: int) -> int:
     template = BESTIARY_NPCS["large_prey"]
     prey_hp = npc_hp(template)
     prey_name = random.choice(PREY_NPC_NAMES)
-    return db.setup_hunt_prey_encounter(
+    enc_id = db.setup_hunt_prey_encounter(
         guild_id,
         channel_id,
         user["discord_id"],
@@ -54,10 +54,67 @@ def start_large_prey_fight(user, *, guild_id: int, channel_id: int) -> int:
         prey_hp=prey_hp,
         prey_name=prey_name,
     )
+    enc = db.get_encounter(enc_id)
+    if not enc or enc["status"] != "active":
+        db.rebuild_encounter_initiative(enc_id)
+    fighters = db.get_combat_fighters(enc_id)
+    prey = next((f for f in fighters if f["npc_name"]), None)
+    if prey:
+        db.set_combat_target(user["discord_id"], enc_id, prey["id"])
+    return enc_id
+
+
+def enrich_large_prey_embed(
+    embed: discord.Embed,
+    enc_id: int,
+    user,
+    *,
+    day: int,
+) -> discord.Embed:
+    """Add fight roster and turn hint so the hunt works even if the panel is slow to load."""
+    from engine.combat_display import current_fighter_for_enc
+    from engine.role_privileges import hunts_left_footer
+
+    enc = db.get_encounter(enc_id)
+    if not enc:
+        embed.description = (
+            (embed.description or "")
+            + "\n\n_Combat failed to open; try **`/bones action:hunt`** again or `/combat list`._"
+        )
+        return embed
+
+    fighters = db.get_combat_fighters(enc_id)
+    hunter_name = user["wolf_name"] if user and "wolf_name" in user.keys() else "Hunter"
+    lines = [f"Fight **#{enc_id}**"]
+    for fighter in fighters:
+        label = fighter["npc_name"] or hunter_name
+        lines.append(f"· **{label}** {fighter['hp']}/{fighter['max_hp']} HP")
+
+    if enc["status"] == "active":
+        current = current_fighter_for_enc(enc_id)
+        actor = (current["npc_name"] if current and current["npc_name"] else hunter_name) if current else hunter_name
+        lines.append(
+            f"\n**Round {enc['round']}** — **{actor}** acts first. "
+            "On your turn: **Bite** or **Claw** (auto-targets lone prey), or pick from the target menu."
+        )
+    else:
+        lines.append(
+            f"\n_Combat status **{enc['status']}** — `/combat status encounter:{enc_id}` to recover the panel._"
+        )
+
+    embed.description = (embed.description or "") + "\n\n" + "\n".join(lines)
+    footer = (
+        f"~{LARGE_PREY_ENCOUNTER_CHANCE}% hunt chance · down the prey to open the fresh-kill cache"
+        f" · {hunts_left_footer(user, day)}"
+    )
+    embed.set_footer(text=footer)
+    return embed
 
 
 def is_hunt_prey_encounter(enc) -> bool:
-    return bool(enc and enc["is_hunt_prey"] if "is_hunt_prey" in enc.keys() else False)
+    if not enc:
+        return False
+    return bool(enc["is_hunt_prey"] if "is_hunt_prey" in enc.keys() else False)
 
 
 def is_large_prey_fighter(fighter) -> bool:
@@ -136,9 +193,7 @@ async def try_complete_hunt_prey_victory(
     prey_label = random.choice(LARGE_PREY_LABELS)
     prey_key = "elk" if "elk" in prey_label.lower() else "deer"
     from engine.hunt_payout import grant_prey_carcass_canonical
-    from engine.role_privileges import record_hunt_use
 
-    record_hunt_use(user["discord_id"], wolf_id=user["id"], day=world["day_number"])
     grant_prey_carcass_canonical(
         user["id"],
         guild_id=guild_id,

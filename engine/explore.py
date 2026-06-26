@@ -55,6 +55,7 @@ DIG_LOOT = (
     ("feather", 12),
     ("bones", 12),
     ("vole", 8),
+    ("frog", 5),
     ("shiny_pebble", 8),
 )
 
@@ -72,6 +73,7 @@ INVESTIGATE_LOOT = (
     ("feather", 22),
     ("bone", 18),
     ("fish", 14),
+    ("frog", 8),
     ("grouse", 14),
     ("bones", 14),
     ("shell", 10),
@@ -97,6 +99,22 @@ EXPLORE_FAIL_FLAVOR = [
 ]
 
 
+def _explore_field_hazard(user, action: str, *, scale: float = 1.0) -> str:
+    from engine.disease_contract import (
+        try_insect_sting_exposure,
+        try_poison_ivy_exposure,
+        try_snake_venom_exposure,
+    )
+
+    if action == "dig":
+        return try_insect_sting_exposure(user, chance=0.10 * scale) or ""
+    if action == "follow":
+        return try_snake_venom_exposure(user, chance=0.07 * scale) or ""
+    if action == "investigate":
+        return try_poison_ivy_exposure(user, chance=0.08 * scale) or ""
+    return ""
+
+
 def _maybe_explore_side_event(user, discord_id: int) -> str:
     import database as db
 
@@ -115,6 +133,23 @@ def _maybe_explore_side_event(user, discord_id: int) -> str:
 def _pick_loot(table: tuple) -> str:
     keys, weights = zip(*table)
     return random.choices(keys, weights=weights, k=1)[0]
+
+
+def _biome_loot_extra(user) -> tuple[tuple[str, int], ...]:
+    gp = user["great_pack"] if user and "great_pack" in user.keys() else None
+    if gp in ("mistmoor", "silverrush"):
+        return (("frog", 10), ("snake", 4))
+    if gp == "thistlehide":
+        return (("lizard", 8),)
+    return ()
+
+
+def _pick_loot_for_user(user, table: tuple) -> str:
+    extra = _biome_loot_extra(user)
+    if not extra:
+        return _pick_loot(table)
+    merged = list(table) + list(extra)
+    return _pick_loot(tuple(merged))
 
 
 def _grant_loot(
@@ -148,7 +183,7 @@ def _grant_loot(
         if item:
             db.grant_item(discord_id, item["id"])
             return f"**{HERBS[herb_key]['name']}** (herb)"
-    if loot_key in ("vole", "hare", "fish", "grouse"):
+    if loot_key in ("vole", "hare", "fish", "grouse", "frog", "snake", "lizard"):
         grant_prey_carcass(
             wolf_id,
             loot_key,
@@ -184,20 +219,31 @@ def try_explore(
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
         return howlbert_embed("Too Injured", inj, color=ERROR_COLOR), None
-    block = full_activity_block(user)
+
+    world = db.get_world(interaction.guild.id)
+    day = world["day_number"]
+    block = full_activity_block(user, day, action="explore")
     if block:
         return howlbert_embed("Cannot Explore", block, color=ERROR_COLOR), None
 
     spec = EXPLORE_ACTIONS.get(action)
     if not spec:
         return howlbert_embed("Unknown Action", "Pick dig, follow, or investigate.", color=ERROR_COLOR), None
-
-    world = db.get_world(interaction.guild.id)
-    day = world["day_number"]
     from engine.role_privileges import can_explore_again, is_scout
 
     if not can_explore_again(user, day):
-        return howlbert_embed("Already Explored", "You've ranged out this sunrise.", color=ERROR_COLOR), None
+        hint = (
+            "Scouts may **`/explore venture`** or **`/scout rescout`** again this sunrise."
+            if is_scout(user)
+            else "Resets next sunrise · check **`/world action:cooldowns`**"
+        )
+        embed = howlbert_embed(
+            "Already Explored",
+            f"You've ranged out this sunrise.\n\n_{hint}_",
+            color=ERROR_COLOR,
+        )
+        embed.set_footer(text="/world action:cooldowns · Scouts: unlimited explore & rescout")
+        return embed, None
 
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
 
@@ -209,7 +255,7 @@ def try_explore(
     )
     if ambush:
         enc_id, template_key, flavor = ambush
-        embed = ambush_embed(template_key, flavor)
+        embed = ambush_embed(template_key, flavor, user, activity="explore")
         from config import EXPLORE_WILD_ENCOUNTER_CHANCE
 
         embed.set_footer(
@@ -233,6 +279,11 @@ def try_explore(
     )
 
     db.update_user(interaction.user.id, last_explore_day=day)
+    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+
+    explore_fatigue = apply_activity_fatigue(
+        db.get_user(interaction.user.id), "explore", skill_key, day
+    )
 
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
@@ -245,32 +296,40 @@ def try_explore(
         filth = try_den_filth_exposure(user)
         if filth:
             filth_note = f"\n\n{filth}"
+        hazard_note = _explore_field_hazard(user, action, scale=0.65)
         embed = howlbert_embed(
             f"{spec['emoji']} Explore: {spec['label']}",
             format_roll_result(result)
             + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n"
             "**Critical failure**; you startle prey, twist a paw, or lose the trail. **−5 mood.**"
-            + filth_note,
+            + filth_note
+            + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Today's explore is spent · `/playpen` · `/prey`")
+        append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
     if not result["success"]:
         fail_extra = ""
         if random.random() < 0.35:
             fail_extra = f"\n\n_{random.choice(EXPLORE_FAIL_FLAVOR)}_"
+        hazard_note = _explore_field_hazard(user, action, scale=0.45)
         embed = howlbert_embed(
             f"{spec['emoji']} Explore: {spec['label']}",
             format_roll_result(result)
-            + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\nNothing useful today.{fail_extra}",
+            + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\nNothing useful today.{fail_extra}"
+            + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
+        embed.set_footer(text="Today's explore is spent · hazards still find you in the brush")
+        append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
     table = {"dig": DIG_LOOT, "follow": FOLLOW_LOOT, "investigate": INVESTIGATE_LOOT}[action]
-    loot_key = _pick_loot(table)
+    loot_key = _pick_loot_for_user(user, table)
     if result["outcome"] == "critical_success":
-        loot_key2 = _pick_loot(table)
+        loot_key2 = _pick_loot_for_user(user, table)
         reward = _grant_loot(
             user["id"],
             guild_id=interaction.guild.id,
@@ -311,10 +370,12 @@ def try_explore(
 
     witness = try_plot_witness(user, interaction.guild.id, day, action="explore")
     db.increment_quest_progress(interaction.user.id, "explore", guild_id=interaction.guild.id)
+    hazard_note = _explore_field_hazard(user, action)
     embed = howlbert_embed(
         f"{spec['emoji']} Explore: {spec['label']}",
         format_roll_result(result)
-        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}{witness}",
+        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}{witness}"
+        + (f"\n\n{hazard_note}" if hazard_note else ""),
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text="Amusement: `/playpen` · carcasses: `/prey` · sell scraps: `/raccoon sell`")
@@ -327,6 +388,7 @@ def try_explore(
                 f"/scout rescout · `/playpen` · /prey"
             )
         )
+    append_fatigue_to_footer(embed, explore_fatigue)
     return embed, None
 
 
@@ -401,6 +463,16 @@ def try_rescout(interaction) -> discord.Embed | None:
         game_day=day,
     )
     _record_rescout_use(interaction.user.id, day)
+    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+    from engine.role_privileges import rescout_uses_today
+
+    rescout_fatigue = apply_activity_fatigue(
+        db.get_user(interaction.user.id),
+        "rescout",
+        "survival",
+        day,
+        activity_count=rescout_uses_today(db.get_user(interaction.user.id), day),
+    )
 
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
@@ -410,12 +482,15 @@ def try_rescout(interaction) -> discord.Embed | None:
 
     if result["outcome"] == "critical_failure":
         db.adjust_mood(user["id"], -3)
-        return howlbert_embed(
+        embed = howlbert_embed(
             "🔁 Rescout",
             format_roll_result(result)
             + f"\n\nYou double back through {biome}; a false trail and a stubbed paw. **−3 mood.**",
             color=ERROR_COLOR,
         )
+        embed.set_footer(text=scout_footer)
+        append_fatigue_to_footer(embed, rescout_fatigue)
+        return embed
 
     if not result["success"]:
         embed = howlbert_embed(
@@ -425,6 +500,7 @@ def try_rescout(interaction) -> discord.Embed | None:
             color=ERROR_COLOR,
         )
         embed.set_footer(text=scout_footer)
+        append_fatigue_to_footer(embed, rescout_fatigue)
         return embed
 
     if result["outcome"] == "critical_success":
@@ -469,4 +545,5 @@ def try_rescout(interaction) -> discord.Embed | None:
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text=scout_footer)
+    append_fatigue_to_footer(embed, rescout_fatigue)
     return embed

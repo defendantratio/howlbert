@@ -374,6 +374,98 @@ BESTIARY_NPCS: dict[str, dict] = {
         },
         "behavior": "Cunning scavenger; raids caches and kits; rarely stands ground.",
     },
+    "water_snake": {
+        "name": "Water Snake",
+        "category": "reptiles",
+        "attrs": {
+            "attr_str": 3,
+            "attr_dex": 9,
+            "attr_con": 4,
+            "attr_int": 2,
+            "attr_cha": 2,
+            "attr_wis": 6,
+        },
+        "proficiencies": ["stealth"],
+        "attack": {
+            "name": "Venom Bite",
+            "type": "bite",
+            "die": 4,
+            "flat_damage": 0,
+            "hit_bonus": 2,
+            "skill": None,
+            "on_hit": "Marsh venom; swelling may follow.",
+        },
+        "behavior": "Coils from reeds at the bank; strikes fast and slides away.",
+    },
+    "garter_snake": {
+        "name": "Garter Snake",
+        "category": "reptiles",
+        "attrs": {
+            "attr_str": 3,
+            "attr_dex": 8,
+            "attr_con": 4,
+            "attr_int": 2,
+            "attr_cha": 2,
+            "attr_wis": 5,
+        },
+        "proficiencies": ["stealth"],
+        "attack": {
+            "name": "Bite",
+            "type": "bite",
+            "die": 4,
+            "flat_damage": 0,
+            "hit_bonus": 1,
+            "skill": None,
+            "on_hit": "Quick strike; mild venom on a bad day.",
+        },
+        "behavior": "Sun-warms on stone; bites when cornered, then flees.",
+    },
+    "skink": {
+        "name": "Skink",
+        "category": "reptiles",
+        "attrs": {
+            "attr_str": 2,
+            "attr_dex": 9,
+            "attr_con": 3,
+            "attr_int": 2,
+            "attr_cha": 2,
+            "attr_wis": 4,
+        },
+        "proficiencies": ["stealth"],
+        "attack": {
+            "name": "Snap",
+            "type": "bite",
+            "die": 3,
+            "flat_damage": 0,
+            "hit_bonus": 0,
+            "skill": None,
+            "on_hit": "Tiny jaws; more insult than wound.",
+        },
+        "behavior": "Darts from sun-warmed rock; prey-sized, not a real threat alone.",
+    },
+    "spider": {
+        "name": "Wolf Spider",
+        "category": "reptiles",
+        "attrs": {
+            "attr_str": 2,
+            "attr_dex": 10,
+            "attr_con": 3,
+            "attr_int": 1,
+            "attr_cha": 1,
+            "attr_wis": 5,
+        },
+        "proficiencies": ["stealth"],
+        "attack": {
+            "name": "Bite",
+            "type": "bite",
+            "die": 3,
+            "flat_damage": 0,
+            "hit_bonus": 2,
+            "skill": None,
+            "on_hit": "Irritating bite; welts and dread.",
+        },
+        "behavior": "Hunts in leaf litter; too many legs, too fast.",
+    },
     "badger": {
         "name": "Badger",
         "category": "predators",
@@ -403,6 +495,7 @@ NPC_CATEGORY_LABELS = {
     "predators": "Predators & Threats",
     "dogs": "Hearth-hounds (Twoleg hounds)",
     "cats": "Clan Cats & Rivals",
+    "reptiles": "Reptiles & Vermin",
 }
 
 HAZARD_TOPICS: dict[str, tuple[str, str]] = {
@@ -467,6 +560,12 @@ HAZARD_TOPICS: dict[str, tuple[str, str]] = {
         "cannot move 1 round.",
     ),
 }
+
+
+def format_npc_category(template_key: str) -> str:
+    """Short category label for ambush and combat footers."""
+    category = BESTIARY_NPCS.get(template_key, {}).get("category", "predators")
+    return NPC_CATEGORY_LABELS.get(category, category.replace("_", " ").title())
 
 
 def build_npc_stats(template_key: str) -> dict:

@@ -72,6 +72,31 @@ def format_prey_hoard_line(stack, current_day: int) -> str:
     )
 
 
+def format_prey_hoard_footer(*, empty: bool = False) -> str:
+    if empty:
+        return (
+            "Fresh kills rot by type (3–8 sunrises); `/eat` before spoil · "
+            "rotting → `/salvage` · `/world action:cooldowns`"
+        )
+    return (
+        "Rot timers vary by carcass · `/eat` · `/drink` · `/bury` · `/preypile` · "
+        "rotting → `/salvage` · `/pack stash deposit`"
+    )
+
+
+def fresh_kill_pile_block_message(wolf_id: int, day: int) -> str | None:
+    """Return a player-facing error when fresh-kill cache cannot be opened."""
+    stacks = db.get_todays_prey_stacks(wolf_id, day)
+    if not stacks:
+        return None
+    if any(not s["is_rotting"] for s in stacks):
+        return None
+    return (
+        "Today's kill is **rotting**; the fresh-kill cache is for meat still good. "
+        "`/eat` at gut-risk or `/salvage` for bones."
+    )
+
+
 def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     block = living_wolf_block(user)
     if block:
@@ -102,14 +127,13 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     disease_note = ""
     if stack["is_rotting"]:
         from engine.disease_contract import try_rotting_meat_exposure
-
-        import random
         from engine.prey_items import PREY_ROTTING_EAT_DISEASE_CHANCE
 
+        disease_note = "\n_You choke down **rotting** flesh; gut twists._"
         if random.random() < PREY_ROTTING_EAT_DISEASE_CHANCE:
             note = try_rotting_meat_exposure(user)
             if note:
-                disease_note = f"\n{note}"
+                disease_note += f"\n{note}"
 
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:

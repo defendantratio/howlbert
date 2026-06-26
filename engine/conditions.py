@@ -52,6 +52,28 @@ def injury_heal_note(key: str, since: dict[str, int], day: int, user=None) -> st
 
 def format_conditions(user, *, day: int | None = None) -> str:
     lines = []
+    cond = user["condition"] if "condition" in user.keys() else "healthy"
+    hp = int(user["hp"]) if "hp" in user.keys() else 1
+    if cond == "dead":
+        lines.append(
+            "**Dead**; `/bones action:use item:revive` or reincarnate, or `/switchwolf` for a new wolf."
+        )
+    elif cond == "dying" or hp <= 0:
+        rnd = (
+            int(user["death_save_round"])
+            if "death_save_round" in user.keys() and user["death_save_round"]
+            else 1
+        )
+        succ = (
+            int(user["death_save_successes"])
+            if "death_save_successes" in user.keys() and user["death_save_successes"]
+            else 0
+        )
+        lines.append(
+            f"**Dying** (death save **{rnd}**/3, **{succ}** success"
+            f"{'' if succ == 1 else 'es'}); `/medic action:deathsaves` or Medic "
+            "`/medic action:stabilize`."
+        )
     exhaustion = user["exhaustion"] if "exhaustion" in user.keys() else 0
     if exhaustion:
         effect = EXHAUSTION_EFFECTS.get(exhaustion, "Unknown")
@@ -61,11 +83,9 @@ def format_conditions(user, *, day: int | None = None) -> str:
     if smoke:
         lines.append("**Wildfire smoke**; disadvantage on Perception until next sunrise.")
 
-    from engine.diseases import disease_display
+    from engine.diseases import illness_displays
 
-    illness = disease_display(user)
-    if illness:
-        name, effect = illness
+    for name, effect in illness_displays(user):
         lines.append(f"**{name}**; {effect}")
 
     from engine.quarantine import is_quarantined
@@ -75,11 +95,13 @@ def format_conditions(user, *, day: int | None = None) -> str:
             "**Quarantined**; isolated in the sick den; cannot spread illness or leave for pack activities."
         )
 
-    from engine.genetics import format_genetic_conditions
+    from engine.genetics import GENETIC_CONDITIONS, parse_genetic_conditions
 
-    genetic_text = format_genetic_conditions(user)
-    if genetic_text:
-        lines.append(genetic_text)
+    for key in parse_genetic_conditions(
+        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
+    ):
+        info = GENETIC_CONDITIONS[key]
+        lines.append(f"**{info['name']}**; {info['effect']}")
 
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
     since = parse_injury_since(
@@ -107,6 +129,12 @@ def format_conditions(user, *, day: int | None = None) -> str:
         if bone_note:
             lines.append(bone_note)
 
+        from engine.herb_buffs import format_active_herb_buffs
+
+        herb_buff_text = format_active_herb_buffs(user, day)
+        if herb_buff_text:
+            lines.append(herb_buff_text)
+
     from engine.long_term_injuries import format_long_term_injuries
 
     lt = format_long_term_injuries(user)
@@ -125,6 +153,12 @@ def format_conditions(user, *, day: int | None = None) -> str:
         sacred = format_sacred_visit_reminder(user, day)
         if sacred:
             lines.append(sacred)
+
+    from engine.blooding import format_blooding_status
+
+    blooding = format_blooding_status(user)
+    if blooding:
+        lines.append(blooding)
 
     if user["condition"] and user["condition"] != "healthy" and not lines:
         lines.append(f"**{user['condition'].title()}**")
@@ -402,6 +436,47 @@ def progress_disease(user) -> dict:
         )
 
     return result
+
+
+def progress_mental_overlay(user) -> dict:
+    """Progress fever-delirium stored in herb_buffs.mental_disease."""
+    from engine.herb_buffs import get_buffs, merge_buff_fields
+
+    overlay = get_buffs(user).get("mental_disease")
+    if not overlay:
+        return {"changed": False}
+    pseudo = dict(user)
+    pseudo["disease"] = str(overlay)
+    outcome = progress_disease(pseudo)
+    if not outcome.get("changed"):
+        return outcome
+    if outcome.get("cleared"):
+        buff_fields = merge_buff_fields(user, mental_disease=False)
+    else:
+        buff_fields = merge_buff_fields(user, mental_disease=outcome["new_stage"])
+    outcome["buff_fields"] = buff_fields
+    outcome["overlay_only"] = True
+    return outcome
+
+
+def brief_condition_blurb(user, *, day: int | None = None) -> str | None:
+    """One-line illness + herb buff summary for combat and activity embeds."""
+    from engine.diseases import illness_displays
+    from engine.herb_buffs import format_active_herb_buffs
+
+    bits: list[str] = []
+    for name, _effect in illness_displays(user):
+        bits.append(f"**{name}**")
+    if day is not None:
+        herbs = format_active_herb_buffs(user, day)
+        if herbs:
+            first = herbs.split("\n", 1)[0]
+            bits.append(first)
+    from engine.quarantine import is_quarantined
+
+    if is_quarantined(user):
+        bits.append("**Quarantined**")
+    return " · ".join(bits) if bits else None
 
 
 def treat_with_herb(user, herb_key: str, herb_meta: dict) -> str:
