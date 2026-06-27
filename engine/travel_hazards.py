@@ -12,7 +12,7 @@ from engine.vitals import apply_hp_damage
 
 def _apply_travel_hp_loss(user, dmg: int, lines: list[str], *, label: str | None = None) -> None:
     _, extras = apply_hp_damage(user, dmg)
-    lines.append(label if label else f"**−{dmg} HP**")
+    lines.append(label if label else f"**−{dmg} hp**")
     lines.extend(extras)
 
 TERRITORY_HAZARDS = {
@@ -109,13 +109,13 @@ def travel_hazard_dc(territory: str, *, season: str | None = None, guild_id: int
 def _lose_random_herb_stack(user) -> str:
     stacks = db.get_herb_stacks(user["id"])
     if not stacks:
-        return "Nothing left in the herb bag to wash away."
+        return "nothing left in the herb bag to wash away."
     stack = random.choice(stacks)
     db.remove_herb_stack(stack["id"])
     from herbs import HERBS
 
     name = HERBS.get(stack["herb_key"], {}).get("name", stack["herb_key"])
-    return f"A **{name}** stack washes from your bag."
+    return f"a **{name}** stack washes from your bag."
 
 
 def _apply_twoleg_failure(user, day: int) -> list[str]:
@@ -144,7 +144,7 @@ def roll_travel_hazard(
 ) -> tuple[bool, str]:
     spec = TERRITORY_HAZARDS.get(territory)
     if not spec:
-        return False, f"Unknown territory **{territory}**."
+        return False, f"unknown territory **{territory}**."
     dc = travel_hazard_dc(territory, season=season, guild_id=guild_id)
     fear_context = territory
     if territory == "river" and season == "spring":
@@ -163,9 +163,9 @@ def roll_travel_hazard(
     )
     season_note = ""
     if territory == "river" and season == "spring":
-        season_note = " _(spring melt; DC +2)_"
+        season_note = " _(spring melt; dc +2)_"
     if territory == "twolegplace":
-        season_note = " _(Twoleg fences, Thunderpath, monster-nests)_"
+        season_note = " _(twoleg fences, thunderpath, monster-nests)_"
     lines = [f"**{spec['label']}** travel · {format_roll_result(result)}{season_note}"]
     blizzard = season == "winter" and weather in ("snow", "blizzard", "hail")
     if blizzard and result["success"]:
@@ -179,15 +179,15 @@ def roll_travel_hazard(
             game_day=day,
             fear_context=fear_context,
         )
-        lines.append("_Blizzard; second hazard check._")
+        lines.append("_blizzard; second hazard check._")
         lines.append(format_roll_result(result2))
         if not result2["success"]:
             result = result2
     if result["success"]:
         if territory == "twolegplace":
-            lines.append("You slip past nests and fences; the Thunderpath fades behind you.")
+            lines.append("you slip past nests and fences; the thunderpath fades behind you.")
         else:
-            lines.append("Path holds; you cross safely.")
+            lines.append("path holds; you cross safely.")
         return True, "\n".join(lines)
     if territory == "twolegplace":
         lines.extend(_apply_twoleg_failure(user, day))
@@ -196,7 +196,7 @@ def roll_travel_hazard(
     if territory == "mountain":
         fields = grant_frostbite(user, day=day)
         db.update_user(user["discord_id"], wolf_id=user["id"], **fields)
-        lines.append("**Frostbite**: **−1 Dex** until treated or after a week of warmth.")
+        lines.append("**frostbite**: **−1 dex** until treated or after a week of warmth.")
     elif territory == "river":
         lines.append(_lose_random_herb_stack(user))
         ex = min(6, int(user["exhaustion"]) + 1)
@@ -208,9 +208,9 @@ def roll_travel_hazard(
         if ex_gain:
             ex = min(6, int(user["exhaustion"]) + ex_gain)
             db.set_user_conditions(user["discord_id"], exhaustion=ex)
-            lines.append(f"Wandered **{hours_lost} hours** off-trail; **+{ex_gain} exhaustion**.")
+            lines.append(f"wandered **{hours_lost} hours** off-trail; **+{ex_gain} exhaustion**.")
         else:
-            lines.append(f"Wandered **{hours_lost} hours** off-trail; legs heavy but you push on.")
+            lines.append(f"wandered **{hours_lost} hours** off-trail; legs heavy but you push on.")
     elif territory == "swamp":
         if spec.get("damage"):
             dmg = random.randint(*spec["damage"])
@@ -218,7 +218,7 @@ def roll_travel_hazard(
                 user,
                 dmg,
                 lines,
-                label=f"**Swamp poison**: **−{dmg} HP** until antidote or rest.",
+                label=f"**swamp poison**: **−{dmg} hp** until antidote or rest.",
             )
         from engine.disease_contract import try_contract_disease
 
@@ -227,7 +227,7 @@ def roll_travel_hazard(
             lines.append(poison_note)
         rot_note = try_contract_disease(user, "rot_lung", "fever", chance=0.18)
         if rot_note:
-            lines.append(f"Marsh gas: {rot_note}")
+            lines.append(f"marsh gas: {rot_note}")
     elif spec.get("damage"):
         dmg = random.randint(*spec["damage"])
         _apply_travel_hp_loss(user, dmg, lines)
@@ -235,7 +235,7 @@ def roll_travel_hazard(
 
 
 WC_ENCOUNTER_EFFECTS: dict[str, str] = {
-    "Clan patrol": "patrol",
+    "clan patrol": "patrol",
     "rogue": "rogue",
     "dog": "dog",
     "monster": "monster",
@@ -272,7 +272,7 @@ def _apply_encounter_effect(user, label: str, *, day: int, guild_id: int, channe
         )
         if ambush:
             enc_id, _key, _flavor = ambush
-            lines.append(f"A **guard hearth-hound** charges; combat **#{enc_id}** opened in-channel.")
+            lines.append(f"a **guard hearth-hound** charges; combat **#{enc_id}** opened in-channel.")
             db.adjust_mood(user["id"], -3)
             lines.append("**−3 mood**; you flatten in the ditch until it passes or you fight.")
         else:
@@ -283,7 +283,7 @@ def _apply_encounter_effect(user, label: str, *, day: int, guild_id: int, channe
                 user,
                 dmg,
                 lines,
-                label=f"**−5 mood**, **−{dmg} HP**.",
+                label=f"**−5 mood**, **−{dmg} hp**.",
             )
     elif effect == "badger":
         result = resolve_check(
@@ -302,10 +302,10 @@ def _apply_encounter_effect(user, label: str, *, day: int, guild_id: int, channe
                 user,
                 dmg,
                 lines,
-                label=f"The **badger** rakes your muzzle; **−{dmg} HP**.",
+                label=f"the **badger** rakes your muzzle; **−{dmg} hp**.",
             )
         else:
-            lines.append("You give the sett a wide berth.")
+            lines.append("you give the sett a wide berth.")
     return lines, enc_id
 
 
@@ -319,7 +319,7 @@ def _apply_find_effect(user, label: str, *, day: int, guild_id: int) -> list[str
         pool = herbs_for_verge("roadside") or ["yarrow"]
         herb_key = random.choice(pool)
         stack_id = db.add_herb_stack(user["id"], herb_key, guild_id=guild_id, acquired_day=day)
-        lines.append(f"Gathered **{medicine_herb_display(herb_key)}**; stack `#{stack_id}`.")
+        lines.append(f"gathered **{medicine_herb_display(herb_key)}**; stack `#{stack_id}`.")
     elif effect == "bones":
         bones = random.randint(5, 12)
         db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
@@ -331,16 +331,16 @@ def _apply_find_effect(user, label: str, *, day: int, guild_id: int) -> list[str
         stack_id = grant_prey_carcass(
             user["id"], "rabbit", guild_id=guild_id, acquired_day=day, bone_value=6
         )
-        lines.append(f"Risky **carrion**; carcass `#{stack_id}` in hoard.")
+        lines.append(f"risky **carrion**; carcass `#{stack_id}` in hoard.")
         filth = try_scavenge_filth_exposure(user, day=day)
         if filth:
             lines.append(filth)
     elif effect == "shelter":
         mood = db.adjust_mood(user["id"], 3)
-        lines.append(f"Dry rest under the shed; mood **{mood}** (**+3**).")
+        lines.append(f"dry rest under the shed; mood **{mood}** (**+3**).")
     elif effect == "water":
         thirst = db.adjust_thirst(user["id"], -4)
-        lines.append(f"Clean lap from the stream; thirst **{thirst}** (**−4**).")
+        lines.append(f"clean lap from the stream; thirst **{thirst}** (**−4**).")
     return lines
 
 
@@ -357,15 +357,15 @@ def roll_wilderness_encounter(
         extra, enc_id = _apply_encounter_effect(
             user, label, day=day, guild_id=guild_id, channel_id=channel_id
         )
-        body = f"Roll **{roll}**; **{label}** — {text}"
+        body = f"roll **{roll}**; **{label}** — {text}"
         if extra:
             body += "\n\n" + "\n".join(extra)
         return "encounter", body, enc_id
     if roll <= 15:
-        return "quiet", f"Roll **{roll}**; the border is quiet; only wind and distant Twoleg birds.", None
+        return "quiet", f"roll **{roll}**; the border is quiet; only wind and distant twoleg birds.", None
     label, text = random.choice(WC_ENCOUNTER_FIND)
     extra = _apply_find_effect(user, label, day=day, guild_id=guild_id)
-    body = f"Roll **{roll}**; you find **{label}** — {text}"
+    body = f"roll **{roll}**; you find **{label}** — {text}"
     if extra:
         body += "\n\n" + "\n".join(extra)
     return "find", body, None

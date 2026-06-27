@@ -13,7 +13,7 @@ def _parsed(user) -> tuple[str | None, str | None]:
 
 
 def active_disease(user) -> str | None:
-    """Legacy helper; returns cough stage or disease key."""
+    """legacy helper; returns cough stage or disease key."""
     key, stage = _parsed(user)
     if key == "cough":
         return stage
@@ -98,7 +98,7 @@ def disease_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
 def disease_hunt_multiplier(user) -> tuple[float, str]:
     key, stage = _parsed(user)
     if key == "cough" and stage == "severe":
-        return 0.75, "Blackcough; speed **−25%** hunt bones."
+        return 0.75, "blackcough; speed **−25%** hunt bones."
     if key in ("mange", "distemper", "yellowcough"):
         info = get_stage_info(key, stage or "active")
         mult = float(info.get("hunt_mult", 0.75)) if info else 0.75
@@ -113,7 +113,7 @@ def disease_hunt_multiplier(user) -> tuple[float, str]:
         info = get_stage_info(key, stage)
         mult = float(info.get("hunt_mult", 0.75)) if info else 0.75
         pct = int((1 - mult) * 100)
-        return mult, f"Rot-Lung; **−{pct}%** hunt bones."
+        return mult, f"rot-lung; **−{pct}%** hunt bones."
     if key in ("wasting_sickness", "cancer", "feral_shift", "insomnia", "chronic_stress", "obsession"):
         info = get_stage_info(key, stage or "active")
         mult = float(info.get("hunt_mult", 1.0)) if info else 1.0
@@ -141,7 +141,7 @@ def disease_attack_disadvantage(user, attack_type: str) -> bool:
 
 
 def consume_disease_check_flags(user, day: int) -> dict:
-    """Mark one-shot disease check flags after a roll."""
+    """mark one-shot disease check flags after a roll."""
     from engine.herb_buffs import get_buffs, merge_buff_fields
 
     key, stage = _parsed(user)

@@ -62,11 +62,11 @@ def format_long_term_injuries(user) -> str | None:
         if entry == "spirit_curse":
             from engine.supernatural import SPIRIT_CURSE_BLURB
 
-            lines.append(f"**Spirit Curse**: {SPIRIT_CURSE_BLURB}")
+            lines.append(f"**spirit curse**: {SPIRIT_CURSE_BLURB}")
             continue
         if entry.startswith("fear:"):
             trigger = entry[5:].replace("_", " ").title()
-            lines.append(f"**Fear of {trigger}**: Wisdom DC 12 or frightened 1 round when faced.")
+            lines.append(f"**fear of {trigger}**: wisdom dc 12 or frightened 1 round when faced.")
             continue
         info = LONG_TERM_TYPES.get(entry)
         if info:
@@ -140,7 +140,7 @@ def fear_trigger_check(
     if total >= FEAR_TRIGGER_DC:
         return False, ""
     label = triggers[0].replace("_", " ")
-    return True, f"Fear of {label} (WIS {total} vs DC {FEAR_TRIGGER_DC})"
+    return True, f"fear of {label} (wis {total} vs dc {FEAR_TRIGGER_DC})"
 
 
 def clear_long_term_injuries(wolf_id: int) -> None:
@@ -154,17 +154,17 @@ def try_cure_long_term(herb_key: str, user) -> tuple[bool, str]:
         user["long_term_injuries"] if "long_term_injuries" in user.keys() else None
     )
     if not entries:
-        return False, "No long-term injuries to lift."
+        return False, "no long-term injuries to lift."
     if herb_key == "wolfsbane":
         dmg = random.randint(2, 6)
         new_hp = max(0, int(user["hp"]) - dmg)
         db.set_user_conditions(user["discord_id"], hp=new_hp)
         clear_long_term_injuries(user["id"])
         return True, (
-            f"Spirit curse broken; long-term marks fade. The patient takes **{dmg}** poison damage."
+            f"spirit curse broken; long-term marks fade. the patient takes **{dmg}** poison damage."
         )
     clear_long_term_injuries(user["id"])
-    return True, "Marsh milk breaks the old curse; long-term injuries ease."
+    return True, "marsh milk breaks the old curse; long-term injuries ease."
 
 
 def check_adjustments(

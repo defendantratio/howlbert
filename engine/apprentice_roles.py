@@ -23,7 +23,7 @@ def parent_role(role: str) -> str | None:
 
 
 def matches_parent_role(wolf_role: str, parent: str) -> bool:
-    """True when role is the parent rank or its apprentice path."""
+    """true when role is the parent rank or its apprentice path."""
     if wolf_role == parent:
         return True
     return APPRENTICE_PARENT.get(wolf_role) == parent
@@ -37,5 +37,5 @@ def quest_role_matches(wolf_role: str, required_role: str) -> bool:
 
 
 def role_event_key(role: str) -> str:
-    """Fall back to parent role events for apprentices."""
+    """fall back to parent role events for apprentices."""
     return parent_role(role) or role

@@ -48,8 +48,8 @@ def format_maw_belief(user) -> str | None:
         raw = user["maw_belief"]
     elif user and isinstance(user, dict):
         raw = user.get("maw_belief")
-    if not raw or raw not in MAW_BELIEF_LABELS:
+    if not raw or raw not in maw_belief_labels:
         return None
-    label = MAW_BELIEF_LABELS[raw]
-    blurb = MAW_BELIEF_BLURBS.get(raw, "")
+    label = maw_belief_labels[raw]
+    blurb = maw_belief_blurbs.get(raw, "")
     return f"**{label}**; {blurb}" if blurb else f"**{label}**"

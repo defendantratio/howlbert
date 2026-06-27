@@ -34,10 +34,10 @@ def apply_winter_hunger_stress(
         return []
     placeholders = ",".join("?" * len(ids))
     conn.execute(
-        f"UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id IN ({placeholders})",
+        f"update users set hunger = max(0, hunger - ?) where id in ({placeholders})",
         (extra, *ids),
     )
-    return [f"Leaf-bare cold bites; **−{extra}** extra hunger for wolves in winter dens."]
+    return [f"leaf-bare cold bites; **−{extra}** extra hunger for wolves in winter dens."]
 
 
 def apply_food_cache_on_rollover(conn: sqlite3.Connection, guild_id: int) -> list[dict]:
@@ -84,7 +84,7 @@ def apply_season_rollover_effects(
 
 
 def try_autumn_hunt_cache(user, *, season: str) -> str | None:
-    """On successful hunt in autumn; stash +1 day of food for next sunrise."""
+    """on successful hunt in autumn; stash +1 day of food for next sunrise."""
     if season != "autumn" or not user or "id" not in user.keys():
         return None
     with db.get_db() as conn:
@@ -92,4 +92,4 @@ def try_autumn_hunt_cache(user, *, season: str) -> str | None:
             "UPDATE users SET food_cache_meals = food_cache_meals + 1 WHERE id = ?",
             (user["id"],),
         )
-    return "_Autumn cache; +1 day of food stored for next sunrise._"
+    return "_autumn cache; +1 day of food stored for next sunrise._"

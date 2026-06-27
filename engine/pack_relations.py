@@ -48,22 +48,22 @@ def relation_effect_text(standing: int) -> str:
     tag = relation_tag(standing)
     if tag == "war":
         return (
-            f"**War** (**{standing}/10**); border skirmishes, sniff fights, and treasury raids "
-            "are expected. Standing at **0** also opens an automatic territory war when no "
+            f"**war** (**{standing}/10**); border skirmishes, sniff fights, and treasury raids "
+            "are expected. standing at **0** also opens an automatic territory war when no "
             "conflict is already active. `/pack share` and `/pack aid` won't land until standing rises."
         )
     if tag == "hostile":
         return (
-            f"**Hostile** (**{standing}/10**); rival wolves attack on sight on the trail. "
-            "Foreign Medics won't treat routine wounds (`/medic`)."
+            f"**hostile** (**{standing}/10**); rival wolves attack on sight on the trail. "
+            "**medics** remain neutral; cross-pack `/medic` care still works."
         )
     if tag == "friendly":
         return (
-            f"**Friendly** (**{standing}/10**); may share hunting grounds and join each other's "
+            f"**friendly** (**{standing}/10**); may share hunting grounds and join each other's "
             f"**pack hunts** when standing stays **≥{FRIENDLY_STANDING_THRESHOLD}**."
         )
     return (
-        f"**Neutral** (**{standing}/10**); parley with `/pack howl`, `/pack share`, or `/pack aid`."
+        f"**neutral** (**{standing}/10**); parley with `/pack howl`, `/pack share`, or `/pack aid`."
     )
 
 
@@ -100,11 +100,11 @@ def can_share_territory(guild_id: int, pack_a_id: int, pack_b_id: int) -> tuple[
     standing = pack_relation(guild_id, pack_a_id, pack_b_id)
     if is_war_relation(standing):
         return False, (
-            f"Standing is **{standing}/10** (war). No shared ground until the border cools."
+            f"standing is **{standing}/10** (war). no shared ground until the border cools."
         )
     if is_hostile_relation(standing):
         return False, (
-            f"Standing **{standing}/10** is too hostile; they won't accept shared hunting ground."
+            f"standing **{standing}/10** is too hostile; they won't accept shared hunting ground."
         )
     return True, ""
 
@@ -113,11 +113,11 @@ def can_aid_rival(guild_id: int, pack_a_id: int, pack_b_id: int) -> tuple[bool, 
     standing = pack_relation(guild_id, pack_a_id, pack_b_id)
     if is_war_relation(standing):
         return False, (
-            f"Standing **{standing}/10**; your dens are at war — send aid after parley, not blades."
+            f"standing **{standing}/10**; your dens are at war — send aid after parley, not blades."
         )
     if is_hostile_relation(standing):
         return False, (
-            f"Standing **{standing}/10** is too hostile; they won't accept aid from your den."
+            f"standing **{standing}/10** is too hostile; they won't accept aid from your den."
         )
     return True, ""
 
@@ -134,17 +134,17 @@ def format_standing_war_flash(
     war = db.get_active_war_between_packs(guild_id, int(pack_a_id), int(pack_b_id))
     if war:
         return (
-            f"\n\n**Territory war declared** over **{war['territory_name']}**. "
-            "Earn points with `/pack patrol` and `/pack scout`."
+            f"\n\n**territory war declared** over **{war['territory_name']}**. "
+            "earn points with `/pack patrol` and `/pack scout`."
         )
     if db.get_active_war_for_pack(guild_id, int(pack_a_id)) or db.get_active_war_for_pack(
         guild_id, int(pack_b_id)
     ):
         return (
-            "\n\n_Standing **0** (war), but your den is already tied up in another border fight._"
+            "\n\n_standing **0** (war), but your den is already tied up in another border fight._"
         )
     return (
-        "\n\n_Standing **0** (war). A territory war opens automatically when contested "
+        "\n\n_standing **0** (war). a territory war opens automatically when contested "
         "ground exists and neither den is already fighting._"
     )
 
@@ -165,7 +165,7 @@ def can_join_friendly_pack_hunt(
         return False, None
     other = db.get_pack(int(hunt["pack_id"]))
     name = other["name"] if other else "that den"
-    return True, f"_Friendly standing **{standing}/10** with **{name}**; allied hunt._"
+    return True, f"_friendly standing **{standing}/10** with **{name}**; allied hunt._"
 
 
 def sniff_encounter_lines(
@@ -207,7 +207,7 @@ def sniff_encounter_lines(
 
     if is_friendly_relation(standing):
         return (
-            f"\n\n_A **{pack_name}** wolf on the wind; standing **{standing}/10** — "
+            f"\n\n_a **{pack_name}** wolf on the wind; standing **{standing}/10** — "
             "friendly enough to share the trail today._",
             None,
         )
@@ -268,7 +268,7 @@ def _start_rival_wolf_skirmish(
 
 
 def _pick_border_war_territory(guild_id: int, pack_a_id: int, pack_b_id: int):
-    """Contested tile held by a rival, else first unclaimed ground between dens."""
+    """contested tile held by a rival, else first unclaimed ground between dens."""
     territories = db.get_territories(guild_id)
     for owner_id in (pack_b_id, pack_a_id):
         for terr in territories:
@@ -342,8 +342,8 @@ def cross_pack_prey_dispute(
 
     new_standing = db.adjust_pack_relation(guild_id, int(h_pack), int(r_pack), -1)
     note = (
-        f"\n\n_Rival fresh-kill; **{rival['wolf_name']}** contests the pile. "
-        f"Pack standing **−1** (now **{new_standing}/10**)._"
+        f"\n\n_rival fresh-kill; **{rival['wolf_name']}** contests the pile. "
+        f"pack standing **−1** (now **{new_standing}/10**)._"
     )
     note += format_standing_war_flash(guild_id, int(h_pack), int(r_pack), new_standing)
     enc_id = _start_rival_wolf_skirmish(
@@ -358,17 +358,17 @@ def cross_pack_prey_dispute(
 
 
 def court_relation_note(courter, target, guild_id: int | None, effective: str) -> str | None:
-    """Footer line when cross-pack standing shaped court difficulty."""
+    """footer line when cross-pack standing shaped court difficulty."""
     standing = cross_pack_relation(courter, target, guild_id)
     if standing is None:
         return None
     tag = relation_tag(standing)
     if effective == "friendly" and tag == "friendly":
-        return f"_Rival standing **{standing}/10** (friendly) eased the approach._"
+        return f"_rival standing **{standing}/10** (friendly) eased the approach._"
     if effective == "hostile" and tag in ("hostile", "war"):
         return (
-            f"_Rival standing **{standing}/10** ({tag}); the den reads your court as a challenge._"
+            f"_rival standing **{standing}/10** ({tag}); the den reads your court as a challenge._"
         )
     if tag == "neutral":
-        return f"_Cross-pack standing **{standing}/10** (neutral)._"
+        return f"_cross-pack standing **{standing}/10** (neutral)._"
     return None

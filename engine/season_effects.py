@@ -37,8 +37,8 @@ def season_track_dc_label(season: str) -> str | None:
         return None
     name = season_display(season)
     if mod > 0:
-        return f"+{mod} track DC ({name})"
-    return f"{mod} track DC ({name})"
+        return f"+{mod} track dc ({name})"
+    return f"{mod} track dc ({name})"
 
 
 def season_hunt_modifier_label(season: str) -> str:
@@ -52,11 +52,11 @@ def season_hunt_modifier_label(season: str) -> str:
 def season_forage_modifier_label(season: str) -> str:
     mod = SEASON_FORAGE_DC_MOD.get(season, 0)
     if mod == 0:
-        return "normal forage DC"
+        return "normal forage dc"
     name = season_display(season)
     if mod > 0:
-        return f"+{mod} forage DC ({name}; scarcer plants)"
-    return f"{mod} forage DC ({name}; easier pickings)"
+        return f"+{mod} forage dc ({name}; scarcer plants)"
+    return f"{mod} forage dc ({name}; easier pickings)"
 
 
 def season_activity_blurb(season: str) -> str:
@@ -78,11 +78,11 @@ def season_activity_blurb(season: str) -> str:
         "winter": (
             "Forage **+5 DC** (snow). Hunting **+2 DC**. Blizzards double travel hazard checks. "
             "Wolves need **1.5×** food to avoid exhaustion. "
-            f"Failed forage may spoil a herb stack (**{int(WINTER_FORAGE_SPOIL_CHANCE * 100)}%**)."
+            f"failed forage may spoil a herb stack (**{int(WINTER_FORAGE_SPOIL_CHANCE * 100)}%**)."
         ),
     }
     extra = extras.get(season, "")
-    base = f"**Hunts:** {hunt} · **Herbs:** {forage}"
+    base = f"**hunts:** {hunt} · **herbs:** {forage}"
     return f"{base}\n{extra}" if extra else base
 
 
@@ -101,10 +101,10 @@ def maybe_spoil_herb_on_forage_fail(user, *, season: str) -> str:
         return ""
     stacks = db.get_herb_stacks(user["id"])
     if not stacks:
-        return "\n_Snow ruined what little you had gathered._"
+        return "\n_snow ruined what little you had gathered._"
     stack = random.choice(stacks)
     db.remove_herb_stack(stack["id"])
     from herbs import HERBS
 
     name = HERBS.get(stack["herb_key"], {}).get("name", stack["herb_key"])
-    return f"\n_Winter spoil; **{name}** froze in your bag._"
+    return f"\n_winter spoil; **{name}** froze in your bag._"

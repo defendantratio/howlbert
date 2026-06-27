@@ -23,7 +23,7 @@ BORDER_CAT_WEIGHTS: tuple[tuple[str, int], ...] = (
 
 BORDER_ENCOUNTER_TEXT = {
     "clan_warrior": (
-        "A **clan warrior** drops from the branches; forest-cat scent, bristling tail, "
+        "a **clan warrior** drops from the branches; forest-cat scent, bristling tail, "
         "eyes on your throat.",
         "Moss and cat-musk on the wind. A **patrol cat** steps onto the trail, fur on end.",
     ),
@@ -46,8 +46,8 @@ BORDER_ENCOUNTER_TEXT = {
 }
 
 BORDER_VICTORY_TEXT = (
-    "The cat breaks off, spitting, and melts back toward **cat territory**.",
-    "You drive the patrol back across the scent-line; for now, the border holds.",
+    "the cat breaks off, spitting, and melts back toward **cat territory**.",
+    "you drive the patrol back across the scent-line; for now, the border holds.",
     "The forest-cat retreats, leaving claw-marks in the bark and fury in the air.",
 )
 
@@ -107,7 +107,7 @@ def start_border_cat_fight(
         if clan_name not in flavor:
             flavor = f"**{clan_name}** scent on the wind.\n\n{flavor}"
     if violation:
-        flavor += "\n\n_This patrol answers to a clan your den has sworn peace with; blood here has consequences._"
+        flavor += "\n\n_this patrol answers to a clan your den has sworn peace with; blood here has consequences._"
     return enc_id, template_key, flavor
 
 
@@ -158,8 +158,8 @@ async def try_complete_border_victory(
         db.mark_border_fight_rewarded(enc_id)
         db.end_encounter(enc_id)
         return howlbert_embed(
-            "Cat Escapes",
-            "The patrol cat limps off; but you're too hurt to claim the border.",
+            "cat escapes",
+            "the patrol cat limps off; but you're too hurt to claim the border.",
             color=SUCCESS_COLOR,
         )
 
@@ -196,7 +196,7 @@ async def try_complete_border_victory(
         )
 
     cat_name = cat["npc_name"] or "The patrol cat"
-    embed = howlbert_embed("Border Held", color=SUCCESS_COLOR)
+    embed = howlbert_embed("border held", color=SUCCESS_COLOR)
     embed.description = (
         f"{random.choice(BORDER_VICTORY_TEXT)}\n\n"
         f"**{cat_name}** driven back.\n"
@@ -204,10 +204,10 @@ async def try_complete_border_victory(
     )
     if violation_note:
         embed.description += violation_note
-    embed.add_field(name="Spoils", value=format_bones(net_amount, signed=True), inline=True)
+    embed.add_field(name="spoils", value=format_bones(net_amount, signed=True), inline=True)
     if lucky_bonus > 0:
-        embed.add_field(name="Lucky Tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
+        embed.add_field(name="lucky tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
     if tax > 0:
-        embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
-    embed.set_footer(text="/field action:sniff · /pack pact action:view")
+        embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
+    embed.set_footer(text="/field action:sniff · /pact action:view")
     return embed

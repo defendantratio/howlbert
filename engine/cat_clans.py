@@ -84,7 +84,7 @@ def normalize_clan_name(name: str) -> str:
 
 
 def canon_clan_name(name: str) -> str | None:
-    """Return canonical Clan spelling, or None if not a known Clan."""
+    """return canonical clan spelling, or none if not a known clan."""
     raw = normalize_clan_name(name)
     if not raw:
         return None
@@ -121,7 +121,7 @@ def sniff_cat_scent_line(
     if allied_clan:
         canon = canon_clan_name(allied_clan) or allied_clan
         return (
-            f"Rival **Clan** scent cuts across **{canon}**'s border; "
+            f"rival **clan** scent cuts across **{canon}**'s border; "
             "a patrol blocks the trail."
         )
     return random.choice(GENERIC_CAT_SCENT)
@@ -132,7 +132,7 @@ def receive_border_flavor(clan_name: str, *, trust: int) -> str:
     where = CLAN_TERRITORY.get(canon, "the border")
     if trust >= 75:
         return (
-            f"A **{canon}** patrol left the bundle at the scent-line near {where}; "
+            f"a **{canon}** patrol left the bundle at the scent-line near {where}; "
             "the deputy nodded you through."
         )
     return f"**{canon}** warriors dropped goods at the border stones by {where}."
@@ -141,7 +141,7 @@ def receive_border_flavor(clan_name: str, *, trust: int) -> str:
 def barter_border_flavor(clan_name: str) -> str:
     canon = canon_clan_name(clan_name) or clan_name
     return (
-        f"At the **{canon}** border, warriors trade spare prey and herbs "
+        f"at the **{canon}** border, warriors trade spare prey and herbs "
         "for wolf hoard scraps; no blood, just barter."
     )
 
@@ -150,23 +150,23 @@ def forge_success_flavor(clan_name: str) -> str:
     canon = canon_clan_name(clan_name) or clan_name
     where = CLAN_TERRITORY.get(canon, "the forest")
     return (
-        f"Clan deputies and your **Alpha** mark the stones between wolf runs and {where}."
+        f"clan deputies and your **alpha** mark the stones between wolf runs and {where}."
     )
 
 
 def validate_clan_name(name: str) -> tuple[str | None, str | None]:
     name = normalize_clan_name(name)
     if len(name) < 3 or len(name) > 24:
-        return None, "Clan name must be 3-24 characters."
+        return None, "clan name must be 3-24 characters."
     if not _CLAN_RE.match(name):
-        return None, "Use letters only (e.g. **ThunderClan**)."
+        return None, "use letters only (e.g. **thunderclan**)."
     canon = canon_clan_name(name)
     if canon:
         return canon, None
     # Allow legacy stored names (old pacts) but steer new treaties to canon.
     if name.casefold().replace(" ", "") in LEGACY_CAT_CLAN_ALIASES:
         return LEGACY_CAT_CLAN_ALIASES[name.casefold().replace(" ", "")], None
-    return None, f"Pick one of the four forest Clans: {format_four_clans()}."
+    return None, f"pick one of the four forest clans: {format_four_clans()}."
 
 
 def rival_clans(allied_clan: str) -> list[str]:

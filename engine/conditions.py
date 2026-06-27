@@ -27,7 +27,7 @@ def parse_injury_since(raw: str | None) -> dict[str, int]:
 
 
 def injury_heal_note(key: str, since: dict[str, int], day: int, user=None) -> str:
-    """Show heal_days progress; injuries clear only via /treat, not time alone."""
+    """show heal_days progress; injuries clear only via /treat, not time alone."""
     info = INJURIES.get(key)
     if not info or info.get("permanent"):
         return ""
@@ -56,7 +56,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
     hp = int(user["hp"]) if "hp" in user.keys() else 1
     if cond == "dead":
         lines.append(
-            "**Dead**; `/bones action:use item:revive` or reincarnate, or `/switchwolf` for a new wolf."
+            "**dead**; `/bones action:use item:revive` or reincarnate, or `/switchwolf` for a new wolf."
         )
     elif cond == "dying" or hp <= 0:
         rnd = (
@@ -70,18 +70,18 @@ def format_conditions(user, *, day: int | None = None) -> str:
             else 0
         )
         lines.append(
-            f"**Dying** (death save **{rnd}**/3, **{succ}** success"
-            f"{'' if succ == 1 else 'es'}); `/medic action:deathsaves` or Medic "
+            f"**dying** (death save **{rnd}**/3, **{succ}** success"
+            f"{'' if succ == 1 else 'es'}); `/medic action:deathsaves` or medic "
             "`/medic action:stabilize`."
         )
     exhaustion = user["exhaustion"] if "exhaustion" in user.keys() else 0
     if exhaustion:
         effect = EXHAUSTION_EFFECTS.get(exhaustion, "Unknown")
-        lines.append(f"**Exhaustion {exhaustion}/6**; {effect}")
+        lines.append(f"**exhaustion {exhaustion}/6**; {effect}")
 
     smoke = int(user["smoke_debuff"]) if "smoke_debuff" in user.keys() else 0
     if smoke:
-        lines.append("**Wildfire smoke**; disadvantage on Perception until next sunrise.")
+        lines.append("**wildfire smoke**; disadvantage on perception until next sunrise.")
 
     from engine.diseases import illness_displays
 
@@ -92,7 +92,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
 
     if is_quarantined(user):
         lines.append(
-            "**Quarantined**; isolated in the sick den; cannot spread illness or leave for pack activities."
+            "**quarantined**; isolated in the sick den; cannot spread illness or leave for pack activities."
         )
 
     from engine.genetics import GENETIC_CONDITIONS, parse_genetic_conditions
@@ -114,7 +114,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
             if day is not None:
                 line += injury_heal_note(key, since, day, user=user)
             if info.get("treatment"):
-                line += f"\n_Treatment: {info['treatment']}_"
+                line += f"\n_treatment: {info['treatment']}_"
             lines.append(line)
 
     if day is not None:
@@ -123,7 +123,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
 
         if broom_splint_active(user):
             lines.append(
-                "**Broom splint**; move at half speed; break won't worsen this sunrise."
+                "**broom splint**; move at half speed; break won't worsen this sunrise."
             )
         bone_note = bone_rest_activity_block(user, day=day)
         if bone_note:
@@ -143,7 +143,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
 
     if bool(int(user["frightened_fire"] if "frightened_fire" in user.keys() else 0)):
         lines.append(
-            "**Frightened (fire):** cannot move closer to flame; disadvantage on attacks and checks "
+            "**frightened (fire):** cannot move closer to flame; disadvantage on attacks and checks "
             "while fire is in sight. Move **30+ ft** away or wait until it is out."
         )
 
@@ -163,11 +163,11 @@ def format_conditions(user, *, day: int | None = None) -> str:
     if user["condition"] and user["condition"] != "healthy" and not lines:
         lines.append(f"**{user['condition'].title()}**")
 
-    return "\n".join(lines) if lines else "Healthy: no active conditions."
+    return "\n".join(lines) if lines else "healthy: no active conditions."
 
 
 def roll_injury() -> str:
-    """Roll 1d10 on the injury table."""
+    """roll 1d10 on the injury table."""
     roll = random.randint(1, 10)
     return INJURY_TABLE[roll - 1]
 
@@ -193,16 +193,16 @@ def validate_stats(role: str, stats: dict) -> str | None:
     total = sum(stats[f"attr_{k}"] for k in ("str", "dex", "con", "int", "cha", "wis"))
     for key, val in stats.items():
         if val < 1 or val > 10:
-            return "Each attribute must be between 1 and 10."
+            return "each attribute must be between 1 and 10."
     if total < lo or total > hi:
-        return f"Attribute total must be {lo}–{hi} for your role (yours: {total})."
+        return f"attribute total must be {lo}–{hi} for your role (yours: {total})."
     return None
 
 
 def apply_meal_energy(user, prey_bones: int) -> tuple[int, int, int]:
     """
-    Eating fresh-kill restores energy: −1 exhaustion and a little HP.
-    Returns (new_hp, new_exhaustion, hp_gained).
+    eating fresh-kill restores energy: −1 exhaustion and a little hp.
+    returns (new_hp, new_exhaustion, hp_gained).
     """
     exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
     hp = int(user["hp"])
@@ -216,20 +216,20 @@ def apply_meal_energy(user, prey_bones: int) -> tuple[int, int, int]:
 
 
 def apply_short_rest_healing(user, herb_heal: int = 0) -> int:
-    """Without herbs: not short-rest healing. With herb: 1d4+1 up to 3/day tracked externally."""
+    """without herbs: not short-rest healing. with herb: 1d4+1 up to 3/day tracked externally."""
     heal = herb_heal
     new_hp = min(user["max_hp"], user["hp"] + heal)
     return new_hp
 
 
 def apply_long_rest_healing(user) -> tuple[int, int]:
-    """HP and exhaustion recovery from a full sleep."""
+    """hp and exhaustion recovery from a full sleep."""
     benefits = apply_long_rest_benefits(user)
     return benefits["hp"], benefits["exhaustion"]
 
 
 def apply_long_rest_benefits(user) -> dict[str, int]:
-    """Long rest: HP recovery, exhaustion relief, modest mood lift. Does not replace eating or drinking."""
+    """long rest: hp recovery, exhaustion relief, modest mood lift. does not replace eating or drinking."""
     from config import LONG_REST_EXHAUSTION_RELIEF, LONG_REST_HP_GAIN, LONG_REST_MOOD_GAIN
 
     cond = user["condition"] if "condition" in user.keys() else "healthy"
@@ -277,9 +277,9 @@ def _survival_or_con_mod(user) -> int:
 
 
 def progress_injuries(user, *, day: int | None = None) -> dict:
-    """Daily injury effects at sunrise (bleeding, infection).
+    """daily injury effects at sunrise (bleeding, infection).
 
-    Injuries with heal_days do not auto-clear; only herbs and /treat remove them.
+    injuries with heal_days do not auto-clear; only herbs and /treat remove them.
     """
     if day is None:
         day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
@@ -317,18 +317,18 @@ def progress_injuries(user, *, day: int | None = None) -> dict:
                 result["hp_loss"] += 1
                 result["exhaustion_gain"] += 1
                 result["messages"].append(
-                    f"**Infected Wound**; save {total} vs DC {dc}: fail (−1 HP, +1 exhaustion)."
+                    f"**infected wound**; save {total} vs dc {dc}: fail (−1 hp, +1 exhaustion)."
                 )
             else:
                 result["messages"].append(
-                    f"**Infected Wound**; save {total} vs DC {dc}: held steady today."
+                    f"**infected wound**; save {total} vs dc {dc}: held steady today."
                 )
 
     return result
 
 
 def progress_disease(user) -> dict:
-    """Daily disease progression roll. Returns outcome dict."""
+    """daily disease progression roll. returns outcome dict."""
     from engine.diseases import encode_disease, get_stage_info, parse_disease
     from engine.herb_buffs import consume_disease_save_after_roll, roll_disease_save_die
 
@@ -385,7 +385,7 @@ def progress_disease(user) -> dict:
 
     symptom_bits: list[str] = []
     if result["hp_loss"]:
-        symptom_bits.append(f"−**{result['hp_loss']}** HP")
+        symptom_bits.append(f"−**{result['hp_loss']}** hp")
     if result["exhaustion_gain"]:
         symptom_bits.append(f"+**{result['exhaustion_gain']}** exhaustion")
     if result["hunger_loss"]:
@@ -404,17 +404,17 @@ def progress_disease(user) -> dict:
             result["cleared"] = True
             result["new_stage"] = None
             result["messages"].append(
-                f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: **recovered**."
+                f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: **recovered**."
             )
             return result
         if disease_key == "cough" and stage == "deadly":
             result["messages"].append(
-                f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
-                f"held steady, but fever still cost HP."
+                f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+                f"held steady, but fever still cost hp."
             )
         else:
             result["messages"].append(
-                f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: held steady."
+                f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: held steady."
             )
         return result
 
@@ -423,7 +423,7 @@ def progress_disease(user) -> dict:
         result["new_stage"] = encode_disease(disease_key, new_stage)
         nxt = get_stage_info(disease_key, new_stage)
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
             f"worsened to **{nxt['name'] if nxt else new_stage}**."
         )
     elif disease_key == "cough" and stage == "deadly":
@@ -431,42 +431,42 @@ def progress_disease(user) -> dict:
         result["hp_loss"] += extra
         result["exhaustion_gain"] += 1
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
-            f"fail (−**{extra}** HP, **+1 exhaustion**)."
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+            f"fail (−**{extra}** hp, **+1 exhaustion**)."
         )
     elif disease_key == "yellowcough":
         extra = random.randint(1, 4)
         result["hp_loss"] += extra
         result["exhaustion_gain"] += 1
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
-            f"yellow phlegm and fever spike (−**{extra}** HP, **+1 exhaustion**)."
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+            f"yellow phlegm and fever spike (−**{extra}** hp, **+1 exhaustion**)."
         )
     elif disease_key == "rot_lung" and stage == "necrosis":
         extra = random.randint(1, 3)
         result["hp_loss"] += extra
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
-            f"lung-rot spreads (−**{extra}** HP)."
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+            f"lung-rot spreads (−**{extra}** hp)."
         )
     elif disease_key == "shaking_sickness" and stage == "hemorrhage":
         extra = random.randint(0, 2)
         if extra:
             result["hp_loss"] += extra
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: "
-            f"bleeding continues (−**{result['hp_loss']}** HP this sunrise)."
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+            f"bleeding continues (−**{result['hp_loss']}** hp this sunrise)."
         )
     else:
         result["messages"].append(
-            f"**{info['name']}**; save **{total}** vs DC **{info['dc']}**: symptoms persist."
+            f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: symptoms persist."
         )
 
     return result
 
 
 def progress_mental_overlay(user) -> dict:
-    """Progress fever-delirium stored in herb_buffs.mental_disease."""
+    """progress fever-delirium stored in herb_buffs.mental_disease."""
     from engine.herb_buffs import get_buffs, merge_buff_fields
 
     overlay = get_buffs(user).get("mental_disease")
@@ -487,7 +487,7 @@ def progress_mental_overlay(user) -> dict:
 
 
 def brief_condition_blurb(user, *, day: int | None = None) -> str | None:
-    """One-line illness + herb buff summary for combat and activity embeds."""
+    """one-line illness + herb buff summary for combat and activity embeds."""
     from engine.diseases import illness_displays
     from engine.herb_buffs import format_active_herb_buffs
 
@@ -507,7 +507,7 @@ def brief_condition_blurb(user, *, day: int | None = None) -> str | None:
 
 
 def treat_with_herb(user, herb_key: str, herb_meta: dict) -> str:
-    """Returns outcome: cured_disease, cured_injury, cured_genetic, healed, stabilized, rabies_ease, no_effect."""
+    """returns outcome: cured_disease, cured_injury, cured_genetic, healed, stabilized, rabies_ease, no_effect."""
     from engine.diseases import disease_matches_cure, parse_disease
     from engine.genetics import genetic_keys_matching_cures
     from engine.herb_buffs import DISEASE_DOSE_HERBS, is_cough_suppression_herb
@@ -552,8 +552,8 @@ def treat_with_herb(user, herb_key: str, herb_meta: dict) -> str:
 
 def roll_poison_herb_misuse(user, herb_key: str, *, day: int) -> tuple[bool, str, dict]:
     """
-    CON save for restricted poison herbs.
-    Returns (survived_ok, message, db_fields).
+    con save for restricted poison herbs.
+    returns (survived_ok, message, db_fields).
     """
     import random
 
@@ -584,7 +584,7 @@ def roll_poison_herb_misuse(user, herb_key: str, *, day: int) -> tuple[bool, str
     note = "half damage on save" if result["success"] else "full poison damage"
     return (
         new_hp > 0,
-        format_roll_result(result) + f"\n**Poison misuse**; **−{dmg} HP** ({note}).",
+        format_roll_result(result) + f"\n**poison misuse**; **−{dmg} hp** ({note}).",
         {"hp": new_hp},
     )
 

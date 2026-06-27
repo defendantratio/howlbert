@@ -51,9 +51,9 @@ class AvatarCropView(ui.View):
 
     def _embed(self) -> discord.Embed:
         embed = howlbert_embed(
-            f"Crop — {self.wolf['wolf_name']}",
+            f"crop — {self.wolf['wolf_name']}",
             (
-                "Move and zoom until the portrait looks right, then **Save**.\n"
+                "move and zoom until the portrait looks right, then **save**.\n"
                 "The preview circle matches how Discord shows webhook avatars."
             ),
             color=SUCCESS_COLOR,
@@ -121,8 +121,8 @@ class AvatarCropView(ui.View):
         if not url:
             await interaction.followup.send(
                 embed=howlbert_embed(
-                    "No Avatar Cache",
-                    "Create a channel named **#howlbert-avatars** (bot can post there), "
+                    "no avatar cache",
+                    "create a channel named **#howlbert-avatars** (bot can post there), "
                     "or set `AVATAR_CACHE_CHANNEL_ID` in `.env` so cropped avatars can be hosted.",
                     color=ERROR_COLOR,
                 ),
@@ -139,7 +139,7 @@ class AvatarCropView(ui.View):
         await interaction.followup.send(
             embed=howlbert_embed(
                 self.wolf["wolf_name"],
-                "Proxy avatar saved.",
+                "proxy avatar saved.",
                 color=SUCCESS_COLOR,
             ),
             ephemeral=True,
@@ -151,7 +151,7 @@ class AvatarCropView(ui.View):
         for child in self.children:
             child.disabled = True
         await interaction.response.edit_message(
-            embed=howlbert_embed("Cancelled", "Avatar not changed.", color=ERROR_COLOR),
+            embed=howlbert_embed("cancelled", "avatar not changed.", color=ERROR_COLOR),
             attachments=[],
             view=self,
         )

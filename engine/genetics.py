@@ -258,6 +258,7 @@ REGISTERABLE_GENETIC = frozenset(
 
 # Birth / register genetics that herbs must never remove (splints don't regrow limbs).
 
+
 HERB_INCURABLE_GENETICS = frozenset(
 
     {
@@ -390,7 +391,7 @@ def encode_genetic_conditions(keys: list[str]) -> str:
 
 def parse_genetic_register_input(raw: str | None) -> tuple[list[str], str | None]:
 
-    """Parse `/register genetic:` comma-separated list. Returns (keys, error)."""
+    """parse `/register genetic:` comma-separated list. returns (keys, error)."""
 
     if not raw or not raw.strip():
 
@@ -410,7 +411,7 @@ def parse_genetic_register_input(raw: str | None) -> tuple[list[str], str | None
 
         if key not in GENETIC_CONDITIONS:
 
-            return [], f"Unknown genetic condition **{part.strip()}**."
+            return [], f"unknown genetic condition **{part.strip()}**."
 
         if key not in REGISTERABLE_GENETIC:
 
@@ -543,7 +544,7 @@ def genetic_hunt_multiplier(user) -> tuple[float, str]:
 
 
 def genetic_blocks_howl(user) -> tuple[bool, str]:
-    """True when a genetic condition (e.g. muteness) forbids howling/rallying."""
+    """true when a genetic condition (e.g. muteness) forbids howling/rallying."""
     keys = parse_genetic_conditions(
         user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
     )

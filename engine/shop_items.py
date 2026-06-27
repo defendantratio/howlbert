@@ -43,7 +43,7 @@ def roll_herb_bundle_heal() -> int:
 
 
 def roll_herb_bundle_grants() -> list[tuple[str, str]]:
-    """Return [(herb_key, display_name), ...] for a random herb bundle."""
+    """return [(herb_key, display_name), ...] for a random herb bundle."""
     from herbs_compendium import HERBS
 
     count = random.randint(2, 4)
@@ -60,7 +60,7 @@ def grant_herb_bundle(discord_id: int) -> tuple[list[str], str]:
 
     grants = roll_herb_bundle_grants()
     if not grants:
-        return [], "The bundle was empty."
+        return [], "the bundle was empty."
     lines: list[str] = []
     for key, name in grants:
         item = db.get_item_by_key(herb_inventory_key(key))
@@ -69,7 +69,7 @@ def grant_herb_bundle(discord_id: int) -> tuple[list[str], str]:
         db.grant_item(discord_id, item["id"])
         lines.append(f"**{name}** (`{herb_inventory_key(key)}`)")
     if not lines:
-        return [], "The bundle was empty."
+        return [], "the bundle was empty."
     return [herb_inventory_key(k) for k, _ in grants], " · ".join(lines)
 
 
@@ -86,12 +86,12 @@ def use_herb_bundle(user, discord_id: int) -> tuple[bool, str, dict]:
     heal = roll_herb_bundle_heal()
     cap = effective_max_hp(user)
     new_hp = min(cap, int(user["hp"]) + heal)
-    msg = f"Bundle salve eases old aches (**+{heal} HP**). {summary}"
+    msg = f"bundle salve eases old aches (**+{heal} hp**). {summary}"
     return True, msg, {"hp": new_hp}
 
 
 def roll_prey_bundle_grants() -> list[str]:
-    """Random prey keys for a prey bundle; mostly small game."""
+    """random prey keys for a prey bundle; mostly small game."""
     from engine.prey_items import PREY_CATALOG
 
     count = random.randint(2, 3)

@@ -62,17 +62,17 @@ def roll_rest_omen() -> tuple[str, str]:
         line = random.choice(STARCLAN_BAD_OMENS)
         return (
             "bad",
-            f"{line}\n\nRoll **1**; bad omen (**disadvantage** on tomorrow's first roll).",
+            f"{line}\n\nroll **1**; bad omen (**disadvantage** on tomorrow's first roll).",
         )
     if roll == 20:
         line = random.choice(STARCLAN_GOOD_OMENS)
         return (
             "good",
-            f"{line}\n\nRoll **20**; good omen (**advantage** on tomorrow's first roll).",
+            f"{line}\n\nroll **20**; good omen (**advantage** on tomorrow's first roll).",
         )
     if roll >= 18 and random.random() < 0.4:
         line = random.choice(STARCLAN_VISION_OMENS)
-        return "vision", f"{line}\n\nRoll **{roll}**; **StarClan** vision (no roll buff, +mood)."
+        return "vision", f"{line}\n\nroll **{roll}**; **starclan** vision (no roll buff, +mood)."
     return "neutral", random.choice(STARCLAN_NEUTRAL_OMENS).format(roll=roll)
 
 

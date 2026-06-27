@@ -39,16 +39,16 @@ def grant_tier2_rewards(
     """Fulfill Kickstarter Tier 2: badge, 75 bones, one inventory item."""
     if bonus_item not in KICKSTARTER_TIER2_BONUS_ITEMS:
         allowed = ", ".join(KICKSTARTER_TIER2_BONUS_ITEMS)
-        return False, f"Invalid bonus item. Pick one of: {allowed}."
+        return False, f"invalid bonus item. pick one of: {allowed}."
 
     user = db.get_user(discord_id)
     if not user:
-        return False, "Player must `/register` a wolf before Tier 2 rewards."
+        return False, "player must `/register` a wolf before tier 2 rewards."
 
     item = db.get_item_by_key(bonus_item)
     if not item:
         allowed = ", ".join(KICKSTARTER_TIER2_BONUS_ITEMS)
-        return False, f"Shop item `{bonus_item}` not found in database. Pick one of: {allowed}."
+        return False, f"shop item `{bonus_item}` not found in database. pick one of: {allowed}."
 
     notes: list[str] = []
     if grant_badge:

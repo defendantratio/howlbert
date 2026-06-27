@@ -38,7 +38,7 @@ def wolves_share_pack(a, b) -> bool:
 
 
 def is_cross_pack_pair(a, b) -> bool:
-    """True when two wolves are not in the same Great Pack (at least one in a den)."""
+    """true when two wolves are not in the same great pack (at least one in a den)."""
     if wolves_share_pack(a, b):
         return False
     pack_a = a["pack_id"] if a and "pack_id" in a.keys() else None
@@ -103,8 +103,8 @@ def pick_yield_caught_flavor() -> str:
 
 def apply_yield_caught(user) -> tuple[str | None, str]:
     """
-    If a wolf in a pack is caught yielding, penalize standing.
-    Returns (expulsion note, flavor text) or (None, '').
+    if a wolf in a pack is caught yielding, penalize standing.
+    returns (expulsion note, flavor text) or (none, '').
     """
     if not user:
         return None, ""
@@ -116,7 +116,7 @@ def apply_yield_caught(user) -> tuple[str | None, str]:
 
     flavor = pick_yield_caught_flavor()
     kick = db.adjust_wolf_standing_by_id(user["id"], YIELD_CAUGHT_STANDING)
-    expulsion_note = "You were **cast out** of the pack." if kick == "kicked" else None
+    expulsion_note = "you were **cast out** of the pack." if kick == "kicked" else None
     return expulsion_note, flavor
 
 
@@ -151,11 +151,13 @@ def _apply_standing_penalties(
             continue
         kick = db.adjust_wolf_standing_by_id(wolf["id"], penalty)
         if kick == "kicked" and wolf["id"] == actor["id"]:
-            expulsion_note = "You were **cast out** of the pack."
+            expulsion_note = "you were **cast out** of the pack."
     return expulsion_note
 
 
-def apply_cross_pack_mate_caught(user, partner) -> tuple[str | None, str]:
+def apply_cross_pack_mate_caught(
+    user, partner, *, guild_id: int | None = None, day: int = 0
+) -> tuple[str | None, str]:
     """
     If a cross-pack pairing is caught, penalize standing for wolves in a pack.
     Returns (expulsion note for actor, flavor text) or (None, '').
@@ -171,20 +173,29 @@ def apply_cross_pack_mate_caught(user, partner) -> tuple[str | None, str]:
         penalty=cross_pack_mate_caught_standing(),
         actor=user,
     )
+    if guild_id:
+        db.record_cross_pack_scandal(
+            guild_id,
+            int(user["id"]),
+            int(partner["id"]),
+            caught_day=day or 0,
+        )
     return expulsion_note, flavor
 
 
 def apply_medic_mate_caught(user, partner) -> tuple[str | None, str]:
     """
-    If a Medic mates and is caught, penalize standing and exile family.
-    Returns (expulsion note for actor, flavor text) or (None, '').
+    if a medic mates and is caught, penalize standing and exile family.
+    returns (expulsion note for actor, flavor text) or (none, '').
     """
     from engine.healer_code import apply_medic_mate_caught as _healer_mate
 
     return _healer_mate(user, partner)
 
 
-def apply_mate_infractions(user, partner) -> tuple[str | None, list[str]]:
+def apply_mate_infractions(
+    user, partner, *, guild_id: int | None = None, day: int = 0
+) -> tuple[str | None, list[str]]:
     """
     Run all mating infraction checks (cross-pack, medic oath, etc.).
     Returns (expulsion note for actor, embed lines).
@@ -192,11 +203,13 @@ def apply_mate_infractions(user, partner) -> tuple[str | None, list[str]]:
     lines: list[str] = []
     expulsion_note = None
 
-    cross_exp, cross_flavor = apply_cross_pack_mate_caught(user, partner)
+    cross_exp, cross_flavor = apply_cross_pack_mate_caught(
+        user, partner, guild_id=guild_id, day=day
+    )
     if cross_flavor:
         lines.append(
-            f"**Caught (cross-pack)**; {cross_flavor}\n"
-            f"Standing **{cross_pack_mate_caught_standing()}** for each wolf still in a pack."
+            f"**caught (cross-pack)**; {cross_flavor}\n"
+            f"standing **{cross_pack_mate_caught_standing()}** for each wolf still in a pack."
         )
         expulsion_note = cross_exp
 

@@ -29,7 +29,7 @@ async def ensure_pack_role(guild: discord.Guild, name: str) -> discord.Role | No
         return None
     try:
         return await guild.create_role(
-            name=name, mentionable=True, reason="Howlbert pack role"
+            name=name, mentionable=True, reason="howlbert pack role"
         )
     except (discord.Forbidden, discord.HTTPException):
         logger.info("Could not create pack role %s in guild %s", name, guild.id)
@@ -72,9 +72,9 @@ async def sync_member_pack_role(
     if role in member.roles:
         return None
     if role >= me.top_role:
-        return f"⚠️ Move my role above **{role.name}** so I can assign pack roles."
+        return f"⚠️ move my role above **{role.name}** so i can assign pack roles."
     try:
         await member.add_roles(role, reason="Howlbert pack join")
     except (discord.Forbidden, discord.HTTPException):
         return None
-    return f"Given the **{role.name}** role."
+    return f"given the **{role.name}** role."

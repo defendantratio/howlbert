@@ -110,9 +110,9 @@ def fulfill_shop_order(order_id: int, *, notes: str = "") -> tuple[bool, str]:
             "SELECT * FROM kofi_shop_orders WHERE id = ?", (order_id,)
         ).fetchone()
         if not row:
-            return False, "Order not found."
+            return False, "order not found."
         if row["status"] != "pending":
-            return False, f"Order #{order_id} is already **{row['status']}**."
+            return False, f"order #{order_id} is already **{row['status']}**."
         conn.execute(
             """
             UPDATE kofi_shop_orders
@@ -123,7 +123,7 @@ def fulfill_shop_order(order_id: int, *, notes: str = "") -> tuple[bool, str]:
         )
     label = row["product_label"]
     who = f"<@{row['discord_id']}>" if row["discord_id"] else row["email"]
-    return True, f"Marked **{label}** for {who} as fulfilled."
+    return True, f"marked **{label}** for {who} as fulfilled."
 
 
 def process_kofi_shop_order(
@@ -136,7 +136,7 @@ def process_kofi_shop_order(
     email = str(payload.get("email", "") or "")
     shop_items = payload.get("shop_items") or []
     if not isinstance(shop_items, list) or not shop_items:
-        return False, "Shop order has no items.", None, None
+        return False, "shop order has no items.", None, None
 
     discord_id = parse_discord_id_from_message(message)
     with db.get_db() as conn:
@@ -166,7 +166,7 @@ def process_kofi_shop_order(
                     discord_id=discord_id,
                     email=email,
                     product_key="unknown",
-                    product_label=f"Unknown ({code})",
+                    product_label=f"unknown ({code})",
                     amount_cents=amount_cents,
                     status="pending",
                     notes=json.dumps(raw_item),
@@ -218,9 +218,9 @@ def process_kofi_shop_order(
                     status="pending",
                     notes=f"grant_item:{grant_item_key}",
                 )
-                lines.append(f"**{label}**; queued (need `/register` + Discord id on order)")
+                lines.append(f"**{label}**; queued (need `/register` + discord id on order)")
                 dm_parts.append(
-                    f"**{label}**; we couldn't find a registered wolf for your Discord id.\n"
+                    f"**{label}**; we couldn't find a registered wolf for your discord id.\n"
                     "Use `/register`, then contact staff with your order receipt."
                 )
                 continue
@@ -238,8 +238,8 @@ def process_kofi_shop_order(
                 )
                 lines.append(f"**{label}**; queued for manual delivery")
                 dm_parts.append(
-                    f"**{label}**; we'll DM you within **{prod.get('sla_days', 7)} days** "
-                    f"to deliver. Make sure DMs are open."
+                    f"**{label}**; we'll dm you within **{prod.get('sla_days', 7)} days** "
+                    f"to deliver. make sure dms are open."
                 )
                 continue
 
@@ -262,15 +262,15 @@ def process_kofi_shop_order(
                 lines.append(f"**{label}** → code **`{code}`**")
                 if product_key == "gift_bone_pouch":
                     dm_parts.append(
-                        f"**Gift code:** `{code}`\n"
-                        f"Share with any registered player; they use `/redeem {code}` "
+                        f"**gift code:** `{code}`\n"
+                        f"share with any registered player; they use `/redeem {code}` "
                         f"(**{bones}** bones)."
                     )
                 elif product_key == "legend_gift_card":
                     dm_parts.append(
-                        f"**Legend gift code:** `{code}`\n"
-                        f"Share or redeem with `/redeem {code}`; "
-                        f"**{bones}** bones, Legend perks, **+3 `/bones action:daily`** for "
+                        f"**legend gift code:** `{code}`\n"
+                        f"share or redeem with `/redeem {code}`; "
+                        f"**{bones}** bones, legend perks, **+3 `/bones action:daily`** for "
                         f"**{supporter_days}** days."
                     )
                 else:
@@ -327,7 +327,7 @@ def process_kofi_shop_order(
             lines.append(f"**{label}** → code **`{code}`** (could not auto-grant)")
             dm_parts.append(
                 f"**{label}**; use `/register` then `/redeem {code}` "
-                f"(include Discord id on future orders for instant delivery)."
+                f"(include discord id on future orders for instant delivery)."
             )
             _insert_shop_order(
                 conn,
@@ -354,17 +354,17 @@ def process_kofi_shop_order(
 
     if unknown_items:
         lines.append(
-            f"Unknown item code(s): {', '.join(unknown_items)}; add to `config.py` "
+            f"unknown item code(s): {', '.join(unknown_items)}; add to `config.py` "
             f"`direct_link_codes` or fulfill manually."
         )
 
     if not lines:
-        return False, "No shop items processed.", discord_id, None
+        return False, "no shop items processed.", discord_id, None
 
-    note = "Shop order · " + " · ".join(lines)
+    note = "shop order · " + " · ".join(lines)
     dm_message = None
     if dm_parts:
-        dm_message = "**Thank you for your shop order!** 🦴\n\n" + "\n\n".join(dm_parts)
+        dm_message = "**thank you for your shop order!** 🦴\n\n" + "\n\n".join(dm_parts)
         if any("queued for manual" in line for line in lines):
             dm_message += (
                 "\n\n_Manual items: we'll contact you on Discord. "

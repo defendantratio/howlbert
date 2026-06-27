@@ -23,10 +23,11 @@ def test_treatment_checklist_has_three_steps():
         wolf_name="Patch",
     )
     text = build_treatment_checklist(user, day=10)
-    assert "1. **Herbs**" in text
-    assert "2. **Surgery**" in text
-    assert "3. **Rest**" in text
-    assert "Stitch" in text or "stitch" in text.lower() or "Deep Gash" in text
+    low = text.lower()
+    assert "1. **herbs**" in low
+    assert "2. **surgery**" in low
+    assert "3. **rest**" in low
+    assert "stitch" in low or "deep gash" in low
 
 
 def test_healer_refusal_when_dying_packmate():
@@ -46,7 +47,7 @@ def test_rot_lung_outbreak_threshold():
     w2 = Row(disease="rot_lung:wheeze", wolf_name="B")
     with patch("engine.healer_refusal.db.get_pack_den_wolves", return_value=[w1, w2]):
         line = rot_lung_outbreak_news(1, threshold=2)
-    assert line and "Rot-lung" in line
+    assert line and "rot-lung" in line.lower()
 
 
 def test_treat_patient_requires_medic_in_cog():
@@ -61,11 +62,16 @@ def test_treat_patient_requires_medic_in_cog():
 def test_treat_stack_cross_pack_gate():
     from engine.medical_access import can_medic_treat_cross_pack
 
-    surgeon = Row(id=1, pack_id=1)
+    surgeon = Row(id=1, pack_id=1, wolf_role="hunter", bonus_role_feature=None)
     patient = Row(id=2, pack_id=2, condition="healthy", hp=8)
     with patch("engine.medical_access.db.get_pack_relation", return_value=2):
         ok, msg = can_medic_treat_cross_pack(surgeon, patient, 1, emergency_stabilize=False)
-    assert not ok and "hostile" in msg.lower()
+    assert not ok and "medic" in msg.lower()
+
+    medic = Row(id=1, pack_id=1, wolf_role="medic", bonus_role_feature=None)
+    with patch("engine.medical_access.db.get_pack_relation", return_value=2):
+        ok_med, msg_med = can_medic_treat_cross_pack(medic, patient, 1, emergency_stabilize=False)
+    assert ok_med and not msg_med
 
 
 def test_observe_no_surgery_cooldown_field():
@@ -97,6 +103,45 @@ def test_rush_stalks_flag_on_set_bone():
     assert err and "rush" in err.lower()
 
 
+def test_cross_pack_stabilize_standing():
+    from config import CROSS_PACK_STABILIZE_FAIL_STANDING, CROSS_PACK_STABILIZE_SUCCESS_STANDING
+    from engine.medical_access import apply_stabilize_standing, is_cross_pack_heal
+
+    healer = Row(id=1, pack_id=1, wolf_role="hunter", bonus_role_feature=None)
+    patient = Row(id=2, pack_id=2, condition="dying", hp=0)
+    assert is_cross_pack_heal(healer, patient)
+    with patch("engine.medical_access.db.adjust_pack_relation", return_value=6) as adj:
+        with patch("engine.medical_access.db.get_pack", return_value=Row(name="Mistmoor")):
+            note = apply_stabilize_standing(healer, patient, 99, success=True)
+    adj.assert_called_once()
+    assert f"{CROSS_PACK_STABILIZE_SUCCESS_STANDING:+d}" in note and "6" in note
+    with patch("engine.medical_access.db.adjust_pack_relation", return_value=4):
+        with patch("engine.medical_access.db.get_pack", return_value=Row(name="Mistmoor")):
+            fail_note = apply_stabilize_standing(healer, patient, 99, success=False)
+    assert f"{CROSS_PACK_STABILIZE_FAIL_STANDING:+d}" in fail_note
+
+
+def test_same_pack_stabilize_standing():
+    from config import STABILIZE_LAY_FAIL_STANDING, STABILIZE_LAY_SUCCESS_STANDING
+    from engine.medical_access import apply_stabilize_standing, is_same_pack_heal
+
+    healer = Row(
+        id=1, discord_id=100, pack_id=1, wolf_role="hunter", bonus_role_feature=None, standing=5
+    )
+    patient = Row(id=2, pack_id=1, condition="dying", hp=0)
+    assert is_same_pack_heal(healer, patient)
+    with patch("engine.medical_access.db.adjust_wolf_standing_by_id", return_value="") as adj:
+        with patch("engine.medical_access.db.get_user_by_id", return_value=Row(standing=8)):
+            note = apply_stabilize_standing(healer, patient, None, success=True)
+    adj.assert_called_once_with(1, STABILIZE_LAY_SUCCESS_STANDING)
+    assert "lay healer" in note and f"{STABILIZE_LAY_SUCCESS_STANDING:+d}" in note
+    with patch("engine.medical_access.db.adjust_wolf_standing_by_id", return_value="") as adj_fail:
+        with patch("engine.medical_access.db.get_user_by_id", return_value=Row(standing=1)):
+            fail_note = apply_stabilize_standing(healer, patient, None, success=False)
+    adj_fail.assert_called_once_with(1, STABILIZE_LAY_FAIL_STANDING)
+    assert f"{STABILIZE_LAY_FAIL_STANDING:+d}" in fail_note
+
+
 if __name__ == "__main__":
     test_treatment_checklist_has_three_steps()
     test_healer_refusal_when_dying_packmate()
@@ -105,4 +150,6 @@ if __name__ == "__main__":
     test_treat_stack_cross_pack_gate()
     test_observe_no_surgery_cooldown_field()
     test_rush_stalks_flag_on_set_bone()
+    test_cross_pack_stabilize_standing()
+    test_same_pack_stabilize_standing()
     print("test_medic_commands: OK")

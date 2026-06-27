@@ -9,7 +9,7 @@ def attr_modifier(score: int) -> int:
 
 
 def compute_max_hp(attr_str: int, attr_con: int) -> int:
-    """HP = 10 + Strength + Survival (Constitution score)."""
+    """hp = 10 + strength + survival (constitution score)."""
     strength = max(1, min(10, int(attr_str)))
     survival = max(1, min(10, int(attr_con)))
     return max(1, 10 + strength + survival)
@@ -19,7 +19,7 @@ def format_max_hp_breakdown(attr_str: int, attr_con: int, *, max_hp: int | None 
     strength = max(1, min(10, int(attr_str)))
     survival = max(1, min(10, int(attr_con)))
     total = max_hp if max_hp is not None else compute_max_hp(strength, survival)
-    return f"10 + {strength}(Str) + {survival}(Survival) = {total}"
+    return f"10 + {strength}(str) + {survival}(survival) = {total}"
 
 
 def legacy_modifier_max_hp(attr_str: int, attr_con: int) -> int:
@@ -109,7 +109,7 @@ def skill_proficiency_bonus(user, skill_key: str | None, *, proficient: bool | N
 
 
 def format_skill_proficiencies_line(user) -> str:
-    """Role/sheet training labels only (not added to dice; traits handle modifiers)."""
+    """role/sheet training labels only (not added to dice; traits handle modifiers)."""
     from rpg_rules import ROLE_PROFICIENCIES, SKILLS
 
     profs = parse_proficiencies(user["skill_proficiencies"] if "skill_proficiencies" in user.keys() else None)
@@ -122,7 +122,7 @@ def format_skill_proficiencies_line(user) -> str:
             labels.append(f"{label} (role)")
         else:
             labels.append(label)
-    return ", ".join(labels) if labels else "None"
+    return ", ".join(labels) if labels else "none"
 
 
 def default_stats_for_role(role: str) -> dict:
@@ -130,7 +130,7 @@ def default_stats_for_role(role: str) -> dict:
 
 
 def get_attr(user, short: str) -> int:
-    """Read an attribute (str, dex, con, int, cha, wis) from a user row."""
+    """read an attribute (str, dex, con, int, cha, wis) from a user row."""
     key = f"attr_{short}"
     if key in user.keys() and user[key] is not None:
         return int(user[key])

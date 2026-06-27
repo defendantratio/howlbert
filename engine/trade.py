@@ -10,8 +10,8 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 TRADE_ERROR_MESSAGES = {
-    "not_found": "This trade no longer exists.",
-    "not_pending": "This trade was already completed or cancelled.",
+    "not_found": "this trade no longer exists.",
+    "not_pending": "this trade was already completed or cancelled.",
     "expired": "This trade offer expired; start a new one with `/trade offer`.",
     "not_registered": "One of the wolves is no longer registered.",
     "insufficient_from": "The offerer no longer has everything they promised.",
@@ -56,19 +56,19 @@ def build_trade_embed(trade, *, status: str = "pending") -> discord.Embed:
     )
 
     if status == "completed":
-        embed = howlbert_embed("Trade Complete", color=SUCCESS_COLOR)
+        embed = howlbert_embed("trade complete", color=SUCCESS_COLOR)
     elif status == "declined":
-        embed = howlbert_embed("Trade Declined", "The other wolf declined the trade.", color=ERROR_COLOR)
+        embed = howlbert_embed("trade declined", "the other wolf declined the trade.", color=ERROR_COLOR)
     elif status == "cancelled":
-        embed = howlbert_embed("Trade Cancelled", "The trade offer was cancelled.", color=ERROR_COLOR)
+        embed = howlbert_embed("trade cancelled", "the trade offer was cancelled.", color=ERROR_COLOR)
     else:
-        embed = howlbert_embed("Trade Offer", color=SUCCESS_COLOR)
+        embed = howlbert_embed("trade offer", color=SUCCESS_COLOR)
 
     embed.add_field(name=f"{from_name} offers", value=offer_line, inline=False)
     if has_want:
-        embed.add_field(name=f"In return from {to_name}", value=want_line, inline=False)
+        embed.add_field(name=f"in return from {to_name}", value=want_line, inline=False)
     else:
-        embed.set_footer(text=f"{to_name}; press Accept to receive the offer.")
+        embed.set_footer(text=f"{to_name}; press accept to receive the offer.")
     return embed
 
 
@@ -76,8 +76,8 @@ async def handle_trade_accept(interaction: discord.Interaction, trade_id: int) -
     trade = db.get_pending_trade(trade_id)
     if not trade or trade["status"] != "pending":
         embed = howlbert_embed(
-            "Trade Unavailable",
-            TRADE_ERROR_MESSAGES.get("not_pending", "Unavailable."),
+            "trade unavailable",
+            TRADE_ERROR_MESSAGES.get("not_pending", "unavailable."),
             color=ERROR_COLOR,
         )
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

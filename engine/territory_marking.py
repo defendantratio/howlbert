@@ -11,14 +11,14 @@ from config import GREAT_PACKS
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 MARK_REFRESH_FLAVORS = (
-    "You drag your scent along the border post; the den's claim reads loud and fresh.",
-    "Pine sap and wolf musk; your pack's mark renewed for another sunrise.",
+    "you drag your scent along the border post; the den's claim reads loud and fresh.",
+    "pine sap and wolf musk; your pack's mark renewed for another sunrise.",
     "You circle the stake twice and leave your signature where patrols will read it.",
 )
 
 OVER_MARK_FLAVORS = (
-    "You spray over **{owner}**'s stale line; a deliberate insult on their ground.",
-    "Your musk sits atop **{owner}**'s border mark; every scout will smell the challenge.",
+    "you spray over **{owner}**'s stale line; a deliberate insult on their ground.",
+    "your musk sits atop **{owner}**'s border mark; every scout will smell the challenge.",
     "A fresh over-mark on **{territory}**; **{owner}** will know someone crossed the line.",
 )
 
@@ -49,38 +49,38 @@ def mark_territory(
     territory_key: str,
 ) -> discord.Embed:
     if not user:
-        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
+        return howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR)
     if not user["pack_id"]:
         return howlbert_embed(
-            "No Pack",
-            "Join a Great Pack to mark territory.",
+            "no pack",
+            "join a great pack to mark territory.",
             color=ERROR_COLOR,
         )
 
     pack = db.get_pack(user["pack_id"])
     if not pack:
-        return howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
+        return howlbert_embed("pack not found", "that great pack isn't in this den.", color=ERROR_COLOR)
 
     pack_key = pack["key"] if "key" in pack.keys() and pack["key"] else user["great_pack"]
     if not pack_key or pack_key not in GREAT_PACKS:
         return howlbert_embed(
-            "Not a Great Pack",
-            "Only the four Great Packs mark shared borders.",
+            "not a great pack",
+            "only the four great packs mark shared borders.",
             color=ERROR_COLOR,
         )
 
     if int(user["last_mark_day"]) >= day:
         return howlbert_embed(
-            "Already Marked",
-            "You've left scent on the border this sunrise.",
+            "already marked",
+            "you've left scent on the border this sunrise.",
             color=ERROR_COLOR,
         )
 
     terr = db.get_territory_by_key(guild_id, territory_key)
     if not terr:
         return howlbert_embed(
-            "Unknown Territory",
-            "Pick a key from `/pack territory`.",
+            "unknown territory",
+            "pick a key from `/pack territory`.",
             color=ERROR_COLOR,
         )
 
@@ -105,13 +105,13 @@ def mark_territory(
         )
         from engine.pack_relations import format_standing_war_flash, relation_effect_text
 
-        relation_note = f"\n\nPack standing with **{owner_name}** **−2** (now **{new_standing}/10**)."
+        relation_note = f"\n\npack standing with **{owner_name}** **−2** (now **{new_standing}/10**)."
         relation_note += format_standing_war_flash(guild_id, pack["id"], int(owner_id), new_standing)
         relation_note += f"\n_{relation_effect_text(new_standing)}_"
-        title = "Rival Over-Mark"
+        title = "rival over-mark"
     else:
         body = random.choice(MARK_REFRESH_FLAVORS)
-        title = "Border Refreshed"
+        title = "border refreshed"
 
     embed = howlbert_embed(
         title,

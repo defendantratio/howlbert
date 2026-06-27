@@ -13,16 +13,16 @@ MAX_BYTES = 256 * 1024
 ALLOWED_CONTENT_TYPES = frozenset(
     {"image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"}
 )
-ALLOWED_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
+allowed_extensions = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 
-PAN_STEP = 24
-ZOOM_STEP = 0.12
-MIN_ZOOM = 1.0
-MAX_ZOOM = 4.0
+pan_step = 24
+zoom_step = 0.12
+min_zoom = 1.0
+max_zoom = 4.0
 
 
 @dataclass
-class CropState:
+class cropstate:
     offset_x: float = 0.0
     offset_y: float = 0.0
     zoom: float = 1.0
@@ -33,11 +33,11 @@ class CropState:
         self.zoom = 1.0
 
 
-def _open_image(data: bytes) -> Image.Image:
-    img = Image.open(io.BytesIO(data))
+def _open_image(data: bytes) -> image.image:
+    img = image.open(io.bytesio(data))
     if getattr(img, "is_animated", False):
         img.seek(0)
-    return ImageOps.exif_transpose(img.convert("RGBA"))
+    return ImageOps.exif_transpose(img.convert("rgba"))
 
 
 def _base_scale(img: Image.Image, crop_size: int) -> float:
@@ -83,14 +83,14 @@ def validate_avatar_upload(
     data: bytes, *, content_type: str | None = None, filename: str | None = None
 ) -> str | None:
     if len(data) > 8 * 1024 * 1024:
-        return "Image must be 8 MB or smaller."
+        return "image must be 8 mb or smaller."
     if content_type and content_type.split(";")[0].strip().lower() not in ALLOWED_CONTENT_TYPES:
         if not (filename and any(filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)):
-            return "Use a PNG, JPG, WEBP, or GIF image."
+            return "use a png, jpg, webp, or gif image."
     try:
         img = _open_image(data)
         if img.width < 32 or img.height < 32:
-            return "Image is too small; use at least 32×32 pixels."
+            return "image is too small; use at least 32×32 pixels."
     except Exception:
-        return "Could not read that image file."
+        return "could not read that image file."
     return None

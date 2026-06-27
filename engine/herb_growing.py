@@ -25,8 +25,8 @@ LOW = "low"      # drought-tolerant; rots if fussed over
 MEDIUM = "medium"
 HIGH = "high"    # must stay moist or it wilts fast
 
-LIGHT_LABELS = {FULL_SUN: "Full sun", PARTIAL: "Partial shade", SHADE: "Shade"}
-WATER_LABELS = {LOW: "Dry / well-drained", MEDIUM: "Moderate", HIGH: "Moist soil"}
+LIGHT_LABELS = {FULL_SUN: "full sun", PARTIAL: "partial shade", SHADE: "shade"}
+WATER_LABELS = {LOW: "dry / well-drained", MEDIUM: "moderate", HIGH: "moist soil"}
 
 # Herbs that are tree bark, nuts, fungus, cobwebs, sticks, or honey; gathered in
 # the wild, not sown in a den garden.
@@ -172,7 +172,7 @@ def season_is_suitable(profile: GrowProfile, season: str) -> bool:
 
 
 def effective_grow_days(profile: GrowProfile, season: str) -> int:
-    """Off-season sowings mature more slowly."""
+    """off-season sowings mature more slowly."""
     if season in profile.seasons:
         return profile.grow_days
     if profile.hardy:
@@ -181,7 +181,7 @@ def effective_grow_days(profile: GrowProfile, season: str) -> int:
 
 
 def watering_overdue_penalty(profile: GrowProfile, dry_days: int) -> int:
-    """Health lost from going `dry_days` sunrises without tending."""
+    """health lost from going `dry_days` sunrises without tending."""
     if dry_days <= 0:
         return 0
     if profile.water == HIGH:
@@ -263,15 +263,15 @@ def evaluate_growth(
 
 def _wilt_reason(profile: GrowProfile, season: str) -> str:
     if season == "winter" and not profile.hardy:
-        return "Frost killed this tender planting."
+        return "frost killed this tender planting."
     if profile.water == HIGH:
-        return "Dried out; this herb needs constant moisture."
-    return "Neglected too long and withered."
+        return "dried out; this herb needs constant moisture."
+    return "neglected too long and withered."
 
 
 def _grow_note(profile: GrowProfile, season: str, health: int, ready: bool) -> str:
     if ready:
-        return "Ready to harvest."
+        return "ready to harvest."
     bits = []
     if season not in profile.seasons:
         if profile.hardy:
@@ -290,7 +290,7 @@ def _grow_note(profile: GrowProfile, season: str, health: int, ready: bool) -> s
 
 
 def harvest_yield(profile: GrowProfile, health: int, *, rng=None) -> int:
-    """Number of fresh herb stacks from a mature plant, scaled by health."""
+    """number of fresh herb stacks from a mature plant, scaled by health."""
     import random
 
     rng = rng or random
@@ -303,7 +303,7 @@ def harvest_yield(profile: GrowProfile, health: int, *, rng=None) -> int:
 
 
 def growing_blurb(herb_key: str) -> str:
-    """One-line growing summary for the guide/seed list."""
+    """one-line growing summary for the guide/seed list."""
     p = growing_profile(herb_key)
     seasons = "/".join(s[:3] for s in p.seasons)
     hardy = " · frost-hardy" if p.hardy else ""

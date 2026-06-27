@@ -39,7 +39,7 @@ def fire_fear_save(user, *, wildfire: bool = False, day: int) -> tuple[bool, str
     if result["success"]:
         set_fire_frightened(user, False)
         lines.append(
-            f"No panic; you can act within **{range_ft} ft** of the flame, still wary."
+            f"no panic; you can act within **{range_ft} ft** of the flame, still wary."
         )
         return True, "\n".join(lines)
 
@@ -56,22 +56,22 @@ def fire_fear_save(user, *, wildfire: bool = False, day: int) -> tuple[bool, str
                 skill_key=None,
                 game_day=day,
             )
-            lines.append("_Guard steadiness; one reroll:_")
+            lines.append("_guard steadiness; one reroll:_")
             lines.append(format_roll_result(reroll))
             if reroll["success"]:
                 set_fire_frightened(user, False)
-                lines.append(f"You master the flame within **{range_ft} ft**.")
+                lines.append(f"you master the flame within **{range_ft} ft**.")
                 return True, "\n".join(lines)
 
     set_fire_frightened(user, True)
     lines.append(
-        "**Frightened**; cannot move closer to the fire; disadvantage on attacks and checks "
-        "while flame is in sight. Flee beyond **30 ft** or wait until it is out."
+        "**frightened**; cannot move closer to the fire; disadvantage on attacks and checks "
+        "while flame is in sight. flee beyond **30 ft** or wait until it is out."
     )
     if wildfire:
         lines.append(
-            "_Wildfire doubles fear range and each round near it needs Survival/Constitution "
-            f"DC **{WILDFIRE_SURVIVAL_DC}** or **1d4** heat damage (smoke)._"
+            "_wildfire doubles fear range and each round near it needs survival/constitution "
+            f"dc **{WILDFIRE_SURVIVAL_DC}** or **1d4** heat damage (smoke)._"
         )
     return False, "\n".join(lines)
 
@@ -110,9 +110,9 @@ def stand_against_fire(user, *, day: int) -> tuple[bool, str]:
     lines = [format_roll_result(result)]
     if result["success"]:
         set_fire_frightened(user, False)
-        lines.append("You ignore the flame for **1 round**; teeth bared at the light.")
+        lines.append("you ignore the flame for **1 round**; teeth bared at the light.")
         return True, "\n".join(lines)
-    lines.append("The fire still owns your nerves.")
+    lines.append("the fire still owns your nerves.")
     return False, "\n".join(lines)
 
 
@@ -129,12 +129,12 @@ def wildfire_heat_save(user, *, day: int) -> tuple[bool, str, int]:
         game_day=day,
     )
     if result["success"]:
-        return True, format_roll_result(result) + "\nSmoke stings but you keep breathing.", 0
+        return True, format_roll_result(result) + "\nsmoke stings but you keep breathing.", 0
     dmg = random.randint(1, 4)
     from engine.vitals import apply_hp_damage
 
     _, extras = apply_hp_damage(user, dmg)
-    body = format_roll_result(result) + f"\nSmoke sears the lungs; **−{dmg} HP**."
+    body = format_roll_result(result) + f"\nsmoke sears the lungs; **−{dmg} hp**."
     if extras:
         body += "\n" + "\n".join(extras)
     return False, body, dmg

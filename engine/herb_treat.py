@@ -64,14 +64,14 @@ def check_fresh_toxicity(user, herb_key: str, form: str, *, day: int) -> tuple[b
         game_day=day,
     )
     if result["success"]:
-        return True, format_roll_result(result) + "\n_You spit out the worst of it in time._"
+        return True, format_roll_result(result) + "\n_you spit out the worst of it in time._"
     dmg = _roll_toxic_damage(rule)
     new_hp = max(0, int(user["hp"]) - dmg)
     db.set_user_conditions(user["discord_id"], hp=new_hp)
     return (
         False,
         format_roll_result(result)
-        + f"\n**Toxic fresh plant**; **−{dmg} HP**. {rule.notes}",
+        + f"\n**toxic fresh plant**; **−{dmg} hp**. {rule.notes}",
     )
 
 
@@ -86,7 +86,7 @@ def heal_amount_for_form(form: str, *, complex_wound: bool) -> tuple[int, int]:
 
 
 def _stabilize_stack_bonus(herb_key: str, form: str) -> tuple[bool, bool, bool, bool]:
-    """Return (yarrow, yarrow_fresh, oak_bark, cattail) flags for stabilize_check."""
+    """return (yarrow, yarrow_fresh, oak_bark, cattail) flags for stabilize_check."""
     yarrow = herb_key == "yarrow"
     yarrow_fresh = yarrow and form == "fresh"
     oak = herb_key == "oak_bark"
@@ -118,7 +118,7 @@ def treat_from_herb_stack(
 
     stack = db.get_herb_stack(stack_id)
     if not stack or stack["wolf_id"] != healer["id"]:
-        return False, "That herb isn't in your forage bag."
+        return False, "that herb isn't in your forage bag."
     herb_key = stack["herb_key"]
     form = stack["form"]
     meta = HERBS.get(herb_key, {"cures": (), "effect": "", "name": herb_key})
@@ -172,7 +172,7 @@ def treat_from_herb_stack(
             db.set_user_conditions(
                 patient["discord_id"], wolf_id=patient["id"], clear_disease=True, condition="healthy"
             )
-            return True, prefix + f"**{name}**; {dose_msg} Cough cleared."
+            return True, prefix + f"**{name}**; {dose_msg} cough cleared."
         return True, prefix + f"**{name}**; {dose_msg}"
 
     if outcome == "no_effect" and not special and herb_key not in ("comfrey", "cobwebs"):
@@ -183,7 +183,7 @@ def treat_from_herb_stack(
         if consume_fields:
             db.update_user(healer["discord_id"], wolf_id=healer["id"], **consume_fields)
         if not check["success"] and not is_full_medic(healer):
-            return False, f"Medicine check: {check['total']} vs DC 15: no effect."
+            return False, f"medicine check: {check['total']} vs dc 15: no effect."
 
     db.remove_herb_stack(stack_id)
     prefix = (toxic_msg + "\n\n") if toxic_msg else ""
@@ -209,13 +209,13 @@ def treat_from_herb_stack(
         db.update_user(patient["discord_id"], wolf_id=patient["id"], **fields)
         ex_note = ""
         if "exhaustion" in fields:
-            ex_note = f" Exhaustion **→ {fields['exhaustion']}**."
+            ex_note = f" exhaustion **→ {fields['exhaustion']}**."
         msg = (
             f"**{name}**{form_tag}{target_note}; warm sweetness (**+{HONEY_PUP_HUNGER_BONUS}** hunger)."
             f"{ex_note}"
         )
     elif special == "honey_pup_not_depleted":
-        return False, "Honey feeds starving pups; hunger or thirst must be low first."
+        return False, "honey feeds starving pups; hunger or thirst must be low first."
     elif outcome == "cured_disease":
         db.set_user_conditions(
             patient["discord_id"], wolf_id=patient["id"], clear_disease=True, condition="healthy"
@@ -250,7 +250,7 @@ def treat_from_herb_stack(
         msg = f"**{name}**{form_tag}{target_note} eased **{names}**."
     elif outcome == "stabilized":
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=1, condition="stable")
-        msg = f"**{name}**{form_tag}{target_note} stabilized at 1 HP."
+        msg = f"**{name}**{form_tag}{target_note} stabilized at 1 hp."
     elif outcome == "healed" or herb_key == "comfrey":
         lo, hi = heal_amount_for_form(form, complex_wound=complex_wound)
         heal = max(1, int(random.randint(lo, hi) * (int(stack["potency"]) / 100.0)))
@@ -262,7 +262,7 @@ def treat_from_herb_stack(
         cap = effective_max_hp(patient)
         new_hp = min(cap, int(patient["hp"]) + heal)
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)
-        msg = f"**{name}**{form_tag}{target_note} healed **{heal} HP**."
+        msg = f"**{name}**{form_tag}{target_note} healed **{heal} hp**."
         if trait_clears_infection_on_heal(healer) and "infected_wound" in injuries:
             injuries.remove("infected_wound")
             db.clear_injury_since(patient["id"], "infected_wound")
@@ -280,7 +280,7 @@ def treat_from_herb_stack(
         msg = f"**{name}**{form_tag}{target_note}; {meta.get('effect', 'symptoms ease')}."
     elif outcome == "poison_herb":
         if is_full_medic(healer):
-            msg = f"**{name}**; restricted; Medic knowledge only."
+            msg = f"**{name}**; restricted; medic knowledge only."
         else:
             survived, poison_msg, _ = roll_poison_herb_misuse(patient, herb_key, day=day)
             return survived, prefix + poison_msg
@@ -316,7 +316,7 @@ def treat_from_herb_stack(
 
 
 def stabilize_bonus_from_stack(herb_key: str, form: str) -> int:
-    """Public helper for cog stabilize paths using herb stacks."""
+    """public helper for cog stabilize paths using herb stacks."""
     from engine.death_saves import stabilize_bonus
 
     yarrow, yarrow_fresh, oak, cattail = _stabilize_stack_bonus(herb_key, form)

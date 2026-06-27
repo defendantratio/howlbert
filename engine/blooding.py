@@ -20,18 +20,18 @@ def blooding_gate_message(user, *, action: str = "roleevent") -> str | None:
         return None
     if action == "roleevent":
         return (
-            "You have not earned your **blooding** yet; bring down prey with a successful **`/bones action:hunt`** "
+            "you have not earned your **blooding** yet; bring down prey with a successful **`/bones action:hunt`** "
             "before your role's trials (`/role action:event`)."
         )
     return None
 
 
 def format_blooding_status(user) -> str | None:
-    """Reminder for unblooded juveniles on profile, vitals, and cooldowns."""
+    """reminder for unblooded juveniles on profile, vitals, and cooldowns."""
     if not is_unblooded_juvenile(user):
         return None
     return (
-        "**Blooding:** not yet earned; first successful **`/bones action:hunt`** kill "
+        "**blooding:** not yet earned; first successful **`/bones action:hunt`** kill "
         "unlocks **`/role action:event`** (+8 mood, +1 standing)."
     )
 
@@ -50,6 +50,6 @@ def award_blooding_on_hunt(user) -> str | None:
 
     log_blooded(user["id"], user["wolf_name"])
     return (
-        f"**First kill: {user['wolf_name']} is blooded.** "
+        f"**first kill: {user['wolf_name']} is blooded.** "
         f"+8 mood ({mood}).{standing_note}"
     )

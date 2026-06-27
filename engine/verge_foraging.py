@@ -112,7 +112,7 @@ def _verge_compound_dog_risk(
         enc_id, _key, flavor = ambush
         return (
             f"_{flavor}_\n\n"
-            f"A **guard hearth-hound** breaks the fence-line; combat **#{enc_id}** is live in-channel.",
+            f"a **guard hearth-hound** breaks the fence-line; combat **#{enc_id}** is live in-channel.",
             enc_id,
         )
     bite = verge_dog_bite_fallback(user, day=day)
@@ -141,7 +141,7 @@ def _verge_risk_note(
 
             toxic = try_verge_toxic_misid_exposure(user) if user else None
             db_note = (
-                f"\n\n_{toxic}_" if toxic else "\n\n_You grabbed a toxic look-alike in the ditch; spit it out fast. "
+                f"\n\n_{toxic}_" if toxic else "\n\n_you grabbed a toxic look-alike in the ditch; spit it out fast. "
                 "Get a Medic to check you._"
             )
         else:
@@ -171,24 +171,24 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), None
+        return howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR), None
     if site not in VERGE_SITES:
-        return howlbert_embed("Unknown Verge", "Pick **roadside** or **compound**.", color=ERROR_COLOR), None
+        return howlbert_embed("unknown verge", "pick **roadside** or **compound**.", color=ERROR_COLOR), None
     if not interaction.guild:
-        return howlbert_embed("Server Only", "Edge-forage in a server channel.", color=ERROR_COLOR), None
+        return howlbert_embed("server only", "edge-forage in a server channel.", color=ERROR_COLOR), None
 
     from engine.activities import _activity_block_embed, _need_guild
 
     guild_id = _need_guild(interaction)
     if not guild_id:
-        return howlbert_embed("Server Only", "Use this in a server.", color=ERROR_COLOR), None
+        return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR), None
 
     world = db.get_world(guild_id)
     day = world["day_number"]
     if not can_verge_forage_again(user, day):
         return howlbert_embed(
-            "Already Edged",
-            "You've foraged the **verge** this sunrise; territory forage is separate (`/field action:forage`).",
+            "already edged",
+            "you've foraged the **verge** this sunrise; territory forage is separate (`/field action:forage`).",
             color=ERROR_COLOR,
         ), None
 
@@ -196,25 +196,25 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     auto_herb = grant_forager_auto_herb(user, day=day, guild_id=guild_id)
     forager_note = (
-        f"\n\n_Forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
+        f"\n\n_forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
     )
 
-    blocked = _activity_block_embed(user, title="Cannot Edge-Forage")
+    blocked = _activity_block_embed(user, title="cannot edge-forage")
     if blocked:
         return blocked, None
 
     spec = VERGE_SITES[site]
     pool = herbs_for_verge(site)
     if not pool:
-        return howlbert_embed("No Verge Herbs", "Nothing configured for this site.", color=ERROR_COLOR), None
+        return howlbert_embed("no verge herbs", "nothing configured for this site.", color=ERROR_COLOR), None
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     season_mod = season_forage_dc_mod(world["season"])
     dc = spec["dc"] + season_mod
     season_suffix = (
-        f"\n_{season_forage_modifier_label(world['season'])} · effective DC **{dc}**._"
+        f"\n_{season_forage_modifier_label(world['season'])} · effective dc **{dc}**._"
         if season_mod
-        else f"\n_Effective DC **{dc}**._"
+        else f"\n_effective dc **{dc}**._"
     )
     proficient = spec["skill_key"] in profs or "herblore" in profs
     result = resolve_check(
@@ -241,7 +241,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
         if risk and combat_enc is None:
             db.adjust_mood(user["id"], -VERGE_CRIT_FAIL_MOOD)
         return howlbert_embed(
-            "Spooked at the Verge",
+            "spooked at the verge",
             format_roll_result(result)
             + f"\n\n{spec['intro']}\n\n"
             "**Critical failure**; wrong patch, barking hearth-hound, or monster wind. Nothing gathered."
@@ -262,7 +262,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
         if risk and combat_enc is None:
             db.adjust_mood(user["id"], -VERGE_FAIL_MOOD)
         return howlbert_embed(
-            "Verge Empty",
+            "verge empty",
             format_roll_result(result)
             + f"\n\n{spec['intro']}\n\n{random.choice(spec['fail_flavor'])}"
             + forager_note
@@ -274,7 +274,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
     herb_key = _pick_verge_herb(user, site)
     from engine.herb_storage import fresh_herb_warning, grant_fresh_herb
 
-    stack_id, hoard_note = grant_fresh_herb(
+    item_key, hoard_note = grant_fresh_herb(
         user["id"],
         herb_key=herb_key,
         guild_id=guild_id,
@@ -302,15 +302,15 @@ def try_verge_forage(interaction, site: str = "roadside"):
         hazard = try_insect_sting_exposure(user, chance=0.07) or ""
 
     site_note = (
-        "_Roadside herbs only grow on disturbed ground; never in deep territory._"
+        "_roadside herbs only grow on disturbed ground; never in deep territory._"
         if site == "roadside"
         else "_Compound herbs need Twoleg nests, fences, and spilled seed; too risky for casual forage._"
     )
     embed = howlbert_embed(
-        f"Verge; {spec['label']}",
+        f"verge; {spec['label']}",
         format_roll_result(result)
         + f"\n\n{spec['intro']}\n\n{random.choice(spec['success_flavor'])}\n\n"
-        f"Found **{meta['name']}**{qty_note}; fresh stack `#{stack_id}` in herb bag.\n_{meta['effect']}_"
+        f"found **{meta['name']}**{qty_note}; added to `/bones action:inventory` (`{item_key}`).\n_{meta['effect']}_"
         + fresh_herb_warning(herb_key)
         + (f"\n\n{hoard_note}" if hoard_note else "")
         + forager_note

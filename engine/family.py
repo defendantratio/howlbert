@@ -143,9 +143,9 @@ def generate_pup_stats(mother, father) -> dict:
 def spend_xp_attribute(user, attr_key: str) -> str | None:
     key = f"attr_{attr_key}"
     if key not in user.keys():
-        return "Invalid attribute."
+        return "invalid attribute."
     if user[key] >= 10:
-        return "Attribute already at maximum (10)."
+        return "attribute already at maximum (10)."
     return None
 
 

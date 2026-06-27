@@ -204,7 +204,7 @@ PREY_CATALOG: dict[str, dict] = {
     # Forage food; wolves are facultative carnivores and will eat plant matter to
     # get by. Low bone value (you can't really salvage mush), restores hunger and
     # some thirst, and overripens/rots faster than meat.
-    "berries": {
+"berries": {
         "name": "Mouthful of Berries",
         "label": "a mouthful of berries",
         "uses": 2,
@@ -285,18 +285,18 @@ def seasonal_forage_food(season: str | None) -> str | None:
     return random.choices(keys, weights=weights, k=1)[0]
 
 SNIFF_FLAVORS = (
-    "You nose the wind; rabbit somewhere east of the creek.",
-    "Old blood on stone. Something was dragged through the bracken recently.",
-    "Pine and prey-scent tangled; a trail worth following at dawn.",
-    "The ground holds a warm track; small game, not far.",
-    "Fish-oil and mud: the river bend was busy last night.",
-    "A rival's mark on the border post; fresh, angry, close.",
+    "you nose the wind; rabbit somewhere east of the creek.",
+    "old blood on stone. something was dragged through the bracken recently.",
+    "pine and prey-scent tangled; a trail worth following at dawn.",
+    "the ground holds a warm track; small game, not far.",
+    "fish-oil and mud: the river bend was busy last night.",
+    "a rival's mark on the border post; fresh, angry, close.",
 )
 
 SNIFF_HUNT_HINT = (
-    "Your whiskers prickle; prey-scent runs strong; strike while the trail is hot.",
-    "Scent pools in the ravine; the wind favors hunters who move now.",
-    "Fresh blood on the breeze; your next hunt or track should run richer.",
+    "your whiskers prickle; prey-scent runs strong; strike while the trail is hot.",
+    "scent pools in the ravine; the wind favors hunters who move now.",
+    "fresh blood on the breeze; your next hunt or track should run richer.",
 )
 
 # Max hunt flavor tier per carcass type (stops "heavy prey" text on grouse, etc.)
@@ -332,7 +332,7 @@ def prey_meta(key: str) -> dict:
 
 
 def prey_key_from_label(label: str | None) -> str | None:
-    """Reverse lookup for prey-pile and legacy labels (incl. large-prey flavor text)."""
+    """reverse lookup for prey-pile and legacy labels (incl. large-prey flavor text)."""
     if not label:
         return None
     low = label.lower().strip()
@@ -360,7 +360,7 @@ def prey_key_from_label(label: str | None) -> str | None:
 
 
 def canonical_prey_bones(prey_key: str) -> int:
-    """Standard bone value for a carcass type (eating, salvage, pile display)."""
+    """standard bone value for a carcass type (eating, salvage, pile display)."""
     return int(prey_meta(prey_key)["bones"])
 
 

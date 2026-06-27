@@ -25,7 +25,7 @@ class DuplicateBundle:
 
 
 def collect_duplicates(wolf_id: int) -> DuplicateBundle:
-    """Extra inventory qty, toy stacks, and herb stacks beyond one per type."""
+    """extra inventory qty, toy stacks, and herb stacks beyond one per type."""
     bundle = DuplicateBundle()
 
     with db.get_db() as conn:
@@ -79,22 +79,22 @@ def collect_duplicates(wolf_id: int) -> DuplicateBundle:
 
 def format_duplicate_summary(bundle: DuplicateBundle) -> str:
     if bundle.is_empty():
-        return "No duplicates; you keep one of each item, toy stack, and herb stack."
+        return "no duplicates; you keep one of each item, toy stack, and herb stack."
     lines: list[str] = []
     for _iid, qty, name in bundle.inventory:
         lines.append(f"**{name}** x{qty}")
     for label in bundle.amusement_labels:
-        lines.append(f"Toy: **{label}**")
+        lines.append(f"toy: **{label}**")
     for label in bundle.herb_labels:
-        lines.append(f"Herb: **{label}**")
+        lines.append(f"herb: **{label}**")
     return "\n".join(lines)
 
 
 def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBundle) -> tuple[bool, str]:
     if from_wolf_id == to_wolf_id:
-        return False, "Can't trade duplicates to yourself."
+        return False, "can't trade duplicates to yourself."
     if bundle.is_empty():
-        return False, "Nothing duplicate to trade."
+        return False, "nothing duplicate to trade."
 
     from database import _move_item_conn
 
@@ -103,7 +103,7 @@ def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBun
         for item_id, qty, name in bundle.inventory:
             if not _move_item_conn(conn, from_wolf_id, to_wolf_id, item_id, qty):
                 conn.rollback()
-                return False, f"Transfer failed on **{name}**; try again."
+                return False, f"transfer failed on **{name}**; try again."
             moved.append(f"**{name}** x{qty}")
 
         for stack_id in bundle.amusement_ids:
@@ -121,8 +121,8 @@ def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBun
             )
             if cur.rowcount != 1:
                 conn.rollback()
-                return False, f"Couldn't pass toy **{meta['name']}**."
-            moved.append(f"Toy **{meta['name']}**")
+                return False, f"couldn't pass toy **{meta['name']}**."
+            moved.append(f"toy **{meta['name']}**")
 
         for stack_id in bundle.herb_ids:
             stack = conn.execute(
@@ -139,8 +139,8 @@ def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBun
             )
             if cur.rowcount != 1:
                 conn.rollback()
-                return False, f"Couldn't pass **{label}**."
-            moved.append(f"Herb **{label}** ({stack['form']})")
+                return False, f"couldn't pass **{label}**."
+            moved.append(f"herb **{label}** ({stack['form']})")
 
     body = "\n".join(f"• {line}" for line in moved[:20])
     if len(moved) > 20:
@@ -149,14 +149,14 @@ def transfer_duplicates(from_wolf_id: int, to_wolf_id: int, bundle: DuplicateBun
 
 
 def surrender_duplicates(wolf_id: int, bundle: DuplicateBundle) -> tuple[bool, str]:
-    """Remove duplicates (cat tribute); not recoverable."""
+    """remove duplicates (cat tribute); not recoverable."""
     if bundle.is_empty():
-        return False, "No duplicates to offer."
+        return False, "no duplicates to offer."
 
     removed: list[str] = []
     for item_id, qty, name in bundle.inventory:
         if not db.consume_item_for_wolf(wolf_id, item_id, qty):
-            return False, f"Couldn't surrender **{name}**."
+            return False, f"couldn't surrender **{name}**."
         removed.append(f"**{name}** x{qty}")
 
     for stack_id in bundle.amusement_ids:
@@ -167,7 +167,7 @@ def surrender_duplicates(wolf_id: int, bundle: DuplicateBundle) -> tuple[bool, s
 
         meta = amusement_meta(stack["item_key"])
         db.remove_amusement_stack(stack_id)
-        removed.append(f"Toy **{meta['name']}**")
+        removed.append(f"toy **{meta['name']}**")
 
     for stack_id in bundle.herb_ids:
         stack = db.get_herb_stack(stack_id)
@@ -177,7 +177,7 @@ def surrender_duplicates(wolf_id: int, bundle: DuplicateBundle) -> tuple[bool, s
 
         label = HERBS.get(stack["herb_key"], {}).get("name", stack["herb_key"])
         db.remove_herb_stack(stack_id)
-        removed.append(f"Herb **{label}** ({stack['form']})")
+        removed.append(f"herb **{label}** ({stack['form']})")
 
     body = "\n".join(f"• {line}" for line in removed[:20])
     if len(removed) > 20:
@@ -205,28 +205,28 @@ def trade_duplicates_between_wolves(
 ) -> tuple[bool, str]:
     """Move all duplicate hoard items to another wolf (once per sunrise)."""
     if int(sender["last_duplicate_trade_day"]) >= day:
-        return False, "You already traded duplicates this sunrise."
+        return False, "you already traded duplicates this sunrise."
 
     if sender["id"] == recipient["id"]:
-        return False, "Can't trade duplicates to yourself."
+        return False, "can't trade duplicates to yourself."
 
     if require_pack_trade:
         from config import PACK_DUP_TRADE_MIN_RELATION, PACK_DUP_TRADE_RELATION_GAIN
 
         if not sender["pack_id"] or not recipient["pack_id"]:
-            return False, "Both wolves must belong to a Great Pack den."
+            return False, "both wolves must belong to a great pack den."
         if sender["pack_id"] == recipient["pack_id"]:
-            return False, "Use `/trade duplicates` for packmates; pick a wolf from another den."
+            return False, "use `/trade duplicates` for packmates; pick a wolf from another den."
         standing = db.get_pack_relation(guild_id, sender["pack_id"], recipient["pack_id"])
         if standing < PACK_DUP_TRADE_MIN_RELATION:
             return False, (
-                f"Pack standing **{standing}/10** is too low; need at least "
+                f"pack standing **{standing}/10** is too low; need at least "
                 f"**{PACK_DUP_TRADE_MIN_RELATION}** (`/pack relation`)."
             )
 
     bundle = collect_duplicates(sender["id"])
     if bundle.is_empty():
-        return False, f"No duplicates to trade.\n\n_{format_duplicate_summary(bundle)}_"
+        return False, f"no duplicates to trade.\n\n_{format_duplicate_summary(bundle)}_"
 
     ok, detail = transfer_duplicates(sender["id"], recipient["id"], bundle)
     if not ok:
@@ -241,9 +241,9 @@ def trade_duplicates_between_wolves(
         new_standing = db.adjust_pack_relation(
             guild_id, sender["pack_id"], recipient["pack_id"], PACK_DUP_TRADE_RELATION_GAIN
         )
-        footer = f"\n\nPack standing **+{PACK_DUP_TRADE_RELATION_GAIN}** (now **{new_standing}/10**)."
+        footer = f"\n\npack standing **+{PACK_DUP_TRADE_RELATION_GAIN}** (now **{new_standing}/10**)."
 
     return True, (
-        f"Duplicates passed to **{recipient['wolf_name']}** "
+        f"duplicates passed to **{recipient['wolf_name']}** "
         f"({bundle.total_items} item(s)).\n\n{detail}{footer}"
     )

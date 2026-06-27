@@ -18,27 +18,27 @@ from config import (
 )
 
 WARM_FLAVOR = (
-    "You and **{partner}** tumble through the grass; breathless, laughing, the den feels whole.",
-    "A rough-and-tumble that ends in shared tongues and dozing shoulder to shoulder.",
+    "you and **{partner}** tumble through the grass; breathless, laughing, the den feels whole.",
+    "a rough-and-tumble that ends in shared tongues and dozing shoulder to shoulder.",
     "**{partner}** matches your energy stroke for stroke; even the elders glance over, pleased.",
 )
 
 GOOD_FLAVOR = (
-    "You and **{partner}** wrestle and groom; easy, familiar warmth.",
-    "Nose to nose, then a playful snap at the ear. The pack scent-line feels stronger.",
+    "you and **{partner}** wrestle and groom; easy, familiar warmth.",
+    "nose to nose, then a playful snap at the ear. the pack scent-line feels stronger.",
     "You share a kill-story and a lazy roll in the pine needles.",
 )
 
 AWKWARD_FLAVOR = (
-    "You misread **{partner}**'s mood; a snap, a flinch, and both of you slink away.",
-    "**{partner}** turns cold mid-groom. The silence after hurts more than the nip.",
+    "you misread **{partner}**'s mood; a snap, a flinch, and both of you slink away.",
+    "**{partner}** turns cold mid-groom. the silence after hurts more than the nip.",
     "Your play gets too rough. **{partner}** leaves with flattened ears; the den feels smaller.",
     "A wrestling tumble sends you both rolling through old scat; the stink clings.",
 )
 
 SCRAP_FLAVOR = (
-    "Words become teeth; you and **{partner}** brawl until fur flies and blood salts the dust.",
-    "An old grudge surfaces. You and **{partner}** snarl until someone has to pull you apart.",
+    "words become teeth; you and **{partner}** brawl until fur flies and blood salts the dust.",
+    "an old grudge surfaces. you and **{partner}** snarl until someone has to pull you apart.",
     "**{partner}** won't yield space. The fight leaves both of you limping and the den on edge.",
 )
 
@@ -48,7 +48,7 @@ def _pick(pool: tuple[str, ...], partner: str) -> str:
 
 
 def roll_socialize_outcome() -> str:
-    """Return warm, good, awkward, or scrap."""
+    """return warm, good, awkward, or scrap."""
     roll = random.random()
     if roll < 0.12:
         return "warm"
@@ -68,8 +68,8 @@ def _expulsion_from_standing(kick: str, pack_id: int | None) -> str:
 
 def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
     """
-    Apply socialize effects. Caller must set last_socialize_day first or after.
-    Returns dict: outcome, body, success (embed color hint), expulsion_note.
+    apply socialize effects. caller must set last_socialize_day first or after.
+    returns dict: outcome, body, success (embed color hint), expulsion_note.
     """
     outcome = roll_socialize_outcome()
     name = partner["wolf_name"]
@@ -85,11 +85,11 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         their_mood = db.adjust_mood(partner["id"], mood)
         lines.append(f"**+{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
-        standing_note = f"Standing **+{SOCIALIZE_STANDING_GOOD}**."
+        standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
         if pack_id:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_WARM)
-            unity_note = f"Den unity **+{SOCIALIZE_UNITY_WARM}**."
+            unity_note = f"den unity **+{SOCIALIZE_UNITY_WARM}**."
 
     elif outcome == "good":
         lines.append(_pick(GOOD_FLAVOR, name))
@@ -98,7 +98,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         their_mood = db.adjust_mood(partner["id"], mood)
         lines.append(f"**+{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
-        standing_note = f"Standing **+{SOCIALIZE_STANDING_GOOD}**."
+        standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
 
     elif outcome == "awkward":
@@ -110,7 +110,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         lines.append(f"**{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
         if pack_id:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_AWKWARD)
-            unity_note = f"Den unity **{SOCIALIZE_UNITY_AWKWARD}**."
+            unity_note = f"den unity **{SOCIALIZE_UNITY_AWKWARD}**."
         from engine.disease_contract import try_den_filth_exposure
 
         for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):
@@ -127,11 +127,11 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         db.update_user(partner["discord_id"], wolf_id=partner["id"], distressed=1)
         lines.append(f"**{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_SCRAP)
-        standing_note = f"Standing **{SOCIALIZE_STANDING_SCRAP}**."
+        standing_note = f"standing **{SOCIALIZE_STANDING_SCRAP}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
         if pack_id:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_SCRAP)
-            unity_note = f"Den unity **{SOCIALIZE_UNITY_SCRAP}**."
+            unity_note = f"den unity **{SOCIALIZE_UNITY_SCRAP}**."
         from engine.disease_contract import try_den_filth_exposure
 
         for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):

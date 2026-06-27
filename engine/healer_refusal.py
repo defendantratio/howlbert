@@ -6,8 +6,8 @@ import database as db
 from engine.role_features import is_full_medic
 
 HEALER_REFUSAL_TEXT = (
-    "_**Healer's Code:** a packmate is **dying** in the den. "
-    "You cannot refuse the sick; `/medic action:stabilize` or urge `/medic action:deathsaves`._"
+    "_**healer's code:** a packmate is **dying** in the den. "
+    "you cannot refuse the sick; `/medic action:stabilize` or urge `/medic action:deathsaves`._"
 )
 
 
@@ -53,6 +53,6 @@ def rot_lung_outbreak_news(pack_id: int, *, threshold: int = 2) -> str | None:
     if count < threshold:
         return None
     return (
-        f"**Rot-lung** weighs on **{count}** den-mates; mullein and marsh-mallow courses, "
+        f"**rot-lung** weighs on **{count}** den-mates; mullein and marsh-mallow courses, "
         "strict rest, and quarantine before the mire claims more breath."
     )

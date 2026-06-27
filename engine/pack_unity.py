@@ -38,7 +38,7 @@ def unity_is_broken(unity: int) -> bool:
 
 
 def howl_can_rally_unity(user, pack) -> bool:
-    """Alpha or Beta (Advisor) can rally a broken pack; ordinary wolves cannot."""
+    """alpha or beta (advisor) can rally a broken pack; ordinary wolves cannot."""
     from engine.pack_leadership import is_pack_alpha, is_pack_beta
 
     if not unity_is_broken(int(pack["pack_unity"])):
@@ -64,26 +64,26 @@ def compute_howl_unity_gain(user, pack, unity: int, echo_count: int) -> int:
 def unity_effect_text(unity: int) -> str:
     if unity <= PACK_UNITY_DISSOLVE_THRESHOLD:
         return (
-            f"**Dissolved**; at **{PACK_UNITY_DISSOLVE_THRESHOLD}** unity the den fractures; "
+            f"**dissolved**; at **{PACK_UNITY_DISSOLVE_THRESHOLD}** unity the den fractures; "
             "every wolf is cast to **loner** until they `/setfaction` back in."
         )
     if unity < 0:
         return (
-            f"Pack fracturing (**{unity}**); **−25%** bones on `/bones action:hunt` "
+            f"pack fracturing (**{unity}**); **−25%** bones on `/bones action:hunt` "
             "(50🦴 → 37🦴 before tax). "
             "**Plain `/howl` cannot raise unity** until **Alpha** or **Beta (Advisor)** rallies, "
             "or you share fresh-kill / hang a den charm."
         )
     if unity == 0:
         return (
-            "Pack breaking; **−20%** hunt bones (50🦴 → 40🦴). "
-            "**Plain `/howl` does not raise unity**; need Alpha, Beta (Advisor), den charm, or fresh-kill."
+            "pack breaking; **−20%** hunt bones (50🦴 → 40🦴). "
+            "**plain `/howl` does not raise unity**; need alpha, beta (advisor), den charm, or fresh-kill."
         )
     if unity <= 2:
-        return "Low unity; **−10%** hunt bones (50🦴 → 45🦴 before tax)."
+        return "low unity; **−10%** hunt bones (50🦴 → 45🦴 before tax)."
     if unity >= 8:
-        return "High unity; **+10%** hunt bones (50🦴 → 55🦴); howls rally harder."
-    return "Steady; normal hunt payouts. Howl to strengthen the chorus."
+        return "high unity; **+10%** hunt bones (50🦴 → 55🦴); howls rally harder."
+    return "steady; normal hunt payouts. howl to strengthen the chorus."
 
 
 def standing_effect_text(standing: int) -> str:
@@ -91,18 +91,18 @@ def standing_effect_text(standing: int) -> str:
 
     if standing <= WOLF_STANDING_KICK_THRESHOLD:
         return (
-            f"**Cast out**; at **{WOLF_STANDING_KICK_THRESHOLD}** standing you are expelled "
+            f"**cast out**; at **{WOLF_STANDING_KICK_THRESHOLD}** standing you are expelled "
             "from the pack (loner until `/setfaction`). "
             "**Alphas** face the **Rite of the Broken Canine** instead (`/pack brokenrite`)."
         )
     if standing < 0:
         return (
-            f"Disfavored (**{standing}**); one step from exile at "
-            f"**{WOLF_STANDING_KICK_THRESHOLD}**. Earn standing through quests, howls, and sharing. "
+            f"disfavored (**{standing}**); one step from exile at "
+            f"**{WOLF_STANDING_KICK_THRESHOLD}**. earn standing through quests, howls, and sharing. "
             "**Crime** and **cross-pack mating** (if caught) lower standing. "
-            "Raiding a rival pack's treasury with `/bones action:crime target_pack:` raises standing if you succeed."
+            "A clean rival treasury raid earns den standing; getting caught costs standing and rival pack trust."
         )
-    return "In good standing with the den."
+    return "in good standing with the den."
 
 
 def hunt_bone_multiplier(unity: int) -> float:
@@ -133,3 +133,12 @@ def pick_howl_flavor(*, echo_count: int, muted: bool = False) -> str:
 
 def format_unity_meter(unity: int) -> str:
     return f"{unity}/{PACK_UNITY_MAX} (min {PACK_UNITY_MIN})"
+
+
+def format_howl_carry(reach: int, *, natural_20: bool = False) -> str:
+    """In-world how far today's chorus carries (tree-lengths on the wind)."""
+    unit = "tree-length" if reach == 1 else "tree-lengths"
+    text = f"carries **{reach}** {unit} on the wind"
+    if natural_20:
+        text += " — the note doubles back across the ridges"
+    return text

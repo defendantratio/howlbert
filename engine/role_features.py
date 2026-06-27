@@ -28,7 +28,7 @@ def wolf_role_key(user) -> str:
 
 
 def role_keys(user) -> tuple[str, ...]:
-    """Active wolf role plus optional purchased bonus feature."""
+    """active wolf role plus optional purchased bonus feature."""
     if not user:
         return ()
     keys: list[str] = []
@@ -110,10 +110,10 @@ def role_hunt_multiplier(user, *, day: int | None = None) -> tuple[float, str]:
     ragwort = elder_hunt_speed_active(user, day)
     if has_any_role(user, DROWN_SICK_ROLE):
         if ragwort:
-            return 1.0, "Ragwort tonic; full hunt speed despite frailty."
-        return 0.65, "Drown-Sick; frail; **−35%** hunt bones."
+            return 1.0, "ragwort tonic; full hunt speed despite frailty."
+        return 0.65, "drown-sick; frail; **−35%** hunt bones."
     if ragwort and has_any_role(user, "elder"):
-        return 1.0, "Ragwort tonic; elders hunt at full speed."
+        return 1.0, "ragwort tonic; elders hunt at full speed."
     return 1.0, ""
 
 
@@ -192,7 +192,7 @@ def try_consume_blood_oath_buff(
 
 
 def try_consume_commanding_howl_combat_buff(user) -> bool:
-    """Same buff applies to the wolf's next attack roll in combat."""
+    """same buff applies to the wolf's next attack roll in combat."""
     return try_consume_commanding_howl_buff(user)
 
 
@@ -201,7 +201,7 @@ def guard_imposes_attack_disadvantage(
     attacker_fighter_id: int,
     defender_fighter_id: int,
 ) -> bool:
-    """Guard; impose disadvantage when a packmate is attacked."""
+    """guard; impose disadvantage when a packmate is attacked."""
     for fighter in db.get_combat_fighters(encounter_id):
         fid = fighter["id"]
         if fid in (attacker_fighter_id, defender_fighter_id):
@@ -213,7 +213,7 @@ def guard_imposes_attack_disadvantage(
 
 
 def mark_scout_hidden(user, day: int) -> None:
-    """Scout Unseen Paw; hidden until end of sunrise in fog/mist."""
+    """scout unseen paw; hidden until end of sunrise in fog/mist."""
     if not has_any_role(user, "scout"):
         return
     db.update_user(user["discord_id"], wolf_id=user["id"], scout_hidden_day=day)
@@ -238,14 +238,14 @@ def try_scout_hide_in_weather(user, *, weather_key: str | None, day: int) -> str
     if not weather_is_lightly_obscured(weather_key):
         return None
     mark_scout_hidden(user, day)
-    return "Unseen Paw; you melt into the **fog** until this sunrise ends."
+    return "unseen paw; you melt into the **fog** until this sunrise ends."
 
 
 def caretaker_groom_mood_bonus(partner_mood: int, *, partner_distressed: bool = False) -> tuple[int, str]:
-    """Extra mood when a Caretaker soothes a frightened wolf."""
+    """extra mood when a caretaker soothes a frightened wolf."""
     if partner_mood >= 30 and not partner_distressed:
         return 5, ""
-    return 12, "\n_Soothing Lick; fear and panic ease under a Caretaker's tongue._"
+    return 12, "\n_soothing lick; fear and panic ease under a caretaker's tongue._"
 
 
 def can_grant_commanding_howl(user, pack) -> bool:

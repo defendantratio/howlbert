@@ -51,19 +51,19 @@ def prepare_herb_stack(
     at_den: bool = False,
 ) -> tuple[bool, str]:
     if method not in PREP_FORMS:
-        return False, "Use **dry**, **poultice**, **tonic**, or **decoction**."
+        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
     stack = db.get_herb_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "That herb isn't in your forage bag."
+        return False, "that herb isn't in your forage bag."
     herb_key = stack["herb_key"]
     meta = HERBS.get(herb_key, {})
     rule = herb_form_rule(herb_key)
     if method == "decoction" and not at_den:
         pass  # wolves heat stones / den fire anywhere for decoction
     if stack["form"] != "fresh" and method == "dry":
-        return False, "Only **fresh** herbs can be dried."
+        return False, "only **fresh** herbs can be dried."
     if stack["form"] not in ("fresh", "dried") and method != "dry":
-        return False, f"Already prepared as **{stack['form']}**."
+        return False, f"already prepared as **{stack['form']}**."
 
     dc = _prep_dc(method, user, herb_key)
     result = resolve_check(
@@ -90,19 +90,19 @@ def prepare_herb_stack(
             return (
                 False,
                 format_roll_result(result)
-                + "\n\nContaminated tonic; patient would vomit; herb wasted.",
+                + "\n\ncontaminated tonic; patient would vomit; herb wasted.",
             )
         if method == "decoction":
             db.remove_herb_stack(stack_id)
-            return False, format_roll_result(result) + "\n\nDecoction boiled over; batch ruined."
+            return False, format_roll_result(result) + "\n\ndecoction boiled over; batch ruined."
         if method == "dry":
             db.update_herb_stack(stack_id, potency=max(40, int(stack["potency"]) - 30))
             return (
                 False,
                 format_roll_result(result)
-                + "\n\nPoor drying; **reduced potency** (still usable).",
+                + "\n\npoor drying; **reduced potency** (still usable).",
             )
-        return False, format_roll_result(result) + "\n\nPreparation failed; try again."
+        return False, format_roll_result(result) + "\n\npreparation failed; try again."
 
     potency = 100
     if method == "dry" and result["outcome"] != "critical_success":
@@ -143,16 +143,16 @@ def prepare_pack_herb_stack(
 ) -> tuple[bool, str]:
     """Dry (or prepare) one healers' den store stack; dryall uses this for fresh rows."""
     if method not in PREP_FORMS:
-        return False, "Use **dry**, **poultice**, **tonic**, or **decoction**."
+        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
     stack = db.get_pack_herb_stack(store_id)
     if not stack or int(stack["pack_id"]) != pack_id:
-        return False, "That stack isn't in your pack's herb store."
+        return False, "that stack isn't in your pack's herb store."
     herb_key = stack["herb_key"]
     meta = HERBS.get(herb_key, {})
     if stack["form"] != "fresh" and method == "dry":
-        return False, "Only **fresh** herbs can be dried."
+        return False, "only **fresh** herbs can be dried."
     if stack["form"] not in ("fresh", "dried") and method != "dry":
-        return False, f"Already prepared as **{stack['form']}**."
+        return False, f"already prepared as **{stack['form']}**."
 
     dc = _prep_dc(method, user, herb_key)
     result = resolve_check(
@@ -184,7 +184,7 @@ def prepare_pack_herb_stack(
                 format_roll_result(result)
                 + f"\n\n**{name}**{store_note}: poor drying; **reduced potency** (still usable).",
             )
-        return False, format_roll_result(result) + "\n\nPreparation failed; try again."
+        return False, format_roll_result(result) + "\n\npreparation failed; try again."
 
     potency = 100
     if method == "dry" and result["outcome"] != "critical_success":
@@ -216,40 +216,102 @@ def prepare_herb_from_inventory(
     guild_id: int,
     at_den: bool = False,
 ) -> tuple[bool, str]:
-    """Consume one inventory herb, add as a fresh forage stack, then prepare it."""
+    """Consume one inventory herb and prepare it (dry keeps in inventory; other forms → den store)."""
     key = item_key.strip().lower()
     if not key.startswith("herb_"):
-        return False, "Use an inventory herb key like **`herb_arnica`**."
+        return False, "use an inventory herb key like **`herb_arnica`**."
     herb_key = key.replace("herb_", "", 1)
     if herb_key not in HERBS:
-        return False, "That herb isn't in the compendium."
+        return False, "that herb isn't in the compendium."
     item = db.get_item_by_key(key)
     if not item:
-        return False, "Unknown herb item."
+        return False, "unknown herb item."
     qty = db.get_inventory_quantity(user["discord_id"], item["id"])
     if qty < 1:
-        return False, f"You don't have **{item['name']}** in `/bones action:inventory`."
+        return False, f"you don't have **{item['name']}** in `/bones action:inventory`."
     if not db.consume_item(user["discord_id"], item["id"], quantity=1):
-        return False, f"Could not use herb from `/bones action:inventory`."
+        return False, "could not use herb from `/bones action:inventory`."
 
-    from engine.herb_storage import grant_fresh_herb
+    meta = HERBS.get(herb_key, {})
+    if method not in PREP_FORMS:
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
 
-    stack_id, _ = grant_fresh_herb(
-        user["id"],
-        herb_key=herb_key,
-        guild_id=guild_id,
-        day=day,
-        user=user,
-    )
-    ok, msg = prepare_herb_stack(
+    dc = _prep_dc(method, user, herb_key)
+    result = resolve_check(
         user,
-        stack_id,
-        method,
-        day=day,
-        at_den=at_den,
+        attr_keys=("attr_int", "attr_wis"),
+        skill="Herblore",
+        dc=dc,
+        proficient=_herblore_proficient(user),
+        skill_key="herblore",
+        game_day=day,
     )
-    note = f"_Used **1× {item['name']}** from `/bones action:inventory` → forage bag._\n\n"
-    return ok, note + msg
+    target = _target_form(method)
+    name = meta.get("name", herb_key)
+
+    if result["outcome"] == "critical_failure":
+        return (
+            False,
+            format_roll_result(result) + f"\n\n**{name}** ruined; batch spoiled.",
+        )
+    if not result["success"]:
+        if method in ("tonic", "decoction"):
+            return (
+                False,
+                format_roll_result(result) + f"\n\n**{name}** preparation failed; herb wasted.",
+            )
+        if method == "dry":
+            db.grant_item(user["discord_id"], item["id"], quantity=1)
+            return (
+                False,
+                format_roll_result(result)
+                + "\n\npoor drying; herb kept but **reduced potency** (still usable).",
+            )
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        return False, format_roll_result(result) + "\n\npreparation failed; herb returned."
+
+    potency = 100
+    if method == "dry" and result["outcome"] != "critical_success":
+        potency = 90
+    if method == "decoction":
+        potency = 120
+
+    if method == "dry":
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        bonus = " Stores for months in `/bones action:inventory`."
+        return (
+            True,
+            format_roll_result(result) + f"\n\n**{name}** → **{target}**.{bonus}",
+        )
+
+    pack_id = int(user["pack_id"]) if user and user["pack_id"] else 0
+    if not pack_id:
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        return (
+            False,
+            "join a pack to prepare **poultice/tonic/decoction** into the healers' den store.",
+        )
+    db.add_pack_herb_stack(
+        pack_id,
+        herb_key,
+        form=target,
+        potency=min(120, potency),
+        quantity=1,
+        acquired_day=day,
+        guild_id=guild_id,
+        deposited_by=user["id"],
+    )
+    bonus = {
+        "decoction": " Cure timers **halved** when used from the den store.",
+        "poultice": " Heals **1d4** on complex wounds when used from the den store.",
+        "tonic": " Full tonic effect when administered from the den store.",
+    }.get(method, "")
+    return (
+        True,
+        format_roll_result(result)
+        + f"\n\n**{name}** → **{target}** in the healers' store (`/herbs action:store mode:list`).{bonus}",
+    )
 
 
 def dry_all_fresh_herbs(
@@ -259,9 +321,8 @@ def dry_all_fresh_herbs(
     guild_id: int,
     at_den: bool = False,
 ) -> tuple[bool, str]:
-    """Roll drying separately for each fresh forage stack and inventory herb item."""
-    stacks = db.get_herb_stacks(user["id"])
-    fresh_ids = [int(s["id"]) for s in stacks if s["form"] == "fresh"]
+    """Roll drying separately for each inventory herb and fresh den-store stack."""
+    _ = at_den
     inventory_herbs = [
         (row["key"], row["name"], int(row["quantity"]))
         for row in db.get_inventory(user["discord_id"])
@@ -275,34 +336,17 @@ def dry_all_fresh_herbs(
             for s in db.get_pack_herb_stacks(pack_id)
             if s["form"] == "fresh"
         ]
-    if not fresh_ids and not inventory_herbs and not pack_fresh_ids:
+    if not inventory_herbs and not pack_fresh_ids:
         return (
             False,
-            "No herbs to dry in your **forage bag** (`/herbs action:bag`), "
-            "**inventory** (`/bones action:inventory`), or **healers' den store** (`/herbs action:store mode:list`).",
+            "no herbs to dry in **inventory** (`/bones action:inventory`) or "
+            "**healers' den store** (`/herbs action:store mode:list`).",
         )
 
     dried = 0
     failed = 0
     ruined = 0
     lines: list[str] = []
-
-    for stack_id in fresh_ids:
-        stack = db.get_herb_stack(stack_id)
-        if not stack or stack["form"] != "fresh":
-            continue
-        meta = HERBS.get(stack["herb_key"], {})
-        name = meta.get("name", stack["herb_key"])
-        ok, msg = prepare_herb_stack(user, stack_id, "dry", day=day, at_den=at_den)
-        if ok:
-            dried += 1
-            lines.append(f"**{name}** → dried")
-        elif "ruined" in msg.lower() or "spoiled" in msg.lower():
-            ruined += 1
-            lines.append(f"**{name}** — ruined")
-        else:
-            failed += 1
-            lines.append(f"**{name}** — failed")
 
     for item_key, name, qty in inventory_herbs:
         for _ in range(qty):
@@ -348,7 +392,7 @@ def dry_all_fresh_herbs(
 
     if dried == 0:
         summary = "\n".join(lines[:10])
-        return False, f"No herbs dried.\n{summary}"
+        return False, f"no herbs dried.\n{summary}"
 
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
@@ -358,4 +402,4 @@ def dry_all_fresh_herbs(
         tail += f", **{failed}** failed"
     if ruined:
         tail += f", **{ruined}** ruined"
-    return True, f"**Dry all** complete.{tail}\n{summary}"
+    return True, f"**dry all** complete.{tail}\n{summary}"

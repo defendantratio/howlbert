@@ -157,14 +157,14 @@ def _format_cure_list(cures: tuple) -> str:
     if not labels:
         return ""
     suffix = "…" if len(cures) > 8 else ""
-    return f"Clears on treat: {', '.join(labels)}{suffix}."
+    return f"clears on treat: {', '.join(labels)}{suffix}."
 
 
 def build_usage_hint(herb_key: str, meta: dict | None = None) -> str:
     """Single-line mechanical hint for compendium pages."""
     meta = meta or HERBS.get(herb_key, {})
     if meta.get("poison") or meta.get("rarity") == "restricted":
-        return f"_{STATIC_HINTS.get(herb_key, 'Restricted; Medic knowledge only.')}_"
+        return f"_{STATIC_HINTS.get(herb_key, 'restricted; medic knowledge only.')}_"
 
     if herb_key in STATIC_HINTS:
         return f"_{STATIC_HINTS[herb_key]}_"
@@ -191,5 +191,5 @@ def build_usage_hint(herb_key: str, meta: dict | None = None) -> str:
 
     effect = (meta.get("effect") or "").strip()
     if effect:
-        return f"_{effect} Use via `/medic action:treat`._"
-    return "_Use via `/medic action:treat`._"
+        return f"_{effect} use via `/medic action:treat`._"
+    return "_use via `/medic action:treat`._"

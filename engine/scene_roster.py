@@ -21,13 +21,13 @@ def build_roster_embed(scene, members) -> discord.Embed:
         roster = "_No wolves present yet — post or `/scene join` to enter._"
     embed = howlbert_embed(f"🎬 {scene['name']}", roster, color=SUCCESS_COLOR)
     if scene["topic"]:
-        embed.add_field(name="Topic", value=scene["topic"], inline=False)
+        embed.add_field(name="topic", value=scene["topic"], inline=False)
     embed.set_footer(text=f"{len(members)} present · auto-join on post · /scene poke")
     return embed
 
 
 async def refresh_scene_roster(bot, scene) -> None:
-    """Edit the pinned roster message, or create one if missing."""
+    """edit the pinned roster message, or create one if missing."""
     if scene["status"] != "open":
         return
     thread = bot.get_channel(int(scene["thread_id"]))

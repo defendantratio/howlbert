@@ -42,10 +42,10 @@ def build_ambience_embed(world) -> discord.Embed:
     moon = active_lunar_phase(rollover_now(ROLLOVER_TIMEZONE))
     flavor = random.choice(_AMBIENCE_LINES.get(season, _AMBIENCE_LINES["newgrowth"]))
     body = (
-        f"**Day {day}** · {season_label(season)} · {weather_label(weather)} · "
+        f"**day {day}** · {season_label(season)} · {weather_label(weather)} · "
         f"{time_label(tod)} · {moon}\n\n{flavor}"
     )
-    return howlbert_embed("🌅 Sunrise over the territory", body, color=EMBED_COLOR)
+    return howlbert_embed("🌅 sunrise over the territory", body, color=EMBED_COLOR)
 
 
 async def post_rp_ambience(bot, guild_id: int, world) -> None:

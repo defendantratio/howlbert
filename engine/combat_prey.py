@@ -7,7 +7,7 @@ from engine.hunt_combat import is_hunt_prey_encounter
 from engine.hunt_payout import grant_prey_carcass_canonical
 from engine.prey_items import prey_meta
 
-# Bestiary template key -> prey hoard key (large_prey handled by hunt_combat).
+# Bestiary template key -> food hoard key (large_prey handled by hunt_combat).
 NPC_TEMPLATE_PREY: dict[str, str] = {
     "coyote": "coyote",
     "fox": "fox",
@@ -85,10 +85,10 @@ def try_grant_combat_kill_carcass(
         prey_key=prey_key,
     )
     meta = prey_meta(prey_key)
-    note = f"**{name}** dragged to your hoard (`/prey`)."
+    note = f"**{name}** dragged to your hoard (`/food`)."
     if prey_key == "wolf_carcass":
         note += (
-            " _Wolf meat is edible; private `/eat` costs mood and might slip by; "
+            " _wolf meat is edible; private `/eat` costs mood and might slip by; "
             "`/preypile`, `/pack stash deposit`, or `/packlife feedall` with wolf flesh always gets you caught._"
         )
     return note

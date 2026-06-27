@@ -36,15 +36,15 @@ from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 from utils.hunting import award_bones
 
 COLLAB_FLAVOR = [
-    "The pack fans out through birch and stone; scent thick, voices low.",
-    "You move as one line through the timber, flankers holding the wind.",
+    "the pack fans out through birch and stone; scent thick, voices low.",
+    "you move as one line through the timber, flankers holding the wind.",
     "A coordinated drive; no lone wolf's gamble, but the den's work.",
     "Calls and tail signals; the quarry has nowhere left to run.",
 ]
 
 COLLAB_SUCCESS_FLAVOR = [
-    "The kill is shared work; meat and marrow for every jaw that held the line.",
-    "Flankers, chasers, and the leader's bite; the forest yields to the pack.",
+    "the kill is shared work; meat and marrow for every jaw that held the line.",
+    "flankers, chasers, and the leader's bite; the forest yields to the pack.",
     "A clean takedown. Even the elders would nod at this hunt.",
 ]
 
@@ -70,37 +70,37 @@ def _hunt_block_reason(user, day: int) -> str | None:
     if vitals:
         return vitals
     if not can_hunt_again(user, day):
-        return "You've used your hunt(s) this sunrise."
+        return "you've used your hunt(s) this sunrise."
     if db.wolf_in_open_collab_hunt(user["id"]):
-        return "This wolf is already in an open pack hunt."
+        return "this wolf is already in an open pack hunt."
     return None
 
 
 def validate_start_collab_hunt(user, *, guild_id: int, day: int) -> str | None:
     if not db.row_val(user, "pack_id"):
-        return "Join a Great Pack first; pack hunts are den business."
+        return "join a great pack first; pack hunts are den business."
     reason = _hunt_block_reason(user, day)
     if reason:
         return reason
     if db.get_open_collab_hunt_by_leader(user["id"]):
-        return "You already called a pack hunt. Set out or cancel it first."
+        return "you already called a pack hunt. set out or cancel it first."
     return None
 
 
 def validate_join_collab_hunt(user, hunt, day: int) -> str | None:
     if hunt["status"] != "open":
-        return "This pack hunt is no longer open."
+        return "this pack hunt is no longer open."
     if user["pack_id"] != hunt["pack_id"]:
         from engine.pack_relations import can_join_friendly_pack_hunt
 
         ok, _note = can_join_friendly_pack_hunt(user, hunt, guild_id=int(hunt["guild_id"]))
         if not ok:
-            return "Only wolves in the same Great Pack can join (or **≥8** standing for allied hunts)."
+            return "only wolves in the same great pack can join (or **≥8** standing for allied hunts)."
     members = db.get_collab_hunt_members(hunt["id"])
     if any(m["wolf_id"] == user["id"] for m in members):
-        return "This wolf is already on the hunt."
+        return "this wolf is already on the hunt."
     if len(members) >= COLLAB_HUNT_MAX_WOLVES:
-        return f"The hunting party is full ({COLLAB_HUNT_MAX_WOLVES} wolves max)."
+        return f"the hunting party is full ({COLLAB_HUNT_MAX_WOLVES} wolves max)."
     return _hunt_block_reason(user, day)
 
 
@@ -122,7 +122,7 @@ def wolves_eligible_to_join(discord_id: int, hunt_id: int, day: int) -> list:
 def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
     hunt = db.get_collab_hunt(hunt_id)
     if not hunt:
-        return howlbert_embed("Pack Hunt", "Hunt not found.", color=ERROR_COLOR)
+        return howlbert_embed("pack hunt", "hunt not found.", color=ERROR_COLOR)
     members = db.get_collab_hunt_members(hunt_id)
     leader = db.get_user_by_id(hunt["leader_wolf_id"])
     leader_name = leader["wolf_name"] if leader else "Unknown"
@@ -130,33 +130,33 @@ def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
     pack_name = pack["name"] if pack else "the den"
 
     if hunt["status"] == "open":
-        title = "Pack Hunt Called"
+        title = "pack hunt called"
         desc = (
             f"**{leader_name}** calls the pack to hunt for **{pack_name}**.\n"
             f"{random.choice(COLLAB_FLAVOR)}\n\n"
-            f"**Party** ({len(members)}/{COLLAB_HUNT_MAX_WOLVES}); need at least "
+            f"**party** ({len(members)}/{COLLAB_HUNT_MAX_WOLVES}); need at least "
             f"**{COLLAB_HUNT_MIN_WOLVES}** to set out.\n"
-            f"Each wolf spends one hunt this sunrise. "
+            f"each wolf spends one hunt this sunrise. "
             f"+**{COLLAB_HUNT_BONUS_PCT_PER_WOLF}%** bones per extra hunter; "
             "assign **leader / chaser / flank / scout / blocker** roles for chemistry.\n"
-            f"Allied dens at **≥8** standing may join. "
-            f"Large prey and ambushes can still strike; the party fights together (+1 attack per ally, max +3)."
+            f"allied dens at **≥8** standing may join. "
+            f"large prey and ambushes can still strike; the party fights together (+1 attack per ally, max +3)."
         )
         color = SUCCESS_COLOR
     elif hunt["status"] == "encounter":
-        title = "Pack Hunt; Fight!"
+        title = "pack hunt; fight!"
         desc = (
-            f"The party (**{_party_names(hunt_id)}**) ran into trouble.\n"
+            f"the party (**{_party_names(hunt_id)}**) ran into trouble.\n"
             "Combat is live below; bring it down to finish the hunt."
         )
         color = SUCCESS_COLOR
     elif hunt["status"] == "done":
-        title = "Pack Hunt Complete"
-        desc = hunt["result_text"] or "The party returned to the den."
+        title = "pack hunt complete"
+        desc = hunt["result_text"] or "the party returned to the den."
         color = SUCCESS_COLOR
     else:
-        title = "Pack Hunt Closed"
-        desc = "This hunt was cancelled or the den rolled over."
+        title = "pack hunt closed"
+        desc = "this hunt was cancelled or the den rolled over."
         color = ERROR_COLOR
 
     embed = howlbert_embed(title, desc, color=color)
@@ -175,7 +175,7 @@ def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
                 if ally:
                     pack_tag = f" · **{ally['name']}** ally"
             lines.append(f"• **{m['wolf_name']}** · _{role}_{tag}{hunter}{pack_tag}")
-        embed.add_field(name="Wolves", value="\n".join(lines), inline=False)
+        embed.add_field(name="wolves", value="\n".join(lines), inline=False)
     if hunt["status"] == "open":
         chemistry = ""
         if len(members) >= 2:
@@ -191,7 +191,7 @@ def build_collab_hunt_embed(hunt_id: int) -> discord.Embed:
                 chemistry = f" · chemistry **+{bond_bonus}%**"
         embed.set_footer(
             text=(
-                f"Join with the button · Caller sets out when ready · max {COLLAB_HUNT_MAX_WOLVES} wolves"
+                f"join with the button · caller sets out when ready · max {COLLAB_HUNT_MAX_WOLVES} wolves"
                 f"{chemistry}"
             )
         )
@@ -227,7 +227,7 @@ def payout_collab_hunt(
 ) -> discord.Embed:
     hunt = db.get_collab_hunt(hunt_id)
     if not hunt:
-        return howlbert_embed("Pack Hunt", "Hunt not found.", color=ERROR_COLOR)
+        return howlbert_embed("pack hunt", "hunt not found.", color=ERROR_COLOR)
     if hunt["status"] == "done":
         return build_collab_hunt_embed(hunt_id)
 
@@ -265,6 +265,10 @@ def payout_collab_hunt(
             user, gross, weather, "hunt", season=season
         )
         db.adjust_mood(user["id"], COLLAB_HUNT_MOOD_BONUS)
+        from config import COLLAB_RP_MOOD_BONUS
+
+        if db.collab_hunt_member_rp_said(hunt_id, user["id"]):
+            db.adjust_mood(user["id"], COLLAB_RP_MOOD_BONUS)
         total_payout += payout
 
         parts = [f"**{user['wolf_name']}** {format_bones(net, signed=True)}"]
@@ -316,7 +320,7 @@ def payout_collab_hunt(
 
     bonus_note = f"+{bonus_pct}% pack bonus"
     if users and all(is_hunter(u) for u in users):
-        bonus_note += " (all Hunters)"
+        bonus_note += " (all hunters)"
 
     result_text = (
         f"{flavor}\n\n"
@@ -325,7 +329,7 @@ def payout_collab_hunt(
     )
     if prey_name and leader:
         result_text += (
-            f"\n**{prey_name}** in the caller's hoard (`/prey`) — "
+            f"\n**{prey_name}** in the caller's hoard (`/food`) — "
             f"use `/preypile` to lay fresh-kill out for the den."
         )
 
@@ -337,7 +341,7 @@ def payout_collab_hunt(
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(leader):
-            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
         embed.set_footer(text=footer)
     return embed
 
@@ -345,13 +349,13 @@ def payout_collab_hunt(
 def resolve_collab_hunt(hunt_id: int) -> tuple[discord.Embed | None, str | None]:
     hunt = db.get_collab_hunt(hunt_id)
     if not hunt or hunt["status"] != "open":
-        return None, "This pack hunt is not open."
+        return None, "this pack hunt is not open."
     members = db.get_collab_hunt_members(hunt_id)
     if len(members) < COLLAB_HUNT_MIN_WOLVES:
-        return None, f"Need at least **{COLLAB_HUNT_MIN_WOLVES}** wolves to set out."
+        return None, f"need at least **{COLLAB_HUNT_MIN_WOLVES}** wolves to set out."
     users = _party_users(hunt_id)
     if len(users) < COLLAB_HUNT_MIN_WOLVES:
-        return None, "Not enough valid wolves on the hunt."
+        return None, "not enough valid wolves on the hunt."
 
     world = db.get_world(hunt["guild_id"])
     _record_all_hunt_uses(users, world["day_number"])
@@ -363,21 +367,21 @@ def try_set_out_collab_hunt(hunt_id: int) -> tuple[discord.Embed | None, str | N
     """Set out; may start combat (returns enc_id) or resolve immediately."""
     hunt = db.get_collab_hunt(hunt_id)
     if not hunt or hunt["status"] != "open":
-        return None, "This pack hunt is not open.", None
+        return None, "this pack hunt is not open.", None
     members = db.get_collab_hunt_members(hunt_id)
     if len(members) < COLLAB_HUNT_MIN_WOLVES:
-        return None, f"Need at least **{COLLAB_HUNT_MIN_WOLVES}** wolves to set out.", None
+        return None, f"need at least **{COLLAB_HUNT_MIN_WOLVES}** wolves to set out.", None
 
     users = _party_users(hunt_id)
     leader = db.get_user_by_id(hunt["leader_wolf_id"])
     if not leader or len(users) < COLLAB_HUNT_MIN_WOLVES:
-        return None, "Not enough valid wolves on the hunt.", None
+        return None, "not enough valid wolves on the hunt.", None
 
     guild_id = hunt["guild_id"]
     channel_id = hunt["channel_id"]
     world = db.get_world(guild_id)
     day = world["day_number"]
-    party_note = f"Pack hunt: {_party_names(hunt_id)}"
+    party_note = f"pack hunt: {_party_names(hunt_id)}"
 
     if roll_large_prey_encounter():
         _record_all_hunt_uses(users, day)
@@ -389,7 +393,7 @@ def try_set_out_collab_hunt(hunt_id: int) -> tuple[discord.Embed | None, str | N
         db.set_encounter_collab_hunt(enc_id, hunt_id)
         db.set_collab_hunt_status(hunt_id, "encounter")
         flavor = random.choice(LARGE_PREY_ENCOUNTER_TEXT)
-        embed = howlbert_embed("Large Prey!", flavor, color=SUCCESS_COLOR)
+        embed = howlbert_embed("large prey!", flavor, color=SUCCESS_COLOR)
         embed.set_footer(
             text=f"{party_note} · ~{LARGE_PREY_ENCOUNTER_CHANCE}% chance · caller leads the fight"
         )
@@ -480,7 +484,7 @@ async def complete_collab_hunt_large_prey(
     embed = payout_collab_hunt(
         hunt_id,
         fixed_base=fixed_base,
-        encounter_note="The pack brought down **large prey** together.",
+        encounter_note="the pack brought down **large prey** together.",
     )
     db.mark_hunt_prey_rewarded(enc_id)
     db.end_encounter(enc_id)
@@ -534,7 +538,7 @@ def complete_collab_hunt_ambush(hunt_id: int, enc_id: int) -> discord.Embed | No
     embed = payout_collab_hunt(
         hunt_id,
         fixed_base=gross,
-        encounter_note="The pack drove off the ambush and claimed what was left behind.",
+        encounter_note="the pack drove off the ambush and claimed what was left behind.",
     )
     db.end_encounter(enc_id)
     return embed

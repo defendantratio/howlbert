@@ -11,9 +11,9 @@ SIZE_RANK = {
 WOLF_DEFAULT_SIZE = "medium"
 
 SIZE_LABELS = {
-    "small": "Small",
-    "medium": "Medium",
-    "large": "Large",
+    "small": "small",
+    "medium": "medium",
+    "large": "large",
 }
 
 VALID_SIZE_CLASSES = frozenset(SIZE_RANK)
@@ -76,7 +76,7 @@ def size_class_for_wolf(user) -> str:
 
 
 def format_size_class_profile(user) -> str:
-    """Profile line for combat build size."""
+    """profile line for combat build size."""
     explicit = _explicit_size_class(user)
     effective = size_class_for_wolf(user)
     label = SIZE_LABELS.get(effective, effective.title())

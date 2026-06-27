@@ -72,6 +72,9 @@ def test_standing_hooks() -> None:
     check("acquire warn", "Medic knowledge" in hoard_note and "turnin" in hoard_note.lower())
 
     db.add_herb_stack(wolf_id, "wolfsbane", guild_id=1, acquired_day=1)
+    item = db.get_item_by_key("herb_wolfsbane")
+    if item:
+        db.grant_item(did, item["id"], quantity=1)
     before_audit = int(db.get_user_by_id(wolf_id)["standing"])
 
     with patch("engine.restricted_herbs.roll_restricted_hoard_caught", return_value=False):
@@ -103,10 +106,12 @@ def test_standing_hooks() -> None:
     with db.get_db() as conn:
         conn.execute("UPDATE users SET pack_id = 1 WHERE id = ?", (wolf_id,))
     medic = db.get_user_by_id(wolf_id)
-    db.add_herb_stack(wolf_id, "foxglove", guild_id=1, acquired_day=1)
+    fox_item = db.get_item_by_key("herb_foxglove")
+    if fox_item:
+        db.grant_item(medic["discord_id"], fox_item["id"], quantity=1)
     before_turnin = int(db.get_user_by_id(wolf_id)["standing"])
     ok, turn_msg = turnin_restricted_herb(
-        medic, db.get_herb_stacks(wolf_id)[0]["id"], pack_id=1, guild_id=1, day=10
+        medic, "herb_foxglove", pack_id=1, guild_id=1, day=10
     )
     after_turnin = db.get_user_by_id(wolf_id)
     check("turnin ok", ok and "Standing **+1**" in turn_msg)

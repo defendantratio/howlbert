@@ -28,16 +28,16 @@ def hunt_blocked_by_injury(user) -> str | None:
     """Fractured ribs or paralysis rule out running, fighting prey, and long treks."""
     if has_injury(user, "paralyzed"):
         return (
-            "**Paralyzed**: the spine is severed. You cannot leave the den for field commands."
+            "**paralyzed**: the spine is severed. you cannot leave the den for field commands."
         )
     if has_injury(user, "spinal_injury"):
         return (
-            "**Spinal injury**: hindquarters won't obey. Rest and splint before hunting, "
+            "**spinal injury**: hindquarters won't obey. rest and splint before hunting, "
             "patrol, or ranging out."
         )
     if has_injury(user, "fractured_rib"):
         return (
-            "A **fractured rib** keeps you from strenuous activity; "
+            "a **fractured rib** keeps you from strenuous activity; "
             "rest and comfrey before hunting, tracking, or ranging out."
         )
     return None
@@ -48,15 +48,15 @@ def bone_rest_activity_block(user, *, day: int | None = None) -> str | None:
     if not rest_until or day is None:
         if rest_until and day is None:
             return (
-                "**Splint confinement**: bone rest after surgery. "
-                "No hunt, patrol, or ranging until the Medic clears you."
+                "**splint confinement**: bone rest after surgery. "
+                "no hunt, patrol, or ranging until the medic clears you."
             )
         return None
     if rest_until > day:
         left = rest_until - day
         return (
-            f"**Splint confinement**: **{left}** sunrise(s) of bone rest. "
-            "Den activities only; `/medic action:swim` may ease recovery."
+            f"**splint confinement**: **{left}** sunrise(s) of bone rest. "
+            "den activities only; `/medic action:swim` may ease recovery."
         )
     return None
 
@@ -71,15 +71,15 @@ def meal_blocked_by_injury(user) -> str | None:
         if shield:
             return None
         return (
-            "A **broken jaw**; you cannot eat solid food. "
-            "Liquid diet (broth, milk) and slippery elm until it heals."
+            "a **broken jaw**; you cannot eat solid food. "
+            "liquid diet (broth, milk) and slippery elm until it heals."
         )
     return None
 
 
 def attack_roll_modifiers(user, attack_type: str) -> tuple[int, bool]:
     """
-    Returns (extra damage modifier, disadvantage on attack roll).
+    returns (extra damage modifier, disadvantage on attack roll).
     torn_claw: −1 claw damage · broken_tooth: disadvantage on bite.
     """
     injuries = active_injury_keys(user)
@@ -102,7 +102,7 @@ def perception_penalty(user) -> int:
 
 
 def check_penalty_for_injury(user, attr: str) -> int:
-    """Flat penalty on attribute checks from injuries."""
+    """flat penalty on attribute checks from injuries."""
     injuries = active_injury_keys(user)
     penalty = 0
     if attr == "int" and "concussion" in injuries:

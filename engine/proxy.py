@@ -25,7 +25,7 @@ def parse_bracket_string(raw: str) -> tuple[str | None, str | None]:
 
 
 def split_prefix_suffix(brackets) -> tuple[str | None, str | None]:
-    """Accept Tupperbox 'brackets' ([prefix, suffix]) or a template string."""
+    """accept tupperbox 'brackets' ([prefix, suffix]) or a template string."""
     if isinstance(brackets, (list, tuple)):
         if len(brackets) >= 2:
             return (brackets[0] or None), (brackets[1] or None)
@@ -38,20 +38,20 @@ def split_prefix_suffix(brackets) -> tuple[str | None, str | None]:
 
 
 def sanitize_webhook_name(name: str) -> str:
-    name = (name or "Wolf").strip()
+    name = (name or "wolf").strip()
     lowered = name.lower()
-    for bad in _BANNED_NAME_BITS:
+    for bad in _banned_name_bits:
         if bad in lowered:
             name = re.sub(re.escape(bad), "w" + bad[1:], name, flags=re.IGNORECASE)
             lowered = name.lower()
     name = name[:80].strip()
-    return name or "Wolf"
+    return name or "wolf"
 
 
 def parse_tupperbox_export(raw: str) -> list[dict]:
-    """Return a normalized list of proxies from a Tupperbox or PluralKit export.
+    """return a normalized list of proxies from a tupperbox or pluralkit export.
 
-    Each item: {name, avatar_url, prefix, suffix, bio, birthday}.
+    each item: {name, avatar_url, prefix, suffix, bio, birthday}.
     """
     data = json.loads(raw)
     out: list[dict] = []
@@ -98,7 +98,7 @@ def parse_tupperbox_export(raw: str) -> list[dict]:
             )
         return [m for m in out if m["name"]]
 
-    raise ValueError("Unrecognized export; expected a Tupperbox or PluralKit JSON file.")
+    raise ValueError("unrecognized export; expected a tupperbox or pluralkit json file.")
 
 
 async def get_proxy_webhook(channel: discord.TextChannel) -> discord.Webhook | None:

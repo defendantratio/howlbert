@@ -23,7 +23,7 @@ def execute_rival_challenge(
     """
     favor_note = ""
     if female_favors_challenger:
-        favor_note = "\n_The receptive female favors the challenger (+2)._"
+        favor_note = "\n_the receptive female favors the challenger (+2)._"
 
     if mode == "vocal":
         att = roll_contest(
@@ -46,7 +46,7 @@ def execute_rival_challenge(
             or defender["wolf_role"] in ROLE_PROFICIENCIES,
         )
         body = (
-            f"**Vocal challenge** (howling intimidation)\n"
+            f"**vocal challenge** (howling intimidation)\n"
             f"{format_contest_roll(challenger['wolf_name'], att)}\n"
             f"{format_contest_roll(defender['wolf_name'], defn)}"
             f"{favor_note}"
@@ -62,7 +62,7 @@ def execute_rival_challenge(
         if defn["contest_total"] > att["contest_total"]:
             body += f"\n**{defender['wolf_name']}** holds the den line."
             return defender["wolf_name"], body
-        body += "\nStalemate; neither wolf yields cleanly."
+        body += "\nstalemate; neither wolf yields cleanly."
         return challenger["wolf_name"], body
 
     att = roll_contest(
@@ -83,7 +83,7 @@ def execute_rival_challenge(
         proficient="hunting" in parse_proficiencies(defender["skill_proficiencies"]),
     )
     body = (
-        f"**Physical challenge** (pin or submit)\n"
+        f"**physical challenge** (pin or submit)\n"
         f"{format_contest_roll(challenger['wolf_name'], att)}\n"
         f"{format_contest_roll(defender['wolf_name'], defn)}"
         f"{favor_note}"
@@ -99,5 +99,5 @@ def execute_rival_challenge(
     if defn["contest_total"] > att["contest_total"]:
         body += f"\n**{defender['wolf_name']}** drives the challenger off."
         return defender["wolf_name"], body
-    body += "\nNeither wolf gains a clean pin; stalemate."
+    body += "\nneither wolf gains a clean pin; stalemate."
     return challenger["wolf_name"], body

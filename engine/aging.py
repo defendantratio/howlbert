@@ -43,7 +43,7 @@ def default_age_for_role(role: str) -> int:
 
 
 def resolve_register_age(role: str, age_months: int | None) -> int:
-    """Pick starting moons for registration; elder role requires elder age."""
+    """pick starting moons for registration; elder role requires elder age."""
     role = role if role in ROLE_PROFICIENCIES else "hunter"
     months = age_months if age_months is not None else default_age_for_role(role)
     months = max(0, min(MAX_WOLF_AGE_MOONS, int(months)))
@@ -53,7 +53,7 @@ def resolve_register_age(role: str, age_months: int | None) -> int:
 
 
 def stage_for_age(age_moons: int) -> str:
-    """Life stage label: pup, juvenile, adult, or elder (by age only)."""
+    """life stage label: pup, juvenile, adult, or elder (by age only)."""
     if age_moons < PUP_MAX_MOONS:
         return "pup"
     if age_moons < JUVENILE_MAX_MOONS:
@@ -65,10 +65,10 @@ def stage_for_age(age_moons: int) -> str:
 
 def stage_label(stage: str) -> str:
     return {
-        "pup": "Pup",
-        "juvenile": "Juvenile",
-        "adult": "Adult",
-        "elder": "Elder",
+        "pup": "pup",
+        "juvenile": "juvenile",
+        "adult": "adult",
+        "elder": "elder",
     }.get(stage, stage.title())
 
 
@@ -78,7 +78,7 @@ def format_wolf_age(age_moons: int) -> str:
 
 
 def sync_role_to_age(age_moons: int, role: str) -> str:
-    """Pick a valid wolf_role for the given age and requested role."""
+    """pick a valid wolf_role for the given age and requested role."""
     role = role if role in ROLE_PROFICIENCIES else "hunter"
     if role in AGE_OVERRIDE_ROLES:
         return role
@@ -113,23 +113,23 @@ def check_age_milestones(old_age: int, new_age: int, current_role: str) -> list[
     notes: list[str] = []
     if old_age < PUP_MAX_MOONS <= new_age and current_role == PUP_ROLE:
         notes.append(
-            f"**Naming day**; at **{PUP_MAX_MOONS} moons** you are no longer a pup. "
-            f"Role set to **{ROLE_LABELS[JUVENILE_ROLE]}**. "
-            "Set attraction with **`/setsexuality`** when you are ready."
+            f"**naming day**; at **{PUP_MAX_MOONS} moons** you are no longer a pup. "
+            f"role set to **{ROLE_LABELS[JUVENILE_ROLE]}**. "
+            "set attraction with **`/setsexuality`** when you are ready."
         )
     if old_age < JUVENILE_MAX_MOONS <= new_age and current_role == JUVENILE_ROLE:
         notes.append(
-            f"At **{format_wolf_age(JUVENILE_MAX_MOONS)}** you leave juvenile life; "
+            f"at **{format_wolf_age(JUVENILE_MAX_MOONS)}** you leave juvenile life; "
             "earn an adult role through role quests and `/role action:event`."
         )
     if old_age < ELDER_MIN_MOONS <= new_age:
         notes.append(
-            f"**Long in the tooth**; at **{format_wolf_age(ELDER_MIN_MOONS)}** the pack counts you "
+            f"**long in the tooth**; at **{format_wolf_age(ELDER_MIN_MOONS)}** the pack counts you "
             "among the **elders**."
         )
     if old_age < MAX_WOLF_AGE_MOONS <= new_age:
         notes.append(
-            f"**Ancient**; at **{format_wolf_age(MAX_WOLF_AGE_MOONS)}** the seasons finally catch up. "
+            f"**ancient**; at **{format_wolf_age(MAX_WOLF_AGE_MOONS)}** the seasons finally catch up. "
             "You pass peacefully of old age this sunrise."
         )
     return notes
@@ -174,7 +174,7 @@ def apply_old_age_deaths_on_rollover(
 
 
 def role_after_milestones(new_age: int, current_role: str) -> str:
-    """Apply automatic role promotions from aging."""
+    """apply automatic role promotions from aging."""
     role = current_role if current_role in ROLE_PROFICIENCIES else "hunter"
     if role == PUP_ROLE and new_age >= PUP_MAX_MOONS:
         return JUVENILE_ROLE

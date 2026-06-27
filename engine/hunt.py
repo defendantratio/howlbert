@@ -12,12 +12,12 @@ FLAVOR_TIER_ORDER = ("miss", "small", "solid", "big", "legendary")
 HUNT_FLAVOR_MISS = (
     "You picked up a scent trail, but the prey slipped into the underbrush within a hare-hop.",
     "A rival scent spooked your quarry. Empty paws; carrion-breath talk if you return again.",
-    "You tracked for tree-lengths through pine and stone, but the forest kept its meal.",
+    "you tracked for tree-lengths through pine and stone, but the forest kept its meal.",
 )
 
 GENERIC_HUNT_FLAVOR = {
     "small": (
-        "Old scraps near the riverbank. Not glorious, but it counts toward the pile.",
+        "old scraps near the riverbank. not glorious, but it counts toward the pile.",
         "A quick kill in the bracken; modest fresh-kill for the hoard.",
     ),
     "solid": (
@@ -37,7 +37,7 @@ GENERIC_HUNT_FLAVOR = {
 PREY_HUNT_FLAVOR: dict[str, dict[str, tuple[str, ...]]] = {
     "vole": {
         "small": (
-            "A vole wriggles once; then doesn't. Meager, but the belly doesn't argue.",
+            "a vole wriggles once; then doesn't. meager, but the belly doesn't argue.",
         ),
     },
     "hare": {
@@ -152,7 +152,7 @@ def hunt_flavor_for_prey(prey_key: str, amount: int) -> str:
 
 
 def pick_hunt_outcome() -> tuple[int, str]:
-    """Roll bone payout and matching flavor (legacy helper)."""
+    """roll bone payout and matching flavor (legacy helper)."""
     amount = roll_hunt_amount()
     if amount <= 0:
         return amount, hunt_flavor_for_prey("vole", 0)

@@ -25,7 +25,7 @@ def run_group_check(
     day: int,
 ) -> tuple[bool, str]:
     if not wolves:
-        return False, "No wolves in the group."
+        return False, "no wolves in the group."
     results = []
     successes = 0
     for wolf in wolves:
@@ -41,10 +41,10 @@ def run_group_check(
         )
         if roll["success"]:
             successes += 1
-        results.append(f"**{wolf['wolf_name']}**: {roll['total']} vs DC {dc} ({'ok' if roll['success'] else 'fail'})")
+        results.append(f"**{wolf['wolf_name']}**: {roll['total']} vs dc {dc} ({'ok' if roll['success'] else 'fail'})")
     needed = (len(wolves) + 1) // 2
     ok = successes >= needed
-    header = f"Group check; **{successes}/{len(wolves)}** succeeded (need **{needed}**)."
+    header = f"group check; **{successes}/{len(wolves)}** succeeded (need **{needed}**)."
     return ok, header + "\n" + "\n".join(results)
 
 
@@ -88,7 +88,7 @@ def run_assisted_check(
             game_day=day,
         )
         primary_roll = r1 if r1["total"] >= r2["total"] else r2
-        assist_note = "_Assisted; primary took the higher of two rolls._"
+        assist_note = "_assisted; primary took the higher of two rolls._"
     else:
         primary_roll = resolve_check(
             primary,
@@ -101,11 +101,11 @@ def run_assisted_check(
         )
         assist_note = ""
     lines = [
-        f"Helper **{helper['wolf_name']}**: {format_roll_result(help_roll)}",
-        f"Primary **{primary['wolf_name']}**: {format_roll_result(primary_roll)}",
+        f"helper **{helper['wolf_name']}**: {format_roll_result(help_roll)}",
+        f"primary **{primary['wolf_name']}**: {format_roll_result(primary_roll)}",
     ]
     if help_roll["die"] == 1:
-        lines.append("_Helper fumbled; no advantage._")
+        lines.append("_helper fumbled; no advantage._")
     elif assist_note:
         lines.append(assist_note)
     ok = primary_roll["success"]

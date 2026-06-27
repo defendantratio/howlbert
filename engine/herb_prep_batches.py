@@ -52,7 +52,7 @@ def _append_batch_line(lines: list[str], batch: str | None, *, extra: str = "") 
         lines.append(batch + extra)
     else:
         lines.append(
-            "_No **fresh** herbs in `/herbs action:bag`; technique holds but nothing stored._"
+            "_no **fresh** herbs in `/herbs action:bag`; technique holds but nothing stored._"
         )
 
 
@@ -134,7 +134,7 @@ def _grant_rare_dried(user, *, day: int, guild_id: int | None) -> str | None:
         form="dried",
         potency=100,
     )
-    return f"Preserved **{_herb_name(herb_key)}** (dried) added to your forage bag."
+    return f"preserved **{_herb_name(herb_key)}** (dried) added to your forage bag."
 
 
 def _halve_or_clear_poison(user, *, outcome: str) -> tuple[dict, list[str]]:
@@ -145,12 +145,12 @@ def _halve_or_clear_poison(user, *, outcome: str) -> tuple[dict, list[str]]:
         return cond, lines
     if stage == "venom":
         cond["disease"] = encode_disease("mild_poison", "stung")
-        lines.append("_Venom burn eases to a common sting._")
+        lines.append("_venom burn eases to a common sting._")
     elif random.random() < (1.0 if outcome == "critical_success" else 0.55):
         cond["clear_disease"] = True
-        lines.append("_Poison clears from the blood._")
+        lines.append("_poison clears from the blood._")
     else:
-        lines.append("_Poison lingers but slackens._")
+        lines.append("_poison lingers but slackens._")
     return cond, lines
 
 
@@ -163,7 +163,7 @@ def _try_clear_mild_poison(user, *, outcome: str) -> tuple[dict, list[str]]:
     chance = 1.0 if outcome == "critical_success" else 0.7
     if random.random() < chance:
         cond["clear_disease"] = True
-        lines.append("_Antidote takes hold; poison clears._")
+        lines.append("_antidote takes hold; poison clears._")
     else:
         cond, extra = _halve_or_clear_poison(user, outcome=outcome)
         lines.extend(extra)
@@ -196,7 +196,7 @@ def apply_herb_prep_outcome(
 
             note = try_contract_disease(user, "mild_poison", "stung", chance=0.65)
             if note:
-                lines.append(f"Poison surges: {note}")
+                lines.append(f"poison surges: {note}")
         elif scenario_key == "prep_decoct":
             stacks = [
                 s
@@ -209,7 +209,7 @@ def apply_herb_prep_outcome(
                 lines.append(f"**{_herb_name(stack['herb_key'])}** batch boiled over and ruined.")
             else:
                 db.adjust_mood(user["id"], -3)
-                lines.append("_Decoction ruined; **−3 mood**._")
+                lines.append("_decoction ruined; **−3 mood**._")
         return user_fields, cond_fields, lines
 
     if not success:
@@ -219,35 +219,35 @@ def apply_herb_prep_outcome(
                 lines.append(note)
         elif scenario_key == "prep_mix_tonic":
             db.adjust_mood(user["id"], -3)
-            lines.append("_Contaminated draught; **−3 mood**._")
+            lines.append("_contaminated draught; **−3 mood**._")
         elif scenario_key == "prep_dry_storage":
             note = _reduce_random_potency(user, amount=30)
             if note:
-                lines.append(f"Poor drying; {note}")
+                lines.append(f"poor drying; {note}")
             else:
-                lines.append("_Herbs wilt early; storage botched._")
+                lines.append("_herbs wilt early; storage botched._")
         elif scenario_key == "prep_decoct":
             note = _reduce_random_potency(user, amount=40)
             if note:
-                lines.append(f"Ruined batch; {note}")
+                lines.append(f"ruined batch; {note}")
             else:
                 db.adjust_mood(user["id"], -2)
-                lines.append("_Batch ruined; **−2 mood**._")
+                lines.append("_batch ruined; **−2 mood**._")
         elif scenario_key == "prep_antidote":
             from engine.disease_contract import try_contract_disease
 
             note = try_contract_disease(user, "mild_poison", "stung", chance=0.55)
             if note:
-                lines.append(f"Poison wins: {note}")
+                lines.append(f"poison wins: {note}")
         elif scenario_key == "prep_sedative":
             db.adjust_mood(user["id"], -2)
-            lines.append("_Bitter draught; **−2 mood**._")
+            lines.append("_bitter draught; **−2 mood**._")
         elif scenario_key == "prep_incomplete_antidote":
             from engine.disease_contract import try_contract_disease
 
             note = try_contract_disease(user, "mild_poison", "stung", chance=0.35)
             if note:
-                lines.append(f"Poison worsens: {note}")
+                lines.append(f"poison worsens: {note}")
         elif scenario_key == "prep_preserve_rare":
             stacks = [
                 s
@@ -262,7 +262,7 @@ def apply_herb_prep_outcome(
                     f"**{_herb_name(stack['herb_key'])}** fades within **1 moon**; potency lost."
                 )
             else:
-                lines.append("_Rare seal failed; nothing preserved._")
+                lines.append("_rare seal failed; nothing preserved._")
         return user_fields, cond_fields, lines
 
     # --- success paths ---
@@ -277,10 +277,10 @@ def apply_herb_prep_outcome(
             user_fields.update(
                 merge_buff_fields(user, infection_ward_until_day=day + 1, pain_relief_until_day=day + 1)
             )
-            lines.append("_Poultice paste: **infection ward** and pain ease until next sunrise._")
+            lines.append("_poultice paste: **infection ward** and pain ease until next sunrise._")
         else:
             user_fields.update(merge_buff_fields(user, pain_relief_until_day=day + 1))
-            lines.append("_Chewed poultice ready: **pain relief** for **1 sunrise**._")
+            lines.append("_chewed poultice ready: **pain relief** for **1 sunrise**._")
         batch = _promote_fresh(
             user, "poultice", day=day, guild_id=guild_id, prefer=POULTICE_HERBS
         )
@@ -288,7 +288,7 @@ def apply_herb_prep_outcome(
 
     elif scenario_key == "prep_mix_tonic":
         user_fields.update(grant_disease_save_advantage(user, days=1))
-        lines.append("_Clean tonic brewed; **advantage** on disease saves **1 sunrise**._")
+        lines.append("_clean tonic brewed; **advantage** on disease saves **1 sunrise**._")
         batch = _promote_fresh(user, "tonic", day=day, guild_id=guild_id, prefer=TONIC_HERBS)
         _append_batch_line(lines, batch)
 
@@ -296,7 +296,7 @@ def apply_herb_prep_outcome(
         duration = 21 if outcome == "critical_success" else 14
         user_fields.update(merge_buff_fields(user, herb_storage_bonus_until_day=day + duration))
         lines.append(
-            f"_Leaf-wrapped stores keep **50% longer** for **{duration} sunrises**._"
+            f"_leaf-wrapped stores keep **50% longer** for **{duration} sunrises**._"
         )
         batch = _promote_fresh(
             user,
@@ -315,7 +315,7 @@ def apply_herb_prep_outcome(
             user, "decoction", day=day, guild_id=guild_id, potency=potency, prefer=DECOCT_HERBS
         )
         lines.append(
-            f"_Decoction at **{potency}%** potency; disease-save advantage **{days} sunrise(s)**._"
+            f"_decoction at **{potency}%** potency; disease-save advantage **{days} sunrise(s)**._"
         )
         _append_batch_line(
             lines, batch, extra=" Cure timers **halved** when used." if batch else ""
@@ -323,7 +323,7 @@ def apply_herb_prep_outcome(
 
     elif scenario_key == "prep_antidote":
         user_fields.update(grant_disease_save_advantage(user))
-        lines.append("_Antidote drawn; advantage on the **next disease save**._")
+        lines.append("_antidote drawn; advantage on the **next disease save**._")
         poison_cond, poison_lines = _try_clear_mild_poison(user, outcome=outcome)
         cond_fields.update(poison_cond)
         lines.extend(poison_lines)
@@ -348,13 +348,13 @@ def apply_herb_prep_outcome(
                 )
             )
             lines.append(
-                "_Honeyed sedative: **calm**, deep rest, and sleep aid until next sunrise._"
+                "_honeyed sedative: **calm**, deep rest, and sleep aid until next sunrise._"
             )
         else:
             user_fields.update(
                 merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1)
             )
-            lines.append("_Sedative draught ready: **calm** and sleep aid until next sunrise._")
+            lines.append("_sedative draught ready: **calm** and sleep aid until next sunrise._")
         batch = _promote_fresh(
             user, "tonic", day=day, guild_id=guild_id, prefer=SEDATIVE_HERBS
         )
@@ -364,7 +364,7 @@ def apply_herb_prep_outcome(
         user_fields.update(grant_disease_save_advantage(user))
         poison_cond, poison_lines = _halve_or_clear_poison(user, outcome=outcome)
         cond_fields.update(poison_cond)
-        lines.append("_Improvised antidote: poison **halved**; advantage on next disease save._")
+        lines.append("_improvised antidote: poison **halved**; advantage on next disease save._")
         lines.extend(poison_lines)
         batch = _promote_fresh(
             user,
@@ -385,13 +385,13 @@ def apply_herb_prep_outcome(
             if granted:
                 user_fields.update(merge_buff_fields(user, herb_storage_bonus_until_day=day + 180))
                 lines.append(granted)
-                lines.append("_Rare stock sealed; bag herbs keep **50% longer** for **6 moons**._")
+                lines.append("_rare stock sealed; bag herbs keep **50% longer** for **6 moons**._")
             else:
                 user_fields.update(merge_buff_fields(user, herb_storage_bonus_until_day=day + 30))
-                lines.append("_Wrapping technique learned; storage **50% longer** for **1 moon**._")
+                lines.append("_wrapping technique learned; storage **50% longer** for **1 moon**._")
 
     elif scenario_key == "prep_taste_test":
         user_fields.update(merge_buff_fields(user, venom_save_advantage=True))
-        lines.append("_Tongue learns the bite; advantage on the **next venom or poison save**._")
+        lines.append("_tongue learns the bite; advantage on the **next venom or poison save**._")
 
     return user_fields, cond_fields, lines

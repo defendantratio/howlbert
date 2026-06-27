@@ -33,17 +33,17 @@ def apply_hp_damage(user, amount: int) -> tuple[int, list[str]]:
         if fresh:
             trauma = try_near_death_mental_trauma(fresh)
             if trauma:
-                extras.append(f"**Mind fracture:** {trauma}")
+                extras.append(f"**mind fracture:** {trauma}")
     return amount, extras
 
 
 def vitals_response_footer(user, *, default: str = "") -> str:
-    """Embed footer after hazard/combat damage; highlights dying state."""
+    """embed footer after hazard/combat damage; highlights dying state."""
     hp = int(user["hp"]) if user and "hp" in user.keys() else 1
     cond = user["condition"] if user and "condition" in user.keys() else "healthy"
     if hp <= 0 or cond == "dying":
         return (
-            "You are **dying** · `/medic action:deathsaves` or Medic "
+            "you are **dying** · `/medic action:deathsaves` or medic "
             "`/medic action:stabilize` · `/vitals action:condition`"
         )
     if default:
@@ -55,13 +55,13 @@ def living_wolf_block(user) -> str | None:
     cond = user["condition"] if "condition" in user.keys() else "healthy"
     if cond == "dead":
         return (
-            "Your wolf has died. `/bones action:use item:revive` (same wolf) or "
-            "`/bones action:use item:reincarnation new_name:<name>` (new name, same stats) from Ko-fi, "
+            "your wolf has died. `/bones action:use item:revive` (same wolf) or "
+            "`/bones action:use item:reincarnation new_name:<name>` (new name, same stats) from ko-fi, "
             "or `/switchwolf` / `/register` / `/rpg action:delete confirm:DELETE`."
         )
     if cond == "dying":
         return (
-            "You are **dying**; roll **`/medic action:deathsaves`** (CON save) or ask a medic for **`/medic action:stabilize`**."
+            "you are **dying**; roll **`/medic action:deathsaves`** (con save) or ask a medic for **`/medic action:stabilize`**."
         )
     return None
 
@@ -95,8 +95,8 @@ def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | No
     rest_day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
     if sedated_blocks_activity(user, rest_day):
         return (
-            "**Sedated**; valerian or poppy holds you in deep rest. "
-            "No hunting, tracking, or ranging until next sunrise."
+            "**sedated**; valerian or poppy holds you in deep rest. "
+            "no hunting, tracking, or ranging until next sunrise."
         )
     block = bone_rest_activity_block(user, day=rest_day)
     if block:
@@ -180,7 +180,7 @@ def _apply_death_save_conn(
         if fields:
             sets = ", ".join(f"{k} = ?" for k in fields)
             conn.execute(
-                f"UPDATE users SET {sets} WHERE id = ?",
+                f"update users set {sets} where id = ?",
                 (*fields.values(), wolf_id),
             )
 
@@ -210,8 +210,8 @@ def _apply_death_save_conn(
 
 def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
     """
-    After hunger/thirst decay: +1 exhaustion per sunrise for each vital below the low threshold.
-    Long rest (−1 exhaustion) runs before decay, so neglected wolves can still climb the track.
+    after hunger/thirst decay: +1 exhaustion per sunrise for each vital below the low threshold.
+    long rest (−1 exhaustion) runs before decay, so neglected wolves can still climb the track.
     """
     from config import (
         HUNGER_LOW_THRESHOLD,

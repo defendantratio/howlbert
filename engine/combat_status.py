@@ -185,9 +185,9 @@ def maneuver_pin_block(
     if spec.get("requires_self_pinned") and not a_flags.get("pinned"):
         return f"**{name}** only works while you are **pinned**."
     if spec.get("requires_self_unpinned") and a_flags.get("pinned"):
-        return f"You can't use **{name}** while **pinned**."
+        return f"you can't use **{name}** while **pinned**."
     if spec.get("requires_no_active_pin") and encounter_id and is_holding_pin(attacker_f["id"], encounter_id):
-        return f"You can't use **{name}** while already **pinning** someone."
+        return f"you can't use **{name}** while already **pinning** someone."
     if spec.get("target_must_be_pinner"):
         pinner_id = get_pinner_fighter_id(attacker_f)
         if not pinner_id or defender_f["id"] != pinner_id:
@@ -198,7 +198,7 @@ def maneuver_pin_block(
         if not can_pin_target(attacker_stats, defender_stats):
             return (
                 f"**{name}** can't hold down a foe that much larger; "
-                "try **Badger Defence** or rake from below."
+                "try **badger defence** or rake from below."
             )
     if spec.get("requires_smaller_target") and attacker_stats and defender_stats:
         if not can_scruff_target(attacker_stats, defender_stats):
@@ -209,7 +209,7 @@ def maneuver_pin_block(
         if not d_flags.get("pinned") and not wounded:
             return (
                 f"**{name}** needs a **pinned** or badly wounded foe "
-                f"(below {int(min_pct * 100)}% HP)."
+                f"(below {int(min_pct * 100)}% hp)."
             )
     return None
 
@@ -231,13 +231,13 @@ def attack_target_block(
         pinner_id = get_pinner_fighter_id(attacker_f)
         if pinner_id and defender_f["id"] != pinner_id:
             return (
-                "While **pinned**, you can only bite/claw your **pinner**; "
+                "while **pinned**, you can only bite/claw your **pinner**; "
                 "use an escape maneuver."
             )
     if encounter_id and is_holding_pin(attacker_f["id"], encounter_id):
         if not (d_flags.get("pinned") and d_flags.get("pinned_by") == attacker_f["id"]):
             return (
-                "You're **pinning** a foe; only your pinned target is in reach "
+                "you're **pinning** a foe; only your pinned target is in reach "
                 "for bite/claw."
             )
     return None
@@ -263,7 +263,7 @@ def apply_maneuver_pin_effects(
     if spec.get("applies_pin_on_hit") and fighter_val(defender_f, "id"):
         if attacker_stats and defender_stats and not can_pin_target(attacker_stats, defender_stats):
             notes.append(
-                f"_You land on **{defender_name}**, but you're too light to force them **pinned**._"
+                f"_you land on **{defender_name}**, but you're too light to force them **pinned**._"
             )
         else:
             encounter_id = int(fighter_val(defender_f, "encounter_id") or 0)
@@ -283,10 +283,10 @@ def apply_crit_status_effects(defender_fighter_id: int, crit_effect: int | None)
 
     if crit_effect == 2:
         db.update_fighter_combat_flags(defender_fighter_id, prone=True)
-        return "**Knocked prone.**"
+        return "**knocked prone.**"
     if crit_effect == 3:
         db.update_fighter_combat_flags(defender_fighter_id, disarmed=True)
-        return "**Disarmed**; grip lost."
+        return "**disarmed**; grip lost."
     return None
 
 
@@ -297,10 +297,10 @@ def apply_fumble_status_effects(attacker_fighter_id: int, fumble_effect: int | N
 
     if fumble_effect == 2:
         db.update_fighter_combat_flags(attacker_fighter_id, attack_disadvantage=True)
-        return "**Strained muscle**; disadvantage on your next attack."
+        return "**strained muscle**; disadvantage on your next attack."
     if fumble_effect == 3:
         db.update_fighter_combat_flags(attacker_fighter_id, prone=True)
-        return "**You stumble prone.**"
+        return "**you stumble prone.**"
     return None
 
 

@@ -62,23 +62,23 @@ def daily_ration_note(
     )
     bonus_pct = bone_bonus_pct(prestige_tier)
     lines = [
-        "Paid from **pack treasury** each sunrise (hunt tax, `/pack deposit`, prey-pile shares).",
-        f"Stipend: **{format_bones(payout)}**",
+        "paid from **pack treasury** each sunrise (hunt tax, `/pack deposit`, prey-pile shares).",
+        f"stipend: **{format_bones(payout)}**",
     ]
     if is_booster:
         lines.append(
-            f"_Includes **+{BOOST_DAILY_BONUS}** Den Patron boost (paid to you, not treasury)._"
+            f"_includes **+{BOOST_DAILY_BONUS}** den patron boost (paid to you, not treasury)._"
         )
     if donor_bonus > 0:
         lines.append(
-            f"_Includes **+{donor_bonus}** supporter thank-you (paid to you, not treasury)._"
+            f"_includes **+{donor_bonus}** supporter thank-you (paid to you, not treasury)._"
         )
     if bonus_pct > 0:
         lines.append(
-            f"_(base {format_bones(base)} + {bonus_pct}% prestige; +1 XP; debits treasury)_"
+            f"_(base {format_bones(base)} + {bonus_pct}% prestige; +1 xp; debits treasury)_"
         )
     else:
-        lines.append(f"_(base {format_bones(base)}; +1 XP; debits treasury)_")
+        lines.append(f"_(base {format_bones(base)}; +1 xp; debits treasury)_")
     if pack_name is not None and treasury is not None:
         lines.append(f"**{pack_name}** treasury: **{format_bones(treasury)}**")
     return "\n".join(lines)
@@ -101,24 +101,24 @@ def daily_stipend_status(
 
     if is_rogue_wolf(user):
         note = (
-            "**Rogues** cannot draw a den stipend; earn bones with `/bones action:hunt`, "
+            "**rogues** cannot draw a den stipend; earn bones with `/bones action:hunt`, "
             "`/bones action:work`, or `/field action:scavenge`."
         )
         if _used_today(user, day, "last_daily_day"):
-            return "N/A", note
-        return "Rogue", note
+            return "n/a", note
+        return "rogue", note
 
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
     if not pack_id:
         note = daily_ration_note(prestige_tier)
-        note += "\n**Loners** cannot draw a stipend; `/setfaction` to join a Great Pack."
+        note += "\n**loners** cannot draw a stipend; `/setfaction` to join a great pack."
         if _used_today(user, day, "last_daily_day"):
-            return "Used", note
-        return "No pack", note
+            return "used", note
+        return "no pack", note
 
     pack = db.get_pack(pack_id)
     treasury = int(pack["treasury"]) if pack else 0
-    pack_name = pack["name"] if pack else "Pack"
+    pack_name = pack["name"] if pack else "pack"
     note = daily_ration_note(
         prestige_tier,
         pack_name=pack_name,
@@ -128,10 +128,10 @@ def daily_stipend_status(
     )
 
     if _used_today(user, day, "last_daily_day"):
-        return "Used", note
+        return "used", note
     if treasury < base_payout:
-        return f"Treasury low ({format_bones(treasury)} need {format_bones(base_payout)})", note
-    return "Ready", note
+        return f"treasury low ({format_bones(treasury)} need {format_bones(base_payout)})", note
+    return "ready", note
 
 
 def build_cooldown_fields(
@@ -146,7 +146,7 @@ def build_cooldown_fields(
 ) -> list[tuple[str, str, bool]]:
     """Return embed fields: (name, value, inline)."""
     if not guild_id:
-        return [("Server", "Join a den server to track sunrise cooldowns.", False)]
+        return [("server", "join a den server to track sunrise cooldowns.", False)]
 
     fields: list[tuple[str, str, bool]] = []
 
@@ -190,13 +190,13 @@ def build_cooldown_fields(
     rest_long = _status(user, "rest", ready=not manual_long_rest_used_today(user, day))
     used_heals = _col(user, "herb_heals_today")
     if is_medic(user):
-        heal_line = "Short herb: **unlimited** comfrey (Green Tongue)"
+        heal_line = "short herb: **unlimited** comfrey (green tongue)"
     else:
-        heal_line = f"Short herb: **{used_heals}/{HERB_HEAL_DAILY_LIMIT}** comfrey"
+        heal_line = f"short herb: **{used_heals}/{HERB_HEAL_DAILY_LIMIT}** comfrey"
     fields.append(
         (
             "/vitals action:rest",
-            f"Long: **{rest_long}** · {heal_line}",
+            f"long: **{rest_long}** · {heal_line}",
             True,
         )
     )
@@ -208,11 +208,11 @@ def build_cooldown_fields(
         used_treats = _col(user, "herb_treats_today")
         treat_ready = _status(user, "treat", ready=not treat_limit_reached(user))
         treat_line = f"**{used_treats}/{HERB_TREAT_DAILY_LIMIT}** today · {treat_ready}"
-        stabilize_line = "Ready; Medicine DC 15 (herbs optional)"
+        stabilize_line = "ready; medicine dc 15 (herbs optional)"
     fields.append(
         (
             "/medic action:treat · /medic action:stabilize",
-            f"Treat: {treat_line}\nStabilize: {stabilize_line}",
+            f"treat: {treat_line}\nstabilize: {stabilize_line}",
             False,
         )
     )
@@ -280,9 +280,9 @@ def build_cooldown_fields(
                 "/scout",
                 "\n".join(
                     (
-                        f"Rescout: {_status(user, 'rescout', ready=can_rescout_again(user, day))} · unlimited",
-                        f"Survey: {_status(user, 'survey', ready=not _used_today(user, day, 'last_survey_day'))} · once/sunrise",
-                        f"Trail: {_status(user, 'trail', ready=not _used_today(user, day, 'last_trail_day'))} · once/sunrise",
+                        f"rescout: {_status(user, 'rescout', ready=can_rescout_again(user, day))} · unlimited",
+                        f"survey: {_status(user, 'survey', ready=not _used_today(user, day, 'last_survey_day'))} · once/sunrise",
+                        f"trail: {_status(user, 'trail', ready=not _used_today(user, day, 'last_trail_day'))} · once/sunrise",
                     )
                 ),
                 False,
@@ -325,8 +325,8 @@ def build_cooldown_fields(
     elif pack_id:
         fields.append(
             (
-                "Pack-wide den commands",
-                "Alpha only: `/playpen action:playall`, `/packlife action:feedall`, "
+                "pack-wide den commands",
+                "alpha only: `/playpen action:playall`, `/packlife action:feedall`, "
                 "`/packlife action:drinkall`",
                 False,
             )
@@ -449,7 +449,7 @@ def build_cooldown_fields(
     )
     fields.append(
         (
-            "Den charm",
+            "den charm",
             _status(user, "den_charm", ready=not _used_today(user, day, "last_den_charm_day")),
             True,
         )
@@ -459,8 +459,8 @@ def build_cooldown_fields(
             "/pack war",
             "\n".join(
                 (
-                    f"Patrol: {_status(user, 'patrol', ready=not _used_today(user, day, 'last_patrol_day'))}",
-                    f"Scout: {_status(user, 'scout', ready=not _used_today(user, day, 'last_scout_day'))}",
+                    f"patrol: {_status(user, 'patrol', ready=not _used_today(user, day, 'last_patrol_day'))}",
+                    f"scout: {_status(user, 'scout', ready=not _used_today(user, day, 'last_scout_day'))}",
                 )
             ),
             False,
@@ -474,11 +474,11 @@ def build_cooldown_fields(
         trade_ready = not _used_today(user, day, "last_duplicate_trade_day")
         fields.append(
             (
-                "/pack pact",
+                "/pact",
                 "\n".join(
                     (
-                        f"Receive: {_status(user, 'cat receive', ready=receive_ready)} · trust **{CAT_PACT_RECEIVE_MIN_TRUST}+**",
-                        f"Trade duplicates: {_status(user, 'cat trade', ready=trade_ready)} · once/sunrise",
+                        f"receive: {_status(user, 'cat receive', ready=receive_ready)} · trust **{CAT_PACT_RECEIVE_MIN_TRUST}+**",
+                        f"trade duplicates: {_status(user, 'cat trade', ready=trade_ready)} · once/sunrise",
                     )
                 ),
                 False,

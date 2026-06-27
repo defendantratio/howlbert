@@ -73,7 +73,7 @@ def try_combat_bite_disease(
             notes.append(note)
         distemper = try_contract_disease(defender_user, "distemper", chance=0.10)
         if distemper:
-            notes.append(f"Canid bite: {distemper}")
+            notes.append(f"canid bite: {distemper}")
 
     from engine.reptile_fear import VENOMOUS_REPTILE_TEMPLATES
 
@@ -101,12 +101,12 @@ def try_combat_bite_disease(
     if a_key == "rabies" and a_stage in ("frenzy", "terminal"):
         note = try_rabies_bite_exposure(defender_user, chance=0.55)
         if note:
-            notes.append(f"Rabid bite: {note}")
+            notes.append(f"rabid bite: {note}")
     return "; ".join(notes) if notes else None
 
 
 def try_near_death_mental_trauma(user) -> str | None:
-    """Dropping to dying can fracture the mind toward the wild."""
+    """dropping to dying can fracture the mind toward the wild."""
     from engine.disease_contract import (
         try_night_terrors_from_trauma,
         try_shock_emotional_from_trauma,

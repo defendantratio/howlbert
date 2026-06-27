@@ -12,11 +12,11 @@ from utils.embeds import ERROR_COLOR, SUCCESS_COLOR
 
 def mating_embed_title(body: str, *, hard_fail: bool) -> str:
     if hard_fail:
-        return "Mating Failed"
+        return "mating failed"
     lower = body.lower()
     if "form a bond" in lower or ("bond" in lower and "conception roll" not in lower):
-        return "Mating Bond"
-    return "Mating"
+        return "mating bond"
+    return "mating"
 
 
 def execute_mating(
@@ -24,6 +24,7 @@ def execute_mating(
     partner_user,
     *,
     day_number: int,
+    guild_id: int | None = None,
 ) -> tuple[bool, str, int, bool]:
     """
     Returns (completed, message, embed_color, hard_fail).
@@ -38,9 +39,11 @@ def execute_mating(
 
     mode, err = mate_pairing(user, partner_user)
     if mode == "error":
-        return False, err or "Incompatible pairing.", ERROR_COLOR, True
+        return False, err or "incompatible pairing.", ERROR_COLOR, True
 
-    expulsion_note, caught_lines = apply_mate_infractions(user, partner_user)
+    expulsion_note, caught_lines = apply_mate_infractions(
+        user, partner_user, guild_id=guild_id, day=day_number
+    )
 
     def mood_line() -> str:
         your_mood = db.adjust_mood(user["id"], MATE_MOOD_GAIN)
@@ -64,7 +67,7 @@ def execute_mating(
             db.adjust_pack_unity(user["pack_id"], 1)
         body = (
             f"**{user['wolf_name']}** and **{partner_user['wolf_name']}** mate and form a bond.\n"
-            "No pregnancy; biological pups require a female and male birth sex."
+            "no pregnancy; biological pups require a female and male birth sex."
             + mood_line()
         )
         from engine.disease_contract import try_mating_disease_spread
@@ -82,7 +85,7 @@ def execute_mating(
 
     female, male = conception_parents(user, partner_user)
     if not female or not male:
-        return False, "Cannot conceive.", ERROR_COLOR, True
+        return False, "cannot conceive.", ERROR_COLOR, True
 
     from engine.disease_contract import try_mating_disease_spread
     from engine.diseases import blocks_conception, parse_disease
@@ -94,7 +97,7 @@ def execute_mating(
             spread_notes.append(note)
 
     if female["is_pregnant"]:
-        return False, "Already pregnant.", ERROR_COLOR, True
+        return False, "already pregnant.", ERROR_COLOR, True
 
     f_key, f_stage = parse_disease(female["disease"] if "disease" in female.keys() else None)
     m_key, m_stage = parse_disease(male["disease"] if "disease" in male.keys() else None)
@@ -118,7 +121,7 @@ def execute_mating(
     result = conception_check(female, male)
     if result["success"]:
         db.set_pregnancy(female["id"], male["id"], day_number)
-        msg = f"**{female['wolf_name']}** is with pup. Gestation: **{GESTATION_DAYS}** in-game days."
+        msg = f"**{female['wolf_name']}** is with pup. gestation: **{GESTATION_DAYS}** in-game days."
         if result["outcome"] == "critical_success":
             msg += " Unusually healthy litter expected."
     else:
@@ -127,7 +130,7 @@ def execute_mating(
         if result["outcome"] == "complication":
             msg = "Complications; false pregnancy or illness."
 
-    msg = f"Conception roll: **{result['total']}** vs DC 15.\n{msg}{mood_line()}"
+    msg = f"conception roll: **{result['total']}** vs dc 15.\n{msg}{mood_line()}"
     if spread_notes:
         msg += "\n\n" + "\n".join(spread_notes)
     if caught_lines:

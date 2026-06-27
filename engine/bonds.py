@@ -7,20 +7,20 @@ import database as db
 BOND_TYPES = frozenset({"friendship", "rivalry", "kin", "mentor"})
 
 BOND_LABELS = {
-    "friendship": "Friendship",
-    "rivalry": "Rivalry",
-    "kin": "Kin",
-    "mentor": "Mentor",
+    "friendship": "friendship",
+    "rivalry": "rivalry",
+    "kin": "kin",
+    "mentor": "mentor",
 }
 
 FAMILY_ROLES = frozenset({"founder", "parent", "sibling", "cub", "member"})
 
 FAMILY_ROLE_LABELS = {
-    "founder": "Founder",
-    "parent": "Parent",
-    "sibling": "Sibling",
-    "cub": "Cub",
-    "member": "Member",
+    "founder": "founder",
+    "parent": "parent",
+    "sibling": "sibling",
+    "cub": "cub",
+    "member": "member",
 }
 
 
@@ -53,33 +53,59 @@ def strength_bar(strength: int) -> str:
     return "●" * filled + "○" * (5 - filled)
 
 
+def _format_bond_note(partner_name: str, bond_type: str, row, *, label: str | None = None) -> str:
+    display = label or BOND_LABELS.get(bond_type, bond_type.title()).lower()
+    rival = bond_type == "rivalry"
+    return (
+        f"bond; **{partner_name}**: {display} **{strength_bar(row['strength'])}** "
+        f"({strength_tier(row['strength'], rivalry=rival)})"
+    )
+
+
+def _pair_bond_kind(user, partner) -> tuple[str, str | None]:
+    """Bond type and display label for socialize/groom adjustments."""
+    from engine.attraction import are_bonded_mates
+
+    if are_bonded_mates(user, partner):
+        return "kin", "mate"
+
+    best = None
+    for bond_type in ("kin", "mentor", "friendship", "rivalry"):
+        row = db.get_bond(user["id"], partner["id"], bond_type)
+        if not row:
+            continue
+        if best is None or int(row["strength"]) > int(best["strength"]):
+            best = row
+    if best:
+        bt = best["bond_type"]
+        return bt, BOND_LABELS.get(bt, bt.title()).lower()
+    return "friendship", None
+
+
 def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str | None:
-    """Adjust bond strength from /socialize; returns optional note line."""
+    """adjust bond strength from /socialize; returns optional note line."""
     notes: list[str] = []
+    bond_type, label = _pair_bond_kind(user, partner)
     if outcome == "warm":
-        row = db.adjust_bond_strength(user["id"], partner["id"], "friendship", 10, day=day)
+        row = db.adjust_bond_strength(user["id"], partner["id"], bond_type, 10, day=day)
         if row:
-            notes.append(
-                f"Bond; **{partner['wolf_name']}**: friendship **{strength_bar(row['strength'])}** "
-                f"({strength_tier(row['strength'])})"
-            )
+            notes.append(_format_bond_note(partner["wolf_name"], bond_type, row, label=label))
     elif outcome == "good":
-        row = db.adjust_bond_strength(user["id"], partner["id"], "friendship", 5, day=day)
+        row = db.adjust_bond_strength(user["id"], partner["id"], bond_type, 5, day=day)
         if row:
             if row["strength"] >= 40:
-                notes.append(f"Bond with **{partner['wolf_name']}** grows warmer.")
+                notes.append(f"bond with **{partner['wolf_name']}** grows warmer.")
             else:
-                notes.append(
-                    f"Bond; **{partner['wolf_name']}**: friendship **{strength_bar(row['strength'])}** "
-                    f"({strength_tier(row['strength'])})"
-                )
+                notes.append(_format_bond_note(partner["wolf_name"], bond_type, row, label=label))
     elif outcome == "awkward":
         db.adjust_bond_strength(user["id"], partner["id"], "rivalry", 5, day=day)
-        db.adjust_bond_strength(user["id"], partner["id"], "friendship", -3, day=day)
-        notes.append(f"Tension with **{partner['wolf_name']}**; rivalry stirs.")
+        if bond_type == "friendship":
+            db.adjust_bond_strength(user["id"], partner["id"], "friendship", -3, day=day)
+        notes.append(f"tension with **{partner['wolf_name']}**; rivalry stirs.")
     elif outcome == "scrap":
         r = db.adjust_bond_strength(user["id"], partner["id"], "rivalry", 12, day=day)
-        db.adjust_bond_strength(user["id"], partner["id"], "friendship", -8, day=day)
+        if bond_type == "friendship":
+            db.adjust_bond_strength(user["id"], partner["id"], "friendship", -8, day=day)
         if r and r["strength"] >= 40:
             notes.append(
                 f"**{partner['wolf_name']}**; rivalry **{strength_bar(r['strength'])}** "
@@ -89,13 +115,11 @@ def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str |
 
 
 def apply_groom_bonds(user, partner, *, day: int = 0) -> str | None:
-    row = db.adjust_bond_strength(user["id"], partner["id"], "friendship", 3, day=day)
+    bond_type, label = _pair_bond_kind(user, partner)
+    row = db.adjust_bond_strength(user["id"], partner["id"], bond_type, 3, day=day)
     if not row:
         return None
-    return (
-        f"Bond; **{partner['wolf_name']}**: friendship **{strength_bar(row['strength'])}** "
-        f"({strength_tier(row['strength'])})"
-    )
+    return _format_bond_note(partner["wolf_name"], bond_type, row, label=label)
 
 
 def format_bonds_embed_body(user) -> str:
@@ -103,7 +127,7 @@ def format_bonds_embed_body(user) -> str:
 
     mate = db.get_bonded_mate(user)
     if mate:
-        sections.append(f"**Bonded mate**; {mate['wolf_name']}")
+        sections.append(f"**bonded mate**; {mate['wolf_name']}")
 
     lineage = db.format_lineage_for_profile(user)
     if lineage:
@@ -117,7 +141,7 @@ def format_bonds_embed_body(user) -> str:
             role = FAMILY_ROLE_LABELS.get(m["role"], m["role"].title())
             lines.append(f"**{m['wolf_name']}** ({role})")
         extra = f"\n_+{len(members) - 12} more._" if len(members) > 12 else ""
-        sections.append(f"**Found family: {family['name']}**\n" + "\n".join(lines) + extra)
+        sections.append(f"**found family: {family['name']}**\n" + "\n".join(lines) + extra)
 
     bonds = db.get_bonds_for_wolf(user["id"])
     by_type: dict[str, list] = {t: [] for t in BOND_LABELS}
@@ -145,8 +169,8 @@ def format_bonds_embed_body(user) -> str:
 
     if not sections:
         return (
-            "No bonds recorded yet.\n\n"
-            "Use **`/bonds action:Set`** to mark friendships, rivalries, or kin. "
+            "no bonds recorded yet.\n\n"
+            "use **`/bonds action:set`** to mark friendships, rivalries, or kin. "
             "**`/playpen action:socialize`** and **`action:groom`** deepen friendships over time."
         )
     return "\n\n".join(sections)

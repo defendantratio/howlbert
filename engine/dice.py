@@ -175,44 +175,44 @@ def resolve_check(
 def format_roll_result(r: dict) -> str:
     skill = f" ({r['skill']})" if r.get("skill") else ""
     lines = [
-        f"**1d20** → **{r['die']}** + {r['modifier']} {r['attr_label']} = **{r['total']}** vs DC **{r['dc']}**{skill}",
+        f"**1d20** → **{r['die']}** + {r['modifier']} {r['attr_label']} = **{r['total']}** vs dc **{r['dc']}**{skill}",
     ]
     if r.get("safe_roll_used"):
         lines.insert(
             0,
-            f"🎲 **Safe Roll**; first die was **{r['first_die']}**; rerolled.",
+            f"🎲 **safe roll**; first die was **{r['first_die']}**; rerolled.",
         )
     if r.get("injury_disadvantage"):
-        lines.append("_Injury; disadvantage on this check._")
+        lines.append("_injury; disadvantage on this check._")
     if r.get("disease_disadvantage"):
-        lines.append("_Disease; disadvantage on this check._")
+        lines.append("_disease; disadvantage on this check._")
     if r.get("exhaustion_disadvantage"):
-        lines.append("_Exhaustion; disadvantage on this check._")
+        lines.append("_exhaustion; disadvantage on this check._")
     if r.get("injury_penalty"):
-        lines.append(f"_Injury modifier: {r['injury_penalty']:+d}._")
+        lines.append(f"_injury modifier: {r['injury_penalty']:+d}._")
     if r.get("trait_modifier"):
         names = ", ".join(r.get("traits_applied") or [])
-        lines.append(f"_Character trait: **{r['trait_modifier']:+d}** ({names})._")
+        lines.append(f"_character trait: **{r['trait_modifier']:+d}** ({names})._")
     if r.get("role_modifier"):
-        lines.append(f"_Role feature: **{r['role_modifier']:+d}**._")
+        lines.append(f"_role feature: **{r['role_modifier']:+d}**._")
     if r.get("role_advantage"):
-        lines.append("_Role feature; advantage on this check._")
+        lines.append("_role feature; advantage on this check._")
     if r.get("trait_disadvantage"):
-        lines.append("_Character trait; disadvantage on this check._")
+        lines.append("_character trait; disadvantage on this check._")
     if r.get("commanding_howl_advantage"):
-        lines.append("_Commanding Howl; advantage on this check._")
+        lines.append("_commanding howl; advantage on this check._")
     if r.get("blood_oath_advantage"):
-        lines.append("_Blood Oath; advantage on this Charisma check._")
+        lines.append("_blood oath; advantage on this charisma check._")
     if r.get("role_disadvantage"):
-        lines.append("_Role feature; disadvantage on this check._")
+        lines.append("_role feature; disadvantage on this check._")
     if r["outcome"] == "critical_success":
-        lines.append("**Critical success**; exceptional outcome or lasting boon.")
+        lines.append("**critical success**; exceptional outcome or lasting boon.")
     elif r["outcome"] == "critical_failure":
-        lines.append("**Critical failure**; something goes badly wrong.")
+        lines.append("**critical failure**; something goes badly wrong.")
     elif r["success"]:
-        lines.append("**Success.**")
+        lines.append("**success.**")
     else:
-        lines.append("**Failure.**")
+        lines.append("**failure.**")
     return "\n".join(lines)
 
 

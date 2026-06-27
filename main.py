@@ -10,7 +10,7 @@ from discord.ext import commands
 import database as db
 from config import DISCORD_TOKEN, STATUS_CHANNEL_ID, BOT_DISPLAY_NAME, ENABLE_MESSAGE_CONTENT_INTENT
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, howlbert_embed, player_message
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("howlbert")
@@ -91,6 +91,7 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.profile")
         await self.load_extension("cogs.economy")
         await self.load_extension("cogs.pack")
+        await self.load_extension("cogs.pact")
         await self.load_extension("cogs.howl")
         await self.load_extension("cogs.sign")
         await self.load_extension("cogs.proxy")
@@ -129,7 +130,9 @@ class HowlbertBot(commands.Bot):
         logger.error("Command /%s failed:", interaction.command.name if interaction.command else "?")
         logger.error("%s", "".join(traceback.format_exception(error)))
 
-        message = f"Something went wrong on {BOT_DISPLAY_NAME}'s side. Check the bot terminal for details."
+        message = player_message(
+            f"something went wrong on {BOT_DISPLAY_NAME}'s side. check the bot terminal for details."
+        )
         if interaction.response.is_done():
             await interaction.followup.send(message, ephemeral=reply_ephemeral())
         else:
@@ -160,28 +163,28 @@ async def main():
 
         if isinstance(error, app_commands.TransformerError):
             message = (
-                "Could not resolve that user. Pick them from Discord's **user picker** "
+                "could not resolve that user. pick them from discord's **user picker** "
                 "(click the player field and select a name), not by typing a username alone."
             )
         elif isinstance(error, app_commands.CommandInvokeError) and error.original:
             orig = error.original
             if isinstance(orig, discord.NotFound) and getattr(orig, "code", None) == 10062:
                 message = (
-                    "That command timed out before Howlbert could answer. "
-                    "Try again; if it keeps happening, make sure only **one** bot instance is running."
+                    "that command timed out before howlbert could answer. "
+                    "try again; if it keeps happening, make sure only **one** bot instance is running."
                 )
             else:
                 message = (
-                    f"Something went wrong on {BOT_DISPLAY_NAME}'s side. "
-                    "Check the bot terminal for details."
+                    f"something went wrong on {BOT_DISPLAY_NAME}'s side. "
+                    "check the bot terminal for details."
                 )
         else:
             message = (
-                f"Something went wrong on {BOT_DISPLAY_NAME}'s side. "
-                "Check the bot terminal for details."
+                f"something went wrong on {BOT_DISPLAY_NAME}'s side. "
+                "check the bot terminal for details."
             )
 
-        embed = howlbert_embed("Command Failed", message, color=ERROR_COLOR)
+        embed = howlbert_embed("command failed", message, color=ERROR_COLOR)
         try:
             if interaction.response.is_done():
                 await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())

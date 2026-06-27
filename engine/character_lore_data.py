@@ -8,7 +8,7 @@ def _sheet(**kwargs) -> str:
 
 
 CHARACTER_LORE_BY_NAME: dict[str, str] = {
-    "Mirewort": _sheet(
+    "mirewort": _sheet(
         appearance=(
             "Lean and sinewy, built for crawling through cypress knees and sucking mud. "
             "Patchy olive-brown fur stained greenish-black from swamp tannins, with weeping "
@@ -467,15 +467,15 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "A mountain of a wolf even by Greyspire standards; broad-chested, thick-necked, gray-blue coat "
             "fading to near-black on paws and muzzle. Left ear torn to a ragged stump; a mesh of old scars "
             "crisscrosses his shoulders like a second pelt. Pale icy yellow eyes; habit of narrowing them to "
-            "slits when judging another wolf's worth. A chunk of his tail missing; lost to a rockslide he "
-            "survived as a young wolf. Moves with a deliberate, heavy gait, as if the mountain itself walks."
+            "slits when judging another wolf's worth. a chunk of his tail missing; lost to a rockslide he "
+            "survived as a young wolf. moves with a deliberate, heavy gait, as if the mountain itself walks."
         ),
         personality=(
-            "Did not become Highfang by being the strongest alone; though he is strong; but by being the "
-            "cruelest at the right moments and the most generous at the right moments. The pack is a blade "
-            "sharpened on the bones of the weak. Despises mercy; respects usefulness. Paranoid about other "
-            "packs, especially after the mill expedition; believes the Pact of the Remembered is a Thistlehide "
-            "trick to soften Greyspire's teeth. Secretly envies Finn'pelt's ability to inspire loyalty without "
+            "did not become highfang by being the strongest alone; though he is strong; but by being the "
+            "cruelest at the right moments and the most generous at the right moments. the pack is a blade "
+            "sharpened on the bones of the weak. despises mercy; respects usefulness. paranoid about other "
+            "packs, especially after the mill expedition; believes the pact of the remembered is a thistlehide "
+            "trick to soften greyspire's teeth. Secretly envies Finn'pelt's ability to inspire loyalty without "
             "fear. Rules through terror and bread, never showing the same face twice."
         ),
         backstory=(
@@ -1130,7 +1130,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "worth measured by what you provide; became his own. Three moons ago Mossheart froze at the neutral "
             "bend; Rivenmaw sat, offered half a trout, waited. They meet in secret since, trading patrol "
             "timings and trust. Mossheart spoke of warming water and the strange tooth; Rivenmaw's faith cracked. "
-            "He no longer prays for the river's favor but for one enemy wolf's safety. As a pup he glimpsed a "
+            "He no longer prays for the river's favor but for one enemy wolf's safety. as a pup he glimpsed a "
             "lone trapper on the far bank; pale, strange, out of the river's order; a memory that now feels "
             "like premonition."
         ),
@@ -1213,7 +1213,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "follows the largest warriors, stomps pipeline stakes when un watched, keeps a soothing leaf tucked "
             "behind her bow for flare-ups."
         ),
-        family_ties="Birth parents abandoned her. Foster guardian; River'Shroud (antlered hunter).",
+        family_ties="Birth parents abandoned her. Foster guardian; River'Shroud (antlered Alpha).",
         rp_sample=(
             "Safe under a jagged rock overhang, Pale'Step licked mud from her white-and-brown flank, forcing slow "
             "breaths. Down by the kill site, hunters howled joy; must be nice to have lungs for that. She watched "
@@ -1319,20 +1319,20 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "was not strong enough to lift it and watched her die. Failure drove obsessive strength-building. She "
             "raids pipeline survey camps, tears out white stakes. Solo stag kill near logging lines; snapped its "
             "neck, wedged antlers on that night. Recent pup death from poison baits pushes her to keep Pale'Step "
-            "locked in hidden dens. Orthodox but silent; buries meat from every kill beneath oldest roots."
+            "locked in hidden dens. Won the Alpha's seat when Finn'pelt yielded after the Rite of Broken Canine; "
+            "leads by presence, not speech. Orthodox but silent; buries meat from every kill beneath oldest roots."
         ),
-        family_ties="Foster ward; Pale'Step. Mother deceased (logging accident). Open to mate plots.",
+        family_ties="Alpha of Thistlehide. Foster ward; Pale'Step. Mother deceased (logging accident). Open to mate plots.",
         rp_sample=(
             "Mist hung cold over the Thistlehide border. RiverShroud stood motionless among ferns, antlered "
             "silhouette merging with twisted oak branches, pale gray eyes tracking the treeline. A twig snapped: "
-            "she did not flinch; her chest rumbled a warning growl. A young scout emerged, saw her, froze. She "
-            "tilted her head. \"G-Greyspire patrol,\" he stammered. \"Three wolves south. Finn'pelt wants you at "
-            "the ridge.\" She stared, then padded toward the ridge, massive paws silent on wet earth; a sentinel "
-            "carved from stone and grief."
+            "she did not flinch; her chest rumbled a warning growl. A young scout emerged, saw her, froze. He "
+            "stammered about Greyspire patrol south of the ridge. She stared, then padded toward the line, massive "
+            "paws silent on wet earth; a sentinel carved from stone and grief."
         ),
         open_plots=(
-            "Seeking Thistlehide hunters or warriors who communicate with her on borders; extreme protectiveness "
-            "over Pale'Step. RP open to physical combat, injuries, dark/mature themes, mate plots."
+            "New Alpha learning to rule without a voice; extreme protectiveness over Pale'Step. RP open to physical "
+            "combat, injuries, dark/mature themes, mate plots."
         ),
     ),
     "Sypha": _sheet(
@@ -1455,14 +1455,14 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Orphaned when parents died in a twoleg-caused wildfire. Raised alone, stealing from a nearby twoleg cabin "
             "- hunters caught her in traps, beat her, left scars hidden by ribbons. Escaped; wandered years, joining "
             "packs and cast out. True mate and pups; then he left with the pups and the pack threw her out. Alone "
-            "until Finn'pelt offered Thistlehide border guard. Formerly Alpha's Guard in Silverrush. Watches for "
+            "until River'Shroud offered Thistlehide border guard. Formerly Alpha's Guard in Silverrush. Watches for "
             "Greyspire raiders and twoleg monsters; wears ribbons like armor."
         ),
-        family_ties="Lost mate and pups (whereabouts unknown). Taken in by Finn'pelt / Thistlehide.",
+        family_ties="Lost mate and pups (whereabouts unknown). Taken in by Thistlehide.",
         rp_sample=(
             "Skye sat on a mossy rock at the Thistlehide border, mismatched eyes scanning the treeline, blue ribbons "
-            "fluttering. A twig snapped; teeth bared instantly. A young scout emerged from ferns: \"Skye. Finn'pelt "
-            "wants you at the den.\" \"Tell him I'll come when I'm done watching.\" \"He said urgent.\" Skye turned "
+            "fluttering. A twig snapped; teeth bared instantly. A young scout emerged from ferns: \"Skye. River'Shroud "
+            "wants you at the den.\" \"Tell her I'll come when I'm done watching.\" \"She rumbled urgent.\" Skye turned "
             "mismatched eyes on him; he flinched. \"Fine.\" She leaped off the rock. \"But if I miss a Greyspire "
             "raider because of this, I'm eating your share of fresh-kill.\""
         ),
@@ -1478,35 +1478,37 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "through right eye; vision remains flawless."
         ),
         personality=(
-            "Vigilant, stoic, strict, protective, emotionally oblivious. Pillar of rugged authority; rules through "
-            "crushing reliability, not explosive rage. Pack drops heads when he enters. Strict on duties and borders; "
-            "believes every gear must turn perfectly for Thistlehide to survive the Maw. Deep quiet kindness shown "
-            "through action: patrols Greyspire border for days so young hunters sleep, leaves choice kill cuts at "
-            "nursing dens. Breaks his own heart enforcing dark rules; believes it is the only way to save the pack."
+            "Vigilant, stoic, strict, protective, emotionally oblivious. Pillar of rugged reliability on the border; "
+            "commands respect through crushing presence, not ceremony. Strict on duties and patrols; believes every "
+            "gear must turn perfectly for Thistlehide to survive the Maw. Deep quiet kindness shown through action: "
+            "patrols Greyspire border for days so young hunters sleep, leaves choice kill cuts at nursing dens. "
+            "Struggles with no longer wearing the crown; still enforces dark rules when the Alpha cannot speak them."
         ),
         backstory=(
             "Born to high-ranking warrior during bitter starvation; weak drag down the whole, Alpha's word is law. "
             "Greyspire border conflict taught hesitation meant a shallow grave. Ambushed in high valley over water "
             "runoff; scar across eye, throat nearly torn; held the line alone until reinforcements. Earned name "
-            "Finn'pelt for armor-like resilience. Rite of Broken Canine: shattered previous Alpha's jaw, spared him "
-            "as Living Prisoner advisor. A year into rule, observed twoleg iron beasts tear ancient trees; forbade "
-            "hunting near human paths. Dismisses dying elder rumors of living burials as feverish delusion."
+            "Finn'pelt for armor-like resilience. Rite of Broken Canine: shattered a previous Alpha's jaw, spared him "
+            "as Living Prisoner advisor, then ruled Thistlehide himself. Yielded the seat to River'Shroud when the pack "
+            "needed a guardian who could stand between pups and the logging lines. Still forbids hunting near human paths "
+            "and dismisses dying elder rumors of living burials as feverish delusion."
         ),
         family_ties=(
-            "Alpha of Thistlehide. Younger sibling; Mossgaze (forager). Secretly hyper-protective; treats her with "
-            "extreme public coldness."
+            "Hunter of Thistlehide (former Alpha). Younger sibling; Mossgaze (forager). Secretly hyper-protective; "
+            "treats her with extreme public coldness."
         ),
         rp_sample=(
             "Fog off the high valley tasted of wet slate and old blood. Finn'pelt stood motionless on the precipice, "
             "ash-black fur beaded with condensation, golden eyes scanning Greyspire border. A trembling hunter slid "
-            "from briars: \"Alpha; Greyspire patrol shifted west. We lost scent near the rocks.\" Finn'pelt did not "
-            "turn. \"Get back to the dens and eat. I will hold the ridge until sun breaks.\" He failed to register "
-            "the wolf's terror; only that the border was vulnerable. He stepped into the cold wind, armored coat "
-            "absorbing chill, ready to bleed for the dirt he ruled."
+            "from briars: \"Greyspire patrol shifted west. We lost scent near the rocks.\" Finn'pelt did not turn. "
+            "\"Get back to the dens and eat. I will hold the ridge until sun breaks.\" He failed to register "
+            "the wolf's terror; only that the border was vulnerable. he stepped into the cold wind, armored coat "
+            "absorbing chill, ready to bleed for dirt he no longer rules."
         ),
         open_plots=(
-            "Needs a mate to cement alpha role. RP OK with death (plot progression), permanent scarring, political "
-            "betrayal, psychological horror. NOT OK with unannounced insta-kill without mechanical thread or fair dice."
+            "life after the crown; kanami probation; ashbark's guilt; Mossgaze bond tested. RP OK with death (plot "
+            "progression), permanent scarring, political betrayal, psychological horror. NOT OK with unannounced "
+            "insta-kill without mechanical thread or fair dice."
         ),
     ),
     "Puddlebane": _sheet(
@@ -1613,7 +1615,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Curious, talkative, empathetic, easily frightened, desperately eager to help. Asks questions constantly: "
             "why is the water warm, where does mist come from, what does the Maw taste like. Other pups avoid her; "
             "she does not care. Cries when pups fall or hunters return empty-mouthed. Wants to be a healer like "
-            "Mirewort but happier. Collects leaves and mushrooms, presses them between stones to dry."
+            "mirewort but happier. collects leaves and mushrooms, presses them between stones to dry."
         ),
         backstory=(
             "Born in Mistmoor. Nearly died of rot-lung at three moons; Mirewort saved her with marsh-mallow root "
@@ -1849,7 +1851,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
         personality=(
             "Obsessive, brilliant, socially awkward, gentle, morbid. Fascinated by death as decay; never hurt another "
             "wolf. Studies how bodies return to swamp, fungus blooms from rot, Maw digests what it is given. Collects "
-            "dead beetles, frogs, mice; dries and stores them in a hollow log. Unsettling to others; ey does not mind."
+            "dead beetles, frogs, mice; dries and stores them in a hollow log. unsettling to others; ey does not mind."
         ),
         backstory=(
             "Born with a tremor. Bog-Born mother tried to drown em as a pup; too strange, too creepy. Survived by "

@@ -89,7 +89,7 @@ async def post_collab_hunt_prey_pile(
     )
 
     row = db.get_collab_hunt(hunt_id)
-    note = "\n\n**Fresh-kill cache** open below; packmates choose how to respond."
-    if row and row["result_text"] and "Fresh-kill cache" not in row["result_text"]:
+    note = "\n\n**fresh-kill cache** open below; packmates choose how to respond."
+    if row and row["result_text"] and "fresh-kill cache" not in row["result_text"]:
         db.set_collab_hunt_status(hunt_id, "done", result_text=row["result_text"] + note)
     return True

@@ -15,8 +15,8 @@ from utils.embeds import SUCCESS_COLOR, howlbert_embed
 from utils.hunting import award_bones
 
 LARGE_PREY_ENCOUNTER_TEXT = [
-    "Your quarry was no rabbit; a **deer** wheels on you, hooves ready.",
-    "An **elk** bursts from the brush, antlers lowered. It will not flee.",
+    "your quarry was no rabbit; a **deer** wheels on you, hooves ready.",
+    "an **elk** bursts from the brush, antlers lowered. it will not flee.",
     "The herd broke wrong; one **stag** stands its ground instead of running.",
     "Heavy scent, heavy breath; **large prey** turns to fight for its life.",
 ]
@@ -33,8 +33,8 @@ def roll_large_prey_encounter() -> bool:
 
 
 PREY_NPC_NAMES = (
-    "Cornered Deer",
-    "Fighting Elk",
+    "cornered deer",
+    "fighting elk",
     "Desperate Stag",
 )
 
@@ -79,27 +79,27 @@ def enrich_large_prey_embed(
     if not enc:
         embed.description = (
             (embed.description or "")
-            + "\n\n_Combat failed to open; try **`/bones action:hunt`** again or `/combat list`._"
+            + "\n\n_combat failed to open; try **`/bones action:hunt`** again or `/combat list`._"
         )
         return embed
 
     fighters = db.get_combat_fighters(enc_id)
     hunter_name = user["wolf_name"] if user and "wolf_name" in user.keys() else "Hunter"
-    lines = [f"Fight **#{enc_id}**"]
+    lines = [f"fight **#{enc_id}**"]
     for fighter in fighters:
         label = fighter["npc_name"] or hunter_name
-        lines.append(f"· **{label}** {fighter['hp']}/{fighter['max_hp']} HP")
+        lines.append(f"· **{label}** {fighter['hp']}/{fighter['max_hp']} hp")
 
     if enc["status"] == "active":
         current = current_fighter_for_enc(enc_id)
         actor = (current["npc_name"] if current and current["npc_name"] else hunter_name) if current else hunter_name
         lines.append(
-            f"\n**Round {enc['round']}** — **{actor}** acts first. "
-            "On your turn: **Bite** or **Claw** (auto-targets lone prey), or pick from the target menu."
+            f"\n**round {enc['round']}** — **{actor}** acts first. "
+            "on your turn: **bite** or **claw** (auto-targets lone prey), or pick from the target menu."
         )
     else:
         lines.append(
-            f"\n_Combat status **{enc['status']}** — `/combat status encounter:{enc_id}` to recover the panel._"
+            f"\n_combat status **{enc['status']}** — `/combat status encounter:{enc_id}` to recover the panel._"
         )
 
     embed.description = (embed.description or "") + "\n\n" + "\n".join(lines)
@@ -123,7 +123,7 @@ def is_large_prey_fighter(fighter) -> bool:
     if "npc_template" in fighter.keys() and fighter["npc_template"]:
         return fighter["npc_template"] == "large_prey"
     return (
-        "Large Prey" in fighter["npc_name"]
+        "large prey" in fighter["npc_name"]
         or "deer" in fighter["npc_name"].lower()
         or "elk" in fighter["npc_name"].lower()
         or "stag" in fighter["npc_name"].lower()
@@ -171,8 +171,8 @@ async def try_complete_hunt_prey_victory(
         db.mark_hunt_prey_rewarded(enc_id)
         db.end_encounter(enc_id)
         return howlbert_embed(
-            "Prey Escapes",
-            "The kill is yours, but you're too wounded to drag it to the cache.",
+            "prey escapes",
+            "the kill is yours, but you're too wounded to drag it to the cache.",
             color=SUCCESS_COLOR,
         )
 
@@ -227,16 +227,16 @@ async def try_complete_hunt_prey_victory(
         day_number=world["day_number"],
     )
 
-    embed = howlbert_embed("Fresh-kill Secured", color=SUCCESS_COLOR)
+    embed = howlbert_embed("fresh-kill secured", color=SUCCESS_COLOR)
     embed.description = (
-        f"You bring down the **{prey_label}** and drag it to the clearing.\n"
-        "The **fresh-kill cache** is open; packmates can respond below."
+        f"you bring down the **{prey_label}** and drag it to the clearing.\n"
+        "the **fresh-kill cache** is open; packmates can respond below."
     )
-    embed.add_field(name="Haul", value=format_bones(net_amount, signed=True), inline=True)
+    embed.add_field(name="haul", value=format_bones(net_amount, signed=True), inline=True)
     if lucky_bonus > 0:
-        embed.add_field(name="Lucky Tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
+        embed.add_field(name="lucky tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
     if tax > 0:
-        embed.add_field(name="Pack Tax", value=format_bones(tax), inline=True)
+        embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     from engine.blooding import award_blooding_on_hunt
 
     blooding_note = award_blooding_on_hunt(user)

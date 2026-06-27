@@ -66,7 +66,7 @@ def test_reptile_fear_roll_modifiers(monkeypatch) -> None:
     wolf_f = {"discord_id": 1, "npc_template": None}
     snake_f = {"npc_template": "water_snake", "npc_name": "Water Snake"}
     dis, adv, note = reptile_fear_roll_modifiers(wolf_f, snake_f)
-    assert dis and not adv and "Fear" in note
+    assert dis and not adv and "fear" in note.lower()
     dis2, adv2, note2 = reptile_fear_roll_modifiers(snake_f, wolf_f)
     assert adv2 and not dis2 and "flinch" in note2.lower()
 
@@ -105,7 +105,7 @@ def test_nettle_sting_contract(monkeypatch) -> None:
 
     monkeypatch.setattr(db, "set_user_conditions", fake_set)
     note = try_nettle_sting_exposure(user, chance=1.0)
-    assert note and "Nettle" in note
+    assert note and "nettle" in note.lower()
     assert calls and "mild_poison" in calls[0]
 
 

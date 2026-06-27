@@ -90,13 +90,38 @@ Mistmoor **Medic** under Mirewort. **Requires wolf name Soot + mistmoor affiliat
 
 Shares healer quests with Firepaw: **blink_healer_listen**, **blink_healer_touch**.
 
+## Thistlehide leadership (canon)
+
+**River'Shroud** holds the Alpha seat after **Finnpelt** yielded following the Rite of Broken Canine. **Finnpelt** now patrols as **hunter**. Pack alpha mechanics (`/pack`, broken canine rite, alpha role events) follow each wolf's `wolf_role` in the database.
+
+### River'Shroud (alpha lane)
+
+Thistlehide **Alpha**. Requires wolf name **RiverShroud** + `wolf_role:alpha` + thistlehide affiliation.
+
+| Phase | Mechanic |
+|-------|----------|
+| **2–5** | `/field action:sniff`: **+1 mood**, **sniff bonus** (+15% hunt/track) |
+| **6–10** | Every sniff: **+1 mood**, **sniff bonus**; first sniff each sunrise: **+2 standing** |
+| **6–10** | `/pack patrol` / scout **survey**: **+1 standing** (on top of phase-2 Thistlehide patrol bonus) |
+| **9** | `/howl`: **waives Memory Bites** mood penalty when pack unity < 5 |
+| **9–11** | `/howl`: **+1 pack unity** (stacks with phase **11** Ash Naming unity) |
+
+### Finnpelt (hunter lane)
+
+Thistlehide **hunter** (former Alpha). Requires wolf name **Finnpelt** + `wolf_role:hunter` + thistlehide affiliation.
+
+| Phase | Mechanic |
+|-------|----------|
+| **6–10** | `/field action:sniff`: **+2 mood**, **sniff bonus**; first sniff each sunrise: **+1 standing** |
+| **6–10** | `/pack patrol` / scout **survey**: **+1 standing** |
+
 ## Living world (use alongside phases)
 
 Cat pacts, `/field action:sniff` border fights, season stash failures, territory wars, diseases, restricted herbs, sacred visits, collab hunt/patrol, raccoon, predators, Whispering Wild — all continue during Book One.
 
 ## Canon anchors (affiliations)
 
-- **Thistlehide:** Finnpelt, Mossgaze, Kanami, River'Shroud, Pale'Step, Skye, Thyme, Firepaw, Eltanin
+- **Thistlehide:** River'Shroud (Alpha), Finnpelt, Mossgaze, Kanami, Pale'Step, Skye, Thyme, Firepaw, Eltanin
 - **Silverrush:** Saltmuzzle, Rift, Rivenmaw, Ripple, Aromis
 - **Mistmoor:** Murkvein, Mirewort, Gasp, Soot
 - **Greyspire:** Grim, Talus; **Splinter** exiled rogue

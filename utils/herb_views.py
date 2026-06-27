@@ -33,11 +33,11 @@ class HerbGuideView(discord.ui.View):
     def _embed(self) -> discord.Embed:
         title, body = build_herb_guide_embed(page=self.page, filter_key=self.filter_key)
         embed = howlbert_embed(title, body, color=EMBED_COLOR)
-        embed.set_footer(text="Herb guide · /herbs action:guide")
+        embed.set_footer(text="herb guide · /herbs action:guide")
         return embed
 
     @discord.ui.select(
-        placeholder="Filter by habitat…",
+        placeholder="filter by habitat…",
         min_values=1,
         max_values=1,
         row=1,
@@ -50,21 +50,21 @@ class HerbGuideView(discord.ui.View):
         self.next_page.disabled = self.max_page == 0
         await interaction.response.edit_message(embed=self._embed(), view=self)
 
-    @discord.ui.button(label="◀ Prev", style=discord.ButtonStyle.secondary, disabled=True)
+    @discord.ui.button(label="◀ prev", style=discord.ButtonStyle.secondary, disabled=True)
     async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = max(0, self.page - 1)
         self.prev_page.disabled = self.page == 0
         self.next_page.disabled = self.page >= self.max_page
         await interaction.response.edit_message(embed=self._embed(), view=self)
 
-    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary, disabled=True)
+    @discord.ui.button(label="next ▶", style=discord.ButtonStyle.secondary, disabled=True)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = min(self.max_page, self.page + 1)
         self.prev_page.disabled = self.page == 0
         self.next_page.disabled = self.page >= self.max_page
         await interaction.response.edit_message(embed=self._embed(), view=self)
 
-    @discord.ui.button(label="Overview", style=discord.ButtonStyle.primary, row=2)
+    @discord.ui.button(label="overview", style=discord.ButtonStyle.primary, row=2)
     async def overview(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = 0
         self.prev_page.disabled = True

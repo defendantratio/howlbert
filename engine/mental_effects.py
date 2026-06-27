@@ -26,12 +26,12 @@ def _parsed(user) -> tuple[str | None, str | None]:
 
 
 def mental_activity_block(user) -> str | None:
-    """No total command block for unsentient; field/social blocks are separate."""
+    """no total command block for unsentient; field/social blocks are separate."""
     return None
 
 
 def field_activity_block(user) -> str | None:
-    """Block hunt, patrol, explore, combat, and collab when mind is lost to the wild."""
+    """block hunt, patrol, explore, combat, and collab when mind is lost to the wild."""
     key, stage = _parsed(user)
     if not key or not stage:
         return None
@@ -40,14 +40,14 @@ def field_activity_block(user) -> str | None:
         label = info["name"] if info else "Mind-Fracture"
         return (
             f"**{label}**; your wolf's mind is lost to the wild. "
-            "Hunt, patrol, explore, and combat are beyond them. "
+            "hunt, patrol, explore, and combat are beyond them. "
             "Den care (`/eat`, `/drink`, `/vitals`) still works."
         )
     return None
 
 
 def social_activity_block(user) -> str | None:
-    """Block courtship, socialize, groom when mind is too far gone."""
+    """block courtship, socialize, groom when mind is too far gone."""
     key, stage = _parsed(user)
     if not key or not stage:
         return None
@@ -59,7 +59,7 @@ def social_activity_block(user) -> str | None:
 
 
 def mental_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bool]:
-    """Flat penalty and disadvantage from mental illnesses."""
+    """flat penalty and disadvantage from mental illnesses."""
     key, stage = _parsed(user)
     if not key or not stage:
         return 0, False

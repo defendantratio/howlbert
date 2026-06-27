@@ -34,23 +34,23 @@ def assign_hunt_role(wolf, existing_roles: list[str], *, is_leader: bool = False
 
 
 def hunt_role_synergy(members: list) -> tuple[int, str]:
-    """Bonus when party fills distinct hunt roles."""
+    """bonus when party fills distinct hunt roles."""
     roles = []
     for m in members:
         role = m["hunt_role"] if "hunt_role" in m.keys() and m["hunt_role"] else "flank"
         roles.append(role)
     unique = set(roles)
     if len(unique) >= 5:
-        return 8, "_Full five-role drive; every jaw has a job._"
+        return 8, "_full five-role drive; every jaw has a job._"
     if {"chaser", "scout", "blocker"}.issubset(unique):
-        return 5, "_Chaser, scout, and blocker in place; coordinated drive **+5%**._"
+        return 5, "_chaser, scout, and blocker in place; coordinated drive **+5%**._"
     if len(unique) >= 3:
-        return 3, "_Roles spread; the line holds shape._"
+        return 3, "_roles spread; the line holds shape._"
     return 0, ""
 
 
 def breeding_pair_hunt_bonus(users: list, *, season: str | None) -> tuple[int, str]:
-    """Spring mating season: bonded male hunting beside pregnant mate sharpens the drive."""
+    """spring mating season: bonded male hunting beside pregnant mate sharpens the drive."""
     if season != "spring" or len(users) < 2:
         return 0, ""
     party_ids = {u["id"] for u in users}
@@ -62,7 +62,7 @@ def breeding_pair_hunt_bonus(users: list, *, season: str | None) -> tuple[int, s
         if not mate or not int(mate["is_pregnant"] if "is_pregnant" in mate.keys() else 0):
             continue
         if mate["id"] in party_ids:
-            return 4, "_Breeding pair on the line; spring drive sharpens the hunt._"
+            return 4, "_breeding pair on the line; spring drive sharpens the hunt._"
     return 0, ""
 
 
@@ -116,13 +116,13 @@ def collab_hunt_bond_modifiers(
         notes.append(pair_note.strip("_"))
     if heated_rivalry and random.random() < 0.35:
         return -100, (
-            "_Mid-hunt snarl: a **heated rivalry** in the party scatters the quarry "
+            "_mid-hunt snarl: a **heated rivalry** in the party scatters the quarry "
             "and leaves everyone empty-pawed._"
         )
     if rivalry_pairs and random.random() < 0.2:
         return max(bonus - 5, -15), (
-            "_Tension on the line; grudges slow the drive._"
-            + (f" Chemistry **+{bonus}%**." if bonus else "")
+            "_tension on the line; grudges slow the drive._"
+            + (f" chemistry **+{bonus}%**." if bonus else "")
         )
 
     return bonus, notes[0] if notes else ""

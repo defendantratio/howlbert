@@ -32,11 +32,11 @@ def build_shop_embed(items: list, page: int = 0) -> discord.Embed:
     chunk = items[start : start + SHOP_ITEMS_PER_PAGE]
 
     embed = howlbert_embed(
-        "Trading Post",
-        "Spend bones with **Buy** below.\n"
-        "· **Consumables**; `/bones action:use item:<key>` (e.g. `herb_bundle`, `den_charm`)\n"
-        "· **Food & toys**; go to `/prey` and `/playpen action:toys` automatically\n"
-        "· **Wild herbs**; not sold here; gather with `/field action:forage`",
+        "trading post",
+        "spend bones with **buy** below.\n"
+        "· **consumables**; `/bones action:use item:<key>` (e.g. `herb_bundle`, `den_charm`)\n"
+        "· **food & toys**; go to `/food` and `/playpen action:toys` automatically\n"
+        "· **wild herbs**; not sold here; gather with `/field action:forage`",
     )
     for item in chunk:
         desc = item["description"] or "-"
@@ -48,7 +48,7 @@ def build_shop_embed(items: list, page: int = 0) -> discord.Embed:
             inline=False,
         )
     embed.set_footer(
-        text=f"Page {page + 1} of {total_pages} · {len(items)} items · "
+        text=f"page {page + 1} of {total_pages} · {len(items)} items · "
         "/bones action:buy item:<key> · action:inventory"
     )
     return embed
@@ -83,7 +83,7 @@ class ShopPageView(discord.ui.View):
                     )
 
             button = discord.ui.Button(
-                label=f"Buy {label} ({price})"[:80],
+                label=f"buy {label} ({price})"[:80],
                 style=discord.ButtonStyle.success,
                 custom_id=f"fable_shop:{key}:{self.page}",
             )
@@ -101,7 +101,7 @@ class ShopPageView(discord.ui.View):
                     )
 
                 prev_btn = discord.ui.Button(
-                    label="◀ Prev",
+                    label="◀ prev",
                     style=discord.ButtonStyle.secondary,
                     custom_id=f"fable_shop_page:{self.page - 1}",
                 )
@@ -118,7 +118,7 @@ class ShopPageView(discord.ui.View):
                     )
 
                 next_btn = discord.ui.Button(
-                    label="Next ▶",
+                    label="next ▶",
                     style=discord.ButtonStyle.secondary,
                     custom_id=f"fable_shop_page:{self.page + 1}",
                 )
@@ -171,7 +171,7 @@ def make_quest_accept_view(quests: list) -> discord.ui.View | None:
             await interaction.response.send_message(embed=embed, ephemeral=_is_error(embed))
 
     select = discord.ui.Select(
-        placeholder="Accept a quest…",
+        placeholder="accept a quest…",
         options=options,
         custom_id="fable_accept_select",
     )
@@ -197,7 +197,7 @@ def make_quest_complete_view(ready_quests: list) -> discord.ui.View | None:
                 )
 
         button = discord.ui.Button(
-            label=f"Turn in: {ready[0]['title'][:60]}",
+            label=f"turn in: {ready[0]['title'][:60]}",
             style=discord.ButtonStyle.success,
             custom_id=f"fable_complete:{key}",
         )
@@ -217,7 +217,7 @@ def make_quest_complete_view(ready_quests: list) -> discord.ui.View | None:
             await interaction.response.send_message(embed=embed, ephemeral=_is_error(embed))
 
     select = discord.ui.Select(
-        placeholder="Turn in a finished quest…",
+        placeholder="turn in a finished quest…",
         options=options,
         custom_id="fable_complete_select",
     )
@@ -236,7 +236,7 @@ def make_hunt_followup_view() -> discord.ui.View:
         err = preypile_error(interaction)
         if err:
             await interaction.response.send_message(
-                embed=howlbert_embed("Can't Share", err, color=ERROR_COLOR),
+                embed=howlbert_embed("can't share", err, color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return
@@ -245,7 +245,7 @@ def make_hunt_followup_view() -> discord.ui.View:
         await open_prey_pile(interaction, interaction.client)
 
     button = discord.ui.Button(
-        label="Lay out fresh-kill",
+        label="lay out fresh-kill",
         emoji="🍖",
         style=discord.ButtonStyle.primary,
         custom_id="fable_hunt:preypile",

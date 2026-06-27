@@ -24,7 +24,7 @@ def format_quest_reward_suffix(quest_key: str, *, difficulty: str | None = None)
     parts: list[str] = []
     xp = quest_xp_reward(quest_key, difficulty=difficulty)
     if xp:
-        parts.append(f"+{xp} XP")
+        parts.append(f"+{xp} xp")
     skill_reward = quest_skill_reward(quest_key)
     if skill_reward:
         skill_key, rank_gain = skill_reward

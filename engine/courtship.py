@@ -45,7 +45,7 @@ def resolve_court_difficulty(courter, target, guild_id: int | None, chosen: str)
         dc = COURTSHIP_DCS.get(chosen, 15)
         sdc = COURTSHIP_DCS.get(suggested, 15)
         return chosen, (
-            f"_Standing suggests **{suggested}** (DC {sdc}); you chose **{chosen}** (DC {dc})._"
+            f"_standing suggests **{suggested}** (dc {sdc}); you chose **{chosen}** (dc {dc})._"
         )
     return chosen, None
 
@@ -63,7 +63,7 @@ def apply_court_bond(user, target_user, result: dict, difficulty: str, *, day: i
     from engine.bonds import strength_bar, strength_tier
 
     return (
-        f"Friendship with **{target_user['wolf_name']}** "
+        f"friendship with **{target_user['wolf_name']}** "
         f"{strength_bar(row['strength'])} ({strength_tier(row['strength'])})."
     )
 
@@ -98,7 +98,7 @@ def apply_court_outcome(
             pack_b = int(target_user["pack_id"])
             new_rel = db.adjust_pack_relation(guild_id, pack_a, pack_b, -1)
             lines.append(
-                f"Cross-pack court on hostile ground; den standing **−1** (now **{new_rel}/10**)."
+                f"cross-pack court on hostile ground; den standing **−1** (now **{new_rel}/10**)."
             )
         return "\n".join(lines)
     loss = COURT_HOSTILE_FAIL_MOOD_LOSS if difficulty == "hostile" else COURT_FAIL_MOOD_LOSS

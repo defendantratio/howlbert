@@ -483,13 +483,13 @@ def pick_fishing_catch(
         key = random.choices(keys, weights=weights, k=1)[0]
 
     meta = FISHING_CATCHES[key]
-    flavor = random.choice(meta.get("flavor", ("You land a catch.",)))
+    flavor = random.choice(meta.get("flavor", ("you land a catch.",)))
     rarity = meta["rarity"]
     tag = ""
     if rarity in ("rare", "legendary"):
-        tag = f"\n\n_**{rarity.title()}** catch!_"
+        tag = f"\n\n**{rarity.title()} catch!**"
     if meta.get("kind") == "turtle":
-        tag += "\n_Shell and meat; Wolvden-style turtle haul._"
+        tag += "\n_Shell and meat; a heavy turtle haul._"
 
     return {
         "prey_key": key,

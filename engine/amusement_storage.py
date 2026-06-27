@@ -31,15 +31,15 @@ def play_amusement(user, stack_id: int, *, day: int | None = None) -> tuple[bool
         if last >= day:
             return (
                 False,
-                "You already played with a toy this sunrise.\n\n"
-                "_Resets next sunrise · `/world action:cooldowns`_",
+                "you already played with a toy this sunrise.\n\n"
+                "_resets next sunrise · `/world action:cooldowns`_",
                 0,
             )
     stack = db.get_amusement_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't have that toy.", 0
+        return False, "you don't have that toy.", 0
     if stack["uses_left"] <= 0:
-        return False, "That toy is worn out.", 0
+        return False, "that toy is worn out.", 0
 
     meta = amusement_meta(stack["item_key"])
     mood_gain = meta["mood"]
@@ -47,37 +47,37 @@ def play_amusement(user, stack_id: int, *, day: int | None = None) -> tuple[bool
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:
         db.remove_amusement_stack(stack_id)
-        uses_note = f"The **{meta['name']}** falls apart; spent."
+        uses_note = f"the **{meta['name']}** falls apart; spent."
     else:
         db.update_amusement_stack_uses(stack_id, uses_left)
         worn = " · _last use_" if uses_left == 1 else ""
         uses_note = f"**{uses_left}/{meta['uses']}** uses left{worn}."
 
     msg = (
-        f"You bat **{meta['name']}** around the den; **+{mood_gain} mood** "
+        f"you bat **{meta['name']}** around the den; **+{mood_gain} mood** "
         f"(now **{new_mood}**).\n{uses_note}"
     )
     if random.random() < POOP_PLAY_CHANCE:
         filth = try_den_filth_exposure(user, day=day)
         if filth:
-            msg += f"\n\nYou tumble into something foul. {filth}"
+            msg += f"\n\nyou tumble into something foul. {filth}"
     return True, msg, mood_gain
 
 
 def gift_amusement(user, stack_id: int, recipient) -> tuple[bool, str]:
     stack = db.get_amusement_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't have that toy."
+        return False, "you don't have that toy."
     if stack["uses_left"] <= 0:
-        return False, "That toy is worn out."
+        return False, "that toy is worn out."
     if recipient["id"] == user["id"]:
-        return False, "You already carry it."
+        return False, "you already carry it."
 
     meta = amusement_meta(stack["item_key"])
     if not db.transfer_amusement_stack(stack_id, recipient["id"]):
-        return False, "Couldn't pass the toy."
+        return False, "couldn't pass the toy."
     return (
         True,
-        f"You nudge **{meta['name']}** to **{recipient['wolf_name']}**; "
+        f"you nudge **{meta['name']}** to **{recipient['wolf_name']}**; "
         f"it's in their `/playpen action:toys` now.",
     )

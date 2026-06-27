@@ -89,7 +89,7 @@ def _prof_bonus(user, skill: str) -> int:
 
 
 def overlay_fighter_hp(base_stats, fighter) -> dict:
-    """Merge encounter HP onto profile/NPC stats for maneuver resolution."""
+    """merge encounter hp onto profile/npc stats for maneuver resolution."""
     stats = _combat_stats(base_stats)
     stats["hp"] = int(fighter["hp"])
     stats["max_hp"] = int(fighter["max_hp"])
@@ -97,7 +97,7 @@ def overlay_fighter_hp(base_stats, fighter) -> dict:
 
 
 def _combat_stats(stats) -> dict:
-    """Normalize sqlite3.Row or dict; Row has no .get(), which breaks attack resolution."""
+    """normalize sqlite3.row or dict; row has no .get(), which breaks attack resolution."""
     if isinstance(stats, dict):
         return stats
     if hasattr(stats, "keys"):
@@ -112,7 +112,7 @@ def roll_initiative(user) -> tuple[int, int, int]:
 
 
 def npc_combat_stats(*, dex: int = 12, strength: int = 14) -> dict:
-    """Generic fallback stat block when no bestiary template is set."""
+    """generic fallback stat block when no bestiary template is set."""
     return {
         "attr_str": strength,
         "attr_dex": dex,
@@ -332,7 +332,7 @@ def resolve_attack(
             )
             if hunter_extra:
                 damage += hunter_extra
-                extra = (extra + " " if extra else "") + f"_Killer's Instinct: +{hunter_extra}._"
+                extra = (extra + " " if extra else "") + f"_killer's instinct: +{hunter_extra}._"
         if crit:
             damage, crit_effect, extra = _apply_crit_to_damage(damage)
     elif fumble:
@@ -513,20 +513,20 @@ def format_attack(result: dict, attacker_name: str, defender_name: str) -> str:
     lines = [
         f"**{result['attack_name']}**; {attacker_name} vs {defender_name}",
         (
-            f"Attack: {result['attacker_roll']} + {result['attacker_mod']} = "
+            f"attack: {result['attacker_roll']} + {result['attacker_mod']} = "
             f"**{result['attacker_total']}** vs "
-            f"Defense: {result['defender_roll']} + {result['defender_mod']} = "
+            f"defense: {result['defender_roll']} + {result['defender_mod']} = "
             f"**{result['defender_total']}**"
         ),
     ]
     if result["hit"]:
-        lines.append(f"**Hit!** {result['damage']} damage.")
+        lines.append(f"**hit!** {result['damage']} damage.")
         if result.get("extra"):
             lines.append(result["extra"])
     elif result["fumble"]:
-        lines.append(f"**Critical fumble!** {result['extra']}")
+        lines.append(f"**critical fumble!** {result['extra']}")
     else:
-        lines.append("**Miss.**")
+        lines.append("**miss.**")
     return "\n".join(lines)
 
 
@@ -569,6 +569,6 @@ def finalize_cross_pack_pvp_death(
     new_standing = db.adjust_pack_relation(guild_id, k_pack, v_pack, -3)
     victim_den = db.get_pack(v_pack)
     name = victim_den["name"] if victim_den else GREAT_PACKS[v_gp]["name"]
-    note = f"Pack standing with **{name}** **−3** (now **{new_standing}/10**)."
+    note = f"pack standing with **{name}** **−3** (now **{new_standing}/10**)."
     note += format_standing_war_flash(guild_id, k_pack, v_pack, new_standing)
     return note

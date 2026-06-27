@@ -1511,7 +1511,7 @@ BARKHOLLOW_CHARACTER_TRAITS = {
             "modifier": -4,
             "attrs": ["attr_con"],
             "combat": True,
-            "blurb": "Cannot run or fight; a short sprint leaves him gasping.",
+            "blurb": "Cannot run or fight; a short sprint leaves her gasping.",
         },
         {
             "name": "Forgetful",
@@ -1524,7 +1524,7 @@ BARKHOLLOW_CHARACTER_TRAITS = {
             "name": "Slow",
             "modifier": -2,
             "attrs": ["attr_dex"],
-            "blurb": "Wolves mock his pace; patience mistaken for stupidity.",
+            "blurb": "Wolves mock her pace; patience mistaken for stupidity.",
         },
     ],
 }
@@ -3309,12 +3309,12 @@ def _adjust_skill_trait_experience_step(
     from rpg_rules import MAX_EARNED_TRAIT_BONUS, MAX_EARNED_TRAIT_SETBACK, SKILLS
 
     if skill_key not in SKILLS:
-        return False, "Unknown skill."
+        return False, "unknown skill."
     attr_keys, label = SKILLS[skill_key]
 
     wolf = db.get_user_by_id(wolf_id)
     if not wolf:
-        return False, "Wolf not found."
+        return False, "wolf not found."
 
     traits = ensure_traits_dict(_traits_for_user(wolf))
 
@@ -3403,10 +3403,10 @@ def adjust_skill_trait_experience(
     """
     skill_key = skill_key.strip().lower()
     if delta == 0:
-        return False, "No change."
+        return False, "no change."
     steps = abs(int(delta))
     sign = 1 if delta > 0 else -1
-    last_msg = "No change."
+    last_msg = "no change."
     for _ in range(steps):
         ok, last_msg = _adjust_skill_trait_experience_step(wolf_id, skill_key, sign)
         if not ok:
@@ -3418,7 +3418,7 @@ def spend_xp_trait_bonus(user, skill: str) -> str | None:
     from rpg_rules import MAX_EARNED_TRAIT_BONUS, SKILLS
 
     if skill not in SKILLS:
-        return "Unknown skill."
+        return "unknown skill."
     traits = _traits_for_user(user)
     if earned_trait_bonus_total(traits, skill) >= MAX_EARNED_TRAIT_BONUS:
         return (
@@ -3450,8 +3450,8 @@ def parse_trait_failure_days(raw: str | None) -> dict[str, int]:
 
 def parse_skill_strain_state(raw: str | None) -> dict[str, dict]:
     """
-    Per-skill practice strain before an earned setback lands.
-    Stored in users.trait_failure_days as JSON.
+    per-skill practice strain before an earned setback lands.
+    stored in users.trait_failure_days as json.
     """
     if not raw:
         return {}
@@ -3505,7 +3505,7 @@ def format_skill_strain_line(user) -> str | None:
         parts.append(f"**{label}** {strain}/{SKILL_STRAIN_THRESHOLD}")
     if not parts:
         return None
-    return "Practice strain (rest or success eases): " + " · ".join(parts)
+    return "practice strain (rest or success eases): " + " · ".join(parts)
 
 
 def compute_failure_strain_gain(
@@ -3521,22 +3521,22 @@ def compute_failure_strain_gain(
 
     if outcome == "critical_failure":
         gain = 2
-        note = "A botched attempt shakes confidence."
+        note = "a botched attempt shakes confidence."
     elif outcome == "failure":
         if margin is None and total is not None and dc is not None:
             margin = int(dc) - int(total)
         miss = max(0, int(margin or 0))
         if miss <= 1:
-            return 0, "_Close call; nerves only — no lasting dent._"
+            return 0, "_close call; nerves only — no lasting dent._"
         if miss <= 4:
             gain = 1
-            note = "The miss lingers in muscle memory."
+            note = "the miss lingers in muscle memory."
         else:
             gain = 2
-            note = "A clear failure; doubt creeps in."
+            note = "a clear failure; doubt creeps in."
         if dc is not None and int(dc) >= 20 and gain > 0:
             gain += 1
-            note = "Legendary difficulty; the failure cuts deep."
+            note = "legendary difficulty; the failure cuts deep."
     else:
         return 0, ""
 
@@ -3546,7 +3546,7 @@ def compute_failure_strain_gain(
         note += " Exhaustion made it worse."
 
     if gain >= SKILL_STRAIN_THRESHOLD:
-        note = "Confidence collapses under pressure."
+        note = "confidence collapses under pressure."
 
     return gain, note
 
@@ -3593,7 +3593,7 @@ def _apply_strain_gain(
     remaining = int(entry["strain"])
     if remaining > 0:
         lines.append(
-            f"_Practice strain on this skill: **{remaining}/{SKILL_STRAIN_THRESHOLD}** "
+            f"_practice strain on this skill: **{remaining}/{SKILL_STRAIN_THRESHOLD}** "
             f"(success or a night's rest eases it)._"
         )
     return "\n".join(lines) if lines else None
@@ -3627,11 +3627,11 @@ def maybe_apply_success_recovery(
     db.update_user_by_id(int(user["id"]), trait_failure_days=encode_skill_strain_state(state))
 
     if new_strain <= 0:
-        return "_A clean success; shaken confidence steadies._"
+        return "_a clean success; shaken confidence steadies._"
     from rpg_rules import SKILL_STRAIN_THRESHOLD
 
     return (
-        f"_Success helps — strain down to **{new_strain}/{SKILL_STRAIN_THRESHOLD}**._"
+        f"_success helps — strain down to **{new_strain}/{SKILL_STRAIN_THRESHOLD}**._"
     )
 
 
@@ -3724,6 +3724,8 @@ def _trait_matches_check(
     skill_key: str | None,
     pack: str | None,
 ) -> bool:
+    if trait.get("combat"):
+        return False
     if not _pack_ok(trait, pack):
         return False
     if skill_key and skill_key in (trait.get("exclude_skills") or []):
@@ -3789,7 +3791,7 @@ def trait_check_disadvantage(
 
 
 def trait_hunt_multiplier(user) -> tuple[float, str]:
-    """Worst hunt multiplier from character-trait weaknesses."""
+    """worst hunt multiplier from character-trait weaknesses."""
     traits = _traits_for_user(user)
     if not traits:
         return 1.0, ""
@@ -3813,7 +3815,7 @@ def trait_hunt_multiplier(user) -> tuple[float, str]:
 
 
 def trait_combat_modifier(user) -> int:
-    """Flat attack-roll modifier from character traits (e.g. Physically Frail)."""
+    """flat attack-roll modifier from character traits (e.g. physically frail)."""
     traits = _traits_for_user(user)
     if not traits:
         return 0
@@ -3835,6 +3837,23 @@ def trait_combat_modifier(user) -> int:
     return total
 
 
+def _trait_blurb_for_display(user, trait: dict) -> str:
+    """live canonical blurb when on file, then pronoun adaptation."""
+    from engine.pronouns import adapt_text_for_user
+
+    blurb = trait.get("blurb", "") or ""
+    canon = canonical_traits_for_name(_user_field(user, "wolf_name") or "")
+    if canon:
+        for section in ("bonuses", "weaknesses"):
+            for canon_trait in canon.get(section, []):
+                if canon_trait.get("name") == trait.get("name") and canon_trait.get("blurb"):
+                    blurb = canon_trait["blurb"]
+                    break
+    if not blurb:
+        return ""
+    return adapt_text_for_user(blurb, user)
+
+
 def format_traits_for_profile(user) -> str | None:
     traits = _traits_for_user(user)
     if not traits:
@@ -3843,7 +3862,7 @@ def format_traits_for_profile(user) -> str | None:
     for trait in traits.get("bonuses", []):
         mod = int(trait.get("modifier", 0))
         sign = f"+{mod}" if mod >= 0 else str(mod)
-        blurb = trait.get("blurb", "")
+        blurb = _trait_blurb_for_display(user, trait)
         line = f"**{trait['name']}** ({sign})"
         if trait.get("earned"):
             line += " _(earned)_"
@@ -3853,7 +3872,7 @@ def format_traits_for_profile(user) -> str | None:
     for trait in traits.get("weaknesses", []):
         mod = int(trait.get("modifier", 0))
         sign = f"+{mod}" if mod >= 0 else str(mod)
-        blurb = trait.get("blurb", "")
+        blurb = _trait_blurb_for_display(user, trait)
         line = f"**{trait['name']}** ({sign})"
         if trait.get("earned"):
             line += " _(earned)_"
@@ -3864,7 +3883,7 @@ def format_traits_for_profile(user) -> str | None:
 
 
 CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
-    "Mirewort": MIREWORT_CHARACTER_TRAITS,
+    "mirewort": MIREWORT_CHARACTER_TRAITS,
     "Splinter": SPLINTER_CHARACTER_TRAITS,
     "Moth": MOTH_CHARACTER_TRAITS,
     "Scab": SCAB_CHARACTER_TRAITS,
@@ -3944,7 +3963,8 @@ CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Mossgaze": {"wolf_role": "forager"},
     "Sypha": {"wolf_role": "medic"},
     "Skye": {"wolf_role": "advisor"},
-    "Finnpelt": {"wolf_role": "alpha"},
+    "RiverShroud": {"wolf_role": "alpha"},
+    "Finnpelt": {"wolf_role": "hunter"},
     "Firepaw": {"wolf_role": "medic_apprentice"},
     "Soot": {"wolf_role": "medic", "maw_belief": "orthodox"},
 }
@@ -3965,7 +3985,7 @@ def canonical_register_defaults_for_name(wolf_name: str) -> dict[str, str] | Non
 
 
 def trait_blocks_howl(user) -> tuple[bool, str]:
-    """True when a weakness forbids pack howls (e.g. scarred throat)."""
+    """true when a weakness forbids pack howls (e.g. scarred throat)."""
     traits = _traits_for_user(user)
     if not traits:
         return False, ""
@@ -3979,7 +3999,7 @@ def trait_blocks_howl(user) -> tuple[bool, str]:
 
 
 def roll_trait_hunt_abort(user) -> tuple[bool, str]:
-    """Roll omen/superstition abort; consumes the hunt attempt when True."""
+    """roll omen/superstition abort; consumes the hunt attempt when true."""
     import random
 
     traits = _traits_for_user(user)
@@ -3998,7 +4018,7 @@ def roll_trait_hunt_abort(user) -> tuple[bool, str]:
 
 
 def trait_treat_heal_bonus(healer) -> int:
-    """Extra HP healed when this wolf treats with herbs."""
+    """extra hp healed when this wolf treats with herbs."""
     traits = _traits_for_user(healer)
     if not traits:
         return 0
@@ -4023,7 +4043,7 @@ def trait_clears_infection_on_heal(healer) -> bool:
 
 
 def trait_damage_reduction(defender) -> tuple[int, str]:
-    """Flat damage shaved off incoming hits (best bonus applies)."""
+    """flat damage shaved off incoming hits (best bonus applies)."""
     traits = _traits_for_user(defender)
     if not traits:
         return 0, ""

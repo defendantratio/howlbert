@@ -14,9 +14,9 @@ LORE_FIELDS = (
 )
 
 LORE_LABELS = {
-    "appearance": "Appearance",
-    "personality": "Personality",
-    "backstory": "Backstory",
+    "appearance": "appearance",
+    "personality": "personality",
+    "backstory": "backstory",
     "family_ties": "Family",
     "rp_sample": "RP Sample",
     "open_plots": "Open Plots",
@@ -58,8 +58,28 @@ def has_character_lore(user) -> bool:
     return parse_character_lore(_user_lore_raw(user)) is not None
 
 
+def _wolf_name(user) -> str:
+    if hasattr(user, "keys") and "wolf_name" in user.keys():
+        return user["wolf_name"] or ""
+    if isinstance(user, dict):
+        return user.get("wolf_name") or ""
+    return ""
+
+
+def lore_for_display(user) -> dict | None:
+    """canonical lore sheet when on file; else the wolf's stored copy."""
+    from engine.character_lore_data import CHARACTER_LORE_BY_NAME
+
+    name = _wolf_name(user).lower()
+    if name:
+        for key, raw in CHARACTER_LORE_BY_NAME.items():
+            if key.lower() == name:
+                return parse_character_lore(raw)
+    return parse_character_lore(_user_lore_raw(user))
+
+
 def format_lore_profile_hint(user) -> str | None:
-    lore = parse_character_lore(_user_lore_raw(user))
+    lore = lore_for_display(user)
     if not lore:
         return None
     parts = []
@@ -67,13 +87,17 @@ def format_lore_profile_hint(user) -> str | None:
         text = lore["appearance"]
         if len(text) > 180:
             text = text[:177] + "…"
-        parts.append(text)
-    return "\n".join(parts) if parts else "Lore on file; use `/profile sheet:true` for the full sheet."
+        from engine.pronouns import adapt_text_for_user
+
+        parts.append(adapt_text_for_user(text, user))
+    return "\n".join(parts) if parts else "lore on file; use `/profile sheet:true` for the full sheet."
 
 
 def lore_embed_fields(user) -> list[tuple[str, str]]:
     """Return (name, value) pairs for Discord embed fields."""
-    lore = parse_character_lore(_user_lore_raw(user))
+    from engine.pronouns import adapt_text_for_user
+
+    lore = lore_for_display(user)
     if not lore:
         return []
     out: list[tuple[str, str]] = []
@@ -81,6 +105,7 @@ def lore_embed_fields(user) -> list[tuple[str, str]]:
         text = lore.get(key)
         if not text:
             continue
+        text = adapt_text_for_user(text, user)
         if len(text) > 1024:
             text = text[:1021] + "…"
         out.append((LORE_LABELS[key], text))

@@ -1035,7 +1035,7 @@ def encode_disease(disease_key: str, stage: str) -> str:
 
 
 def parse_disease(raw: str | None) -> tuple[str | None, str | None]:
-    """Return (disease_key, stage_key). Cough legacy: mild/severe/deadly."""
+    """return (disease_key, stage_key). cough legacy: mild/severe/deadly."""
     if not raw:
         return None, None
     if raw == "den_fever":
@@ -1061,13 +1061,13 @@ def get_stage_info(disease_key: str, stage: str) -> dict | None:
 
 
 def disease_display(user) -> tuple[str, str] | None:
-    """Return (name, effect) for primary physical/mental illness in users.disease."""
+    """return (name, effect) for primary physical/mental illness in users.disease."""
     displays = illness_displays(user)
     return displays[0] if displays else None
 
 
 def illness_displays(user) -> list[tuple[str, str]]:
-    """Primary disease plus fever-delirium overlay (herb_buffs.mental_disease)."""
+    """primary disease plus fever-delirium overlay (herb_buffs.mental_disease)."""
     lines: list[tuple[str, str]] = []
     raw = user["disease"] if user and "disease" in user.keys() else None
     key, stage = parse_disease(raw)
