@@ -31,7 +31,7 @@ OPEN **ROLES**     `🐺`
 -# **Alpha** (0/1 per pack)
 -# Greyspire — **OPEN** (Grim)
 -# Mistmoor — **OPEN** (Murkvein)
--# Thistlehide — **TAKEN** (Finnpelt)
+-# Thistlehide — **TAKEN** (River'Shroud · Alpha; Finnpelt)
 -# Silverrush — **OPEN** (Saltmuzzle)
 
 -# **Alpha's Guard / Advisor** (0/1 per pack)

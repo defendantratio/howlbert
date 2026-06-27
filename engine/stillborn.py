@@ -12,7 +12,7 @@ def format_stillborn_save_hint(pup_name: str, conditions: list[str]) -> str:
     label = GENETIC_CONDITIONS[conditions[0]]["name"] if conditions else "Lethal mutation"
     return (
         f"**{pup_name}**; **{label}**; fading fast. "
-        f"Use **`/pupcare action:save name:{pup_name}`** with **Vitality Salve** from `/bones action:shop` "
+        f"use **`/pupcare action:save name:{pup_name}`** with **vitality salve** from `/bones action:shop` "
         f"(same sunrise only)."
     )
 
@@ -48,25 +48,25 @@ def try_save_stillborn_pup(discord_id: int, pup_name: str, *, current_day: int) 
     """Consume vitality_salve and register the pup. Returns (ok, message)."""
     row = db.get_pending_stillborn(discord_id, pup_name.strip())
     if not row:
-        return False, f"No dying pup named **{pup_name}** awaiting neonatal care on your account."
+        return False, f"no dying pup named **{pup_name}** awaiting neonatal care on your account."
     if int(row["born_day"]) != current_day:
         db.delete_pending_stillborn(row["id"])
         return False, (
-            f"**{pup_name}** needed Vitality Salve on the sunrise they were born; "
+            f"**{pup_name}** needed vitality salve on the sunrise they were born; "
             "the window has passed."
         )
 
     item = db.get_item_by_key("vitality_salve")
     if not item or db.get_inventory_quantity(discord_id, item["id"]) < 1:
         return False, (
-            "You need **Vitality Salve** from `/bones action:shop` in your inventory. "
-            f"Use **`/pupcare action:save name:{pup_name}`**."
+            "you need **vitality salve** from `/bones action:shop` in your inventory. "
+            f"use **`/pupcare action:save name:{pup_name}`**."
         )
 
     if db.wolf_name_taken(pup_name) or db.pending_pup_name_taken(pup_name):
         db.delete_pending_stillborn(row["id"])
         return False, (
-            f"The name **{pup_name}** is already taken or reserved for neonatal care."
+            f"the name **{pup_name}** is already taken or reserved for neonatal care."
         )
 
     stats = json.loads(row["stats_json"])
@@ -87,8 +87,8 @@ def try_save_stillborn_pup(discord_id: int, pup_name: str, *, current_day: int) 
     mut = ""
     if genetics:
         names = ", ".join(GENETIC_CONDITIONS[k]["name"] for k in genetics if k in GENETIC_CONDITIONS)
-        mut = f" They carry **{names}**; alive, but changed."
+        mut = f" they carry **{names}**; alive, but changed."
     return True, (
-        f"**Vitality Salve** steadies **{row['pup_name']}**'s breath.{mut} "
-        "Use `/switchwolf` to play them."
+        f"**vitality salve** steadies **{row['pup_name']}**'s breath.{mut} "
+        "use `/switchwolf` to play them."
     )

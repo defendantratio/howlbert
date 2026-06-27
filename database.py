@@ -190,6 +190,9 @@ def init_db():
         _seed_quests(conn)
     _run_journal_backfill_once()
     _run_canonical_bonds_once()
+    _run_canonical_mates_once()
+    _run_pronoun_backfill_once()
+    _run_herb_stacks_to_inventory_once()
 
 
 def _run_canonical_bonds_once() -> None:
@@ -214,6 +217,123 @@ def _run_canonical_bonds_once() -> None:
         conn.execute(
             "INSERT INTO app_meta (key, value) VALUES ('canonical_bonds_v2', ?)",
             (str(added),),
+        )
+
+
+def _run_canonical_mates_once() -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'canonical_mates_v1'"
+        ).fetchone()
+        if row:
+            return
+    from engine.canonical_bonds import backfill_canonical_mates
+
+    linked = backfill_canonical_mates()
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('canonical_mates_v1', ?)",
+            (str(linked),),
+        )
+
+
+def _run_pronoun_backfill_once() -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'pronoun_backfill_v3'"
+        ).fetchone()
+        if row:
+            return
+        users = conn.execute(
+            "SELECT id, wolf_name, birth_sex, pronouns FROM users"
+        ).fetchall()
+    from engine.pronouns import canonical_pronouns_for_name, resolve_wolf_pronouns
+
+    updated = 0
+    for user in users:
+        canon = canonical_pronouns_for_name(user["wolf_name"])
+        if canon:
+            resolved = canon
+        else:
+            resolved = resolve_wolf_pronouns(
+                user["wolf_name"],
+                birth_sex=user["birth_sex"],
+                explicit=user["pronouns"],
+            )
+        if not resolved:
+            continue
+        current = (user["pronouns"] or "").strip() if user["pronouns"] else ""
+        if current == resolved:
+            continue
+        if not canon and current:
+            continue
+        with get_db() as conn:
+            conn.execute("UPDATE users SET pronouns = ? WHERE id = ?", (resolved, user["id"]))
+        updated += 1
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('pronoun_backfill_v3', ?)",
+            (str(updated),),
+        )
+
+
+def _run_herb_stacks_to_inventory_once() -> None:
+    """Move personal forage herb stacks into inventory; herb bag removed."""
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'herb_stacks_to_inventory_v1'"
+        ).fetchone()
+        if row:
+            return
+        stacks = conn.execute("SELECT * FROM herb_stacks").fetchall()
+    if not stacks:
+        with get_db() as conn:
+            conn.execute(
+                "INSERT INTO app_meta (key, value) VALUES ('herb_stacks_to_inventory_v1', '0')"
+            )
+        return
+    from herbs import herb_inventory_key
+
+    moved = 0
+    for stack in stacks:
+        user = get_user_by_id(int(stack["wolf_id"]))
+        if not user:
+            continue
+        item_key = herb_inventory_key(stack["herb_key"])
+        item = get_item_by_key(item_key)
+        if not item:
+            continue
+        grant_item(user["discord_id"], item["id"], quantity=1)
+        moved += 1
+    with get_db() as conn:
+        conn.execute("DELETE FROM herb_stacks")
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('herb_stacks_to_inventory_v1', ?)",
+            (str(moved),),
         )
 
 
@@ -500,6 +620,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
             wolf_name TEXT NOT NULL,
             discord_id INTEGER NOT NULL,
             joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+            hunt_role TEXT NOT NULL DEFAULT 'flank',
+            rp_said INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (hunt_id, wolf_id),
             FOREIGN KEY (hunt_id) REFERENCES collab_hunts(id)
         )
@@ -511,6 +633,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     member_cols = {row[1] for row in conn.execute("PRAGMA table_info(collab_hunt_members)")}
     if member_cols and "hunt_role" not in member_cols:
         conn.execute("ALTER TABLE collab_hunt_members ADD COLUMN hunt_role TEXT NOT NULL DEFAULT 'flank'")
+    if member_cols and "rp_said" not in member_cols:
+        conn.execute("ALTER TABLE collab_hunt_members ADD COLUMN rp_said INTEGER NOT NULL DEFAULT 0")
 
     conn.execute(
         """
@@ -791,6 +915,55 @@ def _migrate(conn: sqlite3.Connection) -> None:
     )
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS pack_raid_alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            victim_pack_id INTEGER NOT NULL,
+            suspect_pack_id INTEGER NOT NULL,
+            stolen_amount INTEGER NOT NULL DEFAULT 0,
+            recovered_amount INTEGER NOT NULL DEFAULT 0,
+            raid_day INTEGER NOT NULL,
+            expires_day INTEGER NOT NULL,
+            caught INTEGER NOT NULL DEFAULT 0,
+            last_audit_day INTEGER NOT NULL DEFAULT 0,
+            accused_pack_id INTEGER,
+            accuse_day INTEGER NOT NULL DEFAULT 0
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_pack_raid_alerts_victim
+        ON pack_raid_alerts (guild_id, victim_pack_id, expires_day)
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS bond_relation_cooldowns (
+            guild_id INTEGER NOT NULL,
+            pack_a_id INTEGER NOT NULL,
+            pack_b_id INTEGER NOT NULL,
+            last_penalty_day INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, pack_a_id, pack_b_id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cross_pack_scandals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            wolf_a_id INTEGER NOT NULL,
+            wolf_b_id INTEGER NOT NULL,
+            pack_a_id INTEGER NOT NULL,
+            pack_b_id INTEGER NOT NULL,
+            caught_day INTEGER NOT NULL,
+            UNIQUE (guild_id, wolf_a_id, wolf_b_id)
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS scent_marks (
             guild_id INTEGER NOT NULL,
             territory_key TEXT NOT NULL,
@@ -833,6 +1006,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_cat_receive_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_wolf_receive_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_wolf_receive_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_cat_food_trade_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_cat_food_trade_day INTEGER NOT NULL DEFAULT 0"
@@ -844,6 +1021,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "last_soot_reward_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_soot_reward_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_rivershroud_reward_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_rivershroud_reward_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_finnpelt_reward_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_finnpelt_reward_day INTEGER NOT NULL DEFAULT 0"
         )
     if "last_plot_witness_day" not in user_cols_late:
         conn.execute(
@@ -1374,6 +1559,36 @@ def _migrate(conn: sqlite3.Connection) -> None:
             clan_name TEXT NOT NULL COLLATE NOCASE,
             last_fail_day INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (pack_id, clan_name)
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_wolf_treaties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            pack_id INTEGER NOT NULL,
+            other_pack_id INTEGER NOT NULL,
+            pact_type TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            terms_note TEXT NOT NULL DEFAULT '',
+            forged_day INTEGER NOT NULL DEFAULT 0,
+            expires_day INTEGER NOT NULL DEFAULT 0,
+            forged_by_discord_id INTEGER NOT NULL DEFAULT 0,
+            broken_day INTEGER,
+            break_reason TEXT NOT NULL DEFAULT '',
+            UNIQUE(pack_id, other_pack_id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_wolf_pact_offers (
+            pack_id INTEGER NOT NULL,
+            other_pack_id INTEGER NOT NULL,
+            last_fail_day INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (pack_id, other_pack_id)
         )
         """
     )
@@ -3523,7 +3738,16 @@ def register_user(
     from engine.canonical_bonds import apply_canonical_bonds_for_wolf
 
     apply_canonical_bonds_for_wolf(wolf_id, refresh_notes=True)
+    _apply_canonical_pronouns(discord_id, wolf_id, wolf_name.strip(), birth_sex=birth_sex)
     return wolf_id
+
+
+def _apply_canonical_pronouns(discord_id: int, wolf_id: int, wolf_name: str, *, birth_sex: str | None = None) -> None:
+    from engine.pronouns import resolve_wolf_pronouns
+
+    pronouns = resolve_wolf_pronouns(wolf_name, birth_sex=birth_sex)
+    if pronouns:
+        set_wolf_identity(wolf_id, pronouns=pronouns)
 
 
 def _apply_canonical_character_lore(discord_id: int, wolf_id: int, wolf_name: str) -> None:
@@ -4840,6 +5064,16 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     from engine.rollover_news import collect_den_news
 
     needs_crisis["den_news"] = collect_den_news(new_day, age_milestones)
+    from engine.den_rhythm import apply_bond_relation_pressure, apply_den_rhythm_unity
+    from engine.pack_raid_ecology import collect_raid_den_news
+
+    expire_pack_raid_alerts_before(guild_id, new_day)
+    rhythm_notes = apply_den_rhythm_unity(guild_id, new_day - 1)
+    bond_notes = apply_bond_relation_pressure(guild_id, new_day)
+    raid_news = collect_raid_den_news(guild_id, new_day - 1)
+    if rhythm_notes or bond_notes or raid_news:
+        pack_events = needs_crisis.setdefault("den_news", {}).setdefault("pack_events", [])
+        pack_events.extend(rhythm_notes + bond_notes + raid_news)
     needs_crisis["condition_notes"] = condition_notes
     from engine.forager_perk import apply_forager_daily_herbs_on_rollover
 
@@ -4847,6 +5081,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         needs_crisis["forager_herbs"] = apply_forager_daily_herbs_on_rollover(conn, new_day, guild_id=guild_id)
     expire_pending_stillborn_before_day(new_day)
     expired_pacts = expire_cat_pacts_for_day(guild_id, new_day)
+    expired_wolf_treaties = expire_wolf_treaties_for_day(guild_id, new_day)
     with get_db() as conn:
         from engine.sacred_visits import apply_sacred_visit_reminders
 
@@ -4899,6 +5134,8 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         )
     if expired_pacts:
         needs_crisis.setdefault("expired_cat_pacts", expired_pacts)
+    if expired_wolf_treaties:
+        needs_crisis.setdefault("expired_wolf_treaties", expired_wolf_treaties)
     if old_season != new_season:
         from engine.cat_gathering import apply_gathering_on_season_change
 
@@ -6512,6 +6749,16 @@ def adjust_wolf_standing_by_id(wolf_id: int, delta: int, *, triggered_day: int =
             )
             if rite:
                 return "broken_rite"
+            pack = get_pack(user["pack_id"]) if user["pack_id"] else None
+            pack_name = pack["name"] if pack else "the pack"
+            from engine.wolf_journal import log_cast_out
+
+            log_cast_out(
+                wolf_id,
+                user["wolf_name"],
+                pack_name,
+                day=triggered_day or None,
+            )
             _expel_wolf_from_pack_conn(conn, wolf_id, reset_standing=True)
             return "kicked"
     return ""
@@ -6754,6 +7001,261 @@ def list_pack_relations(guild_id: int, pack_id: int) -> list[sqlite3.Row]:
             """,
             (pack_id, pack_id, guild_id, pack_id, pack_id),
         ).fetchall()
+
+
+def record_pack_raid_alert(
+    guild_id: int,
+    *,
+    victim_pack_id: int,
+    suspect_pack_id: int,
+    stolen_amount: int,
+    raid_day: int,
+    expires_day: int,
+    caught: bool = False,
+) -> int:
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO pack_raid_alerts (
+                guild_id, victim_pack_id, suspect_pack_id, stolen_amount,
+                raid_day, expires_day, caught
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                guild_id,
+                victim_pack_id,
+                suspect_pack_id,
+                stolen_amount,
+                raid_day,
+                expires_day,
+                1 if caught else 0,
+            ),
+        )
+        return int(cur.lastrowid)
+
+
+def get_active_raid_alert_for_victim(guild_id: int, victim_pack_id: int, day: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pack_raid_alerts
+            WHERE guild_id = ? AND victim_pack_id = ? AND expires_day >= ?
+            ORDER BY raid_day DESC, id DESC
+            LIMIT 1
+            """,
+            (guild_id, victim_pack_id, day),
+        ).fetchone()
+
+
+def raid_watch_active(guild_id: int, pack_a: int, pack_b: int, day: int) -> bool:
+    if pack_a == pack_b:
+        return False
+    a, b = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT 1 FROM pack_raid_alerts
+            WHERE guild_id = ? AND expires_day >= ?
+              AND ((victim_pack_id = ? AND suspect_pack_id = ?)
+                OR (victim_pack_id = ? AND suspect_pack_id = ?))
+            LIMIT 1
+            """,
+            (guild_id, day, a, b, b, a),
+        ).fetchone()
+        return row is not None
+
+
+def recover_raid_alert_bones(alert_id: int, amount: int, victim_pack_id: int) -> int:
+    if amount <= 0:
+        return 0
+    with get_db() as conn:
+        alert = conn.execute(
+            "SELECT * FROM pack_raid_alerts WHERE id = ?", (alert_id,)
+        ).fetchone()
+        if not alert or int(alert["victim_pack_id"]) != victim_pack_id:
+            return 0
+        remaining = int(alert["stolen_amount"]) - int(alert["recovered_amount"])
+        take = min(amount, max(0, remaining))
+        if take <= 0:
+            return 0
+        conn.execute(
+            """
+            UPDATE pack_raid_alerts
+            SET recovered_amount = recovered_amount + ?
+            WHERE id = ?
+            """,
+            (take, alert_id),
+        )
+        conn.execute(
+            "UPDATE packs SET treasury = treasury + ? WHERE id = ?",
+            (take, victim_pack_id),
+        )
+        return take
+
+
+def clawback_raid_from_pack_treasury(
+    suspect_pack_id: int, amount: int, victim_pack_id: int, alert_id: int
+) -> int:
+    if amount <= 0:
+        return 0
+    with get_db() as conn:
+        pack = conn.execute(
+            "SELECT treasury FROM packs WHERE id = ?", (suspect_pack_id,)
+        ).fetchone()
+        if not pack:
+            return 0
+        take = min(amount, int(pack["treasury"]))
+        if take <= 0:
+            return 0
+        conn.execute(
+            "UPDATE packs SET treasury = treasury - ? WHERE id = ?",
+            (take, suspect_pack_id),
+        )
+        conn.execute(
+            "UPDATE packs SET treasury = treasury + ? WHERE id = ?",
+            (take, victim_pack_id),
+        )
+        conn.execute(
+            """
+            UPDATE pack_raid_alerts
+            SET recovered_amount = recovered_amount + ?
+            WHERE id = ?
+            """,
+            (take, alert_id),
+        )
+        return take
+
+
+def set_raid_alert_audit_day(alert_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE pack_raid_alerts SET last_audit_day = ? WHERE id = ?",
+            (day, alert_id),
+        )
+
+
+def set_raid_alert_accused(alert_id: int, accused_pack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE pack_raid_alerts
+            SET accused_pack_id = ?, accuse_day = ?
+            WHERE id = ?
+            """,
+            (accused_pack_id, day, alert_id),
+        )
+
+
+def expire_pack_raid_alerts_before(guild_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM pack_raid_alerts WHERE guild_id = ? AND expires_day < ?",
+            (guild_id, day),
+        )
+
+
+def get_bond_relation_cooldown(guild_id: int, pack_a: int, pack_b: int) -> int:
+    a, b = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT last_penalty_day FROM bond_relation_cooldowns
+            WHERE guild_id = ? AND pack_a_id = ? AND pack_b_id = ?
+            """,
+            (guild_id, a, b),
+        ).fetchone()
+        return int(row["last_penalty_day"]) if row else 0
+
+
+def set_bond_relation_cooldown(guild_id: int, pack_a: int, pack_b: int, day: int) -> None:
+    a, b = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO bond_relation_cooldowns (guild_id, pack_a_id, pack_b_id, last_penalty_day)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(guild_id, pack_a_id, pack_b_id)
+            DO UPDATE SET last_penalty_day = excluded.last_penalty_day
+            """,
+            (guild_id, a, b, day),
+        )
+
+
+def record_cross_pack_scandal(
+    guild_id: int,
+    wolf_a_id: int,
+    wolf_b_id: int,
+    *,
+    caught_day: int,
+) -> None:
+    a = get_user_by_id(wolf_a_id)
+    b = get_user_by_id(wolf_b_id)
+    if not a or not b:
+        return
+    pack_a = a["pack_id"] if "pack_id" in a.keys() else None
+    pack_b = b["pack_id"] if "pack_id" in b.keys() else None
+    if not pack_a or not pack_b or pack_a == pack_b:
+        return
+    low_w, high_w = (wolf_a_id, wolf_b_id) if wolf_a_id < wolf_b_id else (wolf_b_id, wolf_a_id)
+    pa, pb = _normalize_pack_pair(pack_a, pack_b)
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO cross_pack_scandals (
+                guild_id, wolf_a_id, wolf_b_id, pack_a_id, pack_b_id, caught_day
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(guild_id, wolf_a_id, wolf_b_id)
+            DO UPDATE SET caught_day = excluded.caught_day,
+                          pack_a_id = excluded.pack_a_id,
+                          pack_b_id = excluded.pack_b_id
+            """,
+            (guild_id, low_w, high_w, pa, pb, caught_day),
+        )
+
+
+def list_cross_pack_scandals(guild_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM cross_pack_scandals WHERE guild_id = ?",
+            (guild_id,),
+        ).fetchall()
+
+
+def clear_cross_pack_scandal(scandal_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("DELETE FROM cross_pack_scandals WHERE id = ?", (scandal_id,))
+
+
+def mark_collab_hunt_rp_said(wolf_id: int, channel_id: int) -> bool:
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT m.hunt_id FROM collab_hunt_members m
+            JOIN collab_hunts h ON h.id = m.hunt_id
+            WHERE m.wolf_id = ? AND h.channel_id = ? AND h.status IN ('open', 'encounter')
+            LIMIT 1
+            """,
+            (wolf_id, channel_id),
+        ).fetchone()
+        if not row:
+            return False
+        conn.execute(
+            """
+            UPDATE collab_hunt_members SET rp_said = 1
+            WHERE hunt_id = ? AND wolf_id = ?
+            """,
+            (row["hunt_id"], wolf_id),
+        )
+        return True
+
+
+def collab_hunt_member_rp_said(hunt_id: int, wolf_id: int) -> bool:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT rp_said FROM collab_hunt_members WHERE hunt_id = ? AND wolf_id = ?",
+            (hunt_id, wolf_id),
+        ).fetchone()
+        return bool(row and int(row["rp_said"]))
 
 
 def upsert_scent_mark(
@@ -7015,6 +7517,160 @@ def mark_cat_pact_gift_day(pack_id: int, day: int) -> None:
         conn.execute(
             "UPDATE packs SET last_cat_pact_gift_day = ? WHERE id = ?",
             (day, pack_id),
+        )
+
+
+def get_wolf_treaty(pack_id: int, other_pack_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pack_wolf_treaties
+            WHERE pack_id = ? AND other_pack_id = ?
+            """,
+            (pack_id, other_pack_id),
+        ).fetchone()
+
+
+def list_active_wolf_treaties(guild_id: int, pack_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT wt.*, p.name AS other_pack_name, p.key AS other_pack_key
+            FROM pack_wolf_treaties wt
+            JOIN packs p ON p.id = wt.other_pack_id
+            WHERE wt.guild_id = ? AND wt.pack_id = ? AND wt.status = 'active'
+            ORDER BY wt.expires_day ASC
+            """,
+            (guild_id, pack_id),
+        ).fetchall()
+
+
+def count_active_wolf_treaties(pack_id: int) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT COUNT(*) AS c FROM pack_wolf_treaties
+            WHERE pack_id = ? AND status = 'active'
+            """,
+            (pack_id,),
+        ).fetchone()
+        return int(row["c"]) if row else 0
+
+
+def upsert_wolf_treaty(
+    guild_id: int,
+    pack_id: int,
+    other_pack_id: int,
+    *,
+    pact_type: str,
+    terms_note: str,
+    forged_day: int,
+    expires_day: int,
+    forged_by_discord_id: int,
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO pack_wolf_treaties (
+                guild_id, pack_id, other_pack_id, pact_type, status, terms_note,
+                forged_day, expires_day, forged_by_discord_id, broken_day, break_reason
+            ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?, NULL, '')
+            ON CONFLICT(pack_id, other_pack_id) DO UPDATE SET
+                pact_type = excluded.pact_type,
+                status = 'active',
+                terms_note = excluded.terms_note,
+                forged_day = excluded.forged_day,
+                expires_day = excluded.expires_day,
+                forged_by_discord_id = excluded.forged_by_discord_id,
+                broken_day = NULL,
+                break_reason = ''
+            """,
+            (
+                guild_id,
+                pack_id,
+                other_pack_id,
+                pact_type,
+                terms_note or "",
+                forged_day,
+                expires_day,
+                forged_by_discord_id,
+            ),
+        )
+
+
+def renew_wolf_treaty(
+    pack_id: int, other_pack_id: int, *, expires_day: int, day: int
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE pack_wolf_treaties
+            SET expires_day = ?, forged_day = ?
+            WHERE pack_id = ? AND other_pack_id = ? AND status = 'active'
+            """,
+            (expires_day, day, pack_id, other_pack_id),
+        )
+
+
+def break_wolf_treaty(
+    pack_id: int, other_pack_id: int, *, day: int, reason: str
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE pack_wolf_treaties
+            SET status = 'broken', broken_day = ?, break_reason = ?
+            WHERE pack_id = ? AND other_pack_id = ?
+            """,
+            (day, reason or "Treaty withdrawn.", pack_id, other_pack_id),
+        )
+
+
+def expire_wolf_treaties_for_day(guild_id: int, day: int) -> list[str]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT wt.other_pack_id, p.name AS other_pack_name
+            FROM pack_wolf_treaties wt
+            JOIN packs p ON p.id = wt.other_pack_id
+            WHERE wt.guild_id = ? AND wt.status = 'active' AND wt.expires_day < ?
+            """,
+            (guild_id, day),
+        ).fetchall()
+        if not rows:
+            return []
+        conn.execute(
+            """
+            UPDATE pack_wolf_treaties
+            SET status = 'expired', break_reason = 'Treaty term ended.'
+            WHERE guild_id = ? AND status = 'active' AND expires_day < ?
+            """,
+            (guild_id, day),
+        )
+    return [row["other_pack_name"] for row in rows]
+
+
+def get_wolf_pact_fail_day(pack_id: int, other_pack_id: int) -> int | None:
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT last_fail_day FROM pack_wolf_pact_offers
+            WHERE pack_id = ? AND other_pack_id = ?
+            """,
+            (pack_id, other_pack_id),
+        ).fetchone()
+        return int(row["last_fail_day"]) if row else None
+
+
+def set_wolf_pact_fail_day(pack_id: int, other_pack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO pack_wolf_pact_offers (pack_id, other_pack_id, last_fail_day)
+            VALUES (?, ?, ?)
+            ON CONFLICT(pack_id, other_pack_id) DO UPDATE SET last_fail_day = excluded.last_fail_day
+            """,
+            (pack_id, other_pack_id, day),
         )
 
 
@@ -9591,7 +10247,7 @@ def count_prey_pile_responses(pile_id: int) -> int:
         return row["c"] if row else 0
 
 
-# --- Prey hoard (Wolvden-style carcasses) ---
+# --- Food hoard (Wolvden-style carcasses) ---
 
 
 def add_prey_stack(
@@ -9713,7 +10369,7 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
                         "wolf_name": stack["wolf_name"],
                         "discord_id": stack["discord_id"],
                         "line": (
-                            f"**{meta['name']}** is **{terms['rotting']}** (`/prey` — {tail})."
+                            f"**{meta['name']}** is **{terms['rotting']}** (`/food` — {tail})."
                         ),
                     }
                 )

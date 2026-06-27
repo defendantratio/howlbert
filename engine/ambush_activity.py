@@ -116,7 +116,7 @@ def finalize_ambush_activity(encounter_id: int, *, won: bool | None = None) -> N
                     collab_patrol_id,
                     "cancelled",
                     result_text=(
-                        f"The pack {label} broke off; ambush unresolved. "
+                        f"the pack {label} broke off; ambush unresolved. "
                         f"{slot.capitalize()} slots were not spent."
                     ),
                 )
@@ -154,7 +154,7 @@ def _ambush_fatigue_note(user, activity: str, day: int) -> str | None:
 
 
 def ambush_victory_embed(encounter_id: int):
-    """Embed when the hunter downs an ambush NPC."""
+    """embed when the hunter downs an ambush npc."""
     enc = db.get_encounter(encounter_id)
     activity = _enc_activity(enc)
     collab_hunt_id = int(enc["collab_hunt_id"]) if enc and "collab_hunt_id" in enc.keys() and enc["collab_hunt_id"] else 0
@@ -173,7 +173,7 @@ def ambush_victory_embed(encounter_id: int):
 
         embed = complete_collab_hunt_ambush(collab_hunt_id, encounter_id)
         if embed:
-            embed.set_footer(text="Pack hunt complete; each wolf spent one hunt this sunrise.")
+            embed.set_footer(text="pack hunt complete; each wolf spent one hunt this sunrise.")
         return embed
 
     if collab_patrol_id and _ambush_won(encounter_id) and not _is_finalized(enc):
@@ -189,7 +189,7 @@ def ambush_victory_embed(encounter_id: int):
         if embed:
             slot = "trail" if trail else "survey"
             embed.set_footer(
-                text=f"Pack {'trail' if trail else 'patrol'} complete; each scout spent their {slot} this sunrise."
+                text=f"pack {'trail' if trail else 'patrol'} complete; each scout spent their {slot} this sunrise."
             )
         return embed
 
@@ -211,9 +211,9 @@ def ambush_victory_embed(encounter_id: int):
     fatigue = _ambush_fatigue_note(user, activity, world["day_number"])
 
     if activity == "hunt":
-        title = "Threat Driven Off"
+        title = "threat driven off"
         body = (
-            "You survive the ambush and claim a small trove from what the attacker left behind.\n"
+            "you survive the ambush and claim a small trove from what the attacker left behind.\n"
             f"**{format_bones(net, signed=True)}**"
         )
         if tax > 0:
@@ -224,16 +224,16 @@ def ambush_victory_embed(encounter_id: int):
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(user):
-            footer += " · Nursing dam: eat extra from `/prey`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
     else:
-        title = "Ambush Survived"
+        title = "ambush survived"
         body = (
-            "You drive off the attacker and catch your breath.\n"
+            "you drive off the attacker and catch your breath.\n"
             f"**{format_bones(net, signed=True)}** · your explore for this sunrise is done."
         )
         if tax > 0:
-            body += f" Pack tax: **{format_bones(tax)}**."
-        footer = "Scouts may still range out again today."
+            body += f" pack tax: **{format_bones(tax)}**."
+        footer = "scouts may still range out again today."
 
     embed = howlbert_embed(title, body, color=SUCCESS_COLOR)
     from engine.activity_exhaustion import append_fatigue_to_footer

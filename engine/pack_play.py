@@ -26,13 +26,13 @@ def run_playall(
     if int(user["last_playall_day"]) >= day:
         return (
             False,
-            "You already rallied the den to play this sunrise.\n\n"
-            "_Resets next sunrise · `/world action:cooldowns`_",
+            "you already rallied the den to play this sunrise.\n\n"
+            "_resets next sunrise · `/world action:cooldowns`_",
         )
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
-        return False, "No wolves in the den."
+        return False, "no wolves in the den."
 
     from_pack = False
     stacks = [s for s in db.get_amusement_stacks(user["id"]) if int(s["uses_left"]) > 0]
@@ -45,7 +45,7 @@ def run_playall(
         if not pack_stacks:
             return (
                 False,
-                "You need a toy (`/playpen action:toys`) or one in the **den toy store** "
+                "you need a toy (`/playpen action:toys`) or one in the **den toy store** "
                 "(`/playpen action:toystore mode:depositall`).",
             )
         stack = pack_stacks[0]
@@ -58,7 +58,7 @@ def run_playall(
             db.remove_pack_amusement_stack(stack["id"])
         else:
             db.remove_amusement_stack(stack["id"])
-        toy_note = f"The den's **{meta['name']}** falls apart leading the romp."
+        toy_note = f"the den's **{meta['name']}** falls apart leading the romp."
     else:
         if from_pack:
             db.update_pack_amusement_stack_uses(stack["id"], uses_left)
@@ -84,7 +84,7 @@ def run_playall(
     if len(lines) > 15:
         summary += f"\n_…and {len(lines) - 15} more._"
     msg = (
-        f"Den romp! Every packmate gains **+{PLAYALL_MOOD_GAIN} mood**.\n"
+        f"den romp! every packmate gains **+{PLAYALL_MOOD_GAIN} mood**.\n"
         f"{summary}\n\n{toy_note}"
     )
     if filth_lines:

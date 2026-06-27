@@ -48,9 +48,9 @@ from engine.apprentice_roles import parent_role
 from engine.pack_leadership import can_forge_cat_pact, wolf_role_key
 
 PACT_TYPE_LABELS = {
-    "truce": "Border Truce",
-    "alliance": "Clan Alliance",
-    "hunting_rights": "Hunting Rights",
+    "truce": "border truce",
+    "alliance": "clan alliance",
+    "hunting_rights": "hunting rights",
 }
 
 PACT_SPECS = {
@@ -110,7 +110,7 @@ def resolve_active_cat_pact(
 
 
 def pact_border_chance_multiplier(guild_id: int, pack_id: int | None) -> float:
-    """Lower = fewer /sniff border cat fights."""
+    """lower = fewer /sniff border cat fights."""
     if not pack_id:
         return 1.0
     pacts = db.list_active_cat_pacts(guild_id, pack_id)
@@ -182,27 +182,34 @@ def format_pact_line(pact, *, current_day: int | None = None) -> str:
 
 
 def format_pacts_body(guild_id: int, pack_id: int, *, day: int) -> str:
+    from engine.wolf_pack_pacts import format_wolf_treaties_section
+
     pacts = db.list_active_cat_pacts(guild_id, pack_id)
-    if not pacts:
+    wolf_section = format_wolf_treaties_section(guild_id, pack_id, day=day)
+    if not pacts and not wolf_section:
         return (
-            "No cat pacts on the scent-line.\n\n"
-            f"**`/pack pact action:forge`**; Alpha or **Diplomat** negotiates with "
-            f"{format_four_clans()}.\n"
-            "**`/pack pact action:receive`**; collect border gifts from a **Clan patrol** "
-            "(trust **35+**, once per wolf per sunrise).\n"
-            "**`/pack pact action:trade`**; barter duplicate hoard items for Clan prey, herbs, and toys.\n"
-            "**`/pack pact action:tradefood`**; offer a carcass or forage stack; cats prize meat, "
-            "but take fruit and berries for a token (obligate carnivores).\n\n"
+            "no treaties on the scent-line.\n\n"
+            f"**`/pact action:forge`**; alpha or **diplomat** negotiates with "
+            f"{format_four_clans()} **or another great wolf pack** (greyspire, mistmoor, "
+            "thistlehide, silverrush).\n"
+            "**`/pact action:receive`**; collect border gifts from a **clan patrol** or allied wolf den "
+            "(trust **35+** / standing **7+**, once per wolf per sunrise).\n"
+            "**`/pact action:trade`**; barter duplicate hoard items for border goods.\n"
+            "**`/pact action:tradefood`**; offer a carcass or forage stack at the border.\n\n"
             f"{SETTING_TAGLINE}"
         )
     lines = []
-    for pact in pacts:
-        row = dict(pact)
-        row["current_day"] = day
-        lines.append(format_pact_line(row))
+    if pacts:
+        lines.append("**cat clan treaties**")
+        for pact in pacts:
+            row = dict(pact)
+            row["current_day"] = day
+            lines.append(format_pact_line(row))
+    if wolf_section:
+        lines.append(wolf_section)
     lines.append(
-        "\n_Breaking a pact or blood on an allied **warrior patrol** shatters trust. "
-        "Rogues, loners, and rival-Clan cats do not count as violations._\n\n"
+        "\n_breaking a pact or blood on an allied **warrior patrol** shatters trust. "
+        "rogues, loners, and rival-clan cats do not count as violations._\n\n"
         f"{SETTING_TAGLINE}"
     )
     return "\n".join(lines)
@@ -241,24 +248,24 @@ def forge_cat_pact(
     day: int,
 ) -> tuple[bool, str]:
     if not can_forge_cat_pact(user, pack):
-        return False, "Only the **Alpha** or a **Diplomat** can negotiate with forest cats."
+        return False, "only the **alpha** or a **diplomat** can negotiate with forest cats."
 
     clan, err = validate_clan_name(clan_name)
     if err:
         return False, err
 
     if pact_type not in PACT_SPECS:
-        return False, "Pick **truce**, **alliance**, or **hunting_rights**."
+        return False, "pick **truce**, **alliance**, or **hunting_rights**."
 
     if db.count_active_cat_pacts(pack["id"]) >= CAT_PACT_MAX_ACTIVE:
         return False, (
-            f"This den already holds **{CAT_PACT_MAX_ACTIVE}** active cat treaties. "
-            "Break or let one expire before forging another."
+            f"this den already holds **{CAT_PACT_MAX_ACTIVE}** active cat treaties. "
+            "break or let one expire before forging another."
         )
 
     active_pact, _ = resolve_active_cat_pact(guild_id, pack["id"], clan)
     if active_pact:
-        return False, f"An active pact with **{clan}** already stands. Renew or break it first."
+        return False, f"an active pact with **{clan}** already stands. renew or break it first."
 
     existing = db.get_cat_pact(pack["id"], clan)
     if existing and existing["status"] == "broken":
@@ -270,7 +277,7 @@ def forge_cat_pact(
 
     last_fail = db.get_pack_cat_pact_fail_day(pack["id"], clan)
     if last_fail and day < last_fail + CAT_PACT_FORGE_FAIL_COOLDOWN_DAYS:
-        return False, "The cats won't parley again so soon after a refused offer."
+        return False, "the cats won't parley again so soon after a refused offer."
 
     spec = PACT_SPECS[pact_type]
     treasury_cost = spec["treasury"]
@@ -278,7 +285,7 @@ def forge_cat_pact(
 
     if treasury_cost and not db.deduct_pack_treasury(pack["id"], treasury_cost):
         return False, (
-            f"Treasury needs **{treasury_cost}** bones for the tribute gift "
+            f"treasury needs **{treasury_cost}** bones for the tribute gift "
             f"({PACT_TYPE_LABELS[pact_type]})."
         )
 
@@ -286,7 +293,7 @@ def forge_cat_pact(
         if int(user["bones"]) < personal_cost:
             if treasury_cost:
                 db.add_pack_treasury(pack["id"], treasury_cost)
-            return False, f"You need **{personal_cost}** bones for the personal scent-gift."
+            return False, f"you need **{personal_cost}** bones for the personal scent-gift."
         db.add_bones(user["discord_id"], -personal_cost)
 
     dc = spec["dc"]
@@ -300,7 +307,7 @@ def forge_cat_pact(
     if not result["success"]:
         db.set_pack_cat_pact_fail_day(pack["id"], clan, day)
         tribute_note = (
-            f"The cats keep the **{treasury_cost + personal_cost}** bone tribute and leave.\n\n"
+            f"the cats keep the **{treasury_cost + personal_cost}** bone tribute and leave.\n\n"
             if (treasury_cost or personal_cost)
             else ""
         )
@@ -329,17 +336,17 @@ def forge_cat_pact(
         f"**{pack['name']}** and **{clan}** mark a **{PACT_TYPE_LABELS[pact_type]}** "
         f"on the border stones.\n"
         f"{forge_success_flavor(clan)}\n"
-        f"Tribute accepted · trust **{trust}** · holds until sunrise **{expires}**.\n\n"
+        f"tribute accepted · trust **{trust}** · holds until sunrise **{expires}**.\n\n"
         f"{format_roll_result(result)}"
     )
     if terms_note:
-        body += f"\n\n_Terms: {terms_note.strip()}_"
+        body += f"\n\n_terms: {terms_note.strip()}_"
     return True, body
 
 
 def renew_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tuple[bool, str]:
     if not can_forge_cat_pact(user, pack):
-        return False, "Only the **Alpha** or **Diplomat** can renew a cat treaty."
+        return False, "only the **alpha** or **diplomat** can renew a cat treaty."
 
     clan, err = validate_clan_name(clan_name)
     if err:
@@ -347,28 +354,28 @@ def renew_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tu
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     spec = PACT_SPECS.get(pact["pact_type"], PACT_SPECS["truce"])
     if int(pact["trust"]) < CAT_PACT_TRUST_LOW:
-        return False, "Trust is too low; the cats won't extend the treaty. Forge anew after it expires."
+        return False, "trust is too low; the cats won't extend the treaty. forge anew after it expires."
 
     half_tribute = max(10, spec["treasury"] // 2)
     if not db.deduct_pack_treasury(pack["id"], half_tribute):
-        return False, f"Renewal tribute: **{half_tribute}** bones from treasury."
+        return False, f"renewal tribute: **{half_tribute}** bones from treasury."
 
     dc = spec["dc"] - 2
     result = _negotiate_check(user, dc, game_day=day)
     if not result["success"]:
         db.add_pack_treasury(pack["id"], half_tribute)
-        return False, f"The delegation is turned away.\n\n{format_roll_result(result)}"
+        return False, f"the delegation is turned away.\n\n{format_roll_result(result)}"
 
     new_expires = day + spec["days"]
     new_trust = min(100, int(pact["trust"]) + 10)
     db.renew_cat_pact(pack["id"], stored_clan, expires_day=new_expires, trust=new_trust, day=day)
     return True, (
         f"**{stored_clan}** agrees to extend the **{PACT_TYPE_LABELS[pact['pact_type']]}**.\n"
-        f"Trust **{new_trust}** · new expiry sunrise **{new_expires}**.\n\n"
+        f"trust **{new_trust}** · new expiry sunrise **{new_expires}**.\n\n"
         f"{format_roll_result(result)}"
     )
 
@@ -383,7 +390,7 @@ def break_cat_pact(
     reason: str = "Den withdrew from the treaty.",
 ) -> tuple[bool, str]:
     if not can_forge_cat_pact(user, pack):
-        return False, "Only the **Alpha** or **Diplomat** can break a cat treaty."
+        return False, "only the **alpha** or **diplomat** can break a cat treaty."
 
     clan, err = validate_clan_name(clan_name)
     if err:
@@ -391,19 +398,19 @@ def break_cat_pact(
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     db.break_cat_pact(pack["id"], stored_clan, day=day, reason=reason)
     db.adjust_pack_unity(pack["id"], -2)
     return True, (
         f"**{pack['name']}** breaks the treaty with **{stored_clan}**.\n"
-        f"_{reason}_\nDen unity **−2**. Border patrols will remember."
+        f"_{reason}_\nden unity **−2**. border patrols will remember."
     )
 
 
 def gift_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tuple[bool, str]:
     if not can_forge_cat_pact(user, pack):
-        return False, "Only the **Alpha** or **Diplomat** can send tribute."
+        return False, "only the **alpha** or **diplomat** can send tribute."
 
     clan, err = validate_clan_name(clan_name)
     if err:
@@ -411,20 +418,20 @@ def gift_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tup
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     if db.cat_pact_gift_used_today(pack["id"], day):
-        return False, "Tribute was already sent this sunrise."
+        return False, "tribute was already sent this sunrise."
 
     if not db.deduct_pack_treasury(pack["id"], CAT_PACT_GIFT_TRIBUTE):
-        return False, f"Treasury needs **{CAT_PACT_GIFT_TRIBUTE}** bones for the gift."
+        return False, f"treasury needs **{CAT_PACT_GIFT_TRIBUTE}** bones for the gift."
 
     new_trust = min(100, int(pact["trust"]) + CAT_PACT_GIFT_TRUST)
     db.adjust_cat_pact_trust(pack["id"], stored_clan, CAT_PACT_GIFT_TRUST)
     db.mark_cat_pact_gift_day(pack["id"], day)
     return True, (
-        f"Prey bones and herbs left at the border for **{stored_clan}**.\n"
-        f"Trust **{int(pact['trust'])} → {new_trust}**."
+        f"prey bones and herbs left at the border for **{stored_clan}**.\n"
+        f"trust **{int(pact['trust'])} → {new_trust}**."
     )
 
 
@@ -442,14 +449,14 @@ def trade_duplicates_cat_pact(
         return False, err
 
     if not user["pack_id"]:
-        return False, "Join a Great Pack to trade at the cat border."
+        return False, "join a great pack to trade at the cat border."
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     if int(user["last_duplicate_trade_day"]) >= day:
-        return False, "You already traded duplicates this sunrise."
+        return False, "you already traded duplicates this sunrise."
 
     from engine.duplicate_trade import (
         collect_duplicates,
@@ -461,7 +468,7 @@ def trade_duplicates_cat_pact(
     bundle = collect_duplicates(user["id"])
     if bundle.is_empty():
         return False, (
-            "No duplicates in your hoard.\n\n"
+            "no duplicates in your hoard.\n\n"
             f"_{format_duplicate_summary(bundle)}_"
         )
 
@@ -471,7 +478,7 @@ def trade_duplicates_cat_pact(
 
     trust_gain = duplicate_trust_gain(bundle)
     if trust_gain <= 0:
-        return False, "Nothing to trade."
+        return False, "nothing to trade."
 
     db.adjust_cat_pact_trust(pack["id"], stored_clan, trust_gain)
     db.update_user(user["discord_id"], last_duplicate_trade_day=day, wolf_id=user["id"])
@@ -488,9 +495,9 @@ def trade_duplicates_cat_pact(
 
     return True, (
         f"{barter_border_flavor(stored_clan)}\n"
-        f"Trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
-        f"**You gave up:**\n{detail}\n\n"
-        f"**From the Clan:**\n{loot_block}"
+        f"trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
+        f"**you gave up:**\n{detail}\n\n"
+        f"**from the clan:**\n{loot_block}"
     )
 
 
@@ -523,22 +530,22 @@ def trade_food_cat_pact(
         return False, err
 
     if not user["pack_id"]:
-        return False, "Join a Great Pack to trade at the cat border."
+        return False, "join a great pack to trade at the cat border."
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     last_food_trade = int(user["last_cat_food_trade_day"]) if "last_cat_food_trade_day" in user.keys() else 0
     if last_food_trade >= day:
-        return False, "You already traded food at the border this sunrise."
+        return False, "you already traded food at the border this sunrise."
 
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't carry that carcass or forage (`/prey` for stack IDs)."
+        return False, "you don't carry that carcass or forage (`/food` for stack ids)."
     uses_left = int(stack["uses_left"])
     if uses_left <= 0:
-        return False, "There's nothing left of that to trade."
+        return False, "there's nothing left of that to trade."
 
     meta = prey_meta(stack["prey_key"])
     forage = is_forage_food(stack["prey_key"])
@@ -550,7 +557,7 @@ def trade_food_cat_pact(
         )
         loot_count = 1 if uses_left >= 2 else 0
         flavor = (
-            f"The Clan cats sniff the **{meta['name']}** and wrinkle their noses; "
+            f"the clan cats sniff the **{meta['name']}** and wrinkle their noses; "
             "prey-fed warriors have little taste for plants, but a queen takes it "
             "for the nursery nests."
         )
@@ -562,8 +569,8 @@ def trade_food_cat_pact(
         )
         loot_count = max(1, min(CAT_PACT_FOOD_LOOT_MAX, bone_value // 12))
         flavor = (
-            f"Fresh meat at the border; the Clan accepts the **{meta['name']}** "
-            "eagerly. Carnivores know good prey when they smell it."
+            f"fresh meat at the border; the clan accepts the **{meta['name']}** "
+            "eagerly. carnivores know good prey when they smell it."
         )
 
     db.remove_prey_stack(stack_id)
@@ -579,9 +586,9 @@ def trade_food_cat_pact(
 
     return True, (
         f"{flavor}\n"
-        f"Trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
-        f"**You gave up:** {meta['name']} ({uses_left} use(s))\n\n"
-        f"**From the Clan:**\n{loot_block}"
+        f"trust **{int(pact['trust'])} → {new_trust}** (+{trust_gain}).\n\n"
+        f"**you gave up:** {meta['name']} ({uses_left} use(s))\n\n"
+        f"**from the clan:**\n{loot_block}"
     )
 
 
@@ -602,23 +609,23 @@ def receive_cat_goods(
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
-        return False, f"No active pact with **{clan}**."
+        return False, f"no active pact with **{clan}**."
 
     trust = int(pact["trust"])
     if trust < CAT_PACT_RECEIVE_MIN_TRUST:
         return False, (
             f"**{stored_clan}** won't leave goods yet; trust **{trust}** "
-            f"(need **{CAT_PACT_RECEIVE_MIN_TRUST}**). Gift, barter, or patrol without violence."
+            f"(need **{CAT_PACT_RECEIVE_MIN_TRUST}**). gift, barter, or patrol without violence."
         )
 
     if int(user["last_cat_receive_day"]) >= day:
-        return False, "You already collected clan goods this sunrise."
+        return False, "you already collected clan goods this sunrise."
 
     from engine.cat_clan_goods import grant_clan_loot, receive_loot_count, roll_clan_loot
 
     count = receive_loot_count(trust, pact["pact_type"])
     if count <= 0:
-        return False, "Trust is too low for border gifts."
+        return False, "trust is too low for border gifts."
 
     loot_entries = roll_clan_loot(
         stored_clan, pact_type=pact["pact_type"], count=count
@@ -645,7 +652,7 @@ def receive_cat_goods(
     return True, (
         f"{flavor} (**{pact_label}**, trust **{trust}**).\n\n"
         f"{body}\n\n"
-        "_One collection per wolf per sunrise. Barter duplicates with `action:trade`._"
+        "_one collection per wolf per sunrise. barter duplicates with `action:trade`._"
         f"{starclan_note}"
     )
 
@@ -689,12 +696,12 @@ def handle_border_pact_violation(
                     reason="Patrol blood on the border; the treaty is ash.",
                 )
                 return (
-                    f"\n\n**Treaty shattered**; **{clan}** will not forgive this patrol kill. "
-                    f"Trust collapsed · den unity **{CAT_PACT_VIOLATION_UNITY}** · "
+                    f"\n\n**treaty shattered**; **{clan}** will not forgive this patrol kill. "
+                    f"trust collapsed · den unity **{CAT_PACT_VIOLATION_UNITY}** · "
                     f"standing **{CAT_PACT_VIOLATION_STANDING}**."
                 )
             return (
-                f"\n\n**Trust broken** with **{clan}** (**{new_trust}** trust). "
-                f"Another incident ends the pact."
+                f"\n\n**trust broken** with **{clan}** (**{new_trust}** trust). "
+                f"another incident ends the pact."
             )
     return None

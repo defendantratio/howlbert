@@ -1,8 +1,8 @@
-"""Render a wolf's family / relationship web as a Mermaid diagram image.
+"""Render a wolf's family / relationship web as a mermaid diagram image.
 
-Uses the public mermaid.ink render service (no local image dependencies). The
-diagram source is packed exactly like the Mermaid Live Editor (`pako:` state)
-so the GET URL returns a PNG that Discord can embed.
+uses the public mermaid.ink render service (no local image dependencies). the
+diagram source is packed exactly like the mermaid live editor (`pako:` state)
+so the get url returns a png that discord can embed.
 """
 
 from __future__ import annotations
@@ -13,19 +13,19 @@ import zlib
 
 import database as db
 
-_MAX_CHILDREN = 8
+_max_children = 8
 
 
 def _safe_label(name: str | None) -> str:
     if not name:
-        return "Unknown"
-    # Mermaid labels are wrapped in quotes; neutralize quotes/newlines.
-    return name.replace('"', "'").replace("\n", " ").strip()[:32] or "Unknown"
+        return "unknown"
+    # mermaid labels are wrapped in quotes; neutralize quotes/newlines.
+    return name.replace('"', "'").replace("\n", " ").strip()[:32] or "unknown"
 
 
 def build_family_mermaid(wolf) -> tuple[str, int]:
     """Return (mermaid_source, relationship_count) for a wolf's family web."""
-    lines = ["graph TD"]
+    lines = ["graph td"]
     rel = 0
     node_ids: dict[int, str] = {}
     counter = 0
@@ -87,12 +87,12 @@ def build_family_mermaid(wolf) -> tuple[str, int]:
             lines.append(f"{focus_id} --> {cn}")
             rel += 1
 
-    lines.append("classDef focus fill:#5b3a86,stroke:#d9c2ff,color:#fff,stroke-width:2px;")
+    lines.append("classdef focus fill:#5b3a86,stroke:#d9c2ff,color:#fff,stroke-width:2px;")
     return "\n".join(lines), rel
 
 
 def mermaid_image_url(code: str, *, theme: str = "dark") -> str:
-    """Pack Mermaid source into a mermaid.ink PNG URL (Live-Editor `pako:` format)."""
+    """pack mermaid source into a mermaid.ink png url (live-editor `pako:` format)."""
     state = {
         "code": code,
         "mermaid": json.dumps({"theme": theme}),

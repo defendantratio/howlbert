@@ -25,7 +25,7 @@ def _herb_suggestions(cures: tuple[str, ...], limit: int = 4) -> str:
 
 def _surgery_step(patient, injury_key: str | None) -> str:
     if not injury_key:
-        return "None; herbs and rest should suffice."
+        return "none; herbs and rest should suffice."
     for proc in SURGERY_PROCEDURES.values():
         if injury_key in proc.injury_keys:
             herbs = ", ".join(
@@ -34,8 +34,8 @@ def _surgery_step(patient, injury_key: str | None) -> str:
                 if h != "stick"
             )
             sticks = f" + **{proc.stick_count} stick(s)**" if proc.stick_count else ""
-            return f"**{proc.label}** (DC {proc.dc}): {herbs}{sticks} via `/medic action:surgery`"
-    return "Monitor; escalate to a full **Medic** if worsening."
+            return f"**{proc.label}** (dc {proc.dc}): {herbs}{sticks} via `/medic action:surgery`"
+    return "monitor; escalate to a full **medic** if worsening."
 
 
 def _rest_step(injury_key: str | None, disease_key: str | None) -> str:
@@ -45,19 +45,19 @@ def _rest_step(injury_key: str | None, disease_key: str | None) -> str:
         if days:
             return f"**{days}** sunrise(s) den rest; splint confinement after bone-setting."
         if info.get("permanent"):
-            return "Lifelong den care; no full recovery expected."
-        return "Short rest between treatments; avoid hunt and patrol."
+            return "lifelong den care; no full recovery expected."
+        return "short rest between treatments; avoid hunt and patrol."
     if disease_key == "cough":
-        return "Quarantine (`/medic action:quarantine`); isolate **3-7** sunrises with herb doses."
+        return "quarantine (`/medic action:quarantine`); isolate **3-7** sunrises with herb doses."
     if disease_key == "rot_lung":
-        return "Strict rest; mullein or marsh-mallow course; no ranging in cold air."
+        return "strict rest; mullein or marsh-mallow course; no ranging in cold air."
     if disease_key == "shock_emotional":
-        return "Quiet den; comfort and ritual herbs; no forced activity."
+        return "quiet den; comfort and ritual herbs; no forced activity."
     if disease_key == "shock_physical":
-        return "Stabilize immediately; warm den, no ranging until pulse steadies."
+        return "stabilize immediately; warm den, no ranging until pulse steadies."
     if disease_key == "grief_melancholy":
-        return "Den rest with pack comfort; chamomile, lavender, or borage; no forced hunts."
-    return "Long rest this sunrise; re-check after `/rollover`."
+        return "den rest with pack comfort; chamomile, lavender, or borage; no forced hunts."
+    return "long rest this sunrise; re-check after `/rollover`."
 
 
 def build_treatment_checklist(user, *, day: int | None = None) -> str:
@@ -66,8 +66,8 @@ def build_treatment_checklist(user, *, day: int | None = None) -> str:
     hp = int(user["hp"]) if "hp" in user.keys() else 1
     if cond == "dying" or (hp <= 0 and cond != "dead"):
         return (
-            "**Care plan: Dying**\n"
-            "1. **Death saves**: `/medic action:deathsaves` (3 rounds, CON saves)\n"
+            "**care plan: dying**\n"
+            "1. **death saves**: `/medic action:deathsaves` (3 rounds, con saves)\n"
             "2. **Stabilize**: Medic uses `/medic action:stabilize` (emergency cross-pack OK)\n"
             "3. **Rest**: Den confinement after stabilization; no hunt or combat"
         )
@@ -118,8 +118,8 @@ def build_treatment_checklist(user, *, day: int | None = None) -> str:
             break
 
     return (
-        f"**Care plan: {headline}**\n"
-        f"1. **Herbs**: {_herb_suggestions(cure_keys)} (`/medic action:treat`)\n"
-        f"2. **Surgery**: {surgery_line}\n"
-        f"3. **Rest**: {_rest_step(primary_injury, disease_key)}"
+        f"**care plan: {headline}**\n"
+        f"1. **herbs**: {_herb_suggestions(cure_keys)} (`/medic action:treat`)\n"
+        f"2. **surgery**: {surgery_line}\n"
+        f"3. **rest**: {_rest_step(primary_injury, disease_key)}"
     )

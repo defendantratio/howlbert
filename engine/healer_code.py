@@ -34,7 +34,7 @@ def healer_vow_reminder(user) -> str | None:
 
 def healer_daily_tasks_blurb() -> str:
     return (
-        "Herb stores · treat wounded · assist births · pack health rounds · sacred visits "
+        "herb stores · treat wounded · assist births · pack health rounds · sacred visits "
         "each half-moon · train apprentices · prepare the dead."
     )
 
@@ -52,7 +52,7 @@ def pick_medic_pup_scandal_flavor() -> str:
 
 
 def medic_dependents(medic_id: int) -> list:
-    """Biological offspring and adopted youth tied to this medic."""
+    """biological offspring and adopted youth tied to this medic."""
     bio = db.get_lineage_children_for_wolf(medic_id, limit=20)
     adopted = db.get_adopted_youth_for_parent(medic_id)
     seen: set[int] = set()
@@ -66,7 +66,7 @@ def medic_dependents(medic_id: int) -> list:
 
 
 def _exile_wolf(wolf_id: int) -> bool:
-    """Cast wolf out of their Great Pack (loner). Returns True if they had a pack."""
+    """cast wolf out of their great pack (loner). returns true if they had a pack."""
     wolf = db.get_user_by_id(wolf_id)
     if not wolf or not wolf["pack_id"]:
         return False
@@ -131,8 +131,8 @@ def process_medic_violation(
     }.get(violation, violation)
 
     lines.append(
-        f"**Healer's Code broken ({label}):** {flavor}\n"
-        f"Standing **{penalty}** for **{medic['wolf_name']}**."
+        f"**healer's code broken ({label}):** {flavor}\n"
+        f"standing **{penalty}** for **{medic['wolf_name']}**."
     )
 
     kick = db.adjust_wolf_standing_by_id(medic["id"], penalty)
@@ -152,10 +152,10 @@ def process_medic_violation(
             )
             lines.append(expulsion_note)
     elif kick == "kicked":
-        expulsion_note = "You were **cast out** of the pack."
+        expulsion_note = "you were **cast out** of the pack."
         lines.append(expulsion_note)
     elif kick == "broken_rite":
-        expulsion_note = "The **Rite of the Broken Canine** awaits your Alpha."
+        expulsion_note = "the **rite of the broken canine** awaits your alpha."
         lines.append(expulsion_note)
 
     if partner and is_full_medic(partner) and partner["id"] != medic["id"]:
@@ -165,7 +165,7 @@ def process_medic_violation(
 
 
 def apply_medic_court_caught(user, target) -> list[str]:
-    """After a successful court by or with a medic."""
+    """after a successful court by or with a medic."""
     lines: list[str] = []
     for medic, other in ((user, target), (target, user)):
         if not is_full_medic(medic):

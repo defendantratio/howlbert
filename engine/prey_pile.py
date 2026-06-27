@@ -47,7 +47,7 @@ def prey_label_from_yield(yield_bones: int) -> str:
 
 
 def resolve_prey_label(user) -> str:
-    """Use an explicit fresh-kill label (hare, fish) or infer from bone yield."""
+    """use an explicit fresh-kill label (hare, fish) or infer from bone yield."""
     if user and "last_prey_label" in user.keys() and user["last_prey_label"]:
         return user["last_prey_label"]
     yield_bones = int(user["last_hunt_yield"]) if user else 0
@@ -70,7 +70,7 @@ def choice_outcome_message(
     if bones > 0:
         parts.append(f"+{bones} {CURRENCY_LABEL}")
     if hp_gain > 0:
-        parts.append(f"+{hp_gain} HP")
+        parts.append(f"+{hp_gain} hp")
     if hunger_gain > 0:
         parts.append(f"+{hunger_gain} hunger")
     if thirst_gain > 0:
@@ -78,20 +78,20 @@ def choice_outcome_message(
     if exhaustion_delta < 0:
         parts.append(f"{exhaustion_delta} exhaustion (energy restored)")
     elif choice == "eat" and hp_gain == 0 and hunger_gain == 0 and exhaustion_delta == 0:
-        parts.append("Belly already full; no energy or hunger left to restore.")
+        parts.append("belly already full; no energy or hunger left to restore.")
     if standing > 0:
         parts.append(f"+{standing} standing")
     if treasury > 0:
         parts.append(f"+{treasury} bones to pack treasury")
     if choice == "pass":
-        parts.append("You slip away without touching the pile.")
+        parts.append("you slip away without touching the pile.")
     if choice == "guard":
-        parts.append("Your vigil earns respect at the den.")
+        parts.append("your vigil earns respect at the den.")
     return "\n".join(parts)
 
 
 def apply_prey_choice(choice: str, prey_bones: int) -> dict:
-    """Return effect dict: bones, standing, treasury_bones, quest_objective."""
+    """return effect dict: bones, standing, treasury_bones, quest_objective."""
     if choice == "eat":
         return {
             "bones": max(3, prey_bones // 4),
@@ -115,7 +115,7 @@ def apply_prey_choice(choice: str, prey_bones: int) -> dict:
 
 def format_response_summary(rows) -> str:
     if not rows:
-        return "_No wolves have responded yet._"
+        return "_no wolves have responded yet._"
     lines = []
     for row in rows:
         info = PREY_CHOICES.get(row["choice"], {"label": row["choice"], "emoji": "•"})

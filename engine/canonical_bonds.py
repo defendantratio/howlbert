@@ -10,8 +10,20 @@ from engine.canonical_bonds_data import CANONICAL_BONDS
 logger = logging.getLogger("howlbert")
 
 
+def apply_canonical_mates(spec: dict) -> bool:
+    """Link bonded_mate_id for lore mates when both wolves exist."""
+    if not spec.get("mates"):
+        return False
+    a = db.get_wolf_by_name(spec["a"])
+    b = db.get_wolf_by_name(spec["b"])
+    if not a or not b or int(a["id"]) == int(b["id"]):
+        return False
+    db.set_bonded_mates(int(a["id"]), int(b["id"]))
+    return True
+
+
 def apply_canonical_bond(spec: dict, *, refresh_notes: bool = True) -> bool:
-    """Create or upgrade a canonical bond. Returns True if a new row was inserted."""
+    """create or upgrade a canonical bond. returns true if a new row was inserted."""
     a = db.get_wolf_by_name(spec["a"])
     b = db.get_wolf_by_name(spec["b"])
     if not a or not b:
@@ -37,6 +49,7 @@ def apply_canonical_bond(spec: dict, *, refresh_notes: bool = True) -> bool:
                 note=new_note,
                 day=int(existing["created_day"] or 0),
             )
+        apply_canonical_mates(spec)
         return False
 
     db.set_bond(
@@ -47,11 +60,12 @@ def apply_canonical_bond(spec: dict, *, refresh_notes: bool = True) -> bool:
         note=note,
         day=0,
     )
+    apply_canonical_mates(spec)
     return True
 
 
 def apply_canonical_bonds_for_wolf(wolf_id: int, *, refresh_notes: bool = True) -> int:
-    """Apply every canonical bond touching this wolf. Returns count of new bonds."""
+    """apply every canonical bond touching this wolf. returns count of new bonds."""
     wolf = db.get_user_by_id(wolf_id)
     if not wolf:
         return 0
@@ -66,12 +80,14 @@ def apply_canonical_bonds_for_wolf(wolf_id: int, *, refresh_notes: bool = True) 
 
 
 def backfill_all_canonical_bonds(*, refresh_notes: bool = True) -> int:
-    """Apply all canonical bonds for registered pairs. Returns new bond count."""
+    """apply all canonical bonds for registered pairs. returns new bond count."""
     added = 0
     for spec in CANONICAL_BONDS:
         try:
             if apply_canonical_bond(spec, refresh_notes=refresh_notes):
                 added += 1
+            else:
+                apply_canonical_mates(spec)
         except Exception:
             logger.exception(
                 "Canonical bond failed: %s ↔ %s (%s)",
@@ -80,3 +96,19 @@ def backfill_all_canonical_bonds(*, refresh_notes: bool = True) -> int:
                 spec["type"],
             )
     return added
+
+
+def backfill_canonical_mates() -> int:
+    """link bonded_mate_id for lore mate pairs. returns count linked."""
+    linked = 0
+    for spec in CANONICAL_BONDS:
+        try:
+            if apply_canonical_mates(spec):
+                linked += 1
+        except Exception:
+            logger.exception(
+                "Canonical mates failed: %s ↔ %s",
+                spec["a"],
+                spec["b"],
+            )
+    return linked

@@ -21,7 +21,7 @@ from config import (
 
 
 def _month_key() -> str:
-    return datetime.date.today().strftime("%Y-%m")
+    return datetime.date.today().strftime("%y-%m")
 
 
 def _invite_payouts_this_month(discord_id: int) -> int:
@@ -114,7 +114,7 @@ def on_wolf_registered(
 
     db.add_bones(discord_id, INVITE_WELCOME_BONES)
     return (
-        f"**Invite welcome**; **+{INVITE_WELCOME_BONES}** bones for joining the den "
+        f"**invite welcome**; **+{INVITE_WELCOME_BONES}** bones for joining the den "
         f"(invited by <@{row['inviter_discord_id']}>)."
     )
 
@@ -206,9 +206,9 @@ def grant_first_boost(discord_id: int) -> str | None:
     db.adjust_wolf_standing(discord_id, BOOST_FIRST_STANDING)
     db.adjust_mood(user["id"], BOOST_FIRST_MOOD)
     return (
-        f"**Den Patron**; first boost: **+{BOOST_FIRST_BONES}** bones, "
+        f"**den patron**; first boost: **+{BOOST_FIRST_BONES}** bones, "
         f"**+{BOOST_FIRST_STANDING}** standing, **+{BOOST_FIRST_MOOD}** mood. "
-        f"While you boost: **+{BOOST_DAILY_BONUS}** bones on `/bones action:daily`."
+        f"while you boost: **+{BOOST_DAILY_BONUS}** bones on `/bones action:daily`."
     )
 
 
@@ -226,7 +226,7 @@ def grant_second_boost(discord_id: int) -> str | None:
             (discord_id,),
         )
     db.add_bones(discord_id, BOOST_SECOND_BONES, wolf_id=user["id"])
-    return f"**Den Patron**; second boost slot: **+{BOOST_SECOND_BONES}** bones."
+    return f"**den patron**; second boost slot: **+{BOOST_SECOND_BONES}** bones."
 
 
 def booster_daily_bonus() -> int:
@@ -239,20 +239,20 @@ def patron_status_lines(discord_id: int, *, is_boosting: bool) -> list[str]:
     if account:
         first = bool(int(account["boost_first_claimed"]))
         second = bool(int(account["boost_second_claimed"]))
-        lines.append("**Server boost (you only)**")
-        lines.append(f"• First boost claimed: **{'yes' if first else 'no'}**")
-        lines.append(f"• Second slot claimed: **{'yes' if second else 'no'}**")
+        lines.append("**server boost (you only)**")
+        lines.append(f"• first boost claimed: **{'yes' if first else 'no'}**")
+        lines.append(f"• second slot claimed: **{'yes' if second else 'no'}**")
         if is_boosting:
-            lines.append(f"• Active booster: **+{BOOST_DAILY_BONUS}** bones on `/bones action:daily`")
+            lines.append(f"• active booster: **+{BOOST_DAILY_BONUS}** bones on `/bones action:daily`")
         else:
-            lines.append("• Not currently boosting; daily bonus inactive")
+            lines.append("• not currently boosting; daily bonus inactive")
     payouts = _invite_payouts_this_month(discord_id)
     lines.append(
-        f"**Invites**; **{payouts}/{INVITE_MAX_PAYOUTS_PER_MONTH}** referrer payouts this month"
+        f"**invites**; **{payouts}/{INVITE_MAX_PAYOUTS_PER_MONTH}** referrer payouts this month"
     )
     lines.append(
-        f"Invitee welcome: **{INVITE_WELCOME_BONES}** bones · "
-        f"Referrer (after {INVITE_REFERRAL_ROLLOVERS} sunrises): "
+        f"invitee welcome: **{INVITE_WELCOME_BONES}** bones · "
+        f"referrer (after {INVITE_REFERRAL_ROLLOVERS} sunrises): "
         f"**{INVITE_REFERRER_BONES}** bones + **{INVITE_REFERRER_STANDING}** standing"
     )
     from engine.kickstarter import kickstarter_status_lines

@@ -62,7 +62,7 @@ ACTIVITY_ENCOUNTER_CHANCE: dict[str, int] = {
 
 WILD_ENCOUNTER_FLAVOR: dict[str, tuple[str, ...]] = {
     "coyote": (
-        "A **coyote** slinks from the brush; lean, grinning, already sizing your flank.",
+        "a **coyote** slinks from the brush; lean, grinning, already sizing your flank.",
         "Yipping cuts off as a **coyote** steps into the open, hackles up.",
     ),
     "fox": (
@@ -210,10 +210,10 @@ def verge_dog_bite_fallback(user, *, day: int) -> str:
     dmg = random.randint(2, 8)
     new_hp = max(0, int(user["hp"]) - dmg)
     db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=new_hp)
-    lines = [f"Teeth rake your haunches; **−{dmg} HP**."]
+    lines = [f"teeth rake your haunches; **−{dmg} hp**."]
     distemper = try_contract_disease(user, "distemper", chance=0.12)
     if distemper:
-        lines.append(f"Canid bite: {distemper}")
+        lines.append(f"canid bite: {distemper}")
     return "\n".join(lines)
 
 
@@ -260,7 +260,7 @@ def ambush_embed(template_key: str, flavor: str, user=None, *, activity: str = "
     template = BESTIARY_NPCS[template_key]
     fear = reptile_ambush_fear_note(user, template_key) if user else ""
     body = f"{flavor}{fear}\n\n{format_npc_summary(template_key)}"
-    embed = howlbert_embed(f"Ambush; {template['name']}", body, color=ERROR_COLOR)
+    embed = howlbert_embed(f"ambush; {template['name']}", body, color=ERROR_COLOR)
     footer = f"{format_npc_category(template_key)} · combat started; use the panel below"
     if activity:
         activity_labels = {

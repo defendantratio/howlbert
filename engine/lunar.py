@@ -18,9 +18,9 @@ PHASE_WINDOW = 1 / 16  # ~1.8 days each side of new/full/quarter
 BIRTH_LUNAR_PHASES = ("new_moon", "half_moon", "full_moon")
 
 BIRTH_LUNAR_LABELS = {
-    "new_moon": "New Moon",
-    "half_moon": "Half Moon",
-    "full_moon": "Full Moon",
+    "new_moon": "new moon",
+    "half_moon": "half moon",
+    "full_moon": "full moon",
 }
 
 
@@ -57,7 +57,7 @@ def _distance_on_circle(a: float, b: float) -> float:
 
 
 def assign_birth_lunar_phase(dt: datetime) -> str:
-    """Nearest major birth phase for a wolf born at this moment."""
+    """nearest major birth phase for a wolf born at this moment."""
     frac = moon_phase_fraction(dt)
     anchors = {
         "new_moon": 0.0,
@@ -78,8 +78,8 @@ def assign_birth_lunar_phase(dt: datetime) -> str:
 
 def active_lunar_phase(dt: datetime) -> str | None:
     """
-    Major phase in the sky tonight, if within the age-up window.
-    Returns new_moon, half_moon, full_moon, or None (crescent/gibbous nights).
+    major phase in the sky tonight, if within the age-up window.
+    returns new_moon, half_moon, full_moon, or none (crescent/gibbous nights).
     """
     frac = moon_phase_fraction(dt)
     if frac < PHASE_WINDOW or frac > 1 - PHASE_WINDOW:
@@ -94,14 +94,14 @@ def active_lunar_phase(dt: datetime) -> str | None:
 
 
 def lunar_phase_label(dt: datetime) -> str:
-    """Player-facing sky readout for /time."""
+    """player-facing sky readout for /time."""
     active = active_lunar_phase(dt)
     if active:
         return BIRTH_LUNAR_LABELS[active]
     frac = moon_phase_fraction(dt)
     if frac < 0.5:
-        return "Waxing Moon" if frac < 0.25 else "Waxing Gibbous"
-    return "Waning Gibbous" if frac < 0.75 else "Waning Moon"
+        return "waxing moon" if frac < 0.25 else "waxing gibbous"
+    return "waning gibbous" if frac < 0.75 else "waning moon"
 
 
 def wolf_should_age_this_rollover(
@@ -124,15 +124,15 @@ def wolf_should_age_this_rollover(
 
 
 def resolve_timezone(name: str):
-    """Return a tzinfo for rollover scheduling (tzdata required on Windows for non-UTC zones)."""
-    key = (name or "UTC").strip()
+    """return a tzinfo for rollover scheduling (tzdata required on windows for non-utc zones)."""
+    key = (name or "utc").strip()
     if not key or key.casefold() in _UTC_ALIASES:
         return timezone.utc
     try:
         return ZoneInfo(key)
     except ZoneInfoNotFoundError:
         logger.warning(
-            "Timezone %r not found; install tzdata (pip install tzdata) or use UTC. Falling back to UTC.",
+            "timezone %r not found; install tzdata (pip install tzdata) or use utc. falling back to utc.",
             key,
         )
         return timezone.utc

@@ -10,9 +10,9 @@ def _pack_label(key: str | None) -> str:
     if not key:
         return "no pack"
     if key == LONER_KEY:
-        return "Lone Wolf"
+        return "lone wolf"
     if key == ROGUE_KEY:
-        return "Rogue"
+        return "rogue"
     if key in GREAT_PACKS:
         return GREAT_PACKS[key]["name"]
     return key.replace("_", " ").title()
@@ -44,7 +44,7 @@ def _write(
 
 def log_registered(wolf_id: int, wolf_name: str, affiliation: str | None) -> None:
     pack = _pack_label(affiliation)
-    _write(wolf_id, "registered", f"Joined the den as **{wolf_name}** ({pack}).")
+    _write(wolf_id, "registered", f"joined the den as **{wolf_name}** ({pack}).")
 
 
 def log_born(
@@ -78,7 +78,7 @@ def log_pack_change(
         _write(
             wolf_id,
             "pack_left",
-            f"Left **{_pack_label(old_pack)}**.",
+            f"left **{_pack_label(old_pack)}**.",
             guild_id=guild_id,
         )
         return
@@ -87,14 +87,14 @@ def log_pack_change(
             _write(
                 wolf_id,
                 "pack_joined",
-                f"Joined **{_pack_label(new_pack)}**.",
+                f"joined **{_pack_label(new_pack)}**.",
                 guild_id=guild_id,
             )
         else:
             _write(
                 wolf_id,
                 "pack_joined",
-                f"Moved from **{_pack_label(old_pack)}** to **{_pack_label(new_pack)}**.",
+                f"moved from **{_pack_label(old_pack)}** to **{_pack_label(new_pack)}**.",
                 guild_id=guild_id,
             )
 
@@ -104,8 +104,8 @@ def log_bonded(wolf_a_id: int, wolf_b_id: int) -> None:
     b = db.get_user_by_id(wolf_b_id)
     if not a or not b:
         return
-    line_a = f"Bonded with **{b['wolf_name']}**."
-    line_b = f"Bonded with **{a['wolf_name']}**."
+    line_a = f"bonded with **{b['wolf_name']}**."
+    line_b = f"bonded with **{a['wolf_name']}**."
     _write(wolf_a_id, "bonded", line_a)
     _write(wolf_b_id, "bonded", line_b)
 
@@ -114,6 +114,45 @@ def log_blooded(wolf_id: int, wolf_name: str, *, ceremonial: bool = False) -> No
     key = "rite_blooding" if ceremonial else "blooded"
     verb = "Received the **blooding rite**" if ceremonial else "Earned **blooding** on first kill"
     _write(wolf_id, key, f"{verb} — **{wolf_name}** is blooded.")
+
+
+def log_raid(
+    wolf_id: int,
+    wolf_name: str,
+    victim_pack_name: str,
+    *,
+    stolen: int = 0,
+    caught: bool = False,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> None:
+    if caught:
+        summary = f"**{wolf_name}** was caught raiding **{victim_pack_name}**'s treasury."
+        key = "raid_caught"
+    else:
+        summary = (
+            f"**{wolf_name}** raided **{victim_pack_name}**'s treasury "
+            f"(**{stolen}** 🦴 stolen)."
+        )
+        key = "raid_success"
+    _write(wolf_id, key, summary, guild_id=guild_id, day=day)
+
+
+def log_cast_out(
+    wolf_id: int,
+    wolf_name: str,
+    pack_name: str,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> None:
+    _write(
+        wolf_id,
+        "cast_out",
+        f"**{wolf_name}** was cast out of **{pack_name}** for low standing.",
+        guild_id=guild_id,
+        day=day,
+    )
 
 
 def log_died(
@@ -148,7 +187,7 @@ def log_rite(
 
 def format_journal_embed_body(wolf_id: int, *, limit: int = 200) -> str:
     chunks = format_journal_embed_chunks(wolf_id, limit=limit)
-    return chunks[0] if chunks else "_No journal entries yet — life events are recorded automatically._"
+    return chunks[0] if chunks else "_no journal entries yet — life events are recorded automatically._"
 
 
 def _journal_entry_tier(event_key: str) -> int:
@@ -166,17 +205,17 @@ def format_journal_bullet_lines(wolf_id: int, *, limit: int = 200) -> list[str]:
     for row in rows:
         tier = _journal_entry_tier(str(row["event_key"]))
         if tier == 2 and last_tier != 2:
-            lines.append("_**Earlier life — den records on file**_")
+            lines.append("_**earlier life — den records on file**_")
         last_tier = tier
         day = row["day"]
-        prefix = f"**Day {day}** · " if day is not None else ""
+        prefix = f"**day {day}** · " if day is not None else ""
         lines.append(f"✦ {prefix}{row['summary']}")
     return lines
 
 
 def chunk_journal_lines(lines: list[str], *, max_chars: int = 3900) -> list[str]:
     if not lines:
-        return ["_No journal entries yet — life events are recorded automatically._"]
+        return ["_no journal entries yet — life events are recorded automatically._"]
     chunks: list[str] = []
     current: list[str] = []
     current_len = 0

@@ -11,6 +11,7 @@ from engine.character import attr_modifier
 from engine.group_checks import pack_howl_range
 from engine.pack_unity import (
     compute_howl_unity_gain,
+    format_howl_carry,
     format_unity_meter,
     pick_howl_flavor,
     unity_effect_text,
@@ -24,12 +25,12 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     """Run `/howl` or `/packlife action:howl` logic."""
     user = db.get_user(interaction.user.id)
     if not user:
-        embed = howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
+        embed = howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+        await interaction.response.send_message("use this in a server.", ephemeral=reply_ephemeral())
         return
 
     world = db.get_world(interaction.guild.id)
@@ -37,8 +38,8 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     wolf_name = user["wolf_name"]
     if user["last_howl_day"] >= day:
         embed = howlbert_embed(
-            "Already Howled",
-            "Your throat is raw; you already sang to the pack this sunrise.",
+            "already howled",
+            "your throat is raw; you already sang to the pack this sunrise.",
             color=ERROR_COLOR,
         )
         embed.set_footer(text="/world action:cooldowns · once per sunrise")
@@ -53,7 +54,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         blocked, trait_name = genetic_blocks_howl(user)
     if blocked:
         embed = howlbert_embed(
-            "Cannot Howl",
+            "cannot howl",
             f"**{wolf_name}**'s throat will not answer the pack; **{trait_name}** silences the call.",
             color=ERROR_COLOR,
         )
@@ -65,7 +66,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     if user["pack_id"]:
         pack = db.get_pack(user["pack_id"])
         if not pack:
-            embed = howlbert_embed("Pack Not Found", "That Great Pack isn't in this den.", color=ERROR_COLOR)
+            embed = howlbert_embed("pack not found", "that great pack isn't in this den.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
 
@@ -77,7 +78,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         muted = unity_gain == 0 and unity_is_broken(unity_before)
         from engine.plot_blinking import apply_plot_howl_mood_cost, plot_howl_unity_bonus
 
-        plot_unity = plot_howl_unity_bonus(interaction.guild.id)
+        plot_unity = plot_howl_unity_bonus(interaction.guild.id, user=user)
         if plot_unity and unity_gain and not muted:
             unity_gain += plot_unity
         _mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
@@ -105,16 +106,16 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             )
             if message:
                 body += f"\n\n_{message.strip()}_"
-            embed = howlbert_embed("Pack Dissolved", body, color=ERROR_COLOR)
-            embed.set_footer(text="/setfaction to rejoin a Great Pack")
+            embed = howlbert_embed("pack dissolved", body, color=ERROR_COLOR)
+            embed.set_footer(text="/setfaction to rejoin a great pack")
             await interaction.response.send_message(embed=embed)
             return
 
         body = f"**{wolf_name}** howls for **{pack['name'] if pack else 'the pack'}**.\n{flavor}"
         if muted:
             body += (
-                "\n\n_The den is too broken for your howl to raise **unity**; "
-                "an **Alpha** or **Beta (Advisor)** must rally first._"
+                "\n\n_the den is too broken for your howl to raise **unity**; "
+                "an **alpha** or **beta (advisor)** must rally first._"
             )
         if message:
             body += f"\n\n_{message.strip()}_"
@@ -131,24 +132,24 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             allies = grant_commanding_howl_buffs(pack["id"], exclude_wolf_id=user["id"])
             if allies:
                 commanding_note = (
-                    f"\n\n_**Commanding Howl**; **{allies}** packmate"
+                    f"\n\n_**commanding howl**; **{allies}** packmate"
                     f"{'s' if allies != 1 else ''} gain advantage on their next check or attack._"
                 )
                 body += commanding_note
 
-        embed = howlbert_embed("Pack Howl", body, color=SUCCESS_COLOR)
+        embed = howlbert_embed("pack howl", body, color=SUCCESS_COLOR)
         if unity_gain:
             embed.add_field(
-                name="Pack Unity",
+                name="pack unity",
                 value=f"+{unity_gain} → **{format_unity_meter(unity)}**",
                 inline=True,
             )
         else:
-            embed.add_field(name="Pack Unity", value=format_unity_meter(unity), inline=True)
+            embed.add_field(name="pack unity", value=format_unity_meter(unity), inline=True)
         embed.add_field(
-            name="Standing",
+            name="standing",
             value=(
-                "**Cast out**; loner"
+                "**cast out**; loner"
                 if kick == "kicked"
                 else ("**Rite of the Broken Canine**" if kick == "broken_rite" else f"+{standing_gain}")
             ),
@@ -156,7 +157,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         )
         if echo_count >= 2:
             embed.add_field(
-                name="Chorus",
+                name="chorus",
                 value=f"**{echo_count}** wolves have howled this sunrise.",
                 inline=False,
             )
@@ -177,13 +178,13 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             pack_size = len(db.get_pack_den_wolves(pack["id"]))
             reach = pack_howl_range(best_total, pack_size, natural_20=nat_20)
             embed.add_field(
-                name="Howl reach",
-                value=f"**{reach}** ridge-units (Basil pack howl formula)",
+                name="on the wind",
+                value=format_howl_carry(reach, natural_20=nat_20),
                 inline=True,
             )
         footer = unity_effect_text(unity)
         if commanding_note:
-            footer += " · Commanding Howl buff active for packmates"
+            footer += " · commanding howl buff active for packmates"
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
         return
@@ -196,15 +197,15 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     )
     if message:
         body += f"\n\n_{message.strip()}_"
-    embed = howlbert_embed("Lone Howl", body, color=SUCCESS_COLOR)
+    embed = howlbert_embed("lone howl", body, color=SUCCESS_COLOR)
     embed.add_field(
-        name="Standing",
+        name="standing",
         value=(
-            "**Cast out**; loner"
+            "**cast out**; loner"
             if kick == "kicked"
             else ("**Rite of the Broken Canine**" if kick == "broken_rite" else "+1")
         ),
         inline=True,
     )
-    embed.set_footer(text="Join a Great Pack with `/setfaction` to raise pack unity.")
+    embed.set_footer(text="join a great pack with `/setfaction` to raise pack unity.")
     await interaction.response.send_message(embed=embed)

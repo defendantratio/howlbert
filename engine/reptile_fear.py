@@ -38,8 +38,8 @@ def reptile_fear_roll_modifiers(
     attacker_f, defender_f
 ) -> tuple[bool, bool, str]:
     """
-    Return (disadvantage, advantage, flavor) for attack rolls.
-    Wolves with reptile fear flinch when struck and hesitate when striking snakes/lizards.
+    return (disadvantage, advantage, flavor) for attack rolls.
+    wolves with reptile fear flinch when struck and hesitate when striking snakes/lizards.
     """
     if not attacker_f or not defender_f:
         return False, False, ""
@@ -54,12 +54,12 @@ def reptile_fear_roll_modifiers(
     if fighter_val(attacker_f, "discord_id") and def_template in REPTILE_NPC_TEMPLATES:
         wolf = db.get_user(attacker_f["discord_id"])
         if wolf and has_reptile_insect_fear(wolf):
-            return True, False, "_Fear of reptiles; your strike wavers._"
+            return True, False, "_fear of reptiles; your strike wavers._"
 
     if atk_template in REPTILE_NPC_TEMPLATES and fighter_val(defender_f, "discord_id"):
         wolf = db.get_user(defender_f["discord_id"])
         if wolf and has_reptile_insect_fear(wolf):
-            return False, True, "_Reptile fear; you flinch and the strike lands clean._"
+            return False, True, "_reptile fear; you flinch and the strike lands clean._"
 
     return False, False, ""
 
@@ -70,6 +70,6 @@ def reptile_ambush_fear_note(user, template_key: str) -> str:
     if not has_reptile_insect_fear(user):
         return ""
     return (
-        "\n\n_Your blood runs cold; scales and too many legs. "
-        "Medic training wars with instinct._"
+        "\n\n_your blood runs cold; scales and too many legs. "
+        "medic training wars with instinct._"
     )

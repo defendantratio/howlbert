@@ -26,13 +26,13 @@ CRAFT_RECIPES: dict[str, dict] = {
 def craft_from_remnants(user, recipe_key: str) -> tuple[bool, str]:
     recipe = CRAFT_RECIPES.get(recipe_key)
     if not recipe:
-        return False, "Unknown recipe."
+        return False, "unknown recipe."
     have = db.get_remnants(user["id"])
     cost = int(recipe["remnants"])
     if have < cost:
-        return False, f"Need **{cost}** remnants (you have **{have}**)."
+        return False, f"need **{cost}** remnants (you have **{have}**)."
     if not db.spend_remnants(user["id"], cost):
-        return False, f"Need **{cost}** remnants (you have **{have}**)."
+        return False, f"need **{cost}** remnants (you have **{have}**)."
     from engine.amusement_storage import grant_amusement
 
     grant_amusement(user["id"], recipe["output_key"])
@@ -40,16 +40,16 @@ def craft_from_remnants(user, recipe_key: str) -> tuple[bool, str]:
     left = db.get_remnants(user["id"])
     return (
         True,
-        f"Crafted **{recipe['name']}** → **{meta['name']}**. **{left}** remnants left (`/playpen action:toys`).",
+        f"crafted **{recipe['name']}** → **{meta['name']}**. **{left}** remnants left (`/playpen action:toys`).",
     )
 
 
 def shred_amusement_stack(user, stack_id: int) -> tuple[bool, str, int]:
     stack = db.get_amusement_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't have that toy.", 0
+        return False, "you don't have that toy.", 0
     if stack["uses_left"] <= 0:
-        return False, "Nothing left to shred.", 0
+        return False, "nothing left to shred.", 0
 
     meta = amusement_meta(stack["item_key"])
     remnants = max(2, stack["uses_left"] * meta.get("shred_remnants", 2))
@@ -57,7 +57,7 @@ def shred_amusement_stack(user, stack_id: int) -> tuple[bool, str, int]:
     total = db.add_remnants(user["id"], remnants)
     return (
         True,
-        f"Shredded **{meta['name']}** into **{remnants}** remnants (total **{total}**).",
+        f"shredded **{meta['name']}** into **{remnants}** remnants (total **{total}**).",
         remnants,
     )
 
@@ -67,24 +67,24 @@ def format_hoard_summary(user, *, day: int) -> str:
 
     lines: list[str] = []
     remnants = db.get_remnants(user["id"])
-    lines.append(f"**Remnants:** {remnants} _(shred toys; craft: bone toy **8**, stick bundle **6** via `/hoarding action:craft`)_")
+    lines.append(f"**remnants:** {remnants} _(shred toys; craft: bone toy **8**, stick bundle **6** via `/hoarding action:craft`)_")
 
     prey = db.get_prey_stacks(user["id"])
     if prey:
-        lines.append("**Prey**")
+        lines.append("**prey**")
         lines.extend(format_prey_hoard_line(s, day) for s in prey[:8])
         if len(prey) > 8:
-            lines.append(f"_…and {len(prey) - 8} more; `/prey` for full list._")
+            lines.append(f"_…and {len(prey) - 8} more; `/food` for full list._")
     else:
-        lines.append("**Prey**; empty")
+        lines.append("**prey**; empty")
 
     toys = db.get_amusement_stacks(user["id"])
     if toys:
-        lines.append("**Toys**")
+        lines.append("**toys**")
         lines.extend(format_amusement_line(s) for s in toys[:8])
         if len(toys) > 8:
             lines.append(f"_…and {len(toys) - 8} more; `/playpen action:toys` for full list._")
     else:
-        lines.append("**Toys**; empty")
+        lines.append("**toys**; empty")
 
     return "\n".join(lines)

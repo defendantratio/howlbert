@@ -57,22 +57,22 @@ async def _handle_kofi(request: web.Request) -> web.Response:
                     if dm_message:
                         body = dm_message
                     elif is_shop:
-                        body = f"**Thank you for your shop order!** 🦴\n{note}"
+                        body = f"**thank you for your shop order!** 🦴\n{note}"
                     elif is_sub:
                         body = (
-                            f"**Thank you for your membership!** 🦴\n{note}\n"
-                            "Check `/patron` for your donor status."
+                            f"**thank you for your membership!** 🦴\n{note}\n"
+                            "check `/patron` for your donor status."
                         )
                     else:
                         body = (
-                            f"**Thank you for supporting the den!** 🦴\n{note}\n"
-                            "Check `/patron` for your donor status."
+                            f"**thank you for supporting the den!** 🦴\n{note}\n"
+                            "check `/patron` for your donor status."
                         )
                     await user.send(body)
                 except Exception:
                     logger.debug("Could not DM donor %s", discord_id, exc_info=True)
         return web.Response(text="ok")
-    logger.warning("Ko-fi rejected: %s", note)
+    logger.warning("ko-fi rejected: %s", note)
     return web.Response(text=note, status=400)
 
 
@@ -105,7 +105,7 @@ async def start_kofi_webhook(bot) -> None:
             return
         raise
     _runner = runner
-    logger.info("Ko-fi webhook listening on port %s (POST /kofi)", KOFI_WEBHOOK_PORT)
+    logger.info("ko-fi webhook listening on port %s (post /kofi)", KOFI_WEBHOOK_PORT)
 
 
 async def stop_kofi_webhook() -> None:

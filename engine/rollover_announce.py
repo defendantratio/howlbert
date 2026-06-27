@@ -68,15 +68,15 @@ def _format_crisis_lines(entries: list, *, limit: int = 12) -> str:
 
 def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
-    embed = howlbert_embed("The Den Rollovers", color=SUCCESS_COLOR)
+    embed = howlbert_embed("the den rollovers", color=SUCCESS_COLOR)
 
-    embed.add_field(name="Day", value=str(world["day_number"]), inline=True)
+    embed.add_field(name="day", value=str(world["day_number"]), inline=True)
 
-    embed.add_field(name="Season", value=season_label(world["season"]), inline=True)
+    embed.add_field(name="season", value=season_label(world["season"]), inline=True)
 
-    embed.add_field(name="Weather", value=weather_label(world["weather"]), inline=True)
+    embed.add_field(name="weather", value=weather_label(world["weather"]), inline=True)
 
-    embed.add_field(name="Time", value=time_label(world["time_of_day"]), inline=True)
+    embed.add_field(name="time", value=time_label(world["time_of_day"]), inline=True)
 
 
 
@@ -84,13 +84,13 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
     if sky:
 
-        embed.add_field(name="Moon", value=sky, inline=True)
+        embed.add_field(name="moon", value=sky, inline=True)
 
     aged = crisis.get("wolves_aged", 0)
 
     if LUNAR_BIRTH_AGING and aged is not None:
 
-        embed.add_field(name="Aged this sunrise", value=str(aged), inline=True)
+        embed.add_field(name="aged this sunrise", value=str(aged), inline=True)
 
 
 
@@ -114,13 +114,13 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
             lines.append(f"_…and {len(collapses) - 10} more._")
 
-        embed.add_field(name="Collapsed", value="\n".join(lines), inline=False)
+        embed.add_field(name="collapsed", value="\n".join(lines), inline=False)
 
     if stabilized:
 
         lines = [f"**{d['wolf_name']}**; stabilized after {d['cause']}" for d in stabilized[:10]]
 
-        embed.add_field(name="Stabilized", value="\n".join(lines), inline=False)
+        embed.add_field(name="stabilized", value="\n".join(lines), inline=False)
 
     if deaths:
 
@@ -131,17 +131,17 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
             loss_lines.append(f"_…and {len(deaths) - 10} more._")
 
         loss_lines.append(
-            "_Medics: `/medic action:lay_to_rest` · mates may need comfort and herbs._"
+            "_medics: `/medic action:lay_to_rest` · mates may need comfort and herbs._"
         )
 
-        embed.add_field(name="Losses", value="\n".join(loss_lines), inline=False)
+        embed.add_field(name="losses", value="\n".join(loss_lines), inline=False)
 
     grief_notes = crisis.get("grief_notes", [])
 
     if grief_notes:
 
         embed.add_field(
-            name="Grief in the den",
+            name="grief in the den",
             value=_format_crisis_lines(grief_notes, limit=8),
             inline=False,
         )
@@ -196,7 +196,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
             text += f"\n_…and {len(vitals_ex) - 8} more._"
 
-        embed.add_field(name="Needs exhaustion", value=text, inline=False)
+        embed.add_field(name="needs exhaustion", value=text, inline=False)
 
 
 
@@ -204,7 +204,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
     if condition_notes:
         embed.add_field(
-            name="Injuries & disease",
+            name="injuries & disease",
             value=_format_crisis_lines(condition_notes, limit=12),
             inline=False,
         )
@@ -212,7 +212,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
     mental_notes = crisis.get("mental_notes", [])
     if mental_notes:
         embed.add_field(
-            name="Mind & stress",
+            name="mind & stress",
             value=_format_crisis_lines(mental_notes, limit=8),
             inline=False,
         )
@@ -220,7 +220,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
     prey_spoilage = crisis.get("prey_spoilage", [])
     if prey_spoilage:
         embed.add_field(
-            name="Rotting prey",
+            name="rotting prey",
             value=_format_crisis_lines(prey_spoilage, limit=8),
             inline=False,
         )
@@ -237,7 +237,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
             lines.append(f"_…and {len(forager_herbs) - 8} more._")
 
-        embed.add_field(name="Forager finds", value="\n".join(lines), inline=False)
+        embed.add_field(name="forager finds", value="\n".join(lines), inline=False)
 
 
 
@@ -245,14 +245,14 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
     if season_notes:
 
-        embed.add_field(name="Season", value="\n".join(season_notes), inline=False)
+        embed.add_field(name="season", value="\n".join(season_notes), inline=False)
 
     plot_notes = crisis.get("plot_notes", [])
     if plot_notes:
         text = "\n".join(plot_notes[:8])
         if len(plot_notes) > 8:
             text += f"\n_…and {len(plot_notes) - 8} more._"
-        embed.add_field(name="The Blinking", value=text, inline=False)
+        embed.add_field(name="the blinking", value=text, inline=False)
 
 
 
@@ -262,7 +262,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
         lines = [f"**{n['wolf_name']}**; {n['text']}" for n in food_cache[:8]]
 
-        embed.add_field(name="Food cache", value="\n".join(lines), inline=False)
+        embed.add_field(name="food cache", value="\n".join(lines), inline=False)
 
 
 
@@ -272,13 +272,13 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
         lines = [f"**{n['wolf_name']}:** {n['text']}" for n in sacred_notes[:6]]
 
-        embed.add_field(name="Sacred neglect", value="\n".join(lines), inline=False)
+        embed.add_field(name="sacred neglect", value="\n".join(lines), inline=False)
 
 
 
     age_note = (
 
-        "Age +1 moon when the sky matches your birth phase (new / half / full)."
+        "age +1 moon when the sky matches your birth phase (new / half / full)."
 
         if LUNAR_BIRTH_AGING
 
@@ -290,11 +290,11 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
         text=(
 
-            "Hunger −12 · thirst −14 · low mood/hunger/thirst +1 exhaustion each. "
+            "hunger −12 · thirst −14 · low mood/hunger/thirst +1 exhaustion each. "
 
             "Exhaustion 6 = death. At 0 hunger/thirst, collapse: `/medic action:deathsaves`. "
 
-            f"Long-rest: +1 HP, −1 exhaustion. {age_note}"
+            f"long-rest: +1 hp, −1 exhaustion. {age_note}"
 
         )
 
@@ -304,7 +304,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
 
 def build_startup_briefing_crisis(guild_id: int, world) -> dict:
-    """Den-news snapshot for morning startup when sunrise already rolled."""
+    """den-news snapshot for morning startup when sunrise already rolled."""
     from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, lunar_phase_label, rollover_now
     from engine.plot_blinking import plot_den_news_line, plot_phase
     from engine.rollover_news import collect_den_news
@@ -412,8 +412,8 @@ def guild_due_for_rollover(guild_id: int, now: datetime) -> bool:
 
 def within_startup_den_news_dm_window(now: datetime) -> bool:
     """
-    True when the bot came online soon after today's scheduled sunrise.
-    Used to DM den news when rollover was missed because the bot was offline.
+    true when the bot came online soon after today's scheduled sunrise.
+    used to dm den news when rollover was missed because the bot was offline.
     """
     tz = now.tzinfo
     moment = _rollover_moment(now.date(), tz)
@@ -434,7 +434,7 @@ async def run_guild_rollover(
     capped = min(missed, MAX_ROLLOVER_CATCHUP)
     if capped < missed:
         logger.warning(
-            "Guild %s missed %s sunrises; catching up %s (cap %s).",
+            "guild %s missed %s sunrises; catching up %s (cap %s).",
             guild_id,
             missed,
             capped,
@@ -451,7 +451,7 @@ async def run_guild_rollover(
             try:
                 embed = build_rollover_embed(world, crisis)
                 if capped > 1:
-                    embed.title = f"Sunrise catch-up ({i + 1}/{capped})"
+                    embed.title = f"sunrise catch-up ({i + 1}/{capped})"
                 await channel.send(embed=embed)
             except discord.HTTPException as exc:
                 logger.warning("Could not announce rollover in guild %s: %s", guild_id, exc)
@@ -551,7 +551,7 @@ async def auto_rollover_loop(bot: commands.Bot) -> None:
 
 
     logger.info(
-        "Auto rollover on at %02d:%02d %s (lunar birth aging: %s; startup DM window %sh).",
+        "auto rollover on at %02d:%02d %s (lunar birth aging: %s; startup dm window %sh).",
         ROLLOVER_HOUR,
         ROLLOVER_MINUTE,
         ROLLOVER_TIMEZONE,

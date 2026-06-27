@@ -1,0 +1,84 @@
+"""Restore Python True/False/None after mistaken lowercase pass in code (not strings)."""
+from __future__ import annotations
+
+import re
+import tokenize
+from io import BytesIO
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCAN = [ROOT / "engine", ROOT / "cogs", ROOT / "utils", ROOT / "database.py", ROOT / "main.py"]
+
+REPLACEMENTS = {
+    "false": "False",
+    "true": "True",
+    "none": "None",
+}
+
+
+def fix_file(path: Path) -> bool:
+    original = path.read_text(encoding="utf-8")
+    try:
+        tokens = list(tokenize.tokenize(BytesIO(original.encode("utf-8")).readline))
+    except tokenize.TokenError:
+        return False
+
+    pieces: list[str] = []
+    last_end = (1, 0)
+    changed = False
+
+    for tok in tokens:
+        if tok.type == tokenize.ENDMARKER:
+            break
+        if tok.type in (tokenize.NL, tokenize.NEWLINE, tokenize.ENCODING):
+            continue
+        if tok.type == tokenize.ERRORTOKEN:
+            continue
+
+        (srow, scol) = tok.start
+        (erow, ecol) = tok.end
+        if (srow, scol) > last_end:
+            gap_start = _offset(original, last_end)
+            gap_end = _offset(original, (srow, scol))
+            pieces.append(original[gap_start:gap_end])
+
+        if tok.type == tokenize.NAME and tok.string in REPLACEMENTS:
+            pieces.append(REPLACEMENTS[tok.string])
+            if tok.string != REPLACEMENTS[tok.string]:
+                changed = True
+        else:
+            pieces.append(tok.string)
+        last_end = (erow, ecol)
+
+    if last_end < (len(original.splitlines()), 0):
+        gap_start = _offset(original, last_end)
+        pieces.append(original[gap_start:])
+
+    if not changed:
+        return False
+    path.write_text("".join(pieces), encoding="utf-8")
+    return True
+
+
+def _offset(text: str, pos: tuple[int, int]) -> int:
+    row, col = pos
+    lines = text.splitlines(keepends=True)
+    if row < 1 or row > len(lines):
+        return len(text)
+    return sum(len(lines[i]) for i in range(row - 1)) + col
+
+
+def main() -> None:
+    fixed: list[str] = []
+    for base in SCAN:
+        paths = [base] if base.is_file() else sorted(base.rglob("*.py"))
+        for path in paths:
+            if fix_file(path):
+                fixed.append(str(path.relative_to(ROOT)))
+    print(f"fixed {len(fixed)} files")
+    for f in fixed:
+        print(" ", f)
+
+
+if __name__ == "__main__":
+    main()

@@ -5,24 +5,24 @@ from __future__ import annotations
 from herbs import DISEASE_STAGES, HERBS, INJURIES
 
 HABITAT_LABELS = {
-    "wild": "Territory",
-    "roadside": "Thunderpath verge",
-    "compound": "Twoleg edge",
+    "wild": "territory",
+    "roadside": "thunderpath verge",
+    "compound": "twoleg edge",
 }
 
 HERBS_PER_PAGE = 5
 
 FILTER_LABELS = {
-    "all": "All herbs",
-    "wild": "Territory (wild)",
-    "roadside": "Thunderpath verge",
-    "compound": "Twoleg compound edge",
+    "all": "all herbs",
+    "wild": "territory (wild)",
+    "roadside": "thunderpath verge",
+    "compound": "twoleg compound edge",
 }
 
 OVERVIEW_BODY = (
-    "**Gathering**\n"
+    "**gathering**\n"
     "· `/field action:forage`; pack territory (wild habitat)\n"
-    "· `/field action:verge verge_site:roadside`; Thunderpath shoulder weeds\n"
+    "· `/field action:verge verge_site:roadside`; thunderpath shoulder weeds\n"
     "· `/field action:verge verge_site:compound`; Twoleg fence-lines & gardens\n"
     "· **Foragers**; unlimited territory + verge forage each sunrise\n\n"
     "**Using herbs**\n"
@@ -52,7 +52,7 @@ def _cure_labels(cures: tuple) -> str:
         else:
             labels.append(key.replace("_", " ").title())
     suffix = "…" if len(cures) > 10 else ""
-    return f"\n**Treats:** {', '.join(labels)}{suffix}" if labels else ""
+    return f"\n**treats:** {', '.join(labels)}{suffix}" if labels else ""
 
 
 def _usage_hint(herb_key: str, meta: dict) -> str:
@@ -90,7 +90,7 @@ def total_pages(filter_key: str = "all") -> int:
 def build_herb_guide_embed(*, page: int = 0, filter_key: str = "all") -> tuple[str, str]:
     """Return (title, body) for one guide page."""
     if page == 0:
-        title = "Herb Guide; Overview"
+        title = "herb guide; overview"
         return title, OVERVIEW_BODY
 
     keys = list_herb_keys(filter_key)
@@ -98,11 +98,11 @@ def build_herb_guide_embed(*, page: int = 0, filter_key: str = "all") -> tuple[s
     start = content_page * HERBS_PER_PAGE
     chunk = keys[start : start + HERBS_PER_PAGE]
     if not chunk:
-        return "Herb Guide", "_No herbs in this filter._"
+        return "herb guide", "_no herbs in this filter._"
 
     filter_label = FILTER_LABELS.get(filter_key, filter_key)
-    title = f"Herb Guide: {filter_label}"
+    title = f"herb guide: {filter_label}"
     blocks = [format_herb_block(k, HERBS[k]) for k in chunk]
     body = "\n\n".join(blocks)
-    footer_note = f"Page **{page + 1}** of **{total_pages(filter_key) + 1}** · `/medic action:treat herb:herb_<key>`"
+    footer_note = f"page **{page + 1}** of **{total_pages(filter_key) + 1}** · `/medic action:treat herb:herb_<key>`"
     return title, f"{body}\n\n_{footer_note}_"

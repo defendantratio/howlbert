@@ -13,7 +13,7 @@ from engine.role_features import has_any_role, is_full_medic
 from herbs import INJURIES, herb_inventory_key
 
 REALISM_NOTE = (
-    "_A Note on Realism: While we use real plants and their properties for inspiration, "
+    "_a note on realism: while we use real plants and their properties for inspiration, "
     "wolves can't perform complex surgery, set complex broken bones, or cure every ailment. "
     "This guide is designed to enhance storytelling, offering a grounded and believable "
     "framework for the struggles and triumphs of a pack's Healer._"
@@ -128,9 +128,6 @@ def _herb_label(herb_key: str) -> str:
 
 
 def participant_has_herb(user, herb_key: str) -> bool:
-    for stack in db.get_herb_stacks(user["id"]):
-        if stack["herb_key"] == herb_key:
-            return True
     item = db.get_item_by_key(herb_inventory_key(herb_key))
     if item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0:
         return True
@@ -138,10 +135,6 @@ def participant_has_herb(user, herb_key: str) -> bool:
 
 
 def consume_participant_herb(user, herb_key: str) -> bool:
-    for stack in db.get_herb_stacks(user["id"]):
-        if stack["herb_key"] == herb_key:
-            db.remove_herb_stack(stack["id"])
-            return True
     item = db.get_item_by_key(herb_inventory_key(herb_key))
     if item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0:
         db.consume_item(user["discord_id"], item["id"], quantity=1)
@@ -155,11 +148,10 @@ consume_surgeon_herb = consume_participant_herb
 
 
 def _stick_count(user) -> int:
-    count = sum(1 for stack in db.get_herb_stacks(user["id"]) if stack["herb_key"] == "stick")
     item = db.get_item_by_key(herb_inventory_key("stick"))
     if item:
-        count += db.get_inventory_quantity(user["discord_id"], item["id"])
-    return count
+        return db.get_inventory_quantity(user["discord_id"], item["id"])
+    return 0
 
 
 def _sticks_available(patient, surgeon) -> int:
@@ -174,11 +166,11 @@ def _patient_can_bite_stick(patient) -> bool:
 
 
 def _consume_bite_stick(patient, surgeon) -> str:
-    """Consume stick from patient first, then surgeon. Returns flavor line."""
+    """consume stick from patient first, then surgeon. returns flavor line."""
     if consume_participant_herb(patient, "stick"):
         return f"**{patient['wolf_name']}** bites down hard on a stick."
     consume_participant_herb(surgeon, "stick")
-    return f"A stick is placed between **{patient['wolf_name']}**'s jaws."
+    return f"a stick is placed between **{patient['wolf_name']}**'s jaws."
 
 
 def _consume_splint_sticks(patient, surgeon, count: int) -> None:
@@ -214,31 +206,31 @@ def _validate_optional_herb_flags(
 
     if use_loosestrife:
         if procedure_key != "stitch":
-            return "**Purple loosestrife** is only used when stitching wounds."
+            return "**purple loosestrife** is only used when stitching wounds."
         if not participant_has_herb(surgeon, "purple_loosestrife"):
-            return "No **purple loosestrife** in your herb bag or inventory."
+            return "no **purple loosestrife** in your herb bag or inventory."
 
     if use_plantain:
         if procedure_key != "extract":
-            return "**Plantain** is only used when extracting splinters."
+            return "**plantain** is only used when extracting splinters."
         if not participant_has_herb(surgeon, "plantain"):
-            return "No **plantain** in your herb bag or inventory."
+            return "no **plantain** in your herb bag or inventory."
 
     if use_meadowsweet:
         if "meadowsweet" not in optional:
-            return f"**Meadowsweet** is not used for **{spec.label}**."
+            return f"**meadowsweet** is not used for **{spec.label}**."
         if not participant_has_herb(surgeon, "meadowsweet"):
-            return "No **meadowsweet** in your herb bag or inventory."
+            return "no **meadowsweet** in your herb bag or inventory."
 
     if use_poppy and "poppy_seeds" in spec.optional_herbs:
         if not participant_has_herb(surgeon, "poppy_seeds"):
-            return "No **poppy seeds** for sedation."
+            return "no **poppy seeds** for sedation."
 
     if use_rush_stalks:
         if procedure_key != "set_bone":
-            return "**Rush stalks** lash splints only during **set bone** surgery."
+            return "**rush stalks** lash splints only during **set bone** surgery."
         if not participant_has_herb(surgeon, "rush_stalks"):
-            return "No **rush stalks** in your herb bag or inventory."
+            return "no **rush stalks** in your herb bag or inventory."
 
     return None
 
@@ -303,7 +295,7 @@ def matching_injury(patient, procedure: SurgeryProcedure) -> str | None:
 def procedure_for_patient(patient, procedure_key: str) -> tuple[SurgeryProcedure | None, str | None]:
     spec = SURGERY_PROCEDURES.get(procedure_key)
     if not spec:
-        return None, f"Unknown surgery **{procedure_key}**."
+        return None, f"unknown surgery **{procedure_key}**."
     injury = matching_injury(patient, spec)
     if not injury:
         names = ", ".join(INJURIES.get(k, {}).get("name", k) for k in spec.injury_keys)
@@ -359,11 +351,11 @@ def run_surgery(
     Returns (success, message body).
     """
     if not is_full_medic(surgeon) and not has_any_role(surgeon, "medic_apprentice"):
-        return False, "Only **Medics** and **medic apprentices** may perform surgery."
+        return False, "only **medics** and **medic apprentices** may perform surgery."
 
     if surgeon["id"] == patient["id"]:
         return False, (
-            "You cannot operate on yourself; another **Medic** must hold the stick "
+            "you cannot operate on yourself; another **medic** must hold the stick "
             "and work the splint while you lie still."
         )
 
@@ -378,11 +370,11 @@ def run_surgery(
 
     spec, err = procedure_for_patient(patient, procedure_key)
     if err or not spec:
-        return False, err or "Invalid procedure."
+        return False, err or "invalid procedure."
 
     last = int(surgeon["last_surgery_day"] if "last_surgery_day" in surgeon.keys() else 0)
     if last >= day:
-        return False, "You already operated this sunrise."
+        return False, "you already operated this sunrise."
 
     missing = missing_surgery_herbs(surgeon, patient, spec)
     if missing:
@@ -396,7 +388,7 @@ def run_surgery(
                 )
             else:
                 hint = " (stick: patient bag, Medic bag, or `/bones action:inventory`)"
-        return False, f"Missing supplies for **{spec.label}**: {labels}.{hint}"
+        return False, f"missing supplies for **{spec.label}**: {labels}.{hint}"
 
     if spec.stick_count and not _patient_can_bite_stick(patient):
         return False, (
@@ -422,7 +414,7 @@ def run_surgery(
     dc = surgery_dc_for_surgeon(surgeon, spec.dc)
     if helper:
         if helper["id"] == surgeon["id"]:
-            return False, "Pick another **Medic** as **helper**, not yourself."
+            return False, "pick another **medic** as **helper**, not yourself."
         from engine.group_checks import run_assisted_check
 
         _, assist_body = run_assisted_check(
@@ -435,7 +427,7 @@ def run_surgery(
             day=day,
         )
         assist_note = assist_body
-        advantage = "Assisted; primary took the higher" in assist_body
+        advantage = "assisted; primary took the higher" in assist_body
 
     stick_notes: list[str] = []
     if spec.stick_count >= 1:
@@ -488,7 +480,7 @@ def run_surgery(
         lines.insert(1, "_Apprentice paws; a full Medic should oversee this work._")
     lines.extend(stick_notes)
     if splint_sticks:
-        lines.append("_Straight sticks align the break; bindweed will lash the splint._")
+        lines.append("_straight sticks align the break; bindweed will lash the splint._")
     lines.extend(herb_notes)
 
     die = roll["die"]
@@ -500,7 +492,7 @@ def run_surgery(
             from engine.long_term_injuries import add_long_term_injury
 
             add_long_term_injury(patient_id, spec.fail_long_term)
-            lines.append(f"_Permanent mark: **{spec.fail_long_term}**._")
+            lines.append(f"_permanent mark: **{spec.fail_long_term}**._")
         if procedure_key == "extract":
             _add_injury(patient_id, "infected_wound")
         elif procedure_key == "stitch":
@@ -530,23 +522,23 @@ def run_surgery(
             cap = effective_max_hp(fresh) if fresh else 10
             new_hp = min(cap, int(fresh["hp"]) + heal) if fresh else heal
             db.set_user_conditions(fresh["discord_id"], wolf_id=patient_id, hp=new_hp)
-            lines.append(f"{spec.success} **+{heal} HP**.")
+            lines.append(f"{spec.success} **+{heal} hp**.")
         else:
             lines.append(spec.success)
         if procedure_key == "set_bone":
-            lines.append("_Splint lashed with bindweed; the patient keeps biting the stick._")
+            lines.append("_splint lashed with bindweed; the patient keeps biting the stick._")
             from engine.medical_care import apply_bone_rest
 
             apply_bone_rest(patient_id, day=day)
             lines.append(
-                f"_**Splint confinement**: den rest until sunrise **{day + 7}** "
+                f"_**splint confinement**: den rest until sunrise **{day + 7}** "
                 f"(`/medic action:swim` may shorten)._"
             )
         if spec.success_long_term:
             from engine.long_term_injuries import add_long_term_injury
 
             add_long_term_injury(patient_id, spec.success_long_term)
-            lines.append("_Visible **scarring** from the amputation._")
+            lines.append("_visible **scarring** from the amputation._")
         db.update_user_by_id(surgeon["id"], last_surgery_day=day)
         return True, "\n".join(lines)
 
@@ -557,18 +549,18 @@ def run_surgery(
         if fresh:
             new_hp = max(0, int(fresh["hp"]) - dmg)
             db.set_user_conditions(fresh["discord_id"], wolf_id=patient_id, hp=new_hp)
-            lines.append(f"**−{dmg} HP**")
+            lines.append(f"**−{dmg} hp**")
     elif procedure_key == "amputate":
         dmg = random.randint(1, 6)
         fresh = db.get_user_by_id(patient_id)
         if fresh:
             new_hp = max(0, int(fresh["hp"]) - dmg)
             db.set_user_conditions(fresh["discord_id"], wolf_id=patient_id, hp=new_hp)
-            lines.append(f"**−{dmg} HP**")
+            lines.append(f"**−{dmg} hp**")
     if procedure_key == "extract":
         if random.random() < 0.35:
             _add_injury(patient_id, "infected_wound")
-            lines.append("_Infection takes hold._")
+            lines.append("_infection takes hold._")
     lines.append(REALISM_NOTE)
     db.update_user_by_id(surgeon["id"], last_surgery_day=day)
     return False, "\n".join(lines)

@@ -171,7 +171,7 @@ def format_age_milestone_line(
 
 
 def birthday_lines(age_milestones: list[dict]) -> list[str]:
-    """Celebrate wolves who cross a full year (multiple of 12 moons) this rollover."""
+    """celebrate wolves who cross a full year (multiple of 12 moons) this rollover."""
     out: list[str] = []
     for m in age_milestones:
         old_age = int(m["old_age"])

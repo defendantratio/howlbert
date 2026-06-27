@@ -42,6 +42,6 @@ def pregnancy_activity_block(user, action: str, day: int) -> str | None:
     name = user["wolf_name"] if user and "wolf_name" in user.keys() else "She"
     return (
         f"**{name}** is in late pregnancy (**{remaining}** sunrise(s) until birth). "
-        "Rest in the den; strenuous work risks the litter. "
+        "rest in the den; strenuous work risks the litter. "
         "Use `/pupcare action:pregnancy` to check gestation."
     )

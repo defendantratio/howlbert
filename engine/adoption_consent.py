@@ -11,16 +11,16 @@ from engine.youth_lineage import adoption_eligibility_error
 def accept_pending_adoption(pending_id: int) -> tuple[bool, str]:
     pending = db.get_pending_adoption(pending_id)
     if not pending or pending["status"] != "pending":
-        return False, "This adoption request is no longer active."
+        return False, "this adoption request is no longer active."
     adopter1 = db.get_user_by_id(pending["adopter_1_wolf_id"])
     adopter2 = db.get_user_by_id(pending["adopter_2_wolf_id"])
     youth = db.get_user_by_id(pending["youth_wolf_id"])
     if not adopter1 or not adopter2 or not youth:
         db.set_pending_adoption_status(pending_id, "expired")
-        return False, "One of the wolves no longer exists."
+        return False, "one of the wolves no longer exists."
     if not are_bonded_mates(adopter1, adopter2):
         db.set_pending_adoption_status(pending_id, "expired")
-        return False, "The adopters are no longer bonded mates."
+        return False, "the adopters are no longer bonded mates."
     err = adoption_eligibility_error(youth, adopter1, adopter2)
     if err:
         db.set_pending_adoption_status(pending_id, "expired")
@@ -48,7 +48,7 @@ def accept_pending_adoption(pending_id: int) -> tuple[bool, str]:
 def decline_pending_adoption(pending_id: int) -> tuple[bool, str]:
     pending = db.get_pending_adoption(pending_id)
     if not pending or pending["status"] != "pending":
-        return False, "This adoption request is no longer active."
+        return False, "this adoption request is no longer active."
     youth = db.get_user_by_id(pending["youth_wolf_id"])
     name = youth["wolf_name"] if youth else "The youth"
     db.set_pending_adoption_status(pending_id, "declined")

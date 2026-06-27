@@ -36,7 +36,7 @@ def apply_gathering_on_season_change(
     """On season rollover: announce Gathering; bonus dens with active cat treaties."""
     title, flavor = GATHERING_BY_SEASON.get(
         season,
-        ("Clan Gathering", "The four Clans gather at **Fourtrees** under the warrior code."),
+        ("clan gathering", "the four clans gather at **fourtrees** under the warrior code."),
     )
     lines = [f"**{title}** — {flavor}"]
 
@@ -76,6 +76,6 @@ def apply_gathering_on_season_change(
         lines.extend(rewarded)
     else:
         lines.append(
-            "_No wolf dens hold active Clan treaties; the Gathering passes without your pack at Fourtrees._"
+            "_no wolf dens hold active clan treaties; the gathering passes without your pack at fourtrees._"
         )
     return lines

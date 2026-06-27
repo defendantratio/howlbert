@@ -25,13 +25,13 @@ def has_spirit_curse(user) -> bool:
 def format_spirit_curse_line(user) -> str | None:
     if not has_spirit_curse(user):
         return None
-    return f"**Spirit Curse**; {SPIRIT_CURSE_BLURB}"
+    return f"**spirit curse**; {SPIRIT_CURSE_BLURB}"
 
 
 def apply_spirit_curse(wolf_id: int, *, source: str = "") -> tuple[bool, str]:
     wolf = db.get_user_by_id(wolf_id)
     if not wolf:
-        return False, "Wolf not found."
+        return False, "wolf not found."
     if has_spirit_curse(wolf):
         return False, f"**{wolf['wolf_name']}** already bears a spirit curse."
     add_long_term_injury(wolf_id, SPIRIT_CURSE_KEY)
@@ -64,11 +64,11 @@ def spirit_curse_check_adjustment(
     spiritual = skill_key in ("medicine", "herblore", "tracking", "survival") or "attr_wis" in attr_keys
     if not spiritual:
         return 0, ""
-    return -1, "Spirit curse (−1)"
+    return -1, "spirit curse (−1)"
 
 
 def maybe_curse_from_whisper(user, *, weather: str) -> str | None:
-    """Mistmoor / Drown-Sick fog sniff: rare direct curse instead of anxiety."""
+    """mistmoor / drown-sick fog sniff: rare direct curse instead of anxiety."""
     from engine.whispering_wild import is_whispering_weather, _whispering_affinity
 
     if not user or not is_whispering_weather(weather) or not _whispering_affinity(user):
@@ -77,5 +77,5 @@ def maybe_curse_from_whisper(user, *, weather: str) -> str | None:
         return None
     if random.random() > 0.07:
         return None
-    ok, msg = apply_spirit_curse(user["id"], source="Belly-Rip whisper on the wind")
+    ok, msg = apply_spirit_curse(user["id"], source="belly-rip whisper on the wind")
     return msg if ok else None

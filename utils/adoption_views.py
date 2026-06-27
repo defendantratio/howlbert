@@ -19,7 +19,7 @@ class AdoptionConsentView(discord.ui.View):
         pending = db.get_pending_adoption(self.pending_id)
         if not pending or pending["status"] != "pending":
             await interaction.response.send_message(
-                embed=howlbert_embed("Expired", "This adoption request is no longer active.", color=ERROR_COLOR),
+                embed=howlbert_embed("expired", "this adoption request is no longer active.", color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return
@@ -27,8 +27,8 @@ class AdoptionConsentView(discord.ui.View):
         if interaction.user.id != pending["youth_owner_discord_id"]:
             await interaction.response.send_message(
                 embed=howlbert_embed(
-                    "Not Your Wolf",
-                    "Only the youth's player can accept or decline.",
+                    "not your wolf",
+                    "only the youth's player can accept or decline.",
                     color=ERROR_COLOR,
                 ),
                 ephemeral=reply_ephemeral(),
@@ -41,7 +41,7 @@ class AdoptionConsentView(discord.ui.View):
         if not adopter1 or not adopter2 or not youth:
             db.set_pending_adoption_status(self.pending_id, "expired")
             await interaction.response.send_message(
-                embed=howlbert_embed("Invalid", "One of the wolves no longer exists.", color=ERROR_COLOR),
+                embed=howlbert_embed("invalid", "one of the wolves no longer exists.", color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return
@@ -50,14 +50,14 @@ class AdoptionConsentView(discord.ui.View):
             ok, msg = decline_pending_adoption(self.pending_id)
             if not ok:
                 await interaction.response.send_message(
-                    embed=howlbert_embed("Expired", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
+                    embed=howlbert_embed("expired", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
                 )
                 return
             self.stop()
             for item in self.children:
                 item.disabled = True
             await interaction.response.edit_message(
-                embed=howlbert_embed("Adoption Declined", msg, color=ERROR_COLOR),
+                embed=howlbert_embed("adoption declined", msg, color=ERROR_COLOR),
                 view=self,
             )
             return
@@ -65,22 +65,22 @@ class AdoptionConsentView(discord.ui.View):
         ok, msg = accept_pending_adoption(self.pending_id)
         if not ok:
             await interaction.response.send_message(
-                embed=howlbert_embed("Cannot Adopt", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
+                embed=howlbert_embed("cannot adopt", msg, color=ERROR_COLOR), ephemeral=reply_ephemeral()
             )
             return
         self.stop()
         for item in self.children:
             item.disabled = True
         await interaction.response.edit_message(
-            embed=howlbert_embed("Adopted", msg, color=SUCCESS_COLOR),
+            embed=howlbert_embed("adopted", msg, color=SUCCESS_COLOR),
             view=self,
         )
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="accept", style=discord.ButtonStyle.success)
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._finish(interaction, accepted=True)
 
-    @discord.ui.button(label="Decline", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="decline", style=discord.ButtonStyle.danger)
     async def decline(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._finish(interaction, accepted=False)
 

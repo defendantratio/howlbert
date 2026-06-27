@@ -52,13 +52,19 @@ def format_herb_names(keys: set[str] | frozenset[str]) -> str:
 def restricted_held_by_user(user) -> set[str]:
     if not user:
         return frozenset()
-    stacks = db.get_herb_stacks(user["id"])
-    return {s["herb_key"] for s in stacks if is_restricted_herb(s["herb_key"])}
+    held: set[str] = set()
+    for row in db.get_inventory(user["discord_id"]):
+        if not row["key"].startswith("herb_"):
+            continue
+        herb_key = row["key"].replace("herb_", "", 1)
+        if is_restricted_herb(herb_key) and int(row["quantity"]) > 0:
+            held.add(herb_key)
+    return frozenset(held)
 
 
 def format_standing_penalty(kick_msg: str, delta: int) -> str:
     sign = "−" if delta < 0 else "+"
-    note = f"Standing **{sign}{abs(delta)}**."
+    note = f"standing **{sign}{abs(delta)}**."
     if kick_msg:
         return f"{note} {kick_msg}"
     return note
@@ -70,7 +76,7 @@ def roll_restricted_hoard_caught(chance: float | None = None) -> bool:
 
 
 def penalize_restricted_misuse(wolf_id: int, reason: str) -> str:
-    """Apply standing loss when a non-Medic misuses a restricted herb. Returns kick text."""
+    """apply standing loss when a non-medic misuses a restricted herb. returns kick text."""
     _ = reason
     return db.adjust_wolf_standing_by_id(wolf_id, RESTRICTED_HERB_MISUSE_STANDING)
 
@@ -89,7 +95,7 @@ def apply_caught_hoarding(
     """Penalize a caught hoarder; returns user-facing note."""
     kick = penalize_restricted_hoarding(user["id"])
     standing = format_standing_penalty(kick, RESTRICTED_HERB_HOARD_STANDING)
-    return f"**Caught hoarding poison herbs**; {flavor}\n{standing}"
+    return f"**caught hoarding poison herbs**; {flavor}\n{standing}"
 
 
 def medic_rounds_scan_hoarders(pack_id: int) -> tuple[list[dict], list[str]]:
@@ -109,7 +115,7 @@ def medic_rounds_scan_hoarders(pack_id: int) -> tuple[list[dict], list[str]]:
         names = format_herb_names(held)
         if roll_restricted_hoard_caught(RESTRICTED_HERB_MEDIC_ROUNDS_CATCH_CHANCE):
             flavor = (
-                f"**Den checkup** found **{names}** in **{wolf['wolf_name']}**'s herb bag; "
+                f"**den checkup** found **{names}** in **{wolf['wolf_name']}**'s inventory; "
                 "poison plants belong in the healers' store."
             )
             note = apply_caught_hoarding(wolf, held, flavor=flavor)
@@ -129,7 +135,7 @@ def medic_rounds_scan_hoarders(pack_id: int) -> tuple[list[dict], list[str]]:
 
 
 def medic_rounds_catch_hoarders(pack_id: int) -> list[dict]:
-    """Backward-compatible wrapper returning only caught wolves."""
+    """backward-compatible wrapper returning only caught wolves."""
     caught, _ = medic_rounds_scan_hoarders(pack_id)
     return caught
 
@@ -162,8 +168,8 @@ def try_catch_restricted_hoarder(
 
 def on_restricted_herb_acquired(user, herb_key: str) -> str:
     """
-    Call when a restricted herb enters a wolf's personal forage bag.
-    No automatic standing loss; warn non-Medics to turn herbs in.
+    call when a restricted herb enters a wolf's personal forage bag.
+    no automatic standing loss; warn non-medics to turn herbs in.
     """
     if not user or not is_restricted_herb(herb_key):
         return ""
@@ -171,8 +177,8 @@ def on_restricted_herb_acquired(user, herb_key: str) -> str:
         return ""
     name = HERBS.get(herb_key, {}).get("name", herb_key.replace("_", " ").title())
     return (
-        f"**{name}** is Medic knowledge. {RESTRICTED_HERB_HOARD_WARN}\n"
-        "_Use `/herbs action:turnin` to hand it to the healers' den safely._"
+        f"**{name}** is medic knowledge. {RESTRICTED_HERB_HOARD_WARN}\n"
+        "_use `/herbs action:turnin` to hand it to the healers' den safely._"
     )
 
 
@@ -187,7 +193,7 @@ def on_restricted_herb_treat(healer, herb_key: str) -> str:
 
 
 def herbbag_hoard_warning(user) -> str:
-    """Footer note when a non-Medic's bag still holds restricted herbs."""
+    """footer note when a non-medic's bag still holds restricted herbs."""
     if not user or is_full_medic(user):
         return ""
     held = restricted_held_by_user(user)
@@ -195,9 +201,9 @@ def herbbag_hoard_warning(user) -> str:
         return ""
     names = format_herb_names(held)
     return (
-        f"\n\n⚠ **Restricted in bag:** {names}.\n"
+        f"\n\n⚠ **restricted in inventory:** {names}.\n"
         f"{RESTRICTED_HERB_HOARD_WARN}\n"
-        "_Use `/herbs action:turnin` before a patrol catches the scent._"
+        "_use `/herbs action:turnin` before a patrol catches the scent._"
     )
 
 
@@ -227,8 +233,16 @@ def audit_restricted_hoarding(user) -> str | None:
 
 
 def apply_restricted_hoard_audit_on_rollover(conn) -> list[dict]:
-    """Roll catch checks for non-Medics still hoarding restricted herbs each sunrise."""
-    rows = conn.execute("SELECT DISTINCT wolf_id FROM herb_stacks").fetchall()
+    """roll catch checks for non-medics still hoarding restricted herbs each sunrise."""
+    rows = conn.execute(
+        """
+        SELECT DISTINCT u.id AS wolf_id
+        FROM users u
+        JOIN inventory i ON i.wolf_id = u.id
+        JOIN items it ON it.id = i.item_id
+        WHERE it.key LIKE 'herb_%' AND i.quantity > 0
+        """
+    ).fetchall()
     notes: list[dict] = []
     seen: set[int] = set()
     for row in rows:

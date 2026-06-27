@@ -48,8 +48,8 @@ def thirst_activity_block(user) -> str | None:
     thirst = user_thirst(user)
     if thirst < THIRST_CRITICAL_THRESHOLD:
         return (
-            f"You're parched (**{thirst}/{THIRST_MAX}**); `/drink` at the creek, eat moist prey, "
-            "or ask your **Alpha** for `/packlife action:drinkall` before ranging out."
+            f"you're parched (**{thirst}/{THIRST_MAX}**); `/drink` at the creek, eat moist prey, "
+            "or ask your **alpha** for `/packlife action:drinkall` before ranging out."
         )
     return None
 
@@ -58,7 +58,7 @@ def apply_thirst_bone_penalty(amount: int, thirst: int) -> tuple[int, str]:
     if amount <= 0 or thirst >= THIRST_LOW_THRESHOLD:
         return amount, ""
     reduced = max(0, int(amount * (100 - THIRST_HUNT_PENALTY_PCT) / 100))
-    note = f"Low thirst ({thirst}); **−{THIRST_HUNT_PENALTY_PCT}%** bone payout."
+    note = f"low thirst ({thirst}); **−{THIRST_HUNT_PENALTY_PCT}%** bone payout."
     return reduced, note
 
 
@@ -100,7 +100,7 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
 
     wait = drink_cooldown_minutes(user)
     if wait > 0:
-        return False, f"The creek is right there; give it **{wait}** min before you lap again."
+        return False, f"the creek is right there; give it **{wait}** min before you lap again."
 
     db.update_user(
         user["discord_id"],
@@ -124,7 +124,7 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
     mood = db.adjust_mood(user["id"], DRINK_MOOD_RESTORE)
 
     msg = (
-        f"Cold water from the **{season}** creek; thirst **{thirst}** (+{thirst_restore}), "
+        f"cold water from the **{season}** creek; thirst **{thirst}** (+{thirst_restore}), "
         f"hunger **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
     )
     if plot_line:
@@ -134,8 +134,8 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
 
         msg += try_plot_witness(user, guild_id, day, action="drink")
     if hp_gain:
-        msg += f", **+{hp_gain} HP**"
-    msg += f". _(Next drink in {DRINK_COOLDOWN_MINUTES} min.)_"
+        msg += f", **+{hp_gain} hp**"
+    msg += f". _(next drink in {DRINK_COOLDOWN_MINUTES} min.)_"
     return True, msg
 
 
@@ -154,15 +154,15 @@ def run_drinkall(
 
     pack = db.get_pack(pack_id)
     if not pack:
-        return False, "Pack not found.", 0
+        return False, "pack not found.", 0
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
     if int(pack["last_drinkall_day"]) >= day:
-        return False, "The den already drank together at the creek this sunrise.", 0
+        return False, "the den already drank together at the creek this sunrise.", 0
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
-        return False, "No wolves in the den.", 0
+        return False, "no wolves in the den.", 0
 
     drank = 0
     lines: list[str] = []
@@ -176,13 +176,13 @@ def run_drinkall(
         drank += 1
 
     if drank == 0:
-        return False, "No packmate could drink at the creek.", 0
+        return False, "no packmate could drink at the creek.", 0
 
     db.set_pack_drinkall_day(pack_id, day)
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
         summary += f"\n_…and {len(lines) - 12} more._"
     msg = (
-        f"**Communal drink** at the creek; **{drank}** wolf(s) lapped up.\n{summary}"
+        f"**communal drink** at the creek; **{drank}** wolf(s) lapped up.\n{summary}"
     )
     return True, msg, drank

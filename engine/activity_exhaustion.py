@@ -12,7 +12,7 @@ from engine.herb_buffs import buffs_json, get_buffs
 
 ACTIVITY_SKILL: dict[str, str] = {
     "hunt": "hunting",
-    "forage": "survival",
+    "forage": "herblore",
     "track": "tracking",
     "fish": "survival",
     "scavenge": "survival",
@@ -42,10 +42,13 @@ ACTIVITY_LABEL: dict[str, str] = {
 
 
 def skill_for_activity(activity_key: str, user=None) -> str:
-    key = ACTIVITY_SKILL.get(activity_key, "survival")
-    if activity_key == "forage" and user and is_skill_proficient(user, "herblore"):
-        return "herblore"
-    return key
+    if activity_key == "forage" and user:
+        from engine.role_privileges import is_forager
+
+        if is_skill_proficient(user, "herblore") or is_forager(user):
+            return "herblore"
+        return "survival"
+    return ACTIVITY_SKILL.get(activity_key, "survival")
 
 
 def _fatigue_state(user, day: int) -> tuple[dict, dict, int]:
@@ -96,7 +99,7 @@ def _exhaustion_gain(activity_count: int, total_count: int, proficient: bool, cu
 
 
 def clear_activity_fatigue(user, day: int) -> None:
-    """Reset strenuous-activity counters after a rest break (short or long)."""
+    """reset strenuous-activity counters after a rest break (short or long)."""
     if not user:
         return
     buffs = get_buffs(user)
@@ -164,7 +167,7 @@ def apply_activity_fatigue(
         gain, skipped = consume_march_exhaustion_skip(conn, fresh, gain)
         if gain <= 0:
             if skipped:
-                return "_Burnet eases the worst of the strain — no exhaustion this time._"
+                return "_burnet eases the worst of the strain — no exhaustion this time._"
             return None
         new_ex = min(EXHAUSTION_MAX, int(fresh["exhaustion"]) + gain)
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_ex)
@@ -176,7 +179,7 @@ def apply_activity_fatigue(
         reason = f"repeated {label} ({activity_count}×) — you're not trained for this"
     note = f"**+{gain} exhaustion** — {reason}"
     if skipped:
-        note += " _(Burnet softened the worst of it)_"
+        note += " _(burnet softened the worst of it)_"
     return note
 
 

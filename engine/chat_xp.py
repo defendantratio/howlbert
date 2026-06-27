@@ -27,8 +27,8 @@ def chat_xp_claimed_today(discord_id: int, guild_id: int, day: int) -> bool:
 def format_chat_xp_status(discord_id: int, guild_id: int, day: int) -> str:
     """Player-facing line for profile or cooldown hints."""
     if chat_xp_claimed_today(discord_id, guild_id, day):
-        return f"Chat XP claimed (+{CHAT_XP_PER_SUNRISE} account XP this sunrise)"
-    return f"Chat XP unclaimed (+{CHAT_XP_PER_SUNRISE} on your next message)"
+        return f"chat xp claimed (+{CHAT_XP_PER_SUNRISE} account xp this sunrise)"
+    return f"chat xp unclaimed (+{CHAT_XP_PER_SUNRISE} on your next message)"
 
 
 def try_chat_message_xp(message: discord.Message) -> bool:

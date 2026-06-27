@@ -17,13 +17,13 @@ from engine.prey_items import is_cannibal_prey
 def _apply_caught_penalty(user) -> str:
     if not user["pack_id"]:
         return (
-            "\n_The den would have seen everything; you're lucky no pack claims you right now._"
+            "\n_the den would have seen everything; you're lucky no pack claims you right now._"
         )
     db.adjust_wolf_standing(user["discord_id"], -CANNIBALISM_STANDING_PENALTY)
     db.adjust_mood(user["id"], -CANNIBALISM_MOOD_PENALTY)
     return (
-        f"\n**Caught.** Wolf-meat at the den does not go unnoticed. "
-        f"Standing **−{CANNIBALISM_STANDING_PENALTY}** · mood **−{CANNIBALISM_MOOD_PENALTY}**."
+        f"\n**caught.** wolf-meat at the den does not go unnoticed. "
+        f"standing **−{CANNIBALISM_STANDING_PENALTY}** · mood **−{CANNIBALISM_MOOD_PENALTY}**."
     )
 
 
@@ -35,7 +35,7 @@ def cannibalism_public_exposure(user, prey_key: str, *, action: str) -> str:
     if not is_cannibal_prey(prey_key):
         return ""
     if action == "preypile":
-        lead = "You laid **wolf flesh** at the fresh-kill cache for everyone to see."
+        lead = "you laid **wolf flesh** at the fresh-kill cache for everyone to see."
     elif action == "feedall":
         lead = "You served **wolf flesh** to the whole den at communal feed."
     else:
@@ -44,32 +44,32 @@ def cannibalism_public_exposure(user, prey_key: str, *, action: str) -> str:
 
 
 def cannibalism_eat_consequences(user, prey_key: str) -> str:
-    """Private /eat or feedall bite; always costs mood; roll whether anyone notices."""
+    """private /eat or feedall bite; always costs mood; roll whether anyone notices."""
     if not is_cannibal_prey(prey_key):
         return ""
     db.adjust_mood(user["id"], -CANNIBALISM_EAT_MOOD_PENALTY)
-    msg = f"\nThe taste lingers; mood **−{CANNIBALISM_EAT_MOOD_PENALTY}**."
+    msg = f"\nthe taste lingers; mood **−{CANNIBALISM_EAT_MOOD_PENALTY}**."
     from engine.disease_contract import try_contract_disease
 
     filth_roll = random.random()
     if filth_roll < 0.18:
         sick = try_contract_disease(user, "hepatitis", chance=1.0)
         if sick:
-            msg += f"\nWolf flesh carries rot in the gut; {sick}"
+            msg += f"\nwolf flesh carries rot in the gut; {sick}"
     elif filth_roll < 0.24:
         sick = try_contract_disease(user, "wasting_sickness", "waning", chance=1.0)
         if sick:
-            msg += f"\nSomething wrong settles in the marrow; {sick}"
+            msg += f"\nsomething wrong settles in the marrow; {sick}"
     if random.randint(1, 100) > CANNIBALISM_CAUGHT_CHANCE:
         return msg
     if not user["pack_id"]:
-        return msg + "\n_No clan saw it; but the taste stays with you._"
+        return msg + "\n_no clan saw it; but the taste stays with you._"
     db.adjust_wolf_standing(user["discord_id"], -CANNIBALISM_STANDING_PENALTY)
     extra_mood = CANNIBALISM_MOOD_PENALTY - CANNIBALISM_EAT_MOOD_PENALTY
     if extra_mood > 0:
         db.adjust_mood(user["id"], -extra_mood)
     return (
         msg
-        + f"\n**Caught.** A patrol saw you tear into a wolf. "
-        f"Standing **−{CANNIBALISM_STANDING_PENALTY}** · mood **−{CANNIBALISM_MOOD_PENALTY}** total."
+        + f"\n**caught.** a patrol saw you tear into a wolf. "
+        f"standing **−{CANNIBALISM_STANDING_PENALTY}** · mood **−{CANNIBALISM_MOOD_PENALTY}** total."
     )

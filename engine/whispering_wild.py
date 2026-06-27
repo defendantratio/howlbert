@@ -26,8 +26,8 @@ def _whispering_affinity(user) -> bool:
 
 def spirit_whisper_on_sniff(user, *, weather: str) -> str | None:
     """
-    Fog/rain/storm sniff: spirit flavor; Mistmoor & Drown-Sick may contract early anxiety.
-    Returns extra embed lines or None.
+    fog/rain/storm sniff: spirit flavor; mistmoor & drown-sick may contract early anxiety.
+    returns extra embed lines or none.
     """
     if not is_whispering_weather(weather):
         return None
@@ -47,14 +47,14 @@ def spirit_whisper_on_sniff(user, *, weather: str) -> str | None:
                 chance=WHISPERING_SNIFF_ANXIETY_CHANCE,
             )
             if ill:
-                bits.append(f"\n\n**Whispering unease**; {ill}")
+                bits.append(f"\n\n**whispering unease**; {ill}")
         elif has_spirit_curse(user):
             bits.append("\n\n_The curse answers the fog; the whispers are louder tonight._")
     return "\n".join(bits)
 
 
 def format_mental_rounds_line(user) -> str | None:
-    """Medic rounds: flag wolves with mental illness (Warriors cough-check style)."""
+    """medic rounds: flag wolves with mental illness (warriors cough-check style)."""
     from engine.mental_effects import _parsed
     from engine.diseases import get_stage_info
 

@@ -66,7 +66,7 @@ def test_war_flash_when_war_exists():
     fake_war = {"territory_name": "Pine Ridge", "attacker_pack_id": 1, "defender_pack_id": 2}
     with patch("engine.pack_relations.db.get_active_war_between_packs", return_value=fake_war):
         msg = format_standing_war_flash(1, 1, 2, 0)
-        assert "Territory war declared" in msg
+        assert "territory war declared" in msg.lower()
         assert "Pine Ridge" in msg
 
 

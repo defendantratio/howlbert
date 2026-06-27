@@ -24,7 +24,7 @@ def fighter_name(fighter, bot: commands.Bot) -> str:
     if user:
         return user["wolf_name"]
     member = bot.get_user(fighter["discord_id"])
-    return member.display_name if member else "Unknown"
+    return member.display_name if member else "unknown"
 
 
 def assign_npc_display_name(encounter_id: int, template_key: str, base_name: str) -> str:

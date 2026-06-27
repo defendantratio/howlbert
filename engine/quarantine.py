@@ -25,7 +25,7 @@ def quarantine_activity_block(user) -> str | None:
     if not is_quarantined(user):
         return None
     return (
-        "**Quarantined**; you stay in the sick den. No hunting, grooming, or mingling "
-        "until a **Medic**, **Alpha**, or **Advisor** releases you with "
+        "**quarantined**; you stay in the sick den. no hunting, grooming, or mingling "
+        "until a **medic**, **alpha**, or **advisor** releases you with "
         "`/medic action:quarantine release:true`."
     )

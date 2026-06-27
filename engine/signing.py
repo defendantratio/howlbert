@@ -104,17 +104,17 @@ SIGNAL_CATALOG: dict[str, dict] = {
     },
 }
 
-TARGET_REQUIRED = {"submit", "soothe", "threaten"}
-PACK_WIDE = {"alert", "rally"}
+target_required = {"submit", "soothe", "threaten"}
+pack_wide = {"alert", "rally"}
 
 
 def signal_choices() -> list[tuple[str, str]]:
     """(label, key) pairs for the command choice list."""
-    return [(info["name"], key) for key, info in SIGNAL_CATALOG.items()]
+    return [(info["name"], key) for key, info in signal_catalog.items()]
 
 
 def wolf_is_silenced(user) -> tuple[bool, str]:
-    """True if a trait or genetic condition stops this wolf from howling."""
+    """true if a trait or genetic condition stops this wolf from howling."""
     from engine.character_traits import trait_blocks_howl
     from engine.genetics import genetic_blocks_howl
 
@@ -125,37 +125,37 @@ def wolf_is_silenced(user) -> tuple[bool, str]:
 
 
 def _posture(signal_key: str) -> str:
-    return random.choice(SIGNAL_CATALOG[signal_key]["posture"])
+    return random.choice(signal_catalog[signal_key]["posture"])
 
 
 def _standing_field(kick: str, delta: int) -> str:
     if kick == "kicked":
-        return "**Cast out**; loner"
+        return "**cast out**; loner"
     if kick == "broken_rite":
-        return "**Rite of the Broken Canine**"
+        return "**rite of the broken canine**"
     return f"{'+' if delta >= 0 else ''}{delta}"
 
 
 def _resolve_target(interaction, user, wolf, own_wolf) -> tuple[object | None, str | None]:
     """Resolve a directed-signal target; returns (target_row, error_message)."""
     if wolf and own_wolf:
-        return None, "Pick either another **player** or `own_wolf`; not both."
+        return None, "pick either another **player** or `own_wolf`; not both."
     if own_wolf:
         rows = db.list_user_wolves(interaction.user.id)
         target = next(
             (w for w in rows if w["wolf_name"].lower() == own_wolf.strip().lower()), None
         )
         if not target:
-            return None, "No wolf with that name on your account. Check `/wolves`."
+            return None, "no wolf with that name on your account. check `/wolves`."
         if target["id"] == user["id"]:
-            return None, "You can't sign at yourself; pick another wolf."
+            return None, "you can't sign at yourself; pick another wolf."
         return target, None
     if wolf:
         if wolf.bot or wolf.id == interaction.user.id:
-            return None, "Pick another **player**, or your other wolf via `own_wolf`."
+            return None, "pick another **player**, or your other wolf via `own_wolf`."
         target = db.get_user(wolf.id)
         if not target:
-            return None, "They haven't registered a wolf."
+            return None, "they haven't registered a wolf."
         return target, None
     return None, "__no_target__"
 
@@ -172,18 +172,18 @@ async def execute_sign(
     user = db.get_user(interaction.user.id)
     if not user:
         await interaction.response.send_message(
-            embed=howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR),
+            embed=howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR),
             ephemeral=reply_ephemeral(),
         )
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+        await interaction.response.send_message("use this in a server.", ephemeral=reply_ephemeral())
         return
 
     info = SIGNAL_CATALOG.get(signal_key)
     if not info:
         await interaction.response.send_message(
-            embed=howlbert_embed("Unknown Signal", "Pick a signal from the list.", color=ERROR_COLOR),
+            embed=howlbert_embed("unknown signal", "pick a signal from the list.", color=ERROR_COLOR),
             ephemeral=reply_ephemeral(),
         )
         return
@@ -194,8 +194,8 @@ async def execute_sign(
 
     if int(user["last_sign_day"]) >= day:
         embed = howlbert_embed(
-            "Already Signed",
-            "Your body has already spoken this sunrise; the den has read you once today.",
+            "already signed",
+            "your body has already spoken this sunrise; the den has read you once today.",
             color=ERROR_COLOR,
         )
         embed.set_footer(text="/sign signal:read · once per sunrise · /world action:cooldowns")
@@ -211,7 +211,7 @@ async def execute_sign(
         if err == "__no_target__":
             await interaction.response.send_message(
                 embed=howlbert_embed(
-                    "No Target",
+                    "no target",
                     f"**{info['name']}** is aimed at a denmate; pick a **player** or `own_wolf`.",
                     color=ERROR_COLOR,
                 ),
@@ -220,15 +220,15 @@ async def execute_sign(
             return
         if err:
             await interaction.response.send_message(
-                embed=howlbert_embed("Pick a Target", err, color=ERROR_COLOR),
+                embed=howlbert_embed("pick a target", err, color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return
         if not pack_id or int(target["pack_id"] or 0) != pack_id:
             await interaction.response.send_message(
                 embed=howlbert_embed(
-                    "Not Packmates",
-                    "You can only sign at wolves in the **same den**.",
+                    "not packmates",
+                    "you can only sign at wolves in the **same den**.",
                     color=ERROR_COLOR,
                 ),
                 ephemeral=reply_ephemeral(),
@@ -246,17 +246,17 @@ async def execute_sign(
     target_id = target["id"] if target else None
 
     if signal_key == "rally":
-        lines.append("_The pack reads the call to gather._")
+        lines.append("_the pack reads the call to gather._")
         standing_delta = SIGN_RALLY_STANDING
         if pack_id:
             unity_delta = SIGN_RALLY_UNITY_MUTE if silenced else SIGN_RALLY_UNITY_NORMAL
             if silenced:
                 footer_bits.append(f"{silence_label}: body-rally replaces your howl")
         else:
-            lines.append("_No den answers a lone rally._")
+            lines.append("_no den answers a lone rally._")
 
     elif signal_key == "alert":
-        lines.append("_Heads snap up across the den; everyone is watching now._")
+        lines.append("_heads snap up across the den; everyone is watching now._")
         standing_delta = SIGN_ALERT_STANDING
         if pack_id:
             unity_delta = SIGN_ALERT_UNITY
@@ -270,7 +270,7 @@ async def execute_sign(
                 f"**+{SIGN_PLAY_MOOD} mood** each (you: **{your_mood}**, them: **{their_mood}**)."
             )
         else:
-            lines.append(f"The den loosens up; **+{SIGN_PLAY_MOOD} mood** (you: **{your_mood}**).")
+            lines.append(f"the den loosens up; **+{SIGN_PLAY_MOOD} mood** (you: **{your_mood}**).")
         if pack_id:
             unity_delta = SIGN_PLAY_UNITY
 
@@ -319,10 +319,10 @@ async def execute_sign(
     # Apply pack unity + standing.
     if unity_delta and pack_id:
         db.adjust_pack_unity(pack_id, unity_delta)
-        fields.append(("Den Unity", f"{'+' if unity_delta >= 0 else ''}{unity_delta}", True))
+        fields.append(("den unity", f"{'+' if unity_delta >= 0 else ''}{unity_delta}", True))
     if standing_delta:
         kick = db.adjust_wolf_standing(interaction.user.id, standing_delta)
-        fields.append(("Standing", _standing_field(kick, standing_delta), True))
+        fields.append(("standing", _standing_field(kick, standing_delta), True))
         from engine.broken_canine import standing_expulsion_note
 
         note = standing_expulsion_note(kick, pack_id or None)
@@ -339,7 +339,7 @@ async def execute_sign(
         lines.append(f"\n_{message.strip()}_")
 
     color = ERROR_COLOR if signal_key == "threaten" else SUCCESS_COLOR
-    embed = howlbert_embed(f"Sign · {info['name']}", "\n".join(lines), color=color)
+    embed = howlbert_embed(f"sign · {info['name']}", "\n".join(lines), color=color)
     for name, value, inline in fields:
         embed.add_field(name=name, value=value, inline=inline)
     if signal_key in PACK_WIDE and pack_id:
@@ -353,20 +353,20 @@ async def execute_read(interaction: discord.Interaction) -> None:
     user = db.get_user(interaction.user.id)
     if not user:
         await interaction.response.send_message(
-            embed=howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR),
+            embed=howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR),
             ephemeral=reply_ephemeral(),
         )
         return
     if not interaction.guild:
-        await interaction.response.send_message("Use this in a server.", ephemeral=reply_ephemeral())
+        await interaction.response.send_message("use this in a server.", ephemeral=reply_ephemeral())
         return
 
     pack_id = int(user["pack_id"]) if user["pack_id"] else 0
     if not pack_id:
         await interaction.response.send_message(
             embed=howlbert_embed(
-                "No Den",
-                "You have no den to read; join a Great Pack with `/setfaction`.",
+                "no den",
+                "you have no den to read; join a great pack with `/setfaction`.",
                 color=ERROR_COLOR,
             ),
             ephemeral=reply_ephemeral(),
@@ -378,8 +378,8 @@ async def execute_read(interaction: discord.Interaction) -> None:
 
     if int(user["last_sign_read_day"]) >= day:
         embed = howlbert_embed(
-            "Already Answered",
-            "You've already read and answered the den's signs this sunrise.",
+            "already answered",
+            "you've already read and answered the den's signs this sunrise.",
             color=ERROR_COLOR,
         )
         embed.set_footer(text="resets next sunrise · /world action:cooldowns")
@@ -390,8 +390,8 @@ async def execute_read(interaction: discord.Interaction) -> None:
     if not signal:
         await interaction.response.send_message(
             embed=howlbert_embed(
-                "Den is Quiet",
-                "No new body-language to read in your den this sunrise.",
+                "den is quiet",
+                "no new body-language to read in your den this sunrise.",
                 color=ERROR_COLOR,
             ),
             ephemeral=reply_ephemeral(),
@@ -412,14 +412,14 @@ async def execute_read(interaction: discord.Interaction) -> None:
     if signal["signal_key"] == "rally":
         db.adjust_pack_unity(pack_id, SIGN_READ_RALLY_UNITY)
         kick = db.adjust_wolf_standing(interaction.user.id, SIGN_READ_STANDING)
-        lines.append(f"You join the rally; den unity **+{SIGN_READ_RALLY_UNITY}**.")
-        fields.append(("Den Unity", f"+{SIGN_READ_RALLY_UNITY}"))
-        fields.append(("Standing", _standing_field(kick, SIGN_READ_STANDING)))
+        lines.append(f"you join the rally; den unity **+{SIGN_READ_RALLY_UNITY}**.")
+        fields.append(("den unity", f"+{SIGN_READ_RALLY_UNITY}"))
+        fields.append(("standing", _standing_field(kick, SIGN_READ_STANDING)))
 
     db.mark_signal_responded(int(signal["id"]), user["id"])
     db.update_user(interaction.user.id, last_sign_read_day=day)
 
-    embed = howlbert_embed("Sign · Read", "\n".join(lines), color=SUCCESS_COLOR)
+    embed = howlbert_embed("sign · read", "\n".join(lines), color=SUCCESS_COLOR)
     for name, value in fields:
         embed.add_field(name=name, value=value, inline=True)
     embed.set_footer(text="once per sunrise · /world action:cooldowns")

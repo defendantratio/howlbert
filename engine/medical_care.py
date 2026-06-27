@@ -30,22 +30,22 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
     if wolf_role_key(medic) != "medic":
         return (
             False,
-            "Only full **Medics** may walk den checkups. "
-            "Apprentices observe cases with `/medic action:observe`.",
+            "only full **medics** may walk den checkups. "
+            "apprentices observe cases with `/medic action:observe`.",
         )
     last = int(medic["last_medic_rounds_day"] if "last_medic_rounds_day" in medic.keys() else 0)
     if day > 0 and last >= day:
         return (
             False,
-            "You already walked den checkups this sunrise. "
-            "Wait for the next `/rollover` (or ask an admin to call one).",
+            "you already walked den checkups this sunrise. "
+            "wait for the next `/rollover` (or ask an admin to call one).",
         )
     pack_id = medic["pack_id"] if "pack_id" in medic.keys() else None
     if not pack_id:
-        return False, "Join a pack to walk the sick den."
+        return False, "join a pack to walk the sick den."
     wolves = db.get_pack_den_wolves(pack_id)
     if not wolves:
-        return False, "The den is empty."
+        return False, "the den is empty."
 
     contagious: list[str] = []
     bleeding: list[str] = []
@@ -79,9 +79,13 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
             bleeding.append(f"**{name}**: bleeding risk")
         if is_full_medic(wolf) and sacred_visit_due(wolf, day):
             sacred_due.append(f"**{name}**: sacred visit due")
-        stacks = db.get_herb_stacks(wolf["id"])
-        if len(stacks) < 2:
-            low_herbs.append(f"**{name}**: herb bag thin ({len(stacks)} stacks)")
+        inv_count = sum(
+            int(row["quantity"])
+            for row in db.get_inventory(wolf["discord_id"])
+            if row["key"].startswith("herb_") or row["key"] == "stick"
+        )
+        if inv_count < 2:
+            low_herbs.append(f"**{name}**: low herbs ({inv_count} in inventory)")
         cond = wolf["condition"] if "condition" in wolf.keys() else "healthy"
         if cond == "dying" or (int(wolf["hp"]) <= 0 and cond != "dead"):
             dying.append(f"**{name}**: **dying**")
@@ -89,41 +93,41 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
         if rest_until > day:
             bone_rest.append(f"**{name}**: splint rest **{rest_until - day}** sunrise(s)")
 
-    lines = [f"**Den checkup**: **{len(wolves)}** wolves checked."]
+    lines = [f"**den checkup**: **{len(wolves)}** wolves checked."]
     if dying:
-        lines.append("\n**Dying** (Healer's Code)\n" + "\n".join(dying))
+        lines.append("\n**dying** (healer's code)\n" + "\n".join(dying))
     if contagious:
-        lines.append("\n**Contagious**\n" + "\n".join(contagious[:8]))
+        lines.append("\n**contagious**\n" + "\n".join(contagious[:8]))
     if quarantined:
         lines.append(
-            "\n**Quarantined** (`/medic action:quarantine`)\n" + "\n".join(quarantined[:8])
+            "\n**quarantined** (`/medic action:quarantine`)\n" + "\n".join(quarantined[:8])
         )
     if mental:
-        lines.append("\n**Mind & spirit**\n" + "\n".join(mental[:8]))
+        lines.append("\n**mind & spirit**\n" + "\n".join(mental[:8]))
     if bleeding:
-        lines.append("\n**Bleeding / open wounds**\n" + "\n".join(bleeding[:8]))
+        lines.append("\n**bleeding / open wounds**\n" + "\n".join(bleeding[:8]))
     if bone_rest:
-        lines.append("\n**Splint confinement**\n" + "\n".join(bone_rest[:8]))
+        lines.append("\n**splint confinement**\n" + "\n".join(bone_rest[:8]))
     if sacred_due:
-        lines.append("\n**Sacred visit due**\n" + "\n".join(sacred_due))
+        lines.append("\n**sacred visit due**\n" + "\n".join(sacred_due))
     if low_herbs:
-        lines.append("\n**Low herb warning**\n" + "\n".join(low_herbs))
+        lines.append("\n**low herb warning**\n" + "\n".join(low_herbs))
 
     from engine.restricted_herbs import medic_rounds_scan_hoarders
 
     hoard_caught, hoard_suspicious = medic_rounds_scan_hoarders(pack_id)
     if hoard_caught:
         lines.append(
-            "\n**Poison herb hoarders caught**\n"
+            "\n**poison herb hoarders caught**\n"
             + "\n".join(f"**{row['wolf_name']}**: {row['note']}" for row in hoard_caught[:6])
         )
     if hoard_suspicious:
         lines.append(
-            "\n**Suspicious scent (not proven)**\n" + "\n".join(hoard_suspicious[:6])
+            "\n**suspicious scent (not proven)**\n" + "\n".join(hoard_suspicious[:6])
         )
 
     if len(lines) == 1:
-        lines.append("\n_Den is quiet; no urgent cases._")
+        lines.append("\n_den is quiet; no urgent cases._")
 
     db.update_user_by_id(medic["id"], last_medic_rounds_day=day)
     return True, "\n".join(lines)
@@ -134,9 +138,9 @@ def run_observe_apprentice(
 ) -> tuple[bool, str]:
     """Apprentice RP observation; quest progress, no surgery cooldown."""
     if not has_any_role(medic, "medic_apprentice") and not is_full_medic(medic):
-        return False, "Only **Medics** and **medic apprentices** may observe surgery."
+        return False, "only **medics** and **medic apprentices** may observe surgery."
     if medic["id"] == patient["id"]:
-        return False, "Observe another wolf's case; not your own."
+        return False, "observe another wolf's case; not your own."
     if guild_id:
         from engine.medical_access import can_medic_treat_cross_pack
 
@@ -147,15 +151,15 @@ def run_observe_apprentice(
             return False, cross_msg
     last = int(medic["last_observe_day"] if "last_observe_day" in medic.keys() else 0)
     if last >= day:
-        return False, "You already observed a case this sunrise."
+        return False, "you already observed a case this sunrise."
     injuries = parse_injuries(patient["active_injuries"] if "active_injuries" in patient.keys() else None)
     ill = disease_display(patient)
     focus = ill[0] if ill else (_injury_label(injuries) if injuries else "general wellness")
     db.update_user_by_id(medic["id"], last_observe_day=day)
     role_note = (
-        "_Apprentice paws; watch and learn before you hold the stick._"
+        "_apprentice paws; watch and learn before you hold the stick._"
         if has_any_role(medic, "medic_apprentice") and not is_full_medic(medic)
-        else "_Senior Medic oversees the teaching den._"
+        else "_senior medic oversees the teaching den._"
     )
     return True, (
         f"**{medic['wolf_name']}** watches **{patient['wolf_name']}**'s **{focus}** case.\n"
@@ -178,7 +182,7 @@ def run_spirit_ritual(
 ) -> tuple[bool, str]:
     """Douglas sagewort / lavender / rowan for shock_emotional or spirit cleanse."""
     if not is_medic(medic) and not has_any_role(medic, "medic_apprentice"):
-        return False, "Only **Medics** lead cleansing rituals."
+        return False, "only **medics** lead cleansing rituals."
     if guild_id and medic["id"] != patient["id"]:
         from engine.medical_access import can_medic_treat_cross_pack
 
@@ -192,9 +196,9 @@ def run_spirit_ritual(
         key = "mountain_ash"
     if key not in RITUAL_HERB_KEYS - {"rowan"}:
         allowed = ", ".join(_herb_name(k) for k in sorted(RITUAL_HERB_KEYS - {"rowan"}))
-        return False, f"Use **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan). ({allowed})"
+        return False, f"use **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan). ({allowed})"
     if not participant_has_herb(medic, key):
-        return False, f"No **{_herb_name(key)}** in your herb bag or inventory."
+        return False, f"no **{_herb_name(key)}** in your herb bag or inventory."
 
     from engine.surgery import consume_participant_herb
 
@@ -202,35 +206,35 @@ def run_spirit_ritual(
     dkey, stage = parse_disease(patient["disease"] if "disease" in patient.keys() else None)
     check = medicine_check(medic, dc=15)
     lines = [
-        f"**Cleansing ritual**: {_herb_name(key)} smoke over **{patient['wolf_name']}**",
-        f"Herblore: **{check['total']}** vs DC **15**",
+        f"**cleansing ritual**: {_herb_name(key)} smoke over **{patient['wolf_name']}**",
+        f"herblore: **{check['total']}** vs dc **15**",
     ]
     if not check["success"]:
         from engine.supernatural import apply_spirit_curse
 
         apply_spirit_curse(patient["id"], source="botched cleansing smoke")
-        return False, "\n".join(lines + ["_Smoke wrong; curse scent clings._"])
+        return False, "\n".join(lines + ["_smoke wrong; curse scent clings._"])
 
     from engine.supernatural import lift_spirit_curse
 
     if lift_spirit_curse(patient["id"]):
-        lines.append("_Spirit curse broken; the den breathes easier._")
+        lines.append("_spirit curse broken; the den breathes easier._")
 
     if dkey == "shock_emotional":
         db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], clear_disease=True, condition="healthy")
         db.adjust_mood(patient["id"], 10)
-        lines.append("_Emotional shock eases; breath returns to the den._")
+        lines.append("_emotional shock eases; breath returns to the den._")
     else:
         db.adjust_mood(patient["id"], 6)
         db.update_user_by_id(patient["id"], distressed=0)
-        lines.append("_Spirit weight lifts; `/skills category:spiritual check:spirit_cleanse` fulfilled in ritual._")
+        lines.append("_spirit weight lifts; `/skills category:spiritual check:spirit_cleanse` fulfilled in ritual._")
     return True, "\n".join(lines)
 
 
 def run_naming_ceremony(medic, pup, *, day: int) -> tuple[bool, str]:
-    """Naming at sacred visit site (~3 weeks / under 1 moon)."""
+    """naming at sacred visit site (~3 weeks / under 1 moon)."""
     if not is_full_medic(medic):
-        return False, "Only a full **Medic** may name pups at the sacred place."
+        return False, "only a full **medic** may name pups at the sacred place."
     age = int(pup["age_months"] if "age_months" in pup.keys() else 99)
     if age > 1 or age >= PUP_MAX_MOONS:
         return False, (
@@ -246,11 +250,11 @@ def run_naming_ceremony(medic, pup, *, day: int) -> tuple[bool, str]:
     blessings, blessed = apply_sacred_visit_blessings(medic, day=day)
     bless_note = ""
     if blessed:
-        bless_note = f"\n\n**Blessings:** {' · '.join(blessings)}"
+        bless_note = f"\n\n**blessings:** {' · '.join(blessings)}"
     elif int(medic["last_sacred_day"] if "last_sacred_day" in medic.keys() else 0) >= day:
-        bless_note = "\n\n_Half-moon sacred visit already recorded this sunrise._"
+        bless_note = "\n\n_half-moon sacred visit already recorded this sunrise._"
     return True, (
-        f"At the **sacred place**, **{medic['wolf_name']}** speaks **{pup['wolf_name']}** "
+        f"at the **sacred place**, **{medic['wolf_name']}** speaks **{pup['wolf_name']}** "
         "into the ancestors' hearing; eyes open, name bound to the pack."
         f"{bless_note}"
     )
@@ -259,7 +263,7 @@ def run_naming_ceremony(medic, pup, *, day: int) -> tuple[bool, str]:
 def run_lay_to_rest(medic, deceased, herb_key: str, *, day: int) -> tuple[bool, str]:
     """Prepare the dead with rosemary / lavender / mint."""
     if not is_medic(medic) and not has_any_role(medic, "medic_apprentice"):
-        return False, "Only **Medics** prepare the dead."
+        return False, "only **medics** prepare the dead."
     cond = deceased["condition"] if "condition" in deceased.keys() else "healthy"
     if cond != "dead":
         return False, f"**{deceased['wolf_name']}** is not among the dead."
@@ -267,9 +271,9 @@ def run_lay_to_rest(medic, deceased, herb_key: str, *, day: int) -> tuple[bool, 
     if key == "mint":
         key = "garden_mint"
     if key not in LAY_TO_REST_HERBS:
-        return False, "Use **rosemary**, **lavender**, or **mint** (garden_mint / watermint)."
+        return False, "use **rosemary**, **lavender**, or **mint** (garden_mint / watermint)."
     if not participant_has_herb(medic, key):
-        return False, f"No **{_herb_name(key)}** in your herb bag or inventory."
+        return False, f"no **{_herb_name(key)}** in your herb bag or inventory."
     from engine.surgery import consume_participant_herb
 
     consume_participant_herb(medic, key)
@@ -283,16 +287,16 @@ def run_lay_to_rest(medic, deceased, herb_key: str, *, day: int) -> tuple[bool, 
 def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
     """River territory swim; recovery bonus for sprain / bone rest."""
     if season == "winter":
-        return False, "The river is ice-bound in **Leaf-bare**; no swim therapy."
+        return False, "the river is ice-bound in **leaf-bare**; no swim therapy."
     last = int(user["last_swim_day"] if "last_swim_day" in user.keys() else 0)
     if last >= day:
-        return False, "You already swam the healing pool this sunrise."
+        return False, "you already swam the healing pool this sunrise."
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
     rest_until = int(user["bone_rest_until"] if "bone_rest_until" in user.keys() else 0)
     eligible = bool(injuries & {"sprained_leg", "fractured_rib", "punctured_paw"}) or rest_until > day
     if not eligible:
         return False, (
-            "Swim therapy helps **sprains**, **fractured ribs**, or wolves in **splint confinement** "
+            "swim therapy helps **sprains**, **fractured ribs**, or wolves in **splint confinement** "
             "after bone-setting."
         )
     bonus = SWIM_REST_BONUS_HP
@@ -308,7 +312,7 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
         shorten = ""
     return True, (
         f"**{user['wolf_name']}** swims the pack river shallows; muscles loosen, pain fades "
-        f"(**+{bonus} HP**, now **{new_hp}/{user['max_hp']}**).{shorten}"
+        f"(**+{bonus} hp**, now **{new_hp}/{user['max_hp']}**).{shorten}"
     )
 
 

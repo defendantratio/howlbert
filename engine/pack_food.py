@@ -24,7 +24,7 @@ def pack_treasury_pinch_line(pack_id: int) -> str:
     if treasury >= DAILY_REWARD:
         return ""
     return (
-        f"\n\n_Treasury pinch: **{format_bones(treasury)}** in communal bones "
+        f"\n\n_treasury pinch: **{format_bones(treasury)}** in communal bones "
         f"(stipends draw ~**{format_bones(DAILY_REWARD)}**+). "
         "Hunt tax, `/pack deposit`, or `/preypile` → **Leave for the den**._"
     )
@@ -49,13 +49,13 @@ def format_pack_stash_line(stack, current_day: int) -> str:
 def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, day: int) -> tuple[bool, str]:
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't carry that carcass."
+        return False, "you don't carry that carcass."
     if stack["uses_left"] <= 0:
-        return False, "That carcass is picked clean."
+        return False, "that carcass is picked clean."
     if stack["is_rotting"]:
         return (
             False,
-            "Only **fresh** carcasses go in the den reserve; eat or `/salvage` this one first.",
+            "only **fresh** carcasses go in the den reserve; eat or `/salvage` this one first.",
         )
 
     db.add_pack_prey_stack(
@@ -98,9 +98,9 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
 def withdraw_from_pack_stash(user, stack_id: int, *, pack_id: int) -> tuple[bool, str]:
     stack = db.get_pack_prey_stack(stack_id)
     if not stack or stack["pack_id"] != pack_id:
-        return False, "That carcass isn't in your den reserve."
+        return False, "that carcass isn't in your den reserve."
     if stack["uses_left"] <= 0:
-        return False, "That reserve stack is empty."
+        return False, "that reserve stack is empty."
 
     db.add_prey_stack(
         user["id"],
@@ -113,7 +113,7 @@ def withdraw_from_pack_stash(user, stack_id: int, *, pack_id: int) -> tuple[bool
     )
     db.remove_pack_prey_stack(stack_id)
     meta = prey_meta(stack["prey_key"])
-    return True, f"You drag **{meta['name']}** from the reserve into your hoard (`/prey`)."
+    return True, f"you drag **{meta['name']}** from the reserve into your hoard (`/food`)."
 
 
 def _pick_feed_stack(pack_id: int):
@@ -125,7 +125,7 @@ def _pick_feed_stack(pack_id: int):
 
 
 def _is_sick(wolf) -> bool:
-    """Carrying an illness or in any non-healthy condition counts as sick."""
+    """carrying an illness or in any non-healthy condition counts as sick."""
     keys = wolf.keys()
     disease = wolf["disease"] if "disease" in keys else None
     if disease:
@@ -136,11 +136,11 @@ def _is_sick(wolf) -> bool:
 
 def _feed_priority(wolf) -> tuple[int, int]:
     """
-    Lore feeding order (Fresh-kill custom): elders, pups, den-keepers, and sick
-    wolves eat first, then hunters and yearlings. Within a tier the hungriest
+    lore feeding order (fresh-kill custom): elders, pups, den-keepers, and sick
+    wolves eat first, then hunters and yearlings. within a tier the hungriest
     eat first so a short reserve reaches those who need it most.
 
-    Returns a sort key; lower sorts (and eats) first.
+    returns a sort key; lower sorts (and eats) first.
     """
     from engine.aging import stage_for_age
     from engine.role_restrictions import wolf_role
@@ -195,7 +195,7 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
     db.update_pack_prey_stack_uses(stack["id"], uses_left)
 
     old_exhaustion = int(wolf["exhaustion"]) if "exhaustion" in wolf.keys() else 0
-    msg = f"**{wolf['wolf_name']}**; **{meta['label']}** +{hp_gain} HP, hunger **{new_hunger}**, thirst **{new_thirst}**"
+    msg = f"**{wolf['wolf_name']}**; **{meta['label']}** +{hp_gain} hp, hunger **{new_hunger}**, thirst **{new_thirst}**"
     from engine.cannibalism import cannibalism_eat_consequences
 
     msg += cannibalism_eat_consequences(wolf, stack["prey_key"])
@@ -206,9 +206,9 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
 
 def _passive_forage_chance(wolf, season: str | None) -> float:
     """
-    Odds a hungry wolf scrapes together enough food on its own at sunrise.
-    Wolves are facultative carnivores; berries, roots, fallen fruit, and
-    scavenged scraps tide them over. Foragers and scouts do best; pups, the
+    odds a hungry wolf scrapes together enough food on its own at sunrise.
+    wolves are facultative carnivores; berries, roots, fallen fruit, and
+    scavenged scraps tide them over. foragers and scouts do best; pups, the
     injured, elders, and winter do worst, so starvation stays a real risk.
     """
     from config import ROLLOVER_SCAVENGE_BASE_CHANCE
@@ -339,25 +339,7 @@ def auto_feed_wolves_on_rollover(conn, day: int, season: str | None = None) -> l
                     (left, stack["id"]),
                 )
 
-    # Stage 2: wolves the reserve couldn't reach forage/scavenge for themselves.
-    hungry = conn.execute(
-        """
-        SELECT * FROM users
-        WHERE condition NOT IN ('dead', 'dying')
-          AND (hunger < ? OR thirst < ?)
-        """,
-        (HUNGER_LOW_THRESHOLD, THIRST_LOW_THRESHOLD),
-    ).fetchall()
-
-    for wolf in hungry:
-        if int(wolf["id"]) in fed_from_reserve:
-            continue
-        if random.random() > _passive_forage_chance(wolf, season):
-            continue  # foraging failed; the wolf goes hungry and stakes hold
-        hunger = int(wolf["hunger"]) if wolf["hunger"] is not None else 0
-        thirst = int(wolf["thirst"]) if wolf["thirst"] is not None else 0
-        # A successful forage gets the wolf by: at least a sustainable level (so
-        # it isn't slowly killed by exhaustion despite foraging), plus a little
+    # Stage 2: wolves the reserve couldn't reach forage/scavenge for themselves.\n    hungry = conn.execute(\n        """\n        SELECT * FROM users\n        WHERE condition NOT IN ('dead', 'dying')\n          AND (hunger < ? OR thirst < ?)\n        """,\n        (HUNGER_LOW_THRESHOLD, THIRST_LOW_THRESHOLD),\n    ).fetchall()\n\n    for wolf in hungry:\n        if int(wolf["id"]) in fed_from_reserve:\n            continue\n        if random.random() > _passive_forage_chance(wolf, season):\n            continue  # foraging failed; the wolf goes hungry and stakes hold\n        hunger = int(wolf["hunger"]) if wolf["hunger"] is not None else 0\n        thirst = int(wolf["thirst"]) if wolf["thirst"] is not None else 0\n        # A successful forage gets the wolf by: at least a sustainable level (so\n        # it isn't slowly killed by exhaustion despite foraging), plus a little
         # more if it was already close. It does not let a wolf thrive; only real
         # meals (hunts, a stocked reserve) push vitals high.
         if hunger < HUNGER_LOW_THRESHOLD:
@@ -386,17 +368,17 @@ def run_feedall(
     """Feed every living packmate one use from the den reserve. Once per pack per sunrise."""
     pack = db.get_pack(pack_id)
     if not pack:
-        return False, "Pack not found.", 0
+        return False, "pack not found.", 0
     from engine.pack_leadership import PACK_BULK_ALPHA_ONLY_MSG, can_run_pack_bulk_action
 
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
     if int(pack["last_feedall_day"]) >= day:
-        return False, "The den already shared a communal meal this sunrise.", 0
+        return False, "the den already shared a communal meal this sunrise.", 0
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
-        return False, "No wolves in the den.", 0
+        return False, "no wolves in the den.", 0
 
     members = sorted(members, key=_feed_priority)
 
@@ -410,7 +392,7 @@ def run_feedall(
                 pinch = pack_treasury_pinch_line(pack_id)
                 return (
                     False,
-                    "The food reserve is empty; `/pack stash deposit` first." + pinch,
+                    "the food reserve is empty; `/pack stash deposit` first." + pinch,
                     0,
                 )
             break
@@ -424,14 +406,14 @@ def run_feedall(
             lines.append(line)
 
     if fed == 0:
-        return False, "No packmate could eat from the reserve.", 0
+        return False, "no packmate could eat from the reserve.", 0
 
     db.set_pack_feedall_day(pack_id, day)
     db.adjust_pack_unity(pack_id, 1)
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
         summary += f"\n_…and {len(lines) - 12} more._"
-    msg = f"**Communal feed**; **{fed}** wolf(s) ate from the reserve.\n{summary}"
+    msg = f"**communal feed**; **{fed}** wolf(s) ate from the reserve.\n{summary}"
     if served_wolf and caller:
         from engine.cannibalism import cannibalism_public_exposure
 

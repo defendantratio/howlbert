@@ -8,6 +8,7 @@ from discord.ext import commands
 
 import database as db
 from utils.replies import reply_ephemeral
+from utils.embeds import player_message
 from engine.combat_display import current_fighter_for_enc, fighter_name, is_npc_fighter
 
 
@@ -58,13 +59,13 @@ def _player_target_options(enc_id: int, bot: commands.Bot) -> list[discord.Selec
 class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):target$"):
     def __init__(self, enc_id: int, bot: commands.Bot):
         options = _attack_target_options(enc_id, bot)
-        placeholder = "Pick a target…"
+        placeholder = "pick a target…"
         if len(options) == 1:
-            placeholder = f"Target: {options[0].label[:40]} (optional)"
+            placeholder = f"target: {options[0].label[:40]} (optional)"
         super().__init__(
             ui.Select(
                 placeholder=placeholder,
-                options=options or [discord.SelectOption(label="No targets", value="0")],
+                options=options or [discord.SelectOption(label="no targets", value="0")],
                 min_values=1,
                 max_values=1,
                 custom_id=f"fable_combat:{enc_id}:target",
@@ -82,13 +83,13 @@ class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
         tid = int(interaction.data["values"][0])
         if tid == 0:
             await interaction.response.send_message(
-                "No valid targets in this fight.", ephemeral=reply_ephemeral()
+                player_message("no valid targets in this fight."), ephemeral=reply_ephemeral()
             )
             return
         attacker = db.resolve_player_fighter(self.enc_id, interaction.user.id)
         if attacker and tid == attacker["id"]:
             await interaction.response.send_message(
-                "You can't target yourself — pick an **enemy** from the menu.",
+                player_message("you can't target yourself — pick an **enemy** from the menu."),
                 ephemeral=reply_ephemeral(),
             )
             return
@@ -96,7 +97,7 @@ class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
         defender = db.get_combat_fighter(self.enc_id, tid)
         label = fighter_name(defender, self.bot) if defender else "target"
         await interaction.response.send_message(
-            f"**{label}** locked. Choose **Bite**, **Claw**, or a **Maneuver**.",
+            player_message(f"**{label}** locked. choose **bite**, **claw**, or a **maneuver**."),
             ephemeral=reply_ephemeral(),
         )
 
@@ -109,7 +110,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
         super().__init__(
             ui.Select(
                 placeholder=f"{npc_name[:40]} attacks…",
-                options=options or [discord.SelectOption(label="No wolves", value="0")],
+                options=options or [discord.SelectOption(label="no wolves", value="0")],
                 min_values=1,
                 max_values=1,
                 custom_id=f"fable_combat:{enc_id}:npcattack",
@@ -130,7 +131,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
         tid = int(interaction.data["values"][0])
         if tid == 0:
             await interaction.response.send_message(
-                "No player wolves left to target.", ephemeral=reply_ephemeral()
+                player_message("no player wolves left to target."), ephemeral=reply_ephemeral()
             )
             return
         from cogs.combat import execute_npc_attack
@@ -140,7 +141,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
 
 class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):(?P<action>bite|claw|yield)$"):
     def __init__(self, enc_id: int, action: str):
-        labels = {"bite": "Bite", "claw": "Claw", "yield": "Yield"}
+        labels = {"bite": "bite", "claw": "claw", "yield": "yield"}
         styles = {
             "bite": discord.ButtonStyle.danger,
             "claw": discord.ButtonStyle.primary,
@@ -182,7 +183,7 @@ class CombatManeuverSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\
         ]
         super().__init__(
             ui.Select(
-                placeholder="Maneuver…",
+                placeholder="maneuver…",
                 options=maneuver_options,
                 min_values=1,
                 max_values=1,
@@ -205,7 +206,7 @@ class CombatManeuverSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\
             interaction.user.id, self.enc_id, attacker["id"]
         ):
             await interaction.response.send_message(
-                "Pick a **target** from the menu above first, then choose a maneuver.",
+                player_message("pick a **target** from the menu above first, then choose a maneuver."),
                 ephemeral=reply_ephemeral(),
             )
             return

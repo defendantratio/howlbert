@@ -35,14 +35,14 @@ from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 PATROL_FLAVOR = [
-    "Scouts ghost along the ridge in loose formation; no silhouette, no wasted breath.",
-    "You split the border into beats and sweep them twice before the den wakes.",
+    "scouts ghost along the ridge in loose formation; no silhouette, no wasted breath.",
+    "you split the border into beats and sweep them twice before the den wakes.",
     "Wind-check, paw-sign, and a tail signal; the patrol moves as one quiet line.",
 ]
 
 TRAIL_PARTY_FLAVOR = [
-    "Scouts split the spoor line; one reads, one flanks, one holds the wind.",
-    "You leapfrog along the cold trail, never two silhouettes on the same ridge.",
+    "scouts split the spoor line; one reads, one flanks, one holds the wind.",
+    "you leapfrog along the cold trail, never two silhouettes on the same ridge.",
     "Paw-sign and breath held; the party follows sign deeper than lone wolves dare.",
 ]
 
@@ -75,18 +75,18 @@ def _party_names(patrol_id: int) -> str:
 def _war_patrol_block_reason(user, day: int, *, guild_id: int, pack_id: int) -> str | None:
     war = db.get_active_war_for_pack(guild_id, pack_id)
     if not war:
-        return "Your pack isn't fighting for territory; no collab war patrol."
+        return "your pack isn't fighting for territory; no collab war patrol."
     if int(user["last_patrol_day"]) >= day:
-        return "You've already war-patrolled this sunrise."
+        return "you've already war-patrolled this sunrise."
     if db.wolf_in_open_collab_patrol(user["id"]):
-        return "This wolf is already on an open pack patrol or trail."
+        return "this wolf is already on an open pack patrol or trail."
     return None
 
 
 def _scout_block_reason(user, day: int, *, kind: str = "survey") -> str | None:
     if not is_scout(user):
         label = "trail" if kind == "trail" else "patrol"
-        return f"Only **Scout** wolves can join a pack {label}."
+        return f"only **scout** wolves can join a pack {label}."
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
         return inj
@@ -95,11 +95,11 @@ def _scout_block_reason(user, day: int, *, kind: str = "survey") -> str | None:
         return vitals
     if kind == "trail":
         if int(user["last_trail_day"]) >= day:
-            return "You've already trailed this sunrise."
+            return "you've already trailed this sunrise."
     elif int(user["last_survey_day"]) >= day:
-        return "You've already surveyed this sunrise."
+        return "you've already surveyed this sunrise."
     if db.wolf_in_open_collab_patrol(user["id"]):
-        return "This wolf is already on an open pack patrol or trail."
+        return "this wolf is already on an open pack patrol or trail."
     return None
 
 
@@ -108,7 +108,7 @@ def validate_start_collab_patrol(
 ) -> str | None:
     if not db.row_val(user, "pack_id"):
         label = "war patrols" if kind == "war_patrol" else "trails" if kind == "trail" else "patrols"
-        return f"Join a Great Pack first; pack {label} are den business."
+        return f"join a great pack first; pack {label} are den business."
     if kind == "war_patrol":
         reason = _war_patrol_block_reason(
             user, day, guild_id=guild_id, pack_id=user["pack_id"]
@@ -119,21 +119,21 @@ def validate_start_collab_patrol(
         return reason
     if db.get_open_collab_patrol_by_leader(user["id"]):
         label = "war patrol" if kind == "war_patrol" else "trail" if kind == "trail" else "patrol"
-        return f"You already called a pack {label}. Set out or cancel it first."
+        return f"you already called a pack {label}. set out or cancel it first."
     return None
 
 
 def validate_join_collab_patrol(user, patrol, day: int) -> str | None:
     if patrol["status"] != "open":
         label = "war patrol" if _is_war_patrol(patrol) else "trail" if _is_trail(patrol) else "patrol"
-        return f"This pack {label} is no longer open."
+        return f"this pack {label} is no longer open."
     if user["pack_id"] != patrol["pack_id"]:
-        return "Only wolves in the same Great Pack can join."
+        return "only wolves in the same great pack can join."
     members = db.get_collab_patrol_members(patrol["id"])
     if any(m["wolf_id"] == user["id"] for m in members):
-        return "This wolf is already on the party."
+        return "this wolf is already on the party."
     if len(members) >= COLLAB_PATROL_MAX_WOLVES:
-        return f"The party is full ({COLLAB_PATROL_MAX_WOLVES} wolves max)."
+        return f"the party is full ({COLLAB_PATROL_MAX_WOLVES} wolves max)."
     if _is_war_patrol(patrol):
         return _war_patrol_block_reason(
             user, day, guild_id=patrol["guild_id"], pack_id=patrol["pack_id"]
@@ -161,7 +161,7 @@ def wolves_eligible_to_join_patrol(discord_id: int, patrol_id: int, day: int) ->
 def build_collab_patrol_embed(patrol_id: int) -> discord.Embed:
     patrol = db.get_collab_patrol(patrol_id)
     if not patrol:
-        return howlbert_embed("Pack Scout Party", "Party not found.", color=ERROR_COLOR)
+        return howlbert_embed("pack scout party", "party not found.", color=ERROR_COLOR)
     trail = _is_trail(patrol)
     war = _is_war_patrol(patrol)
     members = db.get_collab_patrol_members(patrol_id)
@@ -172,27 +172,27 @@ def build_collab_patrol_embed(patrol_id: int) -> discord.Embed:
 
     if patrol["status"] == "open":
         if war:
-            title = "War Patrol Called"
+            title = "war patrol called"
             flavor = random.choice(PATROL_FLAVOR)
             spend = "war patrol"
-            role_note = "Any packmate"
+            role_note = "any packmate"
         elif trail:
-            title = "Pack Trail Called"
+            title = "pack trail called"
             flavor = random.choice(TRAIL_PARTY_FLAVOR)
             spend = "trail"
-            role_note = "Scouts"
+            role_note = "scouts"
         else:
-            title = "Pack Patrol Called"
+            title = "pack patrol called"
             flavor = random.choice(PATROL_FLAVOR)
             spend = "survey"
-            role_note = "Scouts"
+            role_note = "scouts"
         desc = (
             f"**{leader_name}** calls {role_note.lower()} to "
             f"{'hold the war line' if war else 'follow a cold trail' if trail else 'patrol'} for **{pack_name}**.\n"
             f"{flavor}\n\n"
-            f"**Party** ({len(members)}/{COLLAB_PATROL_MAX_WOLVES}); need at least "
+            f"**party** ({len(members)}/{COLLAB_PATROL_MAX_WOLVES}); need at least "
             f"**{COLLAB_PATROL_MIN_WOLVES}** to set out.\n"
-            f"Each wolf spends their **{spend}** this sunrise. "
+            f"each wolf spends their **{spend}** this sunrise. "
             f"+**{COLLAB_PATROL_BONUS_PCT_PER_SCOUT}%** {'war points' if war else 'bones'} per extra wolf.\n"
             + (
                 "Ambushes can still strike; party fights together (+1 attack per ally, max +3)."
@@ -202,24 +202,24 @@ def build_collab_patrol_embed(patrol_id: int) -> discord.Embed:
         )
         color = SUCCESS_COLOR
     elif patrol["status"] == "encounter":
-        title = "Pack Party; Fight!"
+        title = "pack party; fight!"
         desc = (
-            f"The party (**{_party_names(patrol_id)}**) was ambushed.\n"
+            f"the party (**{_party_names(patrol_id)}**) was ambushed.\n"
             "Combat is live below; win to finish. Packmates fight on their own turns (+1 attack per ally)."
         )
         color = SUCCESS_COLOR
     elif patrol["status"] == "done":
-        title = "War Patrol Complete" if war else "Pack Trail Complete" if trail else "Pack Patrol Complete"
+        title = "war patrol complete" if war else "pack trail complete" if trail else "pack patrol complete"
         desc = patrol["result_text"] or "The scouts returned to the den."
         color = SUCCESS_COLOR
     else:
-        title = "War Patrol Closed" if war else "Pack Trail Closed" if trail else "Pack Patrol Closed"
-        desc = "This party was cancelled or the den rolled over."
+        title = "war patrol closed" if war else "pack trail closed" if trail else "pack patrol closed"
+        desc = "this party was cancelled or the den rolled over."
         color = ERROR_COLOR
 
     embed = howlbert_embed(title, desc, color=color)
     if members:
-        field_name = "Party" if war else "Scouts"
+        field_name = "party" if war else "scouts"
         lines = [
             f"• **{m['wolf_name']}**" + (" (caller)" if m["wolf_id"] == patrol["leader_wolf_id"] else "")
             for m in members
@@ -241,7 +241,7 @@ def build_collab_patrol_embed(patrol_id: int) -> discord.Embed:
         footer_role = "Packmates" if war else "Scouts"
         embed.set_footer(
             text=(
-                f"{footer_role} join below · Caller sets out when ready · "
+                f"{footer_role} join below · caller sets out when ready · "
                 f"max {COLLAB_PATROL_MAX_WOLVES} wolves{chemistry}"
             )
         )
@@ -301,7 +301,7 @@ def payout_collab_survey(
 ) -> discord.Embed:
     patrol = db.get_collab_patrol(patrol_id)
     if not patrol:
-        return howlbert_embed("Pack Scout Party", "Party not found.", color=ERROR_COLOR)
+        return howlbert_embed("pack scout party", "party not found.", color=ERROR_COLOR)
     if patrol["status"] == "done":
         return build_collab_patrol_embed(patrol_id)
     users = _party_users(patrol_id)
@@ -325,7 +325,9 @@ def payout_collab_survey(
         standing_gain = standing_delta
         if standing_delta:
             gp = user["great_pack"] if "great_pack" in user.keys() else None
-            standing_gain += plot_thistlehide_patrol_standing_bonus(patrol["guild_id"], gp)
+            standing_gain += plot_thistlehide_patrol_standing_bonus(
+                patrol["guild_id"], gp, user=user
+            )
             db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
         if standing_delta:
@@ -342,7 +344,7 @@ def payout_collab_survey(
 
     bonus_note = f"+{bonus_pct}% patrol bonus"
     if users and all(is_scout(u) for u in users):
-        bonus_note += " (all Scouts)"
+        bonus_note += " (all scouts)"
     if chemistry_note:
         bonus_note += f" · _{chemistry_note}_"
 
@@ -373,7 +375,7 @@ def payout_collab_trail(
 ) -> discord.Embed:
     patrol = db.get_collab_patrol(patrol_id)
     if not patrol:
-        return howlbert_embed("Pack Scout Party", "Party not found.", color=ERROR_COLOR)
+        return howlbert_embed("pack scout party", "party not found.", color=ERROR_COLOR)
     if patrol["status"] == "done":
         return build_collab_patrol_embed(patrol_id)
     users = _party_users(patrol_id)
@@ -406,7 +408,7 @@ def payout_collab_trail(
         if loot == "bones":
             extra = random.randint(4, 10)
             db.add_bones(leader["discord_id"], extra, wolf_id=leader["id"])
-            prey_note = f"\n**Sign cache** to **{leader['wolf_name']}**; +{extra} bones."
+            prey_note = f"\n**sign cache** to **{leader['wolf_name']}**; +{extra} bones."
         else:
             grant_prey_carcass(
                 leader["id"],
@@ -417,7 +419,7 @@ def payout_collab_trail(
             from engine.prey_items import prey_meta
 
             prey_note = (
-                f"\n**Caught up**; **{prey_meta(loot)['name']}** to caller's hoard (`/prey`)."
+                f"\n**caught up**; **{prey_meta(loot)['name']}** to caller's hoard (`/food`)."
             )
 
     flavor = random.choice(TRAIL_FLAVOR)
@@ -426,7 +428,7 @@ def payout_collab_trail(
 
     bonus_note = f"+{bonus_pct}% trail bonus"
     if users and all(is_scout(u) for u in users):
-        bonus_note += " (all Scouts)"
+        bonus_note += " (all scouts)"
     if chemistry_note:
         bonus_note += f" · _{chemistry_note}_"
 
@@ -610,7 +612,7 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
     day = world["day_number"]
     war = db.get_active_war_for_pack(patrol["guild_id"], patrol["pack_id"])
     if not war:
-        return None, "The war ended before your patrol set out."
+        return None, "the war ended before your patrol set out."
 
     lines: list[str] = []
     raw_points = 0
@@ -635,8 +637,8 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
     war_line = ""
     if war:
         war_line = (
-            f"**{war['territory_name']}**; Attack **{war['attacker_score']}** · "
-            f"Defend **{war['defender_score']}**"
+            f"**{war['territory_name']}**; attack **{war['attacker_score']}** · "
+            f"defend **{war['defender_score']}**"
         )
     result_text = (
         f"{random.choice(PATROL_FLAVOR)}\n\n"
@@ -651,13 +653,13 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
 def resolve_collab_patrol(patrol_id: int) -> tuple[discord.Embed | None, str | None]:
     patrol = db.get_collab_patrol(patrol_id)
     if not patrol or patrol["status"] != "open":
-        return None, "This party is not open."
+        return None, "this party is not open."
     members = db.get_collab_patrol_members(patrol_id)
     if len(members) < COLLAB_PATROL_MIN_WOLVES:
-        return None, f"Need at least **{COLLAB_PATROL_MIN_WOLVES}** scouts to set out."
+        return None, f"need at least **{COLLAB_PATROL_MIN_WOLVES}** scouts to set out."
     users = _party_users(patrol_id)
     if len(users) < COLLAB_PATROL_MIN_WOLVES:
-        return None, "Not enough valid scouts on the party."
+        return None, "not enough valid scouts on the party."
 
     if _is_trail(patrol):
         return resolve_collab_trail(patrol_id)
@@ -669,21 +671,21 @@ def resolve_collab_patrol(patrol_id: int) -> tuple[discord.Embed | None, str | N
 def try_set_out_collab_patrol(patrol_id: int) -> tuple[discord.Embed | None, str | None, int | None]:
     patrol = db.get_collab_patrol(patrol_id)
     if not patrol or patrol["status"] != "open":
-        return None, "This party is not open.", None
+        return None, "this party is not open.", None
     members = db.get_collab_patrol_members(patrol_id)
     if len(members) < COLLAB_PATROL_MIN_WOLVES:
-        return None, f"Need at least **{COLLAB_PATROL_MIN_WOLVES}** scouts to set out.", None
+        return None, f"need at least **{COLLAB_PATROL_MIN_WOLVES}** scouts to set out.", None
 
     users = _party_users(patrol_id)
     leader = db.get_user_by_id(patrol["leader_wolf_id"])
     if not leader or len(users) < COLLAB_PATROL_MIN_WOLVES:
-        return None, "Not enough valid scouts on the party.", None
+        return None, "not enough valid scouts on the party.", None
 
     trail = _is_trail(patrol)
     war = _is_war_patrol(patrol)
     guild_id = patrol["guild_id"]
     channel_id = patrol["channel_id"]
-    party_note = f"Pack {'war patrol' if war else 'trail' if trail else 'patrol'}: {_party_names(patrol_id)}"
+    party_note = f"pack {'war patrol' if war else 'trail' if trail else 'patrol'}: {_party_names(patrol_id)}"
     slot = "war patrols" if war else "trails" if trail else "surveys"
 
     if war:
@@ -743,9 +745,9 @@ def complete_collab_patrol_ambush(patrol_id: int, enc_id: int) -> discord.Embed 
         )
 
     note = (
-        "The trail party drove off the ambush and finished the cold read."
+        "the trail party drove off the ambush and finished the cold read."
         if trail
-        else "The patrol drove off the ambush and finished the border sweep."
+        else "the patrol drove off the ambush and finished the border sweep."
     )
     if trail:
         embed = payout_collab_trail(patrol_id, fixed_base=gross, encounter_note=note)

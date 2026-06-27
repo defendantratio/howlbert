@@ -34,13 +34,13 @@ def sync_lore_journal_entries(wolf_id: int) -> None:
         db.upsert_wolf_journal_entry(
             wolf_id,
             "lore:backstory",
-            f"_From the den records:_ {lore['backstory']}",
+            f"_from the den records:_ {lore['backstory']}",
         )
     if lore.get("family_ties"):
         db.upsert_wolf_journal_entry(
             wolf_id,
             "lore:family",
-            f"_Family on file:_ {lore['family_ties']}",
+            f"_family on file:_ {lore['family_ties']}",
         )
 
 
@@ -54,7 +54,7 @@ def _partner_name(wolf_id: int, row) -> str | None:
 
 
 def sync_bond_journal_entries(wolf_id: int) -> None:
-    """Refresh bond/rivalry journal lines (including notes) from current gameplay bonds."""
+    """refresh bond/rivalry journal lines (including notes) from current gameplay bonds."""
     for bond in db.get_bonds_for_wolf(wolf_id):
         strength = int(bond["strength"]) if "strength" in bond.keys() else 0
         if strength < _BOND_STRENGTH_FLOOR:
@@ -117,12 +117,12 @@ def backfill_wolf_journal(wolf_id: int) -> int:
         if lore.get("backstory"):
             put(
                 "lore:backstory",
-                f"_From the den records:_ {lore['backstory']}",
+                f"_from the den records:_ {lore['backstory']}",
             )
         if lore.get("family_ties"):
             put(
                 "lore:family",
-                f"_Family on file:_ {lore['family_ties']}",
+                f"_family on file:_ {lore['family_ties']}",
             )
 
     is_pup = bool("is_born_pup" in wolf.keys() and wolf["is_born_pup"])
@@ -147,16 +147,16 @@ def backfill_wolf_journal(wolf_id: int) -> int:
     affiliation = wolf["great_pack"] if "great_pack" in wolf.keys() else None
     pack = _pack_label(affiliation)
     if "registered" not in existing:
-        put("registered", f"Joined the den as **{wolf_name}** ({pack}).", day=0)
+        put("registered", f"joined the den as **{wolf_name}** ({pack}).", day=0)
 
     mate_id = wolf["bonded_mate_id"] if "bonded_mate_id" in wolf.keys() else None
     if mate_id and "bonded" not in existing:
         mate = db.get_user_by_id(int(mate_id))
         if mate:
-            put("bonded", f"Bonded with **{mate['wolf_name']}**.")
+            put("bonded", f"bonded with **{mate['wolf_name']}**.")
 
     if "blooded" not in existing and "has_blooding" in wolf.keys() and wolf["has_blooding"]:
-        put("blooded", f"Earned **blooding** on first kill — **{wolf_name}** is blooded.")
+        put("blooded", f"earned **blooding** on first kill — **{wolf_name}** is blooded.")
 
     for bond in db.get_bonds_for_wolf(wolf_id):
         strength = int(bond["strength"]) if "strength" in bond.keys() else 0
@@ -197,7 +197,7 @@ def backfill_wolf_journal(wolf_id: int) -> int:
         day = int(row["day_number"])
         put(
             f"court:{row['target_wolf_id']}:{day}",
-            f"Courted **{target['wolf_name']}**.",
+            f"courted **{target['wolf_name']}**.",
             day=day,
         )
 
@@ -217,9 +217,9 @@ def backfill_wolf_journal(wolf_id: int) -> int:
             family["created_day"] or 0
         ) or None
         if role == "founder":
-            line = f"Founded found family **{family['name']}**."
+            line = f"founded found family **{family['name']}**."
         else:
-            line = f"Joined found family **{family['name']}** as {role}."
+            line = f"joined found family **{family['name']}** as {role}."
         put(f"family:{family['id']}", line, day=day)
 
     if "died" not in existing:
@@ -256,7 +256,7 @@ def backfill_wolf_journal(wolf_id: int) -> int:
 
 
 def backfill_all_wolf_journals() -> int:
-    """Backfill every wolf; returns total entries inserted."""
+    """backfill every wolf; returns total entries inserted."""
     total = 0
     with db.get_db() as conn:
         wolf_ids = [int(r["id"]) for r in conn.execute("SELECT id FROM users").fetchall()]

@@ -27,7 +27,7 @@ def is_great_pack_row(pack) -> bool:
 
 
 def is_pack_alpha(user, pack) -> bool:
-    """Pack leader: Alpha role in-pack; Great Packs use role, player packs use alpha_id seat."""
+    """pack leader: alpha role in-pack; great packs use role, player packs use alpha_id seat."""
     if not user or not pack:
         return False
     if user["pack_id"] != pack["id"]:
@@ -52,7 +52,7 @@ def can_run_pack_bulk_action(user, pack, *, discord_admin: bool = False) -> bool
 
 
 PACK_BULK_ALPHA_ONLY_MSG = (
-    "Only the pack **Alpha** may lead pack-wide den commands "
+    "only the pack **alpha** may lead pack-wide den commands "
     "(server **admins** may override)."
 )
 
@@ -74,14 +74,14 @@ def can_act_as_pack_officer(user, pack, *, discord_admin: bool = False) -> bool:
 
 
 def is_pack_beta(user, pack) -> bool:
-    """Second-in-command (Beta); Advisor role in the same pack."""
+    """second-in-command (beta); advisor role in the same pack."""
     if not user or not pack or user["pack_id"] != pack["id"]:
         return False
     return wolf_role_key(user) == BETA_ROLE
 
 
 def can_forge_cat_pact(user, pack) -> bool:
-    """Alpha or Diplomat (incl. apprentice) in the same pack."""
+    """alpha or diplomat (incl. apprentice) in the same pack."""
     if not user or not pack or user["pack_id"] != pack["id"]:
         return False
     if matches_parent_role(wolf_role_key(user), "diplomat"):
@@ -90,7 +90,7 @@ def can_forge_cat_pact(user, pack) -> bool:
 
 
 def can_resolve_war(user, pack, *, discord_admin: bool = False) -> bool:
-    """Alpha (pack leader) or Diplomat in a pack that is fighting the active war."""
+    """alpha (pack leader) or diplomat in a pack that is fighting the active war."""
     if discord_admin:
         return True
     if not user or not pack or user["pack_id"] != pack["id"]:

@@ -64,7 +64,7 @@ def record_stash_deposit(pack_id: int, day_number: int) -> str | None:
     outcome = db.adjust_pack_unity(pack_id, SEASON_STASH_UNITY_REWARD)
     season = season_for_day(day_number)
     line = (
-        f"**Season goal met!** The den filled the **{season}** reserve "
+        f"**season goal met!** the den filled the **{season}** reserve "
         f"({target} carcasses); pack unity **+{SEASON_STASH_UNITY_REWARD}**."
     )
     if outcome == "dissolved":
@@ -81,5 +81,5 @@ def format_stash_goal_line(pack, day_number: int) -> str:
     count = int(pack["season_stash_deposits"])
     season = season_for_day(day_number)
     if int(pack["season_stash_goal_met"]):
-        return f"**{season.title()} reserve goal**; complete ({target}/{target}). Unity rewarded."
+        return f"**{season.title()} reserve goal**; complete ({target}/{target}). unity rewarded."
     return f"**{season.title()} reserve goal**; **{count}/{target}** carcasses deposited this season."

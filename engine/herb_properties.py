@@ -71,7 +71,7 @@ def herb_form_rule(herb_key: str) -> HerbFormRule:
         return HerbFormRule(
             toxic_if_fresh=True,
             toxic_dc=14,
-            notes="Restricted poison plant.",
+            notes="restricted poison plant.",
         )
     return HerbFormRule()
 
@@ -88,17 +88,17 @@ def form_label(form: str) -> str:
 
 def can_use_form(rule: HerbFormRule, form: str, *, complex_wound: bool) -> tuple[bool, str]:
     if rule.must_dry_before_use and form == "fresh":
-        return False, "Must **dry** this herb before use."
+        return False, "must **dry** this herb before use."
     if rule.dried_only and form != "dried":
-        return False, "Only the **dried** form is safe to use."
+        return False, "only the **dried** form is safe to use."
     if rule.external_only and form in ("tonic", "fresh") and form != "poultice":
         if form == "fresh":
-            return False, "External poultice only; do not swallow fresh."
+            return False, "external poultice only; do not swallow fresh."
     if rule.requires_decoction and form not in ("decoction", "dried"):
-        return False, "Needs a **decoction** (boiled or hot-spring steeped)."
+        return False, "needs a **decoction** (boiled or hot-spring steeped)."
     if rule.requires_tonic and form not in ("tonic", "decoction", "fresh") and not complex_wound:
         if form == "dried":
             return True, ""
     if rule.requires_poultice and form == "fresh" and complex_wound:
-        return False, "Complex wound needs a proper **poultice** (DC 10) or heals less."
+        return False, "complex wound needs a proper **poultice** (dc 10) or heals less."
     return True, ""

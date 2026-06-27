@@ -61,7 +61,7 @@ def lone_nursing_note(mother) -> str:
     if mother and mother["pack_id"]:
         return ""
     return (
-        " **Lone mothers** have no pack caretaker; nurse daily or use **honey** "
+        " **lone mothers** have no pack caretaker; nurse daily or use **honey** "
         "(`/medic action:treat` on the pup, or carry honey when nursing)."
     )
 
@@ -106,7 +106,7 @@ def _pup_hunger_bonus_fields(pup, hunger_gain: int, *, day_number: int | None = 
 
 
 def apply_honey_to_pup(pup, *, day_number: int | None = None) -> dict:
-    """Feed one pup honey: hunger restore and starvation exhaustion relief."""
+    """feed one pup honey: hunger restore and starvation exhaustion relief."""
     return _pup_hunger_bonus_fields(
         pup, HONEY_PUP_HUNGER_BONUS, day_number=day_number
     )
@@ -136,7 +136,7 @@ def _honey_suffix(honey_used: bool) -> str:
     if not honey_used:
         return ""
     return (
-        f" **Honey** sweetens the meal (**+{HONEY_PUP_HUNGER_BONUS}** hunger per pup; "
+        f" **honey** sweetens the meal (**+{HONEY_PUP_HUNGER_BONUS}** hunger per pup; "
         "starving pups shed **1** exhaustion)."
     )
 
@@ -149,13 +149,13 @@ def execute_mother_nursing(
 ) -> tuple[bool, str]:
     """Nurse biological pups under weaning age. Once per sunrise per mother."""
     if mother["birth_sex"] != "female":
-        return False, "Only **female** wolves can nurse with milk."
+        return False, "only **female** wolves can nurse with milk."
 
     last_day = int(mother["last_nurse_day"] if "last_nurse_day" in mother.keys() else 0)
     if last_day >= day_number:
         return False, (
             f"**{mother['wolf_name']}** already nursed this sunrise. "
-            "Try again after the next `/rollover`."
+            "try again after the next `/rollover`."
         )
 
     pups = _filter_pups(db.get_nursing_pups_for_mother(mother["id"]), pup_name)
@@ -176,7 +176,7 @@ def execute_mother_nursing(
     if mother_hunger - total_cost < HUNGER_CRITICAL_THRESHOLD:
         return False, (
             f"**{mother['wolf_name']}** is too hungry to nurse "
-            f"(needs **{total_cost}** hunger; eat from `/prey` first)."
+            f"(needs **{total_cost}** hunger; eat from `/food` first)."
             + lone_nursing_note(mother)
         )
 
@@ -198,7 +198,7 @@ def execute_mother_nursing(
     lines = ", ".join(f"**{n}**" for n in fed)
     return True, (
         f"**{mother['wolf_name']}** nurses {lines}. "
-        f"Milk restores **+{MILK_HUNGER_GAIN}** hunger and **+{MILK_THIRST_GAIN}** thirst per pup "
+        f"milk restores **+{MILK_HUNGER_GAIN}** hunger and **+{MILK_THIRST_GAIN}** thirst per pup "
         f"(**−{total_cost}** hunger for the mother)."
         + _honey_suffix(honey_used)
         + (lone_nursing_note(mother) if not mother["pack_id"] else "")
@@ -214,10 +214,10 @@ def execute_caretaker_feed(
 ) -> tuple[bool, str]:
     """Caretakers mash prey into nursery gruel for weaning pups."""
     if not is_nursery_caretaker(caretaker):
-        return False, "Only **Caretakers** can feed pups without nursing."
+        return False, "only **caretakers** can feed pups without nursing."
 
     if not pack_id:
-        return False, "Join a pack to tend nursery pups."
+        return False, "join a pack to tend nursery pups."
 
     last_day = int(caretaker["last_nurse_day"] if "last_nurse_day" in caretaker.keys() else 0)
     if last_day >= day_number:
@@ -229,8 +229,8 @@ def execute_caretaker_feed(
     pups = [p for p in pups if pup_needs_milk_today(p, day_number)]
     if not pups:
         if pup_name:
-            return False, f"No nursing pup named **{pup_name}** in your pack needs food today."
-        return False, "No pups under weaning age need nursery mash in your pack today."
+            return False, f"no nursing pup named **{pup_name}** in your pack needs food today."
+        return False, "no pups under weaning age need nursery mash in your pack today."
 
     honey_used = _try_consume_feeder_honey(caretaker)
     fed = _feed_pups_with_gains(
@@ -265,12 +265,12 @@ def execute_nursing(
         )
     if feeder["birth_sex"] == "female":
         return False, (
-            "You have no nursing pups. **Caretakers** can mash-feed pack pups, "
+            "you have no nursing pups. **caretakers** can mash-feed pack pups, "
             "or wait until your litter is born."
             + lone_nursing_note(feeder)
         )
     return False, (
-        "Only **mothers** with nursing pups or **Caretakers** can use **`/pupcare action:feed`**."
+        "only **mothers** with nursing pups or **caretakers** can use **`/pupcare action:feed`**."
     )
 
 
@@ -311,7 +311,7 @@ def apply_unfed_pup_penalty_on_rollover(conn, day_ending: int) -> list[dict]:
 
 
 def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
-    """Nursing mothers and pregnant females burn extra calories each sunrise."""
+    """nursing mothers and pregnant females burn extra calories each sunrise."""
     from config import MOTHER_NURSE_HUNGER_COST_PER_PUP, PUP_MAX_MOONS
 
     PREGNANCY_HUNGER = 5

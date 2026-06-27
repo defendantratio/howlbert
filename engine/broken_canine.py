@@ -160,13 +160,13 @@ def run_broken_canine_rite(
     winner_role = ROLE_LABELS.get(winner["wolf_role"], winner["wolf_role"])
     if int(winner["id"]) == int(incumbent_wolf_id):
         conn.execute("UPDATE users SET standing = 0 WHERE id = ?", (incumbent_wolf_id,))
-        logs.append(f"**{winner['wolf_name']}** wins the rite and **keeps the Alpha's seat** (standing restored).")
+        logs.append(f"**{winner['wolf_name']}** wins the rite and **keeps the alpha's seat** (standing restored).")
         outcome = "incumbent_retained"
     else:
         db._expel_wolf_from_pack_conn(conn, incumbent_wolf_id, reset_standing=True)
         _install_pack_alpha(conn, int(winner["id"]), pack_id)
         logs.append(
-            f"**{winner['wolf_name']}** ({winner_role}) wins; **new Alpha**. "
+            f"**{winner['wolf_name']}** ({winner_role}) wins; **new alpha**. "
             f"**{incumbent['wolf_name']}** is cast out."
         )
         outcome = "new_alpha"
@@ -227,9 +227,9 @@ def format_rite_summary(rite: dict) -> str:
 
 
 def standing_expulsion_note(kick: str, pack_id: int | None) -> str | None:
-    """User-facing note when standing adjustment expels or triggers the rite."""
+    """user-facing note when standing adjustment expels or triggers the rite."""
     if kick == "kicked":
-        return "**Cast out**; your standing fell too low."
+        return "**cast out**; your standing fell too low."
     if kick != "broken_rite" or not pack_id:
         return None
     import json

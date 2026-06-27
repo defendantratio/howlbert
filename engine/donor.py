@@ -27,7 +27,7 @@ def _today() -> datetime.date:
 
 
 def _month_key() -> str:
-    return _today().strftime("%Y-%m")
+    return _today().strftime("%y-%m")
 
 
 def _iso_date(day: datetime.date) -> str:
@@ -236,7 +236,7 @@ def apply_donation_grant(
     """Grant donor rewards to a registered wolf owner. Returns (ok, message)."""
     user = db.get_user(discord_id)
     if not user:
-        return False, "No registered wolf for that Discord account."
+        return False, "no registered wolf for that discord account."
 
     db.get_account(discord_id)
     account = db.get_account(discord_id)
@@ -301,7 +301,7 @@ def apply_donation_grant(
             else f"**{supporter_days}** supporter days"
         )
     if not parts:
-        return True, "Donor record updated."
+        return True, "donor record updated."
     return True, " · ".join(parts)
 
 
@@ -355,13 +355,13 @@ def process_kofi_event(
     """Validate Ko-fi webhook payload. Returns (ok, note, discord_id, dm_message)."""
     verification_token = str(payload.get("verification_token", ""))
     if not expected_token:
-        return False, "KOFI_VERIFICATION_TOKEN not configured.", None, None
+        return False, "kofi_verification_token not configured.", None, None
     if verification_token != expected_token:
-        return False, "Invalid verification token.", None, None
+        return False, "invalid verification token.", None, None
 
     transaction_id = str(payload.get("kofi_transaction_id", ""))
     if not transaction_id:
-        return False, "Missing transaction id.", None, None
+        return False, "missing transaction id.", None, None
 
     with db.get_db() as conn:
         existing = conn.execute(
@@ -369,18 +369,18 @@ def process_kofi_event(
             (transaction_id,),
         ).fetchone()
         if existing:
-            return True, "Already processed.", None, None
+            return True, "already processed.", None, None
 
-    event_type = str(payload.get("type", "Donation") or "Donation")
+    event_type = str(payload.get("type", "donation") or "donation")
 
     try:
         amount_cents = int(round(float(str(payload.get("amount", "0"))) * 100))
     except (TypeError, ValueError):
-        return False, "Invalid donation amount.", None, None
+        return False, "invalid donation amount.", None, None
     if amount_cents <= 0:
-        return False, "Zero donation amount.", None, None
+        return False, "zero donation amount.", None, None
 
-    if event_type == "Shop Order":
+    if event_type == "shop order":
         from engine.kofi_shop import process_kofi_shop_order
 
         return process_kofi_shop_order(
@@ -402,7 +402,7 @@ def process_kofi_event(
         hint = "Put your Discord user id in the Ko-fi message on first subscribe."
         if is_subscription and not is_first_sub:
             hint = "Renewal could not be matched; use the same Ko-fi email as your first payment."
-        return False, f"No Discord account linked. {hint}", None, None
+        return False, f"no discord account linked. {hint}", None, None
 
     if email:
         with db.get_db() as conn:
@@ -466,7 +466,7 @@ def _process_kofi_donation(
     cap_note = ""
     if bones < bones_from_donation_cents(amount_cents):
         cap_note = f" (monthly cap; **{remaining}** left this month)"
-    return True, f"Ko-fi tip **${amount_cents / 100:.2f}** → {note}{cap_note}", discord_id
+    return True, f"ko-fi tip **${amount_cents / 100:.2f}** → {note}{cap_note}", discord_id
 
 
 def _process_kofi_membership(
@@ -480,13 +480,13 @@ def _process_kofi_membership(
 ) -> tuple[bool, str, int | None]:
     user = db.get_user(discord_id)
     if not user:
-        return False, "No registered wolf for that Discord account.", discord_id
+        return False, "no registered wolf for that discord account.", discord_id
 
     tier_key = tier_key_from_kofi_name(tier_name)
     if not tier_key:
         return (
             False,
-            f"Unknown membership tier **{tier_name or '?'}**; name it Den Friend, "
+            f"unknown membership tier **{tier_name or '?'}**; name it den friend, "
             "Pack Benefactor, or Legend in Ko-fi.",
             discord_id,
         )
@@ -625,33 +625,33 @@ def create_donation_code(
 def redeem_code(discord_id: int, raw_code: str) -> tuple[bool, str]:
     code = raw_code.strip().upper()
     if not code:
-        return False, "Enter a code."
+        return False, "enter a code."
 
     user = db.get_user(discord_id)
     if not user:
-        return False, "Use `/register` first."
+        return False, "use `/register` first."
 
     with db.get_db() as conn:
         row = conn.execute(
             "SELECT * FROM donation_codes WHERE code = ?", (code,)
         ).fetchone()
         if not row:
-            return False, "Unknown code."
+            return False, "unknown code."
 
         if row["expires_at"]:
             expires = _parse_date(str(row["expires_at"]))
             if expires and expires < _today():
-                return False, "That code has expired."
+                return False, "that code has expired."
 
         if int(row["uses_count"]) >= int(row["max_uses"]):
-            return False, "That code has no uses left."
+            return False, "that code has no uses left."
 
         already = conn.execute(
             "SELECT 1 FROM donation_redemptions WHERE code = ? AND discord_id = ?",
             (code, discord_id),
         ).fetchone()
         if already:
-            return False, "You already redeemed this code."
+            return False, "you already redeemed this code."
 
         conn.execute(
             """
@@ -676,19 +676,19 @@ def redeem_code(discord_id: int, raw_code: str) -> tuple[bool, str]:
     )
     if not ok:
         return False, note
-    return True, f"Redeemed **{code}**; {note}"
+    return True, f"redeemed **{code}**; {note}"
 
 
 def donor_status_lines(discord_id: int) -> list[str]:
     account = db.get_account(discord_id)
     lines = ["**Donations (you only)**"]
     if not account:
-        lines.append("• No donor record yet.")
+        lines.append("• no donor record yet.")
         lines.append(
-            f"Ko-fi: put your Discord user id in the message on **first subscribe** "
+            f"ko-fi: put your discord user id in the message on **first subscribe** "
             f"(**{discord_id}**); **{DONOR_BONES_PER_DOLLAR}** bones per $1, "
             f"**{DONOR_MONTHLY_BONE_CAP}**/month cap. "
-            f"Membership tiers: Den Friend / Pack Benefactor / Legend."
+            f"membership tiers: den friend / pack benefactor / legend."
         )
         return lines
 
@@ -699,33 +699,33 @@ def donor_status_lines(discord_id: int) -> list[str]:
     active_member = bool(membership_tier and member_until and member_until >= _today())
 
     if tier_key or total_cents > 0 or active_member:
-        lines.append(f"• Tier: **{tier_label(tier_key)}**")
+        lines.append(f"• tier: **{tier_label(tier_key)}**")
         if active_member:
             lines.append(
-                f"• Ko-fi membership: **{tier_label(membership_tier)}** until **{_acct_str(account, 'kofi_membership_until')}**"
+                f"• ko-fi membership: **{tier_label(membership_tier)}** until **{_acct_str(account, 'kofi_membership_until')}**"
             )
         if total_cents > 0:
-            lines.append(f"• Lifetime Ko-fi: **${total_cents / 100:.2f}**")
+            lines.append(f"• lifetime ko-fi: **${total_cents / 100:.2f}**")
     else:
-        lines.append("• No Ko-fi donations recorded yet.")
+        lines.append("• no ko-fi donations recorded yet.")
 
     lines.append(
-        f"• Membership tiers on Ko-fi (**$5** minimum): **Den Friend** ($5), "
-        f"**Pack Benefactor** ($10), **Legend** ($25)"
+        f"• membership tiers on ko-fi (**$5** minimum): **den friend** ($5), "
+        f"**pack benefactor** ($10), **legend** ($25)"
     )
 
     bonus = donor_daily_bonus(discord_id)
     until = _acct_str(account, "donor_supporter_until")
     if bonus > 0 and until:
-        lines.append(f"• Supporter `/bones action:daily`: **+{bonus}** until **{until}**")
+        lines.append(f"• supporter `/bones action:daily`: **+{bonus}** until **{until}**")
     elif until:
-        lines.append(f"• Supporter perk expired **{until}**")
+        lines.append(f"• supporter perk expired **{until}**")
 
     remaining = _bones_remaining_this_month(account)
     lines.append(
-        f"• Ko-fi bones left this month: **{remaining}/{DONOR_MONTHLY_BONE_CAP}**"
+        f"• ko-fi bones left this month: **{remaining}/{DONOR_MONTHLY_BONE_CAP}**"
     )
     lines.append(
-        f"Redeem a gift code with `/redeem` · Ko-fi message: your Discord id **{discord_id}**"
+        f"redeem a gift code with `/redeem` · ko-fi message: your discord id **{discord_id}**"
     )
     return lines

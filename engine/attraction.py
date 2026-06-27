@@ -1,10 +1,10 @@
 """Birth sex, sexuality, and attraction for courtship / mating."""
 
 BIRTH_SEX_LABELS = {
-    "female": "Female",
-    "male": "Male",
-    "intersex": "Intersex",
-    "nonbinary": "Nonbinary",
+    "female": "female",
+    "male": "male",
+    "intersex": "intersex",
+    "nonbinary": "nonbinary",
 }
 
 PUP_SEXUALITY = "too_young"
@@ -48,23 +48,23 @@ def resolve_register_sexuality(age_months: int, sexuality: str | None) -> str:
 
 
 def validate_set_sexuality(user, sexuality: str) -> tuple[str | None, str | None]:
-    """Return (stored_value, error_message)."""
+    """return (stored_value, error_message)."""
     if sexuality not in VALID_SEXUALITIES:
-        return None, "Unknown sexuality."
+        return None, "unknown sexuality."
     age = int(user["age_months"]) if "age_months" in user.keys() else 24
     if is_too_young_for_sexuality(age):
         if sexuality != PUP_SEXUALITY:
             from config import JUVENILE_MAX_MOONS
 
             return None, (
-                f"Wolves under **{JUVENILE_MAX_MOONS} moons** stay **Too young / none**. "
+                f"wolves under **{JUVENILE_MAX_MOONS} moons** stay **too young / none**. "
                 "Pick an attraction after aging up with `/setsexuality`."
             )
         return PUP_SEXUALITY, None
     if sexuality == PUP_SEXUALITY:
         from config import JUVENILE_MAX_MOONS
 
-        return None, f"**Too young / none** only applies to wolves under **{JUVENILE_MAX_MOONS} moons**."
+        return None, f"**too young / none** only applies to wolves under **{JUVENILE_MAX_MOONS} moons**."
     return sexuality, None
 
 
@@ -98,30 +98,30 @@ def is_attracted_to(sexuality: str, my_birth_sex: str, their_birth_sex: str) -> 
 
 def mate_pairing(user, partner) -> tuple[str, str | None]:
     """
-    Returns (mode, error_message).
+    returns (mode, error_message).
     mode: conception | bond | error
     """
     u_sex = get_birth_sex(user)
     p_sex = get_birth_sex(partner)
     if not u_sex or not p_sex:
-        return "error", "Both wolves need a birth sex on file (`/setbirthsex` or re-register)."
+        return "error", "both wolves need a birth sex on file (`/setbirthsex` or re-register)."
 
     u_orient = get_sexuality(user)
     p_orient = get_sexuality(partner)
 
     if u_orient == PUP_SEXUALITY or p_orient == PUP_SEXUALITY:
-        return "error", "This wolf is too young for mating or courtship."
+        return "error", "this wolf is too young for mating or courtship."
 
     if not is_attracted_to(u_orient, u_sex, p_sex):
-        return "error", "You are not attracted to this wolf's birth sex."
+        return "error", "you are not attracted to this wolf's birth sex."
     if not is_attracted_to(p_orient, p_sex, u_sex):
-        return "error", "They are not attracted to your birth sex."
+        return "error", "they are not attracted to your birth sex."
 
     if u_orient in BOND_FIRST_SEXUALITIES or p_orient in BOND_FIRST_SEXUALITIES:
         if not are_bonded_mates(user, partner):
             return (
                 "error",
-                "Demisexual and demiromantic wolves mate only after forming a bond "
+                "demisexual and demiromantic wolves mate only after forming a bond "
                 "(court successfully, deepen ties with `/playpen action:socialize` & `action:groom`, "
                 "or mark kin with `/bonds`).",
             )
@@ -134,7 +134,7 @@ def mate_pairing(user, partner) -> tuple[str, str | None]:
 
 
 def conception_parents(user, partner):
-    """Return (female_row, male_row) or (None, None) if not a biological pair."""
+    """return (female_row, male_row) or (none, none) if not a biological pair."""
     u_sex = get_birth_sex(user)
     p_sex = get_birth_sex(partner)
     if u_sex == "female" and p_sex == "male":
@@ -145,7 +145,7 @@ def conception_parents(user, partner):
 
 
 def court_attraction_allowed(courter, target) -> tuple[bool, str | None]:
-    """Whether courter may attempt courtship with target."""
+    """whether courter may attempt courtship with target."""
     u_sex = get_birth_sex(courter)
     t_sex = get_birth_sex(target)
     if not u_sex or not t_sex:
@@ -155,14 +155,14 @@ def court_attraction_allowed(courter, target) -> tuple[bool, str | None]:
     t_orient = get_sexuality(target)
 
     if u_orient == PUP_SEXUALITY:
-        return False, "You are too young for courtship."
+        return False, "you are too young for courtship."
     if t_orient == PUP_SEXUALITY:
-        return False, "They are too young for courtship."
+        return False, "they are too young for courtship."
 
     if u_orient not in ("asexual", *BOND_FIRST_SEXUALITIES) and not is_attracted_to(u_orient, u_sex, t_sex):
-        return False, "You are not attracted to that birth sex."
+        return False, "you are not attracted to that birth sex."
     if t_orient not in ("asexual", *BOND_FIRST_SEXUALITIES) and not is_attracted_to(t_orient, t_sex, u_sex):
-        return False, "They are not attracted to your birth sex."
+        return False, "they are not attracted to your birth sex."
     return True, None
 
 

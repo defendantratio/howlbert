@@ -16,7 +16,7 @@ def npc_hp(template: dict) -> int:
 
 BESTIARY_NPCS: dict[str, dict] = {
     "coyote": {
-        "name": "Coyote",
+        "name": "coyote",
         "category": "predators",
         "attrs": {
             "attr_str": 4,
@@ -492,9 +492,9 @@ BESTIARY_NPCS: dict[str, dict] = {
 }
 
 NPC_CATEGORY_LABELS = {
-    "predators": "Predators & Threats",
-    "dogs": "Hearth-hounds (Twoleg hounds)",
-    "cats": "Clan Cats & Rivals",
+    "predators": "predators & threats",
+    "dogs": "hearth-hounds (twoleg hounds)",
+    "cats": "clan cats & rivals",
     "reptiles": "Reptiles & Vermin",
 }
 
@@ -588,7 +588,7 @@ def build_npc_stats(template_key: str) -> dict:
 
 
 def stats_for_fighter(fighter) -> dict:
-    """Resolve NPC stats from a combat_fighters row, or generic fallback."""
+    """resolve npc stats from a combat_fighters row, or generic fallback."""
     key = None
     if fighter and "npc_template" in fighter.keys():
         key = fighter["npc_template"]
@@ -611,10 +611,10 @@ def format_npc_summary(template_key: str) -> str:
     a = t["attrs"]
     hp = npc_hp(t)
     lines = [
-        f"**HP:** {hp} ({format_max_hp_breakdown(a['attr_str'], a['attr_con'], max_hp=hp)})",
+        f"**hp:** {hp} ({format_max_hp_breakdown(a['attr_str'], a['attr_con'], max_hp=hp)})",
         (
-            f"STR {a['attr_str']} · DEX {a['attr_dex']} · CON {a['attr_con']} · "
-            f"INT {a['attr_int']} · CHA {a['attr_cha']} · WIS {a['attr_wis']}"
+            f"str {a['attr_str']} · dex {a['attr_dex']} · con {a['attr_con']} · "
+            f"int {a['attr_int']} · cha {a['attr_cha']} · wis {a['attr_wis']}"
         ),
     ]
     atk = t["attack"]
@@ -623,7 +623,7 @@ def format_npc_summary(template_key: str) -> str:
         dmg += f"+{atk['flat_damage']}"
     if atk.get("hit_bonus"):
         dmg += f" (+{atk['hit_bonus']} to hit)"
-    lines.append(f"**Attack:** {dmg}")
+    lines.append(f"**attack:** {dmg}")
     if t.get("behavior"):
         lines.append(f"_{t['behavior']}_")
     return "\n".join(lines)

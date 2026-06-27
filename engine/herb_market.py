@@ -36,13 +36,13 @@ def sell_forage_herb_stack(
     """
     stack = db.get_herb_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "That herb isn't in your forage bag.", 0
+        return False, "that herb isn't in your forage bag.", 0
     herb_key = stack["herb_key"]
     if is_restricted_herb(herb_key):
         return (
             False,
-            "The trading post won't buy **restricted poison** herbs. "
-            "Use `/herbs action:turnin` for a pack bounty instead.",
+            "the trading post won't buy **restricted poison** herbs. "
+            "use `/herbs action:turnin` for a pack bounty instead.",
             0,
         )
     spoiling = stack["form"] == "fresh" and day - int(stack["acquired_day"]) >= 1
@@ -53,7 +53,7 @@ def sell_forage_herb_stack(
         spoiling=spoiling,
     )
     if price <= 0:
-        return False, "The den won't buy that herb back.", 0
+        return False, "the den won't buy that herb back.", 0
     meta = HERBS.get(herb_key, {})
     name = meta.get("name", herb_key)
     db.remove_herb_stack(stack_id)
@@ -61,6 +61,6 @@ def sell_forage_herb_stack(
     spoil_note = " (spoiling; half price)" if spoiling else ""
     return (
         True,
-        f"Sold **{name}** ({form_label(stack['form'])}) at the trading post for **{price}🦴**{spoil_note}.",
+        f"sold **{name}** ({form_label(stack['form'])}) at the trading post for **{price}🦴**{spoil_note}.",
         price,
     )

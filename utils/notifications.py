@@ -61,13 +61,13 @@ def births_crossing_threshold(day_number: int) -> list[tuple[int, str]]:
         mate_name = mate["wolf_name"] if mate else "unknown"
         add(
             row["discord_id"],
-            f"**{row['wolf_name']}**; gestation is complete. Use **`/birth names:...`** "
+            f"**{row['wolf_name']}**; gestation is complete. use **`/birth names:...`** "
             f"to name the litter (mate: **{mate_name}**).",
         )
         if mate:
             add(
                 mate["discord_id"],
-                f"Your mate **{row['wolf_name']}** is ready for **`/birth`**; "
+                f"your mate **{row['wolf_name']}** is ready for **`/birth`**; "
                 f"they name the litter when the pups arrive.",
             )
     return recipients
@@ -79,7 +79,7 @@ async def notify_births_ready_after_rollover(bot: discord.Client, day_number: in
         ok = await notify_consent_request(
             bot,
             discord_id,
-            title="Birth Ready",
+            title="birth ready",
             body=message,
         )
         if ok:
@@ -137,20 +137,20 @@ async def notify_den_news_after_rollover(
 
     embed = build_rollover_embed(world, crisis)
     if briefing:
-        embed.title = "Morning Den News"
+        embed.title = "morning den news"
         embed.description = (
-            f"_Howlbert is back online. Day **{world['day_number']}** "
+            f"_howlbert is back online. day **{world['day_number']}** "
             f"— den news for **{guild.name}**._"
         )
     elif catch_up_days > 1:
-        embed.title = f"Sunrise catch-up ({catch_up_days} days)"
+        embed.title = f"sunrise catch-up ({catch_up_days} days)"
         embed.description = (
-            f"_The den rolled while Howlbert was offline. Day **{world['day_number']}** "
+            f"_the den rolled while howlbert was offline. day **{world['day_number']}** "
             f"— sunrise news for **{guild.name}**._"
         )
     elif catch_up_days == 1:
         embed.description = (
-            f"_Sunrise catch-up for **{guild.name}** — day **{world['day_number']}**._"
+            f"_sunrise catch-up for **{guild.name}** — day **{world['day_number']}**._"
         )
     recipients = await guild_member_ids_with_wolves_resolved(bot, guild)
     if not recipients:

@@ -22,7 +22,7 @@ def apply_movement_hunt_penalty(amount: int, user) -> tuple[int, str]:
     ex = user_exhaustion(user)
     if ex >= 2:
         mult = min(mult, 0.5)
-        notes.append(f"Exhaustion {ex}; speed halved (**−50%**)")
+        notes.append(f"exhaustion {ex}; speed halved (**−50%**)")
     if has_injury(user, "sprained_leg"):
         mult = min(mult, 0.5)
         notes.append("Sprained leg; movement halved (**−50%**)")

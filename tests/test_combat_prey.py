@@ -25,7 +25,7 @@ def test_public_exposure_only_wolf() -> None:
     assert cannibalism_public_exposure(user, "hare", action="stash") == ""
     assert cannibalism_public_exposure(user, "hare", action="preypile") == ""
     wolf_msg = cannibalism_public_exposure(user, "wolf_carcass", action="preypile")
-    assert "Caught" in wolf_msg
+    assert "caught" in wolf_msg.lower()
     assert "fresh-kill cache" in wolf_msg.lower() or "laid" in wolf_msg.lower()
 
 

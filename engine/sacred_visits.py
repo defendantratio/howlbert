@@ -36,22 +36,22 @@ SACRED_ANCESTOR_BY_PACK: dict[str, tuple[str, ...]] = {
         "Strength without mercy is only hunger wearing a wolf's face.",
     ),
     "mistmoor": (
-        "The Belly-Rip hears what you withhold from the sick.",
-        "Fog lies; your hands on a fever do not.",
+        "the belly-rip hears what you withhold from the sick.",
+        "fog lies; your hands on a fever do not.",
     ),
     "thistlehide": (
-        "Fur hides wounds poorly when the healer stays away.",
-        "Groom the spirit when the body will not mend.",
+        "fur hides wounds poorly when the healer stays away.",
+        "groom the spirit when the body will not mend.",
     ),
     "silverrush": (
-        "Tears on the wind carry grief the den will need you to mend.",
-        "Listen before you poultice; grief speaks in silence.",
+        "tears on the wind carry grief the den will need you to mend.",
+        "listen before you poultice; grief speaks in silence.",
     ),
 }
 
 
 def pick_sacred_ancestor_word(user) -> str:
-    """One cryptic line from the ancestors for this visit."""
+    """one cryptic line from the ancestors for this visit."""
     gp = user["great_pack"] if user and "great_pack" in user.keys() else None
     pack_lines = SACRED_ANCESTOR_BY_PACK.get(gp or "", ())
     if pack_lines and random.random() < 0.45:
@@ -67,7 +67,7 @@ def _days_since_visit(user, day: int) -> int:
 
 
 def sacred_visit_due(user, day: int) -> bool:
-    """True if a visit is needed before the next rollover standing penalty."""
+    """true if a visit is needed before the next rollover standing penalty."""
     if not is_full_medic(user):
         return False
     last = int(user["last_sacred_day"] if "last_sacred_day" in user.keys() else 0)
@@ -79,19 +79,19 @@ def sacred_visit_due(user, day: int) -> bool:
 
 
 def format_sacred_visit_reminder(user, day: int) -> str | None:
-    """Player-facing status for cooldowns, profile, and /vitals action:condition."""
+    """player-facing status for cooldowns, profile, and /vitals action:condition."""
     if not is_full_medic(user):
         return None
     last = int(user["last_sacred_day"] if "last_sacred_day" in user.keys() else 0)
     if last >= day:
         return (
-            "**Sacred visit:** done this sunrise. "
-            "Next due within **{days}** sunrises.".format(days=HALF_MOON_DAYS)
+            "**sacred visit:** done this sunrise. "
+            "next due within **{days}** sunrises.".format(days=HALF_MOON_DAYS)
         )
     if not last and day < HALF_MOON_DAYS:
         grace = HALF_MOON_DAYS - day
         return (
-            f"**Sacred visit:** **{grace}** sunrise(s) of grace as a new Medic; "
+            f"**sacred visit:** **{grace}** sunrise(s) of grace as a new medic; "
             f"then every **{HALF_MOON_DAYS}** sunrises use `/medic action:sacred` "
             f"(**+{SACRED_STANDING_GAIN}** standing & blessings) or lose "
             f"**{SACRED_STANDING_PENALTY}** standing."
@@ -99,17 +99,17 @@ def format_sacred_visit_reminder(user, day: int) -> str | None:
     elapsed = _days_since_visit(user, day)
     if elapsed >= HALF_MOON_DAYS:
         return (
-            "**Sacred visit:** **overdue**; rollover costs "
-            f"**{SACRED_STANDING_PENALTY}** standing. Use `/medic action:sacred` now."
+            "**sacred visit:** **overdue**; rollover costs "
+            f"**{SACRED_STANDING_PENALTY}** standing. use `/medic action:sacred` now."
         )
     left = HALF_MOON_DAYS - elapsed
     if left <= 1:
         return (
-            "**Sacred visit:** **due this sunrise**; use `/medic action:sacred` "
+            "**sacred visit:** **due this sunrise**; use `/medic action:sacred` "
             f"or lose **{SACRED_STANDING_PENALTY}** standing on rollover."
         )
     return (
-        f"**Sacred visit:** due in **{left}** sunrise(s); `/medic action:sacred` "
+        f"**sacred visit:** due in **{left}** sunrise(s); `/medic action:sacred` "
         f"every half-moon (**+{SACRED_STANDING_GAIN}** standing & den blessings) "
         f"or **{SACRED_STANDING_PENALTY}** standing on rollover."
     )
@@ -117,8 +117,8 @@ def format_sacred_visit_reminder(user, day: int) -> str | None:
 
 def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     """
-    Rewards for walking the sacred path once per sunrise.
-    Returns (reward lines, whether blessings were applied).
+    rewards for walking the sacred path once per sunrise.
+    returns (reward lines, whether blessings were applied).
     """
     last = int(user["last_sacred_day"] if "last_sacred_day" in user.keys() else 0)
     if last >= day:
@@ -147,18 +147,18 @@ def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     db.update_user_by_id(user["id"], **buff_fields)
 
     lines.append(
-        f"next **Medicine/Herblore** check **+{SACRED_MEDICINE_BONUS}**"
+        f"next **medicine/herblore** check **+{SACRED_MEDICINE_BONUS}**"
     )
     return lines, True
 
 
-def apply_sacred_visit_reminders(conn: sqlite3.Connection, day: int) -> list[dict]:
-    """Medics who missed a half-moon sacred visit lose standing."""
+def apply_sacred_visit_reminders(conn: sqlite3.connection, day: int) -> list[dict]:
+    """medics who missed a half-moon sacred visit lose standing."""
     rows = conn.execute(
         """
-        SELECT id, wolf_name, last_sacred_day, pack_id
-        FROM users
-        WHERE wolf_role = 'medic' AND condition NOT IN ('dead', 'dying')
+        select id, wolf_name, last_sacred_day, pack_id
+        from users
+        where wolf_role = 'medic' AND condition NOT IN ('dead', 'dying')
         """
     ).fetchall()
     notes: list[dict] = []
@@ -203,15 +203,15 @@ def apply_sacred_visit_reminders(conn: sqlite3.Connection, day: int) -> list[dic
 
 def record_sacred_visit(user, *, day: int) -> tuple[bool, str]:
     if not is_full_medic(user):
-        return False, "Only full **Medics** must keep the half-moon sacred visits."
+        return False, "only full **medics** must keep the half-moon sacred visits."
     blessings, ok = apply_sacred_visit_blessings(user, day=day)
     if not ok:
-        return False, "You already walked the sacred path this sunrise."
+        return False, "you already walked the sacred path this sunrise."
     ancestor = pick_sacred_ancestor_word(user)
     reward = " · ".join(blessings)
     return True, (
         f"**{user['wolf_name']}** walks the spirit path: ancestors heard at the sacred place.\n\n"
-        f"_The ancestors say:_ \"{ancestor}\"\n\n"
-        f"**Blessings:** {reward}\n\n"
-        f"Next visit due within **{HALF_MOON_DAYS}** sunrises."
+        f"_the ancestors say:_ \"{ancestor}\"\n\n"
+        f"**blessings:** {reward}\n\n"
+        f"next visit due within **{HALF_MOON_DAYS}** sunrises."
     )

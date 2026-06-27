@@ -34,8 +34,8 @@ MEDICINE_HERB_LABELS: dict[str, str] = {
     "plantain": "plantain leaf",
 }
 
-# Shared medicine-cat pantry rolls (receive/barter bias).
-MEDICINE_CAT_TABLE: list[tuple[LootKind, str, int]] = [
+# shared medicine-cat pantry rolls (receive/barter bias).
+MEDICINE_CAT_TABLE: list[tuple[lootkind, str, int]] = [
     ("herb", "cobwebs", 22),
     ("herb", "yarrow", 18),
     ("herb", "chamomile", 16),
@@ -186,7 +186,7 @@ def grant_clan_loot(
             from engine.prey_items import prey_meta
 
             grant_prey_carcass(wolf_id, key, guild_id=guild_id, acquired_day=day)
-            lines.append(f"**{prey_meta(key)['name']}** → `/prey`")
+            lines.append(f"**{prey_meta(key)['name']}** → `/food`")
         elif kind == "herb":
             if key not in HERBS:
                 continue
@@ -206,7 +206,7 @@ def grant_clan_loot(
             grant_amusement(wolf_id, key)
             from engine.amusement_items import amusement_meta
 
-            lines.append(f"Toy **{amusement_meta(key)['name']}** → `/playpen action:toys`")
+            lines.append(f"toy **{amusement_meta(key)['name']}** → `/playpen action:toys`")
         elif kind == "bones":
             amount = max(1, int(key))
             db.add_bones(user["discord_id"], amount, wolf_id=wolf_id)

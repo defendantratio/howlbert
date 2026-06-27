@@ -148,6 +148,7 @@ CANONICAL_BONDS: list[dict] = [
         "b": "Cloverfern",
         "type": "kin",
         "strength": 85,
+        "mates": True,
         "note": "Mates; southern border hunter and forager.",
     },
     {
@@ -183,6 +184,7 @@ CANONICAL_BONDS: list[dict] = [
         "b": "Fernspot",
         "type": "kin",
         "strength": 58,
+        "mates": True,
         "note": "Mates in the same den; cold and strained; Kanami between them.",
     },
     {
@@ -211,14 +213,14 @@ CANONICAL_BONDS: list[dict] = [
         "b": "Pale'Step",
         "type": "mentor",
         "strength": 62,
-        "note": "Foster ward; antlered hunter's charge.",
+        "note": "Foster ward; antlered Alpha's charge.",
     },
     {
         "a": "Skye",
         "b": "Finnpelt",
         "type": "friendship",
         "strength": 55,
-        "note": "Alpha's guard; one of few who has seen him vulnerable.",
+        "note": "Greyspire veteran; one of few who has seen him vulnerable.",
     },
     {
         "a": "Eltanin",

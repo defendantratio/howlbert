@@ -26,7 +26,7 @@ def grant_prey_carcass(
     acquired_day: int,
     bone_value: int | None = None,
 ) -> int:
-    """Add a carcass to the wolf's hoard. Returns stack id."""
+    """Add a carcass to the wolf's hoard. returns stack id."""
     meta = prey_meta(prey_key)
     bones = bone_value if bone_value is not None else meta["bones"]
     return db.add_prey_stack(
@@ -75,11 +75,11 @@ def format_prey_hoard_line(stack, current_day: int) -> str:
 def format_prey_hoard_footer(*, empty: bool = False) -> str:
     if empty:
         return (
-            "Fresh kills rot by type (3–8 sunrises); `/eat` before spoil · "
+            "fresh kills rot by type (3–8 sunrises); `/eat` before spoil · "
             "rotting → `/salvage` · `/world action:cooldowns`"
         )
     return (
-        "Rot timers vary by carcass · `/eat` · `/drink` · `/bury` · `/preypile` · "
+        "rot timers vary by carcass · `/eat` · `/drink` · `/bury` · `/preypile` · "
         "rotting → `/salvage` · `/pack stash deposit`"
     )
 
@@ -92,7 +92,7 @@ def fresh_kill_pile_block_message(wolf_id: int, day: int) -> str | None:
     if any(not s["is_rotting"] for s in stacks):
         return None
     return (
-        "Today's kill is **rotting**; the fresh-kill cache is for meat still good. "
+        "today's kill is **rotting**; the fresh-kill cache is for meat still good. "
         "`/eat` at gut-risk or `/salvage` for bones."
     )
 
@@ -107,9 +107,9 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
 
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't carry that carcass."
+        return False, "you don't carry that carcass."
     if stack["uses_left"] <= 0:
-        return False, "That carcass is picked clean."
+        return False, "that carcass is picked clean."
 
     meta = prey_meta(stack["prey_key"])
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(user, stack["bone_value"])
@@ -131,7 +131,7 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     disease_note = ""
     if stack["is_rotting"]:
         if forage:
-            disease_note = "\n_The fruit is **overripe**, fermented and sour; your gut churns._"
+            disease_note = "\n_the fruit is **overripe**, fermented and sour; your gut churns._"
             from engine.disease_contract import try_contract_disease
 
             if random.random() < 0.15:
@@ -142,7 +142,7 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
             from engine.disease_contract import try_rotting_meat_exposure
             from engine.prey_items import PREY_ROTTING_EAT_DISEASE_CHANCE
 
-            disease_note = "\n_You choke down **rotting** flesh; gut twists._"
+            disease_note = "\n_you choke down **rotting** flesh; gut twists._"
             if random.random() < PREY_ROTTING_EAT_DISEASE_CHANCE:
                 note = try_rotting_meat_exposure(user)
                 if note:
@@ -151,7 +151,7 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:
         db.remove_prey_stack(stack_id)
-        uses_note = "It's all gone." if forage else "The carcass is finished."
+        uses_note = "it's all gone." if forage else "the carcass is finished."
     else:
         unit = "this forage" if forage else "this carcass"
         db.update_prey_stack_uses(stack_id, uses_left)
@@ -160,7 +160,7 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     old_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
     verb = "graze on" if forage else "tear into"
     msg = (
-        f"You {verb} **{meta['label']}**; +{hp_gain} HP, "
+        f"you {verb} **{meta['label']}**; +{hp_gain} hp, "
         f"hunger **{new_hunger}** (+{hunger_gain}), thirst **{new_thirst}** (+{thirst_gain})"
     )
     from engine.cannibalism import cannibalism_eat_consequences
@@ -175,16 +175,16 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
 def salvage_prey_carcass(user, stack_id: int) -> tuple[bool, str, int]:
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't carry that carcass.", 0
+        return False, "you don't carry that carcass.", 0
     from engine.prey_items import is_forage_food
 
     if is_forage_food(stack["prey_key"]):
-        return False, "Spoiled forage rots to mush; there's nothing to salvage. `/bury` it instead.", 0
+        return False, "spoiled forage rots to mush; there's nothing to salvage. `/bury` it instead.", 0
     if not stack["is_rotting"]:
-        return False, "Only **rotting** carcasses can be salvaged; eat them fresh or wait.", 0
+        return False, "only **rotting** carcasses can be salvaged; eat them fresh or wait.", 0
 
     bones = salvage_bones(stack["prey_key"], stack["uses_left"], stack["bone_value"])
     db.remove_prey_stack(stack_id)
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
     meta = prey_meta(stack["prey_key"])
-    return True, f"Salvaged **{meta['name']}** into **{bones}** bones.", bones
+    return True, f"salvaged **{meta['name']}** into **{bones}** bones.", bones

@@ -28,7 +28,7 @@ def test_plot_phase_migration_and_set():
 
 def test_plot_den_news():
     line = plot_den_news_line(1, 100)
-    assert "Blinking" in line
+    assert "blinking" in line.lower()
     assert "moon" in line.lower()
     assert plot_den_news_line(0, 1) == ""
 
@@ -184,7 +184,7 @@ def test_soot_plot_sniff_and_treat():
     assert sniff and "+2 mood" in sniff and "mist-light" in sniff
 
     extra = try_plot_treat_extras(healer, patient, guild_id=guild_id, day=day)
-    assert extra and "Mirewort" in extra
+    assert extra and "mirewort" in extra.lower()
     assert plot_soot_heal_bonus(healer, patient, guild_id) == 3
     assert plot_healer_heal_bonus(healer, patient, guild_id) == 3
 
@@ -261,6 +261,70 @@ def test_horsetail_death_save_consumed():
     assert death_save_bonus(merged) == 0
 
 
+def test_rivershroud_and_finnpelt_plot_sniff():
+    from engine.plot_blinking import (
+        apply_plot_finnpelt_sniff,
+        apply_plot_rivershroud_sniff,
+        plot_howl_unity_bonus,
+        plot_thistlehide_patrol_standing_bonus,
+        rivershroud_plot_active,
+    )
+
+    db.init_db()
+    guild_id = 999_010
+    day = 70
+
+    alpha = {
+        "wolf_name": "RiverShroud",
+        "discord_id": 99040,
+        "great_pack": "thistlehide",
+        "wolf_role": "alpha",
+        "id": 99041,
+        "last_rivershroud_reward_day": 0,
+        "mood": 50,
+    }
+    hunter = {
+        "wolf_name": "Finnpelt",
+        "discord_id": 99042,
+        "great_pack": "thistlehide",
+        "wolf_role": "hunter",
+        "id": 99043,
+        "last_finnpelt_reward_day": 0,
+        "mood": 50,
+    }
+    with db.get_db() as conn:
+        for u in (alpha, hunter):
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO users (
+                    id, discord_id, wolf_name, great_pack, wolf_role, mood, hp, max_hp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (u["id"], u["discord_id"], u["wolf_name"], u["great_pack"], u["wolf_role"], 50, 20, 20),
+            )
+        conn.commit()
+
+    db.set_plot_phase(guild_id, 2)
+    early = apply_plot_rivershroud_sniff(alpha, guild_id, day=day)
+    assert early and "+1 mood" in early.lower() and "sniff bonus" in early.lower()
+    assert not apply_plot_finnpelt_sniff(hunter, guild_id, day=day)
+
+    db.set_plot_phase(guild_id, 7)
+    finn = apply_plot_finnpelt_sniff(hunter, guild_id, day=day)
+    assert finn and "+2 mood" in finn and "+1 standing" in finn
+
+    alpha["last_rivershroud_reward_day"] = 0
+    river = apply_plot_rivershroud_sniff(alpha, guild_id, day=day)
+    assert river and "+2 standing" in river
+    assert plot_thistlehide_patrol_standing_bonus(guild_id, "thistlehide", user=alpha) == 1
+    assert plot_thistlehide_patrol_standing_bonus(guild_id, "thistlehide", user=hunter) == 1
+
+    db.set_plot_phase(guild_id, 11)
+    assert plot_howl_unity_bonus(guild_id, user=alpha) == 2
+    assert rivershroud_plot_active(alpha, guild_id)
+    assert not rivershroud_plot_active({**alpha, "wolf_role": "hunter"}, guild_id)
+
+
 if __name__ == "__main__":
     test_plot_phase_migration_and_set()
     test_plot_den_news()
@@ -274,4 +338,5 @@ if __name__ == "__main__":
     test_plot_witness_once_per_day()
     test_plot_quest_phase_gates()
     test_horsetail_death_save_consumed()
+    test_rivershroud_and_finnpelt_plot_sniff()
     print("test_plot_blinking: ok")

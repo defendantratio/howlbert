@@ -42,7 +42,7 @@ def is_young_wolf(role: str) -> bool:
 
 
 def young_wolf_block(user, *, action: str) -> str | None:
-    """Return an error message if this wolf is too young for the action."""
+    """return an error message if this wolf is too young for the action."""
     role = wolf_role(user)
     label = ROLE_LABELS.get(role, role.title())
     stage = life_stage(user)
@@ -50,19 +50,19 @@ def young_wolf_block(user, *, action: str) -> str | None:
     if action in ("court", "mate", "birth") and (is_young_wolf(role) or stage in ("pup", "juvenile")):
         return (
             f"**{label}** wolves are forbidden to mate. "
-            "Juveniles (6-24 moons) and pups (under 6 moons) cannot court or breed."
+            "juveniles (6-24 moons) and pups (under 6 moons) cannot court or breed."
         )
 
     if action == "hunt" and (is_pup(role) or stage == "pup"):
         return (
-            "Pups are too small to hunt. You are fed by caretakers until you earn a juvenile role "
+            "pups are too small to hunt. you are fed by caretakers until you earn a juvenile role "
             "or survive to practice hunting."
         )
 
     if action == "combat" and (is_pup(role) or stage == "pup"):
-        return "Pups cannot join combat encounters; the den protects you."
+        return "pups cannot join combat encounters; the den protects you."
 
     if action == "crime" and (is_pup(role) or stage == "pup"):
-        return "Pups cannot run scores; the den keeps you out of trouble."
+        return "pups cannot run scores; the den keeps you out of trouble."
 
     return None

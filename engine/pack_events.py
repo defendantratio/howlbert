@@ -34,7 +34,7 @@ def _apply_pack_event_effect(conn, pack_id: int, effect: str | None) -> str:
             (pack_id,),
         ).fetchone()
         if not row:
-            return " Guards held the line; **no theft**."
+            return " guards held the line; **no theft**."
         from engine.prey_items import prey_meta
 
         name = prey_meta(row["prey_key"])["name"]
@@ -46,13 +46,13 @@ def _apply_pack_event_effect(conn, pack_id: int, effect: str | None) -> str:
                 "UPDATE pack_prey_stacks SET uses_left = uses_left - 1 WHERE id = ?",
                 (row["id"],),
             )
-        return f" A raccoon **stole** a bite of reserve **{name}** (`/pack stash`)."
+        return f" a raccoon **stole** a bite of reserve **{name}** (`/pack stash`)."
 
     if effect == "unity":
         outcome = db.adjust_pack_unity(pack_id, 1)
         if outcome == "dissolved":
-            return " The dusk howl couldn't hold the fractured den."
-        return " Dusk howl; **+1 unity**."
+            return " the dusk howl couldn't hold the fractured den."
+        return " dusk howl; **+1 unity**."
 
     if effect == "thin_prey":
         row = conn.execute("SELECT treasury FROM packs WHERE id = ?", (pack_id,)).fetchone()
@@ -64,7 +64,7 @@ def _apply_pack_event_effect(conn, pack_id: int, effect: str | None) -> str:
         loss = min(8, max(3, treasury // 10))
         if not db.deduct_pack_treasury(pack_id, loss):
             return ""
-        return f" Shared rations; treasury **−{loss}** bones."
+        return f" shared rations; treasury **−{loss}** bones."
 
     return ""
 

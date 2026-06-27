@@ -43,6 +43,25 @@ def _row(**kwargs):
     return base
 
 
+def test_barkhollow_forage_herblore_not_hollow_chest():
+    from engine.character_traits import BARKHOLLOW_CHARACTER_TRAITS
+
+    user = _row(
+        great_pack="thistlehide",
+        wolf_role="forager",
+        character_traits=encode_character_traits(BARKHOLLOW_CHARACTER_TRAITS),
+        attr_int=3,
+        attr_wis=4,
+        attr_con=1,
+    )
+    mod, names = trait_check_adjustments(user, ("attr_int", "attr_wis"), skill_key="herblore")
+    assert mod == 10
+    assert "Foraging" in names
+    assert "Herblore" in names
+    assert "Survival" in names
+    assert "Hollow Chest" not in names
+
+
 def test_mirewort_herblore_bonus():
     user = _row()
     mod, names = trait_check_adjustments(user, ("attr_int",), skill_key="herblore")
@@ -60,9 +79,10 @@ def test_mirewort_medicine_bonus():
 def test_mirewort_swamp_nav_outside_mistmoor():
     user = _row(great_pack="thistlehide")
     mod, names = trait_check_adjustments(user, ("attr_con", "attr_str"), skill_key="survival")
-    assert mod == -4
-    assert "Physically Frail" in names
+    assert mod == 0
+    assert "Physically Frail" not in names
     assert "Swamp Navigation" not in names
+    assert trait_combat_modifier(user) == -4
 
 
 def test_mirewort_frail_and_detachment_stack():
@@ -85,8 +105,9 @@ def test_splinter_stealth_bonus():
         skill_proficiencies='["stealth", "tracking"]',
     )
     mod, names = trait_check_adjustments(user, ("attr_dex",), skill_key="stealth")
-    assert mod == 1  # +4 stealth, -3 missing leg on dex
+    assert mod == 4
     assert "Stealth" in names
+    assert "Missing Leg" not in names
 
 
 def test_resolve_check_includes_trait_modifier():

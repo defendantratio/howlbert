@@ -27,7 +27,7 @@ def bury_carcass(
 ) -> tuple[bool, str]:
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "You don't carry that carcass."
+        return False, "you don't carry that carcass."
 
     meta = prey_meta(stack["prey_key"])
     ritual_note = ""
@@ -40,9 +40,9 @@ def bury_carcass(
             key = "garden_mint"
         if key not in BURY_RITUAL_HERBS:
             allowed = ", ".join(_herb_label(k) for k in sorted(BURY_RITUAL_HERBS))
-            return False, f"Use **lavender**, **rosemary**, **meadowsweet**, or **mint** ({allowed})."
+            return False, f"use **lavender**, **rosemary**, **meadowsweet**, or **mint** ({allowed})."
         if not participant_has_herb(user, key):
-            return False, f"No **{_herb_label(key)}** in your herb bag or inventory."
+            return False, f"no **{_herb_label(key)}** in your herb bag or inventory."
         consume_participant_herb(user, key)
         mood_delta = 5
         db_fields.update(grant_burial_scent_mask(user, day=day, duration=3))
@@ -61,8 +61,8 @@ def bury_carcass(
         mirewort_note = mirewort_carcass_burial_note(ritual_herb_key=key if key else None)
 
     body = (
-        f"You scrape earth over **{meta['label']}**; gone from your hoard.\n"
-        f"_The den remembers the respect; mood **{new_mood}** (**+{mood_delta}**)._"
+        f"you scrape earth over **{meta['label']}**; gone from your hoard.\n"
+        f"_the den remembers the respect; mood **{new_mood}** (**+{mood_delta}**)._"
         f"{ritual_note}"
         f"{mirewort_note}"
     )

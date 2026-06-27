@@ -114,9 +114,9 @@ def exhaustion_activity_block(user) -> str | None:
 
         return (
 
-            f"**Exhaustion {ex}/{EXHAUSTION_MAX}**; you cannot move. "
+            f"**exhaustion {ex}/{EXHAUSTION_MAX}**; you cannot move. "
 
-            "Rest, eat, and recover before hunting or ranging out."
+            "rest, eat, and recover before hunting or ranging out."
 
         )
 
@@ -128,7 +128,7 @@ def exhaustion_activity_block(user) -> str | None:
 
 def exhaustion_hunt_multiplier(exhaustion: int) -> float:
 
-    """Level 2+: speed halved → reduced hunt payout."""
+    """level 2+: speed halved → reduced hunt payout."""
 
     if exhaustion >= 2:
 
@@ -150,7 +150,7 @@ def apply_exhaustion_hunt_penalty(amount: int, exhaustion: int) -> tuple[int, st
 
     reduced = max(0, int(amount * mult))
 
-    note = f"Exhaustion {exhaustion}; speed halved, **−50%** hunt bones."
+    note = f"exhaustion {exhaustion}; speed halved, **−50%** hunt bones."
 
     return reduced, note
 
@@ -278,9 +278,9 @@ def apply_exhaustion_death_on_rollover(
 
 
 
-def clamp_hp_for_exhaustion_on_rollover(conn: sqlite3.Connection) -> None:
+def clamp_hp_for_exhaustion_on_rollover(conn: sqlite3.connection) -> None:
 
-    """Level 4+ halves effective max HP; clamp current HP if needed."""
+    """level 4+ halves effective max hp; clamp current hp if needed."""
 
     rows = conn.execute(
 

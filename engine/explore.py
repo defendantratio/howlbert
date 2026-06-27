@@ -92,8 +92,8 @@ EXPLORE_SIDE_FINDS = [
 ]
 
 EXPLORE_FAIL_FLAVOR = [
-    "The trail doubles back on itself until you give up.",
-    "Something large moved uphill; you decide not to follow alone.",
+    "the trail doubles back on itself until you give up.",
+    "something large moved uphill; you decide not to follow alone.",
     "Rain-soft ground swallows your scent; the venture yields nothing.",
     "A rival's mark on a stump tells you to range elsewhere today.",
 ]
@@ -209,26 +209,26 @@ def try_explore(
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR), None
+        return howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR), None
     if not interaction.guild:
-        return howlbert_embed("Server Only", "Explore in a server channel.", color=ERROR_COLOR), None
+        return howlbert_embed("server only", "explore in a server channel.", color=ERROR_COLOR), None
 
     from engine.injury_effects import strenuous_activity_blocked_by_injury
     from engine.vitals import full_activity_block
 
     inj = strenuous_activity_blocked_by_injury(user)
     if inj:
-        return howlbert_embed("Too Injured", inj, color=ERROR_COLOR), None
+        return howlbert_embed("too injured", inj, color=ERROR_COLOR), None
 
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
     block = full_activity_block(user, day, action="explore")
     if block:
-        return howlbert_embed("Cannot Explore", block, color=ERROR_COLOR), None
+        return howlbert_embed("cannot explore", block, color=ERROR_COLOR), None
 
     spec = EXPLORE_ACTIONS.get(action)
     if not spec:
-        return howlbert_embed("Unknown Action", "Pick dig, follow, or investigate.", color=ERROR_COLOR), None
+        return howlbert_embed("unknown action", "pick dig, follow, or investigate.", color=ERROR_COLOR), None
     from engine.role_privileges import can_explore_again, is_scout
 
     if not can_explore_again(user, day):
@@ -238,11 +238,11 @@ def try_explore(
             else "Resets next sunrise · check **`/world action:cooldowns`**"
         )
         embed = howlbert_embed(
-            "Already Explored",
-            f"You've ranged out this sunrise.\n\n_{hint}_",
+            "already explored",
+            f"you've ranged out this sunrise.\n\n_{hint}_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns · Scouts: unlimited explore & rescout")
+        embed.set_footer(text="/world action:cooldowns · scouts: unlimited explore & rescout")
         return embed, None
 
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
@@ -298,15 +298,15 @@ def try_explore(
             filth_note = f"\n\n{filth}"
         hazard_note = _explore_field_hazard(user, action, scale=0.65)
         embed = howlbert_embed(
-            f"{spec['emoji']} Explore: {spec['label']}",
+            f"{spec['emoji']} explore: {spec['label']}",
             format_roll_result(result)
-            + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n"
+            + f"\n\n{spec['flavor']}\n_biome: {biome}_\n\n"
             "**Critical failure**; you startle prey, twist a paw, or lose the trail. **−5 mood.**"
             + filth_note
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="Today's explore is spent · `/playpen` · `/prey`")
+        embed.set_footer(text="today's explore is spent · `/playpen` · `/food`")
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
@@ -316,13 +316,13 @@ def try_explore(
             fail_extra = f"\n\n_{random.choice(EXPLORE_FAIL_FLAVOR)}_"
         hazard_note = _explore_field_hazard(user, action, scale=0.45)
         embed = howlbert_embed(
-            f"{spec['emoji']} Explore: {spec['label']}",
+            f"{spec['emoji']} explore: {spec['label']}",
             format_roll_result(result)
-            + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\nNothing useful today.{fail_extra}"
+            + f"\n\n{spec['flavor']}\n_biome: {biome}_\n\nnothing useful today.{fail_extra}"
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="Today's explore is spent · hazards still find you in the brush")
+        embed.set_footer(text="today's explore is spent · hazards still find you in the brush")
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
@@ -344,7 +344,7 @@ def try_explore(
             loot_key=loot_key2,
             discord_id=interaction.user.id,
         )
-        loot_line = f"**Double find!** {reward} and {reward2}"
+        loot_line = f"**double find!** {reward} and {reward2}"
     else:
         loot_line = _grant_loot(
             user["id"],
@@ -353,7 +353,7 @@ def try_explore(
             loot_key=loot_key,
             discord_id=interaction.user.id,
         )
-        loot_line = f"Found: {loot_line}"
+        loot_line = f"found: {loot_line}"
 
     side = _maybe_explore_side_event(user, interaction.user.id)
     mill_line = ""
@@ -372,20 +372,20 @@ def try_explore(
     db.increment_quest_progress(interaction.user.id, "explore", guild_id=interaction.guild.id)
     hazard_note = _explore_field_hazard(user, action)
     embed = howlbert_embed(
-        f"{spec['emoji']} Explore: {spec['label']}",
+        f"{spec['emoji']} explore: {spec['label']}",
         format_roll_result(result)
-        + f"\n\n{spec['flavor']}\n_Biome: {biome}_\n\n{loot_line}{side}{mill_line}{witness}"
+        + f"\n\n{spec['flavor']}\n_biome: {biome}_\n\n{loot_line}{side}{mill_line}{witness}"
         + (f"\n\n{hazard_note}" if hazard_note else ""),
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="Amusement: `/playpen` · carcasses: `/prey` · sell scraps: `/raccoon sell`")
+    embed.set_footer(text="amusement: `/playpen` · carcasses: `/food` · sell scraps: `/raccoon sell`")
     if is_scout(user):
         from config import SCOUT_EXPLORE_DC_BONUS
 
         embed.set_footer(
             text=(
-                f"Scout; unlimited ventures · explore DC −{SCOUT_EXPLORE_DC_BONUS} · "
-                f"/scout rescout · `/playpen` · /prey"
+                f"scout; unlimited ventures · explore dc −{SCOUT_EXPLORE_DC_BONUS} · "
+                f"/scout rescout · `/playpen` · /food"
             )
         )
     append_fatigue_to_footer(embed, explore_fatigue)
@@ -430,7 +430,7 @@ def _record_rescout_use(discord_id: int, day: int) -> int:
 
 
 def try_rescout(interaction) -> discord.Embed | None:
-    """Repeat explore in the same biome; Scout role only, mood and loot."""
+    """repeat explore in the same biome; scout role only, mood and loot."""
     import database as db
     from config import RESCOUT_MOOD_GAIN, SCOUT_EXPLORE_DC_BONUS
     from engine.character import parse_proficiencies
@@ -438,16 +438,16 @@ def try_rescout(interaction) -> discord.Embed | None:
 
     user = db.get_user(interaction.user.id)
     if not user:
-        return howlbert_embed("Not Registered", "Use `/register` first.", color=ERROR_COLOR)
+        return howlbert_embed("not registered", "use `/register` first.", color=ERROR_COLOR)
     if not is_scout(user):
         return howlbert_embed(
-            "Scouts Only",
-            "Only wolves with the **Scout** role can rescout the biome. "
+            "scouts only",
+            "only wolves with the **scout** role can rescout the biome. "
             "Hunters and others use **`/explore venture`** once per sunrise.",
             color=ERROR_COLOR,
         )
     if not interaction.guild:
-        return howlbert_embed("Server Only", "Explore in a server channel.", color=ERROR_COLOR)
+        return howlbert_embed("server only", "explore in a server channel.", color=ERROR_COLOR)
 
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
@@ -477,15 +477,15 @@ def try_rescout(interaction) -> discord.Embed | None:
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
     scout_footer = (
-        f"Scout; unlimited rescouts · explore DC −{SCOUT_EXPLORE_DC_BONUS} · `/playpen` · /prey"
+        f"scout; unlimited rescouts · explore dc −{SCOUT_EXPLORE_DC_BONUS} · `/playpen` · /food"
     )
 
     if result["outcome"] == "critical_failure":
         db.adjust_mood(user["id"], -3)
         embed = howlbert_embed(
-            "🔁 Rescout",
+            "🔁 rescout",
             format_roll_result(result)
-            + f"\n\nYou double back through {biome}; a false trail and a stubbed paw. **−3 mood.**",
+            + f"\n\nyou double back through {biome}; a false trail and a stubbed paw. **−3 mood.**",
             color=ERROR_COLOR,
         )
         embed.set_footer(text=scout_footer)
@@ -494,9 +494,9 @@ def try_rescout(interaction) -> discord.Embed | None:
 
     if not result["success"]:
         embed = howlbert_embed(
-            "🔁 Rescout",
+            "🔁 rescout",
             format_roll_result(result)
-            + f"\n\nYou pad the old trails through {biome} but find nothing new.",
+            + f"\n\nyou pad the old trails through {biome} but find nothing new.",
             color=ERROR_COLOR,
         )
         embed.set_footer(text=scout_footer)
@@ -521,7 +521,7 @@ def try_rescout(interaction) -> discord.Embed | None:
             discord_id=interaction.user.id,
         )
         new_mood = db.adjust_mood(user["id"], RESCOUT_MOOD_GAIN + 2)
-        loot_line = f"**Sharp eyes!** {reward} and {reward2} · mood **{new_mood}**"
+        loot_line = f"**sharp eyes!** {reward} and {reward2} · mood **{new_mood}**"
     else:
         loot_key = _pick_loot(RESCOUT_LOOT)
         if random.random() < 0.4:
@@ -533,14 +533,14 @@ def try_rescout(interaction) -> discord.Embed | None:
                 discord_id=interaction.user.id,
             )
             new_mood = db.adjust_mood(user["id"], RESCOUT_MOOD_GAIN)
-            loot_line = f"Found: {reward} · **+{RESCOUT_MOOD_GAIN} mood** (now **{new_mood}**)"
+            loot_line = f"found: {reward} · **+{RESCOUT_MOOD_GAIN} mood** (now **{new_mood}**)"
         else:
             new_mood = db.adjust_mood(user["id"], RESCOUT_MOOD_GAIN)
-            loot_line = f"The land reads clear; **+{RESCOUT_MOOD_GAIN} mood** (now **{new_mood}**)"
+            loot_line = f"the land reads clear; **+{RESCOUT_MOOD_GAIN} mood** (now **{new_mood}**)"
 
     db.increment_quest_progress(interaction.user.id, "explore", guild_id=interaction.guild.id)
     embed = howlbert_embed(
-        "🔁 Rescout",
+        "🔁 rescout",
         format_roll_result(result) + f"\n\n_{biome}_\n\n{loot_line}",
         color=SUCCESS_COLOR,
     )

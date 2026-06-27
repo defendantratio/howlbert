@@ -62,19 +62,19 @@ def try_contract_disease(
 
 
 def try_poop_roll_exposure(user) -> str | None:
-    """Filth exposure; rolling in droppings (play, socialize, explore mishaps)."""
+    """filth exposure; rolling in droppings (play, socialize, explore mishaps)."""
     return try_contract_disease(user, "diarrhea", chance=0.35)
 
 
 def try_rotting_meat_exposure(user) -> str | None:
-    """Spoiled prey; gut sickness; rare mold-spore cough (Warriors-style)."""
+    """spoiled prey; gut sickness; rare mold-spore cough (warriors-style)."""
     if random.random() < 0.45:
         note = try_contract_disease(user, "diarrhea", chance=1.0)
         if note:
-            return f"Rotting meat: {note}"
+            return f"rotting meat: {note}"
     note = try_contract_disease(user, "cough", "mild", chance=0.12)
     if note:
-        return f"Mold spores in rotten meat; **Green-cough** (spore-lung): {note}"
+        return f"mold spores in rotten meat; **green-cough** (spore-lung): {note}"
     return None
 
 
@@ -85,7 +85,7 @@ def try_carrion_exposure(user) -> str | None:
     if roll < 0.22:
         note = try_contract_disease(user, "distemper", chance=1.0)
         if note:
-            return f"Carrion from a sick canid: {note}"
+            return f"carrion from a sick canid: {note}"
     if roll < 0.26:
         from engine.chronic_conditions import try_wasting_from_carrion
 
@@ -94,7 +94,7 @@ def try_carrion_exposure(user) -> str | None:
 
 
 def try_pupcough_exposure(user, chance: float = 0.12) -> str | None:
-    """Pup-susceptible cough; only wolves under one year."""
+    """pup-susceptible cough; only wolves under one year."""
     age = int(user["age_months"]) if user and "age_months" in user.keys() else 24
     if age >= 12:
         return None
@@ -116,7 +116,7 @@ def try_grief_on_bond_loss(
         user, "grief_melancholy", "mourning", chance=chance, conn=conn
     )
     if note:
-        return f"Mate lost: {note}"
+        return f"mate lost: {note}"
     return None
 
 
@@ -189,7 +189,7 @@ def try_pack_madness_from_den_stress(
         chance = min(0.15, chance * 1.5)
     note = try_contract_disease(user, "pack_madness", "wary", chance=chance, conn=conn)
     if note:
-        return f"Den stress: {note}"
+        return f"den stress: {note}"
     return None
 
 
@@ -203,7 +203,7 @@ def _fever_note_with_delirium(user, note: str | None) -> str | None:
 
 
 def try_den_filth_exposure(user, *, day: int | None = None) -> str | None:
-    """Nest filth and droppings; GI bugs and pup-susceptible viral illness."""
+    """nest filth and droppings; gi bugs and pup-susceptible viral illness."""
     from engine.herb_buffs import burial_scent_masked
 
     if day is None:
@@ -225,16 +225,16 @@ def try_den_filth_exposure(user, *, day: int | None = None) -> str | None:
 
 
 def try_scavenge_canid_exposure(user) -> str | None:
-    """Scavenge near hearth-hound kills or mangy coyote leavings."""
+    """scavenge near hearth-hound kills or mangy coyote leavings."""
     roll = random.random()
     if roll < 0.10:
         note = try_contract_disease(user, "distemper", chance=1.0)
         if note:
-            return f"Sick canid leavings: {note}"
+            return f"sick canid leavings: {note}"
     if roll < 0.16:
         note = try_contract_disease(user, "mange", chance=1.0)
         if note:
-            return f"Nest mites from a mangy den site: {note}"
+            return f"nest mites from a mangy den site: {note}"
     return None
 
 
@@ -269,10 +269,10 @@ def try_mistmoor_swamp_exposure(user, *, belly_rip: bool = False) -> str | None:
     if belly_rip:
         note = try_contract_disease(user, "shaking_sickness", "shaking", chance=0.16)
         if note:
-            return f"Belly-Rip water: {note}"
+            return f"belly-rip water: {note}"
         note = try_contract_disease(user, "rot_lung", "fever", chance=0.10)
         if note:
-            return _fever_note_with_delirium(user, f"Marsh rot: {note}")
+            return _fever_note_with_delirium(user, f"marsh rot: {note}")
         return None
     note = try_contract_disease(user, "rot_lung", "fever", chance=0.08)
     if note:
@@ -296,11 +296,11 @@ def schedule_milk_fever_risk(
     db.update_user(user["discord_id"], wolf_id=user["id"], milk_fever_due_day=due)
     if difficult_birth or litter_size >= 4:
         return (
-            "**Nursing strain**; heavy lactation may bring **milk-fever** tremors "
+            "**nursing strain**; heavy lactation may bring **milk-fever** tremors "
             "over the next few sunrises."
         )
     return (
-        "**Nursing watch**; peak lactation may bring **milk-fever** tremors "
+        "**nursing watch**; peak lactation may bring **milk-fever** tremors "
         "1–3 sunrises after birth."
     )
 
@@ -331,22 +331,22 @@ def apply_pending_milk_fever_on_rollover(conn, day: int) -> list[dict]:
                 {
                     "wolf_name": user["wolf_name"],
                     "discord_id": user["discord_id"],
-                    "line": f"Peak nursing: {note}",
+                    "line": f"peak nursing: {note}",
                 }
             )
     return notes
 
 
 def try_contract_milk_fever(user, *, difficult_birth: bool = False) -> str | None:
-    """Deprecated alias; birth flow should call schedule_milk_fever_risk with the den day."""
+    """deprecated alias; birth flow should call schedule_milk_fever_risk with the den day."""
     return None
 
 
 def try_sick_traveler_exposure(user) -> str | None:
-    """Infected stranger near the border; Warriors-style plague vector."""
+    """infected stranger near the border; warriors-style plague vector."""
     note = try_contract_disease(user, "yellowcough", chance=0.05)
     if note:
-        return f"Sick traveler: {note}"
+        return f"sick traveler: {note}"
     return None
 
 
@@ -364,44 +364,44 @@ def try_insect_sting_exposure(user, *, chance: float = 0.08) -> str | None:
     """Wasps, hornets, horseflies while ranging, foraging, or digging."""
     note = try_contract_disease(user, "mild_poison", "stung", chance=chance)
     if note:
-        return f"Biting insects: {note}"
+        return f"biting insects: {note}"
     return None
 
 
 def try_snake_venom_exposure(user, *, chance: float = 0.06) -> str | None:
-    """Creek banks, marsh edges, and fishing strikes."""
+    """creek banks, marsh edges, and fishing strikes."""
     gp = user["great_pack"] if user and "great_pack" in user.keys() else None
     if gp in ("mistmoor", "silverrush"):
         chance = min(0.18, chance * 1.6)
     note = try_contract_disease(user, "mild_poison", "venom", chance=chance)
     if note:
-        return f"Snake strike: {note}"
+        return f"snake strike: {note}"
     return None
 
 
 def try_poison_ivy_exposure(user, *, chance: float = 0.09) -> str | None:
-    """Twoleg fence-lines and oily verge weeds."""
+    """twoleg fence-lines and oily verge weeds."""
     note = try_contract_disease(user, "poison_ivy", chance=chance)
     if note:
-        return f"Contact rash: {note}"
+        return f"contact rash: {note}"
     return None
 
 
 def try_nettle_sting_exposure(user, *, chance: float = 0.55) -> str | None:
-    """Stinging nettle harvest; rash and welts even when you know the plant."""
+    """stinging nettle harvest; rash and welts even when you know the plant."""
     note = try_contract_disease(user, "mild_poison", "stung", chance=chance)
     if note:
-        return f"Nettle welts: {note}"
+        return f"nettle welts: {note}"
     return None
 
 
 def try_verge_toxic_misid_exposure(user) -> str | None:
-    """Grabbed the wrong ditch plant on a verge critical failure."""
+    """grabbed the wrong ditch plant on a verge critical failure."""
     roll = random.random()
     if roll < 0.45:
         note = try_contract_disease(user, "mild_poison", "stung", chance=1.0)
         if note:
-            return f"Toxic misidentification: {note}"
+            return f"toxic misidentification: {note}"
     if roll < 0.7:
         note = try_poison_ivy_exposure(user, chance=1.0)
         if note:
@@ -410,7 +410,7 @@ def try_verge_toxic_misid_exposure(user) -> str | None:
 
 
 def try_mating_disease_spread(healthy, carrier) -> str | None:
-    """Mating; redscratch, respiratory illness, and other mating_contagious diseases."""
+    """mating; redscratch, respiratory illness, and other mating_contagious diseases."""
     from engine.diseases import mating_contagious_rate, spread_stage_for
     from engine.quarantine import is_quarantined
 
@@ -425,12 +425,12 @@ def try_mating_disease_spread(healthy, carrier) -> str | None:
     spread = spread_stage_for(key)
     note = try_contract_disease(healthy, key, spread, chance=rate)
     if note:
-        return f"Mating exposure: {note}"
+        return f"mating exposure: {note}"
     return None
 
 
 def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
-    """After vitals decay; mood/hunger stress may trigger mental illness."""
+    """after vitals decay; mood/hunger stress may trigger mental illness."""
     from config import MOOD_LOW_THRESHOLD
     from engine.herb_buffs import get_buffs, merge_buff_fields
 
@@ -481,7 +481,7 @@ def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
 
 
 def try_spread_from_close_contact(healthy, carrier) -> str | None:
-    """Groom, socialize; immediate transmission roll at half pack contagion rate."""
+    """groom, socialize; immediate transmission roll at half pack contagion rate."""
     from engine.quarantine import is_quarantined
 
     if is_quarantined(carrier) or is_quarantined(healthy):
@@ -497,5 +497,5 @@ def try_spread_from_close_contact(healthy, carrier) -> str | None:
     spread = spread_stage_for(key)
     note = try_contract_disease(healthy, key, spread, chance=rate)
     if note:
-        return f"Close contact: {note}"
+        return f"close contact: {note}"
     return None
