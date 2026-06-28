@@ -233,7 +233,7 @@ pick one at `/register`. loners have no treasury or pack trait; join a great pac
 
 ## prestige (tiers 0–7)
 
-legacy grows from **completing quests** and `**/prestige action:retire`**. bone bonus is permanent on hunts and daily.
+legacy grows from **completing quests** and `/prestige action:retire`. bone bonus is permanent on hunts and daily.
 
 
 | tier | name             | total bone bonus |
