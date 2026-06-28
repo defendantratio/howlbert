@@ -208,6 +208,56 @@ class WolfAdmin(commands.Cog):
             embed.set_footer(text='each `/rollover` still ages every wolf by 1 moon.')
         await interaction.response.send_message(embed=embed)
 
+    @wolfadmin.command(name='dormant', description="toggle a wolf's dormant flag (exempt from hunger/thirst/mood decay on /rollover).")
+    @app_commands.describe(player='wolf owner', state='dormant (no decay) or active (normal decay)', wolf_name='which wolf (defaults to their active wolf)')
+    @app_commands.choices(state=[app_commands.Choice(name='dormant', value='dormant'), app_commands.Choice(name='active', value='active')])
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_dormant(self, interaction: discord.Interaction, player: discord.User, state: app_commands.Choice[str], wolf_name: str | None=None):
+        if not await self._require_admin(interaction):
+            return
+        wolf = _resolve_player_wolf(player, wolf_name)
+        if not wolf:
+            if wolf_name:
+                await interaction.response.send_message(embed=_wolf_not_found_embed(player, wolf_name), ephemeral=reply_ephemeral())
+            else:
+                await interaction.response.send_message(embed=howlbert_embed('No Wolf', f'**{player.display_name}** has no active wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        is_dormant = state.value == 'dormant'
+        db.set_wolf_dormant(wolf['id'], is_dormant)
+        note = 'exempt from hunger/thirst/mood decay on `/rollover` until set back to active.' if is_dormant else 'hungers, thirsts, and moods normally again on `/rollover`.'
+        embed = howlbert_embed('wolf marked dormant' if is_dormant else 'wolf marked active', f"**{wolf['wolf_name']}** ({player.mention}); {note}", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
+    @wolfadmin.command(name='execute', description='mark a wolf dead with a lore-flavored cause (admin; severe rp punishment).')
+    @app_commands.describe(player='wolf owner', wolf_name='which wolf (defaults to their active wolf)', method='execution style (sets the cause text)', cause='custom cause text (used when method is custom)')
+    @app_commands.choices(method=[app_commands.Choice(name="sog grave (mistmoor's pit of acidic water)", value='sog_grave'), app_commands.Choice(name='high ledge (greyspire; left to freeze)', value='high_ledge'), app_commands.Choice(name='custom cause', value='custom')])
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_execute(self, interaction: discord.Interaction, player: discord.User, method: app_commands.Choice[str], wolf_name: str | None=None, cause: str | None=None):
+        if not await self._require_admin(interaction):
+            return
+        wolf = _resolve_player_wolf(player, wolf_name)
+        if not wolf:
+            if wolf_name:
+                await interaction.response.send_message(embed=_wolf_not_found_embed(player, wolf_name), ephemeral=reply_ephemeral())
+            else:
+                await interaction.response.send_message(embed=howlbert_embed('No Wolf', f'**{player.display_name}** has no active wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if wolf['condition'] in ('dead', 'dying'):
+            await interaction.response.send_message(embed=howlbert_embed('already gone', f"**{wolf['wolf_name']}** is already {wolf['condition']}.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        cause_text = {
+            'sog_grave': "lowered into the sog grave on a rope of twisted bark; the maw's digestion",
+            'high_ledge': 'left on a high ledge to freeze, still alive, as the ravens came',
+        }.get(method.value)
+        if cause_text is None:
+            cause_text = (cause or 'executed by pack law').strip()[:120]
+        guild_id = interaction.guild.id if interaction.guild else None
+        day = int(db.get_world(guild_id)['day_number']) if guild_id else None
+        db.mark_wolf_dead(wolf['id'], cause_text, guild_id=guild_id, day=day)
+        embed = howlbert_embed('wolf executed', f"**{wolf['wolf_name']}** ({player.mention}); {cause_text}.", color=SUCCESS_COLOR)
+        embed.set_footer(text='/wolfadmin deaths shows the full log')
+        await interaction.response.send_message(embed=embed)
+
     async def _resolve_pending_role_feature(self, interaction: discord.Interaction, *, request_id: int | None, player: discord.User | None, wolf_name: str | None) -> sqlite3.Row | None:
         if request_id is not None:
             row = db.get_pending_role_feature(request_id)
@@ -377,6 +427,76 @@ class WolfAdmin(commands.Cog):
             return
         db.set_autoproxy_wolf(player.id, wolf['id'])
         await interaction.response.send_message(embed=howlbert_embed('Autoproxy On', f"**{player.display_name}**'s untagged messages now post as **{wolf['wolf_name']}**. They can escape once with `\\` at the start of a message.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
+
+    @wolfadmin.command(name='import_sheet', description='parse a pasted/attached rp character sheet into a new wolf (admin).')
+    @app_commands.describe(player='who will own this wolf (defaults to you)', text='paste the sheet text (Name/Pack/Rank/Age/... fields)', file='or attach the sheet as a .txt file instead of pasting', pack='override the detected pack (optional)', dormant='exempt from hunger/thirst/mood decay until claimed (default true; use false if a player starts playing immediately)', dry_run='preview only; rerun with dry_run:False to actually register')
+    @app_commands.choices(pack=PACK_CHOICES)
+    async def wolfadmin_import_sheet(self, interaction: discord.Interaction, player: discord.User | None=None, text: str | None=None, file: discord.Attachment | None=None, pack: str | None=None, dormant: bool=True, dry_run: bool=True):
+        if not await self._require_admin(interaction):
+            return
+        if not text and not file:
+            embed = howlbert_embed('nothing to parse', 'paste the sheet in `text`, or attach it as a `.txt` file.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if file:
+            try:
+                sheet_text = (await file.read()).decode('utf-8')
+            except UnicodeDecodeError:
+                embed = howlbert_embed('bad file', 'could not read that file as utf-8 text.', color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+        else:
+            sheet_text = text
+        from engine.sheet_import import parse_character_sheet
+        parsed = parse_character_sheet(sheet_text)
+        if not parsed:
+            embed = howlbert_embed('no name found', "couldn't find a **name:** field in that text.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        target_player = player or interaction.user
+        if target_player.bot:
+            embed = howlbert_embed('Invalid Player', 'Bots cannot own wolves.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        affiliation = pack or parsed.affiliation
+        embed = howlbert_embed('sheet preview' if dry_run else 'wolf imported', color=SUCCESS_COLOR)
+        name_note = ' ✅ canon match; lore/skills/bonds attach automatically' if parsed.canonical_match else ' _(no canon lore on file for this name)_'
+        embed.add_field(name='name', value=parsed.wolf_name + name_note, inline=False)
+        embed.add_field(name='pack', value=_pack_display(affiliation) if affiliation else '⚠️ not detected; pass `pack:`', inline=True)
+        embed.add_field(name='role', value=ROLE_LABELS.get(parsed.role, parsed.role.title()), inline=True)
+        embed.add_field(name='age', value=format_wolf_age(parsed.age_months) if parsed.age_months is not None else 'default for role', inline=True)
+        embed.add_field(name='birth sex', value=BIRTH_SEX_LABELS.get(parsed.birth_sex, parsed.birth_sex.title()) if parsed.birth_sex else 'unset', inline=True)
+        embed.add_field(name='sexuality', value=SEXUALITY_LABELS.get(parsed.sexuality, parsed.sexuality.title()) if parsed.sexuality else 'default for role/age', inline=True)
+        embed.add_field(name='owner', value=target_player.mention, inline=True)
+        embed.add_field(name='dormant', value='yes (exempt from vitals decay)' if dormant else 'no (ages and hungers normally)', inline=True)
+        if parsed.avatar_url:
+            embed.set_thumbnail(url=parsed.avatar_url)
+        if dry_run:
+            embed.set_footer(text='dry run; nothing created. rerun with dry_run:False to register.')
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if not affiliation:
+            embed = howlbert_embed('pack required', "couldn't detect a pack from the sheet's **pack:** field; pass `pack:` explicitly.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        try:
+            wolf_id = db.register_user(target_player.id, parsed.wolf_name, affiliation, wolf_role=parsed.role, birth_sex=parsed.birth_sex, sexuality=parsed.sexuality, age_months=parsed.age_months, set_active=False)
+        except ValueError as exc:
+            msg = str(exc)
+            title = 'Name Taken' if 'already taken' in msg or 'reserved' in msg else 'Invalid Name'
+            embed = howlbert_embed(title, msg, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if parsed.avatar_url:
+            db.update_user(target_player.id, wolf_id=wolf_id, avatar_url=parsed.avatar_url, ref_image_url=parsed.avatar_url)
+        if dormant:
+            db.set_wolf_dormant(wolf_id, True)
+        user = db.get_user_by_id(wolf_id)
+        from engine.character_lore import has_character_lore
+        lore_note = 'Canon lore, skills, and bonds attached automatically.' if has_character_lore(user) else 'No canon lore on file for this name; registered with default stats only.'
+        embed.add_field(name='Canon Data', value=lore_note, inline=False)
+        embed.set_footer(text=f'wolf id {wolf_id} · not active yet · use /switchwolf to play as them')
+        await interaction.response.send_message(embed=embed)
 
     @wolfadmin.command(name='deaths', description='death log: recent deaths and current dead wolves with causes.')
     @app_commands.describe(player="filter to one player's wolves (optional)", limit='how many log entries to show (default 20, max 50)')

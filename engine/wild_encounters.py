@@ -8,6 +8,8 @@ import database as db
 from config import (
     EXPLORE_WILD_ENCOUNTER_CHANCE,
     HUNT_WILD_ENCOUNTER_CHANCE,
+    SIGN_FREEZE_AMBUSH_MULTIPLIER,
+    SIGN_FREEZE_AMBUSH_WINDOW_MINUTES,
     WILD_ENCOUNTER_COOLDOWN_MINUTES,
 )
 from config import COLLAB_PATROL_AMBUSH_CHANCE
@@ -160,11 +162,19 @@ def can_trigger_wild_encounter(user, channel_id: int) -> bool:
     return wild_encounter_cooldown_minutes(user) == 0
 
 
-def roll_activity_ambush(activity: str) -> bool:
+def recently_froze(user) -> bool:
+    """True if `/sign signal:freeze` is still within its danger-avoidance window."""
+    last_at = user["last_freeze_at"] if "last_freeze_at" in user.keys() else ""
+    return cooldown_minutes_remaining(last_at or None, SIGN_FREEZE_AMBUSH_WINDOW_MINUTES) > 0
+
+
+def roll_activity_ambush(activity: str, user=None) -> bool:
     chance = ACTIVITY_ENCOUNTER_CHANCE.get(activity, 0)
     if chance <= 0:
         return False
-    return random.randint(1, 100) <= chance
+    if user is not None and recently_froze(user):
+        chance *= SIGN_FREEZE_AMBUSH_MULTIPLIER
+    return random.uniform(0, 100) <= chance
 
 
 def maybe_start_activity_ambush(
@@ -177,7 +187,7 @@ def maybe_start_activity_ambush(
     """Roll an ambush while hunting or exploring. Returns None if no fight."""
     if not can_trigger_wild_encounter(user, channel_id):
         return None
-    if not roll_activity_ambush(activity):
+    if not roll_activity_ambush(activity, user):
         return None
     return start_wild_encounter(
         user, guild_id=guild_id, channel_id=channel_id, activity=activity

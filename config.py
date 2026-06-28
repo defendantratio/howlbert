@@ -296,6 +296,10 @@ DRINK_HP_RESTORE = 2
 HUNT_WILD_ENCOUNTER_CHANCE = 8
 EXPLORE_WILD_ENCOUNTER_CHANCE = 10
 WILD_ENCOUNTER_COOLDOWN_MINUTES = 90
+# `/sign signal:freeze`; a recent silent danger-crouch makes the next ambush
+# roll less likely to find you (real-time window, not a sunrise gate).
+SIGN_FREEZE_AMBUSH_WINDOW_MINUTES = 20
+SIGN_FREEZE_AMBUSH_MULTIPLIER = 0.4
 HUNTER_HUNTS_PER_SUNRISE = 10
 # Repeated field work: 2nd+ same activity tires wolves; untrained skills tire faster.
 ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD = 4
@@ -400,6 +404,22 @@ SIGN_THREATEN_UNITY = -1
 SIGN_THREATEN_BACKFIRE_CHANCE = 0.30
 SIGN_THREATEN_BACKFIRE_MOOD = -5
 SIGN_THREATEN_BACKFIRE_STANDING = -1
+SIGN_FREEZE_STANDING = 1
+SIGN_GREET_MOOD = 4
+SIGN_GRIEVE_MOOD_SELF = 5
+SIGN_GRIEVE_MOOD_TARGET = 8
+SIGN_GRIEVE_UNITY = 1
+SIGN_TRACK_MOOD = 4
+SIGN_TRACK_UNITY = 1
+SIGN_CHALLENGE_WIN_STANDING = 2
+SIGN_CHALLENGE_LOSE_STANDING = -1
+# Diminishing returns on repeat /sign mood payouts between the same pair (no
+# cooldown, but signing the same partner over and over pays out less so it
+# can't substitute for `/playpen action:play`/`action:groom`, which stay
+# once-per-sunrise). Resets once SIGN_DIMINISH_WINDOW_MINUTES passes quiet.
+SIGN_DIMINISH_WINDOW_MINUTES = 30
+SIGN_DIMINISH_FACTOR = 0.5
+SIGN_DIMINISH_FLOOR = 0.2
 # Reading/answering a denmate's signal (the back-and-forth half of the system).
 SIGN_READ_MOOD = 4
 SIGN_READ_RALLY_UNITY = 1
@@ -907,6 +927,70 @@ DEFAULT_TERRITORIES = (
     ("mistwood", "Mistwood", 7),
     ("stoneroot", "Stoneroot", 10),
     ("deepfurrow", "Deep Furrow", 9),
+)
+
+# Suggested /location set place: values; autocomplete only, free text always allowed.
+# Grouped by Great Pack terrain, plus the contestable DEFAULT_TERRITORIES and a
+# handful of shared/neutral spots referenced across pack lore and pack traits.
+RP_LOCATIONS = (
+    # Greyspire (Mountain) — "the mouth of the world"
+    "Greyspire Den",
+    "Greyspire High Ridge",
+    "The High Pass",
+    "Stoneguard Watch",
+    "The Ice Caves",
+    "The Volcanic Vents",
+    "The Narrow Passes",
+    "The High Ledge",  # exile/death-by-cold site
+    "The Miners' Camp",
+    "The Screaming Earth",  # the blast zone
+    # Silverrush (River) — "the Maw's tears"
+    "Silverrush Den",
+    "The River's Edge",
+    "The Sandbar",
+    "The Deep Channels",
+    "The Rapids",
+    "The Shallows",  # where warriors fight
+    "The Neutral Bend",
+    "The Maw's Mouth",  # drown-rite pool
+    "The Weep Stone",
+    "The Dam",
+    "Riverbank Dens",
+    # Mistmoor (Swamp) — "the Maw's belly"
+    "Mistmoor Den",
+    "The Belly-Rip",
+    "The Bog",
+    "Glow-Fungus Hollow",
+    "The Sick Den",
+    "The Sog Grave",
+    "The Rot-Feast Grounds",
+    "The Sinkholes",
+    "The Half-Sunken Chapel",
+    "The Collapsed Bridge",
+    # Thistlehide (Forest) — "the Maw's fur"
+    "Thistlehide Den",
+    "The Whisper Tree",
+    "The Thistle Thicket",
+    "The Sparring Grounds",
+    "The Thunderpath",  # logging-truck highway
+    "The Pipeline Stakes",
+    "The Bark-Burial Trees",
+    "The High Valley",  # border dispute with Greyspire
+    # Contestable territories (see DEFAULT_TERRITORIES)
+    "Pine Ridge",
+    "River Crossing",
+    "Old Quarry",
+    "Mistwood",
+    "Stoneroot",
+    "Deep Furrow",
+    # Shared / neutral
+    "The Borderlands",
+    "Neutral Grounds",
+    "The Fresh-Kill Pile",
+    "The Nursery Den",
+    "The Elder's Den",
+    "Rogue Camp",
+    "The Sundering Stone",  # prophecy stone; no pack dares enter
 )
 
 # Static quests: key, title, description, objective, count, reward, standing, type, difficulty
@@ -1449,6 +1533,65 @@ ROLE_QUESTS = (
         "role",
         "medium",
         "juvenile",
+        None,
+    ),
+    # Pack-wide plot hooks; open to any role in the listed pack, so they sit
+    # on the general board (quest_type "unique") rather than the per-role
+    # list, which only ever shows rows with a required_role set.
+    (
+        "dam_sabotage_run",
+        "The Dam Must Fall",
+        "Scout the upstream dam for Silverrush; Thistlehide volunteers know explosives from the mining camp, "
+        "Greyspire wants it gone too, and a Mistmoor spy is watching from the reeds. Almost certainly a death sentence.",
+        "patrol",
+        3,
+        110,
+        14,
+        "unique",
+        "hard",
+        None,
+        "silverrush",
+    ),
+    (
+        "pipeline_survey_raid",
+        "Stakes in the Dark",
+        "Raid the Twoleg survey camps by night; steal stakes, leave mutilated dolls behind. Poison bait and "
+        "leg-holds answer back, and a Thistlehide pup has already died to them.",
+        "scavenge",
+        3,
+        90,
+        10,
+        "unique",
+        "hard",
+        None,
+        "thistlehide",
+    ),
+    (
+        "mining_camp_raid",
+        "Screaming Earth",
+        "Renegade young Greyspire wolves plan a raid on the miners' supply cache for explosives and guns. "
+        "The elders forbid it; the Beta secretly backs it.",
+        "scavenge",
+        3,
+        100,
+        -3,
+        "unique",
+        "hard",
+        None,
+        "greyspire",
+    ),
+    (
+        "rot_feast_envoy",
+        "The Rot-Feast Invitation",
+        "Once a year Mistmoor invites one wolf from another pack to witness a rot-feast; a test of diplomacy "
+        "and stomach. The Maw accepts your offering, whether or not you keep it down.",
+        "patrol",
+        1,
+        70,
+        8,
+        "unique",
+        "medium",
+        None,
         None,
     ),
 )

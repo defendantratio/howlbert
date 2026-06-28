@@ -86,7 +86,8 @@ class RoleCog(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         role = user['wolf_role'] if 'wolf_role' in user.keys() else 'hunter'
-        event = pick_role_event(role)
+        pack = user['great_pack'] if 'great_pack' in user.keys() else None
+        event = pick_role_event(role, pack)
         body = event['text']
         success = True
         roll_note = ''

@@ -4,6 +4,8 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.signing import SIGNAL_CATALOG, execute_read, execute_sign
+from utils.embeds import choice_label
+
 _SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']} — {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items()] + [app_commands.Choice(name='read den signals — answer a denmate', value='read')]
 
 async def _own_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:

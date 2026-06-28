@@ -1,0 +1,1152 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: ╭─ 🏰 𝐑𝐎𝐋𝐄𝐏𝐋𝐀𝐘 𝐇𝐔𝐁 / ╰・🎲︱dice-and-statistic-guide
+==============================================================
+
+[6/14/2026 8:31 AM] lizardpelt
+# 1. CORE MECHANICS
+
+### Rolling
+Roll **1d20** and add the relevant attribute modifier, plus a **out of 5 skill bonus** if your character is proficient in a relevant skill.
+
+- Total ≥ DC → Success
+- Total < DC → Failure
+- Natural 1 → Critical failure (something goes badly wrong)
+- Natural 20 → Critical success (exceptional outcome or lasting boon)
+
+### Action Difficulty
+- **Simple** (eating, walking, smelling) — no roll
+- **Routine** (tracking prey, climbing a familiar slope) — DC 10 (Easy)
+- **Challenging** (fighting an enemy wolf, foraging in a blizzard) — DC 15 (Moderate)
+- **Desperate** (jumping a chasm, treating a fatal wound with few herbs) — DC 20 (Hard)
+- **Legendary** (curing a spirit-curse with wolfsbane, surviving the Whisper Den) — DC 25 (Nearly impossible)
+
+### Quick Attribute Modifier Reference
+- Score 1 → –3
+- Score 2 → –2
+- Score 3 → –2
+- Score 4 → –1
+- Score 5 → 0
+- Score 6 → +1
+- Score 7 → +1
+- Score 8 → +2
+- Score 9 → +2
+- Score 10 → +3
+
+## 2. ATTRIBUTES
+
+Every wolf has six attributes, each rated 1–10:
+
+- **Strength** – Biting, holding, carrying, breaking, grappling.
+- **Dexterity** – Stealth, climbing, dodging, swimming, speed.
+- **Survival/Constitution** – Foraging, enduring harsh conditions, stamina, resisting poison/disease, navigation, fertility.
+- **Intelligence** – Herb knowledge, memory, plant identification, tracking logic.
+- **Charisma** – Howling, intimidation, persuasion, pack influence, courtship.
+- **Wisdom** – Perception, diagnosis, insight, resisting fear/illusion, pheromone detection, and willpower.
+
+
+[6/14/2026 8:32 AM] lizardpelt
+## 3. SKILLS
+
+If trained in a skill, add a **modifer out of 5** to relevant rolls.
+
+- **Herblore** (Intelligence) – Identify plants, prepare poultices, recall rituals.
+- **Hunting** (Strength or Dexterity) – Chase down prey, set ambushes.
+- **Stealth** (Dexterity) – Move silently, hide in undergrowth.
+- **Tracking** (Intelligence) – Follow scent trails, read prints.
+- **Intimidation** (Charisma) – Force submission, scare off predators.
+- **Persuasion** (Charisma) – Negotiate, calm packmates, courtship.
+- **Survival** (Survival/Constitution or Strength) – Build dens, find water, endure cold.
+- **Medicine** (Wisdom) – Diagnose illness, perform treatment (requires herb knowledge).
+
+
+## 4. CHARACTER CREATION
+
+### Step 1 — Choose Your Pack
+Your pack determines starting herbs, social connections, and a unique Pack Trait.
+
+**Silverrush (River)**
+- Starting herbs: meadowsweet, alder bark, cattail, purple loosestrife.  
+- Pack Trait, *Swift Current*: +2 to Dexterity checks involving swimming or crossing water.
+
+**Mistmoor (Swamp)**
+- Starting herbs: elderberry, lizard's tail, boneset, swamp milkweed.  
+- Pack Trait, *Rot's Blessing*: advantage on saving throws against poison and disease.
+
+**Greyspire (Mountain)**
+- Starting herbs: arnica, coneflower, prickly ash, edelweiss.  
+- Pack Trait, *Stone Endurance*: once per long rest, reduce damage from a single source by 1d6 + Strength modifier.
+
+**Thistlehide (Forest)**
+- Starting herbs: comfrey, plantain, oak bark, slippery elm.  
+- Pack Trait, *Whisper Tree*: once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+
+
+[6/14/2026 8:33 AM] lizardpelt
+### Step 2 — Choose Your Role
+Each role grants a unique Role Feature, usable once per session (or per long rest where noted).
+
+- **Alpha** — *Commanding Howl*: as an action, all allies who hear you gain advantage on their next attack or skill check.
+
+- **Medic** — *Green Tongue*: use Herblore in place of Medicine for healing checks; never misidentify a plant — a failed roll just finds nothing.
+
+- **Forager** — *Nose of the Land*: once per day, automatically find one common herb in your pack's territory, no roll required.
+
+- **Hunter** — *Killer's Instinct*: when you bite a surprised or prone target, deal +1d6 damage.
+
+- **Scout** — *Unseen Paw*: can hide even while only lightly obscured (tall grass, light undergrowth).
+
+- **Guard** — *Defender's Resolve*: when an adjacent packmate is attacked, impose disadvantage on the attack roll.
+
+- **Caretaker** — *Soothing Lick*: spend one minute licking a frightened or raging wolf to remove the fear/rage condition.
+
+- **Diplomat** — *Silver Tongue*: once per session, reroll a failed Charisma-based skill check (Persuasion, Intimidation, or Howling) and take the second result. Additionally, you have advantage on Persuasion checks when negotiating between packs or resolving disputes.
+
+- **Elder** — *Wisdom of Years*: once per day, reroll any failed skill check and take the second result.
+
+- **Alpha's Guard/Advisor** — *Blood Oath*: you know one secret about the Alpha. Once per session, use it for advantage on a Charisma roll against them.
+
+
+[6/14/2026 8:35 AM] lizardpelt
+### Step 3 — Assign Attributes
+Distribute points across all six attributes (1–10 each). The total sum must fall within your role's range:
+
+- Alpha — 30–35
+- Alpha's Guard/Advisor — 27–32
+- Medic — 20–25
+- Guard — 18–22
+- Hunter — 16–20
+- Scout — 16–20
+- Forager — 15–20
+- Diplomat — 15–20
+- Elder — 15–20
+- Caretaker — 12–18
+
+*Example (Hunter, total 18):*  
+Strength: 6 (+1)  
+Dexterity: 5 (0)  
+Survival/Constitution: 4 (−1)  
+Intelligence: 1 (−3)  
+Charisma: 1 (−3)  
+Wisdom: 1 (−3)  
+
+Sum = 18 — valid. This wolf is physically capable but nearly feral socially.
+
+
+## 5. COMBAT
+
+**Initiative**: Roll 1d20 + Dexterity modifier. Highest total acts first.
+
+**Turn Structure**: Move + one Action (bite, claw, use herb/item, etc.)
+
+**Bite**: Attacker rolls 1d20 + Strength modifier (+ Hunting if proficient) vs. defender's 1d20 + Dexterity modifier. Hit: 1d6 + Strength modifier damage.
+
+**Claw**: Attacker rolls 1d20 + Dexterity modifier vs. defender's 1d20 + Dexterity modifier. Hit: 1d4 + Dexterity modifier damage.
+
+**Grapple**: Opposed Strength vs. Strength roll. A successful pin reduces the target's available actions.
+
+**Sprint**: Use your action to move double your normal speed. Does not allow attacks during that turn.
+
+
+[6/14/2026 8:35 AM] lizardpelt
+### Critical Hits & Fumbles 
+
+**Natural 20 on attack (Critical hit):** Roll 1d4 for extra effect:
+- 1: Bonus damage (+1d4)
+- 2: Knock target prone
+- 3: Disarm (target drops held item or loses grip)
+- 4: Temporary bleed (target loses 1 HP per round for 3 rounds)
+
+**Natural 1 on attack (Critical fumble):** Roll 1d4:
+- 1: Drop guard – enemy gets a free attack on you
+- 2: Strain muscle – disadvantage on your next attack roll
+- 3: Stumble – you fall prone
+- 4: Bite own tongue – 1 damage and cannot speak/use vocal skills for 1 round
+
+**Health (HP)**: HP = 10 + Strength modifier + Survival/Constitution modifier.  
+*Example: Strength +2, Survival/Constitution +1 → HP = 13.*
+
+**Healing**: Without herbs, recover 1 HP per long rest. With proper herbs (e.g. comfrey poultice), recover 1d4+1 HP per short rest, up to 3 times per day.
+
+**Short rest**: 10–30 minutes of light activity (eating, grooming).  
+**Long rest**: 6–8 hours of sleep.
+
+
+[6/14/2026 8:35 AM] lizardpelt
+## 6. INJURY, DEATH, INFECTION & EXHAUSTION
+
+### Injury Table (1d10)
+Roll 1d10 whenever a wolf drops to 0 HP or takes a critical hit:
+
+1. **Broken tooth** — Disadvantage on bite attacks. No cure — permanent.
+2. **Torn claw** — −1 to claw damage. Heals in 1 week, or 3 days with horsetail poultice.
+3. **Deep gash** — Bleeding: lose 1 HP/hour until bandaged. Yarrow + cobwebs stops bleeding.
+4. **Sprained leg** — Movement halved. Comfrey + 3 days rest.
+5. **Fractured rib** — Disadvantage on Strength checks; cannot hunt. Comfrey poultice + 2 weeks rest.
+6. **Concussion** — Disadvantage on Intelligence checks; memory loss. Dried skullcap + 1 week sleep.
+7. **Punctured paw** — Disadvantage on Dexterity checks involving running or climbing. Heals in 1 week; binding with oak bark halves time.
+8. **Infected wound** — Roll 1d20 + Survival/Constitution each morning. On a failure, lose 1 HP and gain 1 exhaustion level until treated with yarrow or goldenrod poultice.
+9. **Torn ear / lost eye** — Permanent −1 to Perception (Wisdom) checks. No cure if eye is lost; torn ear heals cosmetically but penalty remains.
+10. **Broken jaw** — Cannot bite or eat solid food. Requires liquid diet (broth, milk) and 3 weeks rest. Comfrey poultice reduces to 2 weeks.
+
+
+[6/14/2026 8:36 AM] lizardpelt
+### Infection
+Wounds that are not cleaned within 24 hours have a chance to become infected. The GM may call for a Survival/Constitution save (DC 12) after a serious wound. Failure means the wound becomes **infected** (see injury #8 above).
+
+- **Treatment:** Yarrow poultice or goldenrod poultice applied within 1 day cures infection without a roll. After 1 day, requires a Medicine check (DC 15).
+- **Untreated infection:** Each day, roll Survival/Constitution DC 12. Failure: lose 1 HP and gain 1 exhaustion level. After 3 failures, the infection becomes gangrene (requires amputation or death).
+
+### Long-Term Injuries
+Some injuries leave permanent marks, even after healing. These are roleplay opportunities but may have minor mechanical effects.
+
+- **Limp:** After a badly healed leg injury, movement speed reduced by 1/4 (round down).
+- **Scarring:** No mechanical effect, but gives +1 to Intimidation checks against wolves who see the scar.
+- **Chronic pain:** On cold or rainy days, disadvantage on the first Dexterity or Strength check of the day.
+- **Fear of [trigger]:** After a traumatic injury (e.g., from a bear), the wolf may develop a fear. When facing that trigger, make a Wisdom save DC 12 or be frightened for 1 round.
+
+Long-term injuries can be healed with herbs (wolfsbane, swamp milkweed) at the GM's discretion, or with months of rest.
+
+
+[6/14/2026 8:37 AM] lizardpelt
+### Death
+Death is permanent. No magic brings wolves back.
+
+A wolf at 0 HP is **dying** — they must make a Survival/Constitution save:
+- Round 1: DC 10
+- Round 2: DC 12
+- Round 3: DC 15
+
+If all three succeed, stabilize at 1 HP. If any fail, the wolf dies. Allies can attempt to stabilize with a **Medicine check (Wisdom)**. The DC is 15. If the helper has Herblore proficiency, they add the +2 bonus.  
+**Yarrow** grants +2 to this check. **Cobwebs** stabilize automatically (no roll required).
+
+**Mercy killing**: A dying wolf may request deathberries. This is a roleplay moment, not a dice roll.
+
+### Exhaustion Levels
+1. Disadvantage on skill checks.
+2. Speed halved.
+3. Disadvantage on attack rolls.
+4. HP maximum halved.
+5. Speed 0 (cannot move).
+6. Death.
+
+**Recovery**: One full day of rest (warm den, food, water) removes 1 exhaustion level.
+
+
+[6/14/2026 8:37 AM] lizardpelt
+## 7. SWIMMING & DROWNING
+
+### Swimming
+- **Swim speed** = half your normal movement (round down). Example: normal speed 6 → swim speed 3.
+- **Calm water** (pond, slow river): No roll needed to stay afloat.
+- **Rough water** (fast river, lake with waves): Roll Survival/Constitution DC 12 each minute (or each round in combat). Failure means you sink 1 foot and must spend your next action to surface; critical failure = start drowning.
+
+### Holding Breath
+- A wolf can hold its breath for **Survival/Constitution modifier + 3** rounds (minimum 1 round).
+- After that, each round make a Survival/Constitution save DC 15. Failure = unconscious. Next round = death unless rescued.
+
+### Drowning Rescue
+- A drowning wolf can be pulled to the surface by another wolf making a Strength check DC 12 (grapple then swim up).
+- Once at the surface, the drowning wolf automatically regains consciousness if rescued within 1 round.
+
+
+[6/14/2026 8:38 AM] lizardpelt
+## 8. FEAR OF FIRE
+
+Wolves naturally fear open flame. This affects campfires, wildfires, torches carried by humans, etc.
+
+### When Fire is Present
+- Within 10 feet of open flame, make a **Wisdom save DC 12**.
+- **Success:** No effect. You can act normally but remain wary.
+- **Failure:** You gain the **frightened** condition:
+  - Cannot willingly move closer to the fire.
+  - Disadvantage on attack rolls and ability checks while the fire is within line of sight.
+- The effect lasts until you move more than 30 feet away from the fire **or** the fire is extinguished.
+
+### Overcoming Fear
+- An Alpha or packmate can howl or bark encouragement: **Charisma + Persuasion DC 14** as an action. Success removes the frightened condition for one ally within earshot.
+- A wolf with the **Guard** role may reroll a failed Wisdom save against fire fear once per session.
+- Using fire as a tool to intimidate: A wolf holding their ground against fire (e.g., defending a den from humans with torches) can roll **Charisma + Intimidation DC 15** to ignore fear for 1 round.
+
+### Wildfire
+- Wildfire (forest fire) causes fear at double range (20 feet). Additionally, each round near wildfire requires Survival/Constitution DC 15 or take 1d4 heat damage (smoke inhalation).
+
+
+[6/14/2026 8:39 AM] lizardpelt
+## 9. DISEASE MECHANICS
+
+Several herbs in the compendium cure diseases (whitecough, blackcough, etc.). Use these rules for disease progression.
+
+### Disease Stages
+- **Mild (Whitecough):** Coughing, mild weakness. Disadvantage on Dexterity checks.
+- **Severe (Blackcough):** Fever, wheezing. Disadvantage on Dexterity and Strength checks. Speed reduced by 1/4.
+- **Deadly (Redcough):** Blood from mouth, extreme fatigue. Disadvantage on all physical checks, lose 1 HP per hour. Death in 1d4 days without treatment.
+
+### Progression
+Each day without treatment, roll **Survival/Constitution**:
+- Mild: DC 12. Failure → progresses to Severe.
+- Severe: DC 15. Failure → progresses to Deadly.
+- Deadly: DC 18. Failure → take 1d4 damage + 1 exhaustion level. Death when HP reaches 0 or exhaustion level 6.
+
+### Cures
+- **Mild:** Coltsfoot, chickweed, or juniper berry tonic (1 dose ends disease).
+- **Severe:** Catmint tea or pine needle decoction. Requires 2 doses over 24 hours.
+- **Deadly:** Very rare herbs (swamp milkweed) OR Medicine check DC 20 (requires Herblore proficiency). Failure means patient still dies.
+
+A wolf who recovers from a disease is immune to that specific disease for 1 season.
+
+
+[6/14/2026 8:40 AM] lizardpelt
+## 10. MATING, PREGNANCY & FAMILY 
+
+### Courtship
+- **Flirt or impress** (Charisma + Persuasion)
+  - DC 12 (friendly)
+  - DC 15 (neutral)
+  - DC 18 (hostile or higher rank)
+- Success: target is receptive.
+- Failure: awkwardness or offense.
+- Critical success: lasting attraction or immediate bond.
+- Critical failure: hostility or humiliation.
+
+### Mating & Conception
+- **Mating act**: Fade to black. No roll required for the act itself.
+- **Conception check** (optional, for randomness):  
+  After mating, roll:
+  - 1d20 + female's Survival/Constitution modifier + male's Survival/Constitution modifier.
+  - DC 15 to conceive.
+  - Advantage if both are in peak health (no exhaustion, well-fed).
+  - Natural 1: complications (false pregnancy, illness).
+  - Natural 20: multiple pups or unusually healthy litter.
+
+- **Fertility timing**: Females can only conceive during spring (or a season defined by the GM).
+
+### Pregnancy & Birth
+- **Gestation**: 63 days (in-game time can be abstracted).
+- **Pregnancy penalties** (optional): After halfway point, disadvantage on Dexterity and Strength checks for hunting/fighting.
+- **Birth check** (Survival/Constitution, DC 12):
+  - Success: normal delivery, healthy litter (1d4+1 pups).
+  - Failure: difficult birth — mother gains 1 exhaustion level, litter size reduced by 1 (minimum 1).
+  - Critical failure: mother or pups at risk — requires Medicine check (DC 18) to save them.
+- **Raspberry leaves** (see Herb Compendium) grant advantage on the birth check.
+
+
+[6/14/2026 8:41 AM] lizardpelt
+### Pup Stats Inheritance
+When pups are born, determine their base attributes (before any role assignment or aging bonuses) as follows:
+
+**For each of the six attributes separately, use both parents' scores:**
+
+**Method 1 (detailed):**
+1. Roll 1d4.
+2. If result 1–2 → Take the **lower** of the two parents' attribute scores, then add 0–2 (GM discretion or roll 1d3-1).
+3. If result 3–4 → Take the **higher** of the two parents' attribute scores, then subtract 0–2 (GM discretion or roll 1d3-1).
+
+**Method 2 (simpler, recommended):**
+- Pup's base score = (average of both parents' scores, round down) + 1d4 - 2 (range -1 to +2).
+- Minimum 1, maximum 10.
+- Example: Father Strength 7, Mother Strength 5 → average 6. Roll 1d4 → 3. 6 + (3-2)=7 → Pup Strength 7.
+
+**Pup starting totals:**
+- Newborn pups have a total attribute sum of 6–10 (as per Pup role in character creation).
+- Apply inheritance first, then adjust to fit the range by adding or subtracting small amounts (GM's discretion).
+
+### Pup Development Stages
+
+**0–2 months (Pup)**
+- Role: Pup (attribute sum 6–10)
+- Cannot hunt or fight
+- Requires mother's milk or substitute (honey, goat milk)
+- Bonding rolls available (see below)
+
+**2–6 months (Juvenile)**
+- Attribute sum increases by 1d4 points (distribute freely, max 10 per stat)
+- Can learn skills (see Teaching below)
+- May accompany pack but cannot participate in combat
+
+**6+ months (Young Adult)**
+- Choose a permanent role from the list (except Alpha unless challenged)
+- Full attribute spread (must fit chosen role's total range)
+- Can learn one additional skill proficiency of choice
+
+### Parental & Pup-Raising Rolls
+- **Bonding** (Charisma + Persuasion, DC 10): Success = strong parent-pup bond; failure = pup is skittish or distant.
+- **Teaching a pup a skill** (Intelligence or Wisdom): Over a week of training, roll against DC 12. Success: pup gains a +1 bonus on that skill until adulthood.
+
+
+[6/14/2026 8:42 AM] lizardpelt
+### Detecting Reproductive Status
+- **Pheromone detection** (Wisdom + Tracking)
+  - DC 12 if downwind
+  - DC 18 if upwind or faint
+- Determine if a wolf is in heat or pregnant.
+
+---
+
+## 11. TERRITORIAL SCENT-MARKING & RIVALRY
+
+- **Over-marking an enemy’s scent** (opposed Survival/Constitution):  
+  Success: your mark covers theirs. Critical success: intimidates the rival (disadvantage on their next roll in that area).
+- **Detecting a wolf’s reproductive status from scent** (Wisdom + Tracking, DC 14) — useful for avoiding rival males or finding a mate.
+
+### Rival Challenge (during mating season)
+When two wolves compete for mating access to a receptive female, resolve with one of the following:
+
+**Physical challenge** (opposed Strength + Hunting)
+- Winner pins the loser.
+- Loser must retreat or submit.
+- If the female has a preference, she may give a +2 advantage to her chosen challenger.
+
+**Vocal challenge** (opposed Charisma + Intimidation)
+- Winner forces the loser to flee via howling intimidation.
+- Loser cannot approach the female for the rest of the day.
+
+The female is not forced to mate with the winner; she may still refuse (see Courtship DCs).
+
+
+[6/14/2026 8:42 AM] lizardpelt
+## 12. PACK REPUTATION & RELATIONSHIPS
+
+Wolves are social animals. Track the following for your pack:
+
+### Pack Unity (0–10)
+- Starts at 5.
+- **Increase:** Successful group hunt (+1), resolving internal conflict peacefully (+1), defending a packmate (+1), birth of pups (+1).
+- **Decrease:** Selfish action that harms the pack (−1), losing a fight to a rival pack (−1), death of a packmate (−2), Alpha challenged (−1).
+- **Effects:**
+  - Unity ≤ 2: Disadvantage on group checks (howling, hunting pack).
+  - Unity ≥ 8: Advantage on group howls and hunting pack rolls.
+  - Unity 0: Pack may dissolve or wolves may leave.
+
+### Rival Pack Standing (0–10 for each neighbor pack)
+- Starts at 5 (neutral).
+- **Increase (better relations):** Sharing territory without conflict (+1), helping against a common enemy (+2), diplomatic howl (Diplomat roll success, +1).
+- **Decrease (worse relations):** Fighting over prey (−1), scent-marking over their border (−2), killing a rival pack member (−3).
+- **Effects:**
+  - Standing ≥ 8: Rival pack may share hunting grounds or help in fights.
+  - Standing ≤ 3: Rival pack attacks on sight.
+  - Standing 0: War — constant skirmishes.
+
+
+[6/14/2026 8:43 AM] lizardpelt
+## 13. SKILL CHECK REFERENCE
+
+### Hunting
+- Catch a rabbit or grouse — DC 10
+- Catch a beaver (requires swimming or patience) — DC 12
+- Catch a deer or elk (pack coordination — at least half of hunters must succeed) — DC 15
+- Catch a wild boar (fights back; failure may injure hunter) — DC 18
+- Bring down a bison or moose (full pack; risks death) — DC 20
+- Steal a kill from another predator (success = carcass; failure = you become prey) — DC 20
+
+### Prey Size & Yield (Hunting success)
+- Rabbit/squirrel – feeds 1 wolf for 1 day
+- Beaver/grouse – feeds 1 wolf for 2 days
+- Deer/elk – feeds 4 wolves for 3 days
+- Boar – feeds 6 wolves for 4 days
+- Moose/bison – feeds 8 wolves for 5 days (risky hunt, DC 20)
+
+### Foraging (Herb Gathering)
+Roll Survival/Constitution + Herblore (if proficient).
+
+- Common herbs (yarrow, dandelion, dock, juniper berries) — DC 8
+- Uncommon herbs (meadowsweet, comfrey, plantain, alder bark) — DC 12
+- Rare herbs (cattail pollen, arnica, goldenrod, elderberry) — DC 15
+- Very rare herbs (edelweiss, wolfsbane, swamp milkweed) — DC 20, seasonal/locational only
+- Searching for a herb outside its normal territory — add +5 to base DC
+- Identify a common poison (holly, deathberries) — DC 12
+- Identify a mimic poison (e.g. water hemlock vs. Queen Anne's lace) — DC 18
+
+**Critical failure (nat 1)**: Misidentified — herb is poisonous or useless, or patch is damaged.  
+**Critical success (nat 20)**: Double yield, or discover a hidden property.
+
+
+[6/14/2026 8:43 AM] lizardpelt
+### Preparing Herbs
+- **Poultice** — chewed leaves, applied directly. No roll if herb known. For complex wounds, DC 10 (heals 1d4 instead of 1d2).
+- **Tonic** — crushed herb + water. DC 12 — failure: patient vomits, no effect.
+- **Decoction** — boiled or hot-spring steeped, requires fire/geothermal source. DC 15 — success gives stronger effect (e.g. halves cure time); failure ruins batch.
+- **Drying** — herbs must dry within 1 day of harvest or rot. DC 8 — failure: reduced potency.
+
+### Tracking
+- Follow fresh prey trail (<1 hour old) — DC 8
+- Follow recent trail (1–6 hours) — DC 12
+- Follow cold trail (6–24 hours) — DC 15
+- Follow very cold trail (1–3 days) — DC 18
+- Follow faint trail (over 3 days) — DC 25 (only in ideal weather)
+- Identify specific paw prints in mud/snow — DC 10
+- Determine pack size from tracks — DC 12
+- Track injured wolf by fresh blood scent — DC 10 (DC 15 if rained)
+- Follow trail through water (scent washes away) — DC 18
+- Count wolves by smell alone — DC 12 (off by 1–3 on failure)
+- Determine pregnancy or illness from urine/scat — DC 15
+- Follow deliberately covered trail — opposed: your Tracking vs. their Dexterity + Survival/Constitution
+- Identify a specific wolf's scent — DC 10 if known well, DC 18 if only smelled once
+
+
+[6/14/2026 8:43 AM] lizardpelt
+**Scent Decay:** Rain or snow reduces scent duration by half or more. High wind disperses scent, increasing DC by +2.
+
+### Stealth & Evasion
+- Move silently through dry leaves or snow — DC 10
+- Hide in tall grass or undergrowth — DC 12
+- Sneak up on prey (grants advantage on first attack) — DC 15
+- Cross enemy territory without leaving scent — DC 18
+- Escape a predator by hiding — DC 20
+
+### Howling & Communication
+- Locate lost packmate in clear weather — DC 6
+- Howl a complex message — DC 10
+- Howl a warning or territorial claim — DC 12
+- Imitate another wolf's howl to deceive (requires high Charisma) — DC 15
+- Howl through dense forest or storm (range halved on failure) — DC 15
+
+### Social & Pack Dynamics
+- Intimidate a lone rival wolf into backing down — DC 12
+- Persuade your Alpha to change a minor decision (failure may annoy Alpha) — DC 15
+- Lie to a packmate about a small matter — DC 12
+- Calm a frightened pup — DC 8
+- Negotiate a truce with a rival pack (both sides must succeed) — DC 18
+- Challenge the Alpha for leadership (must gain support of 3+ packmates first) — DC 20
+- Read the Alpha's mood — DC 12
+- Publicly assert dominance over a lower-ranked wolf — opposed: your Charisma + Intimidation vs. their Charisma + Wisdom
+- Defuse a fight between packmates — opposed: your Charisma + Persuasion vs. the higher fighter's Charisma; failure deals 1d4 damage to you
+- Apologize after breaking a pack rule — DC 15
+
+
+[6/14/2026 8:44 AM] lizardpelt
+### Spiritual & Memory
+- Interpret a vision or dream — DC 15
+- Recognize an omen from the Great Maw — no roll for omen; DC 12 to interpret
+- Ask the ancestors a question at a sacred site — DC 20 (success = one-word answer; failure = silence; critical failure = nightmare/exhaustion)
+- Perform a cleansing ritual to remove curse/bad luck (requires sagewort, lavender, or rowan branch) — DC 15
+- Recall a herb patch seen a season ago — DC 15
+- Recognize a wolf met briefly before — DC 12
+- Recall a prophecy or old order (failure = misquote) — DC 10
+- Learn a new herb's properties from the Medic — DC 12
+
+### Environmental & Survival
+- Cross a fast-moving river (failure = swept downstream, 1d4 damage) — DC 12
+- Swim across a lake — DC 10 (see Swimming & Drowning for details)
+- Climb a steep rocky slope (failure = fall, 1d6 damage) — DC 15
+- Find shelter in a blizzard (failure = +1 exhaustion) — DC 15
+- Dig out a buried den after a snowslide — DC 18
+- Navigate a swamp without sinking (failure = stuck, lose 1d4 hours) — DC 15
+- **Stabilize a dying wolf** — DC 15 (Medicine + Herblore proficiency if applicable). Yarrow grants +2; cobwebs stabilize automatically.
+- Set a broken bone without comfrey (failure may cause permanent limp) — DC 20
+- Remove a deep thorn or splinter (failure pushes deeper — infection risk) — DC 10
+- Diagnose an illness — DC 12
+
+
+[6/14/2026 8:44 AM] lizardpelt
+### Night & Vision
+- **Twilight/night (moonlight):** No penalty for wolves.
+- **Dark (new moon, deep cave):** Disadvantage on Perception and attack rolls unless using scent or hearing (Tracking and Wisdom can substitute).
+
+### Herb Preparation (Medic-specific)
+- Chew a poultice correctly — DC 8
+- Mix a tonic without contamination (failure = half effect) — DC 12
+- Dry herbs for winter storage (failure = herbs rot) — DC 10
+- Decoct herbs in hot spring water (success doubles potency; failure ruins batch) — DC 15
+- Administer an antidote (e.g. snakeroot) in time — DC 18
+- Mix a sedative (poppy seeds + honey) — DC 8
+- Create antidote from incomplete ingredients (success halves poison damage; critical failure accelerates it) — DC 20
+- Preserve a rare herb for winter (success = lasts 6 months; failure = potency lost in 1 month) — DC 15
+- Test an unknown plant for toxicity by tongue — opposed: your Survival/Constitution vs. plant's poison DC (12–20)
+
+
+[6/14/2026 8:45 AM] lizardpelt
+### Crafting & Navigation
+- Bind a splint with sticks or vines — DC 12
+- Fashion a bark or hide pouch — DC 10
+- Build a travois for a wounded wolf, needs 2 wolves (success = move at half speed; failure = breaks in 1 hour) — DC 15
+- Find a known landmark in familiar territory — DC 6
+- Find a landmark in unfamiliar territory — DC 12
+- Recognize a neighboring pack's scent marker — DC 10
+- Detect being herded into a trap — opposed: your Intelligence + Survival/Constitution vs. enemy's Charisma + group coordination
+- Find your way to camp after a blizzard chase (failure = sleep outside; critical failure = cross into enemy territory) — DC 18
+
+---
+
+## 14. OPPOSED & GROUP ROLLS
+
+### Opposed Rolls
+Both sides roll 1d20 + relevant modifier (+ skill bonus). Higher total wins; ties = stalemate.
+
+- Natural 20: automatic win unless opponent also rolls 20 (reroll or tie).  
+- Natural 1: automatic loss, plus something embarrassing/harmful.
+
+Common scenarios:
+- **Stealth vs. Perception** — Scout rolls Dexterity + Stealth; Guard rolls Wisdom (or Tracking).
+- **Grapple vs. Escape** — Hunter rolls Strength + Hunting; prey rolls Dexterity + Survival/Constitution.
+- **Intimidation vs. Wisdom** — Alpha rolls Charisma + Intimidation; rival rolls Wisdom (to resist).
+- **Lie vs. Insight** — Liar rolls Charisma; listener rolls Wisdom.
+- **Chase** — Both roll Dexterity; first to 3 wins catches or escapes.
+- **Howling Contest** — Both roll Charisma; winner's howl dominates.
+- **Scent over-marking** — Opposed Survival/Constitution.
+
+### Group Checks
+All wolves in a group roll the same check. If at least half succeed, the group succeeds.  
+*Example: 4 hunters vs. DC 15 — two succeed, two fail → success.*
+
+
+[6/14/2026 8:45 AM] lizardpelt
+### Assisted Checks
+A helper rolls DC 10 using the same attribute/skill. Success grants the primary roller advantage (roll twice, take higher). Failure has no penalty unless helper rolls natural 1.
+
+### Pack Howl
+Every wolf rolls 1d20 + Charisma. The highest single roll sets the howl's range. Add +1 to that roll for every 3 wolves in the pack. A natural 20 doubles the range.
+
+### Hunting Pack (Coordinated Attack)
+The lead hunter rolls 1d20 + Strength or Dexterity + Hunting. Each additional actively helping hunter adds +1 (max +5). If lead succeeds, prey is caught. If fail, each helper may roll a secondary DC 12 to wound prey for a future chase.
+
+### Group Failure
+If a group check fails, the GM may single out the lowest roller (or natural 1) for an individual consequence — injury, exhaustion, or predator attention.
+
+### When Not to Use Group Checks
+- **Individual stealth** — one noisy wolf ruins it; roll individually unless moving as a tight group.
+- **Social challenges** — the Alpha (or speaker) rolls alone.
+- **Healing a single patient** — only the Medic rolls; others may Assist.
+
+
+[6/14/2026 8:46 AM] lizardpelt
+## 15. TRAVEL HAZARDS BY TERRITORY
+
+- **River** — Strong currents, hidden pools. DC 12. Failure: gain an exhaustion level, or lose an herb bundle.
+- **Swamp** — Sinkholes, poisonous gas. DC 15. Failure: poisoned condition (1d4 damage/hour until treated).
+- **Mountain** — Avalanche, thin air, cold. DC 18. Failure: frostbite — lose a toe, permanent −1 Dexterity.
+- **Forest** — Getting lost, territorial predators. DC 10. Failure: lose 1d4 hours of travel.
+
+---
+
+## 16. WEATHER HAZARDS
+
+Each hazard is an opposed roll: the wolf rolls the listed attribute, the environment rolls 1d20 + its severity bonus.
+
+**Blizzard**
+- Wolf rolls Survival/Constitution vs. environment +5 (severe) or +8 (whiteout).
+- Success: find shelter or keep moving.
+- Failure: +1 exhaustion, lose 1d4 hours.
+- Critical failure: lost — separated from pack (Tracking DC 15 to reunite).
+
+**Flood / rapid river**
+- Wolf rolls Strength (+ Swimming) vs. environment +4 (swift) or +8 (raging).
+- Success: cross safely.
+- Failure: swept downstream, 1d4 damage, end up 1d6 miles away.
+- Critical failure: near-drowning — must be rescued (opposed Strength) or lose consciousness.
+
+**Wildfire smoke**
+- Wolf rolls Survival/Constitution vs. environment +6.
+- Success: no effect.
+- Failure: disadvantage on Perception until clean air.
+- Critical failure: collapse — dragged out, +1 exhaustion.
+
+**Freezing rain / ice**
+- Wolf rolls Dexterity vs. environment +4.
+- Success: move carefully, no fall.
+- Failure: fall, 1d4 damage, speed halved for 1 minute.
+- Critical failure: sprained leg (see Injury Table).
+
+**Extreme heat**
+- Wolf rolls Survival/Constitution vs. environment +5.
+- Success: endure.
+- Failure: heat exhaustion — disadvantage on physical rolls until shade and water.
+- Critical failure: heatstroke — unconscious 1d4 hours, needs water.
+
+
+[6/14/2026 8:46 AM] lizardpelt
+**Thick fog**
+- Wolf rolls Survival/Constitution or Intelligence vs. environment +4.
+- Success: stay on trail.
+- Failure: lose 1d4 hours, may wander into hazard.
+- Critical failure: separated from pack (Tracking DC 12).
+
+**Thunderstorm**
+- Wolf rolls Charisma vs. environment +6.
+- Success: stay steady.
+- Failure: frightened — must flee to cover, no actions for 1 minute.
+- Critical failure: bolt blindly into hazard.
+
+**Avalanche**
+- Wolf rolls Dexterity + Survival/Constitution vs. environment +8.
+- Success: escape.
+- Failure: 2d6 damage, buried (Strength DC 15 to dig out; +1 exhaustion per minute buried).
+- Critical failure: swept off cliff or into crevasse — death unless rescued within 1 round.
+
+**Deep snow / whiteout**
+- Wolf rolls Strength vs. environment +3 (knee-deep) or +7 (chest-deep).
+- Success: normal movement (narratively slower).
+- Failure: +1 exhaustion, speed halved for the day.
+- Critical failure: torn claw or sprained leg.
+
+**Quicksand / mud bog**
+- Wolf rolls Strength vs. environment +6.
+- Success: scramble out.
+- Failure: sink deeper — needs rescue (opposed Strength).
+- Critical failure: sink below surface — drowning risk, rescue within 3 rounds or die.
+
+### Simplified Fixed-DC Option
+If the GM prefers not to roll for the environment, use a fixed DC instead:
+
+- Routine weather (light rain, mild wind) — DC 8 (no roll for healthy wolves)
+- Challenging weather (blizzard, heatwave) — DC 15
+- Desperate weather (whiteout, flood, avalanche) — DC 20
+- Legendary weather (once-in-a-decade storm) — DC 25
+
+The wolf rolls 1d20 + Survival/Constitution (or relevant attribute) against the listed DC.
+
+
+[6/14/2026 8:47 AM] lizardpelt
+# 17. SEASONAL EFFECTS SUMMARY
+
+Quick reference for GMs to adjust gameplay by season.
+
+### Spring
+- **Mating season** – Rival challenges common (see Section 11).
+- **Herbs** – Plentiful. +2 bonus to Foraging rolls.
+- **Hazards** – Flood risk from melting snow. River crossing DC +2.
+
+### Summer
+- **Heat** – Extreme heat waves possible. Heat exhaustion checks (see Weather Hazards).
+- **Prey** – Abundant. Hunting DC reduced by 2 for small prey.
+- **Fire** – Wildfire risk. Random encounter chance of wildfire smoke.
+
+### Autumn
+- **Prey** – Fat and slow. Hunting DC reduced by 1 for all prey.
+- **Herbs** – Begin to wilt. After first frost, Foraging DC increases by 2.
+- **Caching** – Wolves may store food. Each successful hunt yields +1 extra day of food if cached.
+
+### Winter
+- **Foraging** – DC +5 (snow covers herbs). Only evergreens and bark available.
+- **Prey** – Scarce. Hunting DC increased by 2. Some prey migrates.
+- **Blizzards** – Common. Travel hazard checks occur twice as often.
+- **Food requirement** – Wolves need 1.5x normal food to avoid exhaustion (e.g., 3 days of food for 2 days).
+
+
+[6/14/2026 8:47 AM] lizardpelt
+## 18. NPC WOLF GENERATOR (Quick Roll)
+
+For GMs to create rival pack members, loners, or background wolves on the fly.
+
+### Step 1 — Role (1d6)
+1. Hunter
+2. Scout
+3. Guard
+4. Forager
+5. Medic
+6. Elder or Diplomat (GM choice)
+
+### Step 2 — Attributes (roll 1d10 for each, or use role averages)
+Recommended averages by role:
+- Hunter: STR 7, DEX 6, CON 6, INT 4, CHA 4, WIS 5
+- Scout: STR 5, DEX 8, CON 5, INT 6, CHA 4, WIS 6
+- Guard: STR 8, DEX 5, CON 7, INT 4, CHA 5, WIS 5
+- Forager: STR 5, DEX 5, CON 6, INT 7, CHA 4, WIS 6
+- Medic: STR 4, DEX 5, CON 5, INT 8, CHA 5, WIS 7
+- Elder/Diplomat: STR 4, DEX 4, CON 5, INT 7, CHA 7, WIS 8
+
+### Step 3 — Personality (1d4)
+1. Aggressive – Quick to fight, Intimidation +2
+2. Cautious – Prefers to observe, Perception +2
+3. Curious – May approach strangers, Tracking +2
+4. Loyal – Fights fiercely for pack, +1 to all group checks
+
+### Step 4 — Bond / Situation (1d6)
+1. Lone wolf (no pack)
+2. Has 1–2 packmates nearby
+3. Leading a small group (3–4 wolves)
+4. Injured (roll on Injury Table)
+5. Desperate (hungry, exhausted – disadvantage on all rolls)
+6. Pregnant (if female) or protecting pups (if male)
+
+### Step 5 — Name & Appearance (freeform)
+Quick suggestions: coat color (gray, brown, black, white, spotted), size (small, average, large), scars (yes/no).
+
+
+[6/14/2026 8:48 AM] lizardpelt
+## 19. PREDATORS & THREATS
+
+**Coyote**
+- Strength 4 (−1), Dexterity 7 (+1), Survival/Constitution 6 (+1), Intelligence 4 (−1), Charisma 3 (−2), Wisdom 5 (0)
+- Stealth +2
+- Flees if outnumbered; targets lone pups or injured wolves
+
+**Cougar (Mountain Lion)**
+- Strength 8 (+2), Dexterity 8 (+2), Survival/Constitution 7 (+1), Intelligence 5 (0), Charisma 4 (−1), Wisdom 6 (+1)
+- HP ~30
+- Bite 1d8+2
+- Stealth/Hunting +2
+- Attacks from above or at dusk
+
+**Black Bear**
+- Strength 9 (+2), Dexterity 4 (−1), Survival/Constitution 8 (+2), Intelligence 4 (−1), Charisma 3 (−2), Wisdom 5 (0)
+- HP ~45
+- Claw 1d6+2
+- Survival +2
+- Avoids wolves unless cubs threatened or starving
+
+**Grizzly Bear** (rare, mountain)
+- Strength 10 (+3), Dexterity 3 (−2), Survival/Constitution 8 (+2), Intelligence 4 (−1), Charisma 2 (−2), Wisdom 5 (0)
+- HP ~60
+- Bite 1d10+3
+- Legendary encounter (DC 25 to scare away) — avoid at all costs
+
+**Wolverine**
+- Strength 6 (+1), Dexterity 6 (+1), Survival/Constitution 8 (+2), Intelligence 4 (−1), Charisma 5 (0), Wisdom 5 (0)
+- HP ~15
+- Bite 1d4+1 plus lingering bleed
+- Intimidation +2
+- Fears nothing — often fights to the death
+
+**Large Prey** (deer, elk — when they fight back)
+- Strength 7 (+1), Dexterity 6 (+1), Survival/Constitution 5 (0), Intelligence 2 (−2), Charisma 3 (−2), Wisdom 4 (−1)
+- HP ~25
+- Kick 1d6+1 (can break ribs)
+- Usually flees, but cornered or protecting young can be deadly
+
+
+[6/14/2026 8:49 AM] lizardpelt
+## 20. THE HUMAN WORLD — HAZARDS & THREATS
+
+### Humans ("Two-Legs")
+Slow, soft, nearly blind — but they carry thundersticks, set traps, and command dogs. Being seen is dangerous.
+
+**Adult, alert**
+- Stealth (to sneak past) +0
+- Perception +0 by day, −2 at night
+- Wisdom save vs. intimidation +3
+- Dogs with them have +4 Perception
+
+**Juvenile**
+- Stealth −1
+- Perception −1
+- Wisdom save vs. intimidation +1 (easily frightened)
+
+**Thunderstick (firearm)**: If a human spots you and is armed, they roll 1d20+2. On a hit, take 2d6 damage and flee immediately. Critical hit: crippled (broken leg) or killed.
+
+**Escaping a human on foot**: Opposed — your Dexterity vs. their 1d20+0. Loss means they pursue (and may call others).
+
+**Hiding from a searching human**: Opposed — your Dexterity + Stealth vs. their 1d20 + Perception. Loss means they spot you (roll for thunderstick).
+
+
+[6/14/2026 8:49 AM] lizardpelt
+### Thunderpath (Road)
+Black stone that reeks of oil and dead prey, traveled by "monsters" (vehicles).
+
+- No monster coming — DC 8 to cross.
+- Monster heard but not seen — opposed: your Intelligence + Survival/Constitution vs. monster's 1d20+8. Failure: abort crossing. Critical failure: you're on the path when it arrives.
+- Monster visible, approaching fast — DC 20 (Desperate), Dexterity + Sprint. Failure: hit. Critical failure: killed instantly.
+
+**Struck by a monster**: 4d6 + 5 damage. Survivors have multiple broken bones; pack must drag them off and treat for weeks.
+
+**Scent near Thunderpath**: All scent-based Perception checks at disadvantage.
+
+**Monster (vehicle) stats**:
+- Small (car) — Speed 1d20+8. Damage: 3d6+5. Perception 0.
+- Large (truck) — Speed 1d20+6. Damage: 5d6+8. Perception 0.
+- Parked, no humans — no threat.
+
+**Stealing roadkill**: Opposed — your Dexterity + Stealth vs. any approaching monster's speed roll. Failure: a passing human spots you (roll for thunderstick).
+
+### Dogs ("Wolf-Kin Enemies")
+
+**Feral (stray)**
+- Strength 6 (+1), Dexterity 5 (0), Survival/Constitution 3 (−2), Intelligence 2 (−2), Charisma 4 (−1), Wisdom 3 (−2)
+- HP ~12
+- Bite +2 to hit
+- Fights to eat; cowardly if outnumbered
+
+**Guard dog**
+- Strength 7 (+1), Dexterity 5 (0), Survival/Constitution 5 (0), Intelligence 3 (−2), Charisma 5 (0), Wisdom 4 (−1)
+- HP ~18
+- Intimidation +2, Tracking +2
+- Often with other dogs
+
+**Hunting dog (hound)**
+- Strength 5 (0), Dexterity 7 (+1), Survival/Constitution 8 (+2), Intelligence 3 (−2), Charisma 4 (−1), Wisdom 4 (−1)
+- HP ~10
+- Tracking +4, Stamina +2
+- Won't fight — chases and bays to alert humans
+
+**Fighting dog (rare)**
+- Strength 8 (+2), Dexterity 6 (+1), Survival/Constitution 4 (−1), Intelligence 2 (−2), Charisma 3 (−2), Wisdom 3 (−2)
+- HP ~25
+- Bite +2, Grapple +2
+- Fights to the death — avoid entirely
+
+
+[6/14/2026 8:49 AM] lizardpelt
+### Traps
+Hidden metal jaws that smell of iron and old blood.
+
+- Spot a trap before stepping in — DC 15 (Intelligence + Tracking).
+- Caught in a trap — 2d4 + 2 damage; held in place.
+- Escape a trap — opposed: your Strength vs. trap's 1d20+5. Failure: remain trapped (may take damage again).
+- Free a packmate from a trap — DC 12 (Intelligence or Dexterity). Failure: trap snaps again, damaging the trapped wolf.
+- Treat an untreated trapped leg — treat as broken bone; infection risk may require amputation (Medic, DC 20, desperate).
+
+### Two-Leg Nests (Buildings)
+- Approach without being seen — Stealth DC 15.
+- Forage in garbage — DC 8 to find food; Survival/Constitution save DC 12 or poisoned.
+- Escape if chased — opposed: your Dexterity vs. human's 1d20+0. Loss may bring dogs or thunderstick.
+
+### Fences
+- **Wooden** — climb over (Dexterity), DC 10. Failure: catch fur, 1d4 damage, but you get over.
+- **Wire/chicken wire** — dig under (Strength + Survival/Constitution), DC 8. Failure: give up. Critical failure: cut paw on wire.
+- **Electric (rare)** — find weak spot and cross, DC 18 (Desperate). Failure: touch wire, 1d6 damage, cannot move for 1 round.
+
+
+[6/14/2026 8:50 AM] lizardpelt
+## 21. ADVANCEMENT & EXPERIENCE
+
+For long-term campaigns, wolves can grow stronger over time.
+
+### Earning XP
+- 1 XP per session attended (at least 2 hours of active play)
+- 1 XP for major roleplay milestone (e.g., resolving a pack conflict, teaching a pup, surviving a near-death experience)
+- 1 XP for achieving a personal goal (set at start of session)
+
+### Spending XP
+
+**5 XP** – Choose one:
+- Increase one attribute by 1 (max 10)
+- Gain proficiency in one new skill (from the skill list)
+
+**10 XP** – Choose one:
+- Gain a Role Feature from a different role (requires GM approval and in-game justification, e.g., training with that role's wolf)
+
+
+## 22. GM TOOLS — RANDOM EVENTS
+
+**Travel hazard check** — Roll 1d20.
+- 1–5: encounter (predator, rival, hazard)
+- 6–15: nothing
+- 16–20: find something useful (herb patch, carcass, water source)
+
+**Omens while resting** — Roll 1d20.
+- Natural 1: bad omen (disadvantage on next day's first roll)
+- Natural 20: good omen (advantage)
+
+**Scent on the wind (Scout on watch)** — Roll 1d20 + Intelligence. High roll = early detection of approaching danger.
+
+**Heat / Mating Season Events** — During spring, add +10% chance of encountering rival wolves competing for mates. On a random encounter roll of 1–3 (instead of 1–5), a rival wolf appears to challenge for mating rights. Use **Rival Challenge** (see Section 11) to resolve.
+
+
+[6/14/2026 8:50 AM] lizardpelt
+## 23. HERB COMPENDIUM
+
+Listed alphabetically. Rarity reflects the Foraging list in Section 13. **Habitat** shows where each herb is commonly found.
+
+**Adder's tongue** (Common) — Induces vomiting. If administered within 1 minute of poisoning, target rerolls a failed Survival/Constitution save vs. poison with advantage. *Habitat: damp meadows, shaded woodlands, near streams.*
+
+**Alder bark** (Uncommon) — Cures toothache and gum inflammation within 10 minutes of chewing. *Habitat: riverbanks, wetlands, swamps (Silverrush territory).*
+
+**Arnica** (Rare) — Heals bruises/sprains, halving recovery time. External only — if ingested, 2d6 poison damage (Survival/Constitution DC 15 for half). *Habitat: mountain meadows, rocky slopes (Greyspire territory).*
+
+**Beech leaves** (Common) — Used to carry herbs as a bowl. Nut oil applied to wounds prevents infection for 24 hours. *Habitat: forests with beech trees, deciduous woods.*
+
+**Bindweed vines** (Common) — Used to lash splints. With comfrey, reduces healing time by 1 week. *Habitat: open fields, forest edges, disturbed ground.*
+
+**Blackberry (bramble)** (Common) — Soothes bee stings and insect bites; ends poisoned condition from non-magical insect venom. *Habitat: forest edges, clearings, thickets.*
+
+
+[6/14/2026 8:50 AM] lizardpelt
+**Bloodroot** (Restricted — poison) — Highly toxic: 3d6 poison damage (Survival/Constitution DC 16 for half). Orange-red root resembles medicinal plants. *Habitat: rich woodlands, shaded slopes.*
+
+**Boneset** (Common) — Breaks stubborn fevers — reroll a failed Survival/Constitution save vs. disease and take the better result. *Habitat: wetlands, swamps, moist meadows (Mistmoor territory).*
+
+**Borage** (Common) — Stimulates milk production — nursing mother produces enough for one additional pup. *Habitat: waste places, gardens, roadsides.*
+
+**Broom** (Common) — Used to bind broken bones; with this splint, patient can move at half speed without worsening the break. *Habitat: sandy soils, open woods, heathlands.*
+
+**Burdock root** (Common) — Poultice removes infection from a wound after 24 hours of rest. *Habitat: roadsides, waste places, disturbed ground.*
+
+**Burnet** (Common) — Eaten (1 leaf/day), ignores first level of exhaustion from forced marching. *Habitat: dry grasslands, meadows, rocky hills.*
+
+**Catchweed burrs** (Common) — Holds poultices in place; extends poultice duration by 4 hours. *Habitat: hedgerows, thickets, forest edges.*
+
+**Cattail** (Common) — Stops bleeding like yarrow. Gel between leaves gives +2 to Medicine checks for tooth/gum pain. (Pollen is Rare.) *Habitat: marshes, ponds, slow-moving water (Silverrush territory).*
+
+**Celandine** (Common) — Nectar trickled into the eye removes blinded condition from minor eye injuries within 1 hour. *Habitat: damp woods, hedgebanks, waste ground.*
+
+**Chamomile** (Common) — Advantage on Wisdom saves against fear/panic for 1 hour. *Habitat: dry fields, roadsides, grassy slopes.*
+
+
+[6/14/2026 8:51 AM] lizardpelt
+**Chervil** (Common) — Removes nauseated condition, especially useful for pregnant wolves. *Habitat: damp woodlands, meadows, stream banks.*
+
+**Chickweed** (Common) — Weaker chest-infection remedy — ends whitecough after 3 doses over 24 hours if catmint unavailable. *Habitat: gardens, cultivated ground, moist waste areas.*
+
+**Cobnuts** (Common) — Thickens ointments. Crushed cobnuts attract prey, giving +1 to Stealth checks when approaching. *Habitat: hazel thickets, forest edges.*
+
+**Cobwebs** (Common) — Stops bleeding — stabilizes a dying wolf without requiring a Medicine check. *Habitat: anywhere spiders are found (caves, hollow logs, abandoned dens).*
+
+**Coltsfoot** (Common) — Ends whitecough symptoms after 1 dose. *Habitat: damp banks, roadsides, waste ground.*
+
+**Comfrey** (Uncommon) — Poultice heals 1d4 HP on broken bones or deep wounds. With stinging nettle, +1 to healing broken bones. *Habitat: riverbanks, damp meadows, ditches (Thistlehide territory).*
+
+**Coneflower (Echinacea)** (Common) — If taken within 1 hour of injury, advantage on Survival/Constitution saves against wound infection. *Habitat: dry prairies, open woods, rocky slopes (Greyspire territory).*
+
+**Daisy** (Common) — Elder wolves ignore arthritis pain penalties for 8 hours. *Habitat: lawns, meadows, grassy places.*
+
+**Dandelion** (Common) — Stem liquid soothes bee stings. Eaten, reduces headache pain by 1 level for 2 hours. *Habitat: everywhere — fields, lawns, roadsides.*
+
+**Deadly nightshade (Belladonna)** (Restricted — poison) — Hallucination and paralysis: Wisdom DC 15 or confused 1 hour, then paralyzed 1d4 hours. *Habitat: wooded areas, scree slopes, ruins.*
+
+
+[6/14/2026 8:52 AM] lizardpelt
+**Deathberries (yew)** (Restricted — Medic only) — Mercy killing: 1 berry ends suffering in 1d4 minutes; 3 berries kill any wolf in 1 minute. *Habitat: forests, churchyards, ancient woods (Medic-only knowledge).*
+
+**Dock** (Common) — Poultice restores cracked paw pad after 1 day of rest (stings on application). *Habitat: damp waste ground, roadsides, meadows.*
+
+**Douglas' sagewort** (Common) — Prevents infection for 24 hours. Calms nerves — advantage on Wisdom saves vs. fear for 1 hour. *Habitat: dry open areas, rocky slopes, prairies.*
+
+**Edelweiss** (Very Rare) — Ends "bellyache" condition and suppresses cough for 4 hours. *Habitat: high mountain cliffs, rocky alpine slopes (Greyspire territory).*
+
+**Elder** (Common, external only) — Treats sprains. Highly toxic if eaten — Survival/Constitution DC 14 or 2d4 poison damage. *Habitat: hedgerows, forests, waste ground.*
+
+**Elderberry** (Rare) — +2 to saving throws against disease for 3 days. *Habitat: damp woods, riverbanks, thickets (Mistmoor territory).*
+
+**Fennel** (Common) — Suppresses hunger; an extra day without food before exhaustion sets in. *Habitat: dry grasslands, roadsides, near human settlements.*
+
+**Feverfew** (Common) — Advantage on Survival/Constitution saves vs. disease for 1 day. *Habitat: roadsides, waste ground, gardens.*
+
+**Foxglove** (Restricted — poison) — Deadly heart poison: Survival/Constitution DC 18 or fall unconscious and die in 1d4 minutes. *Habitat: woodland clearings, rocky slopes, hedgebanks.*
+
+**Goldenrod** (Rare) — Speeds wound healing — target regains +2 additional HP per 8 hours of rest. *Habitat: open woods, meadows, roadsides.*
+
+**Heather** (Common) — Sweetens bitter herb mixtures. *Habitat: moors, heathland, rocky slopes.*
+
+
+[6/14/2026 8:53 AM] lizardpelt
+**Holly berries** (Restricted — poison) — 2d4 poison damage (Survival/Constitution DC 12 for half). Often mistaken for medicinal berries. *Habitat: forests, hedgerows, shady places.*
+
+**Honey** (Common) — Masks bitter herbs, binds poultices, feeds orphaned pups, soothes smoke-damaged throats. Removes 1 exhaustion level from starvation. *Habitat: wild bee hives in hollow trees, rock crevices.*
+
+**Horsetail** (Common) — +3 to Medicine checks to stabilize a dying wolf. *Habitat: damp ground, stream banks, wetlands.*
+
+**Ivy vines** (Common) — Used to wrap and store herbs — preserves dried herbs for 2 extra weeks. *Habitat: forests, trees and rocks.*
+
+**Juniper berries** (Common) — Cures mild poison (DC 12) or removes nausea/bellyache. *Habitat: dry slopes, rocky hills, open woods.*
+
+**Knotgrass** (Common) — Cures diarrhea as a tonic; also kills worms/fleas within 1 day. *Habitat: waste ground, roadsides, compacted soil.*
+
+
+[6/14/2026 8:53 AM] lizardpelt
+**Labrador tea** (Common) — Poultice on chest/neck ends wheezing for 4 hours. *Habitat: bogs, wet forests, tundra.*
+
+**Lamb's ear** (Common) — Eating 2 leaves gives +1 to Survival/Constitution saves vs. disease for 1 day. *Habitat: dry fields, roadsides, waste ground.*
+
+**Lavender** (Common) — Cures fever/chills when inhaled. Also hides death-scent — predators cannot smell a buried wolf. *Habitat: dry rocky slopes, cultivated gardens.*
+
+**Lizard's tail** (Common) — Soothes mastitis and fevers — removes 1 level of fever-related exhaustion. *Habitat: swamps, wetlands, shallow water (Mistmoor territory).*
+
+**Meadowsweet** (Uncommon) — Target ignores 1 level of pain-related exhaustion for 4 hours. *Habitat: damp meadows, riverbanks, wet woods (Silverrush territory).*
+
+**Mountain ash (Rowan)** (Common) — Wards off evil spirits — a placed branch creates a barrier hostile spirits cannot cross within 10 feet. *Habitat: mountains, rocky slopes, cold forests.*
+
+**Oak bark** (Common) — Stops bleeding and dries infected wounds — acts as yarrow, +2 to Medicine checks to stabilize. *Habitat: forests (Thistlehide territory).*
+
+**Oleander** (Restricted — poison, no antidote) — All parts toxic: 4d6 poison damage (Survival/Constitution DC 18 for half). *Habitat: warm regions, near human settlements (rare in wild).*
+
+
+[6/14/2026 8:54 AM] lizardpelt
+**Parsley** (Common) — Ends lactation within 6 hours — used during weaning. *Habitat: damp waste ground, near human settlements.*
+
+**Pine needles** (Common) — Brewed as tea, ends coughing after 1 dose. *Habitat: coniferous forests, mountain slopes.*
+
+**Plantain** (Uncommon) — General gentle wound remedy alongside comfrey and oak bark. *Habitat: pathsides, lawns, waste ground (Thistlehide territory).*
+
+**Poison ivy** (Restricted — contact poison) — If rubbed on fur, target loses 1d4 Charisma and has disadvantage on Stealth for 3 days. *Habitat: forests, thickets, rocky slopes.*
+
+**Poppy seeds** (Common) — Sedative: target falls unconscious for 1 hour, cannot be woken by pain. *Habitat: cultivated fields, waste ground.*
+
+**Prickly ash** (Rare) — Ends numbness from frozen paws. Also numbs tooth pain for 1 hour. *Habitat: rocky slopes, open woods, thickets (Greyspire territory).*
+
+**Purple loosestrife** (Common) — Reduces bleed-out timer by 1 round on deep wounds. Cures diarrhea within 1 hour. *Habitat: wetlands, riverbanks, ponds (Silverrush territory).*
+
+**Ragweed** (Common) — Eating 3 leaves removes 1 level of exhaustion from any cause. *Habitat: fields, roadsides, waste ground.*
+
+**Ragwort** (Common) — Lets an elder wolf hunt at full speed for 1 day (tastes rotten). *Habitat: dry fields, roadsides, waste ground.*
+
+**Raspberry leaves** (Common) — Advantage on Survival/Constitution saves against hemorrhage during birth. *Habitat: forest edges, clearings, thickets.*
+
+**Rosemary** (Common) — Hides death-scent at burial. Smelling rosemary with no plant nearby is a bad omen — GM may impose disadvantage. *Habitat: dry rocky slopes, near human settlements.*
+
+**Rush stalks** (Common) — +2 to Medicine checks to set a fracture. *Habitat: wet ground, marshes, stream banks.*
+
+
+[6/14/2026 8:56 AM] lizardpelt
+**Saffron** (Common) — A pregnant wolf with postpartum hemorrhage automatically stabilizes. *Habitat: cultivated fields (rare in wild).*
+
+**Sage** (Common) — Soothes sore throat as a tonic. Chewed regularly, lets an elder retain ability to eat hard food for 2 extra years. *Habitat: dry rocky slopes, near human settlements.*
+
+**Skunk cabbage** (Common, must be dried) — Treats severe coughs and asthma. Toxic if fresh — Survival/Constitution DC 12 or 1d4 poison damage. *Habitat: swamps, wet woods, stream banks.*
+
+**Slippery elm** (Uncommon) — Lets a wolf eat and drink without pain for 8 hours. *Habitat: forests, riverbanks (Thistlehide territory).*
+
+Slippery elm is useful in several in-game situations where a wolf has difficulty eating or drinking due to pain or injury.
+
+**When to Use Slippery Elm**
+Broken jaw (Injury Table #10) – The wolf cannot eat solid food. Slippery elm soothes the throat and allows swallowing of broth, milk, or soft foods without pain.
+
+Broken or infected teeth – Chewing is agonizing. Slippery elm lets the wolf eat softened meat or drink water without flinching.
+
+Burned throat – From wildfire smoke, hot ash, or drinking scalding water. Slippery elm coats and numbs the throat so the wolf can hydrate.
+
+Mouth ulcers or infected gums – Caused by disease (e.g., whitecough) or poison. Slippery elm enables eating when otherwise the wolf would starve.
+
+Weaning pups – Pups transitioning from milk to solid food often have sore gums. A dab of slippery elm paste on food makes it easier.
+
+Elder wolves with worn teeth – Chronic pain while eating. Slippery elm provides temporary relief for up to 8 hours, allowing a full meal.
+
+
+[6/14/2026 8:57 AM] lizardpelt
+Game mechanic: When a wolf uses slippery elm, they ignore all eating/drinking related pain penalties for 8 hours. This can prevent starvation or dehydration in a wolf that would otherwise refuse food. The Medic or any wolf with Herblore proficiency can prepare it as a poultice or paste (DC 8, no roll needed if herb is correctly identified).
+
+**Snakeroot** (Common) — Best treatment for snake bites — advantage on Survival/Constitution saves vs. venom. *Habitat: woodlands, rocky slopes.*
+
+**Sorrel** (Common) — Stops heavy bleeding; restores appetite even when nauseated. *Habitat: meadows, woodlands, waste ground.*
+
+**Sticklewort** (Common) — If administered within 1 minute of a snake bite, completely neutralizes venom. Also cures severe stomachaches. *Habitat: dry fields, rocky slopes, open woods.*
+
+**Stinging nettle** (Common) — Seeds induce vomiting; reduces swelling. With comfrey, +1 to healing broken bones. *Habitat: rich damp soil, forest edges, waste ground.*
+
+
+[6/14/2026 8:57 AM] lizardpelt
+**Swamp milkweed** (Very Rare) — Breaks a magical curse — drinker gains advantage on Strength checks to overcome curse's source for 1 minute. *Habitat: swamps, wet meadows (Mistmoor territory).*
+
+**Sweet sedge** (Common) — Swallowed sap ends a mild gut infection within 1 day. *Habitat: marshes, stream banks, shallow water.*
+
+**Tansy** (Common) — Halves sprain recovery time. *Habitat: roadsides, waste ground, near human settlements.*
+
+**Thyme** (Common) — Ends a minor pain condition for 2 hours. *Habitat: dry rocky slopes, grasslands.*
+
+**Tormentil** (Common) — +2 to Medicine checks for any injury — treats wounds and snake bites. *Habitat: damp meadows, bogs, heaths.*
+
+**Valerian** (Common) — Calms severe shock: target falls unconscious for 1d4 hours, cannot be woken by pain. *Habitat: damp meadows, woodlands, stream banks.*
+
+**Watermint** (Common) — Removes nausea within 10 minutes. *Habitat: stream banks, wetlands, shallow water.*
+
+**Water hemlock** (Restricted — lethal poison) — Instant death if ingested: Survival/Constitution DC 20 for half (still 6d6 poison damage). *Habitat: marshes, stream banks, wet meadows.*
+
+**Wild cherry bark** (Common) — Stops coughing for 2 hours, even blackcough. *Habitat: forests, woodlands.*
+
+**Wild garlic** (Common) — Advantage on Survival/Constitution saves vs. disease from vermin (e.g. rat bites) for 24 hours. *Habitat: damp woodlands, meadows.*
+
+**Willow bark** (Common) — Ignores pain penalties from headaches, fever, or old injuries for 6 hours. *Habitat: riverbanks, wetlands, damp woods.*
+
+
+[6/14/2026 8:58 AM] lizardpelt
+**Wintergreen** (Restricted — avoid) — Resembles holly berries. 1d4 poison damage (Survival/Constitution DC 10). Often misidentified. *Habitat: woodlands, sandy soils.*
+
+**Witch hazel** (Common) — Removes disadvantage from eye injuries for 4 hours. *Habitat: damp woods, stream banks.*
+
+**Wolfsbane** (Very Rare — Medic only) — Removes a spirit curse (DC 20 Medicine + Intelligence), but deals 2d6 poison damage to the patient. *Habitat: mountain meadows, rocky slopes, damp woods.*
+
+**Yarrow** (Common) — +2 to Medicine checks to stabilize a dying wolf. *Habitat: dry fields, roadsides, grassy slopes.*
+
+
+==============================================================
+Exported 42 message(s)
+==============================================================

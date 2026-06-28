@@ -1,0 +1,142 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: ╭─ 🌫𝐌𝐈𝐒𝐓𝐌𝐎𝐎𝐑 / ╰・🌿︱mire-wort
+==============================================================
+
+[6/12/2026 9:15 PM] lizardpelt
+Name: Mirewort
+
+Pack: Mistmoor
+
+Rank: Medic 
+
+Age: 6 years (seasoned, in his prime as a healer but showing early signs of swamp-rot)
+
+Sexuality: Bisexual (rarely acts on it; his true love is the Maw’s garden)
+
+Gender/Pronouns: Male (he/him)
+
+Appearance
+Mirewort is lean and sinewy, built for crawling through cypress knees and sucking mud. His fur is a patchy olive-brown, permanently stained greenish-black from the swamp’s tannins, with weeping bald spots where shelf-fungus has taken root. His eyes are a pale, watery amber, always slightly unfocused, as if he’s listening to something just beneath the ground. The left half of his muzzle is scarred smooth: not from battle, but from a rot-lung treatment gone wrong. He walks with a slight limp, favoring his right foreleg, which ends in a paw missing two toes (lost to a snapping turtle in his youth). When he stands still, marsh grasses seem to grow toward him.
+
+
+[6/12/2026 9:25 PM] lizardpelt
+**Personality**
+Patient, Morbid, Curious, Detached, Fervent
+
+Mirewort speaks in a low, wet murmur, as if his words are bubbling up through peat. He never rushes, even in a crisis, he will pause to examine a wound from three different angles before acting. This infuriates the young Bog-Born but has saved more lives than any frantic rush ever could. He has a dark, gallows-humor that makes others uncomfortable; he laughs quietly while lancing abscesses or setting broken bones, and he names each plant he harvests after a wolf he failed to save.
+
+His detachment is not cruelty but necessity. Mirewort has watched so many die, from rot-lung, from the Belly-Rip’s whispers, from the Maw’s own hunger, that he no longer flinches. He will hold a dying wolf’s head in his lap and tell them stories of the swamp until their eyes go glassy, then get up and chew moss for the next patient. He does not mourn openly. He mourns by remembering: every corpse becomes a herb name, every death a lesson.
+
+Beneath the stillness, he is feverishly devout. He believes the Maw’s rot is not a curse but a gift: hat sickness is the land trying to speak, and healing is simply translating. He often mutters prayers while mixing poultices: “Maw, let this one listen. Maw, let this rot teach instead of take.”
+
+
+[6/12/2026 9:28 PM] lizardpelt
+**Backstory**
+
+Mirewort was born to a low-ranking mother (a “Bog-Born” in local terms) who died of milk-fever when he was three weeks old. He was raised by a Drown-Sick (a wolf who had fallen into the Belly-Rip and emerged changed), a female named Hollowgaze. Hollowgaze could not hunt, could barely speak, but she could *find* things: roots that stopped bleeding, moss that pulled fever, mud that sealed wounds. She taught Mirewort everything by showing him, not telling: pressing a chewed leaf to his own cut pad, leading him to a particular rotting log at dawn, gesturing with her milky eyes at the fungus that glowed in the dark.
+
+
+[6/12/2026 9:30 PM] lizardpelt
+His Wound came when he was two. A litter of pups in the pack’s nursery den contracted the shaking-sickness, a seizure-illness that comes from drinking water too close to the Belly-Rip. Mirewort tried every herb Hollowgaze had shown him. None worked. One by one, the pups died, their bodies twitching into stillness. The last pup, a dark-furred female named Sedgepup, seized so violently that she bit through her own tongue. Mirewort held her as she bled out. That night, he went to the Belly-Rip’s edge and *listened*: not to jump, but to ask. The chewing sound grew louder, and then, for just a moment, he *understood*: the Maw does not hate. The Maw is simply *digesting*. The pups were not lost. They were *absorbed*.
+
+He returned to the nursery den and gathered the dead pups’ bodies. He buried each one under a different herb plant, speaking their names into the soil. The next spring, those plants grew three times larger than any others. Mirewort became the pack’s unofficial healer, and when the pack’s leader at the time (the Rotmother, the alpha of Mistmoor) saw what he could do, she gave him a name: Mirewort, after the bitter root that cures the slow-fever but tastes like grief.
+
+
+[6/12/2026 9:32 PM] lizardpelt
+**Skills:**
+
+- **Herbal Mastery (Wisdom +6):** Knows every toxic, curative, and hallucinogenic plant in the Rotting Mere. Can brew poultices that draw infection from a wound overnight and teas that induce prophetic dreams. His knowledge is encyclopedic, though his methods are unsettling to outsiders.
+
+- **Wound-Tending (Dexterity +5):** Exceptional at cleaning, sewing (using thorns and sinew), and packing wounds with rot-fighting muds. Can amputate a gangrenous limb with a sharp stone and keep the patient alive. His paws may be clumsy, but his eye for infection is unerring.
+
+- **Swamp Navigation (Wisdom +3):** Knows the sinkholes, the safe paths, and the places where the ground lies. Can move silently through standing water without disturbing the surface. His limp slows him, but he knows the swamp better than he knows himself.
+
+
+**Weaknesses:**
+
+- **Physically Frail (Strength -4):** The swamp-rot in his fur and lungs makes him tire quickly. He cannot fight; his bite is weak, his limp slows him, and a single solid blow would break bones. In combat or strength-based tasks, he suffers significant penalties.
+- **Morbid Detachment (Charisma -2):** His calmness in the face of death unnerves healthy wolves. He struggles to comfort the living, often telling them "you will be food for the Maw soon enough" as a genuine attempt at reassurance. Social checks involving comfort, morale, or persuasion are penalized.
+- **Obsession with the Belly-Rip (Wisdom -1):** He visits the sinkhole once every moon-cycle to "listen." Each time, he returns a little stranger: sometimes whispering in reverse, sometimes forgetting a patient's name, sometimes speaking in the voice of a dead pup. The pack's second-in-command (the "Whisper-Jaw," the Rotmother's enforcer) watches him closely. When the Belly-Rip's influence clouds his mind, memory and clarity checks are penalized.
+
+
+[6/12/2026 9:34 PM] lizardpelt
+**Statistics** (Total: 24)
+Strength: 2 (Barely able to drag a wounded rabbit. His muscles have wasted from years of stooping over patients.)
+
+Dexterity: 3 (Slow and deliberate. The missing toes make his gait uneven, but his paws are precise when holding a thorn-needle.)
+
+Survival/Constitution: 4 (Knows the swamp intimately but cannot hunt or fight. If his herb stores run out, he struggles to feed himself.)
+
+Intelligence: 5 (Sharp memory for symptoms, treatments, and plant locations. Can diagnose most illnesses by smell alone.)
+
+Charisma: 2 (Unsettling to talk to. His wet voice, lack of social warmth, and habit of staring just past your shoulder make others avoid him.)
+
+Wisdom: 8 (Exceptional intuition about life, death, and the Maw’s will. Sees patterns in sickness that others miss. His “guesses” are almost always right.)
+
+
+[6/12/2026 9:38 PM] lizardpelt
+**Maw-Belief**
+Zealot (but a quiet one). Mirewort does not preach or demand offerings. He simply knows the Maw is real in the way he knows mud is wet. He believes every illness is the Maw’s question and every cure is the wolf’s answer. He does not fear death, he fears misunderstanding the Maw’s lesson. When a patient dies despite his best efforts, he does not grieve. He asks: “What did I fail to hear?”
+
+**RP Sample**
+The mud sucked at Mirewort’s paws as he knelt beside the young wolf. The wolf, a male barely a year old, name of Murkpaw, had stepped on a submerged piece of human iron. Rusted, jagged, deep. The wound wept yellow and smelled of the green-sickness.
+
+“Hold still,” Mirewort murmured, more to himself than to the trembling pup. His pale amber eyes traced the red lines climbing up Murkpaw’s leg. Blood poisoning. Maw’s teeth, it’s fast.
+
+He reached into his herb pouch, a hollowed gourd slung over his shoulder, and withdrew a wad of chewed marsh-mallow root. “Open your mouth.”
+
+Murkpaw stared at him, terrified.
+
+“Open, or the fever opens it for you. And I’ll have to cut out your tongue to stop you biting it.” Mirewort’s voice did not change tone. He was not threatening. He was explaining.
+
+Murkpaw opened his mouth. Mirewort pressed the bitter root under his tongue. “Chew. It will hurt. Good. Pain means you’re still in the Maw’s body.”
+
+
+[6/12/2026 9:40 PM] lizardpelt
+While the young wolf chewed, his eyes watering, his body shaking, Mirewort turned to the wound. He spat on his own paw (saliva, clean enough) and wiped away the yellow crust. Then he leaned close and listened. Not with his ears. With his forehead pressed against the hot flesh.
+
+Chewing. Faint. The Maw was interested.
+
+“You stepped on iron,” Mirewort said. “Iron is human bone. The Maw does not like human bone. You must apologize.”
+
+“H-how?” Murkpaw sobbed around the root.
+
+“By living. The Maw hates waste.” Mirewort pulled a curved thorn from his pouch, sterilized in swamp-fire smoke, and a length of dried sinew. “Now. I am going to cut the rot out. You will scream. When you scream, scream loud. The Maw likes to hear you fight.”
+
+He cut.
+
+Murkpaw screamed.
+
+Mirewort smiled, a thin, sad, knowing smile, and whispered to the wound as he sewed: “Hear him, Maw. He’s still chewing back.”
+
+
+[6/12/2026 9:44 PM] lizardpelt
+**Other**
+Family ties: None living. His foster-mother Hollowgaze (a Drown-Sick, one of the pack’s oracles) died two winters ago, simply lay down in the mud and stopped breathing. Mirewort buried her under a patch of glow-fungus. The fungus now grows in the shape of a wolf’s open mouth.
+
+**Open plots / hooks:**
+
+The Rot-Lung Cure: Mirewort believes he is close to a cure for the swamp’s most common killer. He needs a rare fungus that grows only inside the Belly-Rip’s wall, someone would have to lower him down on vines. Or go themselves.
+
+The Twoleg’s Knife: The belt knife from that twoleg is rusting. Mirewort wants a new twoleg tool, a tiny, sharp claw of iron that the hairless ones use for cutting flesh, for finer surgery. He knows the university humans have them. He might convince a younger wolf to steal one.
+
+The Second’s Suspicion: The pack’s second-in-command (called the Whisper-Jaw in Mistmoor) believes Mirewort’s visits to the Belly-Rip are changing him into a Drown-Sick oracle. If Mirewort falls, he will become unable to heal. The pack would lose its best medic. Someone must intervene.
+
+A Debt to the Dead: One of the pups Mirewort failed to save, Sedgepup, had a living sibling in another pack. That sibling has come to Mistmoor, demanding to know how Sedgepup died. Mirewort’s answer (“She became medicine”) may start a blood feud.
+
+
+[6/16/2026 4:35 PM] twisted_rivers
+Wolf has been claimed
+
+
+[6/16/2026 11:19 PM] lizardpelt
+The below image is from the game Wolvden: https://www.wolvden.com/
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1515162095312961616/1516643398231134250/Screenshot_311.png?ex=6a413b7c&is=6a3fe9fc&hm=43990303e66ed66ad66a5b9791286fb8bd2f8250c0e6544cef5fb99390fb68c1&
+
+
+==============================================================
+Exported 11 message(s)
+==============================================================

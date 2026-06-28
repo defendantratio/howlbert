@@ -1,0 +1,81 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: ╭─ 🏰 𝐑𝐎𝐋𝐄𝐏𝐋𝐀𝐘 𝐇𝐔𝐁 / ╰・💥︱roleplay-rules
+==============================================================
+
+[6/17/2026 4:25 AM] Sapphire#8184
+
+
+{Embed}
+[🐺] Roleplay Rules
+**1. Fighting Mechanics**
+- **Consent-based:** PvP combat requires OOC agreement from all involved parties OR moderator oversight for plot-critical fights.
+- **Death:** Permanent character death can only happen if the player agrees OR the death is part of a moderated event with clear stakes (e.g., a challenge for Alpha). You will be warned OOC before a mod-approved death.
+- **Injury:** Your character can be injured without your consent in moderated events, but not maimed or killed.
+- **Hunting / NPC fights:** Use `/roll` for success/failure. Mods will provide difficulty number. Or use agreed-upon RNG for major fights, hunts, and life-or-death moments unless all parties consent to freeform.
+
+**2. Posting Format**
+- Third person, past tense preferred. Example: *Rivenmaw stalked through the snow, his breath frosting the air.*
+- No asterisk roleplay (*licks paw*). Use full sentences.
+- Length: Anywhere from one paragraph to multiple. Quality over quantity. One-liners are discouraged but allowed for fast-paced scenes.
+
+**3. Pack Allegiance**
+Your character must belong to one of the four packs:
+- **Greyspire (mountain)** — harsh, meritocratic, scarred.
+- **Mistmoor (swamp)** — strange, spiritual, rot-touched.
+- **Thistlehide (forest)** — memory-driven, communal, herb-wise.
+- **Silverrush (river)** — fluid, open-border, grief-healing.
+- **Loners / Rogues:** Allowed in limited numbers, but must have a compelling reason and moderator approval. Most loners die in this world. Yours should be the exception, not the rule.
+
+**4. Lore Compliance**
+- Your character must fit their pack's culture, hierarchy, and beliefs. A Greyspire wolf who rejects scar-oaths is possible but must be justified and will face IC consequences.
+- The Great Maw is the dominant (though not universal) belief system. Atheism exists but is rare. Your character can doubt, but they cannot prove the Maw is false.
+- Human activity is real. Your wolf has probably encountered humans, whether as raiders, traders, or threats.
+
+**5. No Spamming or Flooding**
+- Give others a chance to post. If you're in a scene with 3+ people, wait for at least two others to post before replying (unless agreed otherwise).
+
+**6. Hierarchy & Challenges**
+- Pack ranks are IC. If your character challenges a higher rank, be prepared to lose, flee, or die — but the player of the higher-rank must agree to the challenge OOC unless it's a mod-run succession event.
+- You cannot challenge a leader for their position without moderator approval.
+
+**7. Scene Location & Territory Respect**
+- Entering another pack's territory without IC permission is trespassing. Expect hostility, suspicion, or violent ejection.
+- Cross-territory scenes require **OOC coordination** with the other pack's members and, ideally, moderator awareness.
+- Claiming a neutral location (e.g., the Ripsnout, the Maw's Teeth) is fine — but be mindful that neutral zones are often contested or dangerous.
+
+**8. IC Time Flow**
+- Scenes exist in a "time bubble" — they progress at their own pace, and concurrent scenes may take place at different IC times.
+- **Major time skips** (for healing, pregnancy, aging, or large plot jumps) require moderator approval and will be announced server-wide.
+- Small time skips (a few hours to a day) between scenes can be self-managed, but keep consistency with ongoing plots.
+
+**9. Realistic Combat Outcomes**
+- Numbers matter. A single wolf cannot easily defeat three healthy opponents. Be realistic about your character's limits.
+- Injury stacks. If your character enters a fight already wounded, they are at a disadvantage.
+- Retreat is always a valid option. Not every conflict must end in death or victory — survival is a win.
+
+
+[6/17/2026 4:27 AM] Sapphire#8184
+
+
+{Embed}
+**10. Consequences of Actions**
+- IC actions have IC consequences. Murder, betrayal, theft, or treason will ripple through the world — reputation spreads, alliances shift, and vendettas form.
+- "Murder-hobo" behavior (random killing, senseless violence) is discouraged and will result in IC punishment or mod intervention.
+- If your character commits a major crime, you must be prepared for the fallout — exile, execution, or being hunted.
+
+**11. Supernatural / Maw Influence in RP**
+- The Great Maw's influence is **subtle**. Whispers, visions, rotting prey, strange omens — not overt magic.
+- Players may incorporate Maw-related visions or corruption into their own RP, but **major supernatural events** (possessions, curses, manifested spirits) require moderator oversight and approval.
+- Characters who claim to speak for the Maw must be treated with IC skepticism unless proven through mod-run events.
+- No psychic abilities, telepathy, or direct communication with the Maw without mod approval.
+
+**12. Ghosting in RP Scenes**
+- If you leave a scene without warning (especially mid-fight or mid-confrontation), your character may be temporarily NPC'd by a moderator to maintain scene flow.
+- Repeated ghosting will result in a warning and potential restriction from high-stakes scenes.
+- If you need to step away, use `((brb))`, `((pause))`, or DM your scene partner. Communication is key.
+
+
+==============================================================
+Exported 2 message(s)
+==============================================================

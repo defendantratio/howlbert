@@ -1414,6 +1414,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
     if "ic_location" not in user_cols_late:
         conn.execute("ALTER TABLE users ADD COLUMN ic_location TEXT")
+    if "dormant" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN dormant INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_weep_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_weep_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_freeze_at" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_freeze_at TEXT NOT NULL DEFAULT ''"
+        )
 
     scene_cols = {row[1] for row in conn.execute("PRAGMA table_info(rp_scenes)")}
     if "roster_message_id" not in scene_cols:
@@ -1504,6 +1516,29 @@ def _migrate(conn: sqlite3.Connection) -> None:
             updated_day INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY (wolf_a_id, wolf_b_id, bond_type),
             CHECK (wolf_a_id < wolf_b_id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sign_partner_streaks (
+            wolf_a_id INTEGER NOT NULL,
+            wolf_b_id INTEGER NOT NULL,
+            last_at TEXT NOT NULL,
+            streak INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (wolf_a_id, wolf_b_id),
+            CHECK (wolf_a_id < wolf_b_id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS npc_sign_streaks (
+            npc_id INTEGER NOT NULL,
+            wolf_id INTEGER NOT NULL,
+            last_at TEXT NOT NULL,
+            streak INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (npc_id, wolf_id)
         )
         """
     )
@@ -2970,7 +3005,7 @@ def reassign_wolf_owner(
             return "same_owner"
 
         conn.execute(
-            "UPDATE users SET discord_id = ? WHERE id = ?",
+            "UPDATE users SET discord_id = ?, dormant = 0 WHERE id = ?",
             (new_discord_id, wolf_id),
         )
         conn.execute(
@@ -3908,6 +3943,16 @@ def set_quarantined(discord_id: int, quarantined: bool, *, wolf_id: int | None =
     update_user(discord_id, wolf_id=wolf_id, quarantined=1 if quarantined else 0)
 
 
+def set_wolf_dormant(wolf_id: int, dormant: bool) -> None:
+    """
+    Dormant wolves (admin-held NPCs nobody is actively playing) are exempt
+    from the mood/hunger/thirst decay applied on /rollover; see
+    _decay_vitals_on_rollover. Cleared automatically when a wolf is
+    transferred to a new owner via reassign_wolf_owner.
+    """
+    update_user_by_id(wolf_id, dormant=1 if dormant else 0)
+
+
 def list_pack_quarantined(pack_id: int) -> list:
     with get_db() as conn:
         return conn.execute(
@@ -4831,7 +4876,7 @@ def set_wolf_age_moons(wolf_id: int, new_age: int) -> dict | None:
 
 
 def _decay_vitals_on_rollover() -> None:
-    """Mood, hunger, and thirst slip each sunrise."""
+    """Mood, hunger, and thirst slip each sunrise; dormant wolves are exempt."""
     from config import (
         HUNGER_ROLLOVER_DECAY,
         HUNGER_SICK_EXTRA_DECAY,
@@ -4850,7 +4895,7 @@ def _decay_vitals_on_rollover() -> None:
                 raccoon_sells_today = 0,
                 raccoon_buys_today = 0,
                 drinks_today = 0
-            WHERE disease IS NULL OR disease = ''
+            WHERE dormant = 0 AND (disease IS NULL OR disease = '')
             """,
             (MOOD_ROLLOVER_DECAY, HUNGER_ROLLOVER_DECAY, THIRST_ROLLOVER_DECAY),
         )
@@ -4863,7 +4908,7 @@ def _decay_vitals_on_rollover() -> None:
                 raccoon_sells_today = 0,
                 raccoon_buys_today = 0,
                 drinks_today = 0
-            WHERE disease IS NOT NULL AND disease != ''
+            WHERE dormant = 0 AND disease IS NOT NULL AND disease != ''
             """,
             (
                 MOOD_ROLLOVER_DECAY * 2,
@@ -9072,6 +9117,12 @@ def mark_wolf_dead(
             result = None
         from engine.wolf_journal import log_died
 
+        unnamed_pup = (
+            row["wolf_role"] == "pup"
+            and int(row["naming_ceremony_day"] or 0) == 0
+            if "naming_ceremony_day" in row.keys()
+            else False
+        )
         log_died(
             wolf_id,
             row["wolf_name"],
@@ -9079,6 +9130,7 @@ def mark_wolf_dead(
             guild_id=resolved_guild,
             day=resolved_day,
             conn=c,
+            unnamed_pup=unnamed_pup,
         )
         return result
 
@@ -9562,6 +9614,68 @@ def get_bonds_for_wolf(wolf_id: int) -> list[sqlite3.Row]:
             """,
             (wolf_id, wolf_id),
         ).fetchall()
+
+
+def bump_sign_partner_streak(wolf_a_id: int, wolf_b_id: int, *, window_minutes: int) -> int:
+    """
+    Track repeat /sign interactions between a pair (either direction counts
+    the same pair). Returns the streak count *after* this call: 1 if this is
+    a fresh interaction (no prior one within window_minutes), else prior+1.
+    Used to apply diminishing returns so two wolves can't sign-spam infinite
+    free mood.
+    """
+    from engine.time_cooldowns import minutes_since_iso
+
+    low, high = _bond_pair(wolf_a_id, wolf_b_id)
+    now = utcnow()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT last_at, streak FROM sign_partner_streaks WHERE wolf_a_id = ? AND wolf_b_id = ?",
+            (low, high),
+        ).fetchone()
+        elapsed = minutes_since_iso(row["last_at"]) if row else None
+        if row and elapsed is not None and elapsed <= window_minutes:
+            streak = int(row["streak"]) + 1
+        else:
+            streak = 1
+        conn.execute(
+            """
+            INSERT INTO sign_partner_streaks (wolf_a_id, wolf_b_id, last_at, streak)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(wolf_a_id, wolf_b_id)
+            DO UPDATE SET last_at = excluded.last_at, streak = excluded.streak
+            """,
+            (low, high, now, streak),
+        )
+    return streak
+
+
+def bump_npc_sign_streak(npc_id: int, wolf_id: int, *, window_minutes: int) -> int:
+    """Same idea as bump_sign_partner_streak, for `/npc sign` (not admin-gated,
+    so a player could otherwise spam any NPC at their own wolf for free mood)."""
+    from engine.time_cooldowns import minutes_since_iso
+
+    now = utcnow()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT last_at, streak FROM npc_sign_streaks WHERE npc_id = ? AND wolf_id = ?",
+            (npc_id, wolf_id),
+        ).fetchone()
+        elapsed = minutes_since_iso(row["last_at"]) if row else None
+        if row and elapsed is not None and elapsed <= window_minutes:
+            streak = int(row["streak"]) + 1
+        else:
+            streak = 1
+        conn.execute(
+            """
+            INSERT INTO npc_sign_streaks (npc_id, wolf_id, last_at, streak)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(npc_id, wolf_id)
+            DO UPDATE SET last_at = excluded.last_at, streak = excluded.streak
+            """,
+            (npc_id, wolf_id, now, streak),
+        )
+    return streak
 
 
 def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | None:

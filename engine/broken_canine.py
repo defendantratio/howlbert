@@ -88,6 +88,47 @@ def _single_elimination_bracket(fighters: list) -> tuple[sqlite3.Row, list[str]]
     return pool[0], logs
 
 
+def _maybe_grant_drown_rite_mark(conn: sqlite3.Connection, wolf_id: int) -> str | None:
+    """
+    Silverrush lore: alphas claim the seat by submerging in the Maw's Mouth
+    until the current turns. Prolonged hypoxia sometimes leaves them
+    "brilliant and mad in equal measure" — a permanent +wisdom / -charisma
+    trait pair, layered onto whatever traits the wolf already has.
+    """
+    from engine.character_traits import encode_character_traits, ensure_traits_dict, parse_character_traits
+
+    if random.random() >= 0.3:
+        return None
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
+    if not user:
+        return None
+    raw = user["character_traits"] if "character_traits" in user.keys() else None
+    traits = ensure_traits_dict(parse_character_traits(raw))
+    if any(b.get("name") == "Maw-Touched" for b in traits["bonuses"]):
+        return None
+    traits["bonuses"].append(
+        {
+            "name": "Maw-Touched",
+            "modifier": 2,
+            "attrs": ["attr_wis"],
+            "blurb": "Touched the Maw's tears directly in the drown-rite; sees what others miss.",
+        }
+    )
+    traits["weaknesses"].append(
+        {
+            "name": "Drown-Mad",
+            "modifier": -2,
+            "attrs": ["attr_cha"],
+            "blurb": "Brilliant and a little mad in equal measure; unsettling to packmates who weren't there.",
+        }
+    )
+    conn.execute(
+        "UPDATE users SET character_traits = ? WHERE id = ?",
+        (encode_character_traits(traits), wolf_id),
+    )
+    return "Maw-Touched"
+
+
 def _install_pack_alpha(conn: sqlite3.Connection, wolf_id: int, pack_id: int) -> None:
     user = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
     if not user:
@@ -157,10 +198,12 @@ def run_broken_canine_rite(
         winner, bout_logs = _single_elimination_bracket(eligible)
         logs.extend(bout_logs)
 
+    is_silverrush = pack["key"] == "silverrush" if "key" in pack.keys() else False
+    rite_label = "Drown-Rite" if is_silverrush else RITE_NAME
     winner_role = ROLE_LABELS.get(winner["wolf_role"], winner["wolf_role"])
     if int(winner["id"]) == int(incumbent_wolf_id):
         conn.execute("UPDATE users SET standing = 0 WHERE id = ?", (incumbent_wolf_id,))
-        logs.append(f"**{winner['wolf_name']}** wins the rite and **keeps the alpha's seat** (standing restored).")
+        logs.append(f"**{winner['wolf_name']}** wins the {rite_label.lower()} and **keeps the alpha's seat** (standing restored).")
         outcome = "incumbent_retained"
     else:
         db._expel_wolf_from_pack_conn(conn, incumbent_wolf_id, reset_standing=True)
@@ -169,6 +212,13 @@ def run_broken_canine_rite(
             f"**{winner['wolf_name']}** ({winner_role}) wins; **new alpha**. "
             f"**{incumbent['wolf_name']}** is cast out."
         )
+        if is_silverrush:
+            mark = _maybe_grant_drown_rite_mark(conn, int(winner["id"]))
+            if mark:
+                logs.append(
+                    f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
+                    f"emerges **{mark}** — brilliant and a little mad in equal measure."
+                )
         outcome = "new_alpha"
 
     conn.execute(

@@ -935,7 +935,7 @@ def accept_quest(interaction: discord.Interaction, quest_key: str) -> discord.Em
         if wolf_pack != req_pack:
             return howlbert_embed(
                 "wrong pack",
-                f"this mistmoor tradition requires the **{req_pack.title()}** great pack.",
+                f"this tradition requires the **{req_pack.title()}** great pack.",
                 color=ERROR_COLOR,
             )
     req_role = q["required_role"] if "required_role" in q.keys() else None

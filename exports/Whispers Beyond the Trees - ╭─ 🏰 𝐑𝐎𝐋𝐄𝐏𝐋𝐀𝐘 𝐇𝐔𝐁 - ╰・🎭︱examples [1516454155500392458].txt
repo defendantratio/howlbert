@@ -1,0 +1,785 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: ╭─ 🏰 𝐑𝐎𝐋𝐄𝐏𝐋𝐀𝐘 𝐇𝐔𝐁 / ╰・🎭︱examples
+==============================================================
+
+[6/16/2026 10:51 AM] lizardpelt
+# COMBAT SCENE EXAMPLE — BORDER PATROL AMBUSH
+
+*This example demonstrates a combat encounter using the server's combat rules. It includes initiative, attacks, damage, injury, and healing.*
+
+**Setting:** Thistlehide territory, near the Greyspire border. Late afternoon, mist rolling through the pines.
+
+**Combatants:**
+
+- **Finn'pelt** (Thistlehide Alpha) — HP: 10 + 7(Str) + 5(Survival) = 22
+- **River'Shroud** (Thistlehide Hunter) — HP: 10 + 8(Str) + 6(Survival) = 24
+- **Grim** (Greyspire Alpha) — HP: 10 + 8(Str) + 7(Survival) = 25
+- **Icefang** (Greyspire Stoneguard Captain) — HP: 10 + 6(Str) + 5(Survival) = 21
+
+
+
+## SCENE START
+
+The mist curled through the pines like smoke. Finn'pelt stood motionless on the ridge, his ash-black coat beaded with condensation, his golden eyes fixed on the valley below.
+
+Beside him, River'Shroud crouched low, her antlered silhouette merging with the twisted branches. Her pale gray eyes scanned the treeline without blinking.
+
+A twig snapped. Too close.
+
+Two shapes emerged from the mist: massive, gray, and moving with purpose.
+
+**Finn'pelt:** "Greyspire. You've crossed the border."
+
+**River'Shroud:** *A low, chest-rumbling growl.*
+
+**Grim:** "Thistlehide. You're on our land."
+
+**Finn'pelt:** "No, this is Thistlehide territory. Turn back, and I'll let you keep your teeth."
+
+**Grim:** "I've crossed worse borders for less. You want to test that?"
+
+**Icefang:** Her filed teeth glinted in the pale light. She said nothing. She never did.
+
+
+[6/16/2026 10:53 AM] lizardpelt
+## INITIATIVE ROLLS
+
+The GM calls for initiative: *"Roll 1d20 + Dexterity modifier."*
+
+- **Icefang:** 1d20 + 8(Dex)
+- **River'Shroud:** 1d20 + 3(Dex) 
+- **Finn'pelt:** 1d20 + 4(Dex) 
+- **Grim:** 1d20 + 4(Dex)
+
+
+[6/16/2026 10:53 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+8` Roll: `[8]` = **16**
+
+
+[6/16/2026 10:54 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20 + 3` Roll: `[10]` = **13**
+
+
+[6/16/2026 10:54 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20 + 4` Roll: `[9]` = **13**
+
+
+[6/16/2026 10:54 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+4` Roll: `[15]` = **19**
+
+
+[6/16/2026 10:57 AM] lizardpelt
+- **Icefang:** 1d20 + 8(Dex) = 16
+- **River'Shroud:** 1d20 + 3(Dex) = 13
+- **Finn'pelt:** 1d20 + 4(Dex) = 13
+- **Grim:** 1d20 + 4(Dex) = 19
+
+*(Tie between Finn'pelt and River'Shroud — GM decides who goes first.)*
+
+**Turn Order:** Grim → Icefang → River'Shroud →  Finn'pelt 
+
+**Choose who to attack**
+
+
+[6/16/2026 11:05 AM] lizardpelt
+## ROUND 1
+
+### Grim — Turn 1
+
+Grim snarls and lunges at Finn'pelt's exposed flank.
+
+**GM Prompt:** *"Roll a bite attack: 1d20 + Strength modifier (+2) + Hunting proficiency (+2)."*
+
+
+[6/16/2026 11:05 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2+2` Roll: `[20]` = **24**
+
+
+[6/16/2026 11:06 AM] lizardpelt
+**Natural 20! Critical Hit!**
+
+**GM Prompt:** *"Finn'pelt, roll to dodge: 1d20 + Dexterity modifier (–1)."*
+
+
+[6/16/2026 11:08 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-1` Roll: `[2]` = **1**
+
+
+[6/16/2026 11:11 AM] lizardpelt
+**Critical Fumble!**
+
+**Hit!** Grim's jaws sink deep into Finn'pelt's side with devastating force.
+
+
+[6/16/2026 11:14 AM] lizardpelt
+**GM Prompt:** *"Roll damage: 1d6 + Strength modifier (+2)."*
+
+
+[6/16/2026 11:14 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d6+2` Roll: `[2]` = **4**
+
+
+[6/16/2026 11:20 AM] lizardpelt
+**4 damage**
+**GM Prompt:** *"Roll for injury: 1d10."*
+
+
+[6/16/2026 11:20 AM] lizardpelt
+### Injury Table (1d10)
+Roll 1d10 whenever a wolf drops to 0 HP or takes a critical hit:
+
+1. **Broken tooth** — Disadvantage on bite attacks. No cure — permanent.
+2. **Torn claw** — −1 to claw damage. Heals in 1 week, or 3 days with horsetail poultice.
+3. **Deep gash** — Bleeding: lose 1 HP/hour until bandaged. Yarrow + cobwebs stops bleeding.
+4. **Sprained leg** — Movement halved. Comfrey + 3 days rest.
+5. **Fractured rib** — Disadvantage on Strength checks; cannot hunt. Comfrey poultice + 2 weeks rest.
+6. **Concussion** — Disadvantage on Intelligence checks; memory loss. Dried skullcap + 1 week sleep.
+7. **Punctured paw** — Disadvantage on Dexterity checks involving running or climbing. Heals in 1 week; binding with oak bark halves time.
+8. **Infected wound** — Roll 1d20 + Survival/Constitution each morning. On a failure, lose 1 HP and gain 1 exhaustion level until treated with yarrow or goldenrod poultice.
+9. **Torn ear / lost eye** — Permanent −1 to Perception (Wisdom) checks. No cure if eye is lost; torn ear heals cosmetically but penalty remains.
+10. **Broken jaw** — Cannot bite or eat solid food. Requires liquid diet (broth, milk) and 3 weeks rest. Comfrey poultice reduces to 2 weeks.
+
+
+[6/16/2026 11:21 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d10` Roll: `[6]` = **6**
+
+
+[6/16/2026 11:22 AM] lizardpelt
+**Concussion**
+**GM Prompt:** *"Finn'pelt, roll for critical fumble effect: 1d4."*
+
+
+[6/16/2026 11:23 AM] lizardpelt
+### Critical Hits & Fumbles 
+
+**Natural 20 on attack (Critical hit):** Roll 1d4 for extra effect:
+- 1: Bonus damage (+1d4)
+- 2: Knock target prone
+- 3: Disarm (target drops held item or loses grip)
+- 4: Temporary bleed (target loses 1 HP per round for 3 rounds)
+
+**Natural 1 on attack (Critical fumble):** Roll 1d4:
+- 1: Drop guard – enemy gets a free attack on you
+- 2: Strain muscle – disadvantage on your next attack roll
+- 3: Stumble – you fall prone
+- 4: Bite own tongue – 1 damage and cannot speak/use vocal skills for 1 round.
+
+
+[6/16/2026 11:25 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d4` Roll: `[1]` = **1**
+
+
+[6/16/2026 11:25 AM] lizardpelt
+**Enemy gets a free attack on you**
+
+
+[6/16/2026 11:27 AM] lizardpelt
+**GM Prompt:** *"Grim, roll for free attack: 1d20 + Strength modifier (+2) + Hunting proficiency (+2)."*
+
+
+[6/16/2026 11:28 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2+2` Roll: `[5]` = **9**
+
+
+[6/16/2026 11:32 AM] lizardpelt
+**GM Prompt:** *"Finn'pelt, roll to dodge the free attack: 1d20 + Dexterity modifier (–1)."*
+
+*(The GM rules this as a separate attack. The free attack is triggered by the fumble, not by the off-balance condition, so no disadvantage applies.)*
+
+
+[6/16/2026 11:33 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-1` Roll: `[8]` = **7**
+
+
+[6/16/2026 11:34 AM] lizardpelt
+**Hit!** Grim's jaws rake across Finn'pelt's throat, tearing fur and flesh.
+
+**GM Prompt:** *"Roll damage: 1d6 + Strength modifier (+2)."*
+
+
+[6/16/2026 11:34 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d6+2` Roll: `[2]` = **4**
+
+
+[6/16/2026 11:38 AM] lizardpelt
+**Finn'pelt HP:** 22 - 4 - 4 = 14
+
+
+[6/16/2026 11:44 AM] lizardpelt
+### Icefang — Turn 1
+
+Icefang lunges at River'Shroud's throat.
+
+**GM Prompt:** *"Roll a bite attack: 1d20 + Strength modifier (+1) + Hunting proficiency (+2)."*
+
+
+[6/16/2026 11:44 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[1]` = **4**
+
+
+[6/16/2026 11:45 AM] lizardpelt
+**Critical Fumble!**
+
+**GM Prompt:** *"River'Shroud, roll to dodge: 1d20 + Dexterity modifier (–2)."*
+
+
+[6/16/2026 11:45 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-2` Roll: `[12]` = **10**
+
+
+[6/16/2026 11:47 AM] lizardpelt
+**Miss!** Icefang lunges wildly, her filed teeth snapping shut on empty air. She stumbles, off-balance.
+
+**GM Prompt:** *"Icefang, roll for critical fumble effect: 1d4."*
+
+
+[6/16/2026 11:48 AM] lizardpelt
+### Critical Hits & Fumbles 
+
+**Natural 20 on attack (Critical hit):** Roll 1d4 for extra effect:
+- 1: Bonus damage (+1d4)
+- 2: Knock target prone
+- 3: Disarm (target drops held item or loses grip)
+- 4: Temporary bleed (target loses 1 HP per round for 3 rounds)
+
+**Natural 1 on attack (Critical fumble):** Roll 1d4:
+- 1: Drop guard – enemy gets a free attack on you
+- 2: Strain muscle – disadvantage on your next attack roll
+- 3: Stumble – you fall prone
+- 4: Bite own tongue – 1 damage and cannot speak/use vocal skills for 1 round.
+
+
+[6/16/2026 11:48 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d4` Roll: `[4]` = **4**
+
+
+[6/16/2026 11:50 AM] lizardpelt
+**Hit!** Icefang's jaws snap shut, not on River'Shroud, but on her own tongue. Blood wells between her teeth. She snarls, or tries to,  but only a wet, garbled sound escapes.
+
+**Damage:** 1 point of damage (no modifier).
+
+**Icefang HP:** 21 → 20
+
+**Effect:** Icefang cannot speak or use vocal skills (howling, intimidation, persuasion, etc.) for 1 round.
+
+
+[6/16/2026 11:51 AM] lizardpelt
+**GM Prompt:** *"Icefang, you've bitten your own tongue. You cannot speak or use vocal skills until the end of your next turn."*
+
+Icefang stumbles back, blood dripping from her jaws. Her filed teeth are now slick with her own blood. She glares at River'Shroud, but she cannot howl, cannot taunt, cannot call for support.
+
+
+[6/16/2026 11:52 AM] lizardpelt
+### River'Shroud — Turn 1
+
+River'Shroud sees Icefang stumble, blood pouring from her own mouth. She swings her antlered head.
+
+
+[6/16/2026 11:55 AM] lizardpelt
+**GM Prompt:** *"Roll a claw attack: 1d20 + Dexterity modifier (–2)."*
+
+
+[6/16/2026 11:56 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-2` Roll: `[15]` = **13**
+
+
+[6/16/2026 11:56 AM] lizardpelt
+**GM Prompt:** *"Icefang, roll to dodge: 1d20 + Dexterity modifier (+1)."*
+
+
+[6/16/2026 11:56 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1` Roll: `[18]` = **19**
+
+
+[6/16/2026 11:57 AM] lizardpelt
+**Miss!** Icefang sidesteps cleanly as River'Shroud's antlers rake empty air.
+
+
+[6/16/2026 11:58 AM] lizardpelt
+## END OF ROUND 1 SUMMARY 
+
+- Grim: 25 HP (unscathed)
+- Icefang: 20 HP (1 damage, bitten her own tongue, cannot speak/use vocal skills for 1 round)
+- River'Shroud: 24 HP (unscathed)
+- Finn'pelt: 14 HP (concussion, disadvantage on Intelligence checks)
+
+
+[6/16/2026 11:59 AM] lizardpelt
+## ROUND 2
+
+### Grim — Turn 2
+
+Grim presses his advantage, lunging again at the wounded Finn'pelt.
+
+**GM Prompt:** *"Roll a bite attack: 1d20 + Strength modifier (+2) + Hunting proficiency (+2)."*
+
+
+[6/16/2026 11:59 AM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2+2` Roll: `[6]` = **10**
+
+
+[6/16/2026 12:00 PM] lizardpelt
+**GM Prompt:** *"Finn'pelt, roll to dodge: 1d20 + Dexterity modifier (–1). Disadvantage from concussion — roll twice, take the lower."*
+
+*(GM decides disadvantage)*
+
+
+[6/16/2026 12:01 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-2` Roll: `[4]` = **2**
+
+
+[6/16/2026 12:01 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-2` Roll: `[4]` = **2**
+
+
+[6/16/2026 12:02 PM] lizardpelt
+**Hit!** Grim's jaws close on Finn'pelt's shoulder.
+
+**GM Prompt:** *"Roll damage: 1d6 + Strength modifier (+2)."*
+
+
+[6/16/2026 12:02 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d6+2` Roll: `[6]` = **8**
+
+
+[6/16/2026 12:02 PM] lizardpelt
+**8 damage to Finn'pelt**
+
+
+[6/16/2026 12:03 PM] lizardpelt
+**Finn'pelt HP:** 14 - 8 = 6
+
+
+[6/16/2026 12:04 PM] lizardpelt
+### Icefang — Turn 2
+
+Icefang circles River'Shroud, feints left, lunges right.
+
+**GM Prompt:** *"Roll a bite attack: 1d20 + Strength modifier (+1) + Hunting proficiency (+2)."*
+
+
+[6/16/2026 12:04 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[4]` = **7**
+
+
+[6/16/2026 12:05 PM] lizardpelt
+**GM Prompt:** *"River'Shroud, roll to dodge: 1d20 + Dexterity modifier (–2)."*
+
+
+[6/16/2026 12:05 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20-2` Roll: `[17]` = **15**
+
+
+[6/16/2026 12:06 PM] lizardpelt
+**Miss!** River'Shroud steps back; Icefang stumbles past.
+
+
+[6/16/2026 12:07 PM] lizardpelt
+### Finn'pelt — Turn 2
+
+Finn'pelt is badly wounded, his head spinning. He staggers, barely able to stand.
+
+**GM Prompt:** *"You're at 6 HP and concussed. What do you do?"*
+
+**Finn'pelt:** He snarls, forcing himself upright. "I'm not done yet." He takes a step back, trying to create distance.
+
+
+[6/16/2026 12:08 PM] lizardpelt
+### River'Shroud — Turn 2
+
+River'Shroud lunges at Icefang, her massive weight crashing down.
+
+**GM Prompt:** *"River'Shroud, roll Strength to grapple: 1d20 + Strength modifier (+2)."*
+
+
+[6/16/2026 12:09 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2` Roll: `[18]` = **20**
+
+
+[6/16/2026 12:10 PM] lizardpelt
+**GM Prompt:** *"Icefang, roll Strength to resist: 1d20 + Strength modifier (+1)."*
+
+
+[6/16/2026 12:19 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1` Roll: `[18]` = **19**
+
+
+[6/16/2026 12:24 PM] lizardpelt
+**Success!** River'Shroud's 20 beats Icefang's 19 by 1. The grapple succeeds.
+
+River'Shroud pins Icefang to the ground, her massive weight pressing down on the smaller wolf. Icefang struggles, but she cannot break free.
+
+**River'Shroud:** *A low, rumbling growl. "Yield."*
+
+Icefang's flat blue eyes stare up at her. She does not yield.
+
+
+## GRAPPLE MECHANICS
+
+**Grapple:** Opposed Strength vs. Strength roll. A successful pin reduces the target's available actions.
+
+**Pinned Effects:**
+
+- Icefang is pinned. She cannot move or stand.
+-  Icefang attacks with disadvantage (if she tries to bite or claw from the ground).
+- River'Shroud has advantage on attacks against Icefang while she is pinned.
+- Icefang cannot use her movement until she breaks the grapple.
+- Breaking the grapple: On Icefang's turn, she can use her action to attempt another opposed Strength check to escape.
+
+
+## NARRATIVE EXAMPLE
+
+Icefang thrashes beneath River'Shroud, her filed teeth snapping. But the massive Thistlehide hunter is too heavy, too solid. Each attempt to twist free is met with more weight pressing down on her chest.
+
+River'Shroud's pale gray eyes bore into Icefang's flat blue stare. A low rumble vibrates through her chest — not a growl, but a question. *Yield?*
+
+Icefang's tongue still throbs from where she bit it. She cannot speak. But even if she could, she would not yield.
+
+She lies still, waiting for an opening that may never come.
+
+
+## WHAT HAPPENS NEXT?
+
+- **Icefang's next turn:** She can attempt to escape the grapple using her action.
+- **If she stays pinned:** River'Shroud can attack her with advantage next turn.
+- **If Finn'pelt or Grim step in:** The fight could shift.
+
+
+*(If Icefang attempts to break free, she rolls a straight Strength check with no advantage or disadvantage unless the GM rules otherwise.)*
+
+
+[6/16/2026 12:26 PM] lizardpelt
+## ROUND 3 — GRIM'S TURN
+
+Grim sees Icefang pinned beneath River'Shroud's massive weight. His second is vulnerable, and he is outnumbered.
+
+**GM Prompt:** *"Grim, what do you do?"*
+
+**Grim:** He snarls, torn between attacking Finn'pelt and saving Icefang.
+
+**GM Prompt:** *"Icefang is pinned. Finn'pelt is barely standing. River'Shroud is occupied. Do you press the attack or retreat?"*
+
+**Grim:** "Icefang! Break free!"
+
+Icefang thrashes beneath River'Shroud, but she cannot move.
+
+
+[6/16/2026 12:27 PM] lizardpelt
+## ROUND 3 — ICEFANG'S TURN
+
+Icefang is pinned. She tries to break free.
+
+**GM Prompt:** *"Icefang, roll Strength to escape the grapple: 1d20 + Strength modifier (+1)."*
+
+
+[6/16/2026 12:27 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1` Roll: `[12]` = **13**
+
+
+[6/16/2026 12:28 PM] lizardpelt
+**GM Prompt:** *"River'Shroud, roll Strength to maintain the pin: 1d20 + Strength modifier (+2)."*
+
+
+[6/16/2026 12:28 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2` Roll: `[20]` = **22**
+
+
+[6/16/2026 12:30 PM] lizardpelt
+**Natural 20! Critical Success!**
+
+**Critical Success Effect (Grapple):** River'Shroud's pin is unbreakable. Icefang cannot escape this round.
+
+**Fail!** Icefang cannot break free. River'Shroud presses down harder, her massive weight crushing the air from Icefang's lungs.
+
+
+[6/16/2026 12:31 PM] lizardpelt
+**River'Shroud:** Another low, rumbling growl. "Yield."
+
+**Icefang:** She gasps, her filed teeth bared. She does not yield, but she cannot speak. Her tongue is still bleeding. She can only glare.
+
+
+[6/16/2026 12:44 PM] lizardpelt
+### River'Shroud — Turn 3
+
+River'Shroud looks down at Icefang, then at Grim. She does not move. She waits.
+
+**GM Prompt:** *"River'Shroud, what do you do?"*
+
+**River'Shroud:** She growls low, a warning. She does not kill Icefang, she holds, waiting for Finn'pelt's command.
+
+
+### Finn'pelt — Turn 3
+
+Finn'pelt is bleeding, concussed, and barely standing. But Grim is hesitating.
+
+**GM Prompt:** *"Finn'pelt, you're at 6 HP, concussed, and bleeding. What do you do?"*
+
+**Finn'pelt:** He forces himself upright, ignoring the spinning world. "Grim. You're outnumbered. Icefang is pinned. Leave now, and I'll let you walk."
+
+
+[6/16/2026 12:45 PM] lizardpelt
+**Grim:** He bares his teeth. "And if I don't?"
+
+**Finn'pelt:** "Then I'll bury you both in Thistlehide soil."
+
+
+[6/16/2026 12:48 PM] lizardpelt
+### Grim — Turn (End of Round 3)
+
+**GM Prompt:** *"Grim, you're outnumbered. Icefang is pinned. Finn'pelt is wounded but still standing. Do you press the attack or retreat?"*
+
+**Grim:** He snarls. He looks at Icefang. He looks at Finn'pelt. He looks at River'Shroud.
+
+**Grim:** "This isn't over."
+
+**GM Prompt:** *"Do you retreat?"*
+
+**Grim:** "Icefang! We're leaving."
+
+
+### Icefang — Turn (Release or No Release)
+
+**GM Prompt:** *"River'Shroud, do you release her?"*
+
+**River'Shroud:** She looks at Finn'pelt. He nods.
+
+River'Shroud releases Icefang and steps back, her pale gray eyes never leaving the smaller wolf.
+
+Icefang scrambles to her feet, spitting blood. She glares at River'Shroud but says nothing; she cannot speak.
+
+Grim limps to Icefang's side. They retreat into the mist.
+
+
+[6/16/2026 12:48 PM] lizardpelt
+**END OF ROUND 3 SUMMARY:**
+
+- Grim: 25 HP (unscathed, retreated)
+- Icefang: 20 HP (bitten tongue, unable to speak, retreated)
+- River'Shroud: 24 HP (unscathed)
+- Finn'pelt: 6 HP (concussion, disadvantage on Intelligence checks, bleeding from deep gash)
+
+
+[6/16/2026 1:07 PM] lizardpelt
+## AFTERMATH — INJURY & TREATMENT
+
+### Finn'pelt
+
+- **Concussion** (from Grim's critical bite) — 1 week of sleep/rest. Disadvantage on Intelligence checks.
+- **Deep gash** (from Grim's free attack) — bleeding, losing 1 HP/hour until bandaged.
+- **Exhaustion Level 1** from blood loss and trauma.
+
+**GM Prompt:** *"Sypha, roll Medicine check to treat the wounds: 1d20 + Wisdom modifier (+0) + Medicine proficiency (+2) + Herblore proficiency (+2) . DC 15. Yarrow grants +2 to this check if you use it. Cobwebs stabilize bleeding automatically."*
+
+
+[6/16/2026 1:09 PM] lizardpelt
+*(Assume she has yarrow but no cobwebs)*
+
+
+[6/16/2026 1:09 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+2+2+2` Roll: `[17]` = **23**
+
+
+[6/16/2026 1:12 PM] lizardpelt
+**Success!** Sypha's Medicine check beats the DC 15 by a wide margin. She expertly cleans and treats Finn'pelt's wounds.
+
+
+[6/16/2026 1:16 PM] lizardpelt
+**Note:** Yarrow, when applied correctly, grants +2 to Medicine checks to stop bleeding. If Sypha had rolled below 15, the bleeding would have continued, and Finn'pelt would have lost another 1 HP before the wound could be treated again.
+
+
+[6/16/2026 1:17 PM] lizardpelt
+**Narrator:** Sypha works quickly, her paws steady despite the urgency. She chews yarrow into a pulp, pressing it into the deep gash on Finn'pelt's side. The herb's bitter scent fills the air as it meets the wound, drawing the blood into a thick, clotting paste. Without cobwebs, she uses a strip of bark and a bindweed vine to hold the yarrow poultice in place.
+
+**GM Prompt:** *"Sypha, roll Herblore check to prepare the skullcap for concussion: 1d20 + Intelligence modifier (+1) + Herblore proficiency (+2). DC 12."*
+
+
+[6/16/2026 1:17 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[6]` = **9**
+
+
+[6/16/2026 1:21 PM] lizardpelt
+**Failure!** Sypha's Herblore check fails to meet the DC 12. The skullcap is not prepared correctly.
+
+**Sypha:** She chews the dried skullcap, trying to soften it into a paste, but the herb is too brittle;  it crumbles into dust between her teeth. She coughs, spitting out the useless fragments. "I need more. This one's too old."
+
+**GM Prompt:** *"The skullcap is ineffective. Finn'pelt's concussion will require the full 1 week of natural rest: no reduction in recovery time."*
+
+**Effect:** Finn'pelt's concussion treatment fails. He must now rest for the full 1 week. The skullcap cannot be reused from this batch.
+
+
+[6/16/2026 1:24 PM] lizardpelt
+**GM Prompt:** *"Sypha, apply a comfrey poultice to the wound. This requires a Herblore check (DC 10) to prepare correctly. Roll 1d20 + Intelligence modifier (+1) + Herblore proficiency (+2)."*
+
+*(This is if Sypha has comfrey in her pouch.)*
+
+
+[6/16/2026 1:25 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[12]` = **15**
+
+
+[6/16/2026 1:28 PM] lizardpelt
+**Success!** The poultice is prepared correctly.
+**GM Prompt:** *Roll a 1d4 + 1 HP to determine how much HP he recovers during this short rest. The +1 is from the comfrey itself, not from any attribute."*
+
+
+[6/16/2026 1:29 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d4+1` Roll: `[2]` = **3**
+
+
+[6/16/2026 1:30 PM] lizardpelt
+**Finn'pelt HP:** 6 + 3 = 9
+
+
+[6/16/2026 1:35 PM] lizardpelt
+**Sypha:** Sypha knelt beside Finn'pelt, her mismatched eyes fixed on the gash in his side. The yarrow had stopped the bleeding, but the wound was still raw: angry red and weeping clear fluid. She reached into her herb pouch and pulled out a bundle of comfrey leaves, their broad green surfaces still damp with morning dew.
+
+She chewed the leaves slowly, her jaws working the fibrous plant into a thick, green paste. The bitter taste flooded her mouth, but she did not flinch. She had done this a hundred times.
+
+She spat the paste into her paw and spread it evenly across Finn'pelt's wound. The comfrey was cool against his hot flesh, a relief that made him grunt and relax, just slightly.
+
+"Hold still," she murmured. "This will heal you faster."
+
+She pressed a clean strip of bark over the poultice, binding it in place with a length of bindweed vine. Her movements were practiced, gentle, precise.
+
+**Finn'pelt:** He winced but did not pull away. "How bad?"
+
+**Sypha:** "You'll live. The comfrey will help, but you need rest. A lot of it."
+
+She sat back on her haunches, studying her work. The poultice would need to be changed twice a day for the next three days. The concussion; that was another matter entirely. The skullcap had crumbled in her mouth, useless. She would need to forage for fresh herbs.
+
+"You've lost a lot of blood. The comfrey will help you heal, but you're not hunting for at least a week."
+
+**Finn'pelt:** He looked like he wanted to argue. He did not have the strength.
+
+
+[6/16/2026 1:36 PM] lizardpelt
+### Final Status — Finn'pelt
+
+- **HP:** 9 (up from 6)
+- **Exhaustion Level:** 1 (requires 1 full day of rest)
+- **Concussion:** Requires full 1 week of rest (skullcap preparation failed — no reduction)
+- **Deep gash:** Treated with yarrow and bindweed, no longer bleeding
+- **Chronic Pain:** On cold or rainy days, disadvantage on the first Dexterity or Strength check of the day
+
+
+[6/16/2026 1:50 PM] lizardpelt
+### Scene: Greyspire Den — After the Retreat
+
+The mountain den was cold and damp, the firelight casting long shadows across the stone walls. Icefang lay on a bed of dried moss, her flat blue eyes fixed on the ceiling. Her tongue throbbed; a dull, persistent ache that made swallowing painful. Blood still stained her muzzle, crusted and dark.
+
+Grim stood at the entrance, his yellow eyes watching the healer approach.
+
+**Grim:** "Fix her."
+
+Hemlock limped into the den, her clouded eye drifting toward Icefang. She sniffed the air: blood, infection risk low, but the wound was in the mouth. Tricky.
+
+**Hemlock:** "Bite your own tongue, did you? That's a new level of stupid, even for you."
+
+Icefang's flat blue eyes flicked toward her. She said nothing. She could not speak.
+
+**Hemlock:** "Good. Means I don't have to listen to you."
+
+She dropped her herb pouch and knelt beside Icefang, her red-brown coat dusty from the climb. The limestone walls pressed close,  too close. She ignored the tightness in her chest.
+
+
+### Examination
+
+**GM Prompt:** *"Hemlock, roll Medicine check to assess the wound: 1d20 + Wisdom modifier (+1) + Medicine proficiency (+2). DC 10."*
+
+
+[6/16/2026 1:50 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[8]` = **11**
+
+
+[6/16/2026 1:51 PM] lizardpelt
+**Success!** Hemlock diagnoses the wound accurately.
+
+**Hemlock:** "You bit through the side of your tongue. Not deep enough to sever, but the wound is ragged. You'll heal, but it'll hurt to eat, drink, or speak for a few days."
+
+
+[6/16/2026 1:51 PM] lizardpelt
+She leaned closer, squinting with her one good eye.
+
+ "No infection yet. You're lucky. Your teeth are filthy, but the tongue heals fast."
+
+
+[6/16/2026 1:53 PM] lizardpelt
+**GM Prompt:** *"Hemlock, the wound is internal and wet. Yarrow will not stick properly. Celandine nectar can be applied to reduce inflammation and prevent infection. Roll Herblore check to prepare it: 1d20 + Intelligence modifier (+1) + Herblore proficiency (+2). DC 12."*
+
+*(This is if Hemlock has celandine in her pouch. She would keep it for eye injuries, but it works on mouth wounds too.)*
+
+
+[6/16/2026 1:53 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[6]` = **9**
+
+
+[6/16/2026 1:55 PM] lizardpelt
+**Failure!** Hemlock fumbles the preparation.
+
+**Hemlock:** She pulled the celandine from her pouch: a small, yellow-flowered stem with a thick, milky sap. She crushed it between her teeth, trying to release the nectar. But the plant was too dry , it had been in her pouch for too long. The sap came out in a thin, watery drip, not the thick golden nectar she needed.
+
+"Scat-licker," she muttered, spitting out the useless pulp. "This is old. I need fresh celandine."
+
+**Effect:** The celandine is wasted. Hemlock cannot apply it to Icefang's wound.
+
+
+[6/16/2026 1:56 PM] lizardpelt
+**Hemlock:** "Fine. No celandine. You'll have to heal the hard way."
+
+**GM Prompt:** *"Roll Herblore check to prepare the willow bark: 1d20 + Intelligence modifier (+1) + Herblore proficiency (+2). DC 8."*
+
+
+[6/16/2026 1:57 PM] Dice Maiden#9678
+🎲 **basil 🦎** Request: `1d20+1+2` Roll: `[16]` = **19**
+
+
+[6/16/2026 1:57 PM] lizardpelt
+**Success!** The willow bark is prepared expertly.
+
+
+[6/16/2026 1:58 PM] lizardpelt
+### Wound Effects
+
+- **Tongue wound treated.** Willow bark applied for pain relief.
+- **Healing time:** 5 days (instead of 3, because celandine was unavailable).
+- **Pain reduced:** Icefang ignores pain penalties from the tongue wound for 6 hours.
+- **Vocal skills restored:** She can speak after 2 days of rest, though it will hurt.
+
+
+[6/16/2026 2:00 PM] lizardpelt
+**Hemlock:** As she packed her herbs, Hemlock muttered under her breath.
+
+ "Biting your own tongue. In a fight. Against a wolf twice your size. You're a frog-gut, Icefang. A proper vole-snout. If you weren't the Stoneguard captain, I'd let you bleed."
+
+She limped toward the den entrance, pausing to look back.
+
+**Hemlock:** "Rest. Don't speak. I'll find fresh celandine tomorrow. If the wound swells, send for me. And next time, try not to bite yourself. The pack has better things to do than patch up your pride."
+
+Icefang's flat blue eyes followed her out. She did not speak. She could not.
+
+
+## FINAL STATUS — ICEFANG
+
+- **HP:** 20 (she was at 20 after the self-inflicted 1 damage)
+- **Tongue wound:** Treated. Healing in 5 days.
+- **Pain level:** Reduced (willow bark active for 6 hours)
+- **Vocal skills:** Cannot speak for 2 days; after that, speech is painful but possible.
+- **Celandine wasted:** Hemlock will need to forage for fresh celandine.
+
+
+[6/16/2026 2:02 PM] lizardpelt
+## GM NOTE ON FAILED HERB PREPARATION
+
+When a herb preparation fails, the GM has several options:
+
+1. **The herb is wasted** — As here. The celandine was too old and dry.
+2. **The herb is partially effective** — If the DC was missed by only 1-2 points, the GM may rule half effect.
+3. **The herb is harmful** — The treatment fails entirely.
+
+**In this case:** The celandine was too old. Hemlock will need to forage for fresh celandine if she wants to reduce Icefang's recovery time.
+
+
+==============================================================
+Exported 103 message(s)
+==============================================================

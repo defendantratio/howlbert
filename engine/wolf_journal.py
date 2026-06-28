@@ -163,7 +163,20 @@ def log_died(
     guild_id: int | None = None,
     day: int | None = None,
     conn=None,
+    unnamed_pup: bool = False,
 ) -> None:
+    if unnamed_pup:
+        # Lore: pups who die before their naming ceremony are not mourned by
+        # name; "wind that never howled." No name, no cause, no record kept.
+        _write(
+            wolf_id,
+            "died",
+            "an unnamed pup did not survive the first moon; wind that never howled.",
+            guild_id=guild_id,
+            day=day,
+            conn=conn,
+        )
+        return
     _write(
         wolf_id,
         "died",

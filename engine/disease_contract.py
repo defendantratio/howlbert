@@ -280,6 +280,17 @@ def try_mistmoor_swamp_exposure(user, *, belly_rip: bool = False) -> str | None:
     return None
 
 
+def try_silverrush_sewage_exposure(user, *, chance: float = 0.04) -> str | None:
+    """River rot from upstream Twoleg sewage overflow; Silverrush only, no known cure."""
+    gp = user["great_pack"] if user and "great_pack" in user.keys() else None
+    if gp != "silverrush":
+        return None
+    note = try_contract_disease(user, "river_rot", "fouled", chance=chance)
+    if note:
+        return f"foul water: {note}"
+    return None
+
+
 def schedule_milk_fever_risk(
     user,
     *,
