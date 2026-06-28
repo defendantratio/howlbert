@@ -146,7 +146,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/trade`                                               | player item and bone trades                            |
 | `/patron` `/redeem`                                    | boosts, invites, supporter perks                       |
 | `/help topic:<category>`                               | full command guide                                     |
-| `/skills` `/skilllist`                                 | Basil skill checks and DC reference                    |
+| `/skills` `/skilllist`                                 | basil's skill checks and DC reference                    |
 | `/ping`                                                | bot health check                                       |
 
 
