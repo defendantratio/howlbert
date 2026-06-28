@@ -528,7 +528,7 @@ def try_plot_mill_investigate(
     bones = random.randint(15, 35)
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
     standing = db.adjust_wolf_standing(user["discord_id"], 2)
-    kick = f" standing **+2**" if standing != "kicked" else " (**cast out**)"
+    kick = " standing **+2**" if standing != "kicked" else " (**cast out**)"
     return (
         f"\n\n_under the mill timbers you uncover a **fossil tooth** wrapped in rust._\n"
         f"**+{bones}** bones{kick}; report with `/world action:plot`."

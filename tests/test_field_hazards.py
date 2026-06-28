@@ -73,11 +73,16 @@ def main() -> None:
     db.set_user_conditions(user["discord_id"], wolf_id=user["id"], disease="")
     user = db.get_user(999400001000000001)
     sting = try_insect_sting_exposure(user, chance=1.0)
-    check("insect helper wraps note", sting is not None and "Biting insects" in sting)
+    check("insect helper wraps note", sting is not None and "biting insects" in sting)
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

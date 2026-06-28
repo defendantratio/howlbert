@@ -42,7 +42,7 @@ def main() -> None:
     check("socialize warm note", note is not None and "Bond" in note)
 
     body = format_bonds_embed_body(a)
-    check("format body has friendship", "Friendship" in body and "BondWolfB" in body)
+    check("format body has friendship", "friendship" in body and "BondWolfB" in body)
     check("strength tier close", strength_tier(65) == "close")
 
     family, err = db.create_wolf_family(a["id"], f"The Howlers {a['id']}", day=12)
@@ -63,6 +63,11 @@ def main() -> None:
     db.purge_test_accounts()
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

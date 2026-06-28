@@ -305,7 +305,7 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
 def build_startup_briefing_crisis(guild_id: int, world) -> dict:
     """den-news snapshot for morning startup when sunrise already rolled."""
-    from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, lunar_phase_label, rollover_now
+    from engine.lunar import lunar_phase_label, rollover_now
     from engine.plot_blinking import plot_den_news_line, plot_phase
     from engine.rollover_news import collect_den_news
 

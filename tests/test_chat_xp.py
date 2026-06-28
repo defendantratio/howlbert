@@ -55,5 +55,10 @@ def main() -> None:
         raise SystemExit(1)
 
 
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
+
+
 if __name__ == "__main__":
     main()

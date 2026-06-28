@@ -182,7 +182,6 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
 
     disease_note = ""
     if stack["is_rotting"]:
-        import random
         from engine.disease_contract import try_rotting_meat_exposure
         from engine.prey_items import PREY_ROTTING_EAT_DISEASE_CHANCE
 
@@ -269,8 +268,6 @@ def auto_feed_wolves_on_rollover(conn, day: int, season: str | None = None) -> l
     Operates entirely on the given connection so it never opens a second
     connection (which would deadlock against the rollover transaction).
     """
-    import random
-
     from config import (
         HUNGER_LOW_THRESHOLD,
         HUNGER_MAX,

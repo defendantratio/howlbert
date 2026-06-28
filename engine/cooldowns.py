@@ -396,7 +396,6 @@ def build_cooldown_fields(
             )
         )
 
-    from engine.role_features import is_full_medic
     from engine.sacred_visits import format_sacred_visit_reminder, sacred_visit_due
 
     if is_full_medic(user):

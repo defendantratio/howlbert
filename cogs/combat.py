@@ -545,7 +545,7 @@ class Combat(commands.Cog):
         if user and user['pack_id'] and (template['category'] == 'cats'):
             pacts = db.list_active_cat_pacts(interaction.guild.id, user['pack_id'])
             if pacts:
-                footer = f'⚠️ Active cat pact(s); RP fights may break trust. See `/pact action:view`.'
+                footer = '⚠️ Active cat pact(s); RP fights may break trust. See `/pact action:view`.'
         embed = howlbert_embed(f'{display_name} Enters', format_npc_summary(threat), color=SUCCESS_COLOR)
         embed.set_footer(text=footer)
         await interaction.followup.send(embed=embed)
