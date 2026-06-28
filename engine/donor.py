@@ -22,6 +22,11 @@ from config import (
 _DISCORD_ID_RE = re.compile(r"\b(\d{17,20})\b")
 
 
+def _utcnow_str() -> str:
+    """Timezone-aware UTC timestamp, truncated to seconds (datetime.utcnow() is deprecated)."""
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+
+
 def _today() -> datetime.date:
     return datetime.date.today()
 
@@ -110,7 +115,7 @@ def _link_kofi_email(conn: sqlite3.Connection, email: str, discord_id: int) -> N
             discord_id = excluded.discord_id,
             linked_at = excluded.linked_at
         """,
-        (normalized, discord_id, datetime.datetime.utcnow().isoformat(timespec="seconds")),
+        (normalized, discord_id, _utcnow_str()),
     )
 
 
@@ -341,7 +346,7 @@ def _record_kofi_transaction(
             discord_id,
             amount_cents,
             bones,
-            datetime.datetime.utcnow().isoformat(timespec="seconds"),
+            _utcnow_str(),
             event_type,
             tier_name,
             1 if is_subscription else 0,
@@ -597,7 +602,7 @@ def create_donation_code(
     note: str = "",
 ) -> str:
     code = secrets.token_urlsafe(6).upper().replace("-", "")[:10]
-    now = datetime.datetime.utcnow().isoformat(timespec="seconds")
+    now = _utcnow_str()
     with db.get_db() as conn:
         conn.execute(
             """
@@ -658,7 +663,7 @@ def redeem_code(discord_id: int, raw_code: str) -> tuple[bool, str]:
             INSERT INTO donation_redemptions (code, discord_id, redeemed_at)
             VALUES (?, ?, ?)
             """,
-            (code, discord_id, datetime.datetime.utcnow().isoformat(timespec="seconds")),
+            (code, discord_id, _utcnow_str()),
         )
         conn.execute(
             "UPDATE donation_codes SET uses_count = uses_count + 1 WHERE code = ?",

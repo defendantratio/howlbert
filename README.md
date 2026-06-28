@@ -70,7 +70,7 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ **rollover** = one in-game sunrise (`/rollover` for admins, or auto via `.env`)  
 ✦ **four great packs** at `/register`: greyspire, mistmoor, thistlehide, silverrush; or **loner / rogue**  
 ✦ each great pack shares one treasury, tax, territory, and wars  
-✦ **quests** progress from hunts, patrols, deposits, etc.; turn in with `/quest action:complete`  
+✦ **quests** progress from hunts, patrols, deposits, etc.; rewards grant automatically when finished (no manual turn-in)  
 ✦ **mood / hunger / thirst** decay each sunrise; low stats block hunts and add exhaustion  
 ✦ **genetic conditions** (blindness, deafness, muteness, and more) are inherited or rolled at birth; some block howls, hunts, or perception  
 ✦ **cat clans**: trade meat and forage, and form pacts via `/pack pact` (see `docs/CAT_CLANS.md`)  
