@@ -131,7 +131,6 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning` |
 | `/npc`                                                 | server NPC registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
 | `/weep`                                                 | silverrush only, once per sunrise: release grief at the weep stone |
-| `/roster`                                              | gallery of living registered wolves in the server |
 | `/proxy`                                               | speak in-character as your wolves; import from Tupperbox |
 | `/wolves` `/switchwolf` `/rename` `/setfaction`        | multi-wolf and faction                                 |
 | `/prey` `/eat` `/drink` `/salvage` `/preypile` `/bury` | prey hoard and survival                                |
@@ -264,7 +263,7 @@ speak in-character as your wolves, tupperbox-style — plus slash tools that wor
 ✦ `/scene start` opens a roleplay **thread** with a **pinned living roster**; posting auto-joins you (`/scene poke` pings the scene)  
 ✦ `/rite naming` · `blooding` · `mourning` — pack ceremonies in-channel  
 ✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
-✦ `/roster` — server gallery of living wolves; `/family` for relationship trees  
+✦ `/family` — relationship web rendered as a diagram, with the focus wolf's proxy avatar  
 ✦ `/sign` — body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  
 ✦ `/weep` — silverrush only, once per sunrise: release grief alone at the weep stone (also eases the `grief_melancholy` condition)  
 ✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)  

@@ -10,7 +10,7 @@ from engine.hunger import format_hunger_line
 from engine.thirst import format_thirst_line
 from engine.mood import format_mood_line
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 
 async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)

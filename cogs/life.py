@@ -485,7 +485,7 @@ class Life(commands.Cog):
                 continue
             if current and current.lower() not in w['wolf_name'].lower():
                 continue
-            choices.append(app_commands.Choice(name=w['wolf_name'], value=w['wolf_name']))
+            choices.append(app_commands.Choice(name=choice_label(w['wolf_name']), value=w['wolf_name']))
         return choices[:25]
 
     async def _young_wolf_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:

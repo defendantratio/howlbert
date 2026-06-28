@@ -35,7 +35,7 @@ MEDICINE_HERB_LABELS: dict[str, str] = {
 }
 
 # shared medicine-cat pantry rolls (receive/barter bias).
-MEDICINE_CAT_TABLE: list[tuple[lootkind, str, int]] = [
+MEDICINE_CAT_TABLE: list[tuple[LootKind, str, int]] = [
     ("herb", "cobwebs", 22),
     ("herb", "yarrow", 18),
     ("herb", "chamomile", 16),

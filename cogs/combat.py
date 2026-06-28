@@ -10,7 +10,7 @@ from engine.combat_guide import COMBAT_GUIDE_TOPICS, COMBAT_MANEUVERS, MANEUVER_
 from engine.combat_status import apply_crit_status_effects, apply_fumble_status_effects, apply_maneuver_pin_effects, attack_target_block, clear_attack_disadvantage, format_combat_flags, parse_combat_flags, release_pin_states
 from engine.conditions import add_injury, injury_roll_label, parse_injuries
 from engine.combat_injuries import apply_injury_to_list, injury_label, resolve_player_injury_key
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.combat_views import COMBAT_DYNAMIC_ITEMS, make_combat_view, refresh_combat_panel
 from engine.role_restrictions import young_wolf_block
 from engine.vitals import full_activity_block

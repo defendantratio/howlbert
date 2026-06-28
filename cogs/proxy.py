@@ -21,7 +21,7 @@ async def _own_wolf_autocomplete(interaction: discord.Interaction, current: str)
     out = []
     for w in rows:
         if cur in w['wolf_name'].lower():
-            out.append(app_commands.Choice(name=w['wolf_name'], value=w['wolf_name']))
+            out.append(app_commands.Choice(name=choice_label(w['wolf_name']), value=w['wolf_name']))
         if len(out) >= 20:
             break
     return out

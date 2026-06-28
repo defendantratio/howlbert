@@ -40,7 +40,7 @@ def split_prefix_suffix(brackets) -> tuple[str | None, str | None]:
 def sanitize_webhook_name(name: str) -> str:
     name = (name or "wolf").strip()
     lowered = name.lower()
-    for bad in _banned_name_bits:
+    for bad in _BANNED_NAME_BITS:
         if bad in lowered:
             name = re.sub(re.escape(bad), "w" + bad[1:], name, flags=re.IGNORECASE)
             lowered = name.lower()

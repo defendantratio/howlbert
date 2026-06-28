@@ -6,7 +6,7 @@ from discord.ext import commands
 import database as db
 from engine.prey_items import is_forage_food, prey_meta
 from utils.currency import format_bones
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.replies import reply_ephemeral
 
 def _require_pack(user):

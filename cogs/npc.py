@@ -22,7 +22,7 @@ async def _npc_name_autocomplete(interaction: discord.Interaction, current: str)
         return []
     rows = db.list_server_npcs(interaction.guild.id)
     needle = current.lower()
-    return [app_commands.Choice(name=row['name'], value=row['name']) for row in rows if needle in row['name'].lower()][:25]
+    return [app_commands.Choice(name=choice_label(row['name']), value=row['name']) for row in rows if needle in row['name'].lower()][:25]
 
 class Npc(commands.Cog):
 

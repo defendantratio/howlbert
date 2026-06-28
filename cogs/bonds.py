@@ -5,7 +5,7 @@ from discord.ext import commands
 import database as db
 from engine.bonds import BOND_LABELS, FAMILY_ROLE_LABELS, format_bonds_embed_body
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 
 async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)

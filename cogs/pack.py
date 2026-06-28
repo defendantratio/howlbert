@@ -12,7 +12,7 @@ from config import CURRENCY_LABEL, GREAT_PACKS, MAX_PACK_TAX_RATE
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.permissions import is_howlbert_admin
 
 def _is_pack_officer(user, pack, *, discord_admin: bool=False) -> bool:
