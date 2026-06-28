@@ -7,7 +7,7 @@ from engine.activities import try_daily, try_hunt, try_work, try_crime
 from engine.shop_items import RABBIT_PELT_GIFT_BONES, RABBIT_PELT_STANDING, USABLE_ITEM_KEYS
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from engine.trade import build_trade_embed
 from utils.trade_views import TRADE_DYNAMIC_ITEMS, make_trade_view
 from utils.views import build_shop_embed, make_hunt_followup_view, make_shop_view

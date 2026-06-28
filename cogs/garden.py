@@ -7,7 +7,7 @@ import database as db
 from config import GARDEN_HARVEST_SEED_MAX, GARDEN_HARVEST_SEED_MIN, GARDEN_MAX_PLOTS, GARDEN_SEED_BONE_COST, GARDEN_TEND_HEALTH_RESTORE
 from engine.herb_growing import can_cultivate, cultivable_herbs, evaluate_growth, growing_blurb, growing_profile, harvest_yield
 from herbs import HERBS
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, choice_label
 from utils.replies import reply_ephemeral
 STAGE_ICONS = {'seed': '·', 'sprout': '🌱', 'growing': '🌿', 'mature': '🌼', 'wilted': '🥀', 'dead': '💀'}
 

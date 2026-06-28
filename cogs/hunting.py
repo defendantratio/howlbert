@@ -9,7 +9,7 @@ from utils.combat_views import make_combat_view
 from engine.prey_storage import eat_prey_carcass, format_prey_hoard_footer, format_prey_hoard_line, salvage_prey_carcass
 from engine.thirst import drink_at_creek
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.views import make_hunt_followup_view
 
 async def _prey_stack_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:

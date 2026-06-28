@@ -241,7 +241,7 @@ class Profile(commands.Cog):
         for w in rows:
             if needle and needle not in w['wolf_name'].lower():
                 continue
-            choices.append(app_commands.Choice(name=w['wolf_name'], value=w['wolf_name']))
+            choices.append(app_commands.Choice(name=choice_label(w['wolf_name']), value=w['wolf_name']))
         return choices[:25]
 
     @app_commands.command(name='switchwolf', description="switch which wolf you're playing as.")

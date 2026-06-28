@@ -80,7 +80,7 @@ def build_family_mermaid(wolf) -> tuple[str, int]:
             rel += 1
 
     # Offspring.
-    children = db.get_lineage_children_for_wolf(wolf["id"], limit=_MAX_CHILDREN)
+    children = db.get_lineage_children_for_wolf(wolf["id"], limit=_max_children)
     for child in children:
         cn = node(child["id"], child["wolf_name"])
         if cn:

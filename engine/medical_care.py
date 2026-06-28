@@ -181,7 +181,7 @@ def run_spirit_ritual(
     medic, patient, herb_key: str, *, day: int, guild_id: int | None = None
 ) -> tuple[bool, str]:
     """Douglas sagewort / lavender / rowan for shock_emotional or spirit cleanse."""
-    if not is_medic(medic) and not has_any_role(medic, "medic_apprentice"):
+    if not is_full_medic(medic) and not has_any_role(medic, "medic_apprentice"):
         return False, "only **medics** lead cleansing rituals."
     if guild_id and medic["id"] != patient["id"]:
         from engine.medical_access import can_medic_treat_cross_pack
@@ -262,7 +262,7 @@ def run_naming_ceremony(medic, pup, *, day: int) -> tuple[bool, str]:
 
 def run_lay_to_rest(medic, deceased, herb_key: str, *, day: int) -> tuple[bool, str]:
     """Prepare the dead with rosemary / lavender / mint."""
-    if not is_medic(medic) and not has_any_role(medic, "medic_apprentice"):
+    if not is_full_medic(medic) and not has_any_role(medic, "medic_apprentice"):
         return False, "only **medics** prepare the dead."
     cond = deceased["condition"] if "condition" in deceased.keys() else "healthy"
     if cond != "dead":

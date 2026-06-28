@@ -14,7 +14,7 @@ from engine.prey_items import prey_meta
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 
 async def _amusement_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     user = db.get_user(interaction.user.id)

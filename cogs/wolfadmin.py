@@ -26,7 +26,7 @@ async def _wolfadmin_wolf_autocomplete(interaction: discord.Interaction, current
         name = row['wolf_name']
         if needle and needle not in name.lower():
             continue
-        choices.append(app_commands.Choice(name=name, value=name))
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
     return choices[:25]
 
 def _wolf_not_found_embed(player: discord.User, wolf_name: str) -> discord.Embed:

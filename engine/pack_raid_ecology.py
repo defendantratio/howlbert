@@ -171,11 +171,11 @@ def try_treasury_audit(interaction: discord.Interaction, user, pack, day: int) -
             "audit failed",
             format_roll_result(result)
             + "\n\ntracks are too churned; the thief's scent fades.",
-            color=error_color,
+            color=ERROR_COLOR,
         )
 
     remaining = int(alert["stolen_amount"]) - int(alert["recovered_amount"])
-    recover = max(1, int(remaining * raid_audit_recover_pct))
+    recover = max(1, int(remaining * RAID_AUDIT_RECOVER_PCT))
     got = db.recover_raid_alert_bones(int(alert["id"]), recover, pack["id"])
     embed = howlbert_embed(
         "treasury audit",

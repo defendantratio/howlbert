@@ -5,7 +5,7 @@ import database as db
 from engine.skill_checks import SKILL_CATEGORIES, SKILL_SCENARIOS, opponent_required, scenario_keys_for_category
 from engine.skill_runner import run_skill_scenario
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 
 async def _category_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     choices = []

@@ -1,11 +1,11 @@
-"""IC slash lines, whispers, location, journal (read-only), and server roster."""
+"""IC slash lines, whispers, location, journal (read-only), grief vigil, and signs."""
 from __future__ import annotations
 import logging
 import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY, RP_LOCATIONS
+from config import RP_LOCATIONS
 from engine.journal_backfill import backfill_wolf_journal
 from engine.wolf_journal import format_journal_embed_chunks
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, PlayerEmbed, choice_label
@@ -14,7 +14,6 @@ logger = logging.getLogger('howlbert')
 _MAX_SAY = 500
 _MAX_WHISPER = 1000
 _MAX_LOCATION = 120
-_ROSTER_LIMIT = 24
 
 def _active_wolf(interaction: discord.Interaction):
     return db.get_user(interaction.user.id)
@@ -36,16 +35,7 @@ def _ic_location_line(wolf) -> str | None:
 async def _location_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     needle = current.lower()
     choices = [loc for loc in RP_LOCATIONS if needle in loc.lower()]
-    return [app_commands.Choice(name=loc, value=loc) for loc in choices[:25]]
-
-def _pack_short(affiliation: str | None) -> str:
-    if not affiliation or affiliation == LONER_KEY:
-        return 'Lone'
-    if affiliation == ROGUE_KEY:
-        return 'Rogue'
-    if affiliation in GREAT_PACKS:
-        return GREAT_PACKS[affiliation]['name']
-    return str(affiliation).replace('_', ' ').title()
+    return [app_commands.Choice(name=choice_label(loc), value=loc) for loc in choices[:25]]
 
 class Roleplay(commands.Cog):
 
@@ -201,46 +191,6 @@ class Roleplay(commands.Cog):
         elif embeds:
             embeds[-1].set_footer(text='recorded automatically · backfilled from lore and gameplay')
         await interaction.response.send_message(embeds=embeds, ephemeral=reply_ephemeral() if target != interaction.user else False)
-
-    @app_commands.command(name='roster', description='gallery of registered wolves in this server.')
-    @app_commands.describe(pack='filter by great pack')
-    @app_commands.choices(pack=[app_commands.Choice(name='all packs', value='all'), app_commands.Choice(name='lone / rogue', value='lone'), *[app_commands.Choice(name=info['name'], value=key) for key, info in GREAT_PACKS.items()]])
-    async def roster(self, interaction: discord.Interaction, pack: str='all'):
-        if not interaction.guild:
-            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
-            return
-        member_ids = [m.id for m in interaction.guild.members if not m.bot]
-        wolves = db.list_guild_active_wolves(member_ids)
-        if pack != 'all':
-            if pack == 'lone':
-                wolves = [w for w in wolves if not w['great_pack'] or w['great_pack'] in (LONER_KEY, ROGUE_KEY)]
-            else:
-                wolves = [w for w in wolves if w['great_pack'] == pack]
-        if not wolves:
-            await interaction.response.send_message(embed=howlbert_embed('Empty Den', 'No living registered wolves match that filter.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
-        shown = wolves[:_ROSTER_LIMIT]
-        pages: list[discord.Embed] = []
-        for w in shown:
-            pack_lbl = _pack_short(w['great_pack'] if 'great_pack' in w.keys() else None)
-            role = w['wolf_role'] if 'wolf_role' in w.keys() else 'hunter'
-            member = interaction.guild.get_member(w['discord_id'])
-            avatar = _wolf_avatar(w, member)
-            page = howlbert_embed(f"🐺 {w['wolf_name']}", f"{pack_lbl} · {role.title()} · <@{w['discord_id']}>", color=SUCCESS_COLOR)
-            if avatar:
-                page.set_thumbnail(url=avatar)
-            footer = '/profile · /profile sheet:true for lore'
-            if len(wolves) > _ROSTER_LIMIT:
-                footer += f' · showing {_ROSTER_LIMIT} of {len(wolves)}'
-            page.set_footer(text=footer)
-            pages.append(page)
-        if len(pages) == 1:
-            await interaction.response.send_message(embed=pages[0])
-            return
-        from cogs.profile import _EmbedPaginator
-
-        view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
-        await interaction.response.send_message(embed=pages[0], view=view)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Roleplay(bot))
