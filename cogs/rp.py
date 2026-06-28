@@ -220,17 +220,27 @@ class Roleplay(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Empty Den', 'No living registered wolves match that filter.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         shown = wolves[:_ROSTER_LIMIT]
-        lines: list[str] = []
+        pages: list[discord.Embed] = []
         for w in shown:
             pack_lbl = _pack_short(w['great_pack'] if 'great_pack' in w.keys() else None)
             role = w['wolf_role'] if 'wolf_role' in w.keys() else 'hunter'
-            lines.append(f"**{w['wolf_name']}** · {pack_lbl} · {role.title()} · <@{w['discord_id']}>")
-        body = '\n'.join(lines)
-        if len(wolves) > _ROSTER_LIMIT:
-            body += f'\n\n_…and {len(wolves) - _ROSTER_LIMIT} more._'
-        embed = howlbert_embed(f'🐺 Den Roster ({len(wolves)})', body, color=SUCCESS_COLOR)
-        embed.set_footer(text='/profile · /profile sheet:true for lore')
-        await interaction.response.send_message(embed=embed)
+            member = interaction.guild.get_member(w['discord_id'])
+            avatar = _wolf_avatar(w, member)
+            page = howlbert_embed(f"🐺 {w['wolf_name']}", f"{pack_lbl} · {role.title()} · <@{w['discord_id']}>", color=SUCCESS_COLOR)
+            if avatar:
+                page.set_thumbnail(url=avatar)
+            footer = '/profile · /profile sheet:true for lore'
+            if len(wolves) > _ROSTER_LIMIT:
+                footer += f' · showing {_ROSTER_LIMIT} of {len(wolves)}'
+            page.set_footer(text=footer)
+            pages.append(page)
+        if len(pages) == 1:
+            await interaction.response.send_message(embed=pages[0])
+            return
+        from cogs.profile import _EmbedPaginator
+
+        view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
+        await interaction.response.send_message(embed=pages[0], view=view)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Roleplay(bot))

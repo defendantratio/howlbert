@@ -392,6 +392,13 @@ class Profile(commands.Cog):
         lineage = db.format_lineage_for_profile(wolf)
         if lineage:
             embed.description = lineage
+        wolf_avatar = wolf['avatar_url'] if 'avatar_url' in wolf.keys() else None
+        if not wolf_avatar and interaction.guild:
+            tree_member = interaction.guild.get_member(wolf['discord_id'])
+            if tree_member:
+                wolf_avatar = tree_member.display_avatar.url
+        if wolf_avatar:
+            embed.set_thumbnail(url=wolf_avatar)
         embed.set_image(url=url)
         embed.set_footer(text=f'{rel} relationship(s) · solid = blood, dashed = adopted')
         await interaction.response.send_message(embed=embed)
