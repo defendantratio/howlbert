@@ -4616,6 +4616,7 @@ def transfer_to_pack_treasury(discord_id: int, pack_id: int, amount: int) -> boo
     wid = _resolve_wolf_id(discord_id)
     if not wid:
         return False
+    ready_keys: list[str] = []
     with get_db() as conn:
         user = conn.execute(
             "SELECT bones, pack_id FROM users WHERE id = ?", (wid,)
@@ -4630,8 +4631,9 @@ def transfer_to_pack_treasury(discord_id: int, pack_id: int, amount: int) -> boo
             "UPDATE packs SET treasury = treasury + ? WHERE id = ?",
             (amount, pack_id),
         )
-        _increment_deposit_quest_progress_conn(conn, wid, amount)
-        return True
+        ready_keys = _increment_deposit_quest_progress_conn(conn, wid, amount)
+    _auto_complete_ready_quests(discord_id, ready_keys)
+    return True
 
 
 def transfer_from_pack_treasury(discord_id: int, pack_id: int, amount: int) -> bool:
@@ -6111,6 +6113,21 @@ def abandon_quest(discord_id: int, quest_key: str) -> bool:
         return cursor.rowcount > 0
 
 
+def _auto_complete_ready_quests(discord_id: int, ready_keys: list[str]) -> list[sqlite3.Row]:
+    """
+    Call complete_quest for each key that just hit its objective count.
+    Always called *after* the caller's own `with get_db()` block has closed,
+    since complete_quest opens its own connection (nesting them deadlocks
+    mid-transaction; see the herb-grant rollover bug this mirrors the fix for).
+    """
+    results = []
+    for key in ready_keys:
+        result = complete_quest(discord_id, key)
+        if result:
+            results.append(result)
+    return results
+
+
 def increment_quest_progress(
     discord_id: int,
     objective_type: str,
@@ -6118,11 +6135,15 @@ def increment_quest_progress(
     *,
     wolf_id: int | None = None,
     guild_id: int | None = None,
-) -> None:
+) -> list[sqlite3.Row]:
+    """Bump progress on matching active quests; auto-completes (and grants
+    rewards for) any that just hit their objective count. Returns the
+    completed quest result rows, if any."""
+    ready_keys: list[str] = []
     with get_db() as conn:
         wid = wolf_id or _resolve_wolf_id_conn(conn, discord_id)
         if not wid:
-            return
+            return []
         rows = conn.execute(
             """
             SELECT uq.id, uq.progress, q.objective_count, q.key AS quest_key
@@ -6142,6 +6163,9 @@ def increment_quest_progress(
                 "UPDATE user_quests SET progress = ? WHERE id = ?",
                 (new_progress, row["id"]),
             )
+            if new_progress >= row["objective_count"]:
+                ready_keys.append(row["quest_key"])
+    return _auto_complete_ready_quests(discord_id, ready_keys)
 
 
 def increment_quest_progress_by_keys(
@@ -6151,13 +6175,15 @@ def increment_quest_progress_by_keys(
     *,
     wolf_id: int | None = None,
     guild_id: int | None = None,
-) -> None:
+) -> list[sqlite3.Row]:
+    """Same as increment_quest_progress, but for an explicit set of quest keys."""
     if not quest_keys:
-        return
+        return []
+    ready_keys: list[str] = []
     with get_db() as conn:
         wid = wolf_id or _resolve_wolf_id_conn(conn, discord_id)
         if not wid:
-            return
+            return []
         placeholders = ",".join("?" * len(quest_keys))
         rows = conn.execute(
             f"""
@@ -6178,16 +6204,19 @@ def increment_quest_progress_by_keys(
                 "UPDATE user_quests SET progress = ? WHERE id = ?",
                 (new_progress, row["id"]),
             )
+            if new_progress >= row["objective_count"]:
+                ready_keys.append(row["quest_key"])
+    return _auto_complete_ready_quests(discord_id, ready_keys)
 
 
 def _increment_deposit_quest_progress_conn(
     conn: sqlite3.Connection, wolf_id: int, amount: int
-) -> None:
+) -> list[str]:
     user = conn.execute(
         "SELECT deposit_progress FROM users WHERE id = ?", (wolf_id,)
     ).fetchone()
     if not user:
-        return
+        return []
     total = user["deposit_progress"] + amount
     conn.execute(
         "UPDATE users SET deposit_progress = ? WHERE id = ?",
@@ -6195,27 +6224,33 @@ def _increment_deposit_quest_progress_conn(
     )
     rows = conn.execute(
         """
-        SELECT uq.id, q.objective_count
+        SELECT uq.id, q.objective_count, q.key AS quest_key
         FROM user_quests uq
         JOIN quests q ON q.id = uq.quest_id
         WHERE uq.wolf_id = ? AND uq.status = 'active' AND q.objective_type = 'deposit'
         """,
         (wolf_id,),
     ).fetchall()
+    ready_keys: list[str] = []
     for row in rows:
         progress = min(total, row["objective_count"])
         conn.execute(
             "UPDATE user_quests SET progress = ? WHERE id = ?",
             (progress, row["id"]),
         )
+        if progress >= row["objective_count"]:
+            ready_keys.append(row["quest_key"])
+    return ready_keys
 
 
-def increment_deposit_quest_progress(discord_id: int, amount: int) -> None:
+def increment_deposit_quest_progress(discord_id: int, amount: int) -> list[sqlite3.Row]:
+    """Same auto-completion behavior as increment_quest_progress, for deposit quests."""
     with get_db() as conn:
         wolf_id = _resolve_wolf_id_conn(conn, discord_id)
         if not wolf_id:
-            return
-        _increment_deposit_quest_progress_conn(conn, wolf_id, amount)
+            return []
+        ready_keys = _increment_deposit_quest_progress_conn(conn, wolf_id, amount)
+    return _auto_complete_ready_quests(discord_id, ready_keys)
 
 
 def get_active_quest_by_key(discord_id: int, quest_key: str) -> sqlite3.Row | None:
@@ -6582,25 +6617,31 @@ def set_user_stats(discord_id: int, stats: dict) -> None:
         )
 
 
-def grant_item(discord_id: int, item_id: int, quantity: int = 1) -> None:
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
+def grant_item(discord_id: int, item_id: int, quantity: int = 1, *, conn: sqlite3.Connection | None = None) -> None:
+    def _apply(c: sqlite3.Connection) -> None:
+        wolf_id = _resolve_wolf_id_conn(c, discord_id)
         if not wolf_id:
             return
-        row = conn.execute(
+        row = c.execute(
             "SELECT quantity FROM inventory WHERE wolf_id = ? AND item_id = ?",
             (wolf_id, item_id),
         ).fetchone()
         if row:
-            conn.execute(
+            c.execute(
                 "UPDATE inventory SET quantity = quantity + ? WHERE wolf_id = ? AND item_id = ?",
                 (quantity, wolf_id, item_id),
             )
         else:
-            conn.execute(
+            c.execute(
                 "INSERT INTO inventory (wolf_id, item_id, quantity) VALUES (?, ?, ?)",
                 (wolf_id, item_id, quantity),
             )
+
+    if conn is not None:
+        _apply(conn)
+        return
+    with get_db() as c:
+        _apply(c)
 
 
 def consume_item(discord_id: int, item_id: int, quantity: int = 1) -> bool:

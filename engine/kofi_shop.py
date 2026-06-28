@@ -22,7 +22,7 @@ ShopResult = tuple[bool, str, int | None, str | None]
 
 
 def _now_iso() -> str:
-    return datetime.datetime.utcnow().isoformat(timespec="seconds")
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
 
 
 def match_shop_product(item: dict[str, Any], *, amount_cents: int) -> str | None:

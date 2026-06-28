@@ -71,7 +71,7 @@ class Quests(commands.Cog):
         for q in rows[:10]:
             reward_line = format_quest_reward_line(q['key'], q['reward_bones'], difficulty=q['difficulty'])
             embed.add_field(name=f"{q['title']} ({q['difficulty']}); {reward_line}", value=f"`{q['key']}`; {q['description']}", inline=False)
-        embed.set_footer(text='/quest action:progress · action:complete · buttons accept below')
+        embed.set_footer(text='/quest action:progress · rewards grant automatically when the objective is finished · buttons accept below')
         view = make_quest_accept_view(rows[:10])
         await interaction.response.send_message(embed=embed, view=view)
 
@@ -114,7 +114,7 @@ class Quests(commands.Cog):
             if extra:
                 reward_note += f' · {extra}'
             embed.add_field(name=q['title'], value=f"{q['progress']}/{q['objective_count']} ({q['objective_type']})\n`{q['quest_key']}`{reward_note}", inline=False)
-        embed.set_footer(text='/quest action:complete · abandon with action:abandon quest:<key>')
+        embed.set_footer(text='rewards grant automatically when finished · abandon with action:abandon quest:<key>')
         view = make_quest_complete_view(rows)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 

@@ -114,7 +114,9 @@ class Pack(commands.Cog):
         embed.add_field(name='Amount', value=format_bones(amount), inline=True)
         embed.add_field(name='Treasury', value=format_bones(updated_pack['treasury']), inline=True)
         embed.add_field(name='Your Balance', value=format_bones(updated_user['bones']), inline=True)
-        db.increment_quest_progress(interaction.user.id, 'deposit')
+        # NOTE: do not also call db.increment_quest_progress(..., 'deposit') here;
+        # transfer_to_pack_treasury already advances 'deposit' quests by the real
+        # bone amount. Calling both double-counted progress on every deposit.
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name='withdraw', description='take bones from the pack treasury (alpha or advisor).')

@@ -34,7 +34,7 @@ def grant_fresh_herb(
     conn=None,
 ) -> tuple[str, str]:
     """Grant a foraged herb to inventory; returns (item_key, restricted-hoard note if any)."""
-    _ = (guild_id, day, form, conn)
+    _ = (guild_id, day, form)
     if user is None:
         user = db.get_user_by_id(wolf_id)
     if not user:
@@ -43,7 +43,7 @@ def grant_fresh_herb(
     item = db.get_item_by_key(item_key)
     if not item:
         return "", "unknown herb item."
-    db.grant_item(user["discord_id"], item["id"], quantity=1)
+    db.grant_item(user["discord_id"], item["id"], quantity=1, conn=conn)
     hoard_note = ""
     from engine.restricted_herbs import on_restricted_herb_acquired
 
