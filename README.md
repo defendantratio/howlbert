@@ -110,7 +110,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe` |
 | `/herbs`     | `bag`, `guide`, `prepare`, `dryall`, `store`, `turnin`                                                      |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
-| `/skills`    | catalogued Basil checks (`category:` · `check:` · `group:` · `helper:` · `opponent:`)                         |
+| `/skills`    | catalogued checks (`category:` · `check:` · `group:` · `helper:` · `opponent:`)                         |
 | `/skilllist` | reference DCs by category                                                                                     |
 | `/vitals`    | `condition`, `rest`                                                                                           |
 
