@@ -327,6 +327,8 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     prey_key = prey_key_for_payout(payout, user=user, season=world["season"]) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
     record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
+    if net_amount > 0:
+        db.increment_quest_progress(interaction.user.id, "hunt", guild_id=guild_id)
     updated = db.get_user(interaction.user.id)
     from engine.role_shift_bonus import apply_first_hunt_bonus
 
@@ -358,7 +360,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
             day=day,
             prey_key=prey_key,
         )
-        footer = f"**{prey_name}** in your hoard (`/food`) · lay out with `/preypile`"
+        footer = f"{prey_name} in your hoard (`/food`) · lay out with `/preypile`"
         from engine.blooding import award_blooding_on_hunt
 
         blooding_note = award_blooding_on_hunt(user)
@@ -434,6 +436,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     if blocked:
         return blocked
     gross = roll_range(SCAVENGE_BONES)
+    gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
@@ -466,14 +469,14 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth) if n]
-        footer = "**old carrion** in hoard (`/food`) · rotting meat risks gut sickness"
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note) if n]
+        footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
     else:
         footer = "today's scavenge is spent; try again after the next sunrise."
-        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
@@ -575,7 +578,7 @@ def try_track(
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
     if net > 0:
-        footer = f"**{prey_name}** in hoard (`/food`) · `/preypile` to share at the den"
+        footer = f"{prey_name} in hoard (`/food`) · `/preypile` to share at the den"
         notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if notes:
             footer += " · " + " · ".join(notes)
@@ -622,6 +625,7 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
     if blocked:
         return blocked, False
     gross = roll_range(FISHING_BONES)
+    gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "fishing", season=world["season"], guild_id=guild_id
     )
@@ -670,12 +674,12 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         wx = world["weather"]
         tod = live_tod
         footer = (
-            f"**{prey_name}** in hoard (`/food`) · `/preypile` to share · "
+            f"{prey_name} in hoard (`/food`) · `/preypile` to share · "
             f"{conditions_snippet(tod, wx)}"
         )
-        if season_note or mood_note or hunger_note or thirst_note or exhaustion_note:
+        if season_note or mood_note or hunger_note or thirst_note or exhaustion_note or sniff_note:
             footer += " · " + " · ".join(
-                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n
+                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n
             )
         from engine.nursing import is_nursing_mother
 
@@ -689,9 +693,9 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
             embed.description = (embed.description or "") + f"\n\n{snake}"
     else:
         footer = "today's fishing is spent; pack waters shift with weather and time (`/world`)."
-        if season_note or mood_note or hunger_note or thirst_note:
+        if season_note or mood_note or hunger_note or thirst_note or sniff_note:
             footer = " · ".join(
-                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n
+                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n
             ) + " · " + footer
         embed.set_footer(text=footer)
     _append_notes_to_footer(embed, fatigue)

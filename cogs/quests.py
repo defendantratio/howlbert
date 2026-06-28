@@ -108,13 +108,18 @@ class Quests(commands.Cog):
             return
         embed = howlbert_embed('Active Quests')
         from engine.quest_rewards import format_quest_reward_suffix
-        for q in rows:
+        trophies = [q for q in rows if q['quest_type'] == 'achievement']
+        quests = [q for q in rows if q['quest_type'] != 'achievement']
+        for q in quests:
             extra = format_quest_reward_suffix(q['quest_key'], difficulty=q['difficulty'] if 'difficulty' in q.keys() else None)
             reward_note = f"\nRewards: {format_bones(q['reward_bones'])}"
             if extra:
                 reward_note += f' · {extra}'
             embed.add_field(name=q['title'], value=f"{q['progress']}/{q['objective_count']} ({q['objective_type']})\n`{q['quest_key']}`{reward_note}", inline=False)
-        embed.set_footer(text='rewards grant automatically when finished · abandon with action:abandon quest:<key>')
+        if trophies:
+            lines = [f"**{t['title']}**; {t['progress']}/{t['objective_count']}" for t in trophies]
+            embed.add_field(name='Trophies in progress', value='\n'.join(lines), inline=False)
+        embed.set_footer(text='rewards grant automatically when finished · abandon with action:abandon quest:<key> · trophies never expire')
         view = make_quest_complete_view(rows)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 

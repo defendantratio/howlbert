@@ -284,19 +284,19 @@ def seasonal_forage_food(season: str | None) -> str | None:
     weights = [w for _, w in table]
     return random.choices(keys, weights=weights, k=1)[0]
 
-SNIFF_FLAVORS = (
-    "you nose the wind; rabbit somewhere east of the creek.",
-    "old blood on stone. something was dragged through the bracken recently.",
-    "pine and prey-scent tangled; a trail worth following at dawn.",
-    "the ground holds a warm track; small game, not far.",
-    "fish-oil and mud: the river bend was busy last night.",
-    "a rival's mark on the border post; fresh, angry, close.",
-)
-
-SNIFF_HUNT_HINT = (
-    "your whiskers prickle; prey-scent runs strong; strike while the trail is hot.",
-    "scent pools in the ravine; the wind favors hunters who move now.",
-    "fresh blood on the breeze; your next hunt or track should run richer.",
+# Each sniff flavor carries a "kind" that decides its mechanical payoff —
+# no flavor-only text. "gather" flavors grant the hunt/track/scavenge/fish
+# bones bonus (sniff_bonus_day); "water" flavors restore a little thirst
+# from working close to the river; "alert" flavors raise this sniff's
+# encounter odds instead of granting a buff, since you just smelled a
+# rival nearby.
+SNIFF_FLAVORS: tuple[dict, ...] = (
+    {"text": "you nose the wind; rabbit somewhere east of the creek.", "kind": "gather"},
+    {"text": "old blood on stone. something was dragged through the bracken recently.", "kind": "gather"},
+    {"text": "pine and prey-scent tangled; a trail worth following at dawn.", "kind": "gather"},
+    {"text": "the ground holds a warm track; small game, not far.", "kind": "gather"},
+    {"text": "fish-oil and mud: the river bend was busy last night.", "kind": "water"},
+    {"text": "a rival's mark on the border post; fresh, angry, close.", "kind": "alert"},
 )
 
 # Max hunt flavor tier per carcass type (stops "heavy prey" text on grouse, etc.)

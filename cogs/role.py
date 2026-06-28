@@ -26,16 +26,18 @@ class RoleCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='role', description='role quests, role events, or drown-sick prophecy.')
-    @app_commands.describe(action='quests, event, or prophecy')
-    @app_commands.choices(action=[app_commands.Choice(name='role quests', value='quests'), app_commands.Choice(name='role event', value='event'), app_commands.Choice(name='prophecy (drown-sick)', value='prophecy')])
-    async def role(self, interaction: discord.Interaction, action: str):
+    @app_commands.command(name='role', description='role quests, role events, prophecy, or apprentice shadowing.')
+    @app_commands.describe(action='quests, event, prophecy, or shadow', mentor='full-ranked packmate to shadow (action:shadow)')
+    @app_commands.choices(action=[app_commands.Choice(name='role quests', value='quests'), app_commands.Choice(name='role event', value='event'), app_commands.Choice(name='prophecy (drown-sick)', value='prophecy'), app_commands.Choice(name='shadow a mentor (apprentice)', value='shadow')])
+    async def role(self, interaction: discord.Interaction, action: str, mentor: discord.Member | None=None):
         if action == 'quests':
             await self._rolequests(interaction)
         elif action == 'event':
             await self._roleevent(interaction)
         elif action == 'prophecy':
             await self._prophecy(interaction)
+        elif action == 'shadow':
+            await self._shadow(interaction, mentor)
 
     async def _rolequests(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -164,6 +166,35 @@ class RoleCog(commands.Cog):
         embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather})', color=SUCCESS_COLOR)
         embed.set_footer(text='it will make sense when it happens; or after it does.')
         await interaction.response.send_message(embed=embed)
+
+    async def _shadow(self, interaction: discord.Interaction, mentor: discord.Member | None):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        if not mentor:
+            await interaction.response.send_message(player_message('Pick a full-ranked packmate to shadow with the `mentor` option.'), ephemeral=reply_ephemeral())
+            return
+        if mentor.bot or mentor.id == interaction.user.id:
+            embed = howlbert_embed('Pick a Mentor', "Shadow a packmate who's earned the full rank; not yourself.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        mentor_row = db.get_user(mentor.id)
+        if not mentor_row:
+            embed = howlbert_embed('Not Registered', 'That mentor is not on Howlbert.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        from engine.apprentice_shadow import run_apprentice_shadow
+        ok, msg = run_apprentice_shadow(user, mentor_row, day=world['day_number'])
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        embed = howlbert_embed('Shadow', msg, color=color)
+        if ok:
+            embed.set_footer(text='medics use `/medic action:observe` instead · once per sunrise')
+        await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
 
 def _skill_attrs(skill: str) -> tuple[str, ...]:
     from rpg_rules import SKILLS

@@ -289,6 +289,8 @@ def herb_check_adjustments(
     if buffs.get("medicine_bonus_next") and skill_key in ("medicine", "herblore", None):
         if skill_key or "attr_wis" in attr_keys:
             mod += int(buffs["medicine_bonus_next"])
+    if buffs.get("mentor_bonus_skill") and skill_key == buffs.get("mentor_bonus_skill"):
+        mod += int(buffs.get("mentor_bonus_value", 0))
     if buffs.get("fear_immune_until_day"):
         day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
         if int(buffs["fear_immune_until_day"]) >= day and skill_key in (
@@ -320,6 +322,10 @@ def consume_herb_check_buffs(user, *, skill_key: str | None = None) -> dict:
         changed = True
     if buffs.get("medicine_bonus_next") and skill_key in ("medicine", "herblore", None):
         buffs.pop("medicine_bonus_next", None)
+        changed = True
+    if buffs.get("mentor_bonus_skill") and skill_key == buffs.get("mentor_bonus_skill"):
+        buffs.pop("mentor_bonus_skill", None)
+        buffs.pop("mentor_bonus_value", None)
         changed = True
     if buffs.get("venom_save_advantage") and skill_key in ("survival", "medicine", None):
         buffs.pop("venom_save_advantage", None)
@@ -1176,6 +1182,11 @@ def format_active_herb_buffs(user, day: int) -> str:
         lines.append("**cough suppressed**; breathing eased by herbs.")
     if buffs.get("medicine_bonus_next"):
         lines.append(f"**medicine boost**; next treat gets +{buffs['medicine_bonus_next']} to the roll.")
+    if buffs.get("mentor_bonus_skill"):
+        lines.append(
+            f"**mentor boost**; next **{buffs['mentor_bonus_skill']}** check gets "
+            f"+{buffs.get('mentor_bonus_value', 0)} to the roll."
+        )
     return "\n".join(lines)
 
 

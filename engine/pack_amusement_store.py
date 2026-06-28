@@ -130,3 +130,28 @@ def withdraw_amusement_from_store(
     db.add_amusement_stack(user["id"], stack["item_key"], uses_left=int(stack["uses_left"]))
     db.remove_pack_amusement_stack(store_id)
     return True, f"**{meta['name']}** moved to your toys (`/playpen action:toys`)."
+
+
+def withdraw_all_amusement_from_store(
+    user,
+    *,
+    pack_id: int,
+) -> tuple[bool, str]:
+    stacks = db.get_pack_amusement_stacks(pack_id)
+    usable = [s for s in stacks if int(s["uses_left"]) > 0]
+    if not usable:
+        return False, "no toys in the den store."
+    withdrawn = 0
+    names: list[str] = []
+    for stack in usable:
+        ok, msg = withdraw_amusement_from_store(user, int(stack["id"]), pack_id=pack_id)
+        if ok:
+            withdrawn += 1
+            if "**" in msg:
+                names.append(msg.split("**")[1])
+    if withdrawn == 0:
+        return False, "nothing could be withdrawn."
+    summary = ", ".join(names[:8])
+    if len(names) > 8:
+        summary += f", _…and {len(names) - 8} more_"
+    return True, f"**{withdrawn}** toy(s) moved to your toys: {summary}."

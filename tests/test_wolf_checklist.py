@@ -47,6 +47,7 @@ def test_setup_complete_hides_done_items():
         "last_hunt_day": 10,
         "last_work_day": 10,
         "last_sniff_day": 10,
+        "last_fishing_day": 10,
         "last_howl_day": 10,
         "last_socialize_day": 10,
         "last_role_event_day": 10,

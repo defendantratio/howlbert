@@ -83,8 +83,8 @@ class Explore(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='playpen', description='toys, play, socialize, groom, den romp, or toy store.')
-    @app_commands.describe(action='toys, play, socialize, groom, playall, or toystore', mode='toystore: list, deposit, depositall, or withdraw', toy='toy stack (play / toystore deposit or withdraw)', wolf='packmate (socialize/groom)', own_wolf='your other wolf (socialize/groom)')
-    @app_commands.choices(action=[app_commands.Choice(name='view toys', value='toys'), app_commands.Choice(name='play with toy', value='play'), app_commands.Choice(name='socialize', value='socialize'), app_commands.Choice(name='groom packmate', value='groom'), app_commands.Choice(name='play with whole den (alpha)', value='playall'), app_commands.Choice(name='den toy store', value='toystore')], mode=[app_commands.Choice(name='list store', value='list'), app_commands.Choice(name='deposit toy', value='deposit'), app_commands.Choice(name='deposit all toys', value='depositall'), app_commands.Choice(name='withdraw toy', value='withdraw')])
+    @app_commands.describe(action='toys, play, socialize, groom, playall, or toystore', mode='toystore: list, deposit, depositall, withdraw, or withdrawall', toy='toy stack (play / toystore deposit or withdraw)', wolf='packmate (socialize/groom)', own_wolf='your other wolf (socialize/groom)')
+    @app_commands.choices(action=[app_commands.Choice(name='view toys', value='toys'), app_commands.Choice(name='play with toy', value='play'), app_commands.Choice(name='socialize', value='socialize'), app_commands.Choice(name='groom packmate', value='groom'), app_commands.Choice(name='play with whole den (alpha)', value='playall'), app_commands.Choice(name='den toy store', value='toystore')], mode=[app_commands.Choice(name='list store', value='list'), app_commands.Choice(name='deposit toy', value='deposit'), app_commands.Choice(name='deposit all toys', value='depositall'), app_commands.Choice(name='withdraw toy', value='withdraw'), app_commands.Choice(name='withdraw all toys', value='withdrawall')])
     @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete)
     async def playpen(self, interaction: discord.Interaction, action: str, mode: str='list', toy: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None):
         if action == 'toys':
@@ -128,11 +128,11 @@ class Explore(commands.Cog):
         if not user['pack_id']:
             await interaction.response.send_message(embed=howlbert_embed('No Pack', 'Join a pack to use the den toy store.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        from engine.pack_amusement_store import deposit_all_amusement_to_store, deposit_amusement_to_store, list_pack_amusement_store, withdraw_amusement_from_store
+        from engine.pack_amusement_store import deposit_all_amusement_to_store, deposit_amusement_to_store, list_pack_amusement_store, withdraw_all_amusement_from_store, withdraw_amusement_from_store
         if mode == 'list':
             body = list_pack_amusement_store(user['pack_id'])
             embed = howlbert_embed('Den Toy Store', body)
-            embed.set_footer(text='anyone: `mode:deposit` / `depositall` / `withdraw`')
+            embed.set_footer(text='anyone: `mode:deposit` / `depositall` / `withdraw` / `withdrawall`')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if mode == 'depositall':
@@ -157,8 +157,10 @@ class Explore(commands.Cog):
                 await interaction.response.send_message(player_message('Enter store stack **`#ID`** from `mode:list`.'), ephemeral=reply_ephemeral())
                 return
             ok, msg = withdraw_amusement_from_store(user, store_id, pack_id=user['pack_id'])
+        elif mode == 'withdrawall':
+            ok, msg = withdraw_all_amusement_from_store(user, pack_id=user['pack_id'])
         else:
-            await interaction.response.send_message(player_message('Pick **list**, **deposit**, **depositall**, or **withdraw**.'), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(player_message('Pick **list**, **deposit**, **depositall**, **withdraw**, or **withdrawall**.'), ephemeral=reply_ephemeral())
             return
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed('Den Toy Store', msg, color=color))

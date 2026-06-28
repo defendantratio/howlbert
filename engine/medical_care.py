@@ -155,7 +155,12 @@ def run_observe_apprentice(
     injuries = parse_injuries(patient["active_injuries"] if "active_injuries" in patient.keys() else None)
     ill = disease_display(patient)
     focus = ill[0] if ill else (_injury_label(injuries) if injuries else "general wellness")
-    db.update_user_by_id(medic["id"], last_observe_day=day)
+    from config import MENTOR_BONUS_VALUE
+    from engine.herb_buffs import merge_buff_fields
+
+    fields = {"last_observe_day": day}
+    fields.update(merge_buff_fields(medic, mentor_bonus_skill="medicine", mentor_bonus_value=MENTOR_BONUS_VALUE))
+    db.update_user_by_id(medic["id"], **fields)
     role_note = (
         "_apprentice paws; watch and learn before you hold the stick._"
         if has_any_role(medic, "medic_apprentice") and not is_full_medic(medic)
@@ -164,7 +169,7 @@ def run_observe_apprentice(
     return True, (
         f"**{medic['wolf_name']}** watches **{patient['wolf_name']}**'s **{focus}** case.\n"
         f"{role_note}\n"
-        "_No surgery performed; cooldown untouched._"
+        f"_No surgery performed; cooldown untouched._ next **medicine** check: **+{MENTOR_BONUS_VALUE}**."
     )
 
 

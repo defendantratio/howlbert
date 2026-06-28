@@ -413,6 +413,21 @@ SIGN_TRACK_MOOD = 4
 SIGN_TRACK_UNITY = 1
 SIGN_CHALLENGE_WIN_STANDING = 2
 SIGN_CHALLENGE_LOSE_STANDING = -1
+# Lightweight "emote" signals: lower stakes than alert/threaten/challenge,
+# but still real mechanics (no flavor-only signs).
+SIGN_NUZZLE_MOOD = 3
+SIGN_NUZZLE_BOND_GAIN = 4
+SIGN_STRETCH_EXHAUSTION_RELIEF = 1
+# Mentor bonus; medic apprentices already get this from `/medic action:observe`.
+# `/role action:shadow` grants the same boost to hunter/scout/forager/diplomat/
+# caretaker apprentices on their focus skill (engine.herb_buffs mentor_bonus_*).
+MENTOR_BONUS_VALUE = 2
+# Pup training; `/pupcare action:train` — a deliberate, capped stat nudge
+# distinct from feed/save/adopt. Once per sunrise per pup; lifetime-capped
+# so it can't replace genetics/traits as a power source.
+PUP_TRAIN_SUCCESS_DC = 12
+PUP_TRAIN_MAX_LIFETIME_BONUS = 5
+PUP_TRAIN_MOOD_CONSOLATION = 2
 # Diminishing returns on repeat /sign mood payouts between the same pair (no
 # cooldown, but signing the same partner over and over pays out less so it
 # can't substitute for `/playpen action:play`/`action:groom`, which stay
@@ -806,11 +821,14 @@ GREAT_PACKS = {
 SCAVENGE_BONES = (2, 8)
 TRACK_BONES = (8, 28)
 
-# Sniff; wind-read once per sunrise (Wolvden-style)
-SNIFF_HUNT_HINT_CHANCE = 0.22
+# Sniff; wind-read once per sunrise (Wolvden-style). Every flavor line carries
+# its own mechanic (see engine.prey_items.SNIFF_FLAVORS "kind"): "gather"
+# grants the hunt/track/scavenge/fish bonus below, "water" restores thirst,
+# "alert" raises this sniff's encounter odds by SNIFF_ALERT_ENCOUNTER_BONUS.
 SNIFF_HUNT_BONUS_PCT = 15
 SNIFF_WOLF_ENCOUNTER_CHANCE = 0.15
 SNIFF_WOLF_ENCOUNTER_MOOD = 4
+SNIFF_ALERT_ENCOUNTER_BONUS = 0.20
 # Border patrol; clan cat fight from /sniff (only if no wolf encounter that sniff)
 SNIFF_CAT_ENCOUNTER_CHANCE = 0.12
 BORDER_CAT_STANDING = 2
@@ -1259,6 +1277,69 @@ QUEST_SKILL_REWARDS: dict[str, tuple[str, int]] = {
     "daily_deep_scrape": ("survival", 1),
     "daily_river_storm": ("survival", 1),
 }
+
+# Achievements; auto-granted to every wolf at registration (see
+# database.ensure_achievement_quests), never expire, never accepted from a
+# board. Reuses the same objective_type counters every other quest already
+# increments, just at lifetime-milestone scale. Completion also writes a
+# wolf journal entry (engine.wolf_journal.log_achievement).
+ACHIEVEMENT_QUESTS = (
+    (
+        "trophy_hundred_hunts",
+        "Hundred Hunts",
+        "Bring down one hundred hunts over your lifetime.",
+        "hunt",
+        100,
+        200,
+        0,
+        "achievement",
+        "hard",
+    ),
+    (
+        "trophy_healers_hands",
+        "Healer's Hands",
+        "Treat fifty wounds or illnesses over your lifetime.",
+        "treat",
+        50,
+        150,
+        0,
+        "achievement",
+        "hard",
+    ),
+    (
+        "trophy_tireless_scavenger",
+        "Tireless Scavenger",
+        "Scavenge one hundred carcasses over your lifetime.",
+        "scavenge",
+        100,
+        150,
+        0,
+        "achievement",
+        "hard",
+    ),
+    (
+        "trophy_rivers_friend",
+        "River's Friend",
+        "Catch fifty fish over your lifetime.",
+        "fishing",
+        50,
+        150,
+        0,
+        "achievement",
+        "hard",
+    ),
+    (
+        "trophy_green_thumb",
+        "Green Thumb",
+        "Forage one hundred times over your lifetime.",
+        "forage",
+        100,
+        150,
+        0,
+        "achievement",
+        "hard",
+    ),
+)
 
 # Role quests: key, title, desc, objective, count, reward, standing, type, difficulty, role[, pack]
 ROLE_QUESTS = (

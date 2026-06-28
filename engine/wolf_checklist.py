@@ -132,6 +132,17 @@ def _pending_daily_items(
     if not _used_today(user, day, "last_sniff_day"):
         items.append("sniff the wind (`/field action:sniff`)")
 
+    if not _used_today(user, day, "last_fishing_day"):
+        items.append("fish (`/field action:fishing`)")
+
+    wolf_id = int(_field(user, "id", 0) or 0)
+    if wolf_id:
+        from engine.nursing import pup_needs_milk_today
+
+        children = db.get_lineage_children_for_discord(_field(user, "discord_id", 0))
+        if any(pup_needs_milk_today(c, day) for c in children):
+            items.append("feed pups (`/pupcare action:feed`)")
+
     if pack_id:
         if not _used_today(user, day, "last_howl_day"):
             items.append("pack howl (`/howl`)")
@@ -231,13 +242,23 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
         return []
     from engine.pack_relations import HOSTILE_STANDING_THRESHOLD
 
+    wolf_id = int(_field(user, "id", 0) or 0)
     items: list[str] = []
     for row in db.list_pack_relations(guild_id, pack_id):
         if int(row["standing"]) <= HOSTILE_STANDING_THRESHOLD:
-            items.append(
-                f"border watch — hostile with **{row['other_pack_name']}** "
+            line = (
+                f"border tension — hostile with **{row['other_pack_name']}** "
                 f"({row['standing']}/10); sniff/survey risk up."
             )
+            if wolf_id:
+                from engine.rival_npcs import highest_grudge_rival_for_pack_key
+
+                other_pack = db.get_pack(int(row["other_pack_id"]))
+                pack_key = other_pack["key"] if other_pack and "key" in other_pack.keys() else None
+                rival = highest_grudge_rival_for_pack_key(wolf_id, pack_key) if pack_key else None
+                if rival:
+                    line += f" **{rival['name']}** is watching that border (grudge {rival['grudge']}/100)."
+            items.append(line)
     alert = db.get_active_raid_alert_for_victim(guild_id, pack_id, day)
     if alert:
         suspect = db.get_pack(int(alert["suspect_pack_id"]))
@@ -284,7 +305,7 @@ def format_wolf_checklist(setup: list[str], today: list[str], watch: list[str] |
     if today:
         parts.append("**today**\n" + "\n".join(f"☐ {label}" for label in today))
     if watch:
-        parts.append("**watch**\n" + "\n".join(f"☐ {label}" for label in watch))
+        parts.append("**watch**\n" + "\n".join(f"⚠ {label}" for label in watch))
     text = "\n\n".join(parts)
     if len(text) > 4000:
         text = text[:3997] + "…"

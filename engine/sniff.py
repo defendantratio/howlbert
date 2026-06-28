@@ -8,14 +8,15 @@ import discord
 
 from config import (
     GREAT_PACKS,
+    SNIFF_ALERT_ENCOUNTER_BONUS,
     SNIFF_CAT_ENCOUNTER_CHANCE,
     SNIFF_HUNT_BONUS_PCT,
-    SNIFF_HUNT_HINT_CHANCE,
+    SNIFF_THIRST_RESTORE,
     SNIFF_WOLF_ENCOUNTER_CHANCE,
     SNIFF_WOLF_ENCOUNTER_MOOD,
 )
 from engine.cat_pacts import pact_border_chance_multiplier
-from engine.prey_items import SNIFF_FLAVORS, SNIFF_HUNT_HINT
+from engine.prey_items import SNIFF_FLAVORS
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
 
@@ -48,7 +49,7 @@ def apply_sniff_bone_bonus(user, amount: int, day: int) -> tuple[int, int, str]:
     if amount <= 0 or not sniff_bonus_active(user, day):
         return amount, 0, ""
     bonus = max(1, int(amount * SNIFF_HUNT_BONUS_PCT / 100))
-    note = f"sniff bonus; **+{SNIFF_HUNT_BONUS_PCT}%** hunt/track payout."
+    note = f"sniff bonus; +{SNIFF_HUNT_BONUS_PCT}% payout."
     return amount + bonus, bonus, note
 
 
@@ -92,15 +93,43 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
 
     db.update_user(interaction.user.id, last_sniff_day=day)
     flavor = random.choice(SNIFF_FLAVORS)
-    body = flavor
-    from config import SNIFF_THIRST_RESTORE
+    body = flavor["text"]
     from engine.world import conditions_snippet, effective_time_of_day
 
-    new_thirst = db.adjust_thirst(user["id"], SNIFF_THIRST_RESTORE)
-    body += f"\n\n**+{SNIFF_THIRST_RESTORE} thirst** (now **{new_thirst}**)."
     live_tod = effective_time_of_day(world)
     footer_bits: list[str] = [conditions_snippet(live_tod, world["weather"])]
     combat_enc_id: int | None = None
+    alert_bonus = 0.0
+
+    kind = flavor["kind"]
+    if kind == "gather":
+        db.update_user(interaction.user.id, sniff_bonus_day=day)
+        track_cut = sniff_track_fail_reduction(user, day)
+        body += (
+            f"\n\n**+{SNIFF_HUNT_BONUS_PCT}%** hunt/track/scavenge/fish bones · "
+            f"**−{track_cut}** track dc this sunrise."
+        )
+        footer_bits.append(f"sniff bonus (+{SNIFF_HUNT_BONUS_PCT}% bones, −{track_cut} track dc)")
+    elif kind == "water":
+        new_thirst = db.adjust_thirst(user["id"], SNIFF_THIRST_RESTORE)
+        body += f"\n\n**+{SNIFF_THIRST_RESTORE} thirst** (now **{new_thirst}**); the damp air wets your tongue."
+    elif kind == "alert":
+        alert_bonus = SNIFF_ALERT_ENCOUNTER_BONUS
+        body += "\n\nyour hackles rise — whoever left that is close. you stay sharp on the way back."
+        footer_bits.append("on alert")
+        if user["pack_id"]:
+            from engine.rival_npcs import pick_rival_for_hostile_pack, record_rival_encounter
+
+            pick = pick_rival_for_hostile_pack(interaction.guild.id, user["pack_id"])
+            if pick:
+                rival, other_pack_name = pick
+                grudge = record_rival_encounter(user["id"], rival["key"], day=day)
+                body += (
+                    f"\n\nthe mark belongs to **{rival['name']}** of **{other_pack_name}**; "
+                    f"{rival['blurb']}\ngrudge with **{rival['name']}**: **{grudge}/100** "
+                    f"(`/rivals` for the full list)."
+                )
+                footer_bits.append(f"rival: {rival['name']}")
 
     from utils.hunting import weather_hunt_modifier_label
 
@@ -136,7 +165,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             footer_bits.append("border marks")
 
     encounter = None
-    sniff_odds = SNIFF_WOLF_ENCOUNTER_CHANCE
+    sniff_odds = SNIFF_WOLF_ENCOUNTER_CHANCE + alert_bonus
     if interaction.guild and user["pack_id"]:
         from engine.pack_raid_ecology import sniff_encounter_chance_bonus
 
@@ -168,6 +197,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             encounter,
             guild_id=interaction.guild.id,
             channel_id=interaction.channel_id,
+            day=day,
         )
         if relation_body:
             body += relation_body
@@ -185,7 +215,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
                 )
         footer_bits.append("Wolf encounter")
     else:
-        border_odds = SNIFF_CAT_ENCOUNTER_CHANCE * pact_border_chance_multiplier(
+        border_odds = (SNIFF_CAT_ENCOUNTER_CHANCE + alert_bonus) * pact_border_chance_multiplier(
             interaction.guild.id, user["pack_id"]
         )
         from engine.wolf_pack_pacts import wolf_pact_border_multiplier
@@ -218,15 +248,6 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             body += f"\n\n{fight_flavor}"
             combat_enc_id = enc_id
             footer_bits.append("border fight; use the combat panel")
-
-    if random.random() < SNIFF_HUNT_HINT_CHANCE:
-        db.update_user(interaction.user.id, sniff_bonus_day=day)
-        track_cut = sniff_track_fail_reduction(user, day)
-        body += (
-            f"\n\n_{random.choice(SNIFF_HUNT_HINT)}_\n"
-            f"**+{SNIFF_HUNT_BONUS_PCT}%** hunt/track bones · **−{track_cut}** track dc this sunrise."
-        )
-        footer_bits.append(f"sniff bonus (+{SNIFF_HUNT_BONUS_PCT}% bones, −{track_cut} track dc)")
 
     from engine.role_features import try_scout_hide_in_weather
 

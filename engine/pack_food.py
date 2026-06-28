@@ -85,7 +85,8 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
         )
     from engine.pack_season_goals import record_stash_deposit
 
-    goal_line = record_stash_deposit(pack_id, day)
+    season = db.get_world(guild_id)["season"]
+    goal_line = record_stash_deposit(pack_id, season)
     if goal_line:
         msg += f"\n\n{goal_line}"
     from engine.cannibalism import cannibalism_public_exposure

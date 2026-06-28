@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 
@@ -67,11 +68,18 @@ class AvatarCropView(ui.View):
         return discord.File(io.BytesIO(png), filename="preview.png")
 
     async def _refresh(self, interaction: discord.Interaction) -> None:
-        await interaction.response.edit_message(
-            embed=self._embed(),
-            attachments=[self._preview_file()],
-            view=self,
-        )
+        # render_cropped_png re-decodes the full source image on every pan/zoom click;
+        # doing that off the event loop keeps the ack inside Discord's 3s window so
+        # rapid clicking doesn't trip "Unknown interaction" (10062).
+        preview = await asyncio.to_thread(self._preview_file)
+        try:
+            await interaction.response.edit_message(
+                embed=self._embed(),
+                attachments=[preview],
+                view=self,
+            )
+        except discord.NotFound:
+            logger.warning("Crop editor interaction expired before edit for wolf %s", self.wolf["id"])
 
     @ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
     async def pan_left(self, interaction: discord.Interaction, button: ui.Button):
