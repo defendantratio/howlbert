@@ -35,8 +35,6 @@ async def prepare_herb_inventory(interaction: discord.Interaction, item_key: str
     await interaction.response.send_message(embed=howlbert_embed('Herb Preparation', msg, color=color))
 
 async def treat(interaction: discord.Interaction, herb: str, patient: discord.Member | None=None):
-    import json
-    import random
     user = db.get_user(interaction.user.id)
     if not user:
         embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -290,7 +288,7 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
     world = db.get_world(interaction.guild.id)
     if mode == 'list':
         body = list_pack_herb_store(user['pack_id'], world['day_number'])
-        embed = howlbert_embed(f"Healers' Herb Store", body)
+        embed = howlbert_embed("Healers' Herb Store", body)
         embed.set_footer(text='anyone: `mode:deposit` / `depositall` · medics & foragers: `mode:withdraw`')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return

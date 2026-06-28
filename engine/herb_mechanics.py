@@ -64,7 +64,7 @@ STATIC_HINTS: dict[str, str] = {
     "shepherds_purse": "Staunches oozing cuts; **+2** on the next stabilize or bleeding treatment check.",
     "burdock_root": "Skin poultice: **infection ward 1 sunrise**; advantage on the next disease save.",
     "mugwort": "Rub through pelt: **flea ward 3 sunrises**, +2 mood; clears **fleas/mange** on treat.",
-    "garlic_mustard": "Roadside rub: **flea ward 3 sunrises**; antimicrobial advantage on disease saves.",
+    "garlic_mustard": "Roadside rub: **flea ward 3 sunrises**; wild-garlic kin, advantage on next disease save when treating infection.",
     "knotgrass": "Astringent gut herb; **flea ward 2 sunrises**; eases flea itch and nausea **1 sunrise**.",
     "prickly_ash": "Warming bark clears **frostbite**; numbs tooth pain **1 sunrise**.",
     "heather": "Sweetens bitter tonics; advantage on next disease save when ill.",
@@ -87,7 +87,6 @@ STATIC_HINTS: dict[str, str] = {
     "elder": "External poultice for **sprains** only; **toxic if eaten** (CON DC **14** or **2d4** poison).",
     "skunk_cabbage": "Expert-only respiratory aid; toxic if fresh (Survival DC on treat).",
     "sweet_sedge": "Sap eases internal gut infections on successful treat.",
-    "garlic_mustard": "Wild-garlic kin: advantage on next disease save when treating infection.",
 }
 
 

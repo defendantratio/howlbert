@@ -37,7 +37,6 @@ def test_setup_complete_hides_done_items():
     user = {
         "id": 2,
         "age_months": 48,
-        "last_hunt_day": 5,
         "avatar_url": "https://example.com/a.png",
         "proxy_prefix": "F:",
         "pronouns": "she/her",

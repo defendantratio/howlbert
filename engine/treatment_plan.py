@@ -72,7 +72,6 @@ def build_treatment_checklist(user, *, day: int | None = None) -> str:
             "3. **Rest**: Den confinement after stabilization; no hunt or combat"
         )
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
-    from engine.diseases import illness_displays, parse_disease
     from engine.herb_buffs import get_buffs
 
     raw = user["disease"] if "disease" in user.keys() else None

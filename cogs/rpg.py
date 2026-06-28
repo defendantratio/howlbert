@@ -143,7 +143,7 @@ class Rpg(commands.Cog):
         from engine.conditions import validate_stats
         error = validate_stats(role, stats)
         if error:
-            from rpg_rules import ROLE_ATTRIBUTE_RANGES, ROLE_LABELS
+            from rpg_rules import ROLE_ATTRIBUTE_RANGES
             lo, hi = ROLE_ATTRIBUTE_RANGES.get(role, (16, 20))
             embed = howlbert_embed('Invalid Spread', f'{error}\n\nYour role **{ROLE_LABELS.get(role, role)}** allows total **{lo}–{hi}**.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -256,7 +256,7 @@ class Rpg(commands.Cog):
         new_hp = min(user['max_hp'], user['hp'] + heal) if heal else user['hp']
         clear_activity_fatigue(user, day)
         db.set_user_conditions(interaction.user.id, hp=new_hp, herb_heals_today=user['herb_heals_today'] + (1 if heal else 0))
-        msg = f'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.')
+        msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.')
         if not heal:
             msg += ' _(Clears activity strain; no HP or exhaustion recovery without comfrey.)_'
         embed = howlbert_embed('Short Rest', msg, color=SUCCESS_COLOR)

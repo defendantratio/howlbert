@@ -236,7 +236,6 @@ def trade_duplicates_between_wolves(
 
     footer = ""
     if require_pack_trade and sender["pack_id"] and recipient["pack_id"]:
-        from config import PACK_DUP_TRADE_RELATION_GAIN
 
         new_standing = db.adjust_pack_relation(
             guild_id, sender["pack_id"], recipient["pack_id"], PACK_DUP_TRADE_RELATION_GAIN

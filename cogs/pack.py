@@ -364,7 +364,7 @@ class Pack(commands.Cog):
         day = world['day_number']
         user = db.get_user(interaction.user.id)
         if user[day_column] >= day:
-            embed = howlbert_embed('Already Done', f"You've patrolled this rollover.", color=ERROR_COLOR)
+            embed = howlbert_embed('Already Done', "You've patrolled this rollover.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         points = points_fn(user)

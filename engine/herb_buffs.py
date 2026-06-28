@@ -1164,7 +1164,7 @@ def format_active_herb_buffs(user, day: int) -> str:
         lines.append("**burial scent masked**; carrion and filth exposure reduced.")
     pen = frostbite_dex_penalty(user, day)
     if pen:
-        lines.append(f"**frostbitten paws**; dexterity penalty until herbs wear off.")
+        lines.append("**frostbitten paws**; dexterity penalty until herbs wear off.")
     if disease_save_uses_advantage(user):
         days = int(user["disease_save_buff_days"]) if "disease_save_buff_days" in user.keys() else 0
         if days > 0:

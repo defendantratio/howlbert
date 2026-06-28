@@ -29,6 +29,7 @@ class Row(dict):
 def main() -> None:
     medic = Row(
         id=99,
+        discord_id=99,
         wolf_name="Medic",
         wolf_role="medic",
         pack_id=1,
@@ -42,6 +43,7 @@ def main() -> None:
     )
     hunter = Row(
         id=1,
+        discord_id=1,
         wolf_name="HunterWolf",
         wolf_role="hunter",
         pack_id=1,
@@ -54,6 +56,7 @@ def main() -> None:
     )
     barkhollow = Row(
         id=2,
+        discord_id=2,
         wolf_name="Barkhollow",
         wolf_role="hunter",
         pack_id=1,
@@ -75,9 +78,9 @@ def main() -> None:
                     ok, body = run_medic_rounds(medic, day=1)
 
     check("checkup ok", ok)
-    check("hunter thin bag listed", "HunterWolf" in body and "herb bag thin" in body)
+    check("hunter thin bag listed", "HunterWolf" in body and "low herbs" in body)
     check("barkhollow thin bag listed", "Barkhollow" in body)
-    check("lists both wolves", body.count("herb bag thin") == 2, body)
+    check("lists both wolves", body.count("low herbs") == 2, body)
 
     apprentice = Row(
         id=3,
@@ -93,11 +96,16 @@ def main() -> None:
         bone_rest_until=0,
     )
     ok_app, body_app = run_medic_rounds(apprentice, day=1)
-    check("apprentice blocked", not ok_app and "Apprentices observe" in body_app, body_app)
+    check("apprentice blocked", not ok_app and "apprentices observe" in body_app, body_app)
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

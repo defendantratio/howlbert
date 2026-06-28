@@ -715,7 +715,7 @@ def donor_status_lines(discord_id: int) -> list[str]:
         lines.append("• no ko-fi donations recorded yet.")
 
     lines.append(
-        f"• membership tiers on ko-fi (**$5** minimum): **den friend** ($5), "
+        "• membership tiers on ko-fi (**$5** minimum): **den friend** ($5), "
         f"**pack benefactor** ($10), **legend** ($25)"
     )
 

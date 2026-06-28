@@ -43,10 +43,10 @@ def main() -> None:
     check("apply curse", ok, msg)
     user = db.get_user_by_id(user["id"])
     check("has curse", has_spirit_curse(user))
-    check("format line", format_long_term_injuries(user) and "Spirit Curse" in format_long_term_injuries(user))
+    check("format line", format_long_term_injuries(user) and "spirit curse" in format_long_term_injuries(user))
 
     mod, note = spirit_curse_check_adjustment(user, attr_keys=("attr_wis",), skill_key="medicine")
-    check("wis penalty", mod == -1 and "Spirit curse" in note)
+    check("wis penalty", mod == -1 and "spirit curse" in note)
 
     mod, dis, notes = check_adjustments(
         user,
@@ -56,7 +56,7 @@ def main() -> None:
         day_number=1,
         first_physical_today=True,
     )
-    check("lt adjustments", mod == -1 and "Spirit curse" in notes)
+    check("lt adjustments", mod == -1 and "spirit curse" in notes)
 
     check("lift curse", lift_spirit_curse(user["id"]))
     user = db.get_user_by_id(user["id"])
@@ -70,6 +70,11 @@ def main() -> None:
     db.purge_test_accounts()
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

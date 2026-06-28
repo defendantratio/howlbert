@@ -37,7 +37,7 @@ def _open_image(data: bytes) -> Image.Image:
     img = Image.open(io.BytesIO(data))
     if getattr(img, "is_animated", False):
         img.seek(0)
-    return ImageOps.exif_transpose(img.convert("rgba"))
+    return ImageOps.exif_transpose(img.convert("RGBA"))
 
 
 def _base_scale(img: Image.Image, crop_size: int) -> float:

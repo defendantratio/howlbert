@@ -34,7 +34,7 @@ def main() -> None:
             updated += 1
         conn.commit()
     print(f"Reset vitals for {updated} wolf(s).")
-    print(f"  HP -> each wolf's max (exhaustion cleared)")
+    print("  HP -> each wolf's max (exhaustion cleared)")
     print(f"  Mood -> {MOOD_MAX}")
     print(f"  Hunger -> {HUNGER_MAX}")
     print(f"  Thirst -> {THIRST_MAX}")

@@ -13,7 +13,6 @@ from engine.season_effects import season_activity_blurb
 from engine.world import forecast_weather, season_blurb, season_label, time_blurb, time_label, weather_label
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, trim_embed_fields, player_message, choice_label
-from utils.permissions import is_howlbert_admin
 HAZARD_CHOICES = [app_commands.Choice(name='blizzard', value='blizzard'), app_commands.Choice(name='flood / rapid river', value='flood'), app_commands.Choice(name='wildfire smoke', value='wildfire_smoke'), app_commands.Choice(name='freezing rain / ice', value='freezing_rain'), app_commands.Choice(name='extreme heat', value='extreme_heat'), app_commands.Choice(name='thick fog', value='thick_fog'), app_commands.Choice(name='thunderstorm', value='thunderstorm'), app_commands.Choice(name='avalanche', value='avalanche'), app_commands.Choice(name='deep snow', value='deep_snow'), app_commands.Choice(name='quicksand / mud', value='quicksand')]
 HAZARD_SEVERITY_CHOICES = [app_commands.Choice(name='moderate', value='moderate'), app_commands.Choice(name='severe', value='severe'), app_commands.Choice(name='extreme', value='extreme')]
 TRAVEL_TERRITORY_CHOICES = [app_commands.Choice(name='river', value='river'), app_commands.Choice(name='swamp', value='swamp'), app_commands.Choice(name='mountain', value='mountain'), app_commands.Choice(name='forest', value='forest'), app_commands.Choice(name='twolegplace', value='twolegplace')]
@@ -63,7 +62,7 @@ class World(commands.Cog):
         world = db.get_world(guild_id)
         from config import LUNAR_BIRTH_AGING, ROLLOVER_TIMEZONE
         from engine.lunar import lunar_phase_label, rollover_now
-        from engine.world import effective_time_of_day, time_blurb, time_label
+        from engine.world import effective_time_of_day
         now = rollover_now(ROLLOVER_TIMEZONE)
         live_tod = effective_time_of_day(world)
         embed = howlbert_embed(f"Sunrise {world['day_number']}; {time_label(live_tod)}", f"{season_label(world['season'])}\n{season_blurb(world['season'])}\n{season_activity_blurb(world['season'])}\n\n{time_blurb(live_tod)}\n\n**Moon:** {lunar_phase_label(now)}")

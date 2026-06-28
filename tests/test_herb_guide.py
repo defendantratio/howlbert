@@ -29,7 +29,7 @@ def main() -> None:
     check("new mallow roadside", "common_mallow" in herbs_for_verge("roadside"))
 
     title, body = build_herb_guide_embed(page=0)
-    check("overview page", "Gathering" in body and title.startswith("Herb Guide"))
+    check("overview page", "gathering" in body and title.lower().startswith("herb guide"))
     title2, body2 = build_herb_guide_embed(page=1, filter_key="roadside")
     check("content page", "herb_" in body2 or "Herb Guide" in title2)
 
@@ -48,6 +48,11 @@ def main() -> None:
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

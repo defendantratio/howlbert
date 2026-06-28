@@ -63,10 +63,6 @@ def _patient(**kw):
     return Row(base)
 
 
-def _herb_stacks(wolf_id: int, keys: list[str]):
-    return [{"id": i + 1, "herb_key": k} for i, k in enumerate(keys)]
-
-
 def _has_herbs(*keys: str):
     def side_effect(user, herb_key: str) -> bool:
         stacks = {
@@ -80,23 +76,27 @@ def _has_herbs(*keys: str):
     return side_effect
 
 
-def _has_sticks(count: int, *, on_patient: bool = False):
-    uid = 2 if on_patient else 1
+# _stick_count (engine/surgery.py) resolves sticks via the inventory item
+# system now (db.get_item_by_key + db.get_inventory_quantity by discord_id),
+# not the older herb_stacks table. Mock that path instead.
+STICK_ITEM = {"id": 999, "key": "stick"}
 
-    def stacks_fn(wolf_id: int):
-        if wolf_id == uid:
-            return _herb_stacks(wolf_id, ["stick"] * count)
-        return []
 
-    return stacks_fn
+def _stick_quantity(count: int, *, on_patient: bool = False):
+    target_discord_id = 200 if on_patient else 100
+
+    def side_effect(discord_id: int, item_id: int) -> int:
+        return count if discord_id == target_discord_id else 0
+
+    return side_effect
 
 
 def main() -> None:
     surgeon = _medic()
     patient = _patient()
 
-    with patch("engine.surgery.db.get_herb_stacks", return_value=[]), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(0)
     ), patch("engine.surgery.is_full_medic", return_value=True):
         missing = missing_surgery_herbs(surgeon, patient, SURGERY_PROCEDURES["set_bone"])
         check("set_bone missing stick", "stick" in missing)
@@ -104,16 +104,16 @@ def main() -> None:
         ok, msg = run_surgery(surgeon, patient, "set_bone", day=1)
         check("stick missing fails surgery", not ok and "stick" in msg.lower(), msg)
 
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(1)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb", side_effect=_has_herbs()
     ):
         ok, msg = run_surgery(surgeon, patient, "set_bone", day=1)
         check("one stick not enough", not ok and "2 sticks" in msg, repr(msg))
 
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(2)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(2)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("comfrey", "bindweed", "stick"),
@@ -134,8 +134,8 @@ def main() -> None:
         return True
 
     stitch_patient = _patient(active_injuries='["deep_gash"]')
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(1, on_patient=True)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick", "meadowsweet"),
@@ -150,8 +150,8 @@ def main() -> None:
         check("optional herb not auto-used", ok and "meadowsweet" not in consumed, str(consumed))
 
     consumed.clear()
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(1, on_patient=True)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick", "meadowsweet"),
@@ -166,8 +166,8 @@ def main() -> None:
         check("meadowsweet consumed when flagged", ok and "meadowsweet" in consumed, str(consumed))
         check("meadowsweet flavor on success", "Meadowsweet" in msg, msg)
 
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(2)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(2)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("comfrey", "bindweed", "stick"),
@@ -182,8 +182,8 @@ def main() -> None:
         check("loosestrife wrong procedure", not ok and "stitch" in msg.lower(), repr(msg))
 
     dying = _patient(condition="dying", hp=0, active_injuries='["deep_gash"]')
-    with patch("engine.surgery.db.get_herb_stacks", side_effect=_has_sticks(1, on_patient=True)), patch(
-        "engine.surgery.db.get_item_by_key", return_value=None
+    with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
+        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick"),
@@ -194,6 +194,11 @@ def main() -> None:
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ def main() -> None:
     gain, note = compute_failure_strain_gain(
         user, outcome="failure", total=14, dc=15
     )
-    check("close miss no strain", gain == 0 and "Close call" in note)
+    check("close miss no strain", gain == 0 and "close call" in note)
 
     gain2, _ = compute_failure_strain_gain(user, outcome="failure", total=10, dc=15)
     check("clear miss adds strain", gain2 >= 1)
@@ -95,6 +95,11 @@ def main() -> None:
     db.purge_test_accounts()
     if _fail:
         raise SystemExit(1)
+
+
+def test_main() -> None:
+    """pytest entry point; this module's checks otherwise only run via `python -m`."""
+    main()
 
 
 if __name__ == "__main__":
