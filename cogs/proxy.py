@@ -249,6 +249,24 @@ class Proxy(commands.Cog):
             return
         await self._send_as_wolf(message, wolf, inner)
 
+    async def _reply_quote_line(self, message: discord.Message) -> str | None:
+        ref = message.reference
+        if not ref or not ref.message_id:
+            return None
+        resolved = ref.resolved
+        if isinstance(resolved, discord.DeletedReferencedMessage) or resolved is None:
+            try:
+                resolved = await message.channel.fetch_message(ref.message_id)
+            except (discord.NotFound, discord.HTTPException):
+                return None
+        snippet = (resolved.content or '').replace('\n', ' ').strip()
+        if not snippet:
+            snippet = '*[attachment]*' if resolved.attachments else '*[no text]*'
+        elif len(snippet) > 80:
+            snippet = snippet[:77] + '…'
+        jump = resolved.jump_url
+        return f'> [↪ replying to **{resolved.author.display_name}**]({jump}): {snippet}'
+
     async def _send_as_wolf(self, message: discord.Message, wolf, content: str) -> None:
         channel = message.channel
         thread = None
@@ -275,6 +293,9 @@ class Proxy(commands.Cog):
         username = sanitize_webhook_name(wolf['wolf_name'])
         avatar = wolf['avatar_url'] if 'avatar_url' in wolf.keys() else None
         ic_text, ooc_text = split_ooc(content)
+        reply_line = await self._reply_quote_line(message)
+        if reply_line:
+            ic_text = f'{reply_line}\n{ic_text}' if ic_text else reply_line
         allowed = discord.AllowedMentions(everyone=False, users=True, roles=False)
         footer_bits: list[str] = []
         loc = wolf['ic_location'] if 'ic_location' in wolf.keys() else None

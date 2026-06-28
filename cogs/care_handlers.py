@@ -34,8 +34,19 @@ async def prepare_herb_inventory(interaction: discord.Interaction, item_key: str
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Herb Preparation', msg, color=color))
 
-async def treat(interaction: discord.Interaction, herb: str, patient: discord.Member | None=None):
-    user = db.get_user(interaction.user.id)
+async def treat(interaction: discord.Interaction, herb: str, patient: discord.Member | None=None, own_wolf: str | None=None):
+    if patient and own_wolf:
+        embed = howlbert_embed('Pick One', 'Choose another **patient** or your **own_wolf** — not both.', color=ERROR_COLOR)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        return
+    if own_wolf:
+        user = db.find_user_wolf(interaction.user.id, own_wolf)
+        if not user:
+            embed = howlbert_embed('Unknown Wolf', f'No wolf named **{own_wolf}** on your account.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+    else:
+        user = db.get_user(interaction.user.id)
     if not user:
         embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -154,7 +165,7 @@ async def treat(interaction: discord.Interaction, herb: str, patient: discord.Me
     if special == 'reduce_exhaustion':
         old_ex = int(user['exhaustion'])
         new_ex = max(0, old_ex - 1)
-        db.set_user_conditions(interaction.user.id, exhaustion=new_ex)
+        db.set_user_conditions(interaction.user.id, wolf_id=user['id'], exhaustion=new_ex)
         msg = f"**{item['name']}**: exhaustion **{old_ex}** → **{new_ex}**."
     elif special == 'hunger_shield':
         db.update_user(interaction.user.id, wolf_id=user['id'], hunger_exhaustion_skip=1)
@@ -284,12 +295,12 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
     if not user['pack_id']:
         await interaction.response.send_message(embed=howlbert_embed('No Pack', "Join a pack to use the healers' herb store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
         return
-    from engine.pack_herb_store import can_manage_den_herbs, deposit_all_herbs_to_store, deposit_inventory_herb_to_store, list_pack_herb_store, withdraw_herb_from_store
+    from engine.pack_herb_store import can_manage_den_herbs, deposit_all_herbs_to_store, deposit_inventory_herb_to_store, list_pack_herb_store, withdraw_all_herbs_from_store, withdraw_herb_from_store
     world = db.get_world(interaction.guild.id)
     if mode == 'list':
         body = list_pack_herb_store(user['pack_id'], world['day_number'])
         embed = howlbert_embed("Healers' Herb Store", body)
-        embed.set_footer(text='anyone: `mode:deposit` / `depositall` · medics & foragers: `mode:withdraw`')
+        embed.set_footer(text='anyone: `mode:deposit` / `depositall` · medics & foragers: `mode:withdraw` / `withdrawall`')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
     if mode == 'depositall':
@@ -310,8 +321,13 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
             await interaction.response.send_message(player_message('Enter store stack **`#ID`** from `/herbs action:store mode:list`.'), ephemeral=reply_ephemeral())
             return
         ok, msg = withdraw_herb_from_store(user, sid, pack_id=user['pack_id'], guild_id=interaction.guild.id, day=world['day_number'])
+    elif mode == 'withdrawall':
+        if not can_manage_den_herbs(user):
+            await interaction.response.send_message(embed=howlbert_embed('Medic / Forager Only', "Only **Medics** and **Foragers** may withdraw from the healers' store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        ok, msg = withdraw_all_herbs_from_store(user, pack_id=user['pack_id'], guild_id=interaction.guild.id, day=world['day_number'])
     else:
-        await interaction.response.send_message(player_message('Pick **list**, **deposit**, **depositall**, or **withdraw**.'), ephemeral=reply_ephemeral())
+        await interaction.response.send_message(player_message('Pick **list**, **deposit**, **depositall**, **withdraw**, or **withdrawall**.'), ephemeral=reply_ephemeral())
         return
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Den Herb Store', msg, color=color))

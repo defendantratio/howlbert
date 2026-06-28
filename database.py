@@ -13,7 +13,6 @@ from config import (
     LONER_KEY,
     MOONS_PER_ROLLOVER,
     ROGUE_KEY,
-    SEASON_LENGTH_DAYS,
     SEASONS,
     STATIC_QUESTS,
     ROLE_QUESTS,
@@ -807,6 +806,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_observe_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_shadow_day" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_shadow_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_train_day" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_train_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "trained_attr_total" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN trained_attr_total INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_medic_rounds_day" not in user_cols_needs:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_medic_rounds_day INTEGER NOT NULL DEFAULT 0"
@@ -1184,6 +1195,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if world_cols and "last_den_news_dm_day" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN last_den_news_dm_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if world_cols and "season_override" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN season_override TEXT"
         )
 
     conn.execute(
@@ -1713,6 +1728,36 @@ def _migrate(conn: sqlite3.Connection) -> None:
             acquired_day INTEGER NOT NULL,
             deposited_by INTEGER,
             FOREIGN KEY (pack_id) REFERENCES packs(id)
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS wolf_rivalries (
+            wolf_id INTEGER NOT NULL,
+            rival_key TEXT NOT NULL,
+            grudge INTEGER NOT NULL DEFAULT 0,
+            encounters INTEGER NOT NULL DEFAULT 0,
+            last_encounter_day INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (wolf_id, rival_key)
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rp_prompts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            pack TEXT,
+            mood TEXT,
+            plot_phase INTEGER,
+            status TEXT NOT NULL DEFAULT 'pending',
+            submitted_by INTEGER,
+            reviewed_by INTEGER,
+            created_day INTEGER
         )
         """
     )
@@ -2737,9 +2782,12 @@ def _seed_prey_items(conn: sqlite3.Connection) -> None:
     for key, meta in PREY_CATALOG.items():
         item_key = f"prey_{key}"
         price, sell = SHOP_PREY_PRICES.get(key, (0, 0))
+        is_forage = meta.get("category") == "forage"
+        noun = "Hoard food" if is_forage else "Hoard carcass"
+        spoil_verb = "overripens" if is_forage else "rots"
         desc = (
-            f"Hoard carcass; `/eat` or `/preypile`. "
-            f"Rots after ~{meta.get('rot_days', 5)} sunrises."
+            f"{noun}; `/eat` or `/preypile`. "
+            f"{spoil_verb.capitalize()} after ~{meta.get('rot_days', 5)} sunrises."
         )
         if price > 0:
             desc += " Buy at the trading post."
@@ -2750,15 +2798,14 @@ def _seed_prey_items(conn: sqlite3.Connection) -> None:
             """,
             (item_key, meta["name"], desc, price, sell),
         )
-        if price > 0:
-            conn.execute(
-                """
-                UPDATE items
-                SET name = ?, description = ?, price = ?, sell_price = ?
-                WHERE key = ?
-                """,
-                (meta["name"], desc, price, sell, item_key),
-            )
+        conn.execute(
+            """
+            UPDATE items
+            SET name = ?, description = ?, price = ?, sell_price = ?
+            WHERE key = ?
+            """,
+            (meta["name"], desc, price, sell, item_key),
+        )
 
 
 def _seed_amusement_items(conn: sqlite3.Connection) -> None:
@@ -2794,6 +2841,19 @@ def _seed_amusement_items(conn: sqlite3.Connection) -> None:
 
 def _seed_quests(conn: sqlite3.Connection) -> None:
     _purge_retired_quests(conn)
+    from config import ACHIEVEMENT_QUESTS
+
+    for row in ACHIEVEMENT_QUESTS:
+        key, title, desc, obj, count, reward, standing, qtype, diff = row
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO quests
+            (key, title, description, objective_type, objective_count,
+             reward_bones, standing_reward, quest_type, difficulty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (key, title, desc, obj, count, reward, standing, qtype, diff),
+        )
     for row in STATIC_QUESTS:
         key, title, desc, obj, count, reward, standing, qtype, diff = row
         conn.execute(
@@ -2827,6 +2887,49 @@ def _seed_quests(conn: sqlite3.Connection) -> None:
             """,
             (title, desc, obj, count, reward, standing, diff, role, pack, key),
         )
+
+
+def ensure_achievement_quests(discord_id: int, wolf_id: int) -> None:
+    """Auto-enroll a wolf in every lifetime achievement; idempotent.
+
+    Achievements aren't accepted from a board — every wolf tracks all of
+    them automatically from registration onward. Also called lazily from
+    `increment_quest_progress` so wolves registered before this system
+    existed get backfilled the first time any of their progress fires.
+    """
+    from config import ACHIEVEMENT_QUESTS
+
+    with get_db() as conn:
+        have = conn.execute(
+            """
+            SELECT COUNT(*) AS n FROM user_quests uq
+            JOIN quests q ON q.id = uq.quest_id
+            WHERE uq.wolf_id = ? AND q.quest_type = 'achievement'
+            """,
+            (wolf_id,),
+        ).fetchone()["n"]
+        if have >= len(ACHIEVEMENT_QUESTS):
+            return
+        achievement_ids = conn.execute(
+            "SELECT id FROM quests WHERE quest_type = 'achievement'"
+        ).fetchall()
+        existing_ids = {
+            row["quest_id"]
+            for row in conn.execute(
+                "SELECT quest_id FROM user_quests WHERE wolf_id = ?", (wolf_id,)
+            ).fetchall()
+        }
+        for row in achievement_ids:
+            if row["id"] in existing_ids:
+                continue
+            conn.execute(
+                """
+                INSERT INTO user_quests
+                (discord_id, quest_id, wolf_id, progress, status, assigned_day, accepted_at)
+                VALUES (?, ?, ?, 0, 'active', 0, ?)
+                """,
+                (discord_id, row["id"], wolf_id, utcnow()),
+            )
 
 
 RETIRED_QUEST_KEYS = ("den_crafter",)
@@ -3770,6 +3873,7 @@ def register_user(
     from engine.wolf_journal import log_registered
 
     log_registered(wolf_id, wolf_name.strip(), great_pack or affiliation)
+    ensure_achievement_quests(discord_id, wolf_id)
     from engine.canonical_bonds import apply_canonical_bonds_for_wolf
 
     apply_canonical_bonds_for_wolf(wolf_id, refresh_notes=True)
@@ -4754,20 +4858,30 @@ def save_world(
         ).fetchone()
 
 
-def _season_for_day(day_number: int) -> str:
-    index = ((day_number - 1) // SEASON_LENGTH_DAYS) % len(SEASONS)
-    return SEASONS[index]
+def real_world_season(dt: datetime) -> str:
+    """Northern Hemisphere meteorological season for a real-world date.
+
+    Mar-May spring, Jun-Aug summer, Sep-Nov autumn, Dec-Feb winter. Used at
+    rollover so the den's season tracks the real calendar unless a server
+    admin has pinned it with `/world action:setseason`.
+    """
+    month = dt.month
+    if month in (3, 4, 5):
+        return "spring"
+    if month in (6, 7, 8):
+        return "summer"
+    if month in (9, 10, 11):
+        return "autumn"
+    return "winter"
 
 
-def align_day_to_season(day_number: int, season: str) -> int:
-    """Shift day_number within the current cycle so _season_for_day matches season."""
-    if season not in SEASONS:
-        return day_number
-    idx = SEASONS.index(season)
-    day_in_block = (day_number - 1) % SEASON_LENGTH_DAYS
-    cycle_length = SEASON_LENGTH_DAYS * len(SEASONS)
-    cycle_start = ((day_number - 1) // cycle_length) * cycle_length
-    return cycle_start + idx * SEASON_LENGTH_DAYS + day_in_block + 1
+def set_season_override(guild_id: int, season: str | None) -> None:
+    """Pin the den's season (admin); pass None to return to real-calendar sync."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET season_override = ? WHERE guild_id = ?",
+            (season, guild_id),
+        )
 
 
 def _random_weather() -> str:
@@ -4989,7 +5103,8 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     state = get_world(guild_id)
     old_season = state["season"]
     new_day = state["day_number"] + 1
-    new_season = _season_for_day(new_day)
+    override = state["season_override"] if "season_override" in state.keys() else None
+    new_season = override if override in SEASONS else real_world_season(rollover_at)
     new_weather = _random_weather()
     global_key = _rollover_global_key(rollover_at, new_day, ROLLOVER_TIMEZONE)
     run_global = global_key not in _global_wolf_rollover_keys
@@ -6139,6 +6254,12 @@ def increment_quest_progress(
     """Bump progress on matching active quests; auto-completes (and grants
     rewards for) any that just hit their objective count. Returns the
     completed quest result rows, if any."""
+    wid_lookup = wolf_id or _resolve_wolf_id(discord_id)
+    if wid_lookup:
+        # One-time backfill for wolves registered before the achievement
+        # system existed; called outside the block below to avoid nesting
+        # get_db() connections (ensure_achievement_quests opens its own).
+        ensure_achievement_quests(discord_id, wid_lookup)
     ready_keys: list[str] = []
     with get_db() as conn:
         wid = wolf_id or _resolve_wolf_id_conn(conn, discord_id)
@@ -6283,7 +6404,7 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
             uq = conn.execute(
                 """
                 SELECT uq.*, q.key AS quest_key, q.title, q.reward_bones, q.standing_reward,
-                       q.objective_count, q.objective_type, q.difficulty
+                       q.objective_count, q.objective_type, q.difficulty, q.quest_type
                 FROM user_quests uq
                 JOIN quests q ON q.id = uq.quest_id
                 WHERE uq.wolf_id = ? AND uq.quest_id = ? AND uq.status = 'active'
@@ -6294,7 +6415,7 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
             uq = conn.execute(
                 """
                 SELECT uq.*, q.key AS quest_key, q.title, q.reward_bones, q.standing_reward,
-                       q.objective_count, q.objective_type, q.difficulty
+                       q.objective_count, q.objective_type, q.difficulty, q.quest_type
                 FROM user_quests uq
                 JOIN quests q ON q.id = uq.quest_id
                 WHERE uq.wolf_id = ? AND uq.status = 'active' AND uq.progress >= q.objective_count
@@ -6318,6 +6439,13 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
 
     if uq["standing_reward"]:
         adjust_wolf_standing(discord_id, uq["standing_reward"])
+
+    if "quest_type" in uq.keys() and uq["quest_type"] == "achievement":
+        wolf = get_user_by_id(wolf_id)
+        if wolf:
+            from engine.wolf_journal import log_achievement
+
+            log_achievement(wolf_id, wolf["wolf_name"], uq["title"])
 
     record_quest_complete(discord_id, uq["reward_bones"], uq["standing_reward"])
     user = get_user(discord_id)
@@ -8882,6 +9010,9 @@ def apply_death_save_result(discord_id: int, success: bool, nat20: bool = False)
         return "none"
     if nat20:
         stabilize_patient(discord_id)
+        from engine.wolf_journal import log_stabilized
+
+        log_stabilized(user["id"], user["wolf_name"])
         return "stabilized"
 
     if not success:
@@ -8891,6 +9022,9 @@ def apply_death_save_result(discord_id: int, success: bool, nat20: bool = False)
     round_num = user["death_save_round"] or 1
     if round_num >= 3:
         stabilize_patient(discord_id)
+        from engine.wolf_journal import log_stabilized
+
+        log_stabilized(user["id"], user["wolf_name"])
         return "stabilized"
 
     update_user(discord_id, death_save_round=round_num + 1, death_save_successes=round_num)
@@ -8935,6 +9069,9 @@ def revive_wolf(discord_id: int) -> str | None:
                 user["id"],
             ),
         )
+    from engine.wolf_journal import log_revived
+
+    log_revived(user["id"], user["wolf_name"])
     return None
 
 
@@ -9013,6 +9150,9 @@ def reincarnate_as_new_life(discord_id: int, new_name: str) -> str | None:
                 wolf_id,
             ),
         )
+    from engine.wolf_journal import log_reincarnated
+
+    log_reincarnated(wolf_id, user["wolf_name"], cleaned)
     return None
 
 
@@ -10722,6 +10862,126 @@ def update_pack_herb_stack(stack_id: int, **fields) -> None:
 def remove_pack_herb_stack(stack_id: int) -> None:
     with get_db() as conn:
         conn.execute("DELETE FROM pack_herb_stacks WHERE id = ?", (stack_id,))
+
+
+def get_wolf_rivalry(wolf_id: int, rival_key: str) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM wolf_rivalries WHERE wolf_id = ? AND rival_key = ?",
+            (wolf_id, rival_key),
+        ).fetchone()
+
+
+def list_wolf_rivalries(wolf_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM wolf_rivalries WHERE wolf_id = ? ORDER BY grudge DESC",
+            (wolf_id,),
+        ).fetchall()
+
+
+def adjust_wolf_rivalry_grudge(
+    wolf_id: int, rival_key: str, delta: int, *, day: int, grudge_min: int = 0, grudge_max: int = 100
+) -> int:
+    """Insert or update a wolf's grudge with a rival NPC; returns the new grudge."""
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT grudge, encounters FROM wolf_rivalries WHERE wolf_id = ? AND rival_key = ?",
+            (wolf_id, rival_key),
+        ).fetchone()
+        if row is None:
+            new_grudge = max(grudge_min, min(grudge_max, delta))
+            conn.execute(
+                """
+                INSERT INTO wolf_rivalries (wolf_id, rival_key, grudge, encounters, last_encounter_day)
+                VALUES (?, ?, ?, 1, ?)
+                """,
+                (wolf_id, rival_key, new_grudge, day),
+            )
+            return new_grudge
+        new_grudge = max(grudge_min, min(grudge_max, int(row["grudge"]) + delta))
+        conn.execute(
+            """
+            UPDATE wolf_rivalries
+            SET grudge = ?, encounters = encounters + 1, last_encounter_day = ?
+            WHERE wolf_id = ? AND rival_key = ?
+            """,
+            (new_grudge, day, wolf_id, rival_key),
+        )
+        return new_grudge
+
+
+def add_rp_prompt(
+    guild_id: int,
+    text: str,
+    *,
+    pack: str | None = None,
+    mood: str | None = None,
+    plot_phase: int | None = None,
+    submitted_by: int | None = None,
+    status: str = "pending",
+    created_day: int | None = None,
+) -> int:
+    with get_db() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO rp_prompts
+            (guild_id, text, pack, mood, plot_phase, status, submitted_by, created_day)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (guild_id, text, pack, mood, plot_phase, status, submitted_by, created_day),
+        )
+        return cursor.lastrowid
+
+
+def get_rp_prompt(prompt_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM rp_prompts WHERE id = ?", (prompt_id,)
+        ).fetchone()
+
+
+def list_rp_prompts(
+    guild_id: int,
+    *,
+    status: str | None = None,
+    pack: str | None = None,
+    mood: str | None = None,
+    plot_phase: int | None = None,
+) -> list[sqlite3.Row]:
+    clauses = ["guild_id = ?"]
+    params: list = [guild_id]
+    if status is not None:
+        clauses.append("status = ?")
+        params.append(status)
+    if pack is not None:
+        clauses.append("pack = ?")
+        params.append(pack)
+    if mood is not None:
+        clauses.append("mood = ?")
+        params.append(mood)
+    if plot_phase is not None:
+        clauses.append("plot_phase = ?")
+        params.append(plot_phase)
+    where = " AND ".join(clauses)
+    with get_db() as conn:
+        return conn.execute(
+            f"SELECT * FROM rp_prompts WHERE {where} ORDER BY id DESC",
+            params,
+        ).fetchall()
+
+
+def set_rp_prompt_status(prompt_id: int, status: str, reviewed_by: int | None = None) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE rp_prompts SET status = ?, reviewed_by = ? WHERE id = ?",
+            (status, reviewed_by, prompt_id),
+        )
+
+
+def delete_rp_prompt(prompt_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("DELETE FROM rp_prompts WHERE id = ?", (prompt_id,))
 
 
 def set_pack_feedall_day(pack_id: int, day: int) -> None:

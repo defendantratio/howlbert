@@ -195,6 +195,43 @@ def withdraw_herb_from_store(
     return True, msg
 
 
+def withdraw_all_herbs_from_store(
+    user,
+    *,
+    pack_id: int,
+    guild_id: int,
+    day: int,
+) -> tuple[bool, str]:
+    if not can_manage_den_herbs(user):
+        return False, "only **medics** and **foragers** may take from the healers' store."
+    stacks = db.get_pack_herb_stacks(pack_id)
+    if not stacks:
+        return False, "no herbs in the healers' store."
+    withdrawn = 0
+    names: list[str] = []
+    for stack in stacks:
+        qty = int(stack["quantity"])
+        for _ in range(qty):
+            ok, msg = withdraw_herb_from_store(
+                user,
+                stack["id"],
+                pack_id=pack_id,
+                guild_id=guild_id,
+                day=day,
+            )
+            if not ok:
+                break
+            withdrawn += 1
+            meta = HERBS.get(stack["herb_key"], {})
+            names.append(meta.get("name", stack["herb_key"]))
+    if withdrawn == 0:
+        return False, "nothing could be withdrawn."
+    summary = ", ".join(names[:8])
+    if len(names) > 8:
+        summary += f", _…and {len(names) - 8} more_"
+    return True, f"**{withdrawn}** herb(s) moved to `/bones action:inventory`: {summary}."
+
+
 def turnin_restricted_herb(
     user,
     item_key: str,

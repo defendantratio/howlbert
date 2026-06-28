@@ -505,6 +505,10 @@ def run_surgery(
             db.update_user_by_id(patient_id, disease="shock_physical:active")
         lines.append(REALISM_NOTE)
         db.update_user_by_id(surgeon["id"], last_surgery_day=day)
+        if procedure_key == "amputate" or spec.fail_long_term:
+            from engine.wolf_journal import log_surgery
+
+            log_surgery(patient_id, patient["wolf_name"], spec.label, success=False)
         return False, "\n".join(lines)
 
     if success:
@@ -540,6 +544,10 @@ def run_surgery(
             add_long_term_injury(patient_id, spec.success_long_term)
             lines.append("_visible **scarring** from the amputation._")
         db.update_user_by_id(surgeon["id"], last_surgery_day=day)
+        if procedure_key == "amputate" or spec.success_long_term:
+            from engine.wolf_journal import log_surgery
+
+            log_surgery(patient_id, patient["wolf_name"], spec.label, success=True)
         return True, "\n".join(lines)
 
     lines.append(spec.failure)

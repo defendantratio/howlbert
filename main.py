@@ -97,6 +97,8 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.proxy")
         await self.load_extension("cogs.scene")
         await self.load_extension("cogs.rp")
+        await self.load_extension("cogs.rp_prompts")
+        await self.load_extension("cogs.rivals")
         await self.load_extension("cogs.npc")
         await self.load_extension("cogs.rite")
         await self.load_extension("cogs.world")

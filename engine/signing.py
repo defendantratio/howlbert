@@ -26,6 +26,8 @@ from config import (
     SIGN_GRIEVE_MOOD_SELF,
     SIGN_GRIEVE_MOOD_TARGET,
     SIGN_GRIEVE_UNITY,
+    SIGN_NUZZLE_BOND_GAIN,
+    SIGN_NUZZLE_MOOD,
     SIGN_PLAY_MOOD,
     SIGN_PLAY_UNITY,
     SIGN_RALLY_STANDING,
@@ -37,6 +39,7 @@ from config import (
     SIGN_SOOTHE_MOOD_SELF,
     SIGN_SOOTHE_MOOD_TARGET,
     SIGN_SOOTHE_UNITY,
+    SIGN_STRETCH_EXHAUSTION_RELIEF,
     SIGN_SUBMIT_MOOD_SELF,
     SIGN_SUBMIT_MOOD_TARGET,
     SIGN_SUBMIT_UNITY,
@@ -164,6 +167,26 @@ SIGNAL_CATALOG: dict[str, dict] = {
             "a hard shoulder-check that stops just short of contact, eyes never leaving theirs",
         ),
     },
+    "nuzzle": {
+        "name": "Nuzzle",
+        "scope": "target",
+        "summary": "Affectionate gesture; warms mood and builds friendship.",
+        "posture": (
+            "a slow nose pressed along the cheek, breath warm, tail loose and easy",
+            "a chin hooked over the shoulder, leaning the full weight of trust into it",
+            "a soft cheek-rub and a low, contented hum",
+        ),
+    },
+    "stretch": {
+        "name": "Stretch",
+        "scope": "either",
+        "summary": "A full-body stretch and shake-off; sheds a little exhaustion.",
+        "posture": (
+            "a deep front-leg stretch, rump high, a full-body shake-off after",
+            "a slow arch from nose to tail-tip, then a loose-limbed shake",
+            "a yawn, a stretch, and a shiver that runs nose to tail",
+        ),
+    },
 }
 
 TARGET_REQUIRED = {key for key, info in SIGNAL_CATALOG.items() if info["scope"] == "target"}
@@ -174,6 +197,50 @@ EITHER_SCOPE = {key for key, info in SIGNAL_CATALOG.items() if info["scope"] == 
 def signal_choices() -> list[tuple[str, str]]:
     """(label, key) pairs for the command choice list."""
     return [(info["name"], key) for key, info in SIGNAL_CATALOG.items()]
+
+
+# ASL-style posture composition: optional handshape/location/movement
+# parameters that let a player customize *how* a signal looks without
+# touching its mechanic (the mechanic always comes from `signal`, never
+# from these). Mirrors ASL's parameters: handshape -> base, location ->
+# field, movement -> motion.
+BASE_PHRASES = {
+    "ears": "ears",
+    "tail": "tail",
+    "hackles": "hackles",
+    "body": "whole body",
+    "muzzle": "muzzle",
+    "eyes": "eyes",
+}
+
+MOTION_PHRASES = {
+    "held_still": "goes still and held",
+    "sharp_snap": "snaps sharp and sudden",
+    "slow_sweep": "sweeps in a slow arc",
+    "repeated": "moves in a quick repeat",
+    "bouncing": "bounces in a loose rhythm",
+}
+
+FIELD_PHRASES = {
+    "forward": "toward the treeline",
+    "self": "in close, toward yourself",
+    "target": "straight at {target}",
+    "skyward": "lifted toward the sky",
+    "ground": "low, toward the ground",
+}
+
+
+def compose_posture(base: str, motion: str, field: str | None, *, target_name: str | None = None) -> str | None:
+    """Build a custom posture sentence from ASL-style parameters, or None if invalid."""
+    if base not in BASE_PHRASES or motion not in MOTION_PHRASES:
+        return None
+    text = f"{BASE_PHRASES[base]} {MOTION_PHRASES[motion]}"
+    if field and field in FIELD_PHRASES:
+        field_text = FIELD_PHRASES[field]
+        if "{target}" in field_text:
+            field_text = field_text.format(target=target_name or "them")
+        text = f"{text}, {field_text}"
+    return text
 
 
 def wolf_is_silenced(user) -> tuple[bool, str]:
@@ -223,7 +290,7 @@ def _resolve_target(interaction, user, wolf, own_wolf) -> tuple[object | None, s
     return None, "__no_target__"
 
 
-NPC_CAPABLE_SIGNALS = {"submit", "soothe", "threaten", "greet", "grieve", "challenge"}
+NPC_CAPABLE_SIGNALS = {"submit", "soothe", "threaten", "greet", "grieve", "challenge", "nuzzle"}
 
 
 def apply_signal_to_target(signal_key: str, target, *, npc_id: int | None = None) -> str:
@@ -268,6 +335,10 @@ def apply_signal_to_target(signal_key: str, target, *, npc_id: int | None = None
         mood = db.adjust_mood(target["id"], _scaled(SIGN_GREET_MOOD))
         return f"**{target['wolf_name']}** brightens at the gesture (mood **{mood}**)."
 
+    if signal_key == "nuzzle":
+        mood = db.adjust_mood(target["id"], _scaled(SIGN_NUZZLE_MOOD))
+        return f"**{target['wolf_name']}** leans into it (mood **{mood}**)."
+
     if signal_key == "grieve":
         db.update_user_by_id(target["id"], distressed=0)
         mood = db.adjust_mood(target["id"], _scaled(SIGN_GRIEVE_MOOD_TARGET))
@@ -302,6 +373,9 @@ async def execute_sign(
     wolf: discord.Member | None = None,
     own_wolf: str | None = None,
     message: str | None = None,
+    base: str | None = None,
+    motion: str | None = None,
+    field: str | None = None,
 ) -> None:
     """Broadcast a body-language signal to the den."""
     user = db.get_user(interaction.user.id)
@@ -361,10 +435,13 @@ async def execute_sign(
             return
 
     silenced, silence_label = wolf_is_silenced(user)
-    posture = _posture(signal_key)
+    custom_posture = compose_posture(base, motion, field, target_name=target["wolf_name"] if target else None) if base and motion else None
+    posture = custom_posture or _posture(signal_key)
     lines = [f"**{wolf_name}** {posture}."]
     fields: list[tuple[str, str, bool]] = []
     footer_bits: list[str] = []
+    if custom_posture:
+        footer_bits.append("custom posture")
 
     standing_delta = 0
     unity_delta = 0
@@ -531,6 +608,33 @@ async def execute_sign(
             if key == "grief_melancholy":
                 db.set_user_conditions(interaction.user.id, wolf_id=user["id"], clear_disease=True)
                 lines.append("_the grief breaks loose, at least for now._")
+
+    elif signal_key == "nuzzle":
+        your_mood = db.adjust_mood(user["id"], _scaled(SIGN_NUZZLE_MOOD))
+        their_mood = db.adjust_mood(target["id"], _scaled(SIGN_NUZZLE_MOOD))
+        bond = db.adjust_bond_strength(user["id"], target["id"], "friendship", SIGN_NUZZLE_BOND_GAIN, day=day)
+        bond_note = f"; friendship **{int(bond['strength'])}/100**" if bond else ""
+        lines.append(
+            f"**{target['wolf_name']}** leans into it "
+            f"(you: **{your_mood}** mood, them: **{their_mood}**{bond_note})."
+        )
+
+    elif signal_key == "stretch":
+        old_ex = int(user["exhaustion"])
+        new_ex = max(0, old_ex - SIGN_STRETCH_EXHAUSTION_RELIEF)
+        db.set_user_conditions(interaction.user.id, wolf_id=user["id"], exhaustion=new_ex)
+        if old_ex == new_ex:
+            lines.append("a good shake-off, though you weren't carrying much tiredness to begin with.")
+        else:
+            lines.append(f"exhaustion **{old_ex}** → **{new_ex}**.")
+        if target:
+            their_old = int(target["exhaustion"])
+            their_new = max(0, their_old - SIGN_STRETCH_EXHAUSTION_RELIEF)
+            db.set_user_conditions(int(target["discord_id"]), wolf_id=target["id"], exhaustion=their_new)
+            lines.append(
+                f"**{target['wolf_name']}** joins in; their exhaustion "
+                f"**{their_old}** → **{their_new}**."
+            )
 
     elif signal_key == "challenge":
         from engine.character import attr_modifier

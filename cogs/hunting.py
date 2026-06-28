@@ -129,7 +129,7 @@ class Hunting(commands.Cog):
             embed.add_field(name='Bones', value=f'+{bones} 🦴', inline=True)
             embed.set_footer(text='rotting carcass → bone toy (`/playpen action:toys`)')
         elif not ok:
-            embed.set_footer(text='only **rotting** stacks salvage (`/food` shows status)')
+            embed.set_footer(text='only rotting stacks salvage (`/food` shows status)')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='bury', description='bury a carcass from your hoard (optional ritual herbs mask death-scent).')
@@ -176,8 +176,8 @@ class Hunting(commands.Cog):
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='field', description='scavenge, track, fish, forage, verge-forage, mark territory, or sniff the wind.')
-    @app_commands.describe(action='scavenge, track, fishing, forage, verge, mark, sniff, or compendium', rarity='herb rarity (territory forage only)', verge_site='roadside or twoleg compound (verge forage only)', trail_age='trail age (track only)', territory='territory key (mark only; see /pack territory)')
-    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff'), app_commands.Choice(name='herb compendium (read-only)', value='compendium')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1-6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6-24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1-3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
+    @app_commands.describe(action='scavenge, track, fishing, forage, verge, mark, or sniff', rarity='herb rarity (territory forage only)', verge_site='roadside or twoleg compound (verge forage only)', trail_age='trail age (track only)', territory='territory key (mark only; see /pack territory)')
+    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1-6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6-24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1-3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
     @app_commands.autocomplete(territory=_territory_field_autocomplete)
     async def field(self, interaction: discord.Interaction, action: str, rarity: str='common', verge_site: str='roadside', trail_age: str='recent', territory: str | None=None):
         if action == 'scavenge':
@@ -194,8 +194,6 @@ class Hunting(commands.Cog):
             await self._mark_territory(interaction, territory)
         elif action == 'sniff':
             await self._sniff(interaction)
-        elif action == 'compendium':
-            await self._herb_compendium(interaction)
 
     async def _mark_territory(self, interaction: discord.Interaction, territory: str | None):
         user = db.get_user(interaction.user.id)
@@ -212,15 +210,6 @@ class Hunting(commands.Cog):
         world = db.get_world(interaction.guild.id)
         embed = mark_territory(user, interaction.guild.id, world['day_number'], territory)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
-    async def _herb_compendium(self, interaction: discord.Interaction):
-        from engine.herb_guide import build_herb_guide_embed
-        from utils.herb_views import make_herb_guide_view
-        title, body = build_herb_guide_embed(page=0, filter_key='all')
-        embed = howlbert_embed(title, body)
-        embed.set_footer(text='herb compendium · /field action:compendium · read-only')
-        view = make_herb_guide_view(page=0, filter_key='all')
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
 
     async def _scavenge(self, interaction: discord.Interaction):
         await interaction.response.defer()

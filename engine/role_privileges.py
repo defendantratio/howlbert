@@ -46,7 +46,7 @@ def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
     """Footer fragment: N hunt(s) left this sunrise."""
     left = hunts_remaining_today(user, day)
     noun = "hunt" if left == 1 else "hunts"
-    core = f"**{left}** {noun} left this sunrise"
+    core = f"{left} {noun} left this sunrise"
     if role_prefix and is_hunter(user):
         return f"hunter: {core}"
     return core

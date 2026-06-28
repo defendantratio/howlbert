@@ -169,15 +169,10 @@ def process_invite_rollovers(guild_id: int, day: int) -> list[str]:
                 "UPDATE users SET bones = bones + ? WHERE discord_id = ?",
                 (INVITE_REFERRER_BONES, inviter_id),
             )
-            inviter_user = conn.execute(
-                "SELECT id, standing FROM users WHERE discord_id = ? ORDER BY id LIMIT 1",
-                (inviter_id,),
-            ).fetchone()
-            if inviter_user:
-                conn.execute(
-                    "UPDATE users SET standing = ? WHERE id = ?",
-                    (int(inviter_user["standing"]) + INVITE_REFERRER_STANDING, inviter_user["id"]),
-                )
+            conn.execute(
+                "UPDATE users SET standing = standing + ? WHERE discord_id = ?",
+                (INVITE_REFERRER_STANDING, inviter_id),
+            )
 
             _increment_invite_payout(inviter_id)
             notes.append(

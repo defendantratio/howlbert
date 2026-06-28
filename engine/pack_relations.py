@@ -174,6 +174,7 @@ def sniff_encounter_lines(
     *,
     guild_id: int,
     channel_id: int,
+    day: int = 0,
 ) -> tuple[str, int | None]:
     """
     Flavor for a wolf sniff encounter and optional combat id for hostile/war rivals.
@@ -195,6 +196,11 @@ def sniff_encounter_lines(
             pack=pack_name,
             standing=standing,
         )
+        if day > 0:
+            from engine.rival_npcs import record_player_rivalry
+
+            grudge = record_player_rivalry(user["id"], other["id"], day=day)
+            line += f"\nyour grudge with **{other['wolf_name']}**: **{grudge}/100** (`/rivals`)."
         enc_id = _start_rival_wolf_skirmish(
             user,
             other,

@@ -155,8 +155,8 @@ def test_pack_season_goal() -> None:
     check("greyspire pack", pack is not None)
     if not pack:
         return
-    day = 7
-    target = stash_goal_target(day)
+    season = "spring"
+    target = stash_goal_target(season)
     db.update_pack_season_goal(
         pack["id"],
         season_goal_epoch=0,
@@ -165,9 +165,9 @@ def test_pack_season_goal() -> None:
     )
     line = None
     for _ in range(target):
-        line = record_stash_deposit(pack["id"], day)
-    check("goal completes", line is not None and "Season goal met" in line)
-    progress = format_stash_goal_line(db.get_pack(pack["id"]), day)
+        line = record_stash_deposit(pack["id"], season)
+    check("goal completes", line is not None and "season goal met" in line.lower())
+    progress = format_stash_goal_line(db.get_pack(pack["id"]), season)
     check("goal shows complete", "complete" in progress.lower())
     db.update_pack_season_goal(
         pack["id"],

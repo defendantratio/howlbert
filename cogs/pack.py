@@ -89,7 +89,7 @@ class Pack(commands.Cog):
         from engine.pack_season_goals import format_stash_goal_line
         if interaction.guild:
             world = db.get_world(interaction.guild.id)
-            goal_line = format_stash_goal_line(pack, world['day_number'])
+            goal_line = format_stash_goal_line(pack, world['season'])
             if goal_line:
                 embed.add_field(name='Season Goal', value=goal_line, inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -406,7 +406,7 @@ class Pack(commands.Cog):
         if interaction.guild:
             from engine.pack_season_goals import format_stash_goal_line
             world = db.get_world(interaction.guild.id)
-            goal_line = format_stash_goal_line(pack, world['day_number'])
+            goal_line = format_stash_goal_line(pack, world['season'])
             if goal_line:
                 embed.add_field(name='Season Goal', value=goal_line, inline=False)
         embed.set_footer(text='gain: /howl, den charms, fresh-kill, pups, winning wars. loss: losing wars, declaring war. at −5: pack dissolves.')

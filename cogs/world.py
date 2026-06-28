@@ -5,14 +5,13 @@ import database as db
 from config import WEATHER_HUNT_MODIFIERS
 from engine.season_effects import season_hunt_modifier_label
 from engine.chat_xp import try_chat_message_xp
-from engine.cooldowns import build_cooldown_fields
 from utils.permissions import is_howlbert_admin
 from engine.donor import donor_daily_bonus
 from engine.lexicon import format_sunrise
 from engine.season_effects import season_activity_blurb
 from engine.world import forecast_weather, season_blurb, season_label, time_blurb, time_label, weather_label
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, trim_embed_fields, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 HAZARD_CHOICES = [app_commands.Choice(name='blizzard', value='blizzard'), app_commands.Choice(name='flood / rapid river', value='flood'), app_commands.Choice(name='wildfire smoke', value='wildfire_smoke'), app_commands.Choice(name='freezing rain / ice', value='freezing_rain'), app_commands.Choice(name='extreme heat', value='extreme_heat'), app_commands.Choice(name='thick fog', value='thick_fog'), app_commands.Choice(name='thunderstorm', value='thunderstorm'), app_commands.Choice(name='avalanche', value='avalanche'), app_commands.Choice(name='deep snow', value='deep_snow'), app_commands.Choice(name='quicksand / mud', value='quicksand')]
 HAZARD_SEVERITY_CHOICES = [app_commands.Choice(name='moderate', value='moderate'), app_commands.Choice(name='severe', value='severe'), app_commands.Choice(name='extreme', value='extreme')]
 TRAVEL_TERRITORY_CHOICES = [app_commands.Choice(name='river', value='river'), app_commands.Choice(name='swamp', value='swamp'), app_commands.Choice(name='mountain', value='mountain'), app_commands.Choice(name='forest', value='forest'), app_commands.Choice(name='twolegplace', value='twolegplace')]
@@ -126,9 +125,9 @@ class World(commands.Cog):
         embed = howlbert_embed(PLOT_TITLE, body, color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='setseason', description='set the in-game season (server admin).')
-    @app_commands.describe(season='which season the den is in')
-    @app_commands.choices(season=[app_commands.Choice(name='newgrowth (spring)', value='spring'), app_commands.Choice(name='highsun (summer)', value='summer'), app_commands.Choice(name='leaf-drop (autumn)', value='autumn'), app_commands.Choice(name='leaf-bare (winter)', value='winter')])
+    @app_commands.command(name='setseason', description='pin the in-game season, or return it to real-world sync (server admin).')
+    @app_commands.describe(season='which season to pin the den to, or auto for real-world sync')
+    @app_commands.choices(season=[app_commands.Choice(name='newgrowth (spring)', value='spring'), app_commands.Choice(name='highsun (summer)', value='summer'), app_commands.Choice(name='leaf-drop (autumn)', value='autumn'), app_commands.Choice(name='leaf-bare (winter)', value='winter'), app_commands.Choice(name='auto (real-world sync)', value='auto')])
     async def setseason(self, interaction: discord.Interaction, season: str):
         if not is_howlbert_admin(interaction):
             embed = howlbert_embed('Denied', 'Only server admins may set the season.', color=ERROR_COLOR)
@@ -139,13 +138,19 @@ class World(commands.Cog):
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
         world = db.get_world(guild_id)
-        old_day = int(world['day_number'])
-        new_day = db.align_day_to_season(old_day, season)
-        world = db.save_world(guild_id, day_number=new_day, season=season, weather=world['weather'], time_of_day=world['time_of_day'])
-        day_note = ''
-        if new_day != old_day:
-            day_note = f'\nSunrise counter adjusted **{old_day}** → **{new_day}** so rollovers stay in sync.'
-        embed = howlbert_embed('Season Set', f'The den is now in **{season_label(season)}**.\n{season_blurb(season)}{day_note}', color=SUCCESS_COLOR)
+        if season == 'auto':
+            db.set_season_override(guild_id, None)
+            from database import real_world_season
+            from engine.lunar import rollover_now
+            from config import ROLLOVER_TIMEZONE
+            current = real_world_season(rollover_now(ROLLOVER_TIMEZONE))
+            db.save_world(guild_id, day_number=world['day_number'], season=current, weather=world['weather'], time_of_day=world['time_of_day'])
+            embed = howlbert_embed('Season Set', f'The den now follows the real-world calendar; currently **{season_label(current)}**.\n{season_blurb(current)}', color=SUCCESS_COLOR)
+            await interaction.response.send_message(embed=embed)
+            return
+        db.set_season_override(guild_id, season)
+        db.save_world(guild_id, day_number=world['day_number'], season=season, weather=world['weather'], time_of_day=world['time_of_day'])
+        embed = howlbert_embed('Season Set', f'The den is now pinned to **{season_label(season)}**.\n{season_blurb(season)}\n_will stay this season until `/world action:setseason season:auto`._', color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 
     async def _weather(self, interaction: discord.Interaction):
@@ -172,6 +177,8 @@ class World(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     async def _cooldowns(self, interaction: discord.Interaction):
+        # `/checklist` is the single source of truth for "what's left this
+        # sunrise" — this action is now an alias so the two views can't drift.
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -181,16 +188,21 @@ class World(commands.Cog):
         day = db.get_world(guild_id)['day_number'] if guild_id else 0
         account = db.get_account(interaction.user.id)
         prestige_tier = account['prestige_tier'] if account else 0
-        embed = howlbert_embed(f'Cooldowns; Day {day}' if guild_id else 'Cooldowns')
         is_booster = bool(isinstance(interaction.user, discord.Member) and interaction.user.premium_since)
         donor_bonus = donor_daily_bonus(interaction.user.id)
-        for name, value, inline in build_cooldown_fields(user, day, guild_id=guild_id, prestige_tier=prestige_tier, is_booster=is_booster, donor_bonus=donor_bonus, discord_admin=is_howlbert_admin(interaction)):
-            embed.add_field(name=name, value=value, inline=inline)
-        embed = trim_embed_fields(embed)
+        from engine.wolf_checklist import build_wolf_checklist
+
+        body = build_wolf_checklist(
+            user, day=day, guild_id=guild_id, prestige_tier=prestige_tier,
+            is_booster=is_booster, donor_bonus=donor_bonus,
+        )
+        if not body:
+            body = "nothing left this sunrise — you're caught up."
+        embed = howlbert_embed(f"{user['wolf_name']}'s Checklist; Day {day}" if guild_id else f"{user['wolf_name']}'s Checklist", body)
         if guild_id:
             from config import LUNAR_BIRTH_AGING
             age_line = 'wolves age when the sky matches their birth moon (new / half / full).' if LUNAR_BIRTH_AGING else 'wolves age 1 moon per sunrise.'
-            embed.set_footer(text='activities reset each sunrise. patrol/scout need an active pack war. ' + age_line)
+            embed.set_footer(text='same list as `/checklist` · activities reset each sunrise. ' + age_line)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _run_weather_hazard(self, interaction: discord.Interaction, hazard: str, severity: str):

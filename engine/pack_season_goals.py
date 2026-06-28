@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import database as db
-from config import SEASON_LENGTH_DAYS, SEASONS
+from config import SEASONS
 
 SEASON_STASH_TARGETS = {
     "spring": 4,
@@ -14,22 +14,13 @@ SEASON_STASH_TARGETS = {
 SEASON_STASH_UNITY_REWARD = 2
 
 
-def season_for_day(day_number: int) -> str:
-    index = ((day_number - 1) // SEASON_LENGTH_DAYS) % len(SEASONS)
-    return SEASONS[index]
+def stash_goal_target(season: str) -> int:
+    return SEASON_STASH_TARGETS.get(season, 5)
 
 
-def season_epoch(day_number: int) -> int:
-    return ((day_number - 1) // SEASON_LENGTH_DAYS) * SEASON_LENGTH_DAYS + 1
-
-
-def stash_goal_target(day_number: int) -> int:
-    return SEASON_STASH_TARGETS.get(season_for_day(day_number), 5)
-
-
-def _sync_pack_epoch(pack, day_number: int) -> None:
-    epoch = season_epoch(day_number)
-    stored = int(pack["season_goal_epoch"]) if "season_goal_epoch" in pack.keys() else 0
+def _sync_pack_epoch(pack, season: str) -> None:
+    epoch = SEASONS.index(season) if season in SEASONS else 0
+    stored = int(pack["season_goal_epoch"]) if "season_goal_epoch" in pack.keys() else -1
     if stored == epoch:
         return
     db.update_pack_season_goal(
@@ -40,12 +31,12 @@ def _sync_pack_epoch(pack, day_number: int) -> None:
     )
 
 
-def record_stash_deposit(pack_id: int, day_number: int) -> str | None:
+def record_stash_deposit(pack_id: int, season: str) -> str | None:
     """Increment seasonal stash counter; return celebration line if goal just met."""
     pack = db.get_pack(pack_id)
     if not pack:
         return None
-    _sync_pack_epoch(pack, day_number)
+    _sync_pack_epoch(pack, season)
     pack = db.get_pack(pack_id)
     if not pack:
         return None
@@ -53,7 +44,7 @@ def record_stash_deposit(pack_id: int, day_number: int) -> str | None:
     if int(pack["season_stash_goal_met"]):
         return None
 
-    target = stash_goal_target(day_number)
+    target = stash_goal_target(season)
     new_count = int(pack["season_stash_deposits"]) + 1
     db.update_pack_season_goal(pack_id, season_stash_deposits=new_count)
 
@@ -62,7 +53,6 @@ def record_stash_deposit(pack_id: int, day_number: int) -> str | None:
 
     db.update_pack_season_goal(pack_id, season_stash_goal_met=1)
     outcome = db.adjust_pack_unity(pack_id, SEASON_STASH_UNITY_REWARD)
-    season = season_for_day(day_number)
     line = (
         f"**season goal met!** the den filled the **{season}** reserve "
         f"({target} carcasses); pack unity **+{SEASON_STASH_UNITY_REWARD}**."
@@ -72,14 +62,13 @@ def record_stash_deposit(pack_id: int, day_number: int) -> str | None:
     return line
 
 
-def format_stash_goal_line(pack, day_number: int) -> str:
-    _sync_pack_epoch(pack, day_number)
+def format_stash_goal_line(pack, season: str) -> str:
+    _sync_pack_epoch(pack, season)
     pack = db.get_pack(pack["id"])
     if not pack:
         return ""
-    target = stash_goal_target(day_number)
+    target = stash_goal_target(season)
     count = int(pack["season_stash_deposits"])
-    season = season_for_day(day_number)
     if int(pack["season_stash_goal_met"]):
         return f"**{season.title()} reserve goal**; complete ({target}/{target}). unity rewarded."
     return f"**{season.title()} reserve goal**; **{count}/{target}** carcasses deposited this season."
