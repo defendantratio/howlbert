@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY
+from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY, RP_LOCATIONS
 from engine.journal_backfill import backfill_wolf_journal
 from engine.wolf_journal import format_journal_embed_chunks
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, PlayerEmbed, choice_label
@@ -32,6 +32,11 @@ def _ic_location_line(wolf) -> str | None:
     if loc and str(loc).strip():
         return f'📍 {str(loc).strip()}'
     return None
+
+async def _location_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    needle = current.lower()
+    choices = [loc for loc in RP_LOCATIONS if needle in loc.lower()]
+    return [app_commands.Choice(name=loc, value=loc) for loc in choices[:25]]
 
 def _pack_short(affiliation: str | None) -> str:
     if not affiliation or affiliation == LONER_KEY:
@@ -101,8 +106,45 @@ class Roleplay(commands.Cog):
             return
         await interaction.response.send_message(embed=howlbert_embed('Whisper Sent', f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
+    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (once per sunrise).')
+    async def weep(self, interaction: discord.Interaction):
+        wolf = _active_wolf(interaction)
+        if not wolf:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        if wolf['great_pack'] != 'silverrush':
+            await interaction.response.send_message(embed=howlbert_embed('not your stone', 'the weep stone belongs to silverrush; other packs grieve their own way.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.vitals import living_wolf_block
+        block = living_wolf_block(wolf)
+        if block:
+            await interaction.response.send_message(embed=howlbert_embed('cannot weep', block, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        day = world['day_number']
+        if int(wolf['last_weep_day']) >= day:
+            embed = howlbert_embed('already wept', 'the river already holds what you gave it this sunrise.', color=ERROR_COLOR)
+            embed.set_footer(text='resets next sunrise · what happens at the weep stone stays in the river\'s memory')
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        db.update_user(interaction.user.id, last_weep_day=day, wolf_id=wolf['id'])
+        mood = db.adjust_mood(wolf['id'], 10)
+        lines = [f"**{wolf['wolf_name']}** goes alone to the weep stone; no one watches. the river takes the rest.", f"mood **{mood}** (+10)."]
+        from engine.diseases import parse_disease
+        key, stage = parse_disease(wolf['disease'] if 'disease' in wolf.keys() else None)
+        if key == 'grief_melancholy':
+            db.set_user_conditions(interaction.user.id, wolf_id=wolf['id'], clear_disease=True)
+            lines.append('_the grief breaks loose and washes downstream. you feel it; for now._')
+        embed = howlbert_embed('weep stone', '\n'.join(lines), color=SUCCESS_COLOR)
+        embed.set_footer(text='it is forbidden to watch another wolf weep · once per sunrise')
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
     @location.command(name='set', description="mark your wolf's current in-character location.")
-    @app_commands.describe(place='where you are ic (e.g. greyspire high ridge)')
+    @app_commands.describe(place='where you are ic (pick a suggestion or type your own)')
+    @app_commands.autocomplete(place=_location_autocomplete)
     async def location_set(self, interaction: discord.Interaction, place: str):
         wolf = _active_wolf(interaction)
         if not wolf:

@@ -1,0 +1,3574 @@
+==============================================================
+Guild: test server
+Channel: Text Channels / bot-commands
+==============================================================
+
+[6/18/2026 12:52 AM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Mirewort
+Birth Sex
+Male
+Sexuality
+Bisexual
+Rank
+Subordinate
+Role
+Medic
+Great Pack
+**Mistmoor** (Swamp)
+_The swamp remembers. The Maw chews._
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Starting Herbs
+elderberry, lizard's tail, boneset, swamp milkweed
+Den
+Lone wolf — no pack yet.
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/daily` for bones.
+Fable · Wolf RP
+
+
+[6/18/2026 1:02 AM] Howlbert#0720
+
+
+{Embed}
+Mirewort
+Rank
+Subordinate
+Pack
+**Mistmoor** (Swamp)
+Role
+Medic
+Birth Sex
+Male
+Sexuality
+Bisexual
+Condition
+Healthy
+STR
+4 (-1)
+DEX
+5 (+0)
+CON
+5 (+0)
+INT
+7 (+1)
+CHA
+5 (+0)
+WIS
+7 (+1)
+HP
+9 / 9
+Skills
+Herblore, Medicine
+Role Feature
+Green Tongue — Herblore substitutes for Medicine; never misidentify plants.
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Standing
+0
+🦴 Bones
+🦴 0
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Fable · Wolf RP
+
+
+[6/18/2026 1:02 AM] Howlbert#0720
+
+
+{Embed}
+Forage Failed
+**1d20** → **2** + 0 CON +2 prof = **4** vs DC **6** (Survival)
+**Failure.**
+Fable · Wolf RP
+
+
+[6/18/2026 1:03 AM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+You pulled a scrawny hare from the snow. Small, but honest work.
+Earned
++🦴 15
+Balance
+🦴 15
+Fable · Wolf RP
+
+
+[6/18/2026 1:03 AM] Howlbert#0720
+
+
+{Embed}
+Daily Claimed
+Received
++🦴 25
+Balance
+🦴 40
+Fable · Wolf RP
+
+
+[6/18/2026 1:05 AM] Howlbert#0720
+
+
+{Embed}
+Catch Haul
+Slow paw, steady catch — the river gives without a chase.
+Earned
++🦴 17
+Balance
+🦴 57
+Fable · Wolf RP
+
+
+[6/18/2026 1:06 AM] Howlbert#0720
+
+
+{Embed}
+Track Complete
+Scent leads you to a watering hole and an easy catch.
+Earned
++🦴 15
+Balance
+🦴 72
+Fable · Wolf RP
+
+
+[6/18/2026 1:06 AM] Howlbert#0720
+
+
+{Embed}
+Scavenge Complete
+Scraps along the trail. Humble, but honest.
+Earned
++🦴 6
+Balance
+🦴 78
+Fable · Wolf RP
+
+
+[6/18/2026 1:11 AM] Howlbert#0720
+
+
+{Embed}
+Territory Map
+**Deep Furrow** (`deepfurrow`) — Unclaimed · +9🦴/rollover
+**Mistwood** (`mistwood`) — Unclaimed · +7🦴/rollover
+**Old Quarry** (`old_quarry`) — Unclaimed · +6🦴/rollover
+**Pine Ridge** (`pine_ridge`) — Unclaimed · +5🦴/rollover
+**River Crossing** (`river_crossing`) — Unclaimed · +8🦴/rollover
+**Stoneroot** (`stoneroot`) — Unclaimed · +10🦴/rollover
+Fable · Wolf RP
+
+
+[6/18/2026 1:12 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 1:13 AM] Howlbert#0720
+
+
+{Embed}
+NPC Added
+**Twoleg** enters with 20 HP.
+Fable · Wolf RP
+
+
+[6/18/2026 1:13 AM] Howlbert#0720
+
+
+{Embed}
+Initiative
+**Mirewort** — 17 + 0 = **17**
+**Twoleg** — 1 + 0 = **1**
+Round 1 — Mirewort's turn
+
+
+[6/18/2026 1:18 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Bite** — Mirewort vs Twoleg
+Attack: 20 + -1 = **19** vs Defense: 1 + 3 = **4**
+**Hit!** 4 damage.
+Critical hit — Disarm — target drops held item
+Target HP
+16/20
+Round 1 — Twoleg's turn
+
+
+[6/18/2026 1:23 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Bite** — Twoleg vs Mirewort
+Attack: 9 + 3 = **12** vs Defense: 5 + 0 = **5**
+**Hit!** 6 damage.
+Target HP
+3/9
+Round 2 — Mirewort's turn
+
+
+[6/18/2026 1:24 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Claw** — Mirewort vs Twoleg
+Attack: 12 + 0 = **12** vs Defense: 18 + 3 = **21**
+**Miss.**
+Target HP
+16/20
+Round 2 — Twoleg's turn · use `/combat npcattack`
+
+
+[6/18/2026 1:27 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 1:29 AM] Howlbert#0720
+
+
+{Embed}
+Long Rest
+Recovered **1 HP** (now 4/9).
+Exhaustion: 0 → 0
+Fable · Wolf RP
+
+
+[6/18/2026 1:32 AM] Howlbert#0720
+
+
+{Embed}
+The Den Rollovers
+Day
+3
+Season
+Spring
+Weather
+Clear
+Time
+Dawn
+Activities reset when the den rolls over. Wars resolve on rollover.
+
+
+[6/18/2026 1:32 AM] Howlbert#0720
+
+
+{Embed}
+Mirewort
+Rank
+Subordinate
+Pack
+**Mistmoor** (Swamp)
+Role
+Medic
+Birth Sex
+Male
+Sexuality
+Bisexual
+Condition
+Healthy
+STR
+4 (-1)
+DEX
+5 (+0)
+CON
+5 (+0)
+INT
+7 (+1)
+CHA
+5 (+0)
+WIS
+7 (+1)
+HP
+4 / 9
+Skills
+Herblore, Medicine
+Role Feature
+Green Tongue — Herblore substitutes for Medicine; never misidentify plants.
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Standing
+0
+🦴 Bones
+🦴 78
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Fable · Wolf RP
+
+
+[6/18/2026 1:34 AM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **19** + 0 CON +2 prof = **21** vs DC **6** (Survival)
+**Success.**
+
+Found **Celandine**.
+_Removes minor eye blindness within 1 hour._
+Fable · Wolf RP
+
+
+[6/18/2026 1:41 AM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Mirewort
+Birth Sex
+Male
+Sexuality
+Bisexual
+Rank
+Alpha
+Role
+Medic
+Pack
+**Mistmoor** (Swamp)
+Motto
+_The swamp remembers. The Maw chews._
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Starting Herbs
+Elderberry, Lizard's Tail, Boneset, Swamp Milkweed
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/daily` for bones.
+Fable · Wolf RP
+
+
+[6/18/2026 1:42 AM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **6** + 0 CON +2 prof = **8** vs DC **6** (Survival)
+**Success.**
+
+Found **Parsley**.
+_Ends lactation within 6 hours._
+Fable · Wolf RP
+
+
+[6/18/2026 2:24 AM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+You ran down a hare across open ground — swift and sure.
+Earned
++🦴 33
+Balance
+🦴 33
+Fable · Wolf RP
+
+
+[6/18/2026 2:25 AM] Howlbert#0720
+
+
+{Embed}
+Daily Claimed
+Received
++🦴 25
+Balance
+🦴 58
+Fable · Wolf RP
+
+
+[6/18/2026 2:25 AM] Howlbert#0720
+
+
+{Embed}
+Scavenge Complete
+You nose out a marrow-rich bone beneath the frost.
+Earned
++🦴 9
+Balance
+🦴 67
+Fable · Wolf RP
+
+
+[6/18/2026 2:26 AM] Howlbert#0720
+
+
+{Embed}
+Track Complete
+You follow spoor through bracken until the trail goes cold — but not empty-handed.
+Earned
++🦴 25
+Balance
+🦴 92
+Fable · Wolf RP
+
+
+[6/18/2026 2:26 AM] Howlbert#0720
+
+
+{Embed}
+Catch Haul
+Slow paw, steady catch — the river gives without a chase.
+Earned
++🦴 13
+Balance
+🦴 105
+Fable · Wolf RP
+
+
+[6/18/2026 8:27 AM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Gasp
+Birth Sex
+Female
+Sexuality
+Asexual
+Rank
+Subordinate
+Role
+Drown-Sick Oracle
+Pack
+**Mistmoor** (Swamp)
+Oracle's Path
+Drown-Sick wolves are **Mistmoor oracles** — frail, prophetic, changed by the Belly-Rip. Use `/roleevent`, `/prophecy`, and `/rolequests`. Read `/gasp` for the legendary oracle.
+Motto
+_The swamp remembers. The Maw chews._
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Starting Herbs
+Elderberry, Lizard's Tail, Boneset, Swamp Milkweed
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/daily` for bones.
+Active wolf · 2 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 8:55 AM] Howlbert#0720
+
+
+{Embed}
+Gasp
+Rank
+Subordinate
+Pack
+**Mistmoor** (Swamp)
+Role
+Drown-Sick Oracle
+Birth Sex
+Female
+Sexuality
+Asexual
+Condition
+Healthy
+STR
+1 (-3)
+DEX
+2 (-2)
+CON
+2 (-2)
+INT
+4 (-1)
+CHA
+2 (-2)
+WIS
+5 (+0)
+HP
+5 / 5
+Skills
+Stealth, Tracking
+Role Feature
+Belly-Rip Whispers — hear the Maw's chewing; `/roleevent` yields cryptic prophecy. Cannot hunt or fight effectively (frail). +2 to Perception (Wisdom) in fog or swamp.
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Standing
+0
+🦴 Bones
+🦴 0
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 2 on your account · /switchwolf to change
+
+
+[6/18/2026 8:56 AM] Howlbert#0720
+
+
+{Embed}
+Wolf Switched
+You're now playing as **Mirewort**.
+Bones, inventory, quests, and cooldowns follow this wolf.
+Fable · Wolf RP
+
+
+[6/18/2026 8:56 AM] Howlbert#0720
+
+
+{Embed}
+Elders pay you to strip old prey-piles and drag scraps to the bone pit.
+Earned
++🦴 28
+Balance
+🦴 133
+Fable · Wolf RP
+
+
+[6/18/2026 9:00 AM] Howlbert#0720
+
+
+{Embed}
+A reckless smash-and-grab at a trader's drop-off — high risk, heavy payout.
+Earned
++🦴 48
+Balance
+🦴 181
+Fable · Wolf RP
+
+
+[6/18/2026 9:06 AM] Howlbert#0720
+
+
+{Embed}
+Mirewort
+Role
+Medic
+Pack
+**Mistmoor** (Swamp)
+Birth Sex
+Male
+Sexuality
+Bisexual
+Condition
+Healthy
+STR
+4 (-1)
+DEX
+5 (+0)
+CON
+5 (+0)
+INT
+7 (+1)
+CHA
+5 (+0)
+WIS
+7 (+1)
+HP
+9 / 9
+Skills
+Herblore, Medicine
+Role Feature
+Green Tongue — Herblore substitutes for Medicine; never misidentify plants.
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Standing
+0
+🦴 Bones
+🦴 181
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 2 on your account · /switchwolf to change
+
+
+[6/18/2026 9:16 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 9:17 AM] Howlbert#0720
+
+
+{Embed}
+Large Prey (deer/elk) Enters
+**HP:** 25
+STR 7 · DEX 6 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Kick 1d6+1
+_Usually flees, but cornered or protecting young can be deadly._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 9:22 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 9:24 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 9:25 AM] Howlbert#0720
+
+
+{Embed}
+Large Prey (deer/elk) Enters
+**HP:** 25
+STR 7 · DEX 6 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Kick 1d6+1
+_Usually flees, but cornered or protecting young can be deadly._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 9:25 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 9:42 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 9:42 AM] Howlbert#0720
+
+
+{Embed}
+Large Prey (deer/elk) Enters
+**HP:** 25
+STR 7 · DEX 6 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Kick 1d6+1
+_Usually flees, but cornered or protecting young can be deadly._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 9:55 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 9:55 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 9:55 AM] Howlbert#0720
+
+
+{Embed}
+Large Prey (deer/elk) Enters
+**HP:** 25
+STR 7 · DEX 6 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Kick 1d6+1
+_Usually flees, but cornered or protecting young can be deadly._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 9:56 AM] Howlbert#0720
+
+
+{Embed}
+Initiative
+**Mirewort** — 20 + 0 = **20**
+**Large Prey (deer/elk)** — 5 + 1 = **6**
+Round 1 — Mirewort's turn
+
+
+[6/18/2026 9:56 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Badger Defence** — Mirewort vs Large Prey (deer/elk)
+Attack: 5 + 2 = **7** vs Defense: 16 + 1 = **17**
+**Miss.**
+Target HP
+25/25
+Round 1 — Large Prey (deer/elk)'s turn · use `/combat npcattack`
+
+
+[6/18/2026 10:23 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 10:23 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 10:23 AM] Howlbert#0720
+
+
+{Embed}
+Cornered Deer Enters
+**HP:** 25
+STR 4 · DEX 7 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Hoof Kick 1d4 (+-1 to hit)
+_Panicked prey — no bite or claws, only desperate kicks and charges._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 10:24 AM] Howlbert#0720
+
+
+{Embed}
+Initiative
+**Mirewort** — 9 + 0 = **9**
+**Cornered Deer** — 17 + 1 = **18**
+Round 1 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 10:24 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Mirewort
+Attack: 20 + -2 = **18** vs Defense: 19 + 0 = **19**
+**Hit!** 2 damage.
+Critical hit. Wild thrashing — ribs may crack.
+Target HP
+7/9
+Round 1 — Mirewort's turn
+
+
+[6/18/2026 10:24 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Badger Defence** — Mirewort vs Cornered Deer
+Attack: 4 + 2 = **6** vs Defense: 15 + 1 = **16**
+**Miss.**
+Target HP
+25/25
+Round 2 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 10:24 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Mirewort
+Attack: 10 + -2 = **8** vs Defense: 18 + 0 = **18**
+**Miss.**
+Target HP
+7/9
+Round 2 — Mirewort's turn
+
+
+[6/18/2026 10:25 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Badger Defence** — Mirewort vs Cornered Deer
+Attack: 15 + 2 = **17** vs Defense: 17 + 1 = **18**
+**Miss.**
+Target HP
+25/25
+Round 3 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 10:25 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Mirewort
+Attack: 16 + -2 = **14** vs Defense: 1 + 0 = **1**
+**Hit!** 4 damage.
+Wild thrashing — ribs may crack.
+Target HP
+3/9
+Round 3 — Mirewort's turn
+
+
+[6/18/2026 10:25 AM] Howlbert#0720
+
+
+{Embed}
+Combat Over
+**Mirewort** yields (3/9 HP).
+With no opponents left, the encounter ends.
+Fable · Wolf RP
+
+
+[6/18/2026 10:26 AM] Howlbert#0720
+
+
+{Embed}
+Treatment Failed
+Medicine check: 9 vs DC 15 — no effect.
+Fable · Wolf RP
+
+
+[6/18/2026 10:52 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 10:52 AM] Howlbert#0720
+
+
+{Embed}
+Cornered Deer Enters
+**HP:** 25
+STR 4 · DEX 7 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Hoof Kick 1d4 (+-1 to hit)
+_Panicked prey — no bite or claws, only desperate kicks and charges._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 10:56 AM] Howlbert#0720
+
+
+{Embed}
+Combat Ended
+HP synced to wolf profiles. Wounds and conditions persist.
+Fable · Wolf RP
+
+
+[6/18/2026 10:56 AM] Howlbert#0720
+
+
+{Embed}
+Combat Started
+**Mirewort** enters the fray.
+Others: `/combat join` · Add NPC: `/combat npc name:`
+When ready: `/combat begin`
+Fable · Wolf RP
+
+
+[6/18/2026 10:56 AM] Howlbert#0720
+
+
+{Embed}
+Cornered Deer Enters
+**HP:** 10
+STR 4 · DEX 7 · CON 5 · INT 2 · CHA 3 · WIS 4
+**Attack:** Hoof Kick 1d4 (+-1 to hit)
+_Panicked prey — no bite or claws, only desperate kicks and charges._
+Use /combat hazard for Two-Legs, Thunderpath, traps, and fences.
+
+
+[6/18/2026 10:56 AM] Howlbert#0720
+
+
+{Embed}
+Initiative
+**Mirewort** — 18 + 0 = **18**
+**Cornered Deer** — 13 + 1 = **14**
+Round 1 — Mirewort's turn
+
+
+[6/18/2026 10:57 AM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Badger Defence** — Mirewort vs Cornered Deer
+Attack: 6 + 2 = **8** vs Defense: 16 + 1 = **17**
+**Miss.**
+Target HP
+10/10
+Round 1 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 10:57 AM] Howlbert#0720
+
+
+{Embed}
+Combat Over
+**Mirewort** yields (3/9 HP).
+With no opponents left, the encounter ends.
+Fable · Wolf RP
+
+
+[6/18/2026 10:57 AM] Howlbert#0720
+
+
+{Embed}
+The Den Rollovers
+Day
+4
+Season
+Newgrowth (spring)
+Weather
+Cloudy
+Time
+Sunrise
+Activities reset when the den rolls over. Every wolf ages 1 moon. Wars resolve on rollover.
+
+
+[6/18/2026 10:58 AM] Howlbert#0720
+
+
+{Embed}
+Long Rest
+Recovered **1 HP** (now 4/9).
+Exhaustion: 0 → 0
+Fable · Wolf RP
+
+
+[6/18/2026 11:32 AM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **19** + 0 CON +2 prof = **21** vs DC **6** (Survival)
+**Success.**
+
+Found **Lizard's Tail**.
+_Removes 1 fever exhaustion._
+Fable · Wolf RP
+
+
+[6/18/2026 11:34 AM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Weather affects bone payouts — check `/weather`.
+After a hunt, lay out **fresh-kill** with the button or `/preypile`.
+Fable · Wolf RP
+
+
+[6/18/2026 11:35 AM] Howlbert#0720
+
+
+{Embed}
+Daily Claimed
+Received
++🦴 25
+Balance
+🦴 206
+Fable · Wolf RP
+
+
+[6/18/2026 11:35 AM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+Old scraps near the riverbank. Not glorious, but it counts toward the pile.
+Earned
++🦴 11
+Balance
+🦴 217
+Share fresh-kill — use the button below or /preypile
+
+
+[6/18/2026 11:35 AM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Mirewort** dragged **a scrawny hare** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 11**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+Responses
+🍖 Eat your fill: **1**
+Fable · Wolf RP · 1 wolf(s) responded
+
+
+[6/18/2026 11:35 AM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Laid Out
+The cache is open — packmates can respond below.
+Fable · Wolf RP
+
+
+[6/18/2026 11:35 AM] Howlbert#0720
+
+
+{Embed}
+Old bones half-buried in leaf litter — someone else's loss, your gain.
+Earned
++🦴 7
+Balance
+🦴 227
+Fable · Wolf RP
+
+
+[6/18/2026 11:36 AM] Howlbert#0720
+
+
+{Embed}
+A moderate chase ends with a hare in your jaws.
+Earned
++🦴 9
+Balance
+🦴 236
+Fable · Wolf RP
+
+
+[6/18/2026 11:37 AM] Howlbert#0720
+
+
+{Embed}
+Slow paw, steady catch — the river gives without a chase.
+Earned
++🦴 16
+Balance
+🦴 252
+Fable · Wolf RP
+
+
+[6/18/2026 12:14 PM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Rotteddust
+Birth Sex
+Intersex
+Sexuality
+Asexual
+Role
+Medic Apprentice
+Age
+12 moons (Juvenile)
+Pack
+**Mistmoor** (Swamp)
+Motto
+_The swamp remembers. The Maw chews._
+Pack Trait
+Rot's Blessing — advantage on saving throws against poison and disease.
+Starting Herbs
+Elderberry, Lizard's Tail, Boneset, Swamp Milkweed
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/daily` for bones.
+Active wolf · 3 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 12:22 PM] Howlbert#0720
+
+
+{Embed}
+Quest Accepted
+Gather and tend — the sick lean on your green tongue.
+Objective
+forage x1
+Reward
+🦴 55
+Fable · Wolf RP
+
+
+[6/18/2026 12:22 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **10** + -1 CON = **9** vs DC **6** (Survival)
+**Success.**
+
+Found **Skunk Cabbage (dried)**.
+_Treats severe cough; toxic if fresh (DC 12)._
+Fable · Wolf RP
+
+
+[6/18/2026 12:35 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Weather affects bone payouts — check `/weather`.
+After a hunt, track, or fishing catch, lay out **fresh-kill** with the button or `/preypile`.
+Fable · Wolf RP
+
+
+[6/18/2026 12:35 PM] Howlbert#0720
+
+
+{Embed}
+Daily Claimed
+Received
++🦴 25
+Balance
+🦴 80
+Fable · Wolf RP
+
+
+[6/18/2026 12:35 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+A lone rabbit — enough fresh-kill to quiet an empty belly.
+Earned
++🦴 12
+Balance
+🦴 92
+Share fresh-kill — use the button below or /preypile
+
+
+[6/18/2026 12:35 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Rotteddust** dragged **a hare** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 12**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+_Each wolf may respond once — pick a character if you own several._
+Responses
+🍖 Eat your fill: **3**
+Fable · Wolf RP · 3 wolf(s) responded
+
+
+[6/18/2026 12:35 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Laid Out
+The cache is open — packmates can respond below.
+Fable · Wolf RP
+
+
+[6/18/2026 12:43 PM] Howlbert#0720
+
+
+{Embed}
+Mistmoor — Pack Unity
+Unity
+5/10 (min -5)
+Effect
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+Gain: /howl, den charms, fresh-kill, pups, winning wars. Loss: losing wars, declaring war. At −5: pack dissolves.
+
+
+[6/18/2026 12:44 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Rotteddust** howls for **Mistmoor**.
+The den answers in scattered echoes before the wind takes them.
+Pack Unity
++1 → **6/10 (min -5)**
+Standing
++1
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+
+
+[6/18/2026 12:44 PM] Howlbert#0720
+
+
+{Embed}
+Wolf Switched
+You're now playing as **Mirewort**.
+Bones, inventory, quests, and cooldowns follow this wolf.
+Fable · Wolf RP
+
+
+[6/18/2026 12:44 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Mirewort** howls for **Mistmoor**.
+The den answers in scattered echoes before the wind takes them.
+Pack Unity
++1 → **7/10 (min -5)**
+Standing
++1
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+
+
+[6/18/2026 12:45 PM] Howlbert#0720
+
+
+{Embed}
+Wolf Switched
+You're now playing as **Gasp**.
+Bones, inventory, quests, and cooldowns follow this wolf.
+Fable · Wolf RP
+
+
+[6/18/2026 12:45 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Gasp** howls for **Mistmoor**.
+Your howl threads through the pines; somewhere, a packmate pricks their ears.
+Pack Unity
++1 → **8/10 (min -5)**
+Standing
++1
+High unity — **+10%** hunt bones (50🦴 → 55🦴); howls rally harder.
+
+
+[6/18/2026 1:15 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Weather affects bone payouts — check `/weather`.
+After a hunt, track, or fishing catch, lay out **fresh-kill** with the button or `/preypile`.
+Fable · Wolf RP
+
+
+[6/18/2026 1:15 PM] Howlbert#0720
+
+
+{Embed}
+Large Prey!
+An **elk** bursts from the brush, antlers lowered. It will not flee.
+~15% hunt chance · down the prey to open the fresh-kill cache
+
+
+[6/18/2026 1:15 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Badger Defence** — Gasp vs Desperate Stag
+Attack: 13 + 0 = **13** vs Defense: 7 + 1 = **8**
+**Hit!** 1 damage.
+Target HP
+9/10
+Round 1 — Desperate Stag's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 1:15 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Desperate Stag vs Gasp
+Attack: 11 + -2 = **9** vs Defense: 9 + -2 = **7**
+**Hit!** 1 damage.
+Wild thrashing — ribs may crack.
+Target HP
+4/5
+Round 2 — Gasp's turn
+
+
+[6/18/2026 1:21 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Front Paw Blow** — Gasp vs Desperate Stag
+Attack: 19 + -3 = **16** vs Defense: 17 + 1 = **18**
+**Miss.**
+Target HP
+9/10
+Round 2 — Desperate Stag's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 1:22 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Desperate Stag vs Gasp
+Attack: 7 + -2 = **5** vs Defense: 5 + -2 = **3**
+**Hit!** 1 damage.
+Wild thrashing — ribs may crack.
+Target HP
+3/5
+Round 3 — Gasp's turn
+
+
+[6/18/2026 1:22 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Teeth Grip** — Gasp vs Desperate Stag
+Attack: 11 + -3 = **8** vs Defense: 12 + 1 = **13**
+**Miss.**
+Target HP
+9/10
+Round 3 — Desperate Stag's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 1:22 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Desperate Stag vs Gasp
+Attack: 17 + -2 = **15** vs Defense: 19 + -2 = **17**
+**Miss.**
+Target HP
+3/5
+Round 4 — Gasp's turn
+
+
+[6/18/2026 1:22 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Gasp vs Desperate Stag
+Attack: 12 + 0 = **12** vs Defense: 11 + 1 = **12**
+**Hit!** 1 damage.
+Target HP
+8/10
+Round 4 — Desperate Stag's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 1:22 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Desperate Stag vs Gasp
+Attack: 9 + -2 = **7** vs Defense: 20 + -2 = **18**
+**Miss.**
+Target HP
+3/5
+Round 5 — Gasp's turn
+
+
+[6/18/2026 1:23 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Gasp vs Desperate Stag
+Attack: 10 + 0 = **10** vs Defense: 18 + 1 = **19**
+**Miss.**
+Target HP
+8/10
+Round 5 — Desperate Stag's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 1:23 PM] Howlbert#0720
+
+
+{Embed}
+Combat Over
+**Gasp** yields (3/5 HP).
+With no opponents left, the encounter ends.
+Fable · Wolf RP
+
+
+[6/18/2026 1:27 PM] Howlbert#0720
+
+
+{Embed}
+Long Rest
+Recovered **1 HP** (now 4/5).
+Exhaustion: 0 → 0
+Fable · Wolf RP
+
+
+[6/18/2026 1:28 PM] Howlbert#0720
+
+
+{Embed}
+Slow paw, steady catch — the river gives without a chase.
+Earned
++🦴 11
+Balance
+🦴 14
+Share fresh-kill — use the button below or /preypile
+
+
+[6/18/2026 1:28 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Gasp** dragged **a fish** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 11**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+_Each wolf may respond once — pick a character if you own several._
+Responses
+🍖 Eat your fill: **1**
+Fable · Wolf RP · 1 wolf(s) responded
+
+
+[6/18/2026 1:28 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Laid Out
+The cache is open — packmates can respond below.
+Fable · Wolf RP
+
+
+[6/18/2026 1:38 PM] Howlbert#0720
+
+
+{Embed}
+No Rivals Tracked
+Neutral (5) with all packs until relations change through war or diplomacy.
+Fable · Wolf RP
+
+
+[6/18/2026 2:11 PM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Barkhollow
+Birth Sex
+Intersex
+Sexuality
+Bisexual
+Role
+Forager
+Age
+48 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Motto
+_The forest remembers the names of the dead._
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Starting Herbs
+Comfrey, Plantain, Oak Bark, Slippery Elm
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/hunt` or `/work` for bones.
+Active wolf · 4 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 2:12 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **20** + 0 CON +2 prof = **22** vs DC **6** (Survival)
+**Critical success** — exceptional outcome or lasting boon.
+
+Found **Thyme** (double yield!).
+_Ends minor pain 2 hours._
+Fable · Wolf RP
+
+
+[6/18/2026 2:13 PM] Howlbert#0720
+
+
+{Embed}
+Barkhollow
+Role
+Forager
+Age
+48 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Birth Sex
+Intersex
+Sexuality
+Bisexual
+Condition
+Healthy
+STR
+4 (-1)
+DEX
+4 (-1)
+CON
+5 (+0)
+INT
+7 (+1)
+CHA
+3 (-2)
+WIS
+5 (+0)
+HP
+9 / 9
+Skills
+Herblore, Survival
+Role Feature
+Nose of the Land — auto-find one common herb/day in pack territory. May forage without waiting for sunrise.
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Standing
+**0**
+In good standing with the den.
+🦴 Bones
+🦴 0
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 4 on your account · /switchwolf to change
+
+
+[6/18/2026 2:13 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **13** + 0 CON +2 prof = **15** vs DC **10** (Survival)
+**Success.**
+
+Found **Comfrey**.
+_Poultice heals 1d4 HP on deep wounds._
+Fable · Wolf RP
+
+
+[6/18/2026 2:14 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **16** + 0 CON +2 prof = **18** vs DC **10** (Survival)
+**Success.**
+
+Found **Oak Bark**.
+_Stops bleeding; +2 stabilize._
+Fable · Wolf RP
+
+
+[6/18/2026 2:15 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **14** + 0 CON +2 prof = **16** vs DC **6** (Survival)
+**Success.**
+
+Found **Slippery Elm**.
+_Eat/drink without pain 8 hours._
+Fable · Wolf RP
+
+
+[6/18/2026 2:27 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Weather affects bone payouts — check `/weather`.
+After a hunt, track, or fishing catch, lay out **fresh-kill** with the button or `/preypile`.
+Fable · Wolf RP
+
+
+[6/18/2026 2:28 PM] Howlbert#0720
+
+
+{Embed}
+Large Prey!
+An **elk** bursts from the brush, antlers lowered. It will not flee.
+~15% hunt chance · down the prey to open the fresh-kill cache
+
+
+[6/18/2026 2:28 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Barkhollow
+Attack: 14 + -2 = **12** vs Defense: 6 + -1 = **5**
+**Hit!** 1 damage.
+Wild thrashing — ribs may crack.
+Target HP
+8/9
+Round 1 — Barkhollow's turn
+
+
+[6/18/2026 2:28 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Barkhollow vs Cornered Deer
+Attack: 5 + 1 = **6** vs Defense: 13 + 1 = **14**
+**Miss.**
+Target HP
+10/10
+Round 2 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 2:28 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Barkhollow
+Attack: 14 + -2 = **12** vs Defense: 14 + -1 = **13**
+**Miss.**
+Target HP
+8/9
+Round 2 — Barkhollow's turn
+
+
+[6/18/2026 2:28 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Skull Smash** requires the target to be badly wounded first (below 45% HP).
+Target HP
+10/10
+Round 3 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 2:29 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Barkhollow
+Attack: 16 + -2 = **14** vs Defense: 16 + -1 = **15**
+**Miss.**
+Target HP
+8/9
+Round 3 — Barkhollow's turn
+
+
+[6/18/2026 2:29 PM] Howlbert#0720
+
+
+{Embed}
+Combat Over
+**Barkhollow** yields (8/9 HP).
+With no opponents left, the encounter ends.
+Fable · Wolf RP
+
+
+[6/18/2026 2:33 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Weather affects bone payouts — check `/weather`.
+After a hunt, track, or fishing catch, lay out **fresh-kill** with the button or `/preypile`.
+Fable · Wolf RP
+
+
+[6/18/2026 2:34 PM] Howlbert#0720
+
+
+{Embed}
+A forgotten cache near a collapsed den.
+Earned
++🦴 5
+Balance
+🦴 5
+Fable · Wolf RP
+
+
+[6/18/2026 2:34 PM] Howlbert#0720
+
+
+{Embed}
+You follow spoor through bracken until the trail goes cold — but not empty-handed.
+Earned
++🦴 27
+Balance
+🦴 32
+Fable · Wolf RP
+
+
+[6/18/2026 10:23 PM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Curlgrip
+Birth Sex
+Intersex
+Sexuality
+Homosexual
+Role
+Hunter
+Age
+48 moons (Adult)
+Pack
+**Silverrush** (River)
+Motto
+_The river flows. The stones weep._
+Pack Trait
+Swift Current — +2 to Dexterity checks involving swimming or crossing water.
+Starting Herbs
+Meadowsweet, Alder Bark, Cattail, Purple Loosestrife
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/hunt` or `/work` for bones.
+Active wolf · 5 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 10:25 PM] Howlbert#0720
+
+
+{Embed}
+Drink
+Cold water from the **spring** creek — hunger **92** (+12), mood **77** (+2).
+Wolvden explore pools heal — this is the den creek
+
+
+[6/18/2026 10:25 PM] Howlbert#0720
+
+
+{Embed}
+Hall of Fame
+🥇 Test — 166 legacy (The Unremembered)
+🥈 Curlgrip — 35 legacy (The Unremembered)
+🥉 A — 0 legacy (The Unremembered)
+**4.** TestWolf — 0 legacy (The Unremembered)
+**5.** TestAlpha — 0 legacy (The Unremembered)
+**6.** TestBeta — 0 legacy (The Unremembered)
+**7.** TestLegend — 0 legacy (The Unremembered)
+**8.** TestAlpha — 0 legacy (The Unremembered)
+**9.** TestBeta — 0 legacy (The Unremembered)
+**10.** TestLegend — 0 legacy (The Unremembered)
+Fable · Wolf RP
+
+
+[6/18/2026 10:26 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+Old scraps near the riverbank. Not glorious, but it counts toward the pile.
+Earned
++🦴 14
+Balance
+🦴 14
+**Hare Carcass** in your hoard (`/prey`) · lay out with `/preypile` · Hunter — you may hunt again this sunrise
+
+
+[6/18/2026 10:26 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Curlgrip** dragged **a hare** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 14**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+_Each wolf may respond once — pick a character if you own several._
+Responses
+🍖 Eat your fill: **1**
+Fable · Wolf RP · 1 wolf(s) responded
+
+
+[6/18/2026 10:26 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Laid Out
+The cache is open — packmates can respond below.
+Fable · Wolf RP
+
+
+[6/18/2026 10:27 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/18/2026 10:27 PM] Howlbert#0720
+
+
+{Embed}
+You nose out a marrow-rich bone beneath the frost.
+Earned
++🦴 11
+Balance
+🦴 28
+Fable · Wolf RP
+
+
+[6/18/2026 10:27 PM] Howlbert#0720
+
+
+{Embed}
+You tracked well. The forest paid you for patience.
+Earned
++🦴 12
+Balance
+🦴 40
+Fable · Wolf RP
+
+
+[6/18/2026 10:27 PM] Howlbert#0720
+
+
+{Embed}
+A silver fish flips in your teeth at the riverbank.
+Earned
++🦴 12
+Balance
+🦴 52
+**River fish** in hoard (`/prey`) · `/preypile` to share at the den
+
+
+[6/18/2026 10:29 PM] Howlbert#0720
+
+
+{Embed}
+Quest Accepted
+Bring down prey with your jaws alone — the pack watches hunters.
+Objective
+hunt x2
+Reward
+🦴 70
+Fable · Wolf RP
+
+
+[6/18/2026 10:29 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+Old scraps near the riverbank. Not glorious, but it counts toward the pile.
+Earned
++🦴 12
+Balance
+🦴 64
+**Hare Carcass** in your hoard (`/prey`) · lay out with `/preypile` · Hunter — you may hunt again this sunrise
+
+
+[6/18/2026 10:30 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+Two rabbits in one sweep. A hunter's steady night at the cache.
+Earned
++🦴 18
+Balance
+🦴 82
+**Rabbit Carcass** in your hoard (`/prey`) · lay out with `/preypile` · Hunter — you may hunt again this sunrise
+
+
+[6/18/2026 10:38 PM] Howlbert#0720
+
+
+{Embed}
+On the Wind
+Pine and prey-scent tangled; a trail worth following at dawn.
+Season: spring · cloudy
+
+
+[6/18/2026 10:49 PM] Howlbert#0720
+
+
+{Embed}
+Curlgrip
+Role
+Hunter
+Age
+48 moons (Adult)
+Pack
+**Silverrush** (River)
+Birth Sex
+Intersex
+Sexuality
+Homosexual
+Condition
+Healthy
+STR
+6 (+1)
+DEX
+5 (+0)
+CON
+4 (-1)
+INT
+1 (-3)
+CHA
+1 (-3)
+WIS
+1 (-3)
+HP
+10 / 10
+Skills
+Hunting, Stealth
+Role Feature
+Killer's Instinct — +1d6 damage vs surprised or prone targets. May hunt without waiting for sunrise.
+Pack Trait
+Swift Current — +2 to Dexterity checks involving swimming or crossing water.
+Standing
+**0**
+In good standing with the den.
+Mood
+**77**/100
+Hunger
+**92/100**
+🦴 Bones
+🦴 82
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 5 on your account · /switchwolf to change
+
+
+[6/18/2026 10:52 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+Old scraps near the riverbank. Not glorious, but it counts toward the pile.
+Earned
++🦴 10
+Balance
+🦴 92
+**Hare Carcass** in your hoard (`/prey`) · lay out with `/preypile` · Hunter — you may hunt again this sunrise
+
+
+[6/18/2026 10:52 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+A full elk share. Your jaws still ache from the haul.
+Earned
++🦴 46
+Balance
+🦴 138
+**Deer Carcass** in your hoard (`/prey`) · lay out with `/preypile` · Hunter — you may hunt again this sunrise
+
+
+[6/18/2026 10:53 PM] Howlbert#0720
+
+
+{Embed}
+Quest Complete
+Quest
+Prove the Kill
+Bones
++🦴 70
+Standing
++5
+Fable · Wolf RP
+
+
+[6/18/2026 10:55 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Old Carrion** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:55 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**River Fish** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:55 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Hare Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:55 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Rabbit Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:56 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Hare Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:56 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Deer Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 10:59 PM] Howlbert#0720
+
+
+{Embed}
+Territory Map
+**Deep Furrow** (`deepfurrow`) — Unclaimed · +9🦴/rollover
+**Mistwood** (`mistwood`) — Unclaimed · +7🦴/rollover
+**Old Quarry** (`old_quarry`) — Unclaimed · +6🦴/rollover
+**Pine Ridge** (`pine_ridge`) — Unclaimed · +5🦴/rollover
+**River Crossing** (`river_crossing`) — Unclaimed · +8🦴/rollover
+**Stoneroot** (`stoneroot`) — Unclaimed · +10🦴/rollover
+Fable · Wolf RP
+
+
+[6/18/2026 11:00 PM] Howlbert#0720
+
+
+{Embed}
+A half-day mending trails through the pines earns a modest share.
+Earned
++🦴 21
+Balance
+🦴 229
+Fable · Wolf RP
+
+
+[6/18/2026 11:02 PM] Howlbert#0720
+
+
+{Embed}
+Gasp of the Belly-Rip
+**Gasp** — Drown-Sick Oracle of Mistmoor _(NPC)_
+_They/them · 4 years · formerly Bog-Born wolf named Reed_
+
+Gaunt, pale gray-green fur like bleached bones and swamp mist. Milky blind eyes that seem to look anyway. A soft wet gasp with every breath.
+
+Reed fell into the **Belly-Rip** for three days — longer than any other Drown-Sick. They emerged as Gasp: riddles, prophecies that come true, laughter at whispers no one else hears. They are unsettling but never cruel.
+
+_"Tell her the moon will blink twice before the snow melts."_
+_"It means she will understand when it happens."_
+Mistmoor · Path of the Belly · Drown-Sick Oracle
+
+
+[6/18/2026 11:03 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Curlgrip** howls for **Silverrush**.
+The den answers in scattered echoes before the wind takes them.
+Pack Unity
++1 → **7/10 (min -5)**
+Standing
++1
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+
+
+[6/18/2026 11:05 PM] Howlbert#0720
+
+
+{Embed}
+Faith of the Four Packs
+**The Prophecy of the Sundering's End**
+_Carved into stone in neutral territory no pack dares enter:_
+
+When the Teeth drink the Tears,
+When the Fur chokes the Belly,
+When the Maw closes its eye,
+The pack that was one will remember why it split.
+And the hunger will end, or begin again.
+
+No one agrees on what this means. But the moon grows larger every night.
+Fable · Wolf RP
+
+
+[6/18/2026 11:11 PM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Thyme
+Birth Sex
+Intersex
+Sexuality
+Demiromantic
+Role
+Diplomat
+Age
+36 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Motto
+_The forest remembers the names of the dead._
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Starting Herbs
+Comfrey, Plantain, Oak Bark, Slippery Elm
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/hunt` or `/work` for bones.
+Active wolf · 6 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 11:11 PM] Howlbert#0720
+
+
+{Embed}
+Thyme
+Role
+Diplomat
+Age
+36 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Birth Sex
+Intersex
+Sexuality
+Demiromantic
+Condition
+Healthy
+STR
+3 (-2)
+DEX
+4 (-1)
+CON
+4 (-1)
+INT
+5 (+0)
+CHA
+7 (+1)
+WIS
+5 (+0)
+HP
+7 / 7
+Skills
+Intimidation, Persuasion
+Role Feature
+Silver Tongue — reroll failed Charisma check once/session.
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Standing
+**0**
+In good standing with the den.
+Mood
+**75**/100
+Hunger
+**80/100**
+🦴 Bones
+🦴 0
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 6 on your account · /switchwolf to change
+
+
+[6/18/2026 11:12 PM] Howlbert#0720
+
+
+{Embed}
+You pull trout from the shallows as dusk settles.
+Earned
++🦴 18
+Balance
+🦴 18
+**River fish** in hoard (`/prey`) · `/preypile` to share at the den
+
+
+[6/18/2026 11:13 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Thyme** dragged **a fish** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 18**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+_Each wolf may respond once — pick a character if you own several._
+Responses
+🍖 Eat your fill: **1**
+Fable · Wolf RP · 1 wolf(s) responded
+
+
+[6/18/2026 11:13 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Laid Out
+The cache is open — packmates can respond below.
+Fable · Wolf RP
+
+
+[6/18/2026 11:13 PM] Howlbert#0720
+
+
+{Embed}
+Drink
+Cold water from the **spring** creek — hunger **92** (+12), mood **77** (+2).
+Wolvden explore pools heal — this is the den creek
+
+
+[6/18/2026 11:14 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/18/2026 11:14 PM] Howlbert#0720
+
+
+{Embed}
+A forgotten cache near a collapsed den.
+Earned
++🦴 11
+Balance
+🦴 33
+Fable · Wolf RP
+
+
+[6/18/2026 11:14 PM] Howlbert#0720
+
+
+{Embed}
+Large Prey!
+The herd broke wrong — one **stag** stands its ground instead of running.
+~15% hunt chance · down the prey to open the fresh-kill cache
+
+
+[6/18/2026 11:14 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 2 + -2 = **0** vs Defense: 18 + -1 = **17**
+**Miss.**
+Target HP
+7/7
+Round 1 — Thyme's turn
+
+
+[6/18/2026 11:15 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Thyme vs Cornered Deer
+Attack: 6 + 1 = **7** vs Defense: 6 + 1 = **7**
+**Hit!** 5 damage.
+Target HP
+5/10
+Round 2 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:15 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 6 + -2 = **4** vs Defense: 18 + -1 = **17**
+**Miss.**
+Target HP
+7/7
+Round 2 — Thyme's turn
+
+
+[6/18/2026 11:15 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Thyme vs Cornered Deer
+Attack: 14 + 1 = **15** vs Defense: 4 + 1 = **5**
+**Hit!** 1 damage.
+Target HP
+4/10
+Round 3 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:15 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 11 + -2 = **9** vs Defense: 4 + -1 = **3**
+**Hit!** 2 damage.
+Wild thrashing — ribs may crack.
+Target HP
+5/7
+Round 3 — Thyme's turn
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Bite** — Thyme vs Cornered Deer
+Attack: 18 + -2 = **16** vs Defense: 10 + 1 = **11**
+**Hit!** 1 damage.
+Target HP
+3/10
+Round 4 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 10 + -2 = **8** vs Defense: 20 + -1 = **19**
+**Miss.**
+Target HP
+5/7
+Round 4 — Thyme's turn
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Badger Defence** — Thyme vs Cornered Deer
+Attack: 7 + 1 = **8** vs Defense: 16 + 1 = **17**
+**Miss.**
+Target HP
+3/10
+Round 5 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 10 + -2 = **8** vs Defense: 10 + -1 = **9**
+**Miss.**
+Target HP
+5/7
+Round 5 — Thyme's turn
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Forepaw Slash** — Thyme vs Cornered Deer
+Attack: 2 + -1 = **1** vs Defense: 20 + 1 = **21**
+**Miss.**
+Target HP
+3/10
+Round 6 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 18 + -2 = **16** vs Defense: 20 + -1 = **19**
+**Miss.**
+Target HP
+5/7
+Round 6 — Thyme's turn
+
+
+[6/18/2026 11:16 PM] Howlbert#0720
+
+
+{Embed}
+Maneuver
+**Front Paw Blow** — Thyme vs Cornered Deer
+Attack: 6 + -2 = **4** vs Defense: 12 + 1 = **13**
+**Miss.**
+Target HP
+3/10
+Round 7 — Cornered Deer's turn · pick a wolf from the NPC attack menu
+
+
+[6/18/2026 11:17 PM] Howlbert#0720
+
+
+{Embed}
+Attack
+**Hoof Kick** — Cornered Deer vs Thyme
+Attack: 18 + -2 = **16** vs Defense: 4 + -1 = **3**
+**Hit!** 4 damage.
+Wild thrashing — ribs may crack.
+Target HP
+1/7
+Round 7 — Thyme's turn
+
+
+[6/18/2026 11:17 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Cache
+**Thyme** dragged **a deer** to the clearing — fresh-kill for the den.
+The haul is worth roughly **🦴 39**.
+
+Elders, pups, and sick wolves eat first by custom. **How do you respond?**
+_Each wolf may respond once — pick a character if you own several._
+Responses
+🛡️ Guard the pile: **1**
+Fable · Wolf RP · 1 wolf(s) responded
+
+
+[6/18/2026 11:17 PM] Howlbert#0720
+
+
+{Embed}
+Fresh-kill Secured
+You bring down the **a cornered deer** and drag it to the clearing.
+The **fresh-kill cache** is open — packmates can respond below.
+Haul
++🦴 39
+Fable · Wolf RP
+
+
+[6/18/2026 11:18 PM] Howlbert#0720
+
+
+{Embed}
+Thyme
+Role
+Diplomat
+Age
+36 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Birth Sex
+Intersex
+Sexuality
+Demiromantic
+Condition
+Healthy
+STR
+3 (-2)
+DEX
+4 (-1)
+CON
+4 (-1)
+INT
+5 (+0)
+CHA
+7 (+1)
+WIS
+5 (+0)
+HP
+1 / 7
+Skills
+Intimidation, Persuasion
+Role Feature
+Silver Tongue — reroll failed Charisma check once/session.
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Standing
+**1**
+In good standing with the den.
+Mood
+**77**/100
+Hunger
+**92/100**
+🦴 Bones
+🦴 72
+Prestige
+Tier 0 — The Unremembered
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 6 on your account · /switchwolf to change
+
+
+[6/18/2026 11:18 PM] Howlbert#0720
+
+
+{Embed}
+You follow spoor through bracken until the trail goes cold — but not empty-handed.
+Earned
++🦴 14
+Balance
+🦴 86
+Fable · Wolf RP
+
+
+[6/18/2026 11:19 PM] Howlbert#0720
+
+
+{Embed}
+Long Rest
+Recovered **1 HP** (now 2/7).
+Exhaustion: 0 → 0
+Fable · Wolf RP
+
+
+[6/18/2026 11:19 PM] Howlbert#0720
+
+
+{Embed}
+Treatment
+Comfrey poultice healed **4 HP**.
+Fable · Wolf RP
+
+
+[6/18/2026 11:20 PM] Howlbert#0720
+
+
+{Embed}
+Daily Quests — Day 4
+[Easy] Scrap Search — 🦴 45
+Scavenge the trails.
+Progress: **0/1**
+[Medium] Scent Trail — 🦴 100
+Track prey through the brush.
+Progress: **0/1**
+[Hard] Deep Den Dig — 🦴 165
+Scour the oldest trails for hidden bone.
+Progress: **0/1**
+Daily quests auto-assign each rollover. Use /complete when finished.
+
+
+[6/18/2026 11:25 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Thyme** howls for **Thistlehide**.
+Your voice carries over the ridges — a long, clear note.
+Pack Unity
++1 → **6/10 (min -5)**
+Standing
++1
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+
+
+[6/18/2026 11:27 PM] Howlbert#0720
+
+
+{Embed}
+Den Board
+Accept a quest with the buttons below.
+Border Patrol (easy) — 🦴 35
+`den_patrol` — Walk the pack border and watch for rival scent.
+Den Crafts (easy) — 🦴 40
+`den_crafter` — Shred toys and craft something useful at the hoard.
+First Blood (easy) — 🦴 50
+`first_hunt` — Complete your first hunt and bring meat back to the den.
+Range the Wild (easy) — 🦴 30
+`biome_wander` — Venture beyond the den — dig, follow scent, or investigate the biome.
+River Rations (easy) — 🦴 40
+`river_fish` — Catch fish from the Silverrush shallows.
+Feed the Treasury (medium) — 🦴 60
+`den_gift` — Deposit 50 bones into your pack treasury.
+Master Tracker (medium) — 🦴 120
+`triple_tracker` — Follow three separate scent trails to their source.
+Old Trails (medium) — 🦴 90
+`trail_seeker` — Explore the wild three separate sunrises.
+Fable · Wolf RP
+
+
+[6/18/2026 11:29 PM] Howlbert#0720
+
+
+{Embed}
+Quest Accepted
+Deposit 50 bones into your pack treasury.
+Objective
+deposit x50
+Reward
+🦴 60
+Fable · Wolf RP
+
+
+[6/18/2026 11:38 PM] Howlbert#0720
+
+
+{Embed}
+Quest Complete
+Quest
+Scrap Search
+Bones
++🦴 45
+Standing
++0
+Fable · Wolf RP
+
+
+[6/18/2026 11:38 PM] Howlbert#0720
+
+
+{Embed}
+Quest Complete
+Quest
+Scent Trail
+Bones
++🦴 100
+Standing
++0
+Fable · Wolf RP
+
+
+[6/18/2026 11:38 PM] Howlbert#0720
+
+
+{Embed}
+Quest Complete
+Quest
+Deep Den Dig
+Bones
++🦴 165
+Standing
++0
+Fable · Wolf RP
+
+
+[6/18/2026 11:39 PM] Howlbert#0720
+
+
+{Embed}
+Quest Complete
+Quest
+Feed the Treasury
+Bones
++🦴 60
+Standing
++8
+Fable · Wolf RP
+
+
+[6/18/2026 11:39 PM] Howlbert#0720
+
+
+{Embed}
+On the Wind
+You nose the wind — rabbit somewhere east of the creek.
+
+_Your whiskers prickle — prey-scent runs strong; strike while the trail is hot._
+**+15%** on **hunt** and **track** payouts this sunrise.
+Season: spring · cloudy · Sniff bonus active (+15%)
+
+
+[6/18/2026 11:42 PM] Howlbert#0720
+
+
+{Embed}
+Welcome to the Wild
+Wolf
+Frostburn
+Birth Sex
+Intersex
+Sexuality
+Demisexual
+Role
+Guard
+Age
+60 moons (Elder)
+Pack
+**Greyspire** (Mountain)
+Motto
+_Strength is truth. Blood is law._
+Pack Trait
+Stone Endurance — once per long rest, reduce damage from a single source by 1d6 + Strength modifier.
+Starting Herbs
+Arnica, Coneflower (Echinacea), Prickly Ash, Edelweiss
+_Added to `/inventory`._
+Next Steps
+Try `/profile` for your sheet, `/roll` for skill checks, `/hunt` or `/work` for bones.
+Active wolf · 7 wolves on your account · use /switchwolf to change
+
+
+[6/18/2026 11:42 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/18/2026 11:42 PM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+You ran down a hare across open ground — swift and sure within a few pawsteps.
+Earned
++🦴 29
+Balance
+🦴 29
+**Grouse Carcass** in your hoard (`/prey`) · lay out with `/preypile`
+
+
+[6/18/2026 11:43 PM] Howlbert#0720
+
+
+{Embed}
+A forgotten cache near a collapsed den.
+Earned
++🦴 11
+Balance
+🦴 40
+Fable · Wolf RP
+
+
+[6/18/2026 11:43 PM] Howlbert#0720
+
+
+{Embed}
+You follow spoor through bracken until the trail goes cold — but not empty-handed.
+Earned
++🦴 25
+Balance
+🦴 65
+Fable · Wolf RP
+
+
+[6/18/2026 11:43 PM] Howlbert#0720
+
+
+{Embed}
+A silver fish flips in your teeth at the riverbank.
+Earned
++🦴 17
+Balance
+🦴 82
+**River fish** in hoard (`/prey`) · `/preypile` to share at the den
+
+
+[6/18/2026 11:44 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**River Fish** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 11:44 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Old Carrion** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/18/2026 11:44 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Grouse Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/19/2026 11:20 AM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **12** + 1 CON +2 prof = **15** vs DC **6** (Survival)
+**Success.**
+
+Found **Arnica**.
+_Halves bruise/sprain recovery (external only)._
+Fable · Wolf RP
+
+
+[6/19/2026 11:21 AM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Frostburn** howls for **Greyspire**.
+The den answers in scattered echoes before the wind takes them.
+Pack Unity
++1 → **6/10 (min -5)**
+Standing
++1
+Steady — normal hunt payouts. Howl to strengthen the chorus.
+
+
+[6/19/2026 11:22 AM] Howlbert#0720
+
+
+{Embed}
+Long Rest
+Recovered **1 HP** (now 12/12).
+Exhaustion: 0 → 0
+Fable · Wolf RP
+
+
+[6/19/2026 11:23 AM] Howlbert#0720
+
+
+{Embed}
+Wolf Switched
+You're now playing as **Barkhollow**.
+Bones, inventory, quests, and cooldowns follow this wolf.
+Fable · Wolf RP
+
+
+[6/19/2026 11:23 AM] Howlbert#0720
+
+
+{Embed}
+Groom
+You work burrs from **Thyme**'s coat — **+5 mood** each.
+Your mood: **80** · Theirs: **82**
+They gain **+1 HP** from the care.
+Den unity **+1**.
+Fable · Wolf RP
+
+
+[6/19/2026 11:41 AM] Howlbert#0720
+
+
+{Embed}
+The Den Rollovers
+Day
+5
+Season
+Newgrowth (spring)
+Weather
+Clear
+Time
+Sunrise
+Activities reset when the den rolls over. Every wolf long-rests (+1 HP, −1 exhaustion) and ages 1 moon.
+
+
+[6/19/2026 11:42 AM] Howlbert#0720
+
+
+{Embed}
+Lesson in Humility
+An elder accuses you of misidentifying a poisonous plant. Tradition says you should eat what you picked — a lesson in humility.
+
+**1d20** → **17** + 1 INT +2 prof = **20** vs DC **14** (Herblore)
+**Success.**
+
+You prove the plant safe. The elder grunts and walks away.
+Earned
++🦴 5
+Forager · Nose of the Land — auto-find one common herb/day in pack territory. May forage w…
+
+
+[6/19/2026 11:58 AM] Howlbert#0720
+
+
+{Embed}
+Barkhollow
+Role
+Forager
+Age
+49 moons (Adult)
+Pack
+**Thistlehide** (Forest)
+Birth Sex
+Intersex
+Sexuality
+Bisexual
+Condition
+Healthy
+STR
+4 (-1)
+DEX
+4 (-1)
+CON
+5 (+0)
+INT
+7 (+1)
+CHA
+3 (-2)
+WIS
+5 (+0)
+HP
+9 / 9
+Skills
+Herblore, Survival
+Role Feature
+Nose of the Land — auto-find one common herb/day in pack territory. May forage without waiting for sunrise.
+Pack Trait
+Whisper Tree — once per session, ask the GM one question about the past or present in the forest, answered by your ancestor-tree.
+Standing
+**0**
+In good standing with the den.
+Mood
+**77**/100
+Hunger
+**68/100**
+🦴 Bones
+🦴 37
+Prestige
+Tier 1 — The Named
+https://images-ext-1.discordapp.net/external/LuVFpWnXXllkVV_g851pRZv_GizdhxapK8ks2p-zFpA/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1056053114177855548/1945f56bb5961794aaa45e819cffe344.png
+Active wolf · 7 on your account · /switchwolf to change
+
+
+[6/19/2026 12:02 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/19/2026 12:03 PM] Howlbert#0720
+
+
+{Embed}
+A forgotten cache near a collapsed den.
+Earned
++🦴 7
+Balance
+🦴 44
+Fable · Wolf RP
+
+
+[6/19/2026 12:03 PM] Howlbert#0720
+
+
+{Embed}
+You pull trout from the shallows as dusk settles.
+Earned
++🦴 14
+Balance
+🦴 58
+**River fish** in hoard (`/prey`) · `/preypile` to share at the den
+
+
+[6/19/2026 12:03 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **15** + 0 CON +2 prof = **17** vs DC **6** (Survival)
+**Success.**
+
+Found **Bindweed Vines**.
+_Lash splints; with comfrey −1 week healing._
+Fable · Wolf RP
+
+
+[6/19/2026 12:03 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **10** + 0 CON +2 prof = **12** vs DC **6** (Survival)
+**Success.**
+
+Found **Wild Cherry Bark**.
+_Stops coughing 2 hours, even blackcough._
+Fable · Wolf RP
+
+
+[6/19/2026 12:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **4** + 0 CON +2 prof = **6** vs DC **6** (Survival)
+**Success.**
+
+Found **Feverfew**.
+_Advantage on disease saves for 1 day._
+Fable · Wolf RP
+
+
+[6/19/2026 12:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **12** + 0 CON +2 prof = **14** vs DC **10** (Survival)
+**Success.**
+
+Found **Slippery Elm**.
+_Eat/drink without pain 8 hours._
+Fable · Wolf RP
+
+
+[6/19/2026 12:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **15** + 0 CON +2 prof = **17** vs DC **6** (Survival)
+**Success.**
+
+Found **Comfrey**.
+_Poultice heals 1d4 HP on deep wounds._
+Fable · Wolf RP
+
+
+[6/19/2026 12:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **13** + 0 CON +2 prof = **15** vs DC **6** (Survival)
+**Success.**
+
+Found **Chamomile**.
+_Advantage on Wisdom saves vs fear for 1 hour._
+Fable · Wolf RP
+
+
+[6/19/2026 12:05 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**River Fish** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/19/2026 12:05 PM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Old Carrion** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/19/2026 10:03 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/19/2026 10:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **9** + 0 CON +2 prof = **11** vs DC **6** (Survival)
+**Success.**
+
+Found **Celandine**.
+_Removes minor eye blindness within 1 hour._
+Fable · Wolf RP
+
+
+[6/19/2026 10:04 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **10** + 0 CON +2 prof = **12** vs DC **6** (Survival)
+**Success.**
+
+Found **Slippery Elm**.
+_Eat/drink without pain 8 hours._
+Fable · Wolf RP
+
+
+[6/19/2026 10:05 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **15** + 0 CON +2 prof = **17** vs DC **13** (Survival)
+**Success.**
+
+Found **Elderberry**.
+_+2 disease saves for 3 days._
+Fable · Wolf RP
+
+
+[6/19/2026 10:05 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **13** + 0 CON +2 prof = **15** vs DC **13** (Survival)
+**Success.**
+
+Found **Goldenrod**.
+_+2 HP per 8h rest._
+Fable · Wolf RP
+
+
+[6/19/2026 10:05 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **11** + 0 CON +2 prof = **13** vs DC **13** (Survival)
+**Success.**
+
+Found **Arnica**.
+_Halves bruise/sprain recovery (external only)._
+Fable · Wolf RP
+
+
+[6/19/2026 10:05 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **20** + 0 CON +2 prof = **22** vs DC **10** (Survival)
+**Critical success** — exceptional outcome or lasting boon.
+
+Found **Alder Bark** (double yield!).
+_Cures toothache and gum inflammation._
+Fable · Wolf RP
+
+
+[6/19/2026 10:06 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **18** + 0 CON +2 prof = **20** vs DC **10** (Survival)
+**Success.**
+
+Found **Catmint Tea**.
+_Cures severe blackcough (2 doses/24h)._
+Fable · Wolf RP
+
+
+[6/19/2026 10:06 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **20** + 0 CON +2 prof = **22** vs DC **10** (Survival)
+**Critical success** — exceptional outcome or lasting boon.
+
+Found **Plantain** (double yield!).
+_Gentle wound remedy._
+Fable · Wolf RP
+
+
+[6/19/2026 10:07 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **7** + 0 CON +2 prof = **9** vs DC **6** (Survival)
+**Success.**
+
+Found **Adder's Tongue**.
+_Reroll failed poison save with advantage if within 1 minute._
+Fable · Wolf RP
+
+
+[6/19/2026 10:07 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **9** + 0 CON +2 prof = **11** vs DC **6** (Survival)
+**Success.**
+
+Found **Plantain**.
+_Gentle wound remedy._
+Fable · Wolf RP
+
+
+[6/19/2026 10:09 PM] Howlbert#0720
+
+
+{Embed}
+Drink
+Cold water from the **spring** creek — thirst **100** (+28), hunger **74** (+6), mood **79** (+2).
+Thirst slips faster than hunger each sunrise — drink often.
+
+
+[6/19/2026 10:10 PM] Howlbert#0720
+
+
+{Embed}
+Groom
+You work burrs from **Thyme**'s coat — **+5 mood** each.
+Your mood: **84** · Theirs: **84**
+Den unity **+1**.
+Fable · Wolf RP
+
+
+[6/19/2026 10:11 PM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **20** + 0 CON +2 prof = **22** vs DC **18** (Survival)
+**Critical success** — exceptional outcome or lasting boon.
+
+Found **Swamp Milkweed** (double yield!).
+_Breaks curses; cures deadly disease._
+Fable · Wolf RP
+
+
+[6/19/2026 10:14 PM] Howlbert#0720
+
+
+{Embed}
+Courtship
+1d20 (17) + CHA = **17** vs DC **12**
+**Success** — target is receptive this season.
+Fable · Wolf RP
+
+
+[6/19/2026 10:14 PM] Howlbert#0720
+
+
+{Embed}
+Mating Bond
+**Barkhollow** and **Thyme** mate and form a bond.
+No pregnancy — biological pups require a female and male birth sex.
+Fable · Wolf RP
+
+
+[6/19/2026 10:16 PM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/19/2026 10:16 PM] Howlbert#0720
+
+
+{Embed}
+🔍 Explore — Investigate
+**1d20** → **8** + 1 INT +2 prof = **11** vs DC **11** (Survival)
+**Success.**
+
+Something moved in the brush — you circle wide and look closer.
+_Biome: thorn scrub and dry gulch_
+
+Found: **Bone** (5 uses)
+Amusement: /play · carcasses: /prey · sell scraps: /raccoon sell
+
+
+[6/19/2026 10:18 PM] Howlbert#0720
+
+
+{Embed}
+Play
+You bat **Bone** around the den — **+10 mood** (now **94**).
+**4** uses left.
+Fable · Wolf RP
+
+
+[6/19/2026 10:26 PM] Howlbert#0720
+
+
+{Embed}
+Socialize
+You and **Thyme** wrestle and groom — easy, familiar warmth.
+**+8 mood** each (you: **100**, them: **92**).
+Standing **+1**.
+Fable · Wolf RP
+
+
+[6/19/2026 10:27 PM] Howlbert#0720
+
+
+{Embed}
+Pack Howl
+**Barkhollow** howls for **Thistlehide**.
+Your voice carries over the ridges — a long, clear note.
+Pack Unity
++1 → **10/10 (min -5)**
+Standing
++1
+High unity — **+10%** hunt bones (50🦴 → 55🦴); howls rally harder.
+
+
+[6/19/2026 10:28 PM] Howlbert#0720
+
+
+{Embed}
+On the Wind
+Fish-oil and mud: the river bend was busy last night.
+Season: spring · clear
+
+
+[6/19/2026 10:28 PM] Howlbert#0720
+
+
+{Embed}
+You stand watch at the ravine crossing while hunters are out.
+Earned
++🦴 26
+Balance
+🦴 84
+Fable · Wolf RP
+
+
+[6/19/2026 10:29 PM] Howlbert#0720
+
+
+{Embed}
+Wolf Switched
+You're now playing as **Frostburn**.
+Bones, inventory, quests, and cooldowns follow this wolf.
+Fable · Wolf RP
+
+
+[6/20/2026 4:43 AM] Howlbert#0720
+
+
+{Embed}
+Hunt Complete
+A beaver never hears you over the water — until it's too late.
+Earned
++🦴 35
+Balance
+🦴 117
+**Beaver Carcass** in your hoard (`/prey`) · lay out with `/preypile`
+
+
+[6/20/2026 4:44 AM] Howlbert#0720
+
+
+{Embed}
+Forage Success
+**1d20** → **4** + 1 CON +2 prof = **7** vs DC **6** (Survival)
+**Success.**
+
+Found **Fennel**.
+_Extra day without food before exhaustion._
+Fable · Wolf RP
+
+
+[6/20/2026 4:45 AM] Howlbert#0720
+
+
+{Embed}
+On the Wind
+Pine and prey-scent tangled; a trail worth following at dawn.
+Season: spring · clear
+
+
+[6/20/2026 4:45 AM] Howlbert#0720
+
+
+{Embed}
+🔍 Explore — Investigate
+**1d20** → **20** + 0 WIS +2 prof = **22** vs DC **11** (Survival)
+**Critical success** — exceptional outcome or lasting boon.
+
+Something moved in the brush — you circle wide and look closer.
+_Biome: pine ridges and grey stone_
+
+**Double find!** **River Fish** and **Bone** (5 uses)
+Amusement: /play · carcasses: /prey · sell scraps: /raccoon sell
+
+
+[6/20/2026 4:46 AM] Howlbert#0720
+
+
+{Embed}
+Defender's Watch
+You defend the den site, the nursery, the Alpha's sleep. Something circles in the dark — older, larger, retired from the hunt but not from teeth.
+
+**1d20** → **13** + 0 CHA +2 prof = **15** vs DC **12** (Intimidation)
+**Success.**
+
+Your growl sends it running. The pups never wake.
+Earned
++🦴 12
+Standing
++2
+Guard · Defender's Resolve — impose disadvantage when adjacent packmate is attacked.
+
+
+[6/20/2026 4:48 AM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Beaver Carcass** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/20/2026 4:48 AM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**River Fish** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/20/2026 4:48 AM] Howlbert#0720
+
+
+{Embed}
+Drink
+Cold water from the **spring** creek — thirst **100** (+28), hunger **74** (+6), mood **74** (+2).
+Thirst slips faster than hunger each sunrise — drink often.
+
+
+[6/20/2026 4:49 AM] Howlbert#0720
+
+
+{Embed}
+Play
+You bat **Bone** around the den — **+10 mood** (now **84**).
+**4** uses left.
+Fable · Wolf RP
+
+
+[6/20/2026 4:51 AM] Howlbert#0720
+
+
+{Embed}
+Den Activities
+Once-per-sunrise actions. Catches go to your **prey hoard** (`/prey`) and rot over time.
+Lay out fresh-kill at the den with `/preypile` or the hunt button.
+Fable · Wolf RP
+
+
+[6/20/2026 4:51 AM] Howlbert#0720
+
+
+{Embed}
+Scraps along the trail. Humble, but honest.
+Earned
++🦴 3
+Balance
+🦴 132
+Fable · Wolf RP
+
+
+[6/20/2026 4:51 AM] Howlbert#0720
+
+
+{Embed}
+The current runs cold, but your haul runs true.
+Earned
++🦴 19
+Balance
+🦴 151
+**River fish** in hoard (`/prey`) · `/preypile` to share at the den
+
+
+[6/20/2026 4:51 AM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**Old Carrion** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/20/2026 4:51 AM] Howlbert#0720
+
+
+{Embed}
+Food Reserve
+**River Fish** added to the den food reserve (`/pack stash`).
+Fable · Wolf RP
+
+
+[6/26/2026 8:04 AM] Howlbert#0720
+
+
+{Embed}
+The Den Rollovers
+Day
+101
+Season
+Newgrowth (spring)
+Weather
+Wind
+Time
+Sunrise
+Moon
+Waxing Gibbous
+Aged this sunrise
+[]
+Low treasury
+**Mistmoor** treasury **28** 🦴; low for daily stipends (~**400** 🦴 needed).
+**Thistlehide** treasury **50** 🦴; low for daily stipends (~**450** 🦴 needed).
+**Silverrush** treasury **6** 🦴; low for daily stipends (~**325** 🦴 needed).
+Hunger −12 · thirst −14 · low mood/hunger/thirst +1 exhaustion each. Exhaustion 6 = death. At 0 hunger/thirst, collapse: `/medic action:deathsaves`. Long-rest: +1 HP, −1 exhaustion. Age +1 moon when the sky matches your birth phase (new / half / full).
+
+
+==============================================================
+Exported 257 message(s)
+==============================================================

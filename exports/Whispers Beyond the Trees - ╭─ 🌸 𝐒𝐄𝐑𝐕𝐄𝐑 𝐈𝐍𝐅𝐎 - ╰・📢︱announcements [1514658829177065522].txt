@@ -1,0 +1,270 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: ╭─ 🌸 𝐒𝐄𝐑𝐕𝐄𝐑 𝐈𝐍𝐅𝐎 / ╰・📢︱announcements
+==============================================================
+
+[6/12/2026 9:37 AM] lizardpelt
+@everyone hellooo !
+just popping in to remind everyone to pick up roles :333
+also add sexuality (if your character is not a pup) to your character channel and add character permissions (check https://discord.com/channels/1501605895837057174/1514290538315124898 for a comprehensive list) to either your character channel or the character permissions channel
+
+
+[6/12/2026 8:01 PM] lizardpelt
+@everyone add your character as a tupper so we can start heading towards beginning the rp ! if you need help, let me or a mod know.
+also the format we're doing is 24/7 text rp (you can respond anytime) with in game events and/or minor sessions.
+i will be creating NPCs for the mods to play as so we don't have to wait for all the roles to be filled !
+
+
+[6/14/2026 9:05 AM] lizardpelt
+@everyone as you might have noticed, i finally worked on the formatting of the dice guide
+
+
+[6/14/2026 9:06 AM] lizardpelt
+
+
+
+[6/15/2026 8:55 PM] lizardpelt
+@everyone if you'd like to adopt an NPC, please let me or a mod know ! you can adopt as many as you'd like :333
+
+
+[6/16/2026 2:22 PM] lizardpelt
+@everyone i'm done the examples channel, please read it and tell me what you think !
+
+
+[6/16/2026 2:23 PM] lizardpelt
+
+
+
+[6/16/2026 7:10 PM] twisted_rivers
+@everyone Hey guys just a heads up so we aren’t using AI In any part of the server @basil 🦎 and I are making wolves that will be put under your character sheet once it’s put up there and you have tupperbot set can you please use what we have put as the avatar. Thank you 😊 if you are wanting to make your own we are currently using https://www.wolvden.com or you can use a photo of your wolf from the Whispering Wilds game
+
+{Reactions}
+🌲 (2)
+
+[6/17/2026 4:44 AM] lizardpelt
+@everyone hello everyone, you may have heard that 'whispering wilds' has been inevitably sold off to a development studio, "pumped entertainment". while i am not sure if it's true, you may also have noticed changes to the official server.
+
+at this time, it is unclear the future of the game or what will happen with the game.
+
+ we will do our best to keep our community updated when we find things out.
+
+**warning**
+
+some people are finding that when they join the game currently, they are being banned by the anti-cheat system the new developer has added into the game.
+
+if you decide to log in, please be aware of this risk. 
+
+**what this means for our community**
+
+to clarify, our community will not be disappearing !! don't worry !
+
+we will continue to play other games and look for games in similar genres that allow for our stories and the pack to be maintained.
+
+
+**text roleplay is still an option**
+
+in the meantime, remember that we have text-based roleplay available right here in the server. even if the game itself becomes unstable or changes beyond recognition, our stories don't have to stop.
+
+you can develop your characters, run pack plots, and build relationships through written rp — no game client required. this is always a fallback and a core part of who we are.
+
+we'll share more information as soon as we have it. keep an eye on the announcements channel, and feel free to ask staff if you have questions.
+
+**new rules**
+also also, i have added new rules to all the rules channels. please look through them. if you have questions or suggestions, please use the appropriate channels.
+
+
+[6/17/2026 4:45 AM] lizardpelt
+also join the new server made by the original developer of 'whispering wilds':  https://discord.gg/Ms5BNPCDfs
+
+
+[6/18/2026 10:32 PM] twisted_rivers
+@everyone Just a quick update after speaking to some of the older mods for the game earlier. please play the game safely as of currently it is not being moderated at all and people are randomly getting banned from the game as well, if you do play expect there to be a lot of people breaking  TOS and protect yourself from a false ban if applicable (try to stay away from the ones blatantly breaking the rules)
+
+
+[6/20/2026 2:08 PM] twisted_rivers
+@everyone this is mainly for the ones that haven’t picked out a wolf or made their own sheet yet
+
+There have been changes to a few channels to make it a bit easier to see which wolves are adoptable
+
+If you see a channel with 📝 after the name those are the ones currently available
+
+
+[6/23/2026 3:11 PM] lizardpelt
+helooo @everyone,
+
+you might've noticed me messing around with a bot called howlbert . . .
+
+i built it custom for this server. the whole point is to give inspo for rp: hunts, pack life, herbs, weather, pups, that kind of thing. you can lean into that for scenes, or ignore it and just play with the systems for fun on its own. totally your call.
+
+heads up: i've already added everyone's wolves to howlbert and linked them to your discord accounts. you shouldn't need to remake your character from scratch. when the bot's up, try /wolves or /profile first and see if yours is there. /register is only if you're new or you don't see your wolf yet.
+
+how it works right now: howlbert is not hosted 24/7. slash commands only work when i'm online and have it running on my pc. when i'm off, it's asleep. if you want it up while you play, someone can run it locally; step by step is in the github readme: https://github.com/defendantratio/howlbert
+
+getting started (when it's up):
+
+✦ /profile for your sheet
+✦ /wolves if you have more than one wolf
+✦ /help topic:getting-started for the full guide
+✦ /bones action:hunt or action:work to earn bones
+
+there's also a ko-fi shop if you want to support development (bone pouches, gift codes, rp extras like revives). use /patron in discord for how tips and orders hook up. all optional. link: https://ko-fi.com/basilsprouts
+
+questions, bugs, weird lore moments: ping me. have fun with it if you want to try it out !
+
+-# sorry for the block of text >.<
+
+{Embed}
+https://github.com/defendantratio/howlbert
+GitHub - defendantratio/howlbert: a discord wolf RPG bot built cust...
+a discord wolf RPG bot built custom for the discord linked below: - defendantratio/howlbert
+https://images-ext-1.discordapp.net/external/nlPz7hYSliRAq_qFX6I-AAvbnm7Sxjml9tEqSTjvNG4/https/opengraph.githubassets.com/621002f2f3299a420c0e413d5fc6c812df61d1ca66655ff82e8e85a76e1d1b64/defendantratio/howlbert
+
+{Embed}
+https://ko-fi.com/basilsprouts
+Support basilsprouts
+Support basilsprouts
+https://images-ext-1.discordapp.net/external/b0ROvchZi_bl_ZHvmfLf_Mp3X-ws3n3G-vQu2Wr9SX4/https/storage.ko-fi.com/cdn/generated/fhfuc7slzawvi/2026-06-19_rest-af8d9d9d268817a0ef11ca8b8e318efc-ytimwtmv.jpg
+
+
+[6/25/2026 9:47 AM] twisted_rivers
+Good morning @everyone,
+
+Two quick announcements
+
+1. While the game is undergoing new ownership we have been informed while the game bans have lessened using lower end devices or devices that have a lag still have a higher chance of the anti-cheat system banning for exploits and Lag hacks, We highly recommend using a device to play that doesn’t have lag as we are unsure when you would be able to put a ticket in if it was a unfair ban and be able to enter back into the game
+
+
+Secondly our server here is under new ownership our previous owner Vamp has left and @basil 🦎 is now the server owner, The reasoning as to why Vamp has left will not be disclosed please do not go around asking the mods here as to why.
+
+Sorry for the ping and have a wonderful day, hopefully once all is fixed we can finally start playing, until then we do have channels Im the server i would highly recommend trying out
+
+
+[6/25/2026 10:35 AM] lizardpelt
+also sorry about the howlbert dms, it's supposed to send it once per day but it keeps sending it whenever the bot comes back online 😭😭 it should be fixed now though
+and feel free to text RP while we're waiting for the game owners to sort themselves out !
+
+
+[6/26/2026 11:58 AM] lizardpelt
+@everyone eeeeeeee i just added some major features to howlbert :333
+
+i had the idea to make it our "in-game RP" because of the stuff happening with whispering wilds >.<
+
+this is all completely optional btw
+
+tupperbox is great for *talking* as your wolf, but it doesn't know you're in greyspire, whether you're starving, who your mate is, or that you just earned blooding. howlbert does. one character for slash commands, hunts, bonds, injuries, pack life, and typed lines; instead of  bot + a proxy + a notes doc.
+
+✦ proxy works tupperbox-style, but wired to your real wolf (name, avatar, pack, profile, journal)
+✦ game state shows up where RP matters; mood, bonds, blooding, den news, deaths, and pack moves log automatically in `/journal`
+✦ scenes, locations, ceremonies, and body language are built for this den, not generic plural tooling
+
+more below :3 `/help topic:roleplay`for the full guide
+
+**speak as your wolf**
+
+✦ `/proxy set tag:H:text` then type `H:your line` 
+✦ `/proxy avatar` upload and crop a portrait; `/proxy autoproxy` to default one wolf (`\` at the start of a line sends as you once)
+✦ `((ooc))` or `//` in proxy text; ic posts as the wolf, ooc in the footer
+✦ `/say` and `/whisper` for quick ic lines and private ic dms
+✦ `/character` for pronouns, bio, birthday, avatar, ref on `/profile`
+
+**migrating from tupperbox**
+
+1. send `tul!export` in #╰・🤖︱bot-commands 
+2. save the `.json` file it sends you
+3. in this server run `/proxy import` and attach that file
+4. export names must match your howlbert wolf names (`/wolves` to check). if something didn't link, `/rename` to match, then `/proxy import` again
+5. optional: `/proxy avatar` if you want cropped portraits here; `/proxy autoproxy` if you had autoproxy on before
+
+
+[6/26/2026 11:59 AM] lizardpelt
+**body language** (not just text!)
+
+✦ `/sign` visual signals: **alert · rally · play · submit · soothe · threaten · read**
+✦ mute wolves can't `/howl`; their **rally** sign builds extra unity instead, and denmates answer with `/sign signal:read`
+✦ good for tense scenes, submission, play bows, "something's wrong" without another dialogue paragraph
+
+**scenes & presence**
+
+✦ `/scene start` opens an rp thread with a pinned living roster; posting auto-joins you; `/scene poke` pings everyone there
+✦ `/location set` for where your wolf is ic (shows on `/profile` and proxy footers)
+✦ `/roster` gallery of living wolves registered in the server
+
+
+**den life**
+
+✦ `/journal` automatic timeline (register, birth, pack, bonds, blooding, death, rites); you don't write it yourself
+✦ `/rite naming` · `blooding` · `mourning` ceremonies in-channel
+✦ `/family` relationship tree diagram
+✦ `/npc` staff register npcs; anyone can `/npc say`
+✦ birthdays still celebrate in sunrise den news at 12 moons :3
+
+have fun being wolves :333 
+questions? → `/help topic:roleplay` or ping staff in #╰・❓︱questions 
+
+-# sorry about the long announcement >.<
+
+{Reactions}
+❤️ (3)
+
+[6/26/2026 5:01 PM] twisted_rivers
+@everyone This situation below is still not confirmed as of yet by the games previous admins, but there seems to be a situation with the new ownership that bought the current game, this announcement was made by another games owner who was scammed by the same ownership that took over ours, As of right now we have no set confirmation but I figured I would let you know in case something does happen
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1514658829177065522/1520172215767666688/Screenshot_2026-06-26-23-50-13-517_com.discord.jpg?ex=6a418bb3&is=6a403a33&hm=6918975253db7927fb14a4e6ac5a987d8f26c869d32a1f031adaa6c1b5e4aad8&
+
+
+[6/26/2026 5:45 PM] twisted_rivers
+So update on this currently is does look like the previous owners were also scammed there is no update on what will happen with the game or if they are able to get it back
+
+
+[6/27/2026 11:09 AM] twisted_rivers
+
+
+{Forwarded Message}
+# Community Update
+
+We regret to inform everyone that The Whispering Wild and The Whispering Studios were the victims of a fraudulent acquisition.
+
+The ownership transfer was carried out under the belief that the buyers were legitimate. It has since become clear that the community responsible was operating as a scam, meaning the previous information shared about the transfer is no longer accurate.
+
+Here's what you should know:
+• The game and community were acquired through fraud by a scam organization.
+• Legal action is currently being taken against those responsible.
+• Protocols are in place for when, or if, the game can be recovered.
+• We cannot guarantee recovery, so please avoid spreading speculation or rumors.
+
+The official Whispering Studios Discord server will be permanently closed for the foreseeable future. Even if the game is recovered, the server will remain closed until further notice.
+
+# Important Security Notice
+If you are currently a member of the official Whispering Studios Discord server:
+
+Do NOT respond to direct messages from anyone connected to that server. The individuals responsible are reportedly also attempting to compromise Discord and Roblox accounts.
+
+If you receive unexpected DMs, requests to click links, download files, verify your account, or transfer ownership of anything:
+
+• Do not reply.
+• Do not click any links.
+• Do not download any files.
+• Do not change/share your passwords.
+• Block the account immediately.
+• Report the account to Discord if appropriate.
+
+Please remember that the previous owner, staff team, moderators, and community members were also victims of this situation. We understand that everyone is frustrated, but we ask that you do not direct anger toward those who acted in good faith.
+
+We know this is difficult news to hear. Thank you for your patience, your understanding, and for helping keep one another safe. We will share official updates as soon as we are able.
+
+|| @deleted-role @deleted-role ||
+Originally sent: 6/27/2026 11:07 AM
+
+
+[6/27/2026 11:09 AM] twisted_rivers
+@everyone
+
+
+[6/27/2026 11:10 AM] twisted_rivers
+If you are a part of the official discord server, I would highly recommend you leave it
+
+
+==============================================================
+Exported 22 message(s)
+==============================================================

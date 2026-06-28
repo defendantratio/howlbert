@@ -77,6 +77,8 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ **forage food** (berries, windfall fruit, roots, greens) drops from `/field forage` and `scavenge`; it ripens then overripens, just like meat rots  
 ✦ **passive scavenge**: unfed wolves forage a little each sunrise so neglect bites without instantly starving the den  
 ✦ **death log**: `/wolfadmin deaths` records cause of death each rollover  
+✦ **admin tooling**: `/wolfadmin import_sheet` parses a pasted/attached RP character sheet into a registered wolf (dry-run preview by default); `/wolfadmin dormant` exempts admin-held NPC wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
+✦ **pack-specific plot quests**: each great pack has its own gated board quest tied to its lore (e.g. Silverrush's dam sabotage, Greyspire's mining-camp raid)  
 ✦ **basil's rules** for attributes, skill checks, combat, herbs, disease, and pups; use `/help` in discord for the player guide
 
 ## commands
@@ -95,7 +97,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/raccoon`   | `sell`, `buy`, `offer`                                                                                        |
 | `/packlife`  | `feedall`, `drinkall`, `howl`                                                                                 |
 | `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
-| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `read` (mute wolf's howl stand-in) |
+| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `freeze`, `track`, `greet`, `grieve`, `challenge`, `read` (unlimited; repeat signs on the same partner pay out less mood, down to 20%) |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`, `plot`, `hazard`, `travel`, `encounter`, `omen`                   |
 | `/garden`    | `plots`, `seeds`, `plant`, `tend`, `harvest`, `clear`, `buy`, `guide` (grow your own herbs from seed)         |
 | `/quest`     | `board`, `daily`, `accept`, `progress`, `complete`, `abandon`, `log`                                          |
@@ -127,7 +129,8 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/location`                                            | set, clear, or show your wolf's in-character whereabouts |
 | `/journal`                                             | read-only automatic life timeline (birth, pack, bonds, blooding, death, rites) |
 | `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning` |
-| `/npc`                                                 | server NPC registry (`add`/`remove` admin) and `/npc say` |
+| `/npc`                                                 | server NPC registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
+| `/weep`                                                 | silverrush only, once per sunrise: release grief at the weep stone |
 | `/roster`                                              | gallery of living registered wolves in the server |
 | `/proxy`                                               | speak in-character as your wolves; import from Tupperbox |
 | `/wolves` `/switchwolf` `/rename` `/setfaction`        | multi-wolf and faction                                 |
@@ -136,7 +139,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/scout rescout` `/survey` `/trail`                    | scout field commands                                   |
 | `/pack …`                                              | treasury, stash, tax, territory, wars, unity, `pact` (cat clans), `share`/`aid`, `tradepack`, `brokenrite` |
 | `/bonds`                                               | friendships, rivalries, kin, mentors, found families   |
-| `/sign`                                                | body/visual language; mute wolves rally without a howl |
+| `/sign`                                                | body/visual language; mute wolves rally without a howl; unlimited, diminishing returns on repeat partners |
 | `/combat …`                                            | initiative combat; `/combat encounter` for ambushes    |
 | `/hazard`                                              | weather opposed roll                                   |
 | `/medic action:quarantine`                               | isolate sick wolves (or `action:quarantine`)           |
@@ -206,7 +209,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **herb gardens:** grow your own with `/garden` — buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
-illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:profile` in discord for the full list.
+illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), river rot (silverrush; sewage-tainted water, no known cure), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:profile` in discord for the full list.
 
 ## territory wars
 
@@ -250,20 +253,21 @@ legacy grows from **completing quests** and `**/prestige action:retire`**. bone 
 
 speak in-character as your wolves, tupperbox-style — plus slash tools that work without reading typed messages.
 
-✦ `/character` sets a wolf's **pronouns, bio, birthday, avatar, and ref image** (shown on `/profile`)
-✦ `/proxy set tag:H:text` registers a proxy tag; typing `H:hello` reposts as that wolf via webhook and deletes your message
-✦ `/proxy avatar`, `/proxy list`, `/proxy clear`, `/proxy autoproxy` manage proxies; autoproxy posts all untagged messages as one wolf (`\` escapes a single message)
-✦ `/proxy import` migrates from **Tupperbox** (DM Tupperbox `tul!export`) or **PluralKit** exports, auto-linking to wolves by name
-✦ proxy **OOC markers**: wrap `((out of character))` or start a line with `//`; IC text posts as the wolf, OOC shows in the footer
-✦ `/say` and `/whisper` post one-line IC speech without the message content intent
-✦ `/location set` · `clear` · `show` — IC whereabouts on `/profile` and proxy footers
-✦ `/journal` reads your wolf's **automatic** timeline (register, birth, pack moves, bonds, blooding, death, rites); no player editing
-✦ `/scene start` opens a roleplay **thread** with a **pinned living roster**; posting auto-joins you (`/scene poke` pings the scene)
-✦ `/rite naming` · `blooding` · `mourning` — pack ceremonies in-channel
-✦ `/npc add` · `remove` · `list` (admin) and `/npc say` for staff-defined NPCs
-✦ `/roster` — server gallery of living wolves; `/family` for relationship trees
-✦ `/sign` — body language when a wolf can't howl (mute rally, alert, play, etc.)
-✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)
+✦ `/character` sets a wolf's **pronouns, bio, birthday, avatar, and ref image** (shown on `/profile`)  
+✦ `/proxy set tag:H:text` registers a proxy tag; typing `H:hello` reposts as that wolf via webhook and deletes your message  
+✦ `/proxy avatar`, `/proxy list`, `/proxy clear`, `/proxy autoproxy` manage proxies; autoproxy posts all untagged messages as one wolf (`\` escapes a single message)  
+✦ `/proxy import` migrates from **Tupperbox** (DM Tupperbox `tul!export`) or **PluralKit** exports, auto-linking to wolves by name  
+✦ proxy **OOC markers**: wrap `((out of character))` or start a line with `//`; IC text posts as the wolf, OOC shows in the footer  
+✦ `/say` and `/whisper` post one-line IC speech without the message content intent  
+✦ `/location set` · `clear` · `show` — IC whereabouts on `/profile` and proxy footers  
+✦ `/journal` reads your wolf's **automatic** timeline (register, birth, pack moves, bonds, blooding, death, rites); no player editing  
+✦ `/scene start` opens a roleplay **thread** with a **pinned living roster**; posting auto-joins you (`/scene poke` pings the scene)  
+✦ `/rite naming` · `blooding` · `mourning` — pack ceremonies in-channel  
+✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
+✦ `/roster` — server gallery of living wolves; `/family` for relationship trees  
+✦ `/sign` — body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  
+✦ `/weep` — silverrush only, once per sunrise: release grief alone at the weep stone (also eases the `grief_melancholy` condition)  
+✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)  
 ✦ optional **RP ambience**: set `RP_AMBIENCE_CHANNEL_IDS` in `.env` for sunrise season/weather/moon posts on rollover
 
 **requirements:** typed proxy tags need the **Message Content Intent** in the Discord Developer Portal, plus **Manage Webhooks** + **Manage Messages** in RP channels. scenes need **Create Public Threads**.

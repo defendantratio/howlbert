@@ -357,6 +357,45 @@ def cross_pack_prey_dispute(
     return note, enc_id
 
 
+# Lore-grounded opening stances (0-10 scale; see HOSTILE/FRIENDLY/WAR thresholds
+# above). Drawn from each Great Pack's "Relations with Other Packs" lore:
+# Greyspire is wary-but-trading with Silverrush, disgusted by Mistmoor, and in
+# open border dispute with Thistlehide; Silverrush is cautiously allied with
+# Thistlehide (shared Twoleg threats) and trades reluctantly with Mistmoor for
+# rot-cure knowledge; Thistlehide avoids Mistmoor entirely (a marsh separates
+# them, so no active border friction). Only seeds pairs still at the untouched
+# default of 5, so it never overwrites diplomacy that's already been played out.
+LORE_OPENING_STANDINGS: dict[frozenset[str], int] = {
+    frozenset({"greyspire", "silverrush"}): 6,  # wary but trade fish for herbs
+    frozenset({"greyspire", "mistmoor"}): 2,  # "belly-lickers"; disgust
+    frozenset({"greyspire", "thistlehide"}): 3,  # open border dispute, high valley
+    frozenset({"silverrush", "mistmoor"}): 4,  # distrust, but reluctant trade
+    frozenset({"silverrush", "thistlehide"}): 8,  # cautious alliance vs Twolegs
+    frozenset({"thistlehide", "mistmoor"}): 3,  # avoidance; marsh keeps borders apart
+}
+
+
+def seed_lore_pack_relations(guild_id: int) -> list[str]:
+    """
+    Apply LORE_OPENING_STANDINGS for a guild's four Great Packs. Only touches
+    pairs still sitting at the untouched default (5); returns a list of
+    human-readable change lines for anything it actually set.
+    """
+    changes: list[str] = []
+    for pair_keys, standing in LORE_OPENING_STANDINGS.items():
+        key_a, key_b = sorted(pair_keys)
+        pack_a = db.get_pack_by_key(key_a)
+        pack_b = db.get_pack_by_key(key_b)
+        if not pack_a or not pack_b:
+            continue
+        current = db.get_pack_relation(guild_id, int(pack_a["id"]), int(pack_b["id"]))
+        if current != NEUTRAL_STANDING:
+            continue
+        db.adjust_pack_relation(guild_id, int(pack_a["id"]), int(pack_b["id"]), standing - NEUTRAL_STANDING)
+        changes.append(f"{pack_a['name']} <-> {pack_b['name']}: {NEUTRAL_STANDING} -> {standing}")
+    return changes
+
+
 def court_relation_note(courter, target, guild_id: int | None, effective: str) -> str | None:
     """footer line when cross-pack standing shaped court difficulty."""
     standing = cross_pack_relation(courter, target, guild_id)

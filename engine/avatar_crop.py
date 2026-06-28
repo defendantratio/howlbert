@@ -13,16 +13,17 @@ MAX_BYTES = 256 * 1024
 ALLOWED_CONTENT_TYPES = frozenset(
     {"image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"}
 )
-allowed_extensions = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 
-pan_step = 24
-zoom_step = 0.12
-min_zoom = 1.0
-max_zoom = 4.0
+ALLOWED_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
+
+PAN_STEP = 24
+ZOOM_STEP = 0.12
+MIN_ZOOM = 1.0
+MAX_ZOOM = 4.0
 
 
 @dataclass
-class cropstate:
+class CropState:
     offset_x: float = 0.0
     offset_y: float = 0.0
     zoom: float = 1.0
@@ -32,9 +33,8 @@ class cropstate:
         self.offset_y = 0.0
         self.zoom = 1.0
 
-
-def _open_image(data: bytes) -> image.image:
-    img = image.open(io.bytesio(data))
+def _open_image(data: bytes) -> Image.Image:
+    img = Image.open(io.BytesIO(data))
     if getattr(img, "is_animated", False):
         img.seek(0)
     return ImageOps.exif_transpose(img.convert("rgba"))

@@ -65,12 +65,23 @@ class PlayerEmbed(discord.Embed):
     def set_footer(self, *, text=..., icon_url=...):
         if text is not ... and text is not None:
             text = player_text(text)
+        if icon_url is ...:
+            return super().set_footer(text=text)
+        if not icon_url:
+            return super().set_footer(text=text, icon_url=None)
         return super().set_footer(text=text, icon_url=icon_url)
 
     def set_author(self, *, name=..., url=..., icon_url=...):
         if name is not ... and name is not None:
             name = player_text(name)
-        return super().set_author(name=name, url=url, icon_url=icon_url)
+        kwargs: dict[str, object] = {}
+        if name is not ...:
+            kwargs["name"] = name
+        if url is not ...:
+            kwargs["url"] = url
+        if icon_url is not ...:
+            kwargs["icon_url"] = icon_url
+        return super().set_author(**kwargs)
 
 
 def howlbert_embed(title: str, description: str = "", *, color=EMBED_COLOR) -> PlayerEmbed:

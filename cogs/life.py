@@ -19,7 +19,7 @@ from utils.mate_views import MateConsentView
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS, SKILLS, MAX_SKILL_RANK, XP_PER_TRAIT
 from engine.role_restrictions import young_wolf_block
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.notifications import notify_consent_request
 from utils.herb_autocomplete import herb_inventory_autocomplete
 from cogs.care_handlers import lay_to_rest, naming_ceremony, quarantine_command, sacred_visit, spirit_ritual, treat

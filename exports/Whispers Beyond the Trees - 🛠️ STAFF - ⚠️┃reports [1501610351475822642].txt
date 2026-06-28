@@ -1,0 +1,684 @@
+==============================================================
+Guild: Whispers Beyond the Trees
+Channel: 🛠️ STAFF / ⚠️┃reports
+==============================================================
+
+[6/10/2026 9:30 AM] Dyno#3861
+Dyno™ #dyno-updates
+
+
+[6/11/2026 9:29 PM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** @mikaj4640 (@FantasyFellow)
+> **Condition(s):** Filter 3
+
+
+[6/11/2026 9:34 PM] Carl-bot#1536
+
+
+{Embed}
+unban | case 2
+**Offender:** mikaj4640  @FantasyFellow
+**Reason:** No reason given, use `!reason 2 <text>` to add one
+**Responsible moderator:** lizardpelt
+ID: 742217235178979420
+
+
+[6/11/2026 10:36 PM] Carl-bot#1536
+
+
+{Embed}
+warn | case 3
+**Offender:** hoovedmerryfaun  @The Tortured Prince Horn
+**Reason:** Automatic action carried out for using a blacklisted word (fuck).
+**Responsible moderator:** Carl-bot#1536
+ID: 1424899628469456999
+
+
+[6/11/2026 10:36 PM] Carl-bot#1536
+
+
+{Embed}
+mute | case 4
+**Offender:** hoovedmerryfaun  @The Tortured Prince Horn
+**Reason:** Automatic action carried out for using a blacklisted word (fuck).
+**Responsible moderator:** Carl-bot#1536
+ID: 1424899628469456999
+
+
+[6/11/2026 10:40 PM] Carl-bot#1536
+
+
+{Embed}
+warn | case 5
+**Offender:** hoovedmerryfaun  @The Tortured Prince Horn
+**Reason:** Automatic action carried out for using a blacklisted word (fuck).
+**Responsible moderator:** Carl-bot#1536
+ID: 1424899628469456999
+
+
+[6/11/2026 10:40 PM] Carl-bot#1536
+
+
+{Embed}
+mute | case 6
+**Offender:** hoovedmerryfaun  @The Tortured Prince Horn
+**Reason:** Automatic action carried out for using a blacklisted word (fuck).
+**Responsible moderator:** Carl-bot#1536
+ID: 1424899628469456999
+
+
+[6/11/2026 10:58 PM] Carl-bot#1536
+
+
+{Embed}
+warn | case 7
+**Offender:** elevenxsilly  @Ele ᢉ𐭩
+**Reason:** Automatic action carried out for spamming mentions ((3/20s) mentions).
+**Responsible moderator:** Carl-bot#1536
+ID: 1135949204720713758
+
+
+[6/11/2026 10:58 PM] Carl-bot#1536
+
+
+{Embed}
+mute | case 8
+**Offender:** elevenxsilly  @Ele ᢉ𐭩
+**Duration:** 15 minutes
+**Reason:** Automatic action carried out for spamming mentions ((3/20s) mentions).
+**Responsible moderator:** Carl-bot#1536
+ID: 1135949204720713758
+
+
+[6/12/2026 1:38 PM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** @summer\_22864 (@Summer)
+> **Condition(s):** Filter 3
+
+
+[6/12/2026 1:45 PM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** @summer\_22864 (@Summer)
+> **Condition(s):** Filter 3
+
+
+[6/12/2026 1:59 PM] Carl-bot#1536
+
+
+{Embed}
+unban | case 12
+**Offender:** summer_22864  @Summer
+**Reason:** No reason given
+**Responsible moderator:** cutechithing
+ID: 1186897193412591637
+
+
+[6/14/2026 12:19 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+13
+:open: Opened By
+@Stroopy
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Friday, June 12, 2026 2:20 PM
+:claim: Claimed By
+Not claimed
+​
+‎
+:reason: Reason
+finished
+
+
+[6/15/2026 9:58 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+14
+:open: Opened By
+@; kio || 天使
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Sunday, June 14, 2026 3:18 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/15/2026 1:13 PM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** @thecozycamprep (@The Cozy Resident)
+> **Condition(s):** Filter 1
+
+
+[6/15/2026 1:13 PM] Carl-bot#1536
+
+
+{Embed}
+ban | case 13
+**Offender:** thecozycamprep  @The Cozy Resident
+**Reason:** [XMDoGaM] 15/06/2026 - 19:13 Sapphire#8184 (Permanent): Join Guard triggered
+**Responsible moderator:** Sapphire#8184
+ID: 1511458974409556088
+
+
+[6/15/2026 1:19 PM] Carl-bot#1536
+
+
+{Embed}
+unban | case 14
+**Offender:** thecozycamprep  @The Cozy Resident
+**Reason:** No reason given, use `!reason 14 <text>` to add one
+**Responsible moderator:** lizardpelt
+ID: 1511458974409556088
+
+
+[6/15/2026 1:41 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+16
+:open: Opened By
+@𓇼𝓘𝓼𝓪𝓫𝓮𝓵𝓵𝓮𓇼
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Monday, June 15, 2026 12:14 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/15/2026 1:41 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+17
+:open: Opened By
+@The Cozy Resident
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Monday, June 15, 2026 1:25 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/15/2026 9:37 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+19
+:open: Opened By
+@Redd
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Monday, June 15, 2026 4:45 PM
+:claim: Claimed By
+@basil 🦎
+:rating: Rating
+5 ⭐
+:reason: Reason
+Finished
+
+
+[6/17/2026 7:13 AM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** @littleone927 (@Littleone)
+> **Condition(s):** Filter 3
+
+
+[6/17/2026 7:13 AM] Carl-bot#1536
+
+
+{Embed}
+ban | case 15
+**Offender:** littleone927  @Littleone
+**Reason:** [JDZEeJd] 17/06/2026 - 13:13 Sapphire#8184 (Permanent): Join Guard triggered
+**Responsible moderator:** Sapphire#8184
+ID: 1312117331849379983
+
+
+[6/17/2026 8:01 AM] Carl-bot#1536
+
+
+{Embed}
+unban | case 16
+**Offender:** littleone927  @Littleone
+**Reason:** No reason given, use `!reason 16 <text>` to add one
+**Responsible moderator:** lizardpelt
+ID: 1312117331849379983
+
+
+[6/17/2026 4:03 PM] Sapphire#8184
+
+
+{Embed}
+Join Guard triggered
+> **User:** Quest Bot#2182 (@Quest Bot)
+> **Condition(s):** Filter 2
+
+
+[6/17/2026 4:03 PM] Carl-bot#1536
+
+
+{Embed}
+ban | case 17
+**Offender:** Quest Bot#2182  @Quest Bot
+**Reason:** [DEFBtjm] 17/06/2026 - 22:03 Sapphire#8184 (Permanent): Join Guard triggered
+**Responsible moderator:** Sapphire#8184
+ID: 1478529577104965862
+
+
+[6/17/2026 7:40 PM] Carl-bot#1536
+
+
+{Embed}
+unban | case 18
+**Offender:** Quest Bot#2182  @Quest Bot
+**Reason:** No reason given, use `!reason 18 <text>` to add one
+**Responsible moderator:** unknown
+ID: 1478529577104965862
+
+
+[6/18/2026 10:11 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+24
+:open: Opened By
+@Horologium
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Thursday, June 18, 2026 5:15 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/18/2026 10:12 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+23
+:open: Opened By
+@Andy
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Wednesday, June 17, 2026 7:33 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/20/2026 8:00 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+26
+:open: Opened By
+@Meeper
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Friday, June 19, 2026 10:51 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/20/2026 8:02 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+20
+:open: Opened By
+@Kaori | Busy
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Monday, June 15, 2026 6:38 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Finished
+
+
+[6/20/2026 2:16 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+27
+:open: Opened By
+@MosaicRavera
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Saturday, June 20, 2026 10:39 AM
+:claim: Claimed By
+@basil 🦎
+:rating: Rating
+5 ⭐
+:reason: Reason
+Verified and wolf claimed (Drift-Pup)
+
+
+[6/20/2026 2:18 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+21
+:open: Opened By
+@Soot Paw
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Tuesday, June 16, 2026 3:50 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Verified and Wolf claimed (Soot)
+
+
+[6/21/2026 10:38 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+29
+:open: Opened By
+@Remus
+:close: Closed By
+@Remus
+:opentime: Open Time
+Sunday, June 21, 2026 10:25 AM
+:claim: Claimed By
+Not claimed
+​
+‎
+:reason: Reason
+No reason specified
+
+
+[6/23/2026 12:10 AM] Carl-bot#1536
+
+
+{Embed}
+ban | case 19
+**Offender:** xxv4mpqu33nxx  @✦ ౨ৎ 𝘝𝘪𝘷𝘪𝘢𝘯 ౨
+**Reason:** No reason given, use `!reason 19 <text>` to add one
+**Responsible moderator:** twisted_rivers
+ID: 625821675870748695
+
+
+[6/23/2026 12:11 AM] twisted_rivers
+https://tenor.com/view/little-rascals-wave-bye-sassy-toodles-gif-3464430
+
+{Embed}
+https://tenor.com/view/little-rascals-wave-bye-sassy-toodles-gif-3464430
+toodle-loo!
+https://images-ext-1.discordapp.net/external/92ST8lFMEzq1MGz6gxAbw51YsXZwqy3gTvs6_Q2wF3Q/https/media.tenor.com/AO9Jt5C5v0sAAAAe/little-rascals-wave.png
+
+{Reactions}
+😹
+
+[6/23/2026 12:13 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+31
+:open: Opened By
+@Remus
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Sunday, June 21, 2026 5:35 PM
+:claim: Claimed By
+@RiverShroud
+​
+‎
+:reason: Reason
+Verified and wolf made Eltanin
+
+
+[6/23/2026 12:14 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+28
+:open: Opened By
+@༘⋆  Queen B.
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Saturday, June 20, 2026 5:11 PM
+:claim: Claimed By
+@basil 🦎
+:rating: Rating
+2 ⭐
+:reason: Reason
+Verified and wolf Claimed Rotteddust
+
+
+[6/23/2026 3:13 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+22
+:open: Opened By
+@Littleone
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Wednesday, June 17, 2026 12:48 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+No reason specified
+
+
+[6/23/2026 3:14 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+25
+:open: Opened By
+@forty
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Friday, June 19, 2026 3:30 PM
+:claim: Claimed By
+@basil 🦎
+:rating: Rating
+5 ⭐
+:reason: Reason
+No reason specified
+
+
+[6/24/2026 10:52 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+32
+:open: Opened By
+@ROT
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Wednesday, June 24, 2026 12:38 PM
+:claim: Claimed By
+@basil 🦎
+:rating: Rating
+5 ⭐
+:reason: Reason
+Finished and created a character: Firepaw
+
+
+[6/25/2026 1:05 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+34
+:open: Opened By
+@Soot Paw
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Thursday, June 25, 2026 10:54 AM
+:claim: Claimed By
+@RiverShroud
+​
+‎
+:reason: Reason
+Accepted
+
+
+[6/25/2026 8:54 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+15
+:open: Opened By
+@gapple
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Monday, June 15, 2026 8:39 AM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Didnt verify or make a character
+
+
+[6/25/2026 9:13 PM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+18
+:open: Opened By
+@renn
+:close: Closed By
+@RiverShroud
+:opentime: Open Time
+Monday, June 15, 2026 4:08 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Left server
+
+
+[6/26/2026 11:06 AM] Tickets v2#5105
+
+
+{Embed}
+Ticket Closed
+:id: Ticket ID
+30
+:open: Opened By
+@widow.
+:close: Closed By
+@basil 🦎
+:opentime: Open Time
+Sunday, June 21, 2026 12:02 PM
+:claim: Claimed By
+@basil 🦎
+​
+‎
+:reason: Reason
+Left
+
+
+==============================================================
+Exported 44 message(s)
+==============================================================

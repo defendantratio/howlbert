@@ -477,6 +477,48 @@ DISEASES: dict[str, dict] = {
             },
         },
     },
+    "river_rot": {
+        "label": "River Rot",
+        "contagious": 0.0,
+        "chronic": True,
+        "spread_stage": "fouled",
+        "stages": {
+            "fouled": {
+                "name": "River Rot (Fouled Gut)",
+                "dc": 13,
+                "next": "bloody_flux",
+                "effect": (
+                    "Sewage-tainted water churns the belly: −10 hunger and −6 thirst "
+                    "each sunrise; con save shakes it off before it sets in."
+                ),
+                "hunger_loss": 10,
+                "thirst_loss": 6,
+            },
+            "bloody_flux": {
+                "name": "River Rot (Bloody Flux)",
+                "dc": 17,
+                "next": "failing",
+                "effect": (
+                    "Bowels turn against the wolf: −1 hp, −14 hunger, −12 thirst each "
+                    "sunrise. no known herb touches it."
+                ),
+                "hp_loss": 1,
+                "hunger_loss": 14,
+                "thirst_loss": 12,
+            },
+            "failing": {
+                "name": "River Rot (Failing)",
+                "dc": 20,
+                "next": None,
+                "effect": (
+                    "Can no longer keep water down; −3 hp each sunrise. fatal without "
+                    "den care; no cure is known."
+                ),
+                "hp_loss": 3,
+                "lethal": True,
+            },
+        },
+    },
     "cancer": {
         "label": "Growth-Sickness",
         "contagious": 0.0,
@@ -974,6 +1016,7 @@ MULTI_STAGE_DISEASES = frozenset(
         "shaking_sickness",
         "rabies",
         "wasting_sickness",
+        "river_rot",
         "cancer",
         "dementia",
         "feral_shift",
