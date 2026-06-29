@@ -1,3 +1,4 @@
+import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -161,7 +162,7 @@ class Profile(commands.Cog):
             embed.add_field(name='Motto', value=f"_{faction['motto']}_", inline=False)
             embed.add_field(name='Pack Trait', value=faction['pack_trait'], inline=False)
             herbs = ', '.join((HERBS[k]['name'] if k in HERBS else k.replace('_', ' ').title() for k in faction['starting_herbs']))
-            embed.add_field(name='Starting Herbs', value=f'{herbs}\n_Added to `/bones action:inventory` (stable shop herbs). Foraged stacks use `/herbs action:bag`._', inline=False)
+            embed.add_field(name='Starting Herbs', value=f'{herbs}\n_Added to `/bones action:inventory` (stable shop herbs). Foraged stacks use `/bones action:inventory`._', inline=False)
         else:
             embed.add_field(name='The Rogue Path', value='No pack treasury, tax, or trait; free to roam. Use `/setfaction` to join a Great Pack later.', inline=False)
         embed.add_field(name='Next Steps', value='Try `/profile` for your sheet, `/rpg action:roll` for skill checks, `/bones action:hunt` or `action:work` for bones.\nNew here? **`/help topic:getting-started`** walks through courtship, pups, and the den.', inline=False)
@@ -376,10 +377,20 @@ class Profile(commands.Cog):
             return
         fields: dict[str, str] = {}
         if ref_image:
+            if not is_howlbert_admin(interaction):
+                await interaction.response.send_message(embed=howlbert_embed('Admins Only', '`ref_image` is admin-set only; ask a server admin to add it for your wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
             if not ref_image.lower().startswith(('http://', 'https://')):
                 await interaction.response.send_message(embed=howlbert_embed('Bad URL', '`ref_image` needs a direct http(s) image link.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             fields['ref_image_url'] = ref_image
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(ref_image, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                        if resp.status == 200:
+                            db.set_wolf_ref_image_cache(wolf['id'], await resp.read())
+            except Exception:
+                pass
         if pronouns:
             fields['pronouns'] = pronouns[:64]
         if birthday:

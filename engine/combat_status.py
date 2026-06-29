@@ -146,6 +146,16 @@ def attacker_roll_modifiers(
         if int(attacker["exhaustion"]) >= 3:
             disadvantage = True
 
+    hunger_note = ""
+    if attacker:
+        from config import HUNGER_LOW_THRESHOLD, THIRST_LOW_THRESHOLD
+
+        hunger = int(attacker["hunger"]) if "hunger" in attacker.keys() else 100
+        thirst = int(attacker["thirst"]) if "thirst" in attacker.keys() else 100
+        if hunger < HUNGER_LOW_THRESHOLD or thirst < THIRST_LOW_THRESHOLD:
+            disadvantage = True
+            hunger_note = "running on empty; hunger/thirst cost you the edge (disadvantage)"
+
     _, bite_disadv = attack_roll_modifiers(attacker, attack_type)
     if bite_disadv:
         disadvantage = True
@@ -163,7 +173,7 @@ def attacker_roll_modifiers(
     if rf_adv:
         advantage = True
 
-    return disadvantage, advantage, rf_note
+    return disadvantage, advantage, rf_note or hunger_note
 
 
 def maneuver_pin_block(

@@ -908,8 +908,11 @@ class Life(commands.Cog):
                 return
         born_names: list[str] = []
         born_pup_ids: list[int] = []
+        born_pup_stats: list[tuple[int, str, dict]] = []
         stillborn_lines: list[str] = []
         mutation_lines: list[str] = []
+        inheritance_lines: list[str] = []
+        from config import RUNT_LITTER_MIN_SIZE
         father_id = father['id'] if father else None
         from engine.genetics import GENETIC_CONDITIONS, encode_genetic_conditions, roll_pup_genetic_conditions
         from engine.stillborn import format_stillborn_save_hint, save_pending_stillborn
@@ -929,6 +932,23 @@ class Life(commands.Cog):
             if conditions:
                 muts = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in conditions))
                 mutation_lines.append(f'**{pup_name}**: {muts}')
+            from engine.family import inherit_parent_skill_trait
+
+            inherit_note = inherit_parent_skill_trait(pup_id, user, father)
+            if inherit_note:
+                inheritance_lines.append(f'**{pup_name}** {inherit_note}')
+            born_pup_stats.append((pup_id, pup_name, stats))
+
+        if len(born_pup_ids) >= RUNT_LITTER_MIN_SIZE:
+            from engine.family import mark_runt_pup
+
+            runt_id, runt_name, runt_stats = min(
+                born_pup_stats, key=lambda entry: sum(entry[2].values())
+            )
+            weakened = mark_runt_pup(runt_id, runt_stats)
+            inheritance_lines.append(
+                f'**{runt_name}** is the runt of the litter; its **{weakened}** is permanently weaker.'
+            )
         if len(born_pup_ids) > 1:
             import random as _random
 
@@ -958,6 +978,8 @@ class Life(commands.Cog):
         body = f"Birth check: **{result['total']}** vs DC 12; **{len(born_names)}** pup(s) born: {name_line}.{father_line}\nBorn pups use **extra slots** (not your 3 `/register` slots). Use `/switchwolf` to play them."
         if mutation_lines:
             body += '\n\n**Mutations:**\n' + '\n'.join(mutation_lines)
+        if inheritance_lines:
+            body += '\n\n**Inherited:**\n' + '\n'.join(inheritance_lines)
         if stillborn_lines:
             body += '\n\n**Dying pups:**\n' + '\n'.join(stillborn_lines)
         if not result['success']:

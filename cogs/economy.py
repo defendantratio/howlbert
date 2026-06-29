@@ -491,7 +491,7 @@ class Economy(commands.Cog):
         if toys:
             footer_bits.append('toys: /playpen action:play · action:toystore')
         if any((row['key'].startswith('herb_') for row in items)):
-            footer_bits.append('herbs: /herbs action:bag · action:dryall · `/bones action:sell item:stack:ID`')
+            footer_bits.append('herbs: /bones action:inventory · action:dryall · `/bones action:sell item:stack:ID`')
         if any((row['key'] in USABLE_ITEM_KEYS for row in items)):
             footer_bits.append('/bones action:use item:<key>')
         if footer_bits:
@@ -534,7 +534,7 @@ class Economy(commands.Cog):
             if fields:
                 db.update_user(interaction.user.id, **fields)
             embed = howlbert_embed('Herb Bundle', msg, color=SUCCESS_COLOR)
-            embed.set_footer(text='/bones action:inventory · /herbs action:bag')
+            embed.set_footer(text='/bones action:inventory · /bones action:inventory')
             await interaction.response.send_message(embed=embed)
             return
         if key == 'prey_bundle':

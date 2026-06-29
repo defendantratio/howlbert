@@ -648,6 +648,7 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
             great_pack=gp,
             time_of_day=live_tod,
             weather=world["weather"],
+            season=world["season"],
         )
     db.update_user(
         interaction.user.id,

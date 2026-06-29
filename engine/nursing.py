@@ -119,16 +119,30 @@ def _feed_pups_with_gains(
     thirst_gain: int,
     day_number: int,
     honey_used: bool,
+    feeder_id: int | None = None,
 ) -> list[str]:
+    from engine.long_term_injuries import parse_long_term_injuries
+
     fed: list[str] = []
     bonus = HONEY_PUP_HUNGER_BONUS if honey_used else 0
     for pup in pups:
         total_hunger = hunger_gain + bonus
         fields = _pup_hunger_bonus_fields(pup, total_hunger)
         fields["thirst"] = _clamp_thirst(int(pup["thirst"]) + thirst_gain)
+        was_unfed = int(pup["last_milk_day"] if "last_milk_day" in pup.keys() else 0) == 0
         fields["last_milk_day"] = day_number
         db.update_user_by_id(pup["id"], **fields)
         fed.append(pup["wolf_name"])
+        if (
+            feeder_id
+            and was_unfed
+            and "runt" in parse_long_term_injuries(
+                pup["long_term_injuries"] if "long_term_injuries" in pup.keys() else None
+            )
+        ):
+            from engine.family import grant_runt_first_feed_bond
+
+            grant_runt_first_feed_bond(feeder_id, pup["id"], day=day_number)
     return fed
 
 
@@ -187,6 +201,7 @@ def execute_mother_nursing(
         thirst_gain=MILK_THIRST_GAIN,
         day_number=day_number,
         honey_used=honey_used,
+        feeder_id=mother["id"],
     )
 
     db.update_user_by_id(
@@ -239,6 +254,7 @@ def execute_caretaker_feed(
         thirst_gain=CARETAKER_MASH_THIRST_GAIN,
         day_number=day_number,
         honey_used=honey_used,
+        feeder_id=caretaker["id"],
     )
 
     db.update_user_by_id(caretaker["id"], last_nurse_day=day_number)

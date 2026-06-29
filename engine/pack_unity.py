@@ -61,6 +61,24 @@ def compute_howl_unity_gain(user, pack, unity: int, echo_count: int) -> int:
     return gain
 
 
+HOWL_MUFFLING_WEATHER = frozenset({"fog", "wind", "storm", "thunderstorm", "hail"})
+
+
+def howl_weather_muffle_note(unity_gain: int, weather: str) -> tuple[int, str]:
+    """
+    A howl genuinely doesn't carry as far through fog, wind, or a storm; on
+    muffling weather a successful (nonzero) howl loses 1 unity off its gain,
+    never dropping below 1. Returns (adjusted_gain, note); note is "" when
+    nothing changed.
+    """
+    if unity_gain <= 0 or weather not in HOWL_MUFFLING_WEATHER:
+        return unity_gain, ""
+    adjusted = max(1, unity_gain - 1)
+    if adjusted == unity_gain:
+        return unity_gain, ""
+    return adjusted, f"_the call is swallowed by the {weather}; unity gain dampened (**{adjusted}** instead of **{unity_gain}**)._"
+
+
 def unity_effect_text(unity: int) -> str:
     if unity <= PACK_UNITY_DISSOLVE_THRESHOLD:
         return (

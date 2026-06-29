@@ -52,10 +52,10 @@ class Pact(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='pact', description='negotiate treaties with cat clans or other great wolf packs (alpha or diplomat).')
-    @app_commands.describe(action='view, forge, renew, break, gift, trade, tradefood, receive, or raid', target='cat clan or great wolf pack (e.g. thunderclan, greyspire)', pact_type='treaty type when forging', terms='short rp terms (optional)', stack='food/forage stack to trade (for tradefood)', raid_type='what to steal: food, herbs, or amusement (raid only)')
+    @app_commands.describe(action='view, forge, renew, break, gift, trade, tradefood, receive, or raid', target='cat clan or great wolf pack (e.g. thunderclan, greyspire)', pact_type='treaty type when forging', terms='short rp terms (optional)', stack='food/forage stack to trade (for tradefood)', raid_type='what to steal: food, herbs, or amusement (raid only)', amount='bones to send as tribute, 0 or more; more bones = more trust/standing (gift only)')
     @app_commands.choices(action=[app_commands.Choice(name='view pacts', value='view'), app_commands.Choice(name='forge treaty', value='forge'), app_commands.Choice(name='renew treaty', value='renew'), app_commands.Choice(name='break treaty', value='break'), app_commands.Choice(name='send tribute gift', value='gift'), app_commands.Choice(name='trade duplicates', value='trade'), app_commands.Choice(name='trade food', value='tradefood'), app_commands.Choice(name='receive border goods', value='receive'), app_commands.Choice(name='raid camp/den', value='raid')], pact_type=[app_commands.Choice(name='border truce (12 sunrises)', value='truce'), app_commands.Choice(name='alliance (18 sunrises)', value='alliance'), app_commands.Choice(name='hunting rights (8 sunrises)', value='hunting_rights')], raid_type=[app_commands.Choice(name='food reserve', value='food'), app_commands.Choice(name='herb store', value='herbs'), app_commands.Choice(name='toy store', value='amusement')])
     @app_commands.autocomplete(target=_pact_target_autocomplete, stack=_food_stack_autocomplete)
-    async def pact(self, interaction: discord.Interaction, action: str='view', target: str | None=None, pact_type: str | None=None, terms: str | None=None, stack: int | None=None, raid_type: str='food'):
+    async def pact(self, interaction: discord.Interaction, action: str='view', target: str | None=None, pact_type: str | None=None, terms: str | None=None, stack: int | None=None, raid_type: str='food', amount: app_commands.Range[int, 0, None] | None=None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(embed=howlbert_embed('not registered', 'use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -95,7 +95,7 @@ class Pact(commands.Cog):
             if ok:
                 updated = db.get_pack(pack['id'])
                 embed.set_footer(text=f"treasury: {format_bones(updated['treasury'])}")
-            await interaction.response.send_message(embed=embed, ephemeral=ok)
+            await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'renew':
             if wolf_target:
@@ -103,7 +103,7 @@ class Pact(commands.Cog):
             else:
                 ok, msg = renew_cat_pact(user, pack, guild_id=guild_id, clan_name=target, day=day)
             color = SUCCESS_COLOR if ok else ERROR_COLOR
-            await interaction.response.send_message(embed=howlbert_embed('renew treaty' if ok else 'renewal failed', msg, color=color), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('renew treaty' if ok else 'renewal failed', msg, color=color), ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'break':
             if wolf_target:
@@ -115,11 +115,11 @@ class Pact(commands.Cog):
             return
         if action == 'gift':
             if wolf_target:
-                ok, msg = gift_wolf_pack_pact(user, pack, guild_id=guild_id, target_pack=target, day=day)
+                ok, msg = gift_wolf_pack_pact(user, pack, guild_id=guild_id, target_pack=target, day=day, amount=amount)
             else:
-                ok, msg = gift_cat_pact(user, pack, guild_id=guild_id, clan_name=target, day=day)
+                ok, msg = gift_cat_pact(user, pack, guild_id=guild_id, clan_name=target, day=day, amount=amount)
             color = SUCCESS_COLOR if ok else ERROR_COLOR
-            await interaction.response.send_message(embed=howlbert_embed('tribute sent' if ok else 'gift failed', msg, color=color), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('tribute sent' if ok else 'gift failed', msg, color=color), ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'trade':
             if wolf_target:
@@ -130,7 +130,7 @@ class Pact(commands.Cog):
             embed = howlbert_embed('border barter' if ok else 'barter failed', msg, color=color)
             if ok:
                 embed.set_footer(text='/pact action:view · /pact action:receive')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'tradefood':
             if stack is None:
@@ -144,7 +144,7 @@ class Pact(commands.Cog):
             embed = howlbert_embed('border food trade' if ok else 'trade failed', msg, color=color)
             if ok:
                 embed.set_footer(text='/pact action:view · /food')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'receive':
             if wolf_target:
@@ -155,7 +155,7 @@ class Pact(commands.Cog):
             embed = howlbert_embed('border goods' if ok else 'receive failed', msg, color=color)
             if ok:
                 embed.set_footer(text='/food · /bones action:inventory · /playpen action:toys')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
             return
         if action == 'raid':
             if wolf_target:

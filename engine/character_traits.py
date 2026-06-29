@@ -1795,11 +1795,11 @@ RIVENMAW_CHARACTER_TRAITS = {
             "blurb": "Fast in shallows and eddies; reads the current before it shifts.",
         },
         {
-            "name": "Perception",
+            "name": "Tracking",
             "modifier": 3,
             "skills": ["tracking"],
             "attrs": ["attr_wis"],
-            "blurb": "Picks up patrol patterns and border scents before others notice.",
+            "blurb": "Reads fresh trails and prey movement before the chase even starts.",
         },
         {
             "name": "Herbal Knowledge",
@@ -1829,7 +1829,7 @@ RIVENMAW_CHARACTER_TRAITS = {
             "modifier": -2,
             "skills": ["persuasion", "intimidation"],
             "attrs": ["attr_cha"],
-            "blurb": "If Saltmuzzle orders him to report Thistlehide movements, he will fracture.",
+            "blurb": "If Saltmuzzle orders a hunt that drives prey off Thistlehide's banks, he will fracture.",
         },
     ],
 }

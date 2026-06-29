@@ -168,6 +168,12 @@ def can_join_friendly_pack_hunt(
     return True, f"_friendly standing **{standing}/10** with **{name}**; allied hunt._"
 
 
+def _bonded_enough_to_skip_fight(user, other) -> bool:
+    from engine.bonds import has_strong_positive_bond
+
+    return has_strong_positive_bond(user["id"], other["id"])
+
+
 def sniff_encounter_lines(
     user,
     other,
@@ -189,7 +195,7 @@ def sniff_encounter_lines(
     gp = other["great_pack"] if "great_pack" in other.keys() and other["great_pack"] else None
     pack_name = GREAT_PACKS[gp]["name"] if gp and gp in GREAT_PACKS else "a rival den"
 
-    if is_war_relation(standing) or is_hostile_relation(standing):
+    if (is_war_relation(standing) or is_hostile_relation(standing)) and not _bonded_enough_to_skip_fight(user, other):
         pool = SNIFF_ENCOUNTER_WAR if is_war_relation(standing) else SNIFF_ENCOUNTER_HOSTILE
         line = random.choice(pool).format(
             name=other["wolf_name"],
@@ -210,6 +216,15 @@ def sniff_encounter_lines(
         if enc_id:
             line += "\n\n_Combat is live; drive them off or break away via the panel._"
         return f"\n\n{line}", enc_id
+
+    if is_war_relation(standing) or is_hostile_relation(standing):
+        # bonded enough to skip the fight, but the encounter still matters.
+        return (
+            f"\n\n_despite **{pack_name}**'s feud with your den, **{other['wolf_name']}** "
+            f"lowers their hackles when they catch your scent; whatever you are to each "
+            f"other outweighs the border tonight._",
+            None,
+        )
 
     if is_friendly_relation(standing):
         from config import WOLF_NOTORIETY_SNIFF_MOOD, WOLF_NOTORIETY_STANDING_THRESHOLD
@@ -298,6 +313,15 @@ def cross_pack_social_risk(
     standing = cross_pack_relation(user, partner, guild_id)
     if standing is None or not is_hostile_relation(standing):
         return False, None
+
+    from engine.bonds import has_strong_positive_bond
+
+    if has_strong_positive_bond(user["id"], partner["id"]):
+        # a real friendship, romance, kinship, or mentorship outweighs den
+        # politics; Mossheart and Rivenmaw don't risk a fight every time
+        # they meet just because their packs are feuding.
+        return False, None
+
     if random.random() >= CROSS_PACK_SOCIAL_COMBAT_CHANCE:
         return False, None
     enc_id = start_rival_wolf_skirmish(user, partner, guild_id=guild_id, channel_id=channel_id)

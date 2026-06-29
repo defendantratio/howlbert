@@ -435,6 +435,82 @@ SIGN_ASL_MATCH_STANDING_BONUS = 2
 # `/role action:shadow` grants the same boost to hunter/scout/forager/diplomat/
 # caretaker apprentices on their focus skill (engine.herb_buffs mentor_bonus_*).
 MENTOR_BONUS_VALUE = 2
+# Each /role action:shadow session also deepens a real mentor bond; once it
+# crosses the threshold the apprentice gains one permanent rank in the
+# mentor's focus skill — a one-time payoff for a mentorship that actually
+# ran deep, not just a repeatable temp buff.
+MENTOR_BOND_SKILL_TRANSFER_GAIN = 8
+MENTOR_BOND_SKILL_TRANSFER_THRESHOLD = 70
+# Bonds are living relationships, not a ratchet: friendship/rivalry/romance
+# bonds untouched for this many sunrises lose a little strength each rollover
+# until someone interacts again. Kin and mentor bonds don't decay.
+BOND_DECAY_IDLE_DAYS = 14
+BOND_DECAY_AMOUNT = 3
+# Reunion bonus when bonded kin who haven't crossed paths in a long while
+# (proxy: bond strength already decayed at least once) socialize again.
+KIN_REUNION_MOOD_BONUS = 6
+KIN_REUNION_BOND_GAIN = 10
+# Mate fidelity: mating with someone who isn't your bonded mate, while that
+# mate bond is still strong, costs real bond strength instead of being pure
+# flavor.
+FIDELITY_BOND_LOSS = 10
+FIDELITY_BOND_MIN_TO_CARE = 40
+# Jealousy: a bonded mate isn't present for /playpen socialize, but a "warm"
+# outcome with someone else still costs them something real.
+JEALOUSY_MOOD_PENALTY = 4
+JEALOUSY_RIVALRY_GAIN = 5
+# Personal standing drifts back toward neutral (0) for a wolf who's gone
+# quiet a long while, instead of returning exactly as feared/trusted as
+# when they left. Checked against the most recent of several common
+# activity timestamps as a proxy for "last seen."
+STANDING_DECAY_IDLE_DAYS = 20
+STANDING_DECAY_AMOUNT = 1
+# A rivalry bond that's stayed strong for a long time without ever being
+# resolved (death, reconciliation) calcifies into permanent den legend
+# instead of just quietly decaying away from neglect like ordinary bonds.
+RIVALRY_LEGEND_STRENGTH_THRESHOLD = 70
+RIVALRY_LEGEND_AGE_DAYS = 60
+# Small chance a newborn pup starts with a one-rank head start in whichever
+# skill a parent has earned the most experience in, instead of every litter
+# beginning completely blank regardless of what the parents are good at.
+PUP_TRAIT_INHERIT_CHANCE = 0.20
+# A few sunrises of reduced cold resistance right after any season change,
+# coat mid-cycle; even winter_survivor doesn't fully insulate during it.
+SHEDDING_WINDOW_DAYS = 4
+# Lower-stakes rank disputes between ordinary pack members (not alpha/advisor
+# — that's the Rite of the Broken Canine's domain). Winner climbs, loser
+# drops, breaking ties in den feed priority; once per sunrise per challenger.
+RANK_DISPUTE_SHIFT = 1
+RANK_DISPUTE_MIN = -10
+RANK_DISPUTE_MAX = 10
+# A wolf back after a long absence doesn't slot back into the den instantly
+# — a brief "stranger scent" beat on their first socialize back.
+STRANGER_SCENT_ABSENCE_DAYS = 15
+STRANGER_SCENT_MOOD_PENALTY = 3
+# A temporary injury left untreated long past its normal heal time doesn't
+# just sit there forever; it ages into a permanent long-term injury instead.
+CHRONIC_CONVERSION_MULTIPLIER = 3
+# As spring (the only season pups can realistically be born by, given the
+# 63-day gestation) nears, a den with too few breeding-age mated pairs feels
+# real anxiety about its future and loses a touch of unity.
+COURTSHIP_PRESSURE_MIN_PAIRS = 2
+COURTSHIP_PRESSURE_UNITY_PENALTY = 2
+# The smallest pup in a large litter starts at a real disadvantage, but
+# whoever feeds them first while they're struggling tends to grow close.
+RUNT_LITTER_MIN_SIZE = 4
+RUNT_ATTR_PENALTY = 1
+RUNT_FIRST_FEED_BOND_BONUS = 10
+# An apprentice can't be taught by a mentor who isn't around; if the mentor
+# (not the apprentice) goes idle long enough, the mentorship itself stalls.
+MENTOR_STALL_IDLE_DAYS = 10
+MENTOR_STALL_DECAY_AMOUNT = 3
+# Grief scaled to bond strength: losing a wolf you weren't formally mated to
+# (best friend, kin, secret romance, mentor) should still hit hard if the
+# bond was real. Only bonds at/above this strength trigger anything; the
+# mood hit and grief-disease chance both scale up to STRONG_BOND_GRIEF_CAP.
+STRONG_BOND_GRIEF_THRESHOLD = 50
+STRONG_BOND_GRIEF_MOOD_CAP = 25
+STRONG_BOND_GRIEF_CHANCE_CAP = 0.7
 # Pup training; `/pupcare action:train` — a deliberate, capped stat nudge
 # distinct from feed/save/adopt. Once per sunrise per pup; lifetime-capped
 # so it can't replace genetics/traits as a power source.
@@ -448,6 +524,9 @@ PUP_TRAIN_MOOD_CONSOLATION = 2
 SIGN_DIMINISH_WINDOW_MINUTES = 30
 SIGN_DIMINISH_FACTOR = 0.5
 SIGN_DIMINISH_FLOOR = 0.2
+# A mute/silenced wolf's sign is their only voice, not a supplement to
+# talking; it decays toward a much gentler floor on repeats.
+SIGN_MUTE_DIMINISH_FLOOR = 0.6
 # Reading/answering a denmate's signal (the back-and-forth half of the system).
 SIGN_READ_MOOD = 4
 SIGN_READ_RALLY_UNITY = 1
@@ -947,6 +1026,12 @@ NEUTRAL_CLAIM_SCORE = 12
 PACK_UNITY_MIN = -5
 PACK_UNITY_MAX = 10
 PACK_UNITY_DISSOLVE_THRESHOLD = -5
+
+# Den upgrades; treasury-funded infrastructure that blunts bad-weather hunt
+# penalties instead of treasury only ever being stipends and raids.
+DEN_UPGRADE_MAX_LEVEL = 5
+DEN_UPGRADE_BASE_COST = 300  # cost for level N = DEN_UPGRADE_BASE_COST * N
+DEN_UPGRADE_WEATHER_MITIGATION_PCT = 3  # per level, off the magnitude of a negative weather modifier
 
 # Personal standing within the pack. At −5 the wolf is cast out as a loner.
 WOLF_STANDING_MIN = -10

@@ -28,7 +28,7 @@ def resolve_check(
 ) -> dict:
     inj_pen, inj_disadv = injury_check_adjustments(user, attr_keys, skill)
     disease_mod, disease_disadv = disease_check_adjustments(user, attr_keys)
-    gen_pen, gen_disadv = genetic_check_adjustments(user, attr_keys)
+    gen_pen, gen_disadv = genetic_check_adjustments(user, attr_keys, skill_key=skill_key)
     trait_mod, trait_applied = trait_check_adjustments(
         user, attr_keys, skill_key=skill_key, skill_label=skill
     )
@@ -66,6 +66,9 @@ def resolve_check(
         game_day=game_day,
     )
     fire_disadv = is_frightened_of_fire(user) and skill_key not in ("tracking", "survival")
+    from engine.aging import very_old_check_adjustment
+
+    age_mod = very_old_check_adjustment(int(user["age_months"]) if "age_months" in user.keys() else 0, attr_keys)
     omen_adv = False
     omen_disadv = False
     omen_buff = user["omen_buff"] if "omen_buff" in user.keys() else ""
@@ -91,7 +94,7 @@ def resolve_check(
     mod, attr_label = best_modifier(user, attr_keys)
     prof = 0
     rank_bonus = 0
-    total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod
+    total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod + age_mod
     safe_roll_used = False
     first_die = die
 
@@ -115,7 +118,7 @@ def resolve_check(
                 die = min(roll_d20(), roll_d20())
             else:
                 die = roll_d20()
-            total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod
+            total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod + age_mod
             if die == 1:
                 outcome = "critical_failure"
                 success = False

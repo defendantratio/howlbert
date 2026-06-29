@@ -27,13 +27,17 @@ HOME_TURF_MARK_WINDOW_DAYS = 3
 HOME_TURF_HUNT_MULT = 1.10
 
 
+RAIN_MARK_WASHOUT_WEATHER = frozenset({"rain", "storm", "thunderstorm", "sleet"})
+
+
 def home_turf_hunt_bonus(
-    pack_id: int | None, pack_key: str | None, guild_id: int | None, day: int
+    pack_id: int | None, pack_key: str | None, guild_id: int | None, day: int, *, weather: str | None = None
 ) -> tuple[float, str]:
     """
     +10% hunt bones when hunting ground your own pack both owns and has
     freshly marked (within HOME_TURF_MARK_WINDOW_DAYS); rewards holding and
     maintaining territory instead of treating /pack territory as cosmetic.
+    Heavy rain washes scent out faster, shrinking that window.
     Returns (multiplier, note); multiplier is 1.0 / note is "" when no bonus.
     """
     if not pack_id or not pack_key or not guild_id or day <= 0:
@@ -42,12 +46,40 @@ def home_turf_hunt_bonus(
     owned_keys = {t["key"] for t in territories if t["owner_pack_id"] == pack_id}
     if not owned_keys:
         return 1.0, ""
-    since = max(1, day - HOME_TURF_MARK_WINDOW_DAYS)
+    window = HOME_TURF_MARK_WINDOW_DAYS
+    if weather in RAIN_MARK_WASHOUT_WEATHER:
+        window = max(1, window - 1)
+    since = max(1, day - window)
     marks = db.get_scent_marks_for_pack(guild_id, pack_key, since_day=since)
     if not any(m["territory_key"] in owned_keys for m in marks):
         return 1.0, ""
     pct = int(round((HOME_TURF_HUNT_MULT - 1.0) * 100))
     return HOME_TURF_HUNT_MULT, f"home turf (fresh mark on owned ground): +{pct}% hunt bones"
+
+
+ALLIED_TERRITORY_HUNT_MULT = 1.05
+
+
+def allied_territory_hunt_bonus(pack_id: int | None, guild_id: int | None) -> tuple[float, str]:
+    """
+    +5% hunt bones when your pack holds an active alliance or hunting_rights
+    treaty with the pack that owns ground you're hunting on; hunting_rights
+    is supposed to mean real access to a rival's territory, not just flavor.
+    Returns (multiplier, note); multiplier is 1.0 / note is "" when no bonus.
+    """
+    if not pack_id or not guild_id:
+        return 1.0, ""
+    treaties = db.list_active_wolf_treaties(guild_id, pack_id)
+    granted_pack_ids = {
+        int(t["other_pack_id"]) for t in treaties if t["pact_type"] in ("alliance", "hunting_rights")
+    }
+    if not granted_pack_ids:
+        return 1.0, ""
+    territories = db.get_territories(guild_id)
+    if not any(t["owner_pack_id"] in granted_pack_ids for t in territories):
+        return 1.0, ""
+    pct = int(round((ALLIED_TERRITORY_HUNT_MULT - 1.0) * 100))
+    return ALLIED_TERRITORY_HUNT_MULT, f"hunting rights with an ally: +{pct}% hunt bones"
 
 
 def read_marks_for_sniff(pack_key: str, *, guild_id: int, day: int, lookback_days: int = 3) -> list[str]:
@@ -136,6 +168,18 @@ def mark_territory(
         relation_note += format_standing_war_flash(guild_id, pack["id"], int(owner_id), new_standing)
         relation_note += f"\n_{relation_effect_text(new_standing)}_"
         title = "rival over-mark"
+    elif not owner_id:
+        claimed = db.claim_unowned_territory(int(terr["id"]), int(pack["id"]))
+        if claimed:
+            body = (
+                f"unclaimed ground; your scent is the only claim on **{terr['name']}** now. "
+                "it's yours until another pack wins it in a war."
+            )
+            title = "territory claimed"
+        else:
+            # lost a race to another wolf claiming it the same moment; just a refresh.
+            body = random.choice(MARK_REFRESH_FLAVORS)
+            title = "border refreshed"
     else:
         body = random.choice(MARK_REFRESH_FLAVORS)
         title = "border refreshed"
