@@ -23,6 +23,33 @@ OVER_MARK_FLAVORS = (
 )
 
 
+HOME_TURF_MARK_WINDOW_DAYS = 3
+HOME_TURF_HUNT_MULT = 1.10
+
+
+def home_turf_hunt_bonus(
+    pack_id: int | None, pack_key: str | None, guild_id: int | None, day: int
+) -> tuple[float, str]:
+    """
+    +10% hunt bones when hunting ground your own pack both owns and has
+    freshly marked (within HOME_TURF_MARK_WINDOW_DAYS); rewards holding and
+    maintaining territory instead of treating /pack territory as cosmetic.
+    Returns (multiplier, note); multiplier is 1.0 / note is "" when no bonus.
+    """
+    if not pack_id or not pack_key or not guild_id or day <= 0:
+        return 1.0, ""
+    territories = db.get_territories(guild_id)
+    owned_keys = {t["key"] for t in territories if t["owner_pack_id"] == pack_id}
+    if not owned_keys:
+        return 1.0, ""
+    since = max(1, day - HOME_TURF_MARK_WINDOW_DAYS)
+    marks = db.get_scent_marks_for_pack(guild_id, pack_key, since_day=since)
+    if not any(m["territory_key"] in owned_keys for m in marks):
+        return 1.0, ""
+    pct = int(round((HOME_TURF_HUNT_MULT - 1.0) * 100))
+    return HOME_TURF_HUNT_MULT, f"home turf (fresh mark on owned ground): +{pct}% hunt bones"
+
+
 def read_marks_for_sniff(pack_key: str, *, guild_id: int, day: int, lookback_days: int = 3) -> list[str]:
     """Recent scent marks readable on the wind for a Great Pack key."""
     since = max(1, day - lookback_days)

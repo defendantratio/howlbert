@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import database as db
 
-BOND_TYPES = frozenset({"friendship", "rivalry", "kin", "mentor"})
+BOND_TYPES = frozenset({"friendship", "rivalry", "kin", "mentor", "romance"})
 
 BOND_LABELS = {
     "friendship": "friendship",
     "rivalry": "rivalry",
     "kin": "kin",
     "mentor": "mentor",
+    "romance": "romance",
 }
 
 FAMILY_ROLES = frozenset({"founder", "parent", "sibling", "cub", "member"})
@@ -24,7 +25,7 @@ FAMILY_ROLE_LABELS = {
 }
 
 
-def strength_tier(strength: int, *, rivalry: bool = False) -> str:
+def strength_tier(strength: int, *, rivalry: bool = False, romance: bool = False) -> str:
     s = max(0, min(100, int(strength)))
     if rivalry:
         if s >= 80:
@@ -36,6 +37,16 @@ def strength_tier(strength: int, *, rivalry: bool = False) -> str:
         if s >= 20:
             return "tension"
         return "mild friction"
+    if romance:
+        if s >= 80:
+            return "devoted"
+        if s >= 60:
+            return "smitten"
+        if s >= 40:
+            return "courting"
+        if s >= 20:
+            return "drawn together"
+        return "a spark"
     if s >= 80:
         return "unshakable"
     if s >= 60:
@@ -56,9 +67,10 @@ def strength_bar(strength: int) -> str:
 def _format_bond_note(partner_name: str, bond_type: str, row, *, label: str | None = None) -> str:
     display = label or BOND_LABELS.get(bond_type, bond_type.title()).lower()
     rival = bond_type == "rivalry"
+    romantic = bond_type == "romance"
     return (
         f"bond; **{partner_name}**: {display} **{strength_bar(row['strength'])}** "
-        f"({strength_tier(row['strength'], rivalry=rival)})"
+        f"({strength_tier(row['strength'], rivalry=rival, romance=romantic)})"
     )
 
 
@@ -70,7 +82,7 @@ def _pair_bond_kind(user, partner) -> tuple[str, str | None]:
         return "kin", "mate"
 
     best = None
-    for bond_type in ("kin", "mentor", "friendship", "rivalry"):
+    for bond_type in ("kin", "mentor", "romance", "friendship", "rivalry"):
         row = db.get_bond(user["id"], partner["id"], bond_type)
         if not row:
             continue
@@ -159,7 +171,8 @@ def format_bonds_embed_body(user) -> str:
         lines = []
         for name, row in sorted(rows, key=lambda x: -x[1]["strength"])[:8]:
             rival = bond_type == "rivalry"
-            tier = strength_tier(row["strength"], rivalry=rival)
+            romantic = bond_type == "romance"
+            tier = strength_tier(row["strength"], rivalry=rival, romance=romantic)
             bar = strength_bar(row["strength"])
             note = f"; _{row['note']}_" if row["note"] else ""
             lines.append(f"**{name}** {bar} ({tier}){note}")
@@ -170,7 +183,7 @@ def format_bonds_embed_body(user) -> str:
     if not sections:
         return (
             "no bonds recorded yet.\n\n"
-            "use **`/bonds action:set`** to mark friendships, rivalries, or kin. "
+            "use **`/bonds action:set`** to mark friendships, rivalries, kin, or romances. "
             "**`/playpen action:socialize`** and **`action:groom`** deepen friendships over time."
         )
     return "\n\n".join(sections)

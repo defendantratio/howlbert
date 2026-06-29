@@ -49,13 +49,13 @@ def format_pack_stash_line(stack, current_day: int) -> str:
 def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, day: int) -> tuple[bool, str]:
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "you don't carry that carcass."
+        return False, "you don't have that in your hoard."
     if stack["uses_left"] <= 0:
-        return False, "that carcass is picked clean."
+        return False, "that's already picked clean."
     if stack["is_rotting"]:
         return (
             False,
-            "only **fresh** carcasses go in the den reserve; eat or `/salvage` this one first.",
+            "only **fresh** food goes in the den reserve; eat or `/salvage` this one first.",
         )
 
     db.add_pack_prey_stack(
@@ -99,7 +99,7 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
 def withdraw_from_pack_stash(user, stack_id: int, *, pack_id: int) -> tuple[bool, str]:
     stack = db.get_pack_prey_stack(stack_id)
     if not stack or stack["pack_id"] != pack_id:
-        return False, "that carcass isn't in your den reserve."
+        return False, "that isn't in your den reserve."
     if stack["uses_left"] <= 0:
         return False, "that reserve stack is empty."
 

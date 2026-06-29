@@ -89,7 +89,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         embed = howlbert_embed(
             "already surveyed",
             "you've mapped the border this sunrise.\n\n"
-            "_resets next sunrise · try **`/scout trail`** · **`/scout rescout`** · `/world action:cooldowns`_",
+            "_resets next sunrise · try **`/scout trail`** · **`/scout rescout`** · `/checklist`_",
             color=ERROR_COLOR,
         )
         embed.set_footer(text="scouts · survey once per sunrise · rescout unlimited")
@@ -99,6 +99,12 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     from engine.pack_raid_ecology import survey_dc_modifiers, survey_victim_bone_bonus
 
     dc_mod, dc_note = survey_dc_modifiers(user, interaction.guild.id, day)
+    from engine.moon_phase import new_moon_stealth_dc_mod
+
+    moon_dc_mod = new_moon_stealth_dc_mod()
+    if moon_dc_mod:
+        dc_mod += moon_dc_mod
+        dc_note = f"{dc_note} new moon; no light to give you away." if dc_note else "new moon; no light to give you away."
     result = resolve_check(
         user,
         attr_keys=("attr_wis", "attr_dex"),
@@ -133,7 +139,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
             + "\n\nYou were **spotted** on the ridge; standing **−1**.",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="survey spent · `/scout trail` · /world action:cooldowns")
+        embed.set_footer(text="survey spent · `/scout trail` · /checklist")
         append_fatigue_to_footer(embed, survey_fatigue)
         return embed
 
@@ -153,7 +159,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
             + plague_note,
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="survey spent · `/scout rescout` · /world action:cooldowns")
+        embed.set_footer(text="survey spent · `/scout rescout` · /checklist")
         append_fatigue_to_footer(embed, survey_fatigue)
         return embed
 
@@ -222,7 +228,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         embed = howlbert_embed(
             "already trailed",
             "you've run a cold trail this sunrise.\n\n"
-            "_resets next sunrise · try **`/scout survey`** · **`/scout rescout`** · `/world action:cooldowns`_",
+            "_resets next sunrise · try **`/scout survey`** · **`/scout rescout`** · `/checklist`_",
             color=ERROR_COLOR,
         )
         embed.set_footer(text="scouts · trail once per sunrise · rescout unlimited")
@@ -253,7 +259,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
             + "\n\nThe spoor vanishes in bog-water; **−2 mood**.",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="trail spent · `/scout survey` · /world action:cooldowns")
+        embed.set_footer(text="trail spent · `/scout survey` · /checklist")
         append_fatigue_to_footer(embed, trail_fatigue)
         return embed
 
@@ -273,7 +279,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
             + hazard_note,
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="trail spent · `/scout rescout` · /world action:cooldowns")
+        embed.set_footer(text="trail spent · `/scout rescout` · /checklist")
         append_fatigue_to_footer(embed, trail_fatigue)
         return embed
 

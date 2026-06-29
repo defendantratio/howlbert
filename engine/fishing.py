@@ -357,6 +357,37 @@ FISHING_CATCHES: dict[str, dict[str, Any]] = {
         "kind": "turtle",
         "flavor": ("A tiny **bog turtle**; the marsh's smallest legend.",),
     },
+    # --- Waterfowl (caught wading the bank at dawn/dusk) ---
+    "mallard": {
+        "name": "Mallard",
+        "label": "a mallard",
+        "uses": 3,
+        "bones": 12,
+        "rot_days": 4,
+        "rarity": "uncommon",
+        "kind": "waterfowl",
+        "flavor": ("A **mallard** drake strays too close to the bank; quick jaws end it.",),
+    },
+    "wood_duck": {
+        "name": "Wood Duck",
+        "label": "a wood duck",
+        "uses": 2,
+        "bones": 9,
+        "rot_days": 4,
+        "rarity": "uncommon",
+        "kind": "waterfowl",
+        "flavor": ("A **wood duck** dabbling in the reeds doesn't see you coming.",),
+    },
+    "canada_goose": {
+        "name": "Canada Goose",
+        "label": "a canada goose",
+        "uses": 5,
+        "bones": 24,
+        "rot_days": 5,
+        "rarity": "rare",
+        "kind": "waterfowl",
+        "flavor": ("A **canada goose** honks once before your jaws close the distance.",),
+    },
 }
 
 # (prey_key, weight_multiplier, optional gates dict)
@@ -379,6 +410,8 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("western_pond_turtle", 1, {"weather_rain": True}),
         ("spotted_turtle", 1, {"times": DAWN_DUSK}),
         ("bullfrog", 1, {"weather_rain": True}),
+        ("mallard", 1, {"times": DAWN_DUSK}),
+        ("canada_goose", 1, {"times": DAWN_DUSK}),
     ),
     "mistmoor": (
         ("swamp_darter", 1, {}),
@@ -393,6 +426,7 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("alligator_snapping_turtle", 1, {"times": DAY_TIMES}),
         ("painted_turtle", 1, {"weather_rain": True}),
         ("bullfrog", 1, {"weather_rain": True}),
+        ("wood_duck", 1, {"times": DAWN_DUSK}),
     ),
     "thistlehide": (
         ("green_sunfish", 1, {}),
@@ -407,6 +441,8 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("painted_turtle", 1, {}),
         ("bullfrog", 1, {"weather_rain": True}),
         ("common_snapping_turtle", 1, {"times": DAY_TIMES}),
+        ("wood_duck", 1, {"times": DAWN_DUSK}),
+        ("mallard", 1, {"times": DAWN_DUSK}),
     ),
     "greyspire": (
         ("brook_trout", 1, {}),
@@ -418,6 +454,7 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("wood_turtle", 1, {"times": DAWN_DUSK}),
         ("shovelnose_sturgeon", 1, {"weather_rain": True}),
         ("bullfrog", 1, {"weather_rain": True}),
+        ("mallard", 1, {"times": DAWN_DUSK}),
     ),
 }
 
@@ -431,6 +468,7 @@ _DEFAULT_POOL = (
     ("painted_turtle", 1, {}),
     ("common_snapping_turtle", 1, {"times": DAY_TIMES}),
     ("shovelnose_sturgeon", 1, {"weather_rain": True}),
+    ("mallard", 1, {"times": DAWN_DUSK}),
 )
 
 

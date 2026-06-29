@@ -76,7 +76,7 @@ def format_prey_hoard_footer(*, empty: bool = False) -> str:
     if empty:
         return (
             "fresh kills rot by type (3–8 sunrises); `/eat` before spoil · "
-            "rotting → `/salvage` · `/world action:cooldowns`"
+            "rotting → `/salvage` · `/checklist`"
         )
     return (
         "rot timers vary by carcass · `/eat` · `/drink` · `/bury` · `/preypile` · "
@@ -107,9 +107,9 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
 
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
-        return False, "you don't carry that carcass."
+        return False, "you don't have that in your hoard."
     if stack["uses_left"] <= 0:
-        return False, "that carcass is picked clean."
+        return False, "that's already picked clean."
 
     meta = prey_meta(stack["prey_key"])
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(user, stack["bone_value"])

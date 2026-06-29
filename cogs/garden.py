@@ -62,7 +62,7 @@ async def _owned_seed_autocomplete(interaction, current: str):
         name = f"{_herb_name(row['herb_key'])} seeds x{row['qty']}"
         if current and current.lower() not in name.lower() and (current.lower() not in row['herb_key']):
             continue
-        out.append(app_commands.Choice(name=name[:100], value=row['herb_key']))
+        out.append(app_commands.Choice(name=choice_label(name), value=row['herb_key']))
     return out[:25]
 
 async def _cultivable_autocomplete(interaction, current: str):
@@ -149,7 +149,7 @@ class Garden(commands.Cog):
         embed.set_footer(text='/garden tend each sunrise · /garden plots')
         await interaction.response.send_message(embed=embed)
 
-    @garden.command(name='tend', description='water and weed the pack garden (once per sunrise).')
+    @garden.command(name='tend', description='water and weed the pack garden (any wolf, any number of times).')
     async def tend(self, interaction: discord.Interaction):
         user, world, pack = await _need_pack_garden(interaction)
         if not user:
@@ -159,9 +159,6 @@ class Garden(commands.Cog):
         living = [p for p in plantings if not p['dead']]
         if not living:
             await interaction.response.send_message(embed=howlbert_embed('Nothing to Tend', f"**{pack['name']}** has no living plots. Sow a seed with `/garden plant`.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
-        if db.pack_garden_tended_today(pack['id'], day):
-            await interaction.response.send_message(embed=howlbert_embed('Already Tended', f"**{pack['name']}**'s garden was already watered this sunrise. Come back next sunrise.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         tended = 0
         for p in living:

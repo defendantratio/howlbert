@@ -8,6 +8,9 @@ from engine.hunt_payout import grant_prey_carcass_canonical
 from engine.prey_items import prey_meta
 
 # Bestiary template key -> food hoard key (large_prey handled by hunt_combat).
+# Every bestiary NPC drops something; anything not listed explicitly here
+# falls back to "carrion" in prey_key_for_npc_template below, so no future
+# bestiary addition silently produces nothing.
 NPC_TEMPLATE_PREY: dict[str, str] = {
     "coyote": "coyote",
     "fox": "fox",
@@ -20,21 +23,21 @@ NPC_TEMPLATE_PREY: dict[str, str] = {
     "dog_guard": "guard_dog",
     "dog_hunting": "hunting_dog",
     "dog_fighting": "fighting_dog",
+    "water_snake": "snake",
+    "garter_snake": "snake",
+    "skink": "lizard",
     "clan_warrior": "cat_carcass",
     "clan_deputy": "cat_carcass",
     "rogue_cat": "cat_carcass",
     "loner_cat": "cat_carcass",
     "kittypet": "kittypet_carcass",
-    "water_snake": "snake",
-    "garter_snake": "snake",
-    "skink": "lizard",
 }
 
 
 def prey_key_for_npc_template(template_key: str | None) -> str | None:
     if not template_key:
-        return None
-    return NPC_TEMPLATE_PREY.get(template_key)
+        return "carrion"
+    return NPC_TEMPLATE_PREY.get(template_key, "carrion")
 
 
 def try_grant_combat_kill_carcass(
@@ -67,8 +70,6 @@ def try_grant_combat_kill_carcass(
             else None
         )
         prey_key = prey_key_for_npc_template(template)
-        if not prey_key:
-            return None
     else:
         defender_wolf_id = defender_f["wolf_id"] if "wolf_id" in defender_f.keys() else None
         defender_discord = defender_f["discord_id"] if "discord_id" in defender_f.keys() else None

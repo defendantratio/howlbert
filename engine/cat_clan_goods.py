@@ -131,6 +131,20 @@ def _roll_single_entry(clan_name: str, pact_type: str) -> tuple[LootKind, str]:
     return _pick_entry(_clan_table(clan_name, pact_type))
 
 
+def roll_clan_loot_by_kind(
+    clan_name: str, *, pact_type: str, kind: LootKind, count: int
+) -> list[tuple[LootKind, str]]:
+    """Like roll_clan_loot, but restricted to one loot kind (for targeted raids)."""
+    if count <= 0:
+        return []
+    table = [e for e in _clan_table(clan_name, pact_type) if e[0] == kind]
+    if kind == "herb":
+        table.extend(e for e in MEDICINE_CAT_TABLE if e[0] == kind)
+    if not table:
+        return []
+    return [_pick_entry(table) for _ in range(count)]
+
+
 def receive_loot_count(trust: int, pact_type: str) -> int:
     from config import CAT_PACT_RECEIVE_MIN_TRUST, CAT_PACT_TRUST_HIGH
 
@@ -146,12 +160,21 @@ def receive_loot_count(trust: int, pact_type: str) -> int:
     return min(count, 4)
 
 
-def barter_loot_count(duplicate_items: int) -> int:
-    from config import CAT_PACT_BARTER_LOOT_MAX, CAT_PACT_BARTER_PER_DUPES
+def barter_loot_count(duplicate_items: int, trust: int = 50) -> int:
+    """
+    Trust changes how good a deal you get, not just whether you can trade at
+    all: a clan that trusts you throws in extra goods, one that's wary skimps.
+    """
+    from config import CAT_PACT_BARTER_LOOT_MAX, CAT_PACT_BARTER_PER_DUPES, CAT_PACT_TRUST_HIGH, CAT_PACT_TRUST_LOW
 
     if duplicate_items <= 0:
         return 0
-    return max(1, min(CAT_PACT_BARTER_LOOT_MAX, duplicate_items // CAT_PACT_BARTER_PER_DUPES))
+    base = max(1, duplicate_items // CAT_PACT_BARTER_PER_DUPES)
+    if trust >= CAT_PACT_TRUST_HIGH:
+        base += 1
+    elif trust < CAT_PACT_TRUST_LOW:
+        base = max(1, base - 1)
+    return max(1, min(CAT_PACT_BARTER_LOOT_MAX, base))
 
 
 def roll_clan_loot(

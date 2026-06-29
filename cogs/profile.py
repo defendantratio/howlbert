@@ -89,7 +89,7 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0-120 (optional; defaults from role)', genetic='optional rp genetics; comma-separated: blind, half_blind, deaf, mute, brachycephaly, albinism, melanism, missing_leg, no_tail', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0-120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
     @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=name, value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
     async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
@@ -192,6 +192,27 @@ class Profile(commands.Cog):
             footer += ' · /register again for another'
             embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
+        from utils.views import make_arrival_scene_view
+
+        is_pup = stage_for_age(age_mo) == 'pup'
+        is_loner = pack in UNAFFILIATED_KEYS
+        if is_pup and is_loner:
+            scene_embed = howlbert_embed(
+                'how were they born?',
+                f"before **{wolf_name}** opens their eyes for good, no den walls around them yet.",
+            )
+        elif is_pup:
+            scene_embed = howlbert_embed(
+                'how were they born?',
+                f"before **{wolf_name}** opens their eyes for good, the litter takes shape.",
+            )
+        else:
+            scene_embed = howlbert_embed(
+                'how did they arrive?',
+                f"before **{wolf_name}** settles in, {'the wild watches them pass' if is_loner else 'the den watches them come'}.",
+            )
+        view = make_arrival_scene_view(user['id'], wolf_name, interaction.user.id, pup=is_pup, loner=is_loner)
+        await interaction.followup.send(embed=scene_embed, view=view)
 
     @app_commands.command(name='wolves', description='list all wolves on your account.')
     async def wolves(self, interaction: discord.Interaction):
@@ -425,9 +446,9 @@ class Profile(commands.Cog):
         body = build_wolf_checklist(target, day=day, guild_id=interaction.guild_id, prestige_tier=prestige_tier, is_booster=is_booster, donor_bonus=donor_bonus)
         if not body:
             body = 'Nothing on your list — caught up.'
-            footer = 'Use `/world action:cooldowns` for full sunrise timers.'
+            footer = 'Use `/checklist` for full sunrise timers.'
         else:
-            footer = f'Day {day} · `/world action:cooldowns` for timers' if day else None
+            footer = f'Day {day} · `/checklist` for timers' if day else None
         embed = howlbert_embed(f"{target['wolf_name']}'s Checklist", body)
         if footer:
             embed.set_footer(text=footer)
@@ -477,6 +498,10 @@ class Profile(commands.Cog):
         belief_text = format_maw_belief(user)
         if belief_text:
             embed.add_field(name='Maw Belief', value=belief_text, inline=False)
+        from engine.long_term_injuries import format_long_term_injuries
+        lt_text = format_long_term_injuries(user)
+        if lt_text:
+            embed.add_field(name='Lasting Marks', value=lt_text, inline=False)
         wolf_birthday = user['birthday'] if 'birthday' in user.keys() else None
         if wolf_birthday:
             embed.add_field(name='Birthday', value=str(wolf_birthday), inline=True)

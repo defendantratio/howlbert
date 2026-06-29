@@ -200,10 +200,11 @@ def signal_choices() -> list[tuple[str, str]]:
 
 
 # ASL-style posture composition: optional handshape/location/movement
-# parameters that let a player customize *how* a signal looks without
-# touching its mechanic (the mechanic always comes from `signal`, never
-# from these). Mirrors ASL's parameters: handshape -> base, location ->
-# field, movement -> motion.
+# parameters built from the same four parameters real ASL signs use
+# (handshape -> base, location -> field, movement -> motion). Picking the
+# anatomically-correct combination for a signal (see CANONICAL_POSTURE)
+# is a real, if small, mechanical bonus — not flavor-only — rewarding
+# players who engage with the composition instead of just reskinning text.
 BASE_PHRASES = {
     "ears": "ears",
     "tail": "tail",
@@ -228,6 +229,35 @@ FIELD_PHRASES = {
     "skyward": "lifted toward the sky",
     "ground": "low, toward the ground",
 }
+
+# The anatomically "correct" base+motion+field for each signal; matching it
+# exactly grants SIGN_ASL_MATCH_MOOD_BONUS extra mood (see execute_sign).
+# Each combo is derived directly from that signal's own posture flavor text
+# (SIGNAL_CATALOG[key]["posture"]) below, not picked arbitrarily:
+CANONICAL_POSTURE: dict[str, tuple[str, str, str]] = {
+    "alert": ("ears", "held_still", "forward"),  # "ears pricked hard forward, body gone still"
+    "rally": ("tail", "slow_sweep", "skyward"),  # "tail sweeping a slow arc" + "lifted muzzle" calling the den up and in, like a howl
+    "play": ("body", "bouncing", "target"),  # "a bouncing dip and spring" aimed at "daring a chase"
+    "submit": ("body", "slow_sweep", "ground"),  # "body sunk low" + "a slow belly-roll" / "crouching wriggle"
+    "soothe": ("muzzle", "slow_sweep", "target"),  # "a gentle muzzle-nudge along the cheek, slow blinks"
+    "threaten": ("hackles", "sharp_snap", "target"),  # "hackles up... weight rolled forward over the toes"
+    "freeze": ("body", "held_still", "ground"),  # "body dropped low to the ground... dead still"
+    "track": ("muzzle", "held_still", "forward"),  # "nose pinned to a thread of scent... in the direction it runs"
+    "greet": ("tail", "repeated", "target"),  # "tail going like a metronome" pushed up at another's chin
+    "grieve": ("body", "held_still", "ground"),  # "a slow lie-down... breath gone shallow and even"
+    "challenge": ("body", "repeated", "target"),  # "a stiff-legged circle" never breaking eye contact
+    "nuzzle": ("muzzle", "slow_sweep", "target"),  # "a slow nose pressed along the cheek"
+    "stretch": ("body", "bouncing", "self"),  # "a full-body shake-off" / "a shiver that runs nose to tail"
+}
+
+
+def asl_posture_match_score(signal_key: str, base: str | None, motion: str | None, field: str | None) -> int:
+    """0-3: how many of (base, motion, field) match the canonical posture for this signal."""
+    canonical = CANONICAL_POSTURE.get(signal_key)
+    if not canonical or not base or not motion or not field:
+        return 0
+    given = (base, motion, field)
+    return sum(1 for g, c in zip(given, canonical) if g == c)
 
 
 def compose_posture(base: str, motion: str, field: str | None, *, target_name: str | None = None) -> str | None:
@@ -423,15 +453,25 @@ async def execute_sign(
                 ephemeral=reply_ephemeral(),
             )
             return
-        if signal_key != "greet" and (not pack_id or int(target["pack_id"] or 0) != pack_id):
-            await interaction.response.send_message(
-                embed=howlbert_embed(
-                    "not packmates",
-                    "you can only sign at wolves in the **same den** (greet works across packs).",
-                    color=ERROR_COLOR,
-                ),
-                ephemeral=reply_ephemeral(),
+    cross_pack_sign = bool(target and pack_id and target["pack_id"] and int(target["pack_id"]) != pack_id)
+    if cross_pack_sign:
+        from engine.pack_relations import cross_pack_social_risk
+
+        fought, combat_enc = cross_pack_social_risk(
+            user, target, guild_id=interaction.guild.id, channel_id=interaction.channel_id
+        )
+        if fought and combat_enc:
+            from utils.combat_views import make_combat_view
+
+            embed = howlbert_embed(
+                "border turns ugly",
+                f"you cross into **{target['wolf_name']}**'s territory to sign and the meeting turns to teeth; "
+                f"hostile ground doesn't forgive an open approach.",
+                color=ERROR_COLOR,
             )
+            embed.set_footer(text="hostile rival; combat panel below")
+            view = make_combat_view(combat_enc, interaction.client)
+            await interaction.response.send_message(embed=embed, view=view)
             return
 
     silenced, silence_label = wolf_is_silenced(user)
@@ -442,6 +482,8 @@ async def execute_sign(
     footer_bits: list[str] = []
     if custom_posture:
         footer_bits.append("custom posture")
+    if cross_pack_sign:
+        footer_bits.append("cross-pack; no den unity change")
 
     standing_delta = 0
     unity_delta = 0
@@ -471,6 +513,12 @@ async def execute_sign(
             unity_delta = SIGN_RALLY_UNITY_MUTE if silenced else SIGN_RALLY_UNITY_NORMAL
             if silenced:
                 footer_bits.append(f"{silence_label}: body-rally replaces your howl")
+            from engine.moon_phase import full_moon_rally_unity_bonus
+
+            moon_bonus = full_moon_rally_unity_bonus()
+            if moon_bonus:
+                unity_delta += moon_bonus
+                footer_bits.append(f"full moon: +{moon_bonus} unity")
         else:
             lines.append("_no den answers a lone rally._")
 
@@ -490,7 +538,7 @@ async def execute_sign(
             )
         else:
             lines.append(f"the den loosens up; **+{SIGN_PLAY_MOOD} mood** (you: **{your_mood}**).")
-        if pack_id:
+        if pack_id and not cross_pack_sign:
             unity_delta = SIGN_PLAY_UNITY
 
     elif signal_key == "submit":
@@ -501,7 +549,7 @@ async def execute_sign(
             f"**{target['wolf_name']}** eases off; the tension drains out of you both "
             f"(you: **{your_mood}** mood, them: **{their_mood}**)."
         )
-        if pack_id:
+        if pack_id and not cross_pack_sign:
             unity_delta = SIGN_SUBMIT_UNITY
 
     elif signal_key == "soothe":
@@ -512,7 +560,7 @@ async def execute_sign(
             f"**{target['wolf_name']}** settles under you; their fear quiets "
             f"(mood → **{their_mood}**; you: **{your_mood}**)."
         )
-        if pack_id:
+        if pack_id and not cross_pack_sign:
             unity_delta = SIGN_SOOTHE_UNITY
 
     elif signal_key == "threaten":
@@ -520,7 +568,7 @@ async def execute_sign(
             db.update_user_by_id(user["id"], distressed=1)
             your_mood = db.adjust_mood(user["id"], _scaled(SIGN_THREATEN_BACKFIRE_MOOD))
             standing_delta = SIGN_THREATEN_BACKFIRE_STANDING
-            unity_delta = SIGN_THREATEN_UNITY if pack_id else 0
+            unity_delta = SIGN_THREATEN_UNITY if (pack_id and not cross_pack_sign) else 0
             lines.append(
                 f"**{target['wolf_name']}** does **not** yield; they hold your stare and "
                 f"the bluff curdles (your mood **{your_mood}**)."
@@ -529,7 +577,7 @@ async def execute_sign(
             db.update_user_by_id(target["id"], distressed=1)
             their_mood = db.adjust_mood(target["id"], _scaled(SIGN_THREATEN_TARGET_MOOD))
             standing_delta = SIGN_THREATEN_STANDING
-            unity_delta = SIGN_THREATEN_UNITY if pack_id else 0
+            unity_delta = SIGN_THREATEN_UNITY if (pack_id and not cross_pack_sign) else 0
             lines.append(
                 f"**{target['wolf_name']}** flinches and gives ground "
                 f"(their mood **{their_mood}**); but the den feels the friction."
@@ -548,7 +596,7 @@ async def execute_sign(
 
     elif signal_key == "track":
         if int(user["last_track_day"]) >= day:
-            unity_delta = SIGN_TRACK_UNITY if pack_id else 0
+            unity_delta = SIGN_TRACK_UNITY if (pack_id and not cross_pack_sign) else 0
             your_mood = db.adjust_mood(user["id"], _scaled(SIGN_TRACK_MOOD))
             if target:
                 their_mood = db.adjust_mood(target["id"], _scaled(SIGN_TRACK_MOOD))
@@ -598,7 +646,7 @@ async def execute_sign(
             if key == "grief_melancholy":
                 db.set_user_conditions(int(target["discord_id"]), wolf_id=target["id"], clear_disease=True)
                 lines.append(f"_held vigil eases **{target['wolf_name']}**'s grief loose._")
-            if pack_id:
+            if pack_id and not cross_pack_sign:
                 unity_delta = SIGN_GRIEVE_UNITY
         else:
             lines.append(f"a held vigil, alone; **+{SIGN_GRIEVE_MOOD_SELF} mood** (you: **{your_mood}**).")
@@ -657,6 +705,24 @@ async def execute_sign(
                 f"**{target['wolf_name']}** holds the ground."
             )
         lines.append("_a rank dispute, not the rite; the alpha's seat is untouched._")
+
+    asl_score = asl_posture_match_score(signal_key, base, motion, field)
+    if asl_score >= 2:
+        from config import SIGN_ASL_MATCH_BOND_GAIN, SIGN_ASL_MATCH_STANDING_BONUS
+
+        full = asl_score == 3
+        tier_label = "textbook form" if full else "close form"
+        if target:
+            gain = SIGN_ASL_MATCH_BOND_GAIN if full else max(1, SIGN_ASL_MATCH_BOND_GAIN // 2)
+            bond = db.adjust_bond_strength(user["id"], target["id"], "friendship", gain, day=day)
+            bond_strength = int(bond["strength"]) if bond else gain
+            lines.append(f"_{tier_label}; friendship **+{gain}** (now **{bond_strength}/100** with {target['wolf_name']})._")
+            footer_bits.append(f"ASL match {asl_score}/3: +{gain} bond")
+        else:
+            bonus = SIGN_ASL_MATCH_STANDING_BONUS if full else max(1, SIGN_ASL_MATCH_STANDING_BONUS // 2)
+            standing_delta += bonus
+            lines.append(f"_{tier_label}; standing **+{bonus}** for signing it true to the body._")
+            footer_bits.append(f"ASL match {asl_score}/3: +{bonus} standing")
 
     # Apply pack unity + standing.
     if unity_delta and pack_id:
@@ -723,7 +789,7 @@ async def execute_read(interaction: discord.Interaction) -> None:
             "you've already read and answered the den's signs this sunrise.",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="resets next sunrise · /world action:cooldowns")
+        embed.set_footer(text="resets next sunrise · /checklist")
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
@@ -763,5 +829,5 @@ async def execute_read(interaction: discord.Interaction) -> None:
     embed = howlbert_embed("sign · read", "\n".join(lines), color=SUCCESS_COLOR)
     for name, value in fields:
         embed.add_field(name=name, value=value, inline=True)
-    embed.set_footer(text="once per sunrise · /world action:cooldowns")
+    embed.set_footer(text="once per sunrise · /checklist")
     await interaction.response.send_message(embed=embed)

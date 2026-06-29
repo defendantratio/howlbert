@@ -12,7 +12,13 @@ def test_npc_prey_map() -> None:
     assert prey_key_for_npc_template("water_snake") == "snake"
     assert prey_key_for_npc_template("garter_snake") == "snake"
     assert prey_key_for_npc_template("skink") == "lizard"
-    assert prey_key_for_npc_template("large_prey") is None
+    # large_prey kills are already granted a carcass via the dedicated
+    # hunt_combat victory path (is_hunt_prey_encounter short-circuits
+    # try_grant_combat_kill_carcass before this lookup ever runs for it);
+    # the lookup itself now falls back to "carrion" for any unmapped
+    # template so no combat kill is ever silently carcass-less.
+    assert prey_key_for_npc_template("large_prey") == "carrion"
+    assert prey_key_for_npc_template("totally_unmapped_future_npc") == "carrion"
 
 
 def test_cannibal_flag() -> None:

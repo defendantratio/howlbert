@@ -3811,7 +3811,7 @@ def trait_hunt_multiplier(user) -> tuple[float, str]:
     if mult >= 1.0:
         return 1.0, ""
     pct = int((1 - mult) * 100)
-    return mult, f"{label}; **−{pct}%** hunt bones."
+    return mult, f"{label}; −{pct}% hunt bones."
 
 
 def trait_combat_modifier(user) -> int:

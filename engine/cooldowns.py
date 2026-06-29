@@ -43,7 +43,7 @@ def daily_ration_note(
     is_booster: bool = False,
     donor_bonus: int = 0,
 ) -> str:
-    """Where `/bones action:daily` bones come from; shown on `/world action:cooldowns`."""
+    """Where `/bones action:daily` bones come from; shown on `/checklist`."""
     base = DAILY_REWARD
     payout = daily_stipend_amount(
         prestige_tier, is_booster=is_booster, donor_bonus=donor_bonus

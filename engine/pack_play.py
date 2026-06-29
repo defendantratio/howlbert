@@ -27,7 +27,7 @@ def run_playall(
         return (
             False,
             "you already rallied the den to play this sunrise.\n\n"
-            "_resets next sunrise · `/world action:cooldowns`_",
+            "_resets next sunrise · `/checklist`_",
         )
 
     members = db.get_pack_den_wolves(pack_id)

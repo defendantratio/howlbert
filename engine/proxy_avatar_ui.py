@@ -137,7 +137,7 @@ class AvatarCropView(ui.View):
                 ephemeral=True,
             )
             return
-        db.set_wolf_identity(self.wolf["id"], avatar_url=url)
+        db.set_wolf_avatar_cache(self.wolf["id"], final_png, url=url)
         for child in self.children:
             child.disabled = True
         try:

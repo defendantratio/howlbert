@@ -2,8 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from config import CURRENCY_LABEL, GREAT_PACKS
-from engine.activities import try_daily, try_hunt, try_work, try_crime
+from config import CURRENCY_LABEL
+from engine.activities import try_daily, try_hunt, try_work
 from engine.shop_items import RABBIT_PELT_GIFT_BONES, RABBIT_PELT_STANDING, USABLE_ITEM_KEYS
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
@@ -90,11 +90,11 @@ class Economy(commands.Cog):
             choices.append(app_commands.Choice(name=choice_label(f"{row['name']} ({row['key']})"), value=row['key']))
         return choices[:25]
 
-    @app_commands.command(name='bones', description='balance, daily, hunt, shop, inventory, work, crime, give, and more.')
-    @app_commands.describe(action='balance, daily, hunt, give, giveitem, leaderboard, work, crime, shop, buy, sell, inventory, or use', amount='bones amount (give)', wolf='recipient player (give / giveitem)', own_wolf='your other wolf (give / giveitem)', item='item key (giveitem, buy, sell, use)', quantity='item quantity', new_name='rename item (use)', collaborate='call a pack hunt (hunt only; same great pack joins via buttons)', target_pack='rival great pack treasury to raid (crime only)', scene='optional rp scene note (work / crime)', staff='flag for staff to weave your rp scene (work / crime)')
-    @app_commands.choices(action=[app_commands.Choice(name='balance', value='balance'), app_commands.Choice(name='daily stipend', value='daily'), app_commands.Choice(name='hunt for bones', value='hunt'), app_commands.Choice(name='give bones', value='give'), app_commands.Choice(name='give item', value='giveitem'), app_commands.Choice(name='leaderboard', value='leaderboard'), app_commands.Choice(name='work', value='work'), app_commands.Choice(name='crime', value='crime'), app_commands.Choice(name='shop', value='shop'), app_commands.Choice(name='buy item', value='buy'), app_commands.Choice(name='sell item', value='sell'), app_commands.Choice(name='inventory', value='inventory'), app_commands.Choice(name='use item', value='use')], target_pack=[app_commands.Choice(name=info['name'], value=key) for key, info in GREAT_PACKS.items()])
+    @app_commands.command(name='bones', description='balance, daily, hunt, shop, inventory, work, give, and more.')
+    @app_commands.describe(action='balance, daily, hunt, give, giveitem, leaderboard, work, shop, buy, sell, inventory, or use', amount='bones amount (give)', wolf='recipient player (give / giveitem)', own_wolf='your other wolf (give / giveitem)', item='item key (giveitem, buy, sell, use)', quantity='item quantity', new_name='rename item (use)', collaborate='call a pack hunt (hunt only; same great pack joins via buttons)', scene='optional rp scene note (work only)', staff='flag for staff to weave your rp scene (work only)')
+    @app_commands.choices(action=[app_commands.Choice(name='balance', value='balance'), app_commands.Choice(name='daily stipend', value='daily'), app_commands.Choice(name='hunt for bones', value='hunt'), app_commands.Choice(name='give bones', value='give'), app_commands.Choice(name='give item', value='giveitem'), app_commands.Choice(name='leaderboard', value='leaderboard'), app_commands.Choice(name='work', value='work'), app_commands.Choice(name='shop', value='shop'), app_commands.Choice(name='buy item', value='buy'), app_commands.Choice(name='sell item', value='sell'), app_commands.Choice(name='inventory', value='inventory'), app_commands.Choice(name='use item', value='use')])
     @app_commands.autocomplete(item=_inventory_item_autocomplete, own_wolf=_other_wolf_autocomplete)
-    async def bones(self, interaction: discord.Interaction, action: str, amount: int | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, item: str | None=None, quantity: int=1, new_name: str | None=None, collaborate: bool=False, target_pack: str | None=None, scene: str | None=None, staff: bool=False):
+    async def bones(self, interaction: discord.Interaction, action: str, amount: int | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, item: str | None=None, quantity: int=1, new_name: str | None=None, collaborate: bool=False, scene: str | None=None, staff: bool=False):
         if action == 'balance':
             await self._balance(interaction)
         elif action == 'daily':
@@ -119,8 +119,6 @@ class Economy(commands.Cog):
             await self._leaderboard(interaction)
         elif action == 'work':
             await self._work(interaction, scene=scene, staff=staff)
-        elif action == 'crime':
-            await self._crime(interaction, target_pack=target_pack, scene=scene, staff=staff)
         elif action == 'shop':
             await self._shop(interaction)
         elif action == 'buy':
@@ -147,7 +145,7 @@ class Economy(commands.Cog):
             return
         embed = howlbert_embed('Your Stores', color=SUCCESS_COLOR)
         embed.add_field(name=CURRENCY_LABEL, value=format_bones(user['bones']), inline=False)
-        embed.set_footer(text='/bones action:hunt · action:work · /world action:cooldowns')
+        embed.set_footer(text='/bones action:hunt · action:work · /checklist')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _daily(self, interaction: discord.Interaction):
@@ -361,11 +359,6 @@ class Economy(commands.Cog):
         if embed:
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    async def _crime(self, interaction: discord.Interaction, target_pack: str | None=None, scene: str | None=None, staff: bool=False):
-        embed = try_crime(interaction, target_pack=target_pack, scene=scene, staff=staff)
-        if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
     async def _shop(self, interaction: discord.Interaction):
         items = db.get_shop_items()
         if not items:
@@ -523,7 +516,7 @@ class Economy(commands.Cog):
         key = item.strip().lower()
         shop_item = db.get_item_by_key(key)
         if not shop_item or key not in USABLE_ITEM_KEYS:
-            embed = howlbert_embed("Can't Use That", 'Check `/bones action:inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, `revive`, `reincarnation`. `lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. `extra_paw` works with `/bones action:work` or `/bones action:crime`.', color=ERROR_COLOR)
+            embed = howlbert_embed("Can't Use That", 'Check `/bones action:inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, `revive`, `reincarnation`. `lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. `extra_paw` works with `/bones action:work` or `/field action:crime`.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if db.get_inventory_quantity(interaction.user.id, shop_item['id']) < 1:

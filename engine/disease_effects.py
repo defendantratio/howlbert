@@ -98,7 +98,7 @@ def disease_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
 def disease_hunt_multiplier(user) -> tuple[float, str]:
     key, stage = _parsed(user)
     if key == "cough" and stage == "severe":
-        return 0.75, "blackcough; speed **−25%** hunt bones."
+        return 0.75, "blackcough; speed −25% hunt bones."
     if key in ("mange", "distemper", "yellowcough"):
         info = get_stage_info(key, stage or "active")
         mult = float(info.get("hunt_mult", 0.75)) if info else 0.75
@@ -107,20 +107,20 @@ def disease_hunt_multiplier(user) -> tuple[float, str]:
             key, key.title()
         )
         if key == "yellowcough":
-            return mult, f"{label}; wheezing and weakness; **−{pct}%** hunt bones."
-        return mult, f"{label}; speed **−{pct}%** hunt bones."
+            return mult, f"{label}; wheezing and weakness; −{pct}% hunt bones."
+        return mult, f"{label}; speed −{pct}% hunt bones."
     if key == "rot_lung" and stage in ("wheeze", "necrosis"):
         info = get_stage_info(key, stage)
         mult = float(info.get("hunt_mult", 0.75)) if info else 0.75
         pct = int((1 - mult) * 100)
-        return mult, f"rot-lung; **−{pct}%** hunt bones."
+        return mult, f"rot-lung; −{pct}% hunt bones."
     if key in ("wasting_sickness", "cancer", "feral_shift", "insomnia", "chronic_stress", "obsession"):
         info = get_stage_info(key, stage or "active")
         mult = float(info.get("hunt_mult", 1.0)) if info else 1.0
         if mult < 1.0:
             pct = int((1 - mult) * 100)
             label = DISEASES.get(key, {}).get("label", key.replace("_", " ").title())
-            return mult, f"{label}; **−{pct}%** hunt bones."
+            return mult, f"{label}; −{pct}% hunt bones."
     return 1.0, ""
 
 

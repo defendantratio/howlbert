@@ -93,7 +93,7 @@ class Life(commands.Cog):
         return user
 
     @app_commands.command(name='medic', description='clinical care, herb treatment, spirit rites, and sick-den quarantine.')
-    @app_commands.describe(action='deathsaves, stabilize, surgery, treat, checkup, sacred, ritual, naming, lay_to_rest, swim, quarantine, or observe', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', helper='assisting medic for surgery (medicine dc 10 → advantage)', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf to prepare (lay_to_rest)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
+    @app_commands.describe(action='medic action (see dropdown for the full list)', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', helper='assisting medic for surgery (medicine dc 10 → advantage)', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf to prepare (lay_to_rest)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
     @app_commands.choices(action=[app_commands.Choice(name='death save (dying wolf)', value='deathsaves'), app_commands.Choice(name='stabilize packmate', value='stabilize'), app_commands.Choice(name='surgery on patient', value='surgery'), app_commands.Choice(name='treat with herb', value='treat'), app_commands.Choice(name='den checkup', value='checkup'), app_commands.Choice(name='sacred visit (medic)', value='sacred'), app_commands.Choice(name='spirit ritual', value='ritual'), app_commands.Choice(name='pup naming rite', value='naming'), app_commands.Choice(name='lay wolf to rest', value='lay_to_rest'), app_commands.Choice(name='swim therapy (river)', value='swim'), app_commands.Choice(name='quarantine sick wolf', value='quarantine'), app_commands.Choice(name='observe case (apprentice)', value='observe')], procedure=[app_commands.Choice(name='stitch wound (deep gash / infection)', value='stitch'), app_commands.Choice(name='set bone / splint (comfrey + bindweed + 2 sticks)', value='set_bone'), app_commands.Choice(name='extract thorn or splinter', value='extract'), app_commands.Choice(name='amputate ruined limb', value='amputate')])
     @app_commands.autocomplete(herb=herb_inventory_autocomplete, own_wolf=_quarantine_own_wolf_autocomplete)
     async def medic(self, interaction: discord.Interaction, action: str, patient: discord.Member | None=None, helper: discord.Member | None=None, procedure: str='stitch', herb: str | None=None, ritual_herb: str | None=None, deceased: discord.Member | None=None, lay_herb: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False, use_yarrow: bool=False, use_cobwebs: bool=False, use_poppy: bool=False, use_meadowsweet: bool=False, use_loosestrife: bool=False, use_plantain: bool=False, use_rush_stalks: bool=False):
@@ -588,7 +588,7 @@ class Life(commands.Cog):
             return
         user_last = user['last_court_day'] if 'last_court_day' in user.keys() else 0
         if user_last >= day:
-            embed = howlbert_embed('Already Courted', 'You may court **once per rollover**.\n\n_Resets next sunrise · `/world action:cooldowns`_', color=ERROR_COLOR)
+            embed = howlbert_embed('Already Courted', 'You may court **once per rollover**.\n\n_Resets next sunrise · `/checklist`_', color=ERROR_COLOR)
             embed.set_footer(text='/courtship action:mate · /courtship action:pregnancy')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
@@ -635,7 +635,7 @@ class Life(commands.Cog):
         if rel_note:
             embed.set_footer(text=rel_note.strip('_'))
         else:
-            embed.set_footer(text='/courtship action:mate · /world action:cooldowns')
+            embed.set_footer(text='/courtship action:mate · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _rival_challenge(self, interaction: discord.Interaction, defender_target: discord.Member | None, challenger_partner: discord.Member | None, own_wolf: str | None, mode: str, favor_challenger: bool):
@@ -929,6 +929,12 @@ class Life(commands.Cog):
             if conditions:
                 muts = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in conditions))
                 mutation_lines.append(f'**{pup_name}**: {muts}')
+        if len(born_pup_ids) > 1:
+            import random as _random
+
+            for i, pup_a in enumerate(born_pup_ids):
+                for pup_b in born_pup_ids[i + 1:]:
+                    db.set_bond(pup_a, pup_b, "kin", strength=_random.randint(35, 65), note="littermates", day=born_day)
         if not born_names and stillborn_lines:
             db.clear_pregnancy(user['id'])
             body = f"Birth check: **{result['total']}** vs DC 12; the litter did not survive.\n" + '\n'.join(stillborn_lines) + '\n\nBuy **Vitality Salve** from `/bones action:shop` and use **`/pupcare action:save`** before the next `/rollover`.'
@@ -977,7 +983,7 @@ class Life(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Birth; Healer Scandal', body, color=ERROR_COLOR))
             return
         embed = howlbert_embed('Birth', body, color=SUCCESS_COLOR)
-        embed.set_footer(text='/pupcare action:feed · /pupcare action:list · /world action:cooldowns')
+        embed.set_footer(text='/pupcare action:feed · /pupcare action:list · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _feedpups(self, interaction: discord.Interaction, pup_name: str | None, own_wolf: str | None):
@@ -1001,7 +1007,7 @@ class Life(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = 'Nursing' if ok else 'Cannot Feed'
         embed = howlbert_embed(title, msg, color=color)
-        embed.set_footer(text='/pupcare action:list · once per sunrise · /world action:cooldowns')
+        embed.set_footer(text='/pupcare action:list · once per sunrise · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _savepup(self, interaction: discord.Interaction, name: str):
@@ -1067,7 +1073,7 @@ class Life(commands.Cog):
             from engine.nursing import lone_nursing_note
             footer += lone_nursing_note(user)
         embed = howlbert_embed('Your Pups', '\n'.join(lines) + footer)
-        embed.set_footer(text='/pupcare action:feed · /switchwolf · /world action:cooldowns')
+        embed.set_footer(text='/pupcare action:feed · /switchwolf · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _adoptpup(self, interaction: discord.Interaction, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None):

@@ -300,7 +300,7 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
     if mode == 'list':
         body = list_pack_herb_store(user['pack_id'], world['day_number'])
         embed = howlbert_embed("Healers' Herb Store", body)
-        embed.set_footer(text='anyone: `mode:deposit` / `depositall` · medics & foragers: `mode:withdraw` / `withdrawall`')
+        embed.set_footer(text='anyone: `mode:deposit` / `depositall` · medics only: `mode:withdraw` / `withdrawall`')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
     if mode == 'depositall':
@@ -313,7 +313,7 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
         ok, msg = deposit_inventory_herb_to_store(user, raw, pack_id=user['pack_id'], guild_id=interaction.guild.id, day=world['day_number'])
     elif mode == 'withdraw':
         if not can_manage_den_herbs(user):
-            await interaction.response.send_message(embed=howlbert_embed('Medic / Forager Only', "Only **Medics** and **Foragers** may withdraw from the healers' store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Medic Only', "Only **Medics** may withdraw from the healers' store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         try:
             sid = int((store_stack or herb or '').strip().lstrip('#'))
@@ -323,7 +323,7 @@ async def denstore(interaction: discord.Interaction, mode: str, store_stack: str
         ok, msg = withdraw_herb_from_store(user, sid, pack_id=user['pack_id'], guild_id=interaction.guild.id, day=world['day_number'])
     elif mode == 'withdrawall':
         if not can_manage_den_herbs(user):
-            await interaction.response.send_message(embed=howlbert_embed('Medic / Forager Only', "Only **Medics** and **Foragers** may withdraw from the healers' store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Medic Only', "Only **Medics** may withdraw from the healers' store.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         ok, msg = withdraw_all_herbs_from_store(user, pack_id=user['pack_id'], guild_id=interaction.guild.id, day=world['day_number'])
     else:

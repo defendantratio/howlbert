@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from config import (
     DRINK_COOLDOWN_MINUTES,
+    DRINK_EXHAUSTION_RELIEF,
     DRINK_HP_RESTORE,
     DRINK_HUNGER_RESTORE,
     DRINK_MOOD_RESTORE,
@@ -58,7 +59,7 @@ def apply_thirst_bone_penalty(amount: int, thirst: int) -> tuple[int, str]:
     if amount <= 0 or thirst >= THIRST_LOW_THRESHOLD:
         return amount, ""
     reduced = max(0, int(amount * (100 - THIRST_HUNT_PENALTY_PCT) / 100))
-    note = f"low thirst ({thirst}); **−{THIRST_HUNT_PENALTY_PCT}%** bone payout."
+    note = f"low thirst ({thirst}); −{THIRST_HUNT_PENALTY_PCT}% bone payout."
     return reduced, note
 
 
@@ -122,11 +123,17 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
     if hp_gain > 0:
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=user["hp"] + hp_gain)
     mood = db.adjust_mood(user["id"], DRINK_MOOD_RESTORE)
+    old_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
+    new_exhaustion = max(0, old_exhaustion - DRINK_EXHAUSTION_RELIEF)
+    if new_exhaustion != old_exhaustion:
+        db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_exhaustion)
 
     msg = (
         f"cold water from the **{season}** creek; thirst **{thirst}** (+{thirst_restore}), "
         f"hunger **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
     )
+    if new_exhaustion != old_exhaustion:
+        msg += f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"
     if plot_line:
         msg += f"\n_{plot_line}_"
     from engine.disease_contract import try_silverrush_sewage_exposure

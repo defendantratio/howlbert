@@ -25,7 +25,9 @@ def test_combat_prey_mapping() -> None:
     assert prey_key_for_npc_template("water_snake") == "snake"
     assert prey_key_for_npc_template("garter_snake") == "snake"
     assert prey_key_for_npc_template("skink") == "lizard"
-    assert prey_key_for_npc_template("spider") is None
+    # No combat kill is exempt; an unmapped template (e.g. spider) still
+    # falls back to a generic "carrion" carcass rather than nothing.
+    assert prey_key_for_npc_template("spider") == "carrion"
 
 
 def test_marsh_hunt_bias_frog() -> None:

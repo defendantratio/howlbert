@@ -429,7 +429,7 @@ class WolfAdmin(commands.Cog):
         await interaction.response.send_message(embed=howlbert_embed('Autoproxy On', f"**{player.display_name}**'s untagged messages now post as **{wolf['wolf_name']}**. They can escape once with `\\` at the start of a message.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
     @wolfadmin.command(name='import_sheet', description='parse a pasted/attached rp character sheet into a new wolf (admin).')
-    @app_commands.describe(player='who will own this wolf (defaults to you)', text='paste the sheet text (Name/Pack/Rank/Age/... fields)', file='or attach the sheet as a .txt file instead of pasting', pack='override the detected pack (optional)', dormant='exempt from hunger/thirst/mood decay until claimed (default true; use false if a player starts playing immediately)', dry_run='preview only; rerun with dry_run:False to actually register')
+    @app_commands.describe(player='who will own this wolf (defaults to you)', text='paste the sheet text (Name/Pack/Rank/Age/... fields)', file='or attach the sheet as a .txt file instead of pasting', pack='override the detected pack (optional)', dormant='exempt from need decay until claimed (default true; false if player starts now)', dry_run='preview only; rerun with dry_run:False to actually register')
     @app_commands.choices(pack=PACK_CHOICES)
     async def wolfadmin_import_sheet(self, interaction: discord.Interaction, player: discord.User | None=None, text: str | None=None, file: discord.Attachment | None=None, pack: str | None=None, dormant: bool=True, dry_run: bool=True):
         if not await self._require_admin(interaction):

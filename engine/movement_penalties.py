@@ -22,22 +22,22 @@ def apply_movement_hunt_penalty(amount: int, user) -> tuple[int, str]:
     ex = user_exhaustion(user)
     if ex >= 2:
         mult = min(mult, 0.5)
-        notes.append(f"exhaustion {ex}; speed halved (**−50%**)")
+        notes.append(f"exhaustion {ex}; speed halved (−50%)")
     if has_injury(user, "sprained_leg"):
         mult = min(mult, 0.5)
-        notes.append("Sprained leg; movement halved (**−50%**)")
+        notes.append("Sprained leg; movement halved (−50%)")
     if has_injury(user, "spinal_injury"):
         mult = min(mult, 0.25)
-        notes.append("Spinal injury; drag-hunt only (**−75%**)")
+        notes.append("Spinal injury; drag-hunt only (−75%)")
     lt = parse_long_term_injuries(
         user["long_term_injuries"] if "long_term_injuries" in user.keys() else None
     )
     if "limp" in lt:
         mult = min(mult, 0.75)
-        notes.append("Limp; speed **−25%**")
+        notes.append("Limp; speed −25%")
     if broom_splint_active(user):
         mult = min(mult, 0.5)
-        notes.append("Broom splint; speed halved (**−50%**)")
+        notes.append("Broom splint; speed halved (−50%)")
     dis_mult, dis_note = disease_hunt_multiplier(user)
     if dis_mult < 1.0:
         mult = min(mult, dis_mult)

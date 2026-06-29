@@ -154,10 +154,17 @@ def log_raid(
     caught: bool = False,
     guild_id: int | None = None,
     day: int | None = None,
+    loot_label: str | None = None,
 ) -> None:
+    """loot_label overrides the bones-treasury wording for food/herb raids
+    (e.g. "a hare carcass" or "3x yarrow") while keeping the same journal key."""
+    target = loot_label or "treasury"
     if caught:
-        summary = f"**{wolf_name}** was caught raiding **{victim_pack_name}**'s treasury."
+        summary = f"**{wolf_name}** was caught raiding **{victim_pack_name}**'s {target}."
         key = "raid_caught"
+    elif loot_label:
+        summary = f"**{wolf_name}** raided **{victim_pack_name}**'s den reserve ({loot_label})."
+        key = "raid_success"
     else:
         summary = (
             f"**{wolf_name}** raided **{victim_pack_name}**'s treasury "
