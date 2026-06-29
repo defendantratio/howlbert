@@ -136,7 +136,7 @@ class RoleCog(commands.Cog):
                 footer = footer[:253] + '…'
             embed.set_footer(text=footer)
         else:
-            embed.set_footer(text='/world action:cooldowns · once per sunrise')
+            embed.set_footer(text='/checklist · once per sunrise')
         await interaction.response.send_message(embed=embed)
 
     async def _prophecy(self, interaction: discord.Interaction):

@@ -49,7 +49,7 @@ from engine.pack_leadership import can_forge_cat_pact, wolf_role_key
 
 PACT_TYPE_LABELS = {
     "truce": "border truce",
-    "alliance": "clan alliance",
+    "alliance": "alliance",
     "hunting_rights": "hunting rights",
 }
 
@@ -435,6 +435,80 @@ def gift_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tup
     )
 
 
+RAID_CLAN_KIND_BY_TYPE = {"food": "prey", "herbs": "herb", "amusement": "amusement"}
+RAID_CLAN_CATCH_CHANCE = 0.40
+RAID_CLAN_CAUGHT_TRUST_PENALTY = -8
+RAID_CLAN_SUCCESS_TRUST_PENALTY = -3
+
+
+def raid_cat_clan(
+    user, pack, *, guild_id: int, clan_name: str, raid_type: str, day: int
+) -> tuple[bool, str]:
+    """
+    Steal from a Clan's camp; same shape as raiding a rival Great Pack's
+    stores, but against trust instead of pack relation (Clans have no
+    persistent stash, so loot is rolled from the same table /pact trade uses).
+    """
+    clan, err = validate_clan_name(clan_name)
+    if err:
+        return False, err
+    kind = RAID_CLAN_KIND_BY_TYPE.get(raid_type)
+    if not kind:
+        return False, "raid_type must be food, herbs, or amusement for a clan camp."
+    if not user["pack_id"]:
+        return False, "join a great pack to run a den raid."
+
+    if int(user["last_crime_day"]) >= day:
+        return False, "you've run your score this rollover."
+
+    pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
+    pact_type = pact["pact_type"] if pact else "truce"
+    display_name = stored_clan or clan
+
+    db.update_user(user["discord_id"], last_crime_day=day, wolf_id=user["id"])
+
+    from engine.cat_clan_goods import roll_clan_loot_by_kind, grant_clan_loot
+    from engine.infractions import cross_pack_steal_caught_standing, cross_pack_steal_standing
+
+    if random.random() < RAID_CLAN_CATCH_CHANCE:
+        kick = db.adjust_wolf_standing(user["discord_id"], cross_pack_steal_caught_standing())
+        trust_note = ""
+        if pact:
+            new_trust = max(0, int(pact["trust"]) + RAID_CLAN_CAUGHT_TRUST_PENALTY)
+            db.adjust_cat_pact_trust(pack["id"], stored_clan, RAID_CLAN_CAUGHT_TRUST_PENALTY)
+            trust_note = f"\ntrust with **{display_name}** **{RAID_CLAN_CAUGHT_TRUST_PENALTY}** (now **{new_trust}/100**)."
+        from engine.wolf_journal import log_raid
+
+        log_raid(user["id"], user["wolf_name"], display_name, caught=True, guild_id=guild_id, day=day, loot_label="camp")
+        return False, (
+            f"a patrol scents you at the camp edge; you bolt empty-pawed.\n"
+            f"standing **{cross_pack_steal_caught_standing()}**"
+            + ("; **cast out** as loner" if kick == "kicked" else "")
+            + trust_note
+        )
+
+    entries = roll_clan_loot_by_kind(display_name, pact_type=pact_type, kind=kind, count=1)
+    if not entries:
+        return False, f"**{display_name}** has nothing worth taking in that category right now."
+
+    lines = grant_clan_loot(user, guild_id=guild_id, day=day, entries=entries)
+    standing_gain = cross_pack_steal_standing()
+    db.adjust_wolf_standing(user["discord_id"], standing_gain)
+    trust_note = ""
+    if pact:
+        new_trust = max(0, int(pact["trust"]) + RAID_CLAN_SUCCESS_TRUST_PENALTY)
+        db.adjust_cat_pact_trust(pack["id"], stored_clan, RAID_CLAN_SUCCESS_TRUST_PENALTY)
+        trust_note = f"\ntrust with **{display_name}** **{RAID_CLAN_SUCCESS_TRUST_PENALTY}** (now **{new_trust}/100**)."
+    from engine.wolf_journal import log_raid
+
+    log_raid(user["id"], user["wolf_name"], display_name, guild_id=guild_id, day=day, loot_label=", ".join(lines) or "camp goods")
+    loot_block = "\n".join(f"• {line}" for line in lines)
+    return True, (
+        f"you slip past **{display_name}**'s sentries and make off with it.\n{loot_block}\n"
+        f"standing **+{standing_gain}**.{trust_note}"
+    )
+
+
 def trade_duplicates_cat_pact(
     user,
     pack,
@@ -486,7 +560,7 @@ def trade_duplicates_cat_pact(
 
     from engine.cat_clan_goods import barter_loot_count, grant_clan_loot, roll_clan_loot
 
-    loot_count = barter_loot_count(bundle.total_items)
+    loot_count = barter_loot_count(bundle.total_items, trust=new_trust)
     loot_entries = roll_clan_loot(
         stored_clan, pact_type=pact["pact_type"], count=loot_count
     )

@@ -60,9 +60,9 @@ class BondsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='bonds', description='view or manage friendships, rivalries, kin, mentors, and found families.')
+    @app_commands.command(name='bonds', description='view or manage friendships, rivalries, kin, mentors, romances, and found families.')
     @app_commands.describe(action='what to do', own_wolf='your other wolf; whose bonds to view or edit (default: active wolf)', wolf="another player's wolf (set/clear target)", target_own_wolf='your other wolf as set/clear target', bond_type='bond to set or clear', strength='bond strength 0-100 (set only; default 40)', note='short label; e.g. litter-mate, old feud (set only)', family_name='found family name (create or join)', family_role='your role in the family (join only)', leave='leave your current found family')
-    @app_commands.choices(action=[app_commands.Choice(name='view bonds', value='view'), app_commands.Choice(name='set bond', value='set'), app_commands.Choice(name='clear bond', value='clear'), app_commands.Choice(name='found family', value='family')], bond_type=[app_commands.Choice(name='friendship', value='friendship'), app_commands.Choice(name='rivalry', value='rivalry'), app_commands.Choice(name='kin', value='kin'), app_commands.Choice(name='mentor', value='mentor')], family_role=[app_commands.Choice(name='parent', value='parent'), app_commands.Choice(name='sibling', value='sibling'), app_commands.Choice(name='cub', value='cub'), app_commands.Choice(name='member', value='member')])
+    @app_commands.choices(action=[app_commands.Choice(name='view bonds', value='view'), app_commands.Choice(name='set bond', value='set'), app_commands.Choice(name='clear bond', value='clear'), app_commands.Choice(name='found family', value='family')], bond_type=[app_commands.Choice(name='friendship', value='friendship'), app_commands.Choice(name='rivalry', value='rivalry'), app_commands.Choice(name='kin', value='kin'), app_commands.Choice(name='mentor', value='mentor'), app_commands.Choice(name='romance', value='romance')], family_role=[app_commands.Choice(name='parent', value='parent'), app_commands.Choice(name='sibling', value='sibling'), app_commands.Choice(name='cub', value='cub'), app_commands.Choice(name='member', value='member')])
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_own_wolf=_other_wolf_autocomplete)
     async def bonds(self, interaction: discord.Interaction, action: str='view', own_wolf: str | None=None, wolf: discord.Member | None=None, target_own_wolf: str | None=None, bond_type: str | None=None, strength: app_commands.Range[int, 0, 100] | None=None, note: str | None=None, family_name: str | None=None, family_role: str | None=None, leave: bool=False):
         subject, err = _resolve_subject(interaction, own_wolf)
@@ -75,7 +75,7 @@ class BondsCog(commands.Cog):
         if action == 'view':
             body = format_bonds_embed_body(subject)
             embed = howlbert_embed(f"{subject['wolf_name']}; Bonds", body)
-            embed.set_footer(text='/playpen action:socialize · action:groom · /bonds action:set · /world action:cooldowns')
+            embed.set_footer(text='/playpen action:socialize · action:groom · /bonds action:set · /checklist')
             await interaction.response.send_message(embed=embed)
             return
         if action == 'family':

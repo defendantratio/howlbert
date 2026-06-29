@@ -49,12 +49,19 @@ def receive_loot_count(standing: int, pact_type: str) -> int:
     return min(count, 4)
 
 
-def barter_loot_count(duplicate_items: int) -> int:
+def barter_loot_count(duplicate_items: int, standing: int = 5) -> int:
+    """Pack relation standing (0-10) sweetens or sours the trade, same as cat-clan trust."""
     from config import CAT_PACT_BARTER_LOOT_MAX, CAT_PACT_BARTER_PER_DUPES
+    from engine.pack_relations import FRIENDLY_STANDING_THRESHOLD, HOSTILE_STANDING_THRESHOLD
 
     if duplicate_items <= 0:
         return 0
-    return max(1, min(CAT_PACT_BARTER_LOOT_MAX, duplicate_items // CAT_PACT_BARTER_PER_DUPES))
+    base = max(1, duplicate_items // CAT_PACT_BARTER_PER_DUPES)
+    if standing >= FRIENDLY_STANDING_THRESHOLD:
+        base += 1
+    elif standing <= HOSTILE_STANDING_THRESHOLD:
+        base = max(1, base - 1)
+    return max(1, min(CAT_PACT_BARTER_LOOT_MAX, base))
 
 
 def roll_wolf_pact_loot(pack_key: str, *, pact_type: str, count: int) -> list[tuple[str, str]]:

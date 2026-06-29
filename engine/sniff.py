@@ -88,7 +88,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     day = world["day_number"]
     if int(user["last_sniff_day"]) >= day:
         embed = howlbert_embed("already sniffed", "you've read the wind this sunrise.", color=ERROR_COLOR)
-        embed.set_footer(text="resets at next `/rollover` · `/world action:cooldowns`")
+        embed.set_footer(text="resets at next `/rollover` · `/checklist`")
         return embed, None
 
     db.update_user(interaction.user.id, last_sniff_day=day)

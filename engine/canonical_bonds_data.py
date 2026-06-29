@@ -175,7 +175,7 @@ CANONICAL_BONDS: list[dict] = [
     {
         "a": "Mossheart",
         "b": "Rivenmaw",
-        "type": "friendship",
+        "type": "romance",
         "strength": 72,
         "note": "Secret lovers at the neutral bend; forbidden warmth.",
     },

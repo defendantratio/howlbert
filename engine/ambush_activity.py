@@ -153,7 +153,7 @@ def _ambush_fatigue_note(user, activity: str, day: int) -> str | None:
     return None
 
 
-def ambush_victory_embed(encounter_id: int):
+def ambush_victory_embed(encounter_id: int, *, kill_note: str | None = None):
     """embed when the hunter downs an ambush npc."""
     enc = db.get_encounter(encounter_id)
     activity = _enc_activity(enc)
@@ -210,11 +210,12 @@ def ambush_victory_embed(encounter_id: int):
     user = db.get_user(user["discord_id"])
     fatigue = _ambush_fatigue_note(user, activity, world["day_number"])
 
+    carcass_note = f"\n{kill_note}" if kill_note else ""
     if activity == "hunt":
-        title = "threat driven off"
+        title = "threat driven off" if not kill_note else "threat killed"
         body = (
             "you survive the ambush and claim a small trove from what the attacker left behind.\n"
-            f"**{format_bones(net, signed=True)}**"
+            f"**{format_bones(net, signed=True)}**{carcass_note}"
         )
         if tax > 0:
             body += f" · pack tax **{format_bones(tax)}**"
@@ -226,10 +227,10 @@ def ambush_victory_embed(encounter_id: int):
         if is_nursing_mother(user):
             footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
     else:
-        title = "ambush survived"
+        title = "ambush survived" if not kill_note else "attacker killed"
         body = (
-            "you drive off the attacker and catch your breath.\n"
-            f"**{format_bones(net, signed=True)}** · your explore for this sunrise is done."
+            ("you drive off the attacker and catch your breath.\n" if not kill_note else "the attacker doesn't get back up.\n")
+            + f"**{format_bones(net, signed=True)}**{carcass_note} · your explore for this sunrise is done."
         )
         if tax > 0:
             body += f" pack tax: **{format_bones(tax)}**."

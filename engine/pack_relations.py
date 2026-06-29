@@ -201,7 +201,7 @@ def sniff_encounter_lines(
 
             grudge = record_player_rivalry(user["id"], other["id"], day=day)
             line += f"\nyour grudge with **{other['wolf_name']}**: **{grudge}/100** (`/rivals`)."
-        enc_id = _start_rival_wolf_skirmish(
+        enc_id = start_rival_wolf_skirmish(
             user,
             other,
             guild_id=guild_id,
@@ -212,15 +212,25 @@ def sniff_encounter_lines(
         return f"\n\n{line}", enc_id
 
     if is_friendly_relation(standing):
+        from config import WOLF_NOTORIETY_SNIFF_MOOD, WOLF_NOTORIETY_STANDING_THRESHOLD
+
+        other_standing = int(other["standing"]) if "standing" in other.keys() else 0
+        notoriety_note = ""
+        if other_standing >= WOLF_NOTORIETY_STANDING_THRESHOLD:
+            new_mood = db.adjust_mood(user["id"], WOLF_NOTORIETY_SNIFF_MOOD)
+            notoriety_note = (
+                f"\n_word of **{other['wolf_name']}**'s name has clearly reached this far; "
+                f"**+{WOLF_NOTORIETY_SNIFF_MOOD} mood** crossing paths with them (now **{new_mood}**)._"
+            )
         return (
             f"\n\n_a **{pack_name}** wolf on the wind; standing **{standing}/10** — "
-            "friendly enough to share the trail today._",
+            f"friendly enough to share the trail today._{notoriety_note}",
             None,
         )
     return "", None
 
 
-def _start_rival_wolf_skirmish(
+def start_rival_wolf_skirmish(
     user,
     rival,
     *,
@@ -271,6 +281,27 @@ def _start_rival_wolf_skirmish(
     order = [fid for fid, _ in sorted(rolls, key=lambda x: -x[1])]
     db.start_combat_encounter(enc_id, order)
     return enc_id
+
+
+def cross_pack_social_risk(
+    user, partner, *, guild_id: int | None, channel_id: int | None
+) -> tuple[bool, int | None]:
+    """
+    Shared gate for /playpen socialize/groom and /sign across Great Packs.
+    Cross-pack interaction always works on friendly/neutral ground. On
+    hostile or war ground there's a real CROSS_PACK_SOCIAL_COMBAT_CHANCE
+    that it breaks into a border skirmish instead of going through.
+    Returns (combat_triggered, encounter_id).
+    """
+    from config import CROSS_PACK_SOCIAL_COMBAT_CHANCE
+
+    standing = cross_pack_relation(user, partner, guild_id)
+    if standing is None or not is_hostile_relation(standing):
+        return False, None
+    if random.random() >= CROSS_PACK_SOCIAL_COMBAT_CHANCE:
+        return False, None
+    enc_id = start_rival_wolf_skirmish(user, partner, guild_id=guild_id, channel_id=channel_id)
+    return True, enc_id
 
 
 def _pick_border_war_territory(guild_id: int, pack_a_id: int, pack_b_id: int):
@@ -352,7 +383,7 @@ def cross_pack_prey_dispute(
         f"pack standing **−1** (now **{new_standing}/10**)._"
     )
     note += format_standing_war_flash(guild_id, int(h_pack), int(r_pack), new_standing)
-    enc_id = _start_rival_wolf_skirmish(
+    enc_id = start_rival_wolf_skirmish(
         hunter,
         rival,
         guild_id=guild_id,

@@ -235,14 +235,14 @@ def try_explore(
         hint = (
             "Scouts may **`/explore venture`** or **`/scout rescout`** again this sunrise."
             if is_scout(user)
-            else "Resets next sunrise · check **`/world action:cooldowns`**"
+            else "Resets next sunrise · check **`/checklist`**"
         )
         embed = howlbert_embed(
             "already explored",
             f"you've ranged out this sunrise.\n\n_{hint}_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns · scouts: unlimited explore & rescout")
+        embed.set_footer(text="/checklist · scouts: unlimited explore & rescout")
         return embed, None
 
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush

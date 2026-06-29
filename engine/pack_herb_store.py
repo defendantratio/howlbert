@@ -1,15 +1,15 @@
-"""Pack den herb store; medics and foragers deposit inventory herbs for the healers' den."""
+"""Pack den herb store; any wolf deposits, only medics withdraw."""
 
 from __future__ import annotations
 
 import database as db
 from engine.herb_properties import form_label
-from engine.role_privileges import is_forager, is_medic
+from engine.role_privileges import is_medic
 from herbs import HERBS, herb_inventory_key
 
 
 def can_manage_den_herbs(user) -> bool:
-    return is_medic(user) or is_forager(user)
+    return is_medic(user)
 
 
 def format_pack_herb_line(stack, current_day: int) -> str:
@@ -29,12 +29,12 @@ def list_pack_herb_store(pack_id: int, day: int) -> str:
             "from `/bones action:inventory`; "
             "fresh store herbs: `/herbs action:dryall`; "
             "use `/herbs action:turnin` for restricted poison herbs.\n\n"
-            "_Withdraw: **Medics** and **Foragers** only (`/herbs action:store mode:withdraw`)._"
+            "_Withdraw: **Medics** only (`/herbs action:store mode:withdraw`)._"
         )
     lines = "\n".join(format_pack_herb_line(s, day) for s in stacks)
     return (
         f"{lines}\n\n"
-        "_withdraw: **medics** and **foragers** only · anyone may deposit or turn in poison herbs._"
+        "_withdraw: **medics** only · anyone may deposit or turn in poison herbs._"
     )
 
 
@@ -168,7 +168,7 @@ def withdraw_herb_from_store(
     day: int,
 ) -> tuple[bool, str]:
     if not can_manage_den_herbs(user):
-        return False, "only **medics** and **foragers** may take from the healers' store."
+        return False, "only **medics** may take from the healers' store."
     stack = db.get_pack_herb_stack(store_id)
     if not stack or stack["pack_id"] != pack_id:
         return False, "that stack isn't in your pack's herb store."
@@ -203,7 +203,7 @@ def withdraw_all_herbs_from_store(
     day: int,
 ) -> tuple[bool, str]:
     if not can_manage_den_herbs(user):
-        return False, "only **medics** and **foragers** may take from the healers' store."
+        return False, "only **medics** may take from the healers' store."
     stacks = db.get_pack_herb_stacks(pack_id)
     if not stacks:
         return False, "no herbs in the healers' store."
@@ -254,7 +254,7 @@ def turnin_restricted_herb(
         return (
             False,
             "only **restricted poison** herbs use turn-in. "
-            "medics/foragers stock other herbs via `/herbs action:store mode:deposit` or `mode:depositall`.",
+            "anyone can stock other herbs via `/herbs action:store mode:deposit` or `mode:depositall`.",
         )
     item = db.get_item_by_key(key)
     if not item or db.get_inventory_quantity(user["discord_id"], item["id"]) < 1:

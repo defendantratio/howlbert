@@ -293,6 +293,7 @@ DRINK_THIRST_RESTORE = 22
 DRINK_HUNGER_RESTORE = 2
 DRINK_MOOD_RESTORE = 2
 DRINK_HP_RESTORE = 2
+DRINK_EXHAUSTION_RELIEF = 2  # eat only relieves 1; cool water off a hot run does more
 HUNT_WILD_ENCOUNTER_CHANCE = 8
 EXPLORE_WILD_ENCOUNTER_CHANCE = 10
 WILD_ENCOUNTER_COOLDOWN_MINUTES = 90
@@ -337,6 +338,7 @@ GARDEN_MAX_PLOTS = 6            # living plantings per pack garden at once
 LONG_REST_MOOD_GAIN = 6
 LONG_REST_HP_GAIN = 3
 LONG_REST_EXHAUSTION_RELIEF = 2
+SHORT_REST_EXHAUSTION_RELIEF = 1  # quick breather; always relieves some, comfrey adds hp on top
 GARDEN_SEED_BONE_COST = 12     # buy a seed packet from the den
 GARDEN_FORAGE_SEED_CHANCE = 0.40  # chance foraging also yields a seed
 GARDEN_HARVEST_SEED_MIN = 1    # seeds returned when harvesting a healthy plant
@@ -382,6 +384,9 @@ SOCIALIZE_UNITY_AWKWARD = -1
 SOCIALIZE_UNITY_SCRAP = -2
 SOCIALIZE_STANDING_GOOD = 1
 SOCIALIZE_STANDING_SCRAP = -1
+# Cross-pack socialize/groom/sign always works, but on hostile ground there's
+# a real chance it breaks into a border skirmish instead of going through.
+CROSS_PACK_SOCIAL_COMBAT_CHANCE = 0.35
 
 # Body / visual language (`/sign`); how wolves "speak" without howling.
 # Rally is the mute wolf's stand-in for a howl, so it pays out more for the silenced.
@@ -418,6 +423,14 @@ SIGN_CHALLENGE_LOSE_STANDING = -1
 SIGN_NUZZLE_MOOD = 3
 SIGN_NUZZLE_BOND_GAIN = 4
 SIGN_STRETCH_EXHAUSTION_RELIEF = 1
+# ASL-style /sign composition (base/motion/field) isn't flavor-only: matching
+# the anatomically correct combo for the signal (engine.signing.CANONICAL_POSTURE)
+# grants a real bonus on top of the signal's normal effect — bond strength
+# with the target when one exists, standing when the signal is pack-wide.
+# Getting 2 of 3 parts right grants half (rounded down, min 1); all 3 grants
+# the full bonus.
+SIGN_ASL_MATCH_BOND_GAIN = 4
+SIGN_ASL_MATCH_STANDING_BONUS = 2
 # Mentor bonus; medic apprentices already get this from `/medic action:observe`.
 # `/role action:shadow` grants the same boost to hunter/scout/forager/diplomat/
 # caretaker apprentices on their focus skill (engine.herb_buffs mentor_bonus_*).
@@ -938,6 +951,11 @@ PACK_UNITY_DISSOLVE_THRESHOLD = -5
 # Personal standing within the pack. At −5 the wolf is cast out as a loner.
 WOLF_STANDING_MIN = -10
 WOLF_STANDING_KICK_THRESHOLD = -5
+# A wolf this respected/feared in their own den is known beyond it too;
+# crossing paths with one on friendly ground is worth a little extra to
+# the wolf who isn't (yet) as notorious.
+WOLF_NOTORIETY_STANDING_THRESHOLD = 20
+WOLF_NOTORIETY_SNIFF_MOOD = 3
 DEFAULT_TERRITORIES = (
     ("pine_ridge", "Pine Ridge", 5),
     ("river_crossing", "River Crossing", 8),

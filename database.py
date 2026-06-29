@@ -450,6 +450,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN character_lore TEXT")
     if "avatar_url" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+    if "avatar_image" not in user_cols:
+        # Raw bytes backup of avatar_url; Discord's CDN attachment URLs are
+        # signed and expire, so the URL alone isn't durable. avatar_url stays
+        # the fast path for webhooks/embeds; avatar_image lets the bot
+        # re-host a fresh URL from cache instead of losing the art forever.
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_image BLOB")
+    if "avatar_cached_at" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_cached_at TEXT")
     if "pronouns" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
     if "ref_image_url" not in user_cols:
@@ -704,6 +712,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN season_goal_epoch INTEGER NOT NULL DEFAULT 0"
         )
+    if "hunts_today" not in pack_cols:
+        conn.execute(
+            "ALTER TABLE packs ADD COLUMN hunts_today INTEGER NOT NULL DEFAULT 0"
+        )
+    if "hunts_today_day" not in pack_cols:
+        conn.execute(
+            "ALTER TABLE packs ADD COLUMN hunts_today_day INTEGER NOT NULL DEFAULT 0"
+        )
 
     user_cols_needs = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
     if "hunger_exhaustion_skip" not in user_cols_needs:
@@ -817,6 +833,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "trained_attr_total" not in user_cols_needs:
         conn.execute(
             "ALTER TABLE users ADD COLUMN trained_attr_total INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_short_rest_day" not in user_cols_needs:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_short_rest_day INTEGER NOT NULL DEFAULT 0"
         )
     if "last_medic_rounds_day" not in user_cols_needs:
         conn.execute(
@@ -1272,6 +1292,23 @@ def _migrate(conn: sqlite3.Connection) -> None:
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
         """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS proxy_message_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            channel_id INTEGER NOT NULL,
+            discord_id INTEGER NOT NULL,
+            wolf_id INTEGER NOT NULL,
+            wolf_name TEXT NOT NULL,
+            content TEXT NOT NULL,
+            sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_proxy_log_wolf ON proxy_message_log(wolf_id, sent_at)"
     )
     conn.execute(
         """
@@ -3236,6 +3273,22 @@ def set_wolf_identity(wolf_id: int, **fields) -> None:
     update_user_by_id(wolf_id, **clean)
 
 
+def set_wolf_avatar_cache(wolf_id: int, image_bytes: bytes | None, *, url: str | None = None) -> None:
+    """Cache the raw avatar bytes (durable) alongside the current Discord URL (fast path, expires)."""
+    fields: dict = {"avatar_image": image_bytes, "avatar_cached_at": utcnow()}
+    if url is not None:
+        fields["avatar_url"] = url
+    update_user_by_id(wolf_id, **fields)
+
+
+def get_wolf_avatar_cache(wolf_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT avatar_url, avatar_image, avatar_cached_at FROM users WHERE id = ?",
+            (wolf_id,),
+        ).fetchone()
+
+
 def set_wolf_proxy(wolf_id: int, prefix: str | None, suffix: str | None) -> None:
     update_user_by_id(
         wolf_id,
@@ -3259,6 +3312,33 @@ def get_proxy_wolves(discord_id: int) -> list[sqlite3.Row]:
             ORDER BY id ASC
             """,
             (discord_id,),
+        ).fetchall()
+
+
+def log_proxy_message(
+    *, guild_id: int, channel_id: int, discord_id: int, wolf_id: int, wolf_name: str, content: str
+) -> None:
+    """Permanent transcript of what a wolf actually said via /proxy (the IC text, not OOC asides)."""
+    if not content or not content.strip():
+        return
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO proxy_message_log (guild_id, channel_id, discord_id, wolf_id, wolf_name, content)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (guild_id, channel_id, discord_id, wolf_id, wolf_name, content.strip()),
+        )
+
+
+def get_proxy_message_log(wolf_id: int, *, limit: int = 50) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM proxy_message_log WHERE wolf_id = ?
+            ORDER BY id DESC LIMIT ?
+            """,
+            (wolf_id, limit),
         ).fetchall()
 
 
@@ -6845,6 +6925,22 @@ def set_user_conditions(
             )
 
 
+def record_pack_hunt_and_get_count(pack_id: int, day: int) -> int:
+    """Bump (and return) how many hunts this pack has logged this sunrise; resets on a new day."""
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT hunts_today, hunts_today_day FROM packs WHERE id = ?", (pack_id,)
+        ).fetchone()
+        if not row:
+            return 0
+        count = int(row["hunts_today"]) + 1 if int(row["hunts_today_day"]) == day else 1
+        conn.execute(
+            "UPDATE packs SET hunts_today = ?, hunts_today_day = ? WHERE id = ?",
+            (count, day, pack_id),
+        )
+        return count
+
+
 def adjust_pack_unity(pack_id: int, delta: int) -> str:
     """Adjust unity (−5 to 10). Returns 'dissolved' if the pack fractured."""
     from config import PACK_UNITY_DISSOLVE_THRESHOLD, PACK_UNITY_MAX, PACK_UNITY_MIN
@@ -6947,6 +7043,9 @@ def adjust_wolf_standing_by_id(wolf_id: int, delta: int, *, triggered_day: int =
 
     old_standing = int(user["standing"])
     new_standing = max(WOLF_STANDING_MIN, old_standing + delta)
+    result = ""
+    cast_out_wolf_name: str | None = None
+    cast_out_pack_name: str | None = None
     with get_db() as conn:
         conn.execute(
             "UPDATE users SET standing = ? WHERE id = ?",
@@ -6962,20 +7061,26 @@ def adjust_wolf_standing_by_id(wolf_id: int, delta: int, *, triggered_day: int =
                 triggered_day=triggered_day,
             )
             if rite:
-                return "broken_rite"
-            pack = get_pack(user["pack_id"]) if user["pack_id"] else None
-            pack_name = pack["name"] if pack else "the pack"
-            from engine.wolf_journal import log_cast_out
+                result = "broken_rite"
+            else:
+                pack = get_pack(user["pack_id"]) if user["pack_id"] else None
+                cast_out_wolf_name = user["wolf_name"]
+                cast_out_pack_name = pack["name"] if pack else "the pack"
+                _expel_wolf_from_pack_conn(conn, wolf_id, reset_standing=True)
+                result = "kicked"
+    if result == "kicked" and cast_out_wolf_name is not None:
+        # log_cast_out opens its own get_db() connection; must run after the
+        # block above closes, or it deadlocks nesting connections (same bug
+        # class as the rollover herb-grant fix).
+        from engine.wolf_journal import log_cast_out
 
-            log_cast_out(
-                wolf_id,
-                user["wolf_name"],
-                pack_name,
-                day=triggered_day or None,
-            )
-            _expel_wolf_from_pack_conn(conn, wolf_id, reset_standing=True)
-            return "kicked"
-    return ""
+        log_cast_out(
+            wolf_id,
+            cast_out_wolf_name,
+            cast_out_pack_name,
+            day=triggered_day or None,
+        )
+    return result
 
 
 def adjust_wolf_standing(discord_id: int, delta: int) -> str:
@@ -9860,7 +9965,7 @@ def bump_npc_sign_streak(npc_id: int, wolf_id: int, *, window_minutes: int) -> i
 
 
 def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
         return None
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     with get_db() as conn:
@@ -9882,7 +9987,7 @@ def set_bond(
     note: str = "",
     day: int = 0,
 ) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
         return None
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     strength = max(0, min(100, int(strength)))
@@ -9910,7 +10015,7 @@ def adjust_bond_strength(
     *,
     day: int = 0,
 ) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
         return None
     if wolf_a_id == wolf_b_id:
         return None
@@ -9939,7 +10044,7 @@ def adjust_bond_strength(
 
 
 def clear_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> bool:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
         return False
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     with get_db() as conn:

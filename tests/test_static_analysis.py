@@ -9,8 +9,12 @@ catches this without ever running the code, so it belongs in the suite
 itself rather than waiting for someone to hit the crash in production.
 
 Also fails on: redefining a name before its first use (almost always a
-leftover/duplicate import), and a dict literal with the same key twice
-(the second value silently wins, dropping the first).
+leftover/duplicate import), a dict literal with the same key twice (the
+second value silently wins, dropping the first), and any command/option
+description or Choice name in cogs/ that exceeds Discord's length limits
+(this took the whole bot down once: a >100-char /sign description made
+the entire app_commands tree sync fail with CommandSyncFailure on startup,
+not just that one command).
 """
 
 from __future__ import annotations
@@ -77,6 +81,78 @@ def _iter_python_files() -> list[Path]:
     return files
 
 
+# Discord rejects the whole command tree sync (CommandSyncFailure, HTTP 400)
+# if any single command/option/choice string exceeds these limits — this
+# took the bot down once already (a >100-char `/sign` description). Caught
+# here statically since these are literal strings, not runtime values.
+DISCORD_NAME_LIMIT = 32
+DISCORD_DESCRIPTION_LIMIT = 100
+
+
+def _str_const(node: ast.AST) -> str | None:
+    """Literal string from a Constant, or from a single-arg wrapper call
+    like choice_label("..."); returns None for anything not staticly known
+    (f-strings, variables, multi-arg calls)."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Call) and len(node.args) == 1 and not node.keywords:
+        return _str_const(node.args[0])
+    return None
+
+
+def _call_name(node: ast.Call) -> str:
+    func = node.func
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    if isinstance(func, ast.Name):
+        return func.id
+    return ""
+
+
+def _discord_length_problems_for(path: Path, tree: ast.AST) -> list[str]:
+    problems: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        callee = _call_name(node)
+        if callee == "command":
+            for kw in node.keywords:
+                if kw.arg not in ("name", "description"):
+                    continue
+                value = _str_const(kw.value)
+                if value is None:
+                    continue
+                limit = DISCORD_NAME_LIMIT if kw.arg == "name" else DISCORD_DESCRIPTION_LIMIT
+                if len(value) > limit:
+                    problems.append(
+                        f"{path}:{node.lineno}: command {kw.arg}= is {len(value)} chars "
+                        f"(limit {limit}): {value[:60]!r}..."
+                    )
+        elif callee == "describe":
+            for kw in node.keywords:
+                value = _str_const(kw.value)
+                if value is None:
+                    continue
+                if len(value) > DISCORD_DESCRIPTION_LIMIT:
+                    problems.append(
+                        f"{path}:{node.lineno}: describe({kw.arg}=...) is {len(value)} chars "
+                        f"(limit {DISCORD_DESCRIPTION_LIMIT}): {value[:60]!r}..."
+                    )
+        elif callee == "Choice":
+            for kw in node.keywords:
+                if kw.arg != "name":
+                    continue
+                value = _str_const(kw.value)
+                if value is None:
+                    continue
+                if len(value) > DISCORD_DESCRIPTION_LIMIT:
+                    problems.append(
+                        f"{path}:{node.lineno}: Choice(name=...) is {len(value)} chars "
+                        f"(limit {DISCORD_DESCRIPTION_LIMIT}): {value[:60]!r}..."
+                    )
+    return problems
+
+
 def _fatal_messages_for(path: Path) -> list[str]:
     source = path.read_text(encoding="utf-8")
     try:
@@ -84,11 +160,14 @@ def _fatal_messages_for(path: Path) -> list[str]:
     except SyntaxError as exc:
         return [f"SyntaxError: {exc}"]
     checker = Checker(tree, filename=str(path))
-    return [
+    problems = [
         str(msg)
         for msg in checker.messages
         if isinstance(msg, FATAL_MESSAGE_TYPES)
     ]
+    if path.parent.name == "cogs" or path.name == "main.py":
+        problems.extend(_discord_length_problems_for(path, tree))
+    return problems
 
 
 def main() -> None:

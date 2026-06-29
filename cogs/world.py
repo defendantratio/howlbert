@@ -315,7 +315,7 @@ class World(commands.Cog):
             new_mood = db.adjust_mood(user['id'], 4)
             body += f'\n**+4 mood** (now **{new_mood}**).'
         embed = howlbert_embed('StarClan Omen', body)
-        embed.set_footer(text='once per sunrise · /world action:cooldowns')
+        embed.set_footer(text='once per sunrise · /checklist')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='hazard', description='face a weather hazard; opposed roll vs the environment.')

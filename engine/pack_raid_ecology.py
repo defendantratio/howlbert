@@ -122,7 +122,7 @@ def collect_raid_den_news(guild_id: int, day: int) -> list[str]:
             )
         else:
             lines.append(
-                f"**{victim}** treasury short **{format_bones(stolen)}**; sentries doubled. "
+                f"**{victim}** den reserves down (worth **{format_bones(stolen)}**); sentries doubled. "
                 f"scouts: **`/scout survey`** (easier dc) · alpha: **`/pack audit`**."
             )
     return lines

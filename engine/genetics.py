@@ -537,7 +537,7 @@ def genetic_hunt_multiplier(user) -> tuple[float, str]:
         label = ", ".join(notes[:2]) + ("…" if len(notes) > 2 else "")
     else:
         label = "Genetic condition"
-    return mult, f"{label}; **−{pct}%** hunt bones."
+    return mult, f"{label}; −{pct}% hunt bones."
 
 
 

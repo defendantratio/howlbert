@@ -169,10 +169,10 @@ class Pack(commands.Cog):
         embed.set_footer(text=f'alpha: `/packlife action:feedall` · `action:drinkall`{fed_note}{drank_note}')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @stash.command(name='deposit', description='add a carcass from your hoard to the den reserve.')
-    @app_commands.describe(prey='stack id from `/food`')
-    @app_commands.autocomplete(prey=_personal_prey_autocomplete)
-    async def stash_deposit(self, interaction: discord.Interaction, prey: str):
+    @stash.command(name='deposit', description='add food from your hoard to the den reserve.')
+    @app_commands.describe(food='stack id from `/food`')
+    @app_commands.autocomplete(food=_personal_prey_autocomplete)
+    async def stash_deposit(self, interaction: discord.Interaction, food: str):
         user, pack = await self._require_pack_member(interaction)
         if not user:
             return
@@ -180,9 +180,9 @@ class Pack(commands.Cog):
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
         try:
-            stack_id = int(prey)
+            stack_id = int(food)
         except ValueError:
-            await interaction.response.send_message(player_message('Pick a carcass from `/food`.'), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(player_message('Pick something from `/food`.'), ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
         ok, msg = deposit_to_pack_stash(user, stack_id, pack_id=pack['id'], guild_id=interaction.guild.id, day=world['day_number'])
@@ -191,15 +191,15 @@ class Pack(commands.Cog):
             db.increment_quest_progress(interaction.user.id, 'deposit')
         await interaction.response.send_message(embed=howlbert_embed('Food Reserve', msg, color=color))
 
-    @stash.command(name='withdraw', description='take a carcass from the reserve into your hoard.')
-    @app_commands.describe(prey='stack id from `/pack stash list`')
-    @app_commands.autocomplete(prey=_pack_stash_autocomplete)
-    async def stash_withdraw(self, interaction: discord.Interaction, prey: str):
+    @stash.command(name='withdraw', description='take food from the reserve into your hoard.')
+    @app_commands.describe(food='stack id from `/pack stash list`')
+    @app_commands.autocomplete(food=_pack_stash_autocomplete)
+    async def stash_withdraw(self, interaction: discord.Interaction, food: str):
         user, pack = await self._require_pack_member(interaction)
         if not user:
             return
         try:
-            stack_id = int(prey)
+            stack_id = int(food)
         except ValueError:
             await interaction.response.send_message(player_message('Pick a stack from `/pack stash list`.'), ephemeral=reply_ephemeral())
             return
@@ -466,7 +466,7 @@ class Pack(commands.Cog):
             label = info['name']
             if current and current.lower() not in label.lower() and (current.lower() not in key):
                 continue
-            choices.append(app_commands.Choice(name=label, value=key))
+            choices.append(app_commands.Choice(name=choice_label(label), value=key))
         return choices[:25]
 
     @pack.command(name='audit', description='scout/alpha treasury audit after a rival raid (recover bones).')

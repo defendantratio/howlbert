@@ -111,7 +111,7 @@ def role_hunt_multiplier(user, *, day: int | None = None) -> tuple[float, str]:
     if has_any_role(user, DROWN_SICK_ROLE):
         if ragwort:
             return 1.0, "ragwort tonic; full hunt speed despite frailty."
-        return 0.65, "drown-sick; frail; **−35%** hunt bones."
+        return 0.65, "drown-sick; frail; −35% hunt bones."
     if ragwort and has_any_role(user, "elder"):
         return 1.0, "ragwort tonic; elders hunt at full speed."
     return 1.0, ""

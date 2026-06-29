@@ -33,7 +33,7 @@ def apply_mood_bone_penalty(amount: int, mood: int) -> tuple[int, str]:
     if amount <= 0 or mood >= MOOD_LOW_THRESHOLD:
         return amount, ""
     reduced = max(0, int(amount * (100 - MOOD_HUNT_PENALTY_PCT) / 100))
-    note = f"low mood ({mood}); **−{MOOD_HUNT_PENALTY_PCT}%** bone payout."
+    note = f"low mood ({mood}); −{MOOD_HUNT_PENALTY_PCT}% bone payout."
     return reduced, note
 
 

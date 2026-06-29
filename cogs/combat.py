@@ -57,15 +57,22 @@ async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot
     if new_hp == 0 and (not _is_npc(defender_f)):
         footer += ' · `/medic action:deathsaves`'
     embed.set_footer(text=footer)
+    kill_note = None
     if new_hp == 0:
         kill_note = try_grant_combat_kill_carcass(enc_id, interaction.user.id, defender_f)
         if kill_note:
             embed.add_field(name='Fresh-kill', value=kill_note, inline=False)
+        if not _is_npc(defender_f):
+            from engine.long_term_injuries import roll_combat_scar
+
+            scar_note = roll_combat_scar(defender_f['wolf_id'])
+            if scar_note:
+                embed.add_field(name='Lasting Mark', value=scar_note, inline=False)
     victory_embed = None
     if new_hp == 0 and _is_npc(defender_f) and interaction.channel:
         victory_embed = await try_complete_hunt_prey_victory(bot, interaction.channel, enc_id)
         if not victory_embed:
-            victory_embed = ambush_victory_embed(enc_id)
+            victory_embed = ambush_victory_embed(enc_id, kill_note=kill_note)
         if not victory_embed:
             victory_embed = await try_complete_border_victory(bot, interaction.channel, enc_id)
     if victory_embed and interaction.channel:
@@ -514,7 +521,7 @@ class Combat(commands.Cog):
 
     @combat.command(name='npc', description='add a predator, hearth-hound, or clan cat from the bestiary.')
     @app_commands.describe(category='threat category', threat='creature to add', encounter="fight id (optional if you're in only one recruiting fight)")
-    @app_commands.choices(category=[app_commands.Choice(name='predators & threats', value='predators'), app_commands.Choice(name='hearth-hounds (twoleg hounds)', value='dogs'), app_commands.Choice(name='clan cats & rivals', value='cats')], threat=[app_commands.Choice(name=data['name'], value=key) for key, data in BESTIARY_NPCS.items()])
+    @app_commands.choices(category=[app_commands.Choice(name='predators & threats', value='predators'), app_commands.Choice(name='hearth-hounds (twoleg hounds)', value='dogs'), app_commands.Choice(name='clan cats & rivals', value='cats')], threat=[app_commands.Choice(name=choice_label(data['name']), value=key) for key, data in BESTIARY_NPCS.items()])
     @app_commands.autocomplete(encounter=_encounter_autocomplete)
     async def combat_npc(self, interaction: discord.Interaction, threat: str, category: str | None=None, encounter: int | None=None):
         await interaction.response.defer()

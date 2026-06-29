@@ -42,7 +42,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             "your throat is raw; you already sang to the pack this sunrise.",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns · once per sunrise")
+        embed.set_footer(text="/checklist · once per sunrise")
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
@@ -81,6 +81,14 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         plot_unity = plot_howl_unity_bonus(interaction.guild.id, user=user)
         if plot_unity and unity_gain and not muted:
             unity_gain += plot_unity
+        moon_note = ""
+        if unity_gain and not muted:
+            from engine.moon_phase import full_moon_rally_unity_bonus
+
+            moon_bonus = full_moon_rally_unity_bonus()
+            if moon_bonus:
+                unity_gain += moon_bonus
+                moon_note = f"\nfull moon: the call carries further (**+{moon_bonus}** unity)."
         _mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
         flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
 
@@ -121,6 +129,8 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             body += f"\n\n_{message.strip()}_"
         if mood_note:
             body += f"\n\n_{mood_note}_"
+        if moon_note:
+            body += f"\n{moon_note}"
         from engine.plot_blinking import try_plot_witness
 
         body += try_plot_witness(user, interaction.guild.id, day, action="howl")

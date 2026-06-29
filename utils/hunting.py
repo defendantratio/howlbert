@@ -43,8 +43,8 @@ def pack_tax_treasury_note(tax: int, pack_id: int | None) -> str:
     if pack_id:
         pack = db.get_pack(pack_id)
         if pack:
-            return f"**{tax}🦴** to **{pack['name']}** treasury (`/pack treasury`)"
-    return f"**{tax}🦴** to den treasury (`/pack treasury`)"
+            return f"{tax}🦴 to {pack['name']} treasury (`/pack treasury`)"
+    return f"{tax}🦴 to den treasury (`/pack treasury`)"
 
 
 def award_bones(
@@ -55,6 +55,7 @@ def award_bones(
     *,
     season: str | None = None,
     guild_id: int | None = None,
+    day: int | None = None,
 ) -> tuple[int, int, int, int, str, str, str, str, str]:
     """Returns (net, tax, gross_after_modifiers, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note)."""
     account = db.get_account(user["discord_id"])
@@ -90,6 +91,22 @@ def award_bones(
         if user["pack_id"]:
             unity = db.get_pack_unity(user["pack_id"])
             amount = apply_unity_to_hunt_amount(amount, unity)
+            if guild_id is not None and day is not None:
+                from engine.territory_marking import home_turf_hunt_bonus
+
+                gp = user["great_pack"] if "great_pack" in user.keys() else None
+                turf_mult, turf_note = home_turf_hunt_bonus(int(user["pack_id"]), gp, guild_id, day)
+                if turf_mult != 1.0:
+                    amount = int(amount * turf_mult)
+                    season_note = f"{season_note} · {turf_note}" if season_note else turf_note
+            if day is not None:
+                from engine.pack_unity import overhunting_hunt_multiplier
+
+                hunts_today = db.record_pack_hunt_and_get_count(int(user["pack_id"]), day)
+                over_mult, over_note = overhunting_hunt_multiplier(hunts_today)
+                if over_mult != 1.0:
+                    amount = int(amount * over_mult)
+                    season_note = f"{season_note} · {over_note}" if season_note else over_note
     net, tax = apply_pack_tax(amount, user["pack_id"])
     if net > 0:
         db.add_bones(user["discord_id"], net, wolf_id=user["id"])

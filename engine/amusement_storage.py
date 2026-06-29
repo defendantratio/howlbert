@@ -32,7 +32,7 @@ def play_amusement(user, stack_id: int, *, day: int | None = None) -> tuple[bool
             return (
                 False,
                 "you already played with a toy this sunrise.\n\n"
-                "_resets next sunrise · `/world action:cooldowns`_",
+                "_resets next sunrise · `/checklist`_",
                 0,
             )
     stack = db.get_amusement_stack(stack_id)

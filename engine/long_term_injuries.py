@@ -10,7 +10,7 @@ import database as db
 LONG_TERM_TYPES = {
     "limp": {
         "label": "Limp",
-        "effect": "Movement speed −¼ (round down); −1 on Dexterity checks involving running.",
+        "effect": "Movement speed −¼ (round down); −1 on Dexterity checks. Flares to disadvantage in cold/wet weather.",
         "intimidate_bonus": 0,
     },
     "scarring": {
@@ -21,6 +21,21 @@ LONG_TERM_TYPES = {
     "chronic_pain": {
         "label": "Chronic Pain",
         "effect": "On cold or rainy days, disadvantage on the first Strength or Dexterity check.",
+        "intimidate_bonus": 0,
+    },
+    "bold_arrival": {
+        "label": "Bold Arrival",
+        "effect": "Walked into the den head-high; **+1** on Intimidation checks.",
+        "intimidate_bonus": 1,
+    },
+    "quiet_arrival": {
+        "label": "Quiet Arrival",
+        "effect": "Slipped in without a sound; **+1** on Stealth checks.",
+        "intimidate_bonus": 0,
+    },
+    "wary_arrival": {
+        "label": "Wary Arrival",
+        "effect": "Came in half-starved and watchful; **+1** on Survival checks.",
         "intimidate_bonus": 0,
     },
 }
@@ -87,6 +102,35 @@ def add_long_term_injury(wolf_id: int, entry: str) -> None:
         return
     current.append(entry)
     db.update_user_by_id(wolf_id, long_term_injuries=json.dumps(current))
+
+
+COMBAT_SCAR_CHANCE = 0.20
+
+
+def roll_combat_scar(wolf_id: int | None) -> str | None:
+    """
+    Surviving a fight you lost (dropped to 0 HP) has a real chance of leaving
+    a permanent scar — a lasting consequence beyond the HP bar, and a genuine
+    +1 Intimidation bonus going forward (see LONG_TERM_TYPES["scarring"]).
+    Returns a player-facing note, or None if no scar this time / already scarred.
+    """
+    if not wolf_id:
+        return None
+    wolf = db.get_user_by_id(wolf_id)
+    if not wolf:
+        return None
+    current = parse_long_term_injuries(
+        wolf["long_term_injuries"] if "long_term_injuries" in wolf.keys() else None
+    )
+    if "scarring" in current:
+        return None
+    if random.random() >= COMBAT_SCAR_CHANCE:
+        return None
+    add_long_term_injury(wolf_id, "scarring")
+    return (
+        f"**{wolf['wolf_name']}** carries a new scar out of this fight; "
+        f"{LONG_TERM_TYPES['scarring']['effect']}"
+    )
 
 
 def add_fear_trigger(wolf_id: int, trigger: str) -> None:
@@ -190,9 +234,21 @@ def check_adjustments(
     if "limp" in entries and "attr_dex" in attr_keys:
         mod -= 1
         notes.append("Limp (−1 Dex)")
+        if weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm"):
+            disadvantage = True
+            notes.append("Old wound flares in the cold and wet (disadvantage)")
     if "scarring" in entries and skill_key == "intimidation":
         mod += 1
         notes.append("Scars (+1 Intimidation)")
+    if "bold_arrival" in entries and skill_key == "intimidation":
+        mod += 1
+        notes.append("Bold arrival (+1 Intimidation)")
+    if "quiet_arrival" in entries and skill_key == "stealth":
+        mod += 1
+        notes.append("Quiet arrival (+1 Stealth)")
+    if "wary_arrival" in entries and skill_key == "survival":
+        mod += 1
+        notes.append("Wary arrival (+1 Survival)")
     if "chronic_pain" in entries and first_physical_today:
         from engine.herb_buffs import pain_relief_active
 

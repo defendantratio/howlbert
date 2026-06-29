@@ -13,7 +13,7 @@ from engine.cooldowns import (
     daily_stipend_status,
 )
 from engine.role_features import is_rogue_wolf
-from engine.role_privileges import is_full_forager, is_scout
+from engine.role_privileges import is_forager, is_full_forager, is_scout
 
 
 def _field(user, key: str, default=None):
@@ -233,6 +233,12 @@ def _pending_daily_items(
         if count_depositable_amusement(user) > 0:
             items.append("deposit toys to den store (`/playpen action:toystore mode:depositall`)")
 
+        from engine.role_features import has_any_role, is_full_medic
+
+        is_medic_track = is_full_medic(user) or has_any_role(user, "medic_apprentice")
+        if (is_medic_track or is_forager(user)) and count_depositable_inventory_herbs(user) > 0:
+            items.append("dry all herbs (`/herbs action:dryall`)")
+
     return items
 
 
@@ -264,7 +270,7 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
         suspect = db.get_pack(int(alert["suspect_pack_id"]))
         sname = suspect["name"] if suspect else "a rival"
         items.append(
-            f"treasury raid alert — **`/pack audit`** or **`/pack accuse`** (suspect: {sname})."
+            f"den raid alert (treasury, food, or herbs) — **`/pack audit`** or **`/pack accuse`** (suspect: {sname})."
         )
     return items
 

@@ -17,6 +17,55 @@ PREY_CATALOG: dict[str, dict] = {
         "bones": 6,
         "rot_days": 4,
     },
+    "mouse": {
+        "name": "Mouse Carcass",
+        "label": "a mouse",
+        "uses": 1,
+        "bones": 3,
+        "rot_days": 3,
+    },
+    "squirrel": {
+        "name": "Squirrel Carcass",
+        "label": "a squirrel",
+        "uses": 2,
+        "bones": 7,
+        "rot_days": 4,
+    },
+    "chipmunk": {
+        "name": "Chipmunk Carcass",
+        "label": "a chipmunk",
+        "uses": 1,
+        "bones": 4,
+        "rot_days": 3,
+    },
+    "raccoon": {
+        "name": "Raccoon Carcass",
+        "label": "a raccoon",
+        "uses": 3,
+        "bones": 9,
+        "rot_days": 4,
+    },
+    "opossum": {
+        "name": "Opossum Carcass",
+        "label": "an opossum",
+        "uses": 2,
+        "bones": 8,
+        "rot_days": 4,
+    },
+    "muskrat": {
+        "name": "Muskrat Carcass",
+        "label": "a muskrat",
+        "uses": 2,
+        "bones": 7,
+        "rot_days": 4,
+    },
+    "groundhog": {
+        "name": "Groundhog Carcass",
+        "label": "a groundhog",
+        "uses": 3,
+        "bones": 9,
+        "rot_days": 4,
+    },
     "hare": {
         "name": "Hare Carcass",
         "label": "a hare",
@@ -314,6 +363,13 @@ PREY_FLAVOR_TIER_CAP: dict[str, str] = {
     "deer": "big",
     "elk": "legendary",
     "carrion": "small",
+    "mouse": "small",
+    "squirrel": "small",
+    "chipmunk": "small",
+    "raccoon": "small",
+    "opossum": "small",
+    "muskrat": "small",
+    "groundhog": "small",
 }
 
 
@@ -384,6 +440,8 @@ def prey_key_from_hunt_amount(
             return random.choice(["lizard", "vole"])
         if season == "summer" and random.random() < 0.2:
             return "hare"
+        if random.random() < 0.25:
+            return random.choice(["mouse", "chipmunk"])
         return "vole"
     if amount <= 15:
         if great_pack in ("mistmoor", "silverrush") and random.random() < 0.28:
@@ -392,6 +450,8 @@ def prey_key_from_hunt_amount(
             return random.choice(["hare", "rabbit", "vole"])
         if season == "winter" and random.random() < 0.3:
             return "vole"
+        if random.random() < 0.2:
+            return random.choice(["squirrel", "raccoon", "opossum", "muskrat", "groundhog"])
         return random.choice(["hare", "rabbit"])
     if amount <= 22:
         if season == "winter" and random.random() < 0.4:

@@ -316,6 +316,15 @@ class Proxy(commands.Cog):
         except discord.HTTPException:
             logger.info('Proxy webhook send failed in channel %s', channel.id)
             return
+        if ic_text and message.guild:
+            db.log_proxy_message(
+                guild_id=message.guild.id,
+                channel_id=channel.id,
+                discord_id=message.author.id,
+                wolf_id=wolf['id'],
+                wolf_name=wolf['wolf_name'],
+                content=ic_text,
+            )
         try:
             await message.delete()
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):

@@ -66,9 +66,11 @@ def _expulsion_from_standing(kick: str, pack_id: int | None) -> str:
     return f"\n\n{note}" if note else ""
 
 
-def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
+def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool = False) -> dict:
     """
     apply socialize effects. caller must set last_socialize_day first or after.
+    cross_pack=True (secret/cross-den meetings) skips den unity changes; the
+    rest of the den doesn't know it happened.
     returns dict: outcome, body, success (embed color hint), expulsion_note.
     """
     outcome = roll_socialize_outcome()
@@ -87,7 +89,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
         standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
-        if pack_id:
+        if pack_id and not cross_pack:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_WARM)
             unity_note = f"den unity **+{SOCIALIZE_UNITY_WARM}**."
 
@@ -108,7 +110,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         their_mood = db.adjust_mood(partner["id"], mood)
         db.update_user(user["discord_id"], wolf_id=user["id"], distressed=1)
         lines.append(f"**{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
-        if pack_id:
+        if pack_id and not cross_pack:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_AWKWARD)
             unity_note = f"den unity **{SOCIALIZE_UNITY_AWKWARD}**."
         from engine.disease_contract import try_den_filth_exposure
@@ -129,7 +131,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0) -> dict:
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_SCRAP)
         standing_note = f"standing **{SOCIALIZE_STANDING_SCRAP}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
-        if pack_id:
+        if pack_id and not cross_pack:
             db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_SCRAP)
             unity_note = f"den unity **{SOCIALIZE_UNITY_SCRAP}**."
         from engine.disease_contract import try_den_filth_exposure

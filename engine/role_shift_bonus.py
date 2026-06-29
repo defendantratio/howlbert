@@ -16,7 +16,7 @@ def apply_first_hunt_bonus(user, day: int) -> str | None:
     if hunts_used_today(user, day) != 1:
         return None
     new_mood = db.adjust_mood(user["id"], ROLE_SHIFT_HUNTER_MOOD)
-    return f"hunter's opening chase; **+{ROLE_SHIFT_HUNTER_MOOD} mood** (now **{new_mood}**)."
+    return f"hunter's opening chase; +{ROLE_SHIFT_HUNTER_MOOD} mood (now {new_mood})."
 
 
 def apply_first_treat_bonus(user, treats_after: int) -> str | None:

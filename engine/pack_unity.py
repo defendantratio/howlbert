@@ -123,6 +123,25 @@ def apply_unity_to_hunt_amount(amount: int, unity: int) -> int:
     return max(0, int(amount * hunt_bone_multiplier(unity)))
 
 
+OVERHUNTING_THRESHOLD = 10
+OVERHUNTING_STEP_PENALTY = 0.05
+OVERHUNTING_FLOOR_MULT = 0.6
+
+
+def overhunting_hunt_multiplier(hunts_today: int) -> tuple[float, str]:
+    """
+    Local prey thins out after a pack hammers the same ground too many times
+    in one sunrise; each hunt past OVERHUNTING_THRESHOLD trims yield further,
+    bottoming out at OVERHUNTING_FLOOR_MULT. Resets clean at the next rollover.
+    """
+    over = hunts_today - OVERHUNTING_THRESHOLD
+    if over <= 0:
+        return 1.0, ""
+    mult = max(OVERHUNTING_FLOOR_MULT, 1.0 - over * OVERHUNTING_STEP_PENALTY)
+    pct = int(round((1.0 - mult) * 100))
+    return mult, f"overhunted ground (hunt #{hunts_today} this sunrise): −{pct}% hunt bones"
+
+
 def pick_howl_flavor(*, echo_count: int, muted: bool = False) -> str:
     if muted:
         return random.choice(HOWL_MUTED_CALLS)

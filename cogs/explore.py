@@ -186,9 +186,9 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play', msg, color=color)
         if ok:
-            embed.set_footer(text='/playpen action:toys · once per sunrise · /world action:cooldowns')
+            embed.set_footer(text='/playpen action:toys · once per sunrise · /checklist')
         elif day is not None and 'already played' in msg.lower():
-            embed.set_footer(text='/playpen action:socialize · /world action:cooldowns')
+            embed.set_footer(text='/playpen action:socialize · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _socialize(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None):
@@ -222,8 +222,8 @@ class Explore(commands.Cog):
         else:
             await interaction.response.send_message(embed=howlbert_embed('No Target', 'Pick another **player** or one of your wolves with `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        if not user['pack_id'] or user['pack_id'] != partner['pack_id']:
-            await interaction.response.send_message(embed=howlbert_embed('Not Packmates', 'You can only socialize wolves in the **same den**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        if not user['pack_id']:
+            await interaction.response.send_message(embed=howlbert_embed('No Den', 'Join a great pack first; `/playpen` is a den activity.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         from engine.quarantine import is_quarantined, quarantine_activity_block
         block = quarantine_activity_block(user)
@@ -241,15 +241,31 @@ class Explore(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
         if int(user['last_socialize_day']) >= day:
-            embed = howlbert_embed('Already Socialized', "You've mingled this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_", color=ERROR_COLOR)
+            embed = howlbert_embed('Already Socialized', "You've mingled this sunrise.\n\n_Resets next sunrise · `/checklist`_", color=ERROR_COLOR)
             embed.set_footer(text='/bonds · /playpen action:groom · once per sunrise')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         db.update_user(interaction.user.id, last_socialize_day=day)
-        result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day)
+        cross_pack = user['pack_id'] != partner['pack_id']
+        if cross_pack:
+            from engine.pack_relations import cross_pack_social_risk
+
+            fought, combat_enc = cross_pack_social_risk(user, partner, guild_id=interaction.guild.id, channel_id=interaction.channel_id)
+            if fought and combat_enc:
+                embed = howlbert_embed('Border Turns Ugly', f"You cross into **{partner['wolf_name']}**'s territory and the meeting turns to teeth; hostile ground doesn't forgive an open approach.", color=ERROR_COLOR)
+                embed.set_footer(text='Hostile rival; combat panel below')
+                from utils.combat_views import make_combat_view
+
+                view = make_combat_view(combat_enc, self.bot)
+                await interaction.response.send_message(embed=embed, view=view)
+                return
+        result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day, cross_pack=cross_pack)
         color = SUCCESS_COLOR if result['success'] else ERROR_COLOR
         embed = howlbert_embed('Socialize', result['body'], color=color)
-        embed.set_footer(text='/bonds · once per sunrise · /world action:cooldowns')
+        footer = '/bonds · once per sunrise · /checklist'
+        if cross_pack:
+            footer = '/bonds · cross-pack; no den unity change · once per sunrise'
+        embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
     async def _groom(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None):
@@ -283,8 +299,8 @@ class Explore(commands.Cog):
         else:
             await interaction.response.send_message(embed=howlbert_embed('No Target', 'Pick another **player** or one of your wolves with `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        if not user['pack_id'] or user['pack_id'] != partner['pack_id']:
-            await interaction.response.send_message(embed=howlbert_embed('Not Packmates', 'Groom wolves in the **same den**; your characters must share a Great Pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        if not user['pack_id']:
+            await interaction.response.send_message(embed=howlbert_embed('No Den', 'Join a great pack first; `/playpen` is a den activity.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         from engine.quarantine import is_quarantined, quarantine_activity_block
         block = quarantine_activity_block(user)
@@ -302,11 +318,24 @@ class Explore(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
         if int(user['last_groom_day']) >= day:
-            embed = howlbert_embed('Already Groomed', "You've shared tongues this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_", color=ERROR_COLOR)
+            embed = howlbert_embed('Already Groomed', "You've shared tongues this sunrise.\n\n_Resets next sunrise · `/checklist`_", color=ERROR_COLOR)
             embed.set_footer(text='/bonds · caretaker bonus on low mood · once per sunrise')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         db.update_user(interaction.user.id, last_groom_day=day)
+        cross_pack = user['pack_id'] != partner['pack_id']
+        if cross_pack:
+            from engine.pack_relations import cross_pack_social_risk
+
+            fought, combat_enc = cross_pack_social_risk(user, partner, guild_id=interaction.guild.id, channel_id=interaction.channel_id)
+            if fought and combat_enc:
+                embed = howlbert_embed('Border Turns Ugly', f"You cross into **{partner['wolf_name']}**'s territory and the meeting turns to teeth; hostile ground doesn't forgive an open approach.", color=ERROR_COLOR)
+                embed.set_footer(text='Hostile rival; combat panel below')
+                from utils.combat_views import make_combat_view
+
+                view = make_combat_view(combat_enc, self.bot)
+                await interaction.response.send_message(embed=embed, view=view)
+                return
         from engine.role_features import caretaker_groom_mood_bonus, is_caretaker
         partner_mood = int(partner['mood']) if 'mood' in partner.keys() else 50
         partner_distressed = int(partner['distressed']) if 'distressed' in partner.keys() else 0
@@ -322,7 +351,7 @@ class Explore(commands.Cog):
         if heal > 0:
             db.set_user_conditions(partner['discord_id'], wolf_id=partner['id'], hp=partner['hp'] + heal)
         unity_line = ''
-        if user['pack_id']:
+        if user['pack_id'] and not cross_pack:
             db.adjust_pack_unity(int(user['pack_id']), 1)
             unity_line = '\nDen unity **+1**.'
         from engine.disease_contract import try_spread_from_close_contact
@@ -338,7 +367,10 @@ class Explore(commands.Cog):
         hoard_caught = try_catch_hoarder_on_groom(user, partner)
         hoard_line = f'\n\n{hoard_caught}' if hoard_caught else ''
         embed = howlbert_embed('Groom', f"You work burrs from **{partner['wolf_name']}**'s coat; **+{mood_gain} mood** each.\nYour mood: **{your_mood}** · Theirs: **{their_mood}**" + (f'\nThey gain **+{heal} HP** from the care.' if heal else '') + unity_line + spread_line + soothe_line + bond_line + hoard_line, color=SUCCESS_COLOR)
-        embed.set_footer(text='/bonds · once per sunrise · /world action:cooldowns')
+        footer = '/bonds · once per sunrise · /checklist'
+        if cross_pack:
+            footer = '/bonds · cross-pack; no den unity change · once per sunrise'
+        embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
     async def _playall(self, interaction: discord.Interaction):
@@ -357,9 +389,9 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play All', msg, color=color)
         if ok:
-            embed.set_footer(text='alpha · once per sunrise · /world action:cooldowns')
+            embed.set_footer(text='alpha · once per sunrise · /checklist')
         elif not ok:
-            embed.set_footer(text='/playpen action:play · /world action:cooldowns')
+            embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
     raccoon = app_commands.Group(name='raccoon', description='sell small carcass scraps to the raccoon trader.')
 
@@ -386,7 +418,7 @@ class Explore(commands.Cog):
             sells = 0
         if sells >= RACCOON_DAILY_SELLS:
             embed = howlbert_embed('Raccoon Broke', f'The raccoon spent his purse for today (**{RACCOON_DAILY_SELLS}** sales max). Try again after sunrise.', color=ERROR_COLOR)
-            embed.set_footer(text='/world action:cooldowns · /raccoon buy')
+            embed.set_footer(text='/checklist · /raccoon buy')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         stack = db.get_prey_stack(stack_id)
@@ -428,7 +460,7 @@ class Explore(commands.Cog):
             buys = 0
         if buys >= RACCOON_DAILY_BUYS:
             embed = howlbert_embed('Raccoon Broke', f'No more bundles today (**{RACCOON_DAILY_BUYS}** buys max).', color=ERROR_COLOR)
-            embed.set_footer(text='/world action:cooldowns · /playpen action:toys')
+            embed.set_footer(text='/checklist · /playpen action:toys')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if user['bones'] < spec['price']:
@@ -458,7 +490,7 @@ class Explore(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
         if int(user['last_raccoon_offer_day']) >= day:
-            embed = howlbert_embed('Already Offered', 'The raccoon took an acorn this sunrise.\n\n_Resets next sunrise · `/world action:cooldowns`_', color=ERROR_COLOR)
+            embed = howlbert_embed('Already Offered', 'The raccoon took an acorn this sunrise.\n\n_Resets next sunrise · `/checklist`_', color=ERROR_COLOR)
             embed.set_footer(text='/playpen action:toys · /raccoon sell')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return

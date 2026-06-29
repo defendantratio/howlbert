@@ -359,7 +359,7 @@ def trade_duplicates_wolf_pack_pact(
     from engine.wolf_pact_goods import barter_loot_count, grant_wolf_pact_loot, roll_wolf_pact_loot
 
     treaty = _active_wolf_treaty(pack["id"], other["id"])
-    loot_count = barter_loot_count(bundle.total_items)
+    loot_count = barter_loot_count(bundle.total_items, standing=standing)
     loot_lines: list[str] = []
     if loot_count > 0 and treaty:
         entries = roll_wolf_pact_loot(

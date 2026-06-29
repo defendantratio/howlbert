@@ -253,12 +253,22 @@ class Rpg(commands.Cog):
             heal = random.randint(1, 4) + 1
             db.consume_item(interaction.user.id, item['id'])
         from engine.activity_exhaustion import clear_activity_fatigue
+        from config import SHORT_REST_EXHAUSTION_RELIEF
         new_hp = min(user['max_hp'], user['hp'] + heal) if heal else user['hp']
         clear_activity_fatigue(user, day)
-        db.set_user_conditions(interaction.user.id, hp=new_hp, herb_heals_today=user['herb_heals_today'] + (1 if heal else 0))
-        msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.')
+        old_exhaustion = int(user['exhaustion']) if 'exhaustion' in user.keys() else 0
+        ex_note = ''
+        fields = {'hp': new_hp, 'herb_heals_today': user['herb_heals_today'] + (1 if heal else 0)}
+        if int(user['last_short_rest_day']) < day:
+            new_exhaustion = max(0, old_exhaustion - SHORT_REST_EXHAUSTION_RELIEF)
+            fields['exhaustion'] = new_exhaustion
+            if new_exhaustion != old_exhaustion:
+                ex_note = f" Exhaustion **−{old_exhaustion - new_exhaustion}** (now {new_exhaustion})."
+            db.update_user(interaction.user.id, wolf_id=user['id'], last_short_rest_day=day)
+        db.set_user_conditions(interaction.user.id, **fields)
+        msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.') + ex_note
         if not heal:
-            msg += ' _(Clears activity strain; no HP or exhaustion recovery without comfrey.)_'
+            msg += ' _(Clears activity strain; HP recovery needs comfrey.)_'
         embed = howlbert_embed('Short Rest', msg, color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 

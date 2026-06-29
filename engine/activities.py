@@ -63,7 +63,7 @@ SCAVENGE_TEXT = [
     "old bones half-buried in leaf litter; someone else's loss, your gain.",
     "a forgotten cache near a collapsed den.",
     "scraps along the trail. humble, but honest.",
-    "you nose out a marrow-rich bone beneath the frost.",
+    "you nose out a marrow-rich bone half-buried in the dirt.",
 ]
 
 TRACK_OUTCOMES: list[tuple[str, str]] = [
@@ -82,6 +82,14 @@ TRACK_OUTCOMES: list[tuple[str, str]] = [
     (
         "you tracked well. a **grouse** never hears you over the creek.",
         "grouse",
+    ),
+    (
+        "tiny prints in the mud lead to a **mouse** nest under a root.",
+        "mouse",
+    ),
+    (
+        "a chattering **squirrel** gives itself away from the underbrush.",
+        "squirrel",
     ),
 ]
 
@@ -252,15 +260,15 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         if is_hunter(user):
             body = (
                 f"you've used all **{hunts_used_today(user, day)}** hunts this sunrise.\n\n"
-                "_resets next sunrise · `/world action:cooldowns`_"
+                "_resets next sunrise · `/checklist`_"
             )
         else:
             body = (
                 "you've hunted this sunrise.\n\n"
-                "_hunters get more daily hunts · `/world action:cooldowns`_"
+                "_hunters get more daily hunts · `/checklist`_"
             )
         embed = howlbert_embed("already hunted", body, color=ERROR_COLOR)
-        embed.set_footer(text="/world action:cooldowns · pack hunt: `/bones action:hunt collaborate:true`")
+        embed.set_footer(text="/checklist · pack hunt: `/bones action:hunt collaborate:true`")
         return embed, False, None
 
     if roll_large_prey_encounter():
@@ -322,7 +330,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         amount += dex_bonus
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id
+        user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id, day=day
     )
     prey_key = prey_key_for_payout(payout, user=user, season=world["season"]) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
@@ -424,10 +432,10 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     if user["last_scavenge_day"] >= day:
         embed = howlbert_embed(
             "already done",
-            "you've scavenged this sunrise.\n\n_resets next sunrise · `/world action:cooldowns`_",
+            "you've scavenged this sunrise.\n\n_resets next sunrise · `/checklist`_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns")
+        embed.set_footer(text="/checklist")
         return embed
     injured = _strenuous_injury_embed(user)
     if injured:
@@ -500,10 +508,10 @@ def try_track(
     if user["last_track_day"] >= day:
         embed = howlbert_embed(
             "already done",
-            "you've tracked this sunrise.\n\n_resets next sunrise · `/world action:cooldowns`_",
+            "you've tracked this sunrise.\n\n_resets next sunrise · `/checklist`_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns · try `/field action:sniff` before next track")
+        embed.set_footer(text="/checklist · try `/field action:sniff` before next track")
         return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
@@ -613,10 +621,10 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
     if user["last_fishing_day"] >= day:
         embed = howlbert_embed(
             "already done",
-            "you've fished this sunrise.\n\n_resets next sunrise · `/world action:cooldowns`_",
+            "you've fished this sunrise.\n\n_resets next sunrise · `/checklist`_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns · waters shift with `/world` weather & time")
+        embed.set_footer(text="/checklist · waters shift with `/world` weather & time")
         return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
@@ -714,10 +722,10 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     if not can_forage_again(user, day):
         embed = howlbert_embed(
             "already foraged",
-            "you've foraged this sunrise.\n\n_resets next sunrise · `/world action:cooldowns`_",
+            "you've foraged this sunrise.\n\n_resets next sunrise · `/checklist`_",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="/world action:cooldowns")
+        embed.set_footer(text="/checklist")
         return embed
     blocked = _activity_block_embed(user, title="cannot forage")
     if blocked:
@@ -1107,6 +1115,7 @@ def try_crime(
     interaction: discord.Interaction,
     *,
     target_pack: str | None = None,
+    raid_type: str = "bones",
     scene: str | None = None,
     staff: bool = False,
 ) -> discord.Embed | None:
@@ -1133,6 +1142,7 @@ def try_crime(
             user,
             day=day,
             target_pack=target_pack,
+            raid_type=raid_type,
             scene=scene,
             staff=staff,
         )
@@ -1190,6 +1200,7 @@ def _try_cross_pack_steal(
     *,
     day: int,
     target_pack: str,
+    raid_type: str = "bones",
     scene: str | None,
     staff: bool,
 ) -> discord.Embed | None:
@@ -1206,7 +1217,7 @@ def _try_cross_pack_steal(
     if own_pack == target_pack:
         return howlbert_embed(
             "your own den",
-            "you can't raid your own pack's treasury.",
+            "you can't raid your own pack's stores.",
             color=ERROR_COLOR,
         )
     if not user["pack_id"]:
@@ -1221,6 +1232,20 @@ def _try_cross_pack_steal(
         return howlbert_embed("pack not found", "join a great pack first.", color=ERROR_COLOR)
 
     victim_name = GREAT_PACKS[target_pack]["name"]
+
+    if raid_type in ("food", "herbs", "amusement"):
+        return _try_cross_pack_goods_steal(
+            interaction,
+            user,
+            day=day,
+            victim=victim,
+            victim_name=victim_name,
+            target_pack=target_pack,
+            raid_type=raid_type,
+            scene=scene,
+            staff=staff,
+        )
+
     if int(victim["treasury"]) <= 0:
         return howlbert_embed(
             "empty stash",
@@ -1334,6 +1359,181 @@ def _try_cross_pack_steal(
             value=format_bones(victim_after["treasury"]),
             inline=True,
         )
+    embed.set_footer(text="your den praises a successful rival raid.")
+    return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
+
+
+def _try_cross_pack_goods_steal(
+    interaction: discord.Interaction,
+    user,
+    *,
+    day: int,
+    victim,
+    victim_name: str,
+    target_pack: str,
+    raid_type: str,
+    scene: str | None,
+    staff: bool,
+) -> discord.Embed | None:
+    """Raid a rival den's communal food reserve, herb store, or toy store (not treasury)."""
+    nouns = {"food": "food reserve", "herbs": "herb store", "amusement": "toy store"}
+    noun = nouns.get(raid_type, "food reserve")
+    if raid_type == "food":
+        stacks = db.get_pack_prey_stacks(victim["id"])
+    elif raid_type == "amusement":
+        stacks = db.get_pack_amusement_stacks(victim["id"])
+    else:
+        stacks = db.get_pack_herb_stacks(victim["id"])
+    if not stacks:
+        return howlbert_embed(
+            "empty stash",
+            f"**{victim_name}**'s {noun} is bare; nothing to steal this sunrise.",
+            color=ERROR_COLOR,
+        )
+
+    db.update_user(interaction.user.id, last_crime_day=day)
+
+    from engine.pack_raid_ecology import roll_steal_caught
+
+    guild_id = interaction.guild.id if interaction.guild else None
+
+    if roll_steal_caught(target_pack):
+        penalty = cross_pack_steal_caught_standing()
+        from engine.plot_blinking import plot_cross_pack_caught_standing_extra
+
+        penalty += plot_cross_pack_caught_standing_extra(guild_id)
+        kick = db.adjust_wolf_standing(interaction.user.id, penalty)
+        relation_note = ""
+        if guild_id and user["pack_id"]:
+            new_rel = db.adjust_pack_relation(guild_id, user["pack_id"], victim["id"], -1)
+            relation_note = f"\npack standing with **{victim_name}** **−1** (now **{new_rel}/10**)."
+            from config import RAID_ALERT_SUNRISES
+
+            db.record_pack_raid_alert(
+                guild_id,
+                victim_pack_id=victim["id"],
+                suspect_pack_id=int(user["pack_id"]),
+                stolen_amount=0,
+                raid_day=day,
+                expires_day=day + RAID_ALERT_SUNRISES,
+                caught=True,
+            )
+            from engine.wolf_journal import log_raid
+
+            log_raid(
+                user["id"],
+                user["wolf_name"],
+                victim_name,
+                caught=True,
+                guild_id=guild_id,
+                day=day,
+                loot_label=noun,
+            )
+        embed = howlbert_embed(
+            "caught at the border",
+            f"a denmate scents you lurking near their {noun}; you bolt before getting a paw on it."
+            + relation_note,
+            color=ERROR_COLOR,
+        )
+        embed.add_field(
+            name="standing",
+            value=f"{penalty}" + ("; **cast out** as loner" if kick == "kicked" else ""),
+            inline=False,
+        )
+        embed.set_footer(text=f"nothing taken from {victim_name}.")
+        return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
+
+    stack = random.choice(stacks)
+    if raid_type == "food":
+        from engine.prey_items import prey_meta
+
+        meta = prey_meta(stack["prey_key"])
+        loot_name = meta["name"]
+        loot_value = max(1, int(stack["bone_value"]))
+        db.add_prey_stack(
+            user["id"],
+            stack["prey_key"],
+            uses_left=stack["uses_left"],
+            bone_value=stack["bone_value"],
+            acquired_day=stack["acquired_day"],
+            guild_id=stack["guild_id"],
+            is_rotting=int(stack["is_rotting"]),
+        )
+        db.remove_pack_prey_stack(stack["id"])
+        loot_line = f"**{loot_name}** dragged off into your own hoard (`/food`)."
+    elif raid_type == "amusement":
+        from engine.amusement_items import amusement_meta
+
+        meta = amusement_meta(stack["item_key"])
+        loot_name = meta["name"]
+        loot_value = 5
+        db.add_amusement_stack(user["id"], stack["item_key"], uses_left=int(stack["uses_left"]))
+        db.remove_pack_amusement_stack(stack["id"])
+        loot_line = f"**{loot_name}** snatched into your toys (`/playpen action:toys`)."
+    else:
+        from herbs import HERBS, herb_inventory_key
+
+        meta = HERBS.get(stack["herb_key"], {})
+        loot_name = meta.get("name", stack["herb_key"])
+        loot_value = 5
+        item_key = herb_inventory_key(stack["herb_key"])
+        item = db.get_item_by_key(item_key)
+        if not item:
+            return howlbert_embed("raid failed", "couldn't carry that herb; try again next sunrise.", color=ERROR_COLOR)
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        qty = int(stack["quantity"])
+        if qty <= 1:
+            db.remove_pack_herb_stack(stack["id"])
+        else:
+            db.update_pack_herb_stack(stack["id"], quantity=qty - 1)
+        loot_line = f"**{loot_name}** stuffed into your jaws, straight to `/bones action:inventory`."
+
+    standing_gain = cross_pack_steal_standing()
+    db.adjust_wolf_standing(interaction.user.id, standing_gain)
+    paranoia_note = ""
+    if guild_id and user["pack_id"]:
+        new_rel = db.adjust_pack_relation(guild_id, user["pack_id"], victim["id"], -1)
+        from config import RAID_ALERT_SUNRISES
+
+        db.record_pack_raid_alert(
+            guild_id,
+            victim_pack_id=victim["id"],
+            suspect_pack_id=int(user["pack_id"]),
+            stolen_amount=loot_value,
+            raid_day=day,
+            expires_day=day + RAID_ALERT_SUNRISES,
+            caught=False,
+        )
+        from engine.wolf_journal import log_raid
+
+        log_raid(
+            user["id"],
+            user["wolf_name"],
+            victim_name,
+            guild_id=guild_id,
+            day=day,
+            loot_label=f"{loot_name}",
+        )
+        from engine.plot_blinking import PARANOIA_PHASES, plot_phase
+        from config import PARANOIA_RAID_UNITY_PENALTY, PARANOIA_RAID_UNITY_RISK
+
+        if plot_phase(guild_id) in PARANOIA_PHASES and random.random() < PARANOIA_RAID_UNITY_RISK:
+            outcome = db.adjust_pack_unity(int(user["pack_id"]), PARANOIA_RAID_UNITY_PENALTY)
+            paranoia_note = f"\nden whispers about the raid; pack unity **{PARANOIA_RAID_UNITY_PENALTY}**."
+            if outcome == "dissolved":
+                paranoia_note += " _(den fractured)_"
+    else:
+        new_rel = None
+
+    embed = howlbert_embed(
+        "raid successful",
+        f"you slip into **{victim_name}**'s {noun} and make off with it. {loot_line}" + paranoia_note,
+        color=SUCCESS_COLOR,
+    )
+    embed.add_field(name="stolen", value=loot_name, inline=True)
+    embed.add_field(name="den standing", value=f"+{standing_gain}", inline=True)
+    if new_rel is not None:
+        embed.add_field(name=f"standing with {victim_name}", value=f"{new_rel}/10", inline=True)
     embed.set_footer(text="your den praises a successful rival raid.")
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 

@@ -42,7 +42,7 @@ PREY_HUNT_FLAVOR: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "hare": {
         "small": (
-            "You pulled a scrawny hare from the snow. Small, but honest work for the cache.",
+            "You pulled a scrawny hare from its burrow. Small, but honest work for the cache.",
         ),
         "solid": (
             "You ran down a hare across open ground; swift and sure within a few pawsteps.",
