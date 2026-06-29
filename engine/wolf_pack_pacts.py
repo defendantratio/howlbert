@@ -290,7 +290,7 @@ def _active_wolf_treaty(pack_id: int, other_pack_id: int):
 
 
 def gift_wolf_pack_pact(
-    user, pack, *, guild_id: int, target_pack: str, day: int
+    user, pack, *, guild_id: int, target_pack: str, day: int, amount: int | None = None
 ) -> tuple[bool, str]:
     from config import CAT_PACT_GIFT_TRIBUTE
 
@@ -307,19 +307,28 @@ def gift_wolf_pack_pact(
     if db.cat_pact_gift_used_today(pack["id"], day):
         return False, "your den already sent pact tribute this sunrise."
 
-    if not db.deduct_pack_treasury(pack["id"], CAT_PACT_GIFT_TRIBUTE):
-        return False, f"treasury needs **{CAT_PACT_GIFT_TRIBUTE}** bones for the tribute."
+    spend = CAT_PACT_GIFT_TRIBUTE if amount is None else max(0, int(amount))
+    if spend > 0 and not db.deduct_pack_treasury(pack["id"], spend):
+        return False, f"treasury doesn't have **{spend}** bones to spare."
 
     from config import WOLF_PACT_GIFT_STANDING
 
-    standing = db.adjust_pack_relation(
-        guild_id, pack["id"], other["id"], WOLF_PACT_GIFT_STANDING
+    standing_gain = round(WOLF_PACT_GIFT_STANDING * spend / CAT_PACT_GIFT_TRIBUTE) if spend > 0 else 0
+    standing = (
+        db.adjust_pack_relation(guild_id, pack["id"], other["id"], standing_gain)
+        if standing_gain
+        else db.get_pack_relation(guild_id, pack["id"], other["id"])
     )
     db.mark_cat_pact_gift_day(pack["id"], day)
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+    flavor = (
+        f"prey bones and scent-gifts left at the border for **{other_name}**."
+        if spend > 0
+        else f"you show up at the border empty-pawed; **{other_name}** notices."
+    )
     return True, (
-        f"prey bones and scent-gifts left at the border for **{other_name}**.\n"
-        f"standing **+{WOLF_PACT_GIFT_STANDING}** (now **{standing}/10**)."
+        f"{flavor}\n"
+        f"spent **{spend}** bones; standing **{'+' if standing_gain >= 0 else ''}{standing_gain}** (now **{standing}/10**)."
     )
 
 

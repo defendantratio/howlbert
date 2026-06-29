@@ -21,6 +21,7 @@ from config import (
     SIGN_DIMINISH_FACTOR,
     SIGN_DIMINISH_FLOOR,
     SIGN_DIMINISH_WINDOW_MINUTES,
+    SIGN_MUTE_DIMINISH_FLOOR,
     SIGN_FREEZE_STANDING,
     SIGN_GREET_MOOD,
     SIGN_GRIEVE_MOOD_SELF,
@@ -494,7 +495,13 @@ async def execute_sign(
         streak = db.bump_sign_partner_streak(
             user["id"], target["id"], window_minutes=SIGN_DIMINISH_WINDOW_MINUTES
         )
-        mood_mult = max(SIGN_DIMINISH_FLOOR, SIGN_DIMINISH_FACTOR ** (streak - 1))
+        if silenced:
+            # sign isn't a supplement to howling/talking for a mute wolf —
+            # it's the only voice they have, so it doesn't get throttled
+            # the same way a repeat-sign-instead-of-talking shortcut would.
+            mood_mult = max(SIGN_MUTE_DIMINISH_FLOOR, SIGN_DIMINISH_FACTOR ** (streak - 1))
+        else:
+            mood_mult = max(SIGN_DIMINISH_FLOOR, SIGN_DIMINISH_FACTOR ** (streak - 1))
         if streak > 1:
             footer_bits.append(f"repeat sign on this partner within {SIGN_DIMINISH_WINDOW_MINUTES}m: mood payout x{mood_mult:.2f}")
 

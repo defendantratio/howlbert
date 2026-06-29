@@ -10,15 +10,25 @@ from engine.season_effects import apply_season_hunt, season_hunt_modifier_label
 from engine.shop_items import lucky_tooth_hunt_bonus
 
 
-def apply_weather(amount: int, weather: str) -> int:
+def _mitigated_weather_modifier(weather: str, den_upgrade_level: int) -> int:
+    """A den_upgrade_level only softens *bad* weather; good weather is unaffected."""
+    mod = WEATHER_HUNT_MODIFIERS.get(weather, 0)
+    if mod >= 0 or den_upgrade_level <= 0:
+        return mod
+    from config import DEN_UPGRADE_WEATHER_MITIGATION_PCT
+
+    return min(0, mod + den_upgrade_level * DEN_UPGRADE_WEATHER_MITIGATION_PCT)
+
+
+def apply_weather(amount: int, weather: str, *, den_upgrade_level: int = 0) -> int:
     if amount <= 0:
         return 0
-    modifier = WEATHER_HUNT_MODIFIERS.get(weather, 0)
+    modifier = _mitigated_weather_modifier(weather, den_upgrade_level)
     return max(0, int(amount * (100 + modifier) / 100))
 
 
-def weather_hunt_modifier_label(weather: str) -> str | None:
-    mod = WEATHER_HUNT_MODIFIERS.get(weather, 0)
+def weather_hunt_modifier_label(weather: str, *, den_upgrade_level: int = 0) -> str | None:
+    mod = _mitigated_weather_modifier(weather, den_upgrade_level)
     if mod == 0:
         return None
     return f"{mod:+d}% hunt bones ({weather})"
@@ -59,7 +69,12 @@ def award_bones(
 ) -> tuple[int, int, int, int, str, str, str, str, str]:
     """Returns (net, tax, gross_after_modifiers, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note)."""
     account = db.get_account(user["discord_id"])
-    amount = apply_weather(gross_amount, weather)
+    den_upgrade_level = 0
+    if user["pack_id"]:
+        pack = db.get_pack(int(user["pack_id"]))
+        if pack and "den_upgrade_level" in pack.keys():
+            den_upgrade_level = int(pack["den_upgrade_level"])
+    amount = apply_weather(gross_amount, weather, den_upgrade_level=den_upgrade_level)
     season_note = ""
     if activity in HUNT_ACTIVITIES and season:
         before = amount
@@ -95,10 +110,16 @@ def award_bones(
                 from engine.territory_marking import home_turf_hunt_bonus
 
                 gp = user["great_pack"] if "great_pack" in user.keys() else None
-                turf_mult, turf_note = home_turf_hunt_bonus(int(user["pack_id"]), gp, guild_id, day)
+                turf_mult, turf_note = home_turf_hunt_bonus(int(user["pack_id"]), gp, guild_id, day, weather=weather)
                 if turf_mult != 1.0:
                     amount = int(amount * turf_mult)
                     season_note = f"{season_note} · {turf_note}" if season_note else turf_note
+                from engine.territory_marking import allied_territory_hunt_bonus
+
+                ally_mult, ally_note = allied_territory_hunt_bonus(int(user["pack_id"]), guild_id)
+                if ally_mult != 1.0:
+                    amount = int(amount * ally_mult)
+                    season_note = f"{season_note} · {ally_note}" if season_note else ally_note
             if day is not None:
                 from engine.pack_unity import overhunting_hunt_multiplier
 

@@ -63,6 +63,24 @@ def stage_for_age(age_moons: int) -> str:
     return "elder"
 
 
+VERY_OLD_MIN_MOONS = 100
+VERY_OLD_PHYSICAL_PENALTY = -1
+
+
+def very_old_check_adjustment(age_moons: int, attr_keys: tuple[str, ...]) -> int:
+    """
+    A small, real physical cost to extreme old age (100+ moons, vs the 120
+    natural-death ceiling) on Strength/Dexterity/Constitution checks —
+    balanced against the elder role's existing reroll bonus, not a straight
+    nerf.
+    """
+    if age_moons < VERY_OLD_MIN_MOONS:
+        return 0
+    if not (set(attr_keys) & {"attr_str", "attr_dex", "attr_con"}):
+        return 0
+    return VERY_OLD_PHYSICAL_PENALTY
+
+
 def stage_label(stage: str) -> str:
     return {
         "pup": "pup",

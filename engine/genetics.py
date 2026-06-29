@@ -20,13 +20,17 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
         "name": "Blindness",
 
-        "effect": "Milky eyes; cannot see; disadvantage on Perception and ranged awareness.",
+        "effect": "Milky eyes; cannot see; disadvantage on Perception and ranged awareness. Compensates with scent and hearing: no penalty, plus +2, on Tracking.",
 
         "hunt_mult": 0.65,
 
         "perception_penalty": 3,
 
         "wis_disadvantage": True,
+
+        "non_visual_skills": ("tracking",),
+
+        "non_visual_bonus": 2,
 
         "lethal_at_birth": False,
 
@@ -40,13 +44,17 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
         "name": "Partial Blindness (Hereditary Cataracts)",
 
-        "effect": "Clouded vision: −2 Perception; disadvantage on Wisdom (Perception) checks.",
+        "effect": "Clouded vision: −2 Perception; disadvantage on Wisdom (Perception) checks. Compensates with scent and hearing: no penalty, plus +1, on Tracking.",
 
         "hunt_mult": 0.85,
 
         "perception_penalty": 2,
 
         "wis_disadvantage": True,
+
+        "non_visual_skills": ("tracking",),
+
+        "non_visual_bonus": 1,
 
         "lethal_at_birth": False,
 
@@ -453,7 +461,9 @@ def format_genetic_conditions(user) -> str:
 
 
 
-def genetic_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bool]:
+def genetic_check_adjustments(
+    user, attr_keys: tuple[str, ...], *, skill_key: str | None = None
+) -> tuple[int, bool]:
 
     keys = parse_genetic_conditions(
 
@@ -475,7 +485,11 @@ def genetic_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
 
         info = GENETIC_CONDITIONS[key]
 
-        if info.get("wis_disadvantage") and "attr_wis" in attrs:
+        # Blindness's wis_disadvantage models losing sight-based perception;
+        # it shouldn't also punish scent/sound-based skills, where a blind
+        # wolf compensates rather than suffers (non_visual_skills below).
+        non_visual = skill_key in info.get("non_visual_skills", ())
+        if info.get("wis_disadvantage") and "attr_wis" in attrs and not non_visual:
 
             disadvantage = True
 
@@ -483,7 +497,8 @@ def genetic_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
 
             disadvantage = True
 
-        penalty -= int(info.get("perception_penalty", 0)) if "attr_wis" in attrs else 0
+        if not non_visual:
+            penalty -= int(info.get("perception_penalty", 0)) if "attr_wis" in attrs else 0
 
         if info.get("stealth_penalty") and "attr_dex" in attrs:
 
@@ -492,6 +507,9 @@ def genetic_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
         if info.get("stealth_bonus") and "attr_dex" in attrs:
 
             penalty += int(info["stealth_bonus"])
+
+        if non_visual:
+            penalty += int(info.get("non_visual_bonus", 0))
 
     return penalty, disadvantage
 

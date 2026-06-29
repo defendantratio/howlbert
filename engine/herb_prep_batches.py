@@ -52,7 +52,7 @@ def _append_batch_line(lines: list[str], batch: str | None, *, extra: str = "") 
         lines.append(batch + extra)
     else:
         lines.append(
-            "_no **fresh** herbs in `/herbs action:bag`; technique holds but nothing stored._"
+            "_no **fresh** herbs in `/bones action:inventory`; technique holds but nothing stored._"
         )
 
 

@@ -334,7 +334,9 @@ class World(commands.Cog):
         if not guild_id:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        world, crisis = db.perform_rollover(guild_id)
+        import asyncio
+
+        world, crisis = await asyncio.to_thread(db.perform_rollover, guild_id)
         from engine.rollover_announce import build_rollover_embed
         embed = build_rollover_embed(world, crisis)
         await interaction.response.send_message(embed=embed)

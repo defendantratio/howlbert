@@ -107,7 +107,6 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.scout")
         await self.load_extension("cogs.wolvden")
         await self.load_extension("cogs.patron")
-        await self.load_extension("cogs.quests")
         await self.load_extension("cogs.wolfadmin")
         await self.load_extension("cogs.prestige")
         await self.load_extension("cogs.rpg")

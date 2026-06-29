@@ -269,6 +269,31 @@ class Pack(commands.Cog):
         embed = howlbert_embed('Tax Updated', f'Pack tax is now **{rate}%**.', color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
+    @pack.command(name='upgrade', description='spend treasury to improve the den; blunts bad-weather hunt penalties (alpha only).')
+    async def pack_upgrade(self, interaction: discord.Interaction):
+        from config import DEN_UPGRADE_MAX_LEVEL, DEN_UPGRADE_WEATHER_MITIGATION_PCT
+
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not _is_alpha(user, pack, discord_admin=is_howlbert_admin(interaction)):
+            embed = howlbert_embed('Alpha Only', 'Your active wolf must have the **Alpha** role and lead this pack.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        level = int(pack['den_upgrade_level']) if 'den_upgrade_level' in pack.keys() else 0
+        if level >= DEN_UPGRADE_MAX_LEVEL:
+            embed = howlbert_embed('Den Fully Upgraded', f"**{pack['name']}**'s den is already at the max (level **{level}**).", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        ok, new_level, cost = db.upgrade_den(pack['id'])
+        if not ok:
+            embed = howlbert_embed('Not Enough Bones', f"den upgrade to level **{level + 1}** needs **{format_bones(cost)}** in the treasury.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        mitigation = new_level * DEN_UPGRADE_WEATHER_MITIGATION_PCT
+        embed = howlbert_embed('Den Upgraded', f"**{pack['name']}**'s den is now level **{new_level}**; bad weather costs **{mitigation}%** less on hunts. spent **{format_bones(cost)}**.", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed)
+
     @pack.command(name='territory', description='view territory held across the wild.')
     async def pack_territory(self, interaction: discord.Interaction):
         if not interaction.guild:

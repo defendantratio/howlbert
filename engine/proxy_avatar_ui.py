@@ -45,7 +45,7 @@ class AvatarCropView(ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.owner_id:
             await interaction.response.send_message(
-                "This crop editor isn't yours.", ephemeral=True
+                "This crop editor isn't yours.", ephemeral=False
             )
             return False
         return True
@@ -118,7 +118,7 @@ class AvatarCropView(ui.View):
 
     @ui.button(label="Save", style=discord.ButtonStyle.success, row=2)
     async def save_crop(self, interaction: discord.Interaction, button: ui.Button):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
         final_png = render_cropped_png(self.source_bytes, self.state, preview=False)
         url = await host_avatar_bytes(
             self.bot,
@@ -134,7 +134,7 @@ class AvatarCropView(ui.View):
                     "or set `AVATAR_CACHE_CHANNEL_ID` in `.env` so cropped avatars can be hosted.",
                     color=ERROR_COLOR,
                 ),
-                ephemeral=True,
+                ephemeral=False,
             )
             return
         db.set_wolf_avatar_cache(self.wolf["id"], final_png, url=url)
@@ -150,7 +150,7 @@ class AvatarCropView(ui.View):
                 "proxy avatar saved.",
                 color=SUCCESS_COLOR,
             ),
-            ephemeral=True,
+            ephemeral=False,
         )
         self.stop()
 

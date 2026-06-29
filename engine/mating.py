@@ -3,11 +3,35 @@
 from __future__ import annotations
 
 import database as db
-from config import MATE_MOOD_GAIN
+from config import FIDELITY_BOND_LOSS, FIDELITY_BOND_MIN_TO_CARE, MATE_MOOD_GAIN
 from engine.attraction import conception_parents, mate_pairing
 from engine.family import GESTATION_DAYS, conception_check
 from engine.infractions import apply_mate_infractions
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR
+
+
+def _fidelity_cost(cheater, mating_partner, *, day: int) -> str | None:
+    """Mating with someone who isn't your bonded mate, while that bond still
+    means something, costs real bond strength and mood — not just an RP
+    label that nothing in the system actually reacts to."""
+    mate = db.get_bonded_mate(cheater)
+    if not mate or mate["id"] == mating_partner["id"]:
+        return None
+    existing = db.get_bond(cheater["id"], mate["id"], "romance") or db.get_bond(
+        cheater["id"], mate["id"], "friendship"
+    )
+    if existing and int(existing["strength"]) < FIDELITY_BOND_MIN_TO_CARE:
+        return None
+    new_mood = db.adjust_mood(mate["id"], -FIDELITY_BOND_LOSS)
+    bond_note = ""
+    if existing:
+        bond_type = existing["bond_type"]
+        row = db.adjust_bond_strength(cheater["id"], mate["id"], bond_type, -FIDELITY_BOND_LOSS, day=day)
+        if row:
+            bond_note = f"; bond **−{FIDELITY_BOND_LOSS}** (now **{row['strength']}/100**)"
+    return (
+        f"_word of this reaches **{mate['wolf_name']}**; their mood drops to **{new_mood}**{bond_note}._"
+    )
 
 
 def mating_embed_title(body: str, *, hard_fail: bool) -> str:
@@ -45,6 +69,15 @@ def execute_mating(
         user, partner_user, guild_id=guild_id, day=day_number
     )
 
+    fidelity_notes = [
+        n
+        for n in (
+            _fidelity_cost(user, partner_user, day=day_number),
+            _fidelity_cost(partner_user, user, day=day_number),
+        )
+        if n
+    ]
+
     def mood_line() -> str:
         your_mood = db.adjust_mood(user["id"], MATE_MOOD_GAIN)
         their_mood = db.adjust_mood(partner_user["id"], MATE_MOOD_GAIN)
@@ -79,6 +112,8 @@ def execute_mating(
                 spread_notes.append(note)
         if spread_notes:
             body += "\n\n" + "\n".join(spread_notes)
+        if fidelity_notes:
+            body += "\n\n" + "\n".join(fidelity_notes)
         if caught_lines:
             body += caught_suffix()
         return True, body, SUCCESS_COLOR, False
@@ -114,6 +149,8 @@ def execute_mating(
         )
         if spread_notes:
             body += "\n\n" + "\n".join(spread_notes)
+        if fidelity_notes:
+            body += "\n\n" + "\n".join(fidelity_notes)
         if caught_lines:
             body += caught_suffix()
         return True, body, ERROR_COLOR, False
@@ -131,8 +168,12 @@ def execute_mating(
             msg = "Complications; false pregnancy or illness."
 
     msg = f"conception roll: **{result['total']}** vs dc 15.\n{msg}{mood_line()}"
+    if result.get("condition_note"):
+        msg += f"\n_{result['condition_note']}._"
     if spread_notes:
         msg += "\n\n" + "\n".join(spread_notes)
+    if fidelity_notes:
+        msg += "\n\n" + "\n".join(fidelity_notes)
     if caught_lines:
         msg += caught_suffix()
     color = SUCCESS_COLOR if result["success"] else ERROR_COLOR

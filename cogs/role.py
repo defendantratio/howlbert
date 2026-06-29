@@ -3,15 +3,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from engine.activities import accept_quest
 from engine.character import parse_proficiencies
 from engine.dice import format_roll_result, resolve_check
 from engine.role_content import pick_prophecy, pick_role_event
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
-from utils.views import make_quest_accept_view
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 
 def _standing_note(kick: str, user) -> str:
     from engine.broken_canine import standing_expulsion_note
@@ -26,9 +24,9 @@ class RoleCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='role', description='role quests, role events, prophecy, or apprentice shadowing.')
-    @app_commands.describe(action='quests, event, prophecy, or shadow', mentor='full-ranked packmate to shadow (action:shadow)')
-    @app_commands.choices(action=[app_commands.Choice(name='role quests', value='quests'), app_commands.Choice(name='role event', value='event'), app_commands.Choice(name='prophecy (drown-sick)', value='prophecy'), app_commands.Choice(name='shadow a mentor (apprentice)', value='shadow')])
+    @app_commands.command(name='role', description='role quests, role events, prophecy, shadowing, or rank disputes.')
+    @app_commands.describe(action='quests, event, prophecy, shadow, or challenge', mentor='full-ranked packmate to shadow (action:shadow), or packmate to contest (action:challenge)')
+    @app_commands.choices(action=[app_commands.Choice(name='role quests', value='quests'), app_commands.Choice(name='role event', value='event'), app_commands.Choice(name='prophecy (drown-sick)', value='prophecy'), app_commands.Choice(name='shadow a mentor (apprentice)', value='shadow'), app_commands.Choice(name='challenge pack rank', value='challenge')])
     async def role(self, interaction: discord.Interaction, action: str, mentor: discord.Member | None=None):
         if action == 'quests':
             await self._rolequests(interaction)
@@ -38,6 +36,8 @@ class RoleCog(commands.Cog):
             await self._prophecy(interaction)
         elif action == 'shadow':
             await self._shadow(interaction, mentor)
+        elif action == 'challenge':
+            await self._rankdispute(interaction, mentor)
 
     async def _rolequests(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -52,19 +52,21 @@ class RoleCog(commands.Cog):
             embed.set_footer(text='/role action:event · once per sunrise')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        embed = howlbert_embed(f'Role Quests: {label}', 'Quests only your role can take. Accept with the buttons below.')
+        embed = howlbert_embed(f'Role Quests: {label}', 'Quests only your role can take; accepted automatically.')
+        guild_id = interaction.guild.id if interaction.guild else None
+        day = db.get_world(guild_id)['day_number'] if guild_id else 0
         for q in rows[:8]:
+            db.accept_quest(interaction.user.id, q['id'], day, guild_id=guild_id)
             pack_note = ''
             if q['required_pack']:
                 pack_note = f" _(requires {q['required_pack'].title()} pack)_"
             from engine.quest_rewards import format_quest_reward_line
             reward_line = format_quest_reward_line(q['key'], q['reward_bones'])
             embed.add_field(name=f"{q['title']} ({q['difficulty']}); {reward_line}", value=f"`{q['key']}`; {q['description']}{pack_note}", inline=False)
-        view = make_quest_accept_view(rows[:8])
         feature = ROLE_FEATURES.get(role)
         if feature:
             embed.set_footer(text=f'{label} · {feature}')
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=reply_ephemeral())
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     async def _roleevent(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -194,6 +196,35 @@ class RoleCog(commands.Cog):
         embed = howlbert_embed('Shadow', msg, color=color)
         if ok:
             embed.set_footer(text='medics use `/medic action:observe` instead · once per sunrise')
+        await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
+
+    async def _rankdispute(self, interaction: discord.Interaction, target: discord.Member | None):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        if not target:
+            await interaction.response.send_message(player_message('Pick a packmate to contest with the `mentor` option.'), ephemeral=reply_ephemeral())
+            return
+        if target.bot or target.id == interaction.user.id:
+            embed = howlbert_embed('Pick Someone Else', "Contest your place against a packmate; not yourself.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        target_row = db.get_user(target.id)
+        if not target_row:
+            embed = howlbert_embed('Not Registered', 'That wolf is not on Howlbert.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        from engine.rank_dispute import run_rank_dispute
+        ok, msg = run_rank_dispute(user, target_row, day=world['day_number'])
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        embed = howlbert_embed('Rank Dispute', msg, color=color)
+        if ok:
+            embed.set_footer(text='shifts den feed priority · once per sunrise')
         await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
 
 def _skill_attrs(skill: str) -> tuple[str, ...]:
