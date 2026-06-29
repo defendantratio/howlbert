@@ -410,8 +410,8 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("western_pond_turtle", 1, {"weather_rain": True}),
         ("spotted_turtle", 1, {"times": DAWN_DUSK}),
         ("bullfrog", 1, {"weather_rain": True}),
-        ("mallard", 1, {"times": DAWN_DUSK}),
-        ("canada_goose", 1, {"times": DAWN_DUSK}),
+        ("mallard", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
+        ("canada_goose", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
     ),
     "mistmoor": (
         ("swamp_darter", 1, {}),
@@ -426,7 +426,7 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("alligator_snapping_turtle", 1, {"times": DAY_TIMES}),
         ("painted_turtle", 1, {"weather_rain": True}),
         ("bullfrog", 1, {"weather_rain": True}),
-        ("wood_duck", 1, {"times": DAWN_DUSK}),
+        ("wood_duck", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
     ),
     "thistlehide": (
         ("green_sunfish", 1, {}),
@@ -441,8 +441,8 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("painted_turtle", 1, {}),
         ("bullfrog", 1, {"weather_rain": True}),
         ("common_snapping_turtle", 1, {"times": DAY_TIMES}),
-        ("wood_duck", 1, {"times": DAWN_DUSK}),
-        ("mallard", 1, {"times": DAWN_DUSK}),
+        ("wood_duck", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
+        ("mallard", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
     ),
     "greyspire": (
         ("brook_trout", 1, {}),
@@ -454,7 +454,7 @@ _PACK_POOLS: dict[str, tuple[tuple, ...]] = {
         ("wood_turtle", 1, {"times": DAWN_DUSK}),
         ("shovelnose_sturgeon", 1, {"weather_rain": True}),
         ("bullfrog", 1, {"weather_rain": True}),
-        ("mallard", 1, {"times": DAWN_DUSK}),
+        ("mallard", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
     ),
 }
 
@@ -468,11 +468,11 @@ _DEFAULT_POOL = (
     ("painted_turtle", 1, {}),
     ("common_snapping_turtle", 1, {"times": DAY_TIMES}),
     ("shovelnose_sturgeon", 1, {"weather_rain": True}),
-    ("mallard", 1, {"times": DAWN_DUSK}),
+    ("mallard", 1, {"times": DAWN_DUSK, "seasons": ("autumn", "spring")}),
 )
 
 
-def _gates_ok(gates: dict, time_of_day: str, weather: str) -> bool:
+def _gates_ok(gates: dict, time_of_day: str, weather: str, season: str | None = None) -> bool:
     if not gates:
         return True
     tod = (time_of_day or "day").lower()
@@ -482,6 +482,8 @@ def _gates_ok(gates: dict, time_of_day: str, weather: str) -> bool:
     if gates.get("weather_rain") and wx not in RAIN_WEATHER:
         return False
     if gates.get("weather_any") and wx not in gates["weather_any"]:
+        return False
+    if gates.get("seasons") and (season or "").lower() not in gates["seasons"]:
         return False
     return True
 
@@ -497,6 +499,7 @@ def pick_fishing_catch(
     great_pack: str | None,
     time_of_day: str,
     weather: str,
+    season: str | None = None,
 ) -> dict[str, Any]:
     """
     Roll a Wolvden-style catch for the wolf's pack waters.
@@ -508,7 +511,7 @@ def pick_fishing_catch(
         key, mult, gates = entry[0], entry[1], entry[2] if len(entry) > 2 else {}
         if key not in FISHING_CATCHES:
             continue
-        if not _gates_ok(gates, time_of_day, weather):
+        if not _gates_ok(gates, time_of_day, weather, season):
             continue
         rarity = FISHING_CATCHES[key]["rarity"]
         weight = RARITY_BASE_WEIGHT.get(rarity, 10) * mult

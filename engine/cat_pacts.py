@@ -408,7 +408,9 @@ def break_cat_pact(
     )
 
 
-def gift_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tuple[bool, str]:
+def gift_cat_pact(
+    user, pack, *, guild_id: int, clan_name: str, day: int, amount: int | None = None
+) -> tuple[bool, str]:
     if not can_forge_cat_pact(user, pack):
         return False, "only the **alpha** or **diplomat** can send tribute."
 
@@ -423,15 +425,23 @@ def gift_cat_pact(user, pack, *, guild_id: int, clan_name: str, day: int) -> tup
     if db.cat_pact_gift_used_today(pack["id"], day):
         return False, "tribute was already sent this sunrise."
 
-    if not db.deduct_pack_treasury(pack["id"], CAT_PACT_GIFT_TRIBUTE):
-        return False, f"treasury needs **{CAT_PACT_GIFT_TRIBUTE}** bones for the gift."
+    spend = CAT_PACT_GIFT_TRIBUTE if amount is None else max(0, int(amount))
+    if spend > 0 and not db.deduct_pack_treasury(pack["id"], spend):
+        return False, f"treasury doesn't have **{spend}** bones to spare."
 
-    new_trust = min(100, int(pact["trust"]) + CAT_PACT_GIFT_TRUST)
-    db.adjust_cat_pact_trust(pack["id"], stored_clan, CAT_PACT_GIFT_TRUST)
+    trust_gain = round(CAT_PACT_GIFT_TRUST * spend / CAT_PACT_GIFT_TRIBUTE) if spend > 0 else 0
+    new_trust = min(100, int(pact["trust"]) + trust_gain)
+    if trust_gain:
+        db.adjust_cat_pact_trust(pack["id"], stored_clan, trust_gain)
     db.mark_cat_pact_gift_day(pack["id"], day)
+    flavor = (
+        f"prey bones and herbs left at the border for **{stored_clan}**."
+        if spend > 0
+        else f"you show up at the border empty-pawed; **{stored_clan}** notices."
+    )
     return True, (
-        f"prey bones and herbs left at the border for **{stored_clan}**.\n"
-        f"trust **{int(pact['trust'])} → {new_trust}**."
+        f"{flavor}\n"
+        f"spent **{spend}** bones; trust **{int(pact['trust'])} → {new_trust}** (**{'+' if trust_gain >= 0 else ''}{trust_gain}**)."
     )
 
 

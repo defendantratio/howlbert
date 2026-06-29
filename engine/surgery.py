@@ -384,7 +384,7 @@ def run_surgery(
             if spec.stick_count > 1:
                 hint = (
                     f" (need **{spec.stick_count} sticks**: one to bite, one to lash the splint; "
-                    "patient `/herbs action:bag`, Medic bag, or `/bones action:inventory`)"
+                    "patient `/bones action:inventory`, Medic bag, or `/bones action:inventory`)"
                 )
             else:
                 hint = " (stick: patient bag, Medic bag, or `/bones action:inventory`)"

@@ -73,9 +73,28 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
     rest of the den doesn't know it happened.
     returns dict: outcome, body, success (embed color hint), expulsion_note.
     """
-    outcome = roll_socialize_outcome()
+    from config import STRANGER_SCENT_ABSENCE_DAYS, STRANGER_SCENT_MOOD_PENALTY
+
     name = partner["wolf_name"]
     lines: list[str] = []
+    last_active = db.last_active_day(user)
+    if day > 0 and last_active == 0:
+        # brand new to the den; the pack hasn't had a chance to know them yet,
+        # same wary-before-warming-up beat as a long-absent wolf gets.
+        new_mood = db.adjust_mood(user["id"], -STRANGER_SCENT_MOOD_PENALTY)
+        lines.append(
+            f"_you're new enough to the den that **{name}** scents you like a stranger at first; "
+            f"the pack is wary before warming up to someone they don't know yet. "
+            f"**{STRANGER_SCENT_MOOD_PENALTY} mood** (now **{new_mood}**)._"
+        )
+    elif day > 0 and last_active > 0 and day - last_active >= STRANGER_SCENT_ABSENCE_DAYS:
+        new_mood = db.adjust_mood(user["id"], -STRANGER_SCENT_MOOD_PENALTY)
+        lines.append(
+            f"_you've been gone long enough that **{name}** scents you like a stranger at first; "
+            f"the den is wary before warming back up. **{STRANGER_SCENT_MOOD_PENALTY} mood** (now **{new_mood}**)._"
+        )
+
+    outcome = roll_socialize_outcome()
     unity_note = ""
     standing_note = ""
     expulsion = ""
@@ -118,7 +137,8 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):
             filth = try_den_filth_exposure(wolf, day=day)
             if filth:
-                lines.append(f"{label} tumble through old scat; {filth}")
+                verb = "tumble" if label == "You" else "tumbles"
+                lines.append(f"{label} {verb} through old scat; {filth}")
 
     else:  # scrap
         lines.append(_pick(SCRAP_FLAVOR, name))
@@ -139,7 +159,8 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         for wolf, label in ((user, "You"), (partner, partner["wolf_name"])):
             filth = try_den_filth_exposure(wolf, day=day)
             if filth:
-                lines.append(f"{label} tumble through old scat; {filth}")
+                verb = "tumble" if label == "You" else "tumbles"
+                lines.append(f"{label} {verb} through old scat; {filth}")
 
     from engine.disease_contract import try_spread_from_close_contact
 

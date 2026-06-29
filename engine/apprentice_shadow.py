@@ -55,8 +55,29 @@ def run_apprentice_shadow(apprentice, mentor, *, day: int) -> tuple[bool, str]:
     fields = {"last_shadow_day": day}
     fields.update(merge_buff_fields(apprentice, mentor_bonus_skill=focus, mentor_bonus_value=MENTOR_BONUS_VALUE))
     db.update_user_by_id(apprentice["id"], **fields)
+
+    transfer_note = ""
+    from config import MENTOR_BOND_SKILL_TRANSFER_GAIN, MENTOR_BOND_SKILL_TRANSFER_THRESHOLD
+
+    before = db.get_bond(apprentice["id"], mentor["id"], "mentor")
+    before_strength = int(before["strength"]) if before else 0
+    bond = db.adjust_bond_strength(
+        apprentice["id"], mentor["id"], "mentor", MENTOR_BOND_SKILL_TRANSFER_GAIN, day=day
+    )
+    after_strength = int(bond["strength"]) if bond else before_strength
+    if (
+        focus
+        and before_strength < MENTOR_BOND_SKILL_TRANSFER_THRESHOLD
+        and after_strength >= MENTOR_BOND_SKILL_TRANSFER_THRESHOLD
+    ):
+        db.add_skill_rank(apprentice["id"], focus, 1, grant_proficiency=True)
+        transfer_note = (
+            f"\n_the mentorship runs deep enough now that something of **{mentor['wolf_name']}**'s "
+            f"**{focus}** has rubbed off for good; **{apprentice['wolf_name']}** gains a permanent rank._"
+        )
+
     return True, (
         f"**{apprentice['wolf_name']}** shadows **{mentor['wolf_name']}** at work, watching close.\n"
         f"_apprentice paws; watch and learn before you hold the rank._\n"
-        f"next **{focus}** check: **+{MENTOR_BONUS_VALUE}**."
+        f"next **{focus}** check: **+{MENTOR_BONUS_VALUE}**.{transfer_note}"
     )

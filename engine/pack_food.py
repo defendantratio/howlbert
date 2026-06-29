@@ -160,7 +160,12 @@ def _feed_priority(wolf) -> tuple[int, int]:
     )
     tier = 0 if eats_first else 1
     hunger = int(wolf["hunger"]) if "hunger" in wolf.keys() and wolf["hunger"] is not None else 50
-    return (tier, hunger)
+    # Won rank disputes nudge a wolf earlier in line among similarly-hungry
+    # packmates (real pecking order), without letting rank override genuine
+    # survival need the way hunger itself does.
+    pack_rank = int(wolf["pack_rank"]) if "pack_rank" in wolf.keys() and wolf["pack_rank"] is not None else 0
+    adjusted_hunger = hunger + pack_rank * 3
+    return (tier, adjusted_hunger)
 
 
 def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:

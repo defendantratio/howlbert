@@ -145,6 +145,17 @@ def log_achievement(wolf_id: int, wolf_name: str, title: str) -> None:
     _write(wolf_id, "achievement", f"**{wolf_name}** earned the **{title}** trophy.")
 
 
+def log_quest_complete(
+    wolf_id: int, wolf_name: str, title: str, *, reward_bones: int, standing_reward: int
+) -> None:
+    extra = f" (+{standing_reward} standing)" if standing_reward else ""
+    _write(
+        wolf_id,
+        "quest_complete",
+        f"**{wolf_name}** finished **{title}**; +{reward_bones} bones{extra}.",
+    )
+
+
 def log_raid(
     wolf_id: int,
     wolf_name: str,
@@ -240,7 +251,7 @@ def format_journal_embed_body(wolf_id: int, *, limit: int = 200) -> str:
 
 
 def _journal_entry_tier(event_key: str) -> int:
-    if event_key.startswith("lore:") or event_key in ("born", "adopted"):
+    if event_key.startswith("lore:"):
         return 2
     return 1
 
@@ -282,5 +293,29 @@ def chunk_journal_lines(lines: list[str], *, max_chars: int = 3900) -> list[str]
     return chunks
 
 
+def format_notable_lines(wolf_id: int, *, limit: int = 5) -> list[str]:
+    """
+    A handful of the wolf's own /proxy speech, picked for length (the lines
+    that read like they mattered), so the journal reads like a character's
+    history instead of only mechanical milestones.
+    """
+    rows = db.get_proxy_message_log(wolf_id, limit=50)
+    if not rows:
+        return []
+    longest = sorted(rows, key=lambda r: len(r["content"]), reverse=True)[:limit]
+    longest.sort(key=lambda r: r["id"])
+    lines = []
+    for row in longest:
+        text = row["content"]
+        if len(text) > 200:
+            text = text[:197] + "…"
+        lines.append(f'_"{text}"_')
+    return lines
+
+
 def format_journal_embed_chunks(wolf_id: int, *, limit: int = 200) -> list[str]:
-    return chunk_journal_lines(format_journal_bullet_lines(wolf_id, limit=limit))
+    lines = format_journal_bullet_lines(wolf_id, limit=limit)
+    notable = format_notable_lines(wolf_id)
+    if notable:
+        lines = lines + ["", "_**in their own words**_"] + notable
+    return chunk_journal_lines(lines)

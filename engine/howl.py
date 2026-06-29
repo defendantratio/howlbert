@@ -89,6 +89,11 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             if moon_bonus:
                 unity_gain += moon_bonus
                 moon_note = f"\nfull moon: the call carries further (**+{moon_bonus}** unity)."
+            from engine.pack_unity import howl_weather_muffle_note
+
+            unity_gain, muffle_note = howl_weather_muffle_note(unity_gain, world["weather"])
+            if muffle_note:
+                moon_note = f"{moon_note}\n{muffle_note}" if moon_note else f"\n{muffle_note}"
         _mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
         flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
 

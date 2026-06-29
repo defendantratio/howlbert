@@ -6,8 +6,6 @@ import discord
 
 import database as db
 from engine.activities import (
-    accept_quest,
-    complete_quest,
     preypile_error,
     purchase_item,
 )
@@ -79,7 +77,7 @@ class ShopPageView(discord.ui.View):
                 embed = purchase_item(interaction, item_key)
                 if embed:
                     await interaction.response.send_message(
-                        embed=embed, ephemeral=_is_error(embed)
+                        embed=embed, ephemeral=False
                     )
 
             button = discord.ui.Button(
@@ -130,100 +128,6 @@ def make_shop_view(items: list, page: int = 0) -> discord.ui.View:
     return ShopPageView(items, page)
 
 
-# --- Quests ---
-
-
-def make_quest_accept_view(quests: list) -> discord.ui.View | None:
-    if not quests:
-        return None
-    view = discord.ui.View(timeout=300)
-    if len(quests) <= 4:
-        for q in quests[:4]:
-            key = q["key"]
-
-            async def callback(interaction: discord.Interaction, *, quest_key=key):
-                embed = accept_quest(interaction, quest_key)
-                if embed:
-                    await interaction.response.send_message(
-                        embed=embed, ephemeral=_is_error(embed)
-                    )
-
-            button = discord.ui.Button(
-                label=q["title"][:80],
-                style=discord.ButtonStyle.primary,
-                custom_id=f"fable_accept:{key}",
-            )
-            button.callback = callback
-            view.add_item(button)
-        return view
-
-    options = [
-        discord.SelectOption(
-            label=q["title"][:100], value=q["key"], description=q["difficulty"][:100]
-        )
-        for q in quests[:25]
-    ]
-
-    async def select_callback(interaction: discord.Interaction):
-        quest_key = interaction.data["values"][0]
-        embed = accept_quest(interaction, quest_key)
-        if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=_is_error(embed))
-
-    select = discord.ui.Select(
-        placeholder="accept a quest…",
-        options=options,
-        custom_id="fable_accept_select",
-    )
-    select.callback = select_callback
-    view.add_item(select)
-    return view
-
-
-def make_quest_complete_view(ready_quests: list) -> discord.ui.View | None:
-    ready = [q for q in ready_quests if q["progress"] >= q["objective_count"]]
-    if not ready:
-        return None
-    view = discord.ui.View(timeout=300)
-
-    if len(ready) == 1:
-        key = ready[0]["quest_key"]
-
-        async def callback(interaction: discord.Interaction, *, quest_key=key):
-            embed = complete_quest(interaction, quest_key)
-            if embed:
-                await interaction.response.send_message(
-                    embed=embed, ephemeral=_is_error(embed)
-                )
-
-        button = discord.ui.Button(
-            label=f"turn in: {ready[0]['title'][:60]}",
-            style=discord.ButtonStyle.success,
-            custom_id=f"fable_complete:{key}",
-        )
-        button.callback = callback
-        view.add_item(button)
-        return view
-
-    options = [
-        discord.SelectOption(label=q["title"][:100], value=q["quest_key"])
-        for q in ready[:25]
-    ]
-
-    async def select_callback(interaction: discord.Interaction):
-        quest_key = interaction.data["values"][0]
-        embed = complete_quest(interaction, quest_key)
-        if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=_is_error(embed))
-
-    select = discord.ui.Select(
-        placeholder="turn in a finished quest…",
-        options=options,
-        custom_id="fable_complete_select",
-    )
-    select.callback = select_callback
-    view.add_item(select)
-    return view
 
 
 # --- Hunt follow-up ---
@@ -367,7 +271,7 @@ def make_arrival_scene_view(
         async def callback(interaction: discord.Interaction):
             if interaction.user.id != owner_discord_id:
                 await interaction.response.send_message(
-                    "this is someone else's scene.", ephemeral=True
+                    "this is someone else's scene.", ephemeral=False
                 )
                 return
             add_long_term_injury(wolf_id, choice["key"])

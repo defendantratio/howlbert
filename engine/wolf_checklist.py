@@ -275,6 +275,21 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
     return items
 
 
+def _pending_quest_items(user) -> list[str]:
+    """Active quests in progress; quests auto-accept and auto-complete now,
+    so this is the only player-facing view of them (no /quest command)."""
+    wolf_id = int(_field(user, "id", 0) or 0)
+    if not wolf_id:
+        return []
+    rows = db.get_user_active_quests(_field(user, "discord_id", 0))
+    items = []
+    for q in rows:
+        if q["quest_type"] == "achievement":
+            continue
+        items.append(f"{q['title']}; {q['progress']}/{q['objective_count']} ({q['objective_type']})")
+    return items
+
+
 def collect_wolf_checklist(
     user,
     *,
@@ -284,8 +299,8 @@ def collect_wolf_checklist(
     prestige_tier: int = 0,
     is_booster: bool = False,
     donor_bonus: int = 0,
-) -> tuple[list[str], list[str], list[str]]:
-    """Return (setup todos, daily todos, watch todos); only incomplete items."""
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Return (setup todos, daily todos, active quests, watch todos); only incomplete items."""
     setup = _pending_setup_items(user)
     today = _pending_daily_items(
         user,
@@ -296,20 +311,26 @@ def collect_wolf_checklist(
         is_booster=is_booster,
         donor_bonus=donor_bonus,
     )
+    quests = _pending_quest_items(user)
     watch = _pending_watch_items(user, guild_id, day)
-    return setup, today, watch
+    return setup, today, quests, watch
 
 
-def format_wolf_checklist(setup: list[str], today: list[str], watch: list[str] | None = None) -> str | None:
+def format_wolf_checklist(
+    setup: list[str], today: list[str], watch: list[str] | None = None, quests: list[str] | None = None
+) -> str | None:
     """markdown checklist with ☐ boxes; none when nothing pending."""
     watch = watch or []
-    if not setup and not today and not watch:
+    quests = quests or []
+    if not setup and not today and not watch and not quests:
         return None
     parts: list[str] = []
     if setup:
         parts.append("**setup**\n" + "\n".join(f"☐ {label}" for label in setup))
     if today:
         parts.append("**today**\n" + "\n".join(f"☐ {label}" for label in today))
+    if quests:
+        parts.append("**active quests**\n" + "\n".join(f"• {label}" for label in quests))
     if watch:
         parts.append("**watch**\n" + "\n".join(f"⚠ {label}" for label in watch))
     text = "\n\n".join(parts)
@@ -332,7 +353,7 @@ def build_wolf_checklist(
         world = db.get_world(guild_id)
         season = world["season"] if world else "spring"
     season = season or "spring"
-    setup, today, watch = collect_wolf_checklist(
+    setup, today, quests, watch = collect_wolf_checklist(
         user,
         day=day,
         guild_id=guild_id,
@@ -341,4 +362,4 @@ def build_wolf_checklist(
         is_booster=is_booster,
         donor_bonus=donor_bonus,
     )
-    return format_wolf_checklist(setup, today, watch)
+    return format_wolf_checklist(setup, today, watch, quests)

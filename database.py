@@ -458,6 +458,24 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN avatar_image BLOB")
     if "avatar_cached_at" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN avatar_cached_at TEXT")
+    if "ref_image_blob" not in user_cols:
+        # Same durability fix as avatar_image, for the /character ref_image
+        # lore-sheet art; admin-pasted URLs aren't guaranteed Discord CDN,
+        # but if they are, this is the backup once that link goes stale.
+        conn.execute("ALTER TABLE users ADD COLUMN ref_image_blob BLOB")
+    if "ref_image_cached_at" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN ref_image_cached_at TEXT")
+    if "shedding_until_day" not in user_cols:
+        # Brief vulnerability window right after a season change while the
+        # coat cycles; even a winter survivor isn't well-insulated mid-shed.
+        conn.execute("ALTER TABLE users ADD COLUMN shedding_until_day INTEGER NOT NULL DEFAULT 0")
+    if "pack_rank" not in user_cols:
+        # Lower-stakes subordinate pecking-order, contested via rank
+        # disputes; breaks ties in den feed priority. Lower sorts first,
+        # matching engine.pack_food._feed_priority's convention.
+        conn.execute("ALTER TABLE users ADD COLUMN pack_rank INTEGER NOT NULL DEFAULT 0")
+    if "last_rank_dispute_day" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN last_rank_dispute_day INTEGER NOT NULL DEFAULT 0")
     if "pronouns" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
     if "ref_image_url" not in user_cols:
@@ -719,6 +737,13 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "hunts_today_day" not in pack_cols:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN hunts_today_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "den_upgrade_level" not in pack_cols:
+        # Treasury-funded den infrastructure (windbreak, drainage, expansion);
+        # passively blunts weather penalties instead of treasury only ever
+        # being stipends and raids.
+        conn.execute(
+            "ALTER TABLE packs ADD COLUMN den_upgrade_level INTEGER NOT NULL DEFAULT 0"
         )
 
     user_cols_needs = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
@@ -1219,6 +1244,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if world_cols and "season_override" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN season_override TEXT"
+        )
+    if world_cols and "season_changed_day" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN season_changed_day INTEGER NOT NULL DEFAULT 0"
         )
 
     conn.execute(
@@ -3289,6 +3318,11 @@ def get_wolf_avatar_cache(wolf_id: int) -> sqlite3.Row | None:
         ).fetchone()
 
 
+def set_wolf_ref_image_cache(wolf_id: int, image_bytes: bytes | None) -> None:
+    """Durable backup of the /character ref_image art, in case the admin-pasted URL ever dies."""
+    update_user_by_id(wolf_id, ref_image_blob=image_bytes, ref_image_cached_at=utcnow())
+
+
 def set_wolf_proxy(wolf_id: int, prefix: str | None, suffix: str | None) -> None:
     update_user_by_id(
         wolf_id,
@@ -3574,14 +3608,19 @@ def list_wolf_journal(
 
 
 def _journal_sort_key(row: sqlite3.Row) -> tuple:
-    """In-game days first (oldest→newest), then pre-game den records at the end."""
+    """
+    True chronological order: pre-game backstory lore first (it describes
+    life before the den even has a day count for them), then every in-game
+    event by its actual day — including "born"/"adopted", which have a real
+    day and were previously and incorrectly lumped in with pre-game lore.
+    """
     key = str(row["event_key"])
     day = row["day"]
     row_id = int(row["id"])
 
-    if key.startswith("lore:") or key in ("born", "adopted"):
-        sub = {"lore:backstory": 0, "lore:family": 1, "born": 2, "adopted": 3}.get(key, 9)
-        return (2, 0, sub, row_id)
+    if key.startswith("lore:"):
+        sub = {"lore:backstory": 0, "lore:family": 1}.get(key, 9)
+        return (0, 0, sub, row_id)
 
     game_day = int(day) if day is not None else 0
     if key == "registered":
@@ -3589,6 +3628,8 @@ def _journal_sort_key(row: sqlite3.Row) -> tuple:
 
     sub = {
         "registered": 0,
+        "born": 0,
+        "adopted": 0,
         "pack_joined": 1,
         "pack_left": 2,
         "bonded": 3,
@@ -4740,6 +4781,32 @@ def deduct_pack_treasury(pack_id: int, amount: int) -> bool:
         return True
 
 
+def upgrade_den(pack_id: int) -> tuple[bool, int, int]:
+    """
+    Spend treasury to raise den_upgrade_level by one (atomic). Cost scales
+    with the level being purchased. Returns (success, new_level, cost).
+    """
+    from config import DEN_UPGRADE_BASE_COST, DEN_UPGRADE_MAX_LEVEL
+
+    with get_db() as conn:
+        pack = conn.execute(
+            "SELECT treasury, den_upgrade_level FROM packs WHERE id = ?", (pack_id,)
+        ).fetchone()
+        if not pack:
+            return False, 0, 0
+        level = int(pack["den_upgrade_level"])
+        if level >= DEN_UPGRADE_MAX_LEVEL:
+            return False, level, 0
+        cost = DEN_UPGRADE_BASE_COST * (level + 1)
+        if int(pack["treasury"]) < cost:
+            return False, level, cost
+        conn.execute(
+            "UPDATE packs SET treasury = treasury - ?, den_upgrade_level = den_upgrade_level + 1 WHERE id = ?",
+            (cost, pack_id),
+        )
+        return True, level + 1, cost
+
+
 def claim_daily_stipend(discord_id: int, pack_id: int, amount: int) -> bool:
     """Pay daily stipend from pack treasury to the active wolf (atomic)."""
     if amount <= 0:
@@ -4964,8 +5031,30 @@ def set_season_override(guild_id: int, season: str | None) -> None:
         )
 
 
+# Weather is one shared roll across all four Great Packs (mountain, swamp,
+# forest, river), so this isn't per-pack weather — it's the global roll
+# weighted toward what that mix of terrains would actually produce more
+# often, instead of every weather type being equally likely regardless of
+# whether anyone's land is a swamp or a mountain.
+_TERRAIN_WEATHER_WEIGHT = {
+    "clear": 10,
+    "cloudy": 12,
+    "sunny": 6,
+    "rain": 16,
+    "fog": 12,
+    "wind": 10,
+    "sleet": 6,
+    "snow": 8,
+    "hail": 4,
+    "storm": 8,
+    "heatwave": 3,
+    "thunderstorm": 5,
+}
+
+
 def _random_weather() -> str:
-    return random.choice(WEATHER_TYPES)
+    weights = [_TERRAIN_WEATHER_WEIGHT.get(w, 1) for w in WEATHER_TYPES]
+    return random.choices(WEATHER_TYPES, weights=weights, k=1)[0]
 
 
 def _age_wolves_on_rollover(months: int, rollover_at: datetime | None = None) -> tuple[list[dict], int]:
@@ -5382,11 +5471,53 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         from engine.cat_gathering import apply_gathering_on_season_change
 
         with get_db() as conn:
+            conn.execute(
+                "UPDATE world_state SET season_changed_day = ? WHERE guild_id = ?",
+                (new_day, guild_id),
+            )
+            from config import SHEDDING_WINDOW_DAYS
+
+            conn.execute(
+                "UPDATE users SET shedding_until_day = ? WHERE condition != 'dead'",
+                (new_day + SHEDDING_WINDOW_DAYS,),
+            )
             gathering_notes = apply_gathering_on_season_change(
                 conn, guild_id, new_season, new_day
             )
         if gathering_notes:
             needs_crisis.setdefault("season_notes", []).extend(gathering_notes)
+        if old_season == "winter":
+            from engine.long_term_injuries import apply_winter_survivor_trait_on_rollover
+
+            with get_db() as conn:
+                survivors = apply_winter_survivor_trait_on_rollover(conn)
+            if survivors:
+                needs_crisis.setdefault("season_notes", []).append(
+                    f"the den has weathered another winter; **{survivors}** wolves carry that resilience forward."
+                )
+        if new_season == "spring":
+            with get_db() as conn:
+                courtship_notes = apply_courtship_pressure_on_season_change(conn)
+            for _pack_id, note in courtship_notes:
+                needs_crisis.setdefault("season_notes", []).append(note)
+    with get_db() as conn:
+        calcify_old_rivalries_on_rollover(conn, new_day)
+        decay_idle_bonds_on_rollover(conn, new_day)
+        decay_idle_standing_on_rollover(conn, new_day)
+        decay_stalled_mentorships_on_rollover(conn, new_day)
+        from engine.long_term_injuries import (
+            LONG_TERM_TYPES,
+            convert_untreated_injuries_on_rollover,
+        )
+
+        chronic_conversions = convert_untreated_injuries_on_rollover(conn, new_day)
+    if chronic_conversions:
+        for wolf_id, wolf_name, injury_key, target in chronic_conversions:
+            label = LONG_TERM_TYPES.get(target, {}).get("label", target)
+            needs_crisis.setdefault("season_notes", []).append(
+                f"**{wolf_name}**'s untreated {injury_key.replace('_', ' ')} has gone on too long; "
+                f"it settles into a permanent **{label}**."
+            )
     sky = active_lunar_phase(rollover_at)
     needs_crisis["lunar_phase_label"] = (
         BIRTH_LUNAR_LABELS[sky] if sky else lunar_phase_label(rollover_at)
@@ -6526,6 +6657,18 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
             from engine.wolf_journal import log_achievement
 
             log_achievement(wolf_id, wolf["wolf_name"], uq["title"])
+    else:
+        wolf = get_user_by_id(wolf_id)
+        if wolf:
+            from engine.wolf_journal import log_quest_complete
+
+            log_quest_complete(
+                wolf_id,
+                wolf["wolf_name"],
+                uq["title"],
+                reward_bones=int(uq["reward_bones"]),
+                standing_reward=int(uq["standing_reward"]),
+            )
 
     record_quest_complete(discord_id, uq["reward_bones"], uq["standing_reward"])
     user = get_user(discord_id)
@@ -6568,6 +6711,7 @@ def ensure_daily_quests(discord_id: int, day: int) -> list[sqlite3.Row]:
         if existing:
             return list(existing)
 
+        daily_standing_reward = {"easy": 1, "medium": 2, "hard": 3}
         for difficulty in ("easy", "medium", "hard"):
             pool = DAILY_QUEST_TEMPLATES[difficulty]
             key, title, desc, obj, count, reward = rnd.choice(pool)
@@ -6576,10 +6720,10 @@ def ensure_daily_quests(discord_id: int, day: int) -> list[sqlite3.Row]:
                 """
                 INSERT OR IGNORE INTO quests
                 (key, title, description, objective_type, objective_count,
-                 reward_bones, quest_type, difficulty)
-                VALUES (?, ?, ?, ?, ?, ?, 'daily', ?)
+                 reward_bones, quest_type, difficulty, standing_reward)
+                VALUES (?, ?, ?, ?, ?, ?, 'daily', ?, ?)
                 """,
-                (quest_key, title, desc, obj, count, reward, difficulty),
+                (quest_key, title, desc, obj, count, reward, difficulty, daily_standing_reward[difficulty]),
             )
             quest = conn.execute(
                 "SELECT id FROM quests WHERE key = ?", (quest_key,)
@@ -6630,6 +6774,16 @@ def get_territory_by_key(guild_id: int, key: str) -> sqlite3.Row | None:
             "SELECT * FROM territories WHERE guild_id = ? AND key = ? COLLATE NOCASE",
             (guild_id, key.strip()),
         ).fetchone()
+
+
+def claim_unowned_territory(territory_id: int, pack_id: int) -> bool:
+    """Claim an unowned territory by marking it; contested ground still needs a war."""
+    with get_db() as conn:
+        cur = conn.execute(
+            "UPDATE territories SET owner_pack_id = ? WHERE id = ? AND owner_pack_id IS NULL",
+            (pack_id, territory_id),
+        )
+        return cur.rowcount > 0
 
 
 def get_active_war_for_pack(guild_id: int, pack_id: int) -> sqlite3.Row | None:
@@ -8778,103 +8932,111 @@ def yield_fighter(encounter_id: int, fighter_id: int) -> str:
     """
     import json
 
+    result = "not_found"
+    should_finalize_ambush = False
+
     with get_db() as conn:
         enc = conn.execute(
             "SELECT * FROM combat_encounters WHERE id = ?", (encounter_id,)
         ).fetchone()
-        if not enc:
-            return "not_found"
-
-        fighter = conn.execute(
-            "SELECT * FROM combat_fighters WHERE encounter_id = ? AND id = ?",
-            (encounter_id, fighter_id),
-        ).fetchone()
-        if not fighter:
-            return "not_found"
-
-        from engine.combat_status import release_pin_states
-
-        release_pin_states(fighter_id, encounter_id)
-
-        if fighter["discord_id"] or (fighter["wolf_id"] if "wolf_id" in fighter.keys() else None):
-            _sync_fighter_hp_to_user(conn, fighter, fighter["hp"])
-
-        old_order = json.loads(enc["turn_order"] or "[]")
-        yield_idx = old_order.index(fighter_id) if fighter_id in old_order else None
-        was_current = (
-            enc["status"] == "active"
-            and yield_idx is not None
-            and yield_idx == enc["current_turn"]
-        )
-        old_turn = enc["current_turn"]
-
-        conn.execute(
-            "DELETE FROM combat_fighters WHERE id = ?",
-            (fighter_id,),
+        fighter = (
+            conn.execute(
+                "SELECT * FROM combat_fighters WHERE encounter_id = ? AND id = ?",
+                (encounter_id, fighter_id),
+            ).fetchone()
+            if enc
+            else None
         )
 
-        remaining = conn.execute(
-            """
-            SELECT id FROM combat_fighters
-            WHERE encounter_id = ?
-            ORDER BY initiative DESC, id ASC
-            """,
-            (encounter_id,),
-        ).fetchall()
+        if enc and fighter:
+            from engine.combat_status import release_pin_states
 
-        if len(remaining) < 2:
-            for row in conn.execute(
+            release_pin_states(fighter_id, encounter_id)
+
+            if fighter["discord_id"] or (fighter["wolf_id"] if "wolf_id" in fighter.keys() else None):
+                _sync_fighter_hp_to_user(conn, fighter, fighter["hp"])
+
+            old_order = json.loads(enc["turn_order"] or "[]")
+            yield_idx = old_order.index(fighter_id) if fighter_id in old_order else None
+            was_current = (
+                enc["status"] == "active"
+                and yield_idx is not None
+                and yield_idx == enc["current_turn"]
+            )
+            old_turn = enc["current_turn"]
+
+            conn.execute(
+                "DELETE FROM combat_fighters WHERE id = ?",
+                (fighter_id,),
+            )
+
+            remaining = conn.execute(
                 """
-                SELECT discord_id, wolf_id, hp FROM combat_fighters
-                WHERE encounter_id = ? AND (discord_id IS NOT NULL OR wolf_id IS NOT NULL)
+                SELECT id FROM combat_fighters
+                WHERE encounter_id = ?
+                ORDER BY initiative DESC, id ASC
                 """,
                 (encounter_id,),
-            ):
-                _sync_fighter_hp_to_user(conn, row, row["hp"])
-            from engine.ambush_activity import finalize_ambush_activity
+            ).fetchall()
 
-            finalize_ambush_activity(encounter_id)
-            conn.execute(
-                "UPDATE combat_encounters SET status = 'ended' WHERE id = ?",
-                (encounter_id,),
-            )
-            conn.execute(
-                "DELETE FROM combat_target_picks WHERE encounter_id = ?",
-                (encounter_id,),
-            )
-            return "ended"
+            if len(remaining) < 2:
+                for row in conn.execute(
+                    """
+                    SELECT discord_id, wolf_id, hp FROM combat_fighters
+                    WHERE encounter_id = ? AND (discord_id IS NOT NULL OR wolf_id IS NOT NULL)
+                    """,
+                    (encounter_id,),
+                ):
+                    _sync_fighter_hp_to_user(conn, row, row["hp"])
+                should_finalize_ambush = True
+                conn.execute(
+                    "UPDATE combat_encounters SET status = 'ended' WHERE id = ?",
+                    (encounter_id,),
+                )
+                conn.execute(
+                    "DELETE FROM combat_target_picks WHERE encounter_id = ?",
+                    (encounter_id,),
+                )
+                result = "ended"
+            else:
+                remaining_ids = [row["id"] for row in remaining]
+                # Preserve the established turn order minus the yielded fighter;
+                # append any fighters not yet placed (e.g. mid-join) in initiative order.
+                new_order = [fid for fid in old_order if fid in remaining_ids and fid != fighter_id]
+                for fid in remaining_ids:
+                    if fid not in new_order:
+                        new_order.append(fid)
 
-        remaining_ids = [row["id"] for row in remaining]
-        # Preserve the established turn order minus the yielded fighter; append
-        # any fighters not yet placed (e.g. mid-join) in initiative order.
-        new_order = [fid for fid in old_order if fid in remaining_ids and fid != fighter_id]
-        for fid in remaining_ids:
-            if fid not in new_order:
-                new_order.append(fid)
+                if enc["status"] != "active":
+                    conn.execute(
+                        "UPDATE combat_encounters SET turn_order = ? WHERE id = ?",
+                        (json.dumps(new_order), encounter_id),
+                    )
+                    result = "ok"
+                else:
+                    if was_current:
+                        new_turn = old_turn % len(new_order)
+                    elif yield_idx is not None and yield_idx < old_turn:
+                        new_turn = max(0, old_turn - 1)
+                    else:
+                        new_turn = min(old_turn, len(new_order) - 1)
 
-        if enc["status"] != "active":
-            conn.execute(
-                "UPDATE combat_encounters SET turn_order = ? WHERE id = ?",
-                (json.dumps(new_order), encounter_id),
-            )
-            return "ok"
+                    conn.execute(
+                        """
+                        UPDATE combat_encounters
+                        SET turn_order = ?, current_turn = ?
+                        WHERE id = ?
+                        """,
+                        (json.dumps(new_order), new_turn, encounter_id),
+                    )
+                    result = "ok"
 
-        if was_current:
-            new_turn = old_turn % len(new_order)
-        elif yield_idx is not None and yield_idx < old_turn:
-            new_turn = max(0, old_turn - 1)
-        else:
-            new_turn = min(old_turn, len(new_order) - 1)
+    if should_finalize_ambush:
+        from engine.ambush_activity import finalize_ambush_activity
 
-        conn.execute(
-            """
-            UPDATE combat_encounters
-            SET turn_order = ?, current_turn = ?
-            WHERE id = ?
-            """,
-            (json.dumps(new_order), new_turn, encounter_id),
-        )
-        return "ok"
+        finalize_ambush_activity(encounter_id)
+
+    return result
 
 
 def end_encounter(encounter_id: int) -> None:
@@ -9399,6 +9561,7 @@ def mark_wolf_dead(
         )
         if grief:
             result = handle_mate_grief_on_wolf_death(c, wolf_id)
+            apply_bond_grief_for_strong_bonds(c, wolf_id)
         else:
             result = None
         from engine.wolf_journal import log_died
@@ -9511,6 +9674,54 @@ def handle_mate_grief_on_wolf_death(conn: sqlite3.Connection, dead_wolf_id: int)
         "discord_id": partner["discord_id"],
         "line": note,
     }
+
+
+def apply_bond_grief_for_strong_bonds(conn: sqlite3.Connection, dead_wolf_id: int) -> list[dict]:
+    """
+    A formal bonded mate already gets grief above; this covers everyone
+    else who was genuinely close to the dead wolf (best friend, kin, a
+    secret romance, a mentor) — scaled by how strong that bond actually
+    was, instead of only the one official relationship mattering.
+    """
+    from config import (
+        STRONG_BOND_GRIEF_CHANCE_CAP,
+        STRONG_BOND_GRIEF_MOOD_CAP,
+        STRONG_BOND_GRIEF_THRESHOLD,
+    )
+    from engine.disease_contract import try_grief_on_bond_loss
+
+    rows = conn.execute(
+        """
+        SELECT * FROM wolf_bonds
+        WHERE (wolf_a_id = ? OR wolf_b_id = ?) AND strength >= ?
+        """,
+        (dead_wolf_id, dead_wolf_id, STRONG_BOND_GRIEF_THRESHOLD),
+    ).fetchall()
+    results: list[dict] = []
+    for row in rows:
+        other_id = row["wolf_b_id"] if row["wolf_a_id"] == dead_wolf_id else row["wolf_a_id"]
+        survivor = conn.execute("SELECT * FROM users WHERE id = ?", (other_id,)).fetchone()
+        if not survivor or survivor["condition"] in ("dead", "dying"):
+            continue
+        strength = int(row["strength"])
+        scale = min(1.0, strength / 100.0)
+        mood_loss = max(2, int(STRONG_BOND_GRIEF_MOOD_CAP * scale))
+        conn.execute(
+            "UPDATE users SET mood = MAX(0, mood - ?) WHERE id = ?",
+            (mood_loss, other_id),
+        )
+        chance = min(STRONG_BOND_GRIEF_CHANCE_CAP, 0.2 + scale * 0.5)
+        note = try_grief_on_bond_loss(survivor, bond_type=row["bond_type"], chance=chance, conn=conn)
+        results.append(
+            {
+                "wolf_name": survivor["wolf_name"],
+                "discord_id": survivor["discord_id"],
+                "bond_type": row["bond_type"],
+                "mood_loss": mood_loss,
+                "line": note,
+            }
+        )
+    return results
 
 
 def clear_pregnancy(wolf_id: int) -> None:
@@ -9962,6 +10173,235 @@ def bump_npc_sign_streak(npc_id: int, wolf_id: int, *, window_minutes: int) -> i
             (npc_id, wolf_id, now, streak),
         )
     return streak
+
+
+_LEGEND_MARKER = "[legend]"
+
+
+def apply_courtship_pressure_on_season_change(conn) -> list[tuple[int, str]]:
+    """
+    Called when a new season begins and that season is spring; a den with
+    fewer than COURTSHIP_PRESSURE_MIN_PAIRS breeding-age mated pairs feels
+    real anxiety about its future as the only season pups can realistically
+    arrive in (63-day gestation) opens up, and loses a touch of unity.
+    Operates on the rollover's own connection to avoid a nested-connection
+    deadlock. Returns a list of (pack_id, note) for each pack hit.
+    """
+    from config import (
+        COURTSHIP_PRESSURE_MIN_PAIRS,
+        COURTSHIP_PRESSURE_UNITY_PENALTY,
+        PACK_UNITY_MAX,
+        PACK_UNITY_MIN,
+        PUP_MAX_MOONS,
+    )
+
+    packs = conn.execute("SELECT id, name FROM packs").fetchall()
+    notes: list[tuple[int, str]] = []
+    for pack in packs:
+        rows = conn.execute(
+            """
+            SELECT id, bonded_mate_id FROM users
+            WHERE pack_id = ? AND condition != 'dead' AND age_months >= ?
+              AND bonded_mate_id IS NOT NULL
+            """,
+            (pack["id"], PUP_MAX_MOONS),
+        ).fetchall()
+        pair_count = 0
+        seen: set[frozenset[int]] = set()
+        for row in rows:
+            pair = frozenset((row["id"], row["bonded_mate_id"]))
+            if pair in seen:
+                continue
+            mate = conn.execute(
+                "SELECT pack_id, age_months, condition FROM users WHERE id = ?",
+                (row["bonded_mate_id"],),
+            ).fetchone()
+            if not mate or mate["pack_id"] != pack["id"]:
+                continue
+            if mate["condition"] == "dead" or int(mate["age_months"]) < PUP_MAX_MOONS:
+                continue
+            seen.add(pair)
+            pair_count += 1
+        if pair_count >= COURTSHIP_PRESSURE_MIN_PAIRS:
+            continue
+        conn.execute(
+            """
+            UPDATE packs
+            SET pack_unity = MIN(?, MAX(?, pack_unity - ?))
+            WHERE id = ?
+            """,
+            (PACK_UNITY_MAX, PACK_UNITY_MIN, COURTSHIP_PRESSURE_UNITY_PENALTY, pack["id"]),
+        )
+        notes.append((
+            pack["id"],
+            f"spring nears and **{pack['name']}** has only **{pair_count}** breeding-age "
+            f"pair{'s' if pair_count != 1 else ''}; the den murmurs about its future. "
+            f"unity **-{COURTSHIP_PRESSURE_UNITY_PENALTY}**.",
+        ))
+    return notes
+
+
+def decay_stalled_mentorships_on_rollover(conn, current_day: int) -> list[tuple[int, str, str, int]]:
+    """
+    A mentor bond's skill-transfer threshold should require an actually
+    present mentor, not just a number that never moves once apprentice
+    activity stops decaying it (decay_idle_bonds_on_rollover exempts mentor
+    bonds entirely). If the MENTOR side has gone idle long enough, the
+    mentorship itself stalls and loses ground. Operates on the rollover's
+    own connection. Returns (apprentice_id, apprentice_name, mentor_name, new_strength).
+    """
+    from config import MENTOR_STALL_DECAY_AMOUNT, MENTOR_STALL_IDLE_DAYS
+    from engine.apprentice_shadow import SHADOWABLE_APPRENTICES
+
+    last_seen_expr = "MAX(" + ", ".join(f"COALESCE({c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    rows = conn.execute(
+        f"""
+        SELECT wb.wolf_a_id, wb.wolf_b_id, wb.strength,
+               a.id AS a_id, a.wolf_role AS a_role, a.wolf_name AS a_name,
+               b.id AS b_id, b.wolf_role AS b_role, b.wolf_name AS b_name,
+               ({last_seen_expr.replace("COALESCE(", "COALESCE(a.")}) AS a_seen,
+               ({last_seen_expr.replace("COALESCE(", "COALESCE(b.")}) AS b_seen
+        FROM wolf_bonds wb
+        JOIN users a ON a.id = wb.wolf_a_id
+        JOIN users b ON b.id = wb.wolf_b_id
+        WHERE wb.bond_type = 'mentor' AND wb.strength > 0
+        """
+    ).fetchall()
+    decayed: list[tuple[int, str, str, int]] = []
+    for row in rows:
+        if row["a_role"] in SHADOWABLE_APPRENTICES:
+            apprentice_id, apprentice_name = row["a_id"], row["a_name"]
+            mentor_id, mentor_name, mentor_seen = row["b_id"], row["b_name"], row["b_seen"]
+        elif row["b_role"] in SHADOWABLE_APPRENTICES:
+            apprentice_id, apprentice_name = row["b_id"], row["b_name"]
+            mentor_id, mentor_name, mentor_seen = row["a_id"], row["a_name"], row["a_seen"]
+        else:
+            continue
+        if current_day - int(mentor_seen) < MENTOR_STALL_IDLE_DAYS:
+            continue
+        new_strength = max(0, int(row["strength"]) - MENTOR_STALL_DECAY_AMOUNT)
+        conn.execute(
+            "UPDATE wolf_bonds SET strength = ?, updated_day = ? WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = 'mentor'",
+            (new_strength, current_day, row["wolf_a_id"], row["wolf_b_id"]),
+        )
+        decayed.append((apprentice_id, apprentice_name, mentor_name, new_strength))
+    return decayed
+
+
+def calcify_old_rivalries_on_rollover(conn, current_day: int) -> int:
+    """
+    A rivalry bond that's stayed strong a long time without being resolved
+    (death, reconciliation) calcifies into permanent den legend — a one-time
+    journal entry for both wolves — instead of just quietly fading from
+    neglect like an ordinary bond would. Marked in the note so it only
+    fires once per pair.
+    """
+    from config import RIVALRY_LEGEND_AGE_DAYS, RIVALRY_LEGEND_STRENGTH_THRESHOLD
+    from engine.wolf_journal import log_rivalry_milestone
+
+    rows = conn.execute(
+        """
+        SELECT * FROM wolf_bonds
+        WHERE bond_type = 'rivalry' AND strength >= ?
+          AND created_day <= ? AND note NOT LIKE ?
+        """,
+        (
+            RIVALRY_LEGEND_STRENGTH_THRESHOLD,
+            current_day - RIVALRY_LEGEND_AGE_DAYS,
+            f"%{_LEGEND_MARKER}%",
+        ),
+    ).fetchall()
+    calcified = 0
+    for row in rows:
+        a = conn.execute("SELECT * FROM users WHERE id = ?", (row["wolf_a_id"],)).fetchone()
+        b = conn.execute("SELECT * FROM users WHERE id = ?", (row["wolf_b_id"],)).fetchone()
+        if not a or not b:
+            continue
+        log_rivalry_milestone(a["id"], a["wolf_name"], b["wolf_name"], "den legend")
+        log_rivalry_milestone(b["id"], b["wolf_name"], a["wolf_name"], "den legend")
+        new_note = (row["note"] or "").strip()
+        new_note = f"{new_note} {_LEGEND_MARKER}".strip()
+        conn.execute(
+            "UPDATE wolf_bonds SET note = ? WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = 'rivalry'",
+            (new_note, row["wolf_a_id"], row["wolf_b_id"]),
+        )
+        calcified += 1
+    return calcified
+
+
+_STANDING_ACTIVITY_COLUMNS = (
+    "last_hunt_day", "last_work_day", "last_socialize_day", "last_explore_day",
+    "last_forage_day", "last_groom_day", "last_sniff_day", "last_fishing_day",
+    "last_howl_day", "last_sign_day",
+)
+
+
+def last_active_day(user) -> int:
+    """Most recent of several common activity timestamps, as a 'last seen' proxy."""
+    return max((int(user[c]) if c in user.keys() and user[c] is not None else 0) for c in _STANDING_ACTIVITY_COLUMNS)
+
+
+def decay_idle_standing_on_rollover(conn, current_day: int) -> int:
+    """
+    A wolf who's gone quiet for a long while drifts back toward neutral (0)
+    standing instead of returning exactly as feared/trusted as when they
+    left. Uses the most recent of several common activity timestamps as a
+    "last seen" proxy since there's no single activity log to check.
+    """
+    from config import STANDING_DECAY_AMOUNT, STANDING_DECAY_IDLE_DAYS
+
+    last_seen_expr = "MAX(" + ", ".join(f"COALESCE({c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    rows = conn.execute(
+        f"""
+        SELECT id, standing FROM users
+        WHERE standing != 0 AND condition != 'dead'
+          AND {last_seen_expr} < ?
+        """,
+        (current_day - STANDING_DECAY_IDLE_DAYS,),
+    ).fetchall()
+    decayed = 0
+    for row in rows:
+        standing = int(row["standing"])
+        if standing > 0:
+            new_standing = max(0, standing - STANDING_DECAY_AMOUNT)
+        else:
+            new_standing = min(0, standing + STANDING_DECAY_AMOUNT)
+        conn.execute("UPDATE users SET standing = ? WHERE id = ?", (new_standing, row["id"]))
+        decayed += 1
+    return decayed
+
+
+def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
+    """
+    Friendships, rivalries, and romances that haven't been touched in a
+    while (no socialize/groom/sign/etc.) slowly fade — a bond is a living
+    relationship, not a ratchet that only ever goes up. Kin and mentor
+    bonds are exempt; family and "who taught you" don't erode from a quiet
+    season. Operates on the rollover's own connection (no nested get_db()).
+    """
+    from config import BOND_DECAY_AMOUNT, BOND_DECAY_IDLE_DAYS
+
+    stale_before = current_day - BOND_DECAY_IDLE_DAYS
+    rows = conn.execute(
+        """
+        SELECT wolf_a_id, wolf_b_id, bond_type, strength FROM wolf_bonds
+        WHERE bond_type IN ('friendship', 'rivalry', 'romance')
+          AND updated_day < ? AND strength > 0
+        """,
+        (stale_before,),
+    ).fetchall()
+    decayed = 0
+    for row in rows:
+        new_strength = max(0, int(row["strength"]) - BOND_DECAY_AMOUNT)
+        conn.execute(
+            """
+            UPDATE wolf_bonds SET strength = ?, updated_day = ?
+            WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = ?
+            """,
+            (new_strength, current_day, row["wolf_a_id"], row["wolf_b_id"], row["bond_type"]),
+        )
+        decayed += 1
+    return decayed
 
 
 def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | None:

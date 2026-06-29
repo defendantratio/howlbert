@@ -38,6 +38,16 @@ LONG_TERM_TYPES = {
         "effect": "Came in half-starved and watchful; **+1** on Survival checks.",
         "intimidate_bonus": 0,
     },
+    "winter_survivor": {
+        "label": "Winter Survivor",
+        "effect": "Lived through a full winter; **+1** on Survival or Constitution checks in cold/wet weather, and immune to chronic-pain weather flares.",
+        "intimidate_bonus": 0,
+    },
+    "runt": {
+        "label": "Runt of the Litter",
+        "effect": "Smallest of a large litter; one attribute permanently weaker.",
+        "intimidate_bonus": 0,
+    },
 }
 
 CURE_HERBS = frozenset({"wolfsbane", "swamp_milkweed"})
@@ -89,6 +99,101 @@ def format_long_term_injuries(user) -> str | None:
         else:
             lines.append(f"**{entry}**")
     return " · ".join(lines)
+
+
+def apply_winter_survivor_trait_on_rollover(conn) -> int:
+    """
+    Called once when winter ends (old_season == 'winter', new_season !=
+    'winter'). Grants the permanent winter_survivor trait to every living,
+    non-pup wolf — operates on the rollover's own connection so it never
+    opens a second one (would deadlock against the rollover transaction).
+    """
+    from config import PUP_MAX_MOONS
+
+    rows = conn.execute(
+        """
+        SELECT id, long_term_injuries FROM users
+        WHERE condition != 'dead' AND age_months >= ?
+        """,
+        (PUP_MAX_MOONS,),
+    ).fetchall()
+    granted = 0
+    for row in rows:
+        current = parse_long_term_injuries(row["long_term_injuries"])
+        if "winter_survivor" in current:
+            continue
+        current.append("winter_survivor")
+        conn.execute(
+            "UPDATE users SET long_term_injuries = ? WHERE id = ?",
+            (json.dumps(current), row["id"]),
+        )
+        granted += 1
+    return granted
+
+
+CHRONIC_CONVERSION_TARGET = {
+    "sprained_leg": "limp",
+    "broken_jaw": "limp",
+    "spinal_injury": "limp",
+    "punctured_paw": "limp",
+    "fractured_rib": "chronic_pain",
+    "concussion": "chronic_pain",
+    "torn_claw": "scarring",
+}
+
+
+def convert_untreated_injuries_on_rollover(conn, current_day: int) -> list[tuple[int, str, str, str]]:
+    """
+    An injury left untreated isn't supposed to sit forever; `/medic` is the
+    only thing that clears one, but a wolf nobody ever treats shouldn't get
+    to coast on a temporary wound indefinitely either. Past
+    CHRONIC_CONVERSION_MULTIPLIER times its normal heal_days, an untreated
+    injury ages into the closest matching permanent long-term injury and is
+    removed from active_injuries. Only injuries with a defined heal_days and
+    a mapped chronic target convert; operates on the rollover's own
+    connection to avoid a nested-connection deadlock.
+    Returns a list of (wolf_id, wolf_name, injury_key, chronic_key) tuples.
+    """
+    from config import CHRONIC_CONVERSION_MULTIPLIER
+    from engine.conditions import parse_injuries, parse_injury_since
+    from herbs import INJURIES
+
+    rows = conn.execute(
+        """
+        SELECT id, wolf_name, active_injuries, injury_since, long_term_injuries
+        FROM users WHERE condition != 'dead' AND active_injuries IS NOT NULL
+        """
+    ).fetchall()
+    converted: list[tuple[int, str, str, str]] = []
+    for row in rows:
+        injuries = parse_injuries(row["active_injuries"])
+        if not injuries:
+            continue
+        since = parse_injury_since(row["injury_since"])
+        remaining = list(injuries)
+        changed = False
+        lt_current = parse_long_term_injuries(row["long_term_injuries"])
+        for key in injuries:
+            target = CHRONIC_CONVERSION_TARGET.get(key)
+            info = INJURIES.get(key)
+            start = since.get(key)
+            if not target or not info or not info.get("heal_days") or start is None:
+                continue
+            threshold = int(info["heal_days"]) * CHRONIC_CONVERSION_MULTIPLIER
+            if current_day - start < threshold:
+                continue
+            remaining.remove(key)
+            since.pop(key, None)
+            if target not in lt_current:
+                lt_current.append(target)
+            changed = True
+            converted.append((row["id"], row["wolf_name"], key, target))
+        if changed:
+            conn.execute(
+                "UPDATE users SET active_injuries = ?, injury_since = ?, long_term_injuries = ? WHERE id = ?",
+                (json.dumps(remaining), json.dumps(since), json.dumps(lt_current), row["id"]),
+            )
+    return converted
 
 
 def add_long_term_injury(wolf_id: int, entry: str) -> None:
@@ -249,13 +354,26 @@ def check_adjustments(
     if "wary_arrival" in entries and skill_key == "survival":
         mod += 1
         notes.append("Wary arrival (+1 Survival)")
+    cold_weather = weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind")
+    shedding = day_number > 0 and day_number <= int(user["shedding_until_day"] or 0) if user and "shedding_until_day" in user.keys() else False
+    if (
+        "winter_survivor" in entries
+        and cold_weather
+        and not shedding
+        and (skill_key == "survival" or "attr_con" in attr_keys)
+    ):
+        mod += 1
+        notes.append("Winter survivor (+1 in cold/wet weather)")
+    if shedding and cold_weather and "attr_con" in attr_keys:
+        mod -= 1
+        notes.append("Mid-shed; coat isn't fully grown in yet (cold hits harder)")
     if "chronic_pain" in entries and first_physical_today:
         from engine.herb_buffs import pain_relief_active
 
         day = day_number
         if pain_relief_active(user, day):
             notes.append("Pain relief (willow bark, poppy, etc.)")
-        elif weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind"):
+        elif cold_weather and "winter_survivor" not in entries:
             if "attr_str" in attr_keys or "attr_dex" in attr_keys:
                 disadvantage = True
                 notes.append("Chronic pain (disadvantage)")

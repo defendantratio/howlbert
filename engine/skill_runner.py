@@ -562,8 +562,21 @@ def run_skill_scenario(
     extra_notes = []
     if scenario.category == "tracking":
         mod, note = _weather_scent_dc_mod(weather, rained=rained)
-        dc += mod
-        if note:
+        # An older trail has less scent left to begin with, so the same rain
+        # or wind erases proportionally more of it; a fresh trail shrugs off
+        # weather that would wipe out a faint, day-old one.
+        trail_age_scale = {
+            "track_fresh": 0.5,
+            "track_recent": 1.0,
+            "track_cold": 1.5,
+            "track_very_cold": 2.0,
+            "track_faint": 2.5,
+        }.get(scenario.key, 1.0)
+        scaled_mod = round(mod * trail_age_scale)
+        dc += scaled_mod
+        if note and trail_age_scale != 1.0:
+            extra_notes.append(f"{note} (older trail: x{trail_age_scale:g})")
+        elif note:
             extra_notes.append(note)
     if scenario.key == "track_blood" and rained:
         dc += 5

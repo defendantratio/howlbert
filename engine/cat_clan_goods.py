@@ -61,6 +61,7 @@ CLAN_LOOT_TABLES: dict[str, list[tuple[LootKind, str, int]]] = {
         ("herb", "beech_leaves", 10),
         ("amusement", "feather", 12),
         ("amusement", "acorn", 8),
+        ("bones", "8", 10),
     ],
     "ShadowClan": [
         ("prey", "vole", 16),
@@ -80,6 +81,7 @@ CLAN_LOOT_TABLES: dict[str, list[tuple[LootKind, str, int]]] = {
         ("herb", "chervil", 12),
         ("herb", "sage", 10),
         ("amusement", "stick", 12),
+        ("bones", "8", 10),
     ],
     "RiverClan": [
         ("prey", "fish", 30),
@@ -89,6 +91,7 @@ CLAN_LOOT_TABLES: dict[str, list[tuple[LootKind, str, int]]] = {
         ("herb", "juniper_berry", 10),
         ("herb", "blackberry", 10),
         ("amusement", "shell", 10),
+        ("bones", "8", 10),
     ],
 }
 
@@ -221,7 +224,7 @@ def grant_clan_loot(
                 user=user,
             )
             name = medicine_herb_display(key)
-            line = f"**{name}** (medicine cat · fresh) → `/herbs action:bag`"
+            line = f"**{name}** (medicine cat · fresh) → `/bones action:inventory`"
             if hoard_note:
                 line += f" · _{hoard_note}_"
             lines.append(line)
