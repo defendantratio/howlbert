@@ -303,6 +303,18 @@ def forge_cat_pact(
 
     dc += plot_cat_pact_forge_dc_bonus(guild_id)
 
+    from config import OATHBREAKER_FORGE_DC_CAP, OATHBREAKER_FORGE_DC_PER_BREAK
+
+    oath_penalty = min(
+        OATHBREAKER_FORGE_DC_CAP, db.oathbreaker_count(user) * OATHBREAKER_FORGE_DC_PER_BREAK
+    )
+    dc += oath_penalty
+    oath_note = (
+        f"\n_**{user['wolf_name']}**'s broken oaths follow them into this parley; **+{oath_penalty} dc**._"
+        if oath_penalty
+        else ""
+    )
+
     result = _negotiate_check(user, dc, game_day=day)
     if not result["success"]:
         db.set_pack_cat_pact_fail_day(pack["id"], clan, day)
@@ -311,7 +323,7 @@ def forge_cat_pact(
             if (treasury_cost or personal_cost)
             else ""
         )
-        return False, tribute_note + format_roll_result(result)
+        return False, tribute_note + format_roll_result(result) + oath_note
 
     trust = spec["trust_start"]
     if result["outcome"] == "critical_success":
@@ -337,7 +349,7 @@ def forge_cat_pact(
         f"on the border stones.\n"
         f"{forge_success_flavor(clan)}\n"
         f"tribute accepted · trust **{trust}** · holds until sunrise **{expires}**.\n\n"
-        f"{format_roll_result(result)}"
+        f"{format_roll_result(result)}{oath_note}"
     )
     if terms_note:
         body += f"\n\n_terms: {terms_note.strip()}_"
@@ -402,9 +414,12 @@ def break_cat_pact(
 
     db.break_cat_pact(pack["id"], stored_clan, day=day, reason=reason)
     db.adjust_pack_unity(pack["id"], -2)
+    personal_count = db.mark_oathbreaker(int(user["id"]))
     return True, (
         f"**{pack['name']}** breaks the treaty with **{stored_clan}**.\n"
-        f"_{reason}_\nden unity **−2**. border patrols will remember."
+        f"_{reason}_\nden unity **−2**. border patrols will remember.\n"
+        f"_**{user['wolf_name']}** carries this oath broken now too "
+        f"(**{personal_count}** personally); future negotiations they lead start with a wary den._"
     )
 
 
@@ -445,7 +460,7 @@ def gift_cat_pact(
     )
 
 
-RAID_CLAN_KIND_BY_TYPE = {"food": "prey", "herbs": "herb", "amusement": "amusement"}
+RAID_CLAN_KIND_BY_TYPE = {"food": "prey", "herbs": "herb", "amusement": "amusement", "bones": "bones"}
 RAID_CLAN_CATCH_CHANCE = 0.40
 RAID_CLAN_CAUGHT_TRUST_PENALTY = -8
 RAID_CLAN_SUCCESS_TRUST_PENALTY = -3
@@ -464,7 +479,7 @@ def raid_cat_clan(
         return False, err
     kind = RAID_CLAN_KIND_BY_TYPE.get(raid_type)
     if not kind:
-        return False, "raid_type must be food, herbs, or amusement for a clan camp."
+        return False, "raid_type must be food, herbs, amusement, or bones for a clan camp."
     if not user["pack_id"]:
         return False, "join a great pack to run a den raid."
 

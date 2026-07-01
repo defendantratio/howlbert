@@ -77,9 +77,20 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ **forage food** (berries, windfall fruit, roots, greens) drops from `/field forage` and `scavenge`; it ripens then overripens, just like meat rots  
 ✦ **passive scavenge**: unfed wolves forage a little each sunrise so neglect bites without instantly starving the den  
 ✦ **death log**: `/wolfadmin deaths` records cause of death each rollover  
-✦ **admin tooling**: `/wolfadmin import_sheet` parses a pasted/attached RP character sheet into a registered wolf (dry-run preview by default); `/wolfadmin dormant` exempts admin-held NPC wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
+✦ **admin tooling**: `/wolfadmin assign` registers a wolf to a player (paste sheets directly in chat); `/wolfadmin arrival` posts the arrival/birth scene for an already-registered wolf so it grants its long-term trait properly; `/wolfadmin dormant` exempts admin-held NPC wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
 ✦ **pack-specific plot quests**: each great pack has its own gated board quest tied to its lore (e.g. Silverrush's dam sabotage, Greyspire's mining-camp raid)  
 ✦ **basil's rules** for attributes, skill checks, combat, herbs, disease, and pups; use `/help` in discord for the player guide
+
+## realism mechanics
+
+howlbert leans toward measurable, granular wolf-ecology effects over flavor text — every system below changes a number, not just a description.
+
+✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter** — `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
+✦ **pregnancy costs food**: pregnant wolves burn extra hunger/thirst each sunrise, and hunt/fish/scavenge yield drops **−10%** in early pregnancy, **−20%** mid-to-late; the final third blocks strenuous activity outright. nursing mothers burn extra hunger/thirst per pup  
+✦ **injuries cost yield, not just combat**: non-blocking injuries (sprained leg, punctured paw, concussion, deep gash, infected wound, torn claw, broken tooth, torn ear) reduce hunt/fish/scavenge yield, stacking up to **−50%**. severe injuries (fractured rib, spinal injury, paralysis) still block field commands outright  
+✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first — but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
+✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day — wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
+✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances — a +1 skill bonus that follows a wolf for life
 
 ## commands
 
@@ -199,7 +210,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 | death saves          | `/medic action:deathsaves`, `action:stabilize` at 0 hp                         |
 | weather hazards      | `/hazard`                                                                      |
 | xp                   | `/advance action:view`, `action:spend`                                         |
-| mating and pups      | `/courtship`, `/pupcare`                                                       |
+| mating and pups      | `/courtship` (court year-round; **conception only in winter**), `/pupcare`    |
 
 
 **hp** = 10 + str + survival (con score). **pack unity** (0–10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
@@ -230,8 +241,6 @@ illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distem
 
 
 pick one at `/register`. loners have no treasury or pack trait; join a great pack anytime with `/setfaction`.
-
-**auto pack roles:** on `/register` and `/setfaction` the bot assigns a Discord role named after the great pack (auto-created if missing), removing stale pack roles. give the bot **Manage Roles** and keep its role above the pack roles; without the permission it silently skips.
 
 ## prestige (tiers 0–7)
 

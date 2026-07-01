@@ -328,6 +328,8 @@ def payout_collab_survey(
             standing_gain += plot_thistlehide_patrol_standing_bonus(
                 patrol["guild_id"], gp, user=user
             )
+            from engine.injury_effects import injury_patrol_standing_bonus
+            standing_gain += injury_patrol_standing_bonus(user)
             db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
         if standing_delta:
@@ -491,15 +493,24 @@ def resolve_collab_survey(patrol_id: int) -> tuple[discord.Embed | None, str | N
 
     needed = (len(users) + 1) // 2
     if crit_fail and successes < needed:
+        from engine.injury_effects import injury_caught_standing_penalty
+        extra_penalty_lines = []
         for user in users:
-            db.adjust_wolf_standing(user["discord_id"], -1)
+            standing_loss = -1 + injury_caught_standing_penalty(user)
+            db.adjust_wolf_standing(user["discord_id"], standing_loss)
             db.update_user(user["discord_id"], wolf_id=user["id"], last_survey_day=day)
+            if standing_loss < -1:
+                extra_penalty_lines.append(
+                    f"**{user['wolf_name']}**'s injury slowed the getaway; standing **{standing_loss}**."
+                )
         result_text = (
             random.choice(SURVEY_FLAVOR)
             + "\n\n"
             + "\n".join(roll_lines)
             + "\n\nThe patrol was **spotted** on the ridge; standing **−1** each."
         )
+        if extra_penalty_lines:
+            result_text += "\n\n" + "\n".join(extra_penalty_lines)
         db.set_collab_patrol_status(patrol_id, "done", result_text=result_text)
         return build_collab_patrol_embed(patrol_id), None
 

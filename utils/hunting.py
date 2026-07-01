@@ -66,6 +66,7 @@ def award_bones(
     season: str | None = None,
     guild_id: int | None = None,
     day: int | None = None,
+    territory: str | None = None,
 ) -> tuple[int, int, int, int, str, str, str, str, str]:
     """Returns (net, tax, gross_after_modifiers, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note)."""
     account = db.get_account(user["discord_id"])
@@ -85,12 +86,41 @@ def award_bones(
         from engine.plot_blinking import plot_activity_payout_mult
 
         gp = user["great_pack"] if "great_pack" in user.keys() else None
-        mult, plot_note = plot_activity_payout_mult(guild_id, activity, great_pack=gp)
+        mult, plot_note = plot_activity_payout_mult(guild_id, activity, great_pack=gp, user=user)
         if mult != 1.0:
             amount = max(0, int(amount * mult))
         if plot_note:
             season_note = f"{season_note} · {plot_note}" if season_note else plot_note
     amount = apply_bone_bonus(amount, account["prestige_tier"])
+    if activity in HUNT_ACTIVITIES and day is not None:
+        from engine.injury_effects import injury_hunt_multiplier
+        from engine.pregnancy import pregnancy_hunt_multiplier
+
+        inj_mult, inj_note = injury_hunt_multiplier(user)
+        if inj_mult != 1.0:
+            amount = max(0, int(amount * inj_mult))
+            season_note = f"{season_note} · {inj_note}" if season_note else inj_note
+        preg_mult, preg_note = pregnancy_hunt_multiplier(user, day)
+        if preg_mult != 1.0:
+            amount = max(0, int(amount * preg_mult))
+            season_note = f"{season_note} · {preg_note}" if season_note else preg_note
+        streak = int(user["low_mood_streak"]) if "low_mood_streak" in user.keys() else 0
+        if streak >= 2:
+            from config import LOW_MOOD_STREAK_HUNT_PENALTY_PCT
+            amount = max(0, int(amount * (100 - LOW_MOOD_STREAK_HUNT_PENALTY_PCT) / 100))
+            season_note = f"{season_note} · persistent low mood: −{LOW_MOOD_STREAK_HUNT_PENALTY_PCT}%" if season_note else f"persistent low mood: −{LOW_MOOD_STREAK_HUNT_PENALTY_PCT}%"
+        grief = int(user["grief_sunrises"]) if "grief_sunrises" in user.keys() else 0
+        if grief > 0:
+            from config import MATE_GRIEF_HUNT_PENALTY_PCT
+            amount = max(0, int(amount * (100 - MATE_GRIEF_HUNT_PENALTY_PCT) / 100))
+            grief_note = f"grieving ({grief}d): −{MATE_GRIEF_HUNT_PENALTY_PCT}%"
+            season_note = f"{season_note} · {grief_note}" if season_note else grief_note
+    if activity in HUNT_ACTIVITIES and season == "summer":
+        from config import HUNT_SUMMER_THIRST_COST, HUNT_SUMMER_THIRST_WEATHER
+        cost = HUNT_SUMMER_THIRST_COST + (1 if (weather in HUNT_SUMMER_THIRST_WEATHER if weather else False) else 0)
+        new_thirst = db.adjust_thirst(user["id"], -cost)
+        thirst_drain_note = f"summer heat: −{cost} thirst (now **{new_thirst}**)"
+        season_note = f"{season_note} · {thirst_drain_note}" if season_note else thirst_drain_note
     mood_note = ""
     hunger_note = ""
     thirst_note = ""
@@ -110,13 +140,13 @@ def award_bones(
                 from engine.territory_marking import home_turf_hunt_bonus
 
                 gp = user["great_pack"] if "great_pack" in user.keys() else None
-                turf_mult, turf_note = home_turf_hunt_bonus(int(user["pack_id"]), gp, guild_id, day, weather=weather)
+                turf_mult, turf_note = home_turf_hunt_bonus(int(user["pack_id"]), gp, guild_id, day, weather=weather, territory=territory)
                 if turf_mult != 1.0:
                     amount = int(amount * turf_mult)
                     season_note = f"{season_note} · {turf_note}" if season_note else turf_note
                 from engine.territory_marking import allied_territory_hunt_bonus
 
-                ally_mult, ally_note = allied_territory_hunt_bonus(int(user["pack_id"]), guild_id)
+                ally_mult, ally_note = allied_territory_hunt_bonus(int(user["pack_id"]), guild_id, territory=territory)
                 if ally_mult != 1.0:
                     amount = int(amount * ally_mult)
                     season_note = f"{season_note} · {ally_note}" if season_note else ally_note

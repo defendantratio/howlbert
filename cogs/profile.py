@@ -1,4 +1,3 @@
-import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -91,7 +90,7 @@ class Profile(commands.Cog):
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
     @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0-120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
-    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=name, value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
+    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
     async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
         is_admin = is_howlbert_admin(interaction)
@@ -168,15 +167,6 @@ class Profile(commands.Cog):
         embed.add_field(name='Next Steps', value='Try `/profile` for your sheet, `/rpg action:roll` for skill checks, `/bones action:hunt` or `action:work` for bones.\nNew here? **`/help topic:getting-started`** walks through courtship, pups, and the den.', inline=False)
         if invite_note:
             embed.add_field(name='Invite Reward', value=invite_note, inline=False)
-        role_note = None
-        if interaction.guild and isinstance(interaction.user, discord.Member):
-            from engine.pack_roles import sync_member_pack_role
-            try:
-                role_note = await sync_member_pack_role(interaction.guild, interaction.user, pack)
-            except Exception:
-                pass
-        if role_note:
-            embed.add_field(name='Pack Role', value=role_note, inline=False)
         total = db.count_user_wolves(interaction.user.id)
         slots = db.count_slot_wolves(interaction.user.id)
         born = db.count_born_pups(interaction.user.id)
@@ -302,14 +292,17 @@ class Profile(commands.Cog):
             embed = howlbert_embed('No Change', f'You already walk as **{_pack_display(pack)}**.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        if current not in UNAFFILIATED_KEYS and pack not in UNAFFILIATED_KEYS:
+        charge_bones = current not in UNAFFILIATED_KEYS and pack not in UNAFFILIATED_KEYS
+        if charge_bones:
             if user['bones'] < SETFACTION_CHANGE_COST:
                 embed = howlbert_embed('Not Enough Bones', f'Switching Great Packs costs {format_bones(SETFACTION_CHANGE_COST)}.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             db.deduct_bones(interaction.user.id, SETFACTION_CHANGE_COST)
-        err = db.assign_pack_affiliation(interaction.user.id, pack)
+        err = db.assign_pack_affiliation(interaction.user.id, pack, guild_id=interaction.guild.id if interaction.guild else None)
         if err:
+            if charge_bones:
+                db.add_bones(interaction.user.id, SETFACTION_CHANGE_COST)
             embed = howlbert_embed('Cannot Change Pack', err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
@@ -321,14 +314,6 @@ class Profile(commands.Cog):
             embed.add_field(name='Motto', value=f"_{faction['motto']}_", inline=False)
         if current not in UNAFFILIATED_KEYS and pack not in UNAFFILIATED_KEYS:
             embed.set_footer(text=f'paid {format_bones(SETFACTION_CHANGE_COST)} to change great packs.')
-        if interaction.guild and isinstance(interaction.user, discord.Member):
-            from engine.pack_roles import sync_member_pack_role
-            try:
-                role_note = await sync_member_pack_role(interaction.guild, interaction.user, pack)
-            except Exception:
-                role_note = None
-            if role_note:
-                embed.add_field(name='Pack Role', value=role_note, inline=False)
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='rename', description="change your wolf's name.")
@@ -361,46 +346,78 @@ class Profile(commands.Cog):
         embed.add_field(name='Now', value=new_name, inline=True)
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='character', description="set your wolf's rp identity: pronouns, birthday, ref image.")
-    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", ref_image='direct image url for a reference image shown on your profile', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
-    @app_commands.choices(clear=[app_commands.Choice(name='pronouns', value='pronouns'), app_commands.Choice(name='birthday', value='birthday'), app_commands.Choice(name='ref image', value='ref_image_url')])
+    @app_commands.command(name='character', description="set your wolf's identity: pronouns, birthday, birth sex, sexuality, maw belief, combat size, or age.")
+    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", birth_sex='biological sex (affects conception checks)', sexuality='romantic/sexual attraction', maw_belief='faith in the maw', size='combat build size (auto = role/age default)', age_moons='age in moons, 0-120 (role and proficiencies re-sync to the new age)', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
+    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS], size=[app_commands.Choice(name='auto (role / age)', value='auto'), app_commands.Choice(name='small', value='small'), app_commands.Choice(name='medium', value='medium'), app_commands.Choice(name='large', value='large')], clear=[app_commands.Choice(name='pronouns', value='pronouns'), app_commands.Choice(name='birthday', value='birthday'), app_commands.Choice(name='birth sex', value='birth_sex'), app_commands.Choice(name='sexuality', value='sexuality'), app_commands.Choice(name='maw belief', value='maw_belief'), app_commands.Choice(name='combat size', value='size_class')])
     @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
-    async def character(self, interaction: discord.Interaction, pronouns: str | None=None, birthday: str | None=None, ref_image: str | None=None, clear: str | None=None, own_wolf: str | None=None):
+    async def character(self, interaction: discord.Interaction, pronouns: str | None=None, birthday: str | None=None, birth_sex: str | None=None, sexuality: str | None=None, maw_belief: str | None=None, size: str | None=None, age_moons: app_commands.Range[int, 0, 120] | None=None, clear: str | None=None, own_wolf: str | None=None):
         wolf = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else db.get_user(interaction.user.id)
         if not wolf:
             msg = 'No wolf with that name on your account.' if own_wolf else 'Use `/register` first.'
             await interaction.response.send_message(embed=howlbert_embed('No Wolf', msg, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if clear:
-            db.set_wolf_identity(wolf['id'], **{clear: None})
+            if clear in ('pronouns', 'birthday'):
+                db.set_wolf_identity(wolf['id'], **{clear: None})
+            else:
+                db.update_user(wolf['discord_id'], wolf_id=wolf['id'], **{clear: None})
             await interaction.response.send_message(embed=howlbert_embed(wolf['wolf_name'], f"Cleared **{clear.replace('_', ' ')}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
             return
-        fields: dict[str, str] = {}
-        if ref_image:
-            if not is_howlbert_admin(interaction):
-                await interaction.response.send_message(embed=howlbert_embed('Admins Only', '`ref_image` is admin-set only; ask a server admin to add it for your wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        updated_parts: list[str] = []
+        if pronouns or birthday:
+            fields: dict[str, str] = {}
+            if pronouns:
+                fields['pronouns'] = pronouns[:64]
+            if birthday:
+                fields['birthday'] = birthday[:48]
+            db.set_wolf_identity(wolf['id'], **fields)
+            updated_parts.extend(fields.keys())
+        if birth_sex:
+            db.update_user(wolf['discord_id'], wolf_id=wolf['id'], birth_sex=birth_sex)
+            updated_parts.append('birth sex')
+        if sexuality:
+            from engine.attraction import validate_set_sexuality
+            stored, err = validate_set_sexuality(wolf, sexuality)
+            if err:
+                await interaction.response.send_message(embed=howlbert_embed('Cannot Update', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            if not ref_image.lower().startswith(('http://', 'https://')):
-                await interaction.response.send_message(embed=howlbert_embed('Bad URL', '`ref_image` needs a direct http(s) image link.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            db.update_user(wolf['discord_id'], wolf_id=wolf['id'], sexuality=stored)
+            label = SEXUALITY_LABELS.get(sexuality, sexuality.title())
+            updated_parts.append(f'sexuality ({label})')
+        if maw_belief:
+            ok, err = db.set_maw_belief(wolf['discord_id'], maw_belief, wolf_id=wolf['id'])
+            if not ok:
+                await interaction.response.send_message(embed=howlbert_embed('Cannot Update', err or 'Invalid belief.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            fields['ref_image_url'] = ref_image
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(ref_image, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-                        if resp.status == 200:
-                            db.set_wolf_ref_image_cache(wolf['id'], await resp.read())
-            except Exception:
-                pass
-        if pronouns:
-            fields['pronouns'] = pronouns[:64]
-        if birthday:
-            fields['birthday'] = birthday[:48]
-        if not fields:
-            await interaction.response.send_message(embed=howlbert_embed('Nothing to Update', 'Set at least one of: pronouns, birthday, ref_image (or use `clear`).', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            updated_parts.append('maw belief')
+        if size:
+            ok, err = db.set_size_class(wolf['discord_id'], size, wolf_id=wolf['id'])
+            if not ok:
+                await interaction.response.send_message(embed=howlbert_embed('Cannot Update', err or 'Invalid size.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            updated_parts.append('combat size')
+        age_result = None
+        if age_moons is not None:
+            age_result = db.set_wolf_age_moons(wolf['id'], age_moons)
+            if not age_result:
+                await interaction.response.send_message(embed=howlbert_embed('Cannot Update', 'Could not update age.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            updated_parts.append('age')
+        if not updated_parts:
+            await interaction.response.send_message(embed=howlbert_embed('Nothing to Update', 'Set at least one field, or use `clear`. Ref image is admin-set via `/wolfadmin refimage`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        db.set_wolf_identity(wolf['id'], **fields)
-        updated = ', '.join((k.replace('_url', '').replace('_', ' ') for k in fields))
-        await interaction.response.send_message(embed=howlbert_embed(wolf['wolf_name'], f'Updated **{updated}**. See `/profile`.', color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
+        updated = ', '.join(updated_parts)
+        embed = howlbert_embed(wolf['wolf_name'], f'Updated **{updated}**. See `/profile`.', color=SUCCESS_COLOR)
+        if age_result:
+            from engine.attraction import is_pup_age
+            embed.add_field(name='Age', value=f"**{format_wolf_age(age_result['old_age'])}** → **{format_wolf_age(age_result['new_age'])}** ({stage_label(stage_for_age(age_result['new_age']))})", inline=False)
+            if age_result['new_role'] != age_result['old_role']:
+                embed.add_field(name='Role', value=f"{ROLE_LABELS.get(age_result['old_role'], age_result['old_role'])} → **{ROLE_LABELS.get(age_result['new_role'], age_result['new_role'])}**", inline=False)
+            for note in age_result['notes']:
+                embed.add_field(name='Milestone', value=note, inline=False)
+            if is_pup_age(age_result['new_age']):
+                embed.set_footer(text='pup age; sexuality set to too young / none.')
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='family', description="show a wolf's family tree / relationship web as a diagram.")
     @app_commands.describe(member='whose family to show (defaults to you)', own_wolf='one of your wolves (defaults to your active wolf)')
@@ -416,12 +433,12 @@ class Profile(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('No Wolf', 'No wolf found. Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         from engine.family_tree import family_tree_image_url
-        url, rel = family_tree_image_url(wolf)
+        url, rel = family_tree_image_url(wolf, viewer_discord_id=interaction.user.id)
         if not url:
             await interaction.response.send_message(embed=howlbert_embed(f"{wolf['wolf_name']}'s Family", 'No recorded parents, mate, or offspring yet. Bonds form through `/courtship`, `/pupcare`, and `/bonds`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed(f"{wolf['wolf_name']}'s Family Tree", color=SUCCESS_COLOR)
-        lineage = db.format_lineage_for_profile(wolf)
+        lineage = db.format_lineage_for_profile(wolf, viewer_discord_id=interaction.user.id)
         if lineage:
             embed.description = lineage
         wolf_avatar = wolf['avatar_url'] if 'avatar_url' in wolf.keys() else None
@@ -532,7 +549,7 @@ class Profile(commands.Cog):
             bonded = db.get_bonded_mate(user)
             if bonded:
                 embed.add_field(name='Bonded Mate', value=bonded['wolf_name'], inline=True)
-        lineage = db.format_lineage_for_profile(user)
+        lineage = db.format_lineage_for_profile(user, viewer_discord_id=interaction.user.id)
         if lineage:
             embed.add_field(name='Family', value=lineage, inline=False)
         from engine.bonds import format_bonds_embed_body
@@ -589,6 +606,13 @@ class Profile(commands.Cog):
             embed.add_field(name='Pack Trait', value=GREAT_PACKS[affiliation]['pack_trait'], inline=False)
         standing = int(user['standing'])
         embed.add_field(name='Standing', value=f'**{standing}**\n{standing_effect_text(standing)}', inline=False)
+        oath_breaks = db.oathbreaker_count(user)
+        if oath_breaks:
+            embed.add_field(
+                name='Oathbreaker',
+                value=f"**{oath_breaks}** treaty(s) personally broken; other dens remember `/pact action:forge` led by this wolf.",
+                inline=False,
+            )
         mood = int(user['mood']) if 'mood' in user.keys() else 75
         from config import MOOD_LOW_THRESHOLD
         from engine.hunger import format_hunger_line

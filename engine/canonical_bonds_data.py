@@ -122,11 +122,11 @@ CANONICAL_BONDS: list[dict] = [
         "note": "Rogue-born hunter she steadied into the pack.",
     },
     {
-        "a": "Churn",
+        "a": "Vulcan Stonehide",
         "b": "Aromis",
-        "type": "rivalry",
+        "type": "mentor",
         "strength": 56,
-        "note": "Hunter rivalry; deep water, boastfulness, and old grudges.",
+        "note": "Both scarred outsiders Silverrush took in; Vulcan looks out for him the way he couldn't for Zephyr.",
     },
     {
         "a": "Ripplepup",

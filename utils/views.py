@@ -275,6 +275,8 @@ def make_arrival_scene_view(
                 )
                 return
             add_long_term_injury(wolf_id, choice["key"])
+            from engine.wolf_journal import log_arrival
+            log_arrival(wolf_id, wolf_name, choice["key"])
             for item in view.children:
                 item.disabled = True
             embed = howlbert_embed(

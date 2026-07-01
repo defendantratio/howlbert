@@ -305,6 +305,36 @@ HUNTER_HUNTS_PER_SUNRISE = 10
 # Repeated field work: 2nd+ same activity tires wolves; untrained skills tire faster.
 ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD = 4
 
+# Auto-dormant: wolves inactive this many days skip vitals decay on rollover.
+AUTO_DORMANT_INACTIVE_DAYS = 7
+# Low mood streak: consecutive sunrises below threshold give a hunt penalty.
+LOW_MOOD_STREAK_THRESHOLD = 30
+LOW_MOOD_STREAK_HUNT_PENALTY_PCT = 10
+# Hunt thirst drain: chasing prey in summer/heatwave costs thirst.
+HUNT_SUMMER_THIRST_COST = 1
+HUNT_SUMMER_THIRST_WEATHER = frozenset({"heatwave"})
+# Pack size instability: packs below threshold drain unity each rollover.
+SMALL_PACK_ACTIVE_THRESHOLD = 3
+SMALL_PACK_UNITY_DRAIN = 1
+# Scent marks older than this many days are pruned from the DB on rollover.
+SCENT_MARK_PRUNE_DAYS = 10
+# Deep grief after bonded mate dies; sunrises before re-mate eligibility.
+MATE_GRIEF_SUNRISES = 7
+MATE_GRIEF_HUNT_PENALTY_PCT = 15
+# Weather-scaled rollover thirst decay.
+THIRST_ROLLOVER_HEATWAVE_EXTRA = 4
+THIRST_ROLLOVER_SNOW_REDUCTION = 4
+THIRST_ROLLOVER_SNOW_WEATHER = frozenset({"snow", "sleet", "hail", "storm", "thunderstorm"})
+THIRST_ROLLOVER_HEATWAVE_WEATHER = frozenset({"heatwave"})
+# Hunger passive mood drain; chronic hunger compounds distress.
+HUNGER_LOW_THRESHOLD_MOOD_DRAIN = 30
+HUNGER_PASSIVE_MOOD_DRAIN = 2
+# Age-based physical stat drift: strength erodes, wisdom grows.
+ELDER_STAT_DRIFT_START_MOONS = 84
+ELDER_STAT_DRIFT_INTERVAL_MOONS = 12
+# Howl exposure: hostile packs heard the call; sniff border odds increase.
+HOWL_EXPOSED_BORDER_BONUS = 0.15
+
 # Pack collaborative hunt (/bones action:hunt collaborate:true)
 COLLAB_HUNT_MIN_WOLVES = 2
 COLLAB_HUNT_MAX_WOLVES = 4
@@ -715,6 +745,11 @@ CROSS_PACK_STEAL_BONES = (12, 40)
 CROSS_PACK_STEAL_CATCH_CHANCE = 0.40
 CROSS_PACK_STEAL_STANDING = 2
 CROSS_PACK_STEAL_CAUGHT_STANDING = -4
+INDIVIDUAL_STEAL_PCT = (0.10, 0.25)
+INDIVIDUAL_STEAL_CATCH_CHANCE = 0.45
+INDIVIDUAL_STEAL_CAUGHT_STANDING = -4
+INDIVIDUAL_STEAL_STANDING = 1
+INDIVIDUAL_STEAL_RIVALRY_GAIN = 8
 RAID_ALERT_SUNRISES = 5
 RAID_PACK_MODIFIERS = {
     "greyspire": {"catch_bonus": 0.05, "steal_mult": 0.85},
@@ -728,6 +763,28 @@ RAID_SURVEY_DC_VICTIM = -2
 RAID_SURVEY_VICTIM_BONE_BONUS = 5
 RAID_AUDIT_RECOVER_PCT = 0.40
 RAID_ACCUSE_RECOVER_PCT = 0.30
+# Trial by combat: whoever loses pays, win or lose as the accuser — makes a
+# false accusation as risky as the thing it's accusing someone of.
+TRIAL_BY_COMBAT_LOSER_STANDING = -4
+# Crowd-sourced denouncement: one wolf's say-so isn't a verdict; the den has
+# to actually agree.
+DENOUNCEMENT_SECONDS_REQUIRED = 3
+DENOUNCEMENT_STANDING_PENALTY = -3
+# Hostage diplomacy: sending a wolf to live with a treaty partner as a
+# good-faith guarantee. A small trust bonus for offering one, and a much
+# bigger relations penalty if the host pack's own treaty later breaks while
+# someone else's wolf is standing in their den.
+HOSTAGE_TREATY_STANDING_BONUS = 1
+HOSTAGE_BETRAYAL_STANDING_PENALTY = -4
+# Espionage: a planted spy reporting back risks discovery every time, not
+# just once — real ongoing risk for real ongoing intel.
+SPY_REPORT_DISCOVERY_DC = 14
+SPY_CAUGHT_STANDING = -4
+SPY_CAUGHT_RELATION_PENALTY = -3
+# Active political matchmaking: an alpha/diplomat formally sanctioning an
+# existing bonded pair across pack lines as a deliberate alliance act — a
+# one-time upfront bump on top of the passive marriage-alliance forge bonus.
+POLITICAL_MATCH_STANDING_BONUS = 2
 DEN_RHYTHM_MIN_WOLVES = 2
 DEN_RHYTHM_ACTIVITY_RATIO = 0.5
 DEN_RHYTHM_UNITY_GAIN = 1
@@ -794,6 +851,14 @@ MEDIC_MATE_CAUGHT_TEXT = [
     "Someone reports celibacy broken. The den will not trust your hands on their wounds.",
     "A pup sees what they should not. Word spreads: the pack's healer mated.",
     "The Alpha's nose finds lust where only herbs should be. This is exile talk.",
+]
+MENTOR_MATE_CATCH_CHANCE = 0.45
+MENTOR_MATE_CAUGHT_STANDING = -3
+MENTOR_MATE_CAUGHT_TEXT = [
+    "Word spreads fast: a mentor's hands shouldn't wander to the wolf they're shaping.",
+    "An apprentice elsewhere in the den lets it slip; the pack hears whose teacher this was.",
+    "The den has a long memory for power taken advantage of. This will be remembered.",
+    "Someone saw the lesson turn to something else. The Alpha will want a word.",
 ]
 MEDIC_PUP_SCANDAL_STANDING = -5
 RESTRICTED_HERB_MISUSE_STANDING = -4
@@ -943,6 +1008,10 @@ CAT_PACT_HUNTING_PERSONAL = 10
 CAT_PACT_HUNTING_DC = 12
 CAT_PACT_DIPLOMAT_NEGOTIATE_BONUS = 2
 CAT_PACT_FORGE_FAIL_COOLDOWN_DAYS = 3
+# A wolf's own broken oaths follow them personally into future negotiations,
+# on top of whatever cooldown/relation penalty their den already eats.
+OATHBREAKER_FORGE_DC_PER_BREAK = 1
+OATHBREAKER_FORGE_DC_CAP = 5
 CAT_PACT_GIFT_TRIBUTE = 15
 CAT_PACT_GIFT_TRUST = 8
 CAT_PACT_DUP_TRUST_PER_ITEM = 2
@@ -1012,11 +1081,39 @@ RIVERSHROUD_PLOT_HOWL_UNITY = 1  # phases 9–11, stacks with Ash Naming unity
 FINNPELT_PLOT_SNIFF_MOOD = 2
 FINNPELT_PLOT_SNIFF_STANDING = 1
 FINNPELT_PLOT_PATROL_STANDING = 1
+# MaggotBrain hunter plot (Book One — Mistmoor rot)
+MAGGOTBRAIN_PLOT_SNIFF_MOOD = 2
+MAGGOTBRAIN_PLOT_SNIFF_STANDING = 1
 # Universal plot witness (once per sunrise, any wolf)
 PLOT_WITNESS_MOOD = 1
+# Generic "every canon wolf is part of the plot" rollover nudge (Book One, any phase)
+NAMED_WOLF_BLINK_MOOD = 2
 PLOT_GENERIC_HEALER_STANDING = 1
 PLOT_GENERIC_HEALER_MOOD = 1
 FISHING_BONES = (10, 22)
+# Brackenpelt hunter plot (Book One — Thistlehide border)
+BRACKENPELT_PLOT_PATROL_STANDING = 1
+# Icefang Stoneguard plot (Book One — Greyspire border)
+ICEFANG_PLOT_PATROL_STANDING = 1
+# Hemlock healer plot (Book One — Greyspire den)
+HEMLOCK_PLOT_TREAT_HEAL_BONUS = 1
+# Ripple healer plot (Book One — Silverrush den)
+RIPPLE_PLOT_TREAT_HEAL_BONUS = 1
+# Sypha healer plot (Book One — Thistlehide den)
+SYPHA_PLOT_TREAT_HEAL_BONUS = 1
+# Murkvein healer plot (Book One — Mistmoor den)
+MURKVEIN_PLOT_TREAT_HEAL_BONUS = 1
+# Aromis fishing plot (Book One — Silverrush, Warm Below)
+AROMIS_PLOT_FISHING_MULT = 1.15
+# Lucid tracking plot (Book One — Thistlehide border)
+LUCID_PLOT_TRACK_MULT = 1.10
+# Eltanin hunting plot (Book One — Thistlehide border)
+ELTANIN_PLOT_HUNT_MULT = 1.10
+# Cloverfern scavenge plot (Book One — Thistlehide den)
+CLOVERFERN_PLOT_SCAVENGE_MULT = 1.10
+# Kanami and Skye border-sense plot (Book One — Thistlehide paranoia)
+KANAMI_PLOT_BORDER_MULT = 0.75
+SKYE_PLOT_BORDER_MULT = 0.75
 
 # Pack warfare
 WAR_DURATION_DAYS = 2
@@ -1036,6 +1133,10 @@ DEN_UPGRADE_WEATHER_MITIGATION_PCT = 3  # per level, off the magnitude of a nega
 # Personal standing within the pack. At −5 the wolf is cast out as a loner.
 WOLF_STANDING_MIN = -10
 WOLF_STANDING_KICK_THRESHOLD = -5
+# A cast-out wolf can't simply pay the setfaction fee and walk back into the
+# same den; exile has to mean something. The alpha of that pack can lift it
+# early with `/pack pardon`.
+EXILE_REJOIN_COOLDOWN_DAYS = 30
 # A wolf this respected/feared in their own den is known beyond it too;
 # crossing paths with one on friendly ground is worth a little extra to
 # the wolf who isn't (yet) as notorious.
@@ -1088,6 +1189,7 @@ RP_LOCATIONS = (
     "The Sinkholes",
     "The Half-Sunken Chapel",
     "The Collapsed Bridge",
+    "The Brackish Reach",  # MaggotBrain's stretch of stagnant water and cypress
     # Thistlehide (Forest) — "the Maw's fur"
     "Thistlehide Den",
     "The Whisper Tree",

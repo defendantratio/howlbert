@@ -367,6 +367,9 @@ def check_adjustments(
     if shedding and cold_weather and "attr_con" in attr_keys:
         mod -= 1
         notes.append("Mid-shed; coat isn't fully grown in yet (cold hits harder)")
+    if shedding and skill_key == "stealth":
+        mod -= 1
+        notes.append("Mid-shed; loose fur clings to everything (−1 Stealth)")
     if "chronic_pain" in entries and first_physical_today:
         from engine.herb_buffs import pain_relief_active
 

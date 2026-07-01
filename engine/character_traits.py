@@ -1225,52 +1225,51 @@ CURLGRIP_CHARACTER_TRAITS = {
 }
 
 
-CHURN_CHARACTER_TRAITS = {
+VULCAN_CHARACTER_TRAITS = {
     "bonuses": [
         {
-            "name": "Swimming",
+            "name": "Expert Tracker",
             "modifier": 4,
-            "attrs": ["attr_dex"],
+            "skills": ["tracking"],
+            "attrs": ["attr_wis"],
+            "blurb": "Years as a pack hunter and then a nomad honed his nose and patience to a fine edge.",
+        },
+        {
+            "name": "Survivalist",
+            "modifier": 3,
             "skills": ["survival"],
-            "packs": ["silverrush"],
-            "blurb": "Powerful and fast; can fight the strongest currents.",
-        },
-        {
-            "name": "Hunting",
-            "modifier": 3,
-            "skills": ["hunting"],
-            "attrs": ["attr_str"],
-            "blurb": "Specializes in large fish; salmon, pike, sturgeon.",
-        },
-        {
-            "name": "Endurance",
-            "modifier": 3,
             "attrs": ["attr_con"],
-            "skills": ["survival"],
-            "blurb": "Can hold his breath for a surprising length of time.",
+            "blurb": "Lived alone in the wild for years with nothing but his own resourcefulness.",
+        },
+        {
+            "name": "Hardened Fighter",
+            "modifier": 2,
+            "attrs": ["attr_str"],
+            "combat": True,
+            "blurb": "A powerful bite, forged the hard way; he survived the attack that killed his brother.",
         },
     ],
     "weaknesses": [
         {
-            "name": "Afraid of Deep Water",
-            "modifier": -3,
-            "attrs": ["attr_wis"],
-            "exclude_skills": ["survival", "hunting"],
-            "blurb": "Hides it well; but if he panics, he could drown.",
-        },
-        {
-            "name": "Quiet",
+            "name": "Guarded",
             "modifier": -3,
             "skills": ["persuasion", "intimidation"],
             "attrs": ["attr_cha"],
-            "blurb": "Other wolves forget he exists; he has no allies.",
+            "blurb": "Trust issues and a nomad's isolation; he keeps almost everyone at arm's length.",
         },
         {
-            "name": "Competitive",
+            "name": "Overprotective",
+            "modifier": -2,
+            "attrs": ["attr_dex"],
+            "combat": True,
+            "blurb": "Puts himself between danger and whoever he's protecting; moderate defense for himself, at best.",
+        },
+        {
+            "name": "Haunted by the Past",
             "modifier": -2,
             "attrs": ["attr_wis"],
-            "exclude_skills": ["hunting", "survival"],
-            "blurb": "Might take unnecessary risks to beat Aromis.",
+            "exclude_skills": ["tracking", "survival"],
+            "blurb": "Zephyr's death and the loss of his pack surface in nightmares and unguarded moments.",
         },
     ],
 }
@@ -2211,53 +2210,51 @@ SLUDGE_CHARACTER_TRAITS = {
 }
 
 
-GRISTLE_CHARACTER_TRAITS = {
+MAGGOTBRAIN_CHARACTER_TRAITS = {
     "bonuses": [
         {
-            "name": "Hunting",
-            "modifier": 3,
-            "skills": ["hunting"],
-            "attrs": ["attr_str"],
-            "packs": ["mistmoor"],
-            "blurb": "Brutal and direct; takes down prey twice his size by refusing to let go.",
-        },
-        {
-            "name": "Intimidation",
-            "modifier": 2,
-            "skills": ["intimidation"],
-            "attrs": ["attr_cha"],
-            "blurb": "Scars and stench make smaller prey freeze in fear.",
-        },
-        {
-            "name": "Endurance",
+            "name": "Excellent Smeller",
             "modifier": 4,
-            "skills": ["survival"],
-            "attrs": ["attr_con"],
-            "blurb": "Can run a quarter-moon on half a vole; refuses to quit.",
+            "skills": ["tracking"],
+            "attrs": ["attr_int"],
+            "packs": ["mistmoor"],
+            "blurb": "Reads rot and prey on the wind from a swamp away; the rot tells her what she's tracking.",
+        },
+        {
+            "name": "Stalking & Traps",
+            "modifier": 3,
+            "skills": ["stealth", "hunting"],
+            "attrs": ["attr_dex"],
+            "blurb": "Lays bone-splinter snares and waits motionless in the muck for hours.",
+        },
+        {
+            "name": "Speedy",
+            "modifier": 2,
+            "attrs": ["attr_dex"],
+            "blurb": "Light enough to skim cracking mud crust that swallows heavier wolves.",
         },
     ],
     "weaknesses": [
         {
-            "name": "Loud",
-            "modifier": -2,
-            "attrs": ["attr_dex"],
-            "skills": ["stealth", "hunting"],
-            "hunt_mult": 0.85,
-            "blurb": "Scares prey away; other hunters hate hunting with him.",
-        },
-        {
-            "name": "Missing Claws",
-            "modifier": -2,
-            "attrs": ["attr_dex"],
-            "exclude_skills": ["hunting", "intimidation"],
-            "blurb": "Reduced grip on slippery banks; sometimes loses footing.",
-        },
-        {
-            "name": "Ashamed of His Past",
+            "name": "Tunnel-Vision Fixation",
             "modifier": -3,
-            "skills": ["persuasion", "intimidation"],
-            "attrs": ["attr_cha"],
-            "blurb": "Flies into rage if anyone mentions Greyspire.",
+            "attrs": ["attr_dex", "attr_con"],
+            "combat": True,
+            "blurb": "Once she's fixed on a skull or bone, a second attacker can take her from behind unchallenged.",
+        },
+        {
+            "name": "Sensory Overload",
+            "modifier": -3,
+            "attrs": ["attr_dex", "attr_con"],
+            "combat": True,
+            "blurb": "Loud noise, fire, or sudden light shatters her focus into a screaming, undefended panic.",
+        },
+        {
+            "name": "Fragile Frame",
+            "modifier": -3,
+            "attrs": ["attr_str", "attr_con"],
+            "combat": True,
+            "blurb": "80 pounds with no muscle to speak of; pinned, she has nothing to overpower a grip with.",
         },
     ],
 }
@@ -3854,6 +3851,28 @@ def _trait_blurb_for_display(user, trait: dict) -> str:
     return adapt_text_for_user(blurb, user)
 
 
+def _trait_skill_label(trait: dict) -> str:
+    """Compact skill/scope label for trait display, e.g. 'Tracking · Wisdom'."""
+    from rpg_rules import SKILLS
+
+    parts: list[str] = []
+    if trait.get("combat"):
+        parts.append("combat")
+    if trait.get("skills"):
+        for sk in trait["skills"]:
+            label = SKILLS.get(sk, (None, sk.title()))[1]
+            if label not in parts:
+                parts.append(label)
+    if not parts and trait.get("attrs"):
+        attr_names = {"attr_str": "Strength", "attr_dex": "Dexterity", "attr_con": "Survival",
+                      "attr_int": "Intelligence", "attr_cha": "Charisma", "attr_wis": "Wisdom"}
+        for a in trait["attrs"][:1]:
+            label = attr_names.get(a, a.replace("attr_", "").title())
+            if label not in parts:
+                parts.append(label)
+    return " · ".join(parts) if parts else ""
+
+
 def format_traits_for_profile(user) -> str | None:
     traits = _traits_for_user(user)
     if not traits:
@@ -3862,8 +3881,10 @@ def format_traits_for_profile(user) -> str | None:
     for trait in traits.get("bonuses", []):
         mod = int(trait.get("modifier", 0))
         sign = f"+{mod}" if mod >= 0 else str(mod)
+        skill_label = _trait_skill_label(trait)
         blurb = _trait_blurb_for_display(user, trait)
-        line = f"**{trait['name']}** ({sign})"
+        modifier_str = f"{sign} {skill_label}" if skill_label else sign
+        line = f"**{trait['name']}** ({modifier_str})"
         if trait.get("earned"):
             line += " _(earned)_"
         if blurb:
@@ -3872,8 +3893,10 @@ def format_traits_for_profile(user) -> str | None:
     for trait in traits.get("weaknesses", []):
         mod = int(trait.get("modifier", 0))
         sign = f"+{mod}" if mod >= 0 else str(mod)
+        skill_label = _trait_skill_label(trait)
         blurb = _trait_blurb_for_display(user, trait)
-        line = f"**{trait['name']}** ({sign})"
+        modifier_str = f"{sign} {skill_label}" if skill_label else sign
+        line = f"**{trait['name']}** ({modifier_str})"
         if trait.get("earned"):
             line += " _(earned)_"
         if blurb:
@@ -3908,7 +3931,7 @@ CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
     "Riptide": RIPTIDE_CHARACTER_TRAITS,
     "Ebb": EBB_CHARACTER_TRAITS,
     "Curlgrip": CURLGRIP_CHARACTER_TRAITS,
-    "Churn": CHURN_CHARACTER_TRAITS,
+    "Vulcan Stonehide": VULCAN_CHARACTER_TRAITS,
     "Aromis": AROMIS_CHARACTER_TRAITS,
     "Ripple": RIPPLE_CHARACTER_TRAITS,
     "Rift": RIFT_CHARACTER_TRAITS,
@@ -3926,7 +3949,7 @@ CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
     "Soot": SOOT_CHARACTER_TRAITS,
     "Rotteddust": ROTTEDDUST_CHARACTER_TRAITS,
     "Sludge": SLUDGE_CHARACTER_TRAITS,
-    "Gristle": GRISTLE_CHARACTER_TRAITS,
+    "MaggotBrain": MAGGOTBRAIN_CHARACTER_TRAITS,
     "Croaker": CROAKER_CHARACTER_TRAITS,
     "Gasp": GASP_CHARACTER_TRAITS,
     "Yarrow": YARROW_CHARACTER_TRAITS,
@@ -3965,6 +3988,7 @@ CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Skye": {"wolf_role": "advisor"},
     "RiverShroud": {"wolf_role": "alpha"},
     "Finnpelt": {"wolf_role": "hunter"},
+    "MaggotBrain": {"wolf_role": "hunter", "size_class": "small", "maw_belief": "zealot"},
     "Firepaw": {"wolf_role": "medic_apprentice"},
     "Soot": {"wolf_role": "medic", "maw_belief": "orthodox"},
 }

@@ -9,6 +9,7 @@ HUNTER_ROLE = "hunter"
 FORAGER_ROLE = "forager"
 MEDIC_ROLE = "medic"
 SCOUT_ROLE = "scout"
+GUARD_ROLE = "guard"
 
 HERB_HEAL_DAILY_LIMIT = 3
 HERB_TREAT_DAILY_LIMIT = 3
@@ -80,6 +81,10 @@ def is_medic(user) -> bool:
 
 def is_scout(user) -> bool:
     return has_any_role(user, SCOUT_ROLE, "scout_apprentice")
+
+
+def is_guard(user) -> bool:
+    return has_any_role(user, GUARD_ROLE)
 
 
 def rescout_uses_today(user, day: int) -> int:

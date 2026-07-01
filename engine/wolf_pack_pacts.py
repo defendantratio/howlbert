@@ -57,6 +57,9 @@ WOLF_PACT_SPECS = {
     },
 }
 
+WOLF_PACT_MARRIAGE_STANDING_BONUS = 1
+WOLF_PACT_MARRIAGE_DAYS_BONUS = 6
+
 WOLF_FORGE_SUCCESS = (
     "**{pack}** answers with lowered hackles; the treaty is carved in scent and law.",
     "parley holds. **{pack}**'s scouts read peace on the border wind.",
@@ -181,6 +184,18 @@ def forge_wolf_pack_pact(
 
     dc += plot_cat_pact_forge_dc_bonus(guild_id)
 
+    from config import OATHBREAKER_FORGE_DC_CAP, OATHBREAKER_FORGE_DC_PER_BREAK
+
+    oath_penalty = min(
+        OATHBREAKER_FORGE_DC_CAP, db.oathbreaker_count(user) * OATHBREAKER_FORGE_DC_PER_BREAK
+    )
+    dc += oath_penalty
+    oath_note = (
+        f"\n_**{user['wolf_name']}**'s broken oaths follow them into this parley; **+{oath_penalty} dc**._"
+        if oath_penalty
+        else ""
+    )
+
     result = _negotiate_check(user, dc, game_day=day)
     if not result["success"]:
         db.set_wolf_pact_fail_day(pack["id"], other["id"], day)
@@ -189,7 +204,7 @@ def forge_wolf_pack_pact(
             if (treasury_cost or personal_cost)
             else ""
         )
-        return False, tribute_note + format_roll_result(result)
+        return False, tribute_note + format_roll_result(result) + oath_note
 
     expires = day + spec["days"]
     db.upsert_wolf_treaty(
@@ -207,10 +222,36 @@ def forge_wolf_pack_pact(
     target_standing = max(spec["standing_floor"], current + spec["standing_gain"])
     if result["outcome"] == "critical_success":
         target_standing = min(10, target_standing + 1)
+
+    marriage_tie = db.has_cross_pack_bonded_mate(int(pack["id"]), int(other["id"]))
+    marriage_note = ""
+    extra_days = 0
+    if marriage_tie:
+        target_standing = min(10, target_standing + WOLF_PACT_MARRIAGE_STANDING_BONUS)
+        extra_days = WOLF_PACT_MARRIAGE_DAYS_BONUS
+        marriage_note = (
+            "\n\n_a bonded pair already ties these two dens together; the marriage "
+            f"steadies the parley (+{WOLF_PACT_MARRIAGE_STANDING_BONUS} standing, "
+            f"+{WOLF_PACT_MARRIAGE_DAYS_BONUS} sunrises)._"
+        )
+
     delta = target_standing - current
     if delta:
         db.adjust_pack_relation(guild_id, pack["id"], other["id"], delta)
     new_standing = db.get_pack_relation(guild_id, pack["id"], other["id"])
+
+    if extra_days:
+        expires += extra_days
+        db.upsert_wolf_treaty(
+            guild_id,
+            pack["id"],
+            other["id"],
+            pact_type=pact_type,
+            terms_note=terms_note or "",
+            forged_day=day,
+            expires_day=expires,
+            forged_by_discord_id=int(user["discord_id"]),
+        )
 
     if spec["unity"]:
         db.adjust_pack_unity(pack["id"], spec["unity"])
@@ -218,9 +259,9 @@ def forge_wolf_pack_pact(
     flavor = random.choice(WOLF_FORGE_SUCCESS).format(pack=other_name)
     terms = f"\n\n_terms: {terms_note}_" if terms_note else ""
     return True, (
-        f"{format_roll_result(result)}\n\n{flavor}\n\n"
-        f"**{PACT_TYPE_LABELS[pact_type]}** with **{other_name}** for **{spec['days']}** sunrises."
-        f"{terms}\n\n{relation_effect_text(new_standing)}"
+        f"{format_roll_result(result)}{oath_note}\n\n{flavor}\n\n"
+        f"**{PACT_TYPE_LABELS[pact_type]}** with **{other_name}** for **{spec['days'] + extra_days}** sunrises."
+        f"{terms}{marriage_note}\n\n{relation_effect_text(new_standing)}"
     )
 
 
@@ -274,11 +315,185 @@ def break_wolf_pack_pact(
 
     db.break_wolf_treaty(pack["id"], other["id"], day=day, reason=reason)
     db.adjust_pack_relation(guild_id, pack["id"], other["id"], -2)
+
+    hostage_note = ""
+    hostages = db.get_hostages_at_pack_from(int(other["id"]), int(pack["id"]))
+    if hostages:
+        from config import HOSTAGE_BETRAYAL_STANDING_PENALTY
+        new_rel = db.adjust_pack_relation(guild_id, pack["id"], other["id"], HOSTAGE_BETRAYAL_STANDING_PENALTY)
+        names = ", ".join(f"**{h['wolf_name']}**" for h in hostages)
+        hostage_note = (
+            f"\n\n_{names} still live in {GREAT_PACKS.get(other['key'], {}).get('name', other['name'])}'s den as "
+            f"hostages — breaking faith with them standing there costs extra: standing "
+            f"**{HOSTAGE_BETRAYAL_STANDING_PENALTY}** more (now **{new_rel}/10**)._"
+        )
+
     standing = db.get_pack_relation(guild_id, pack["id"], other["id"])
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+    personal_count = db.mark_oathbreaker(int(user["id"]))
     return True, (
         f"**{pack['name']}** breaks the treaty with **{other_name}**.\n"
-        f"_{reason}_\n\nstanding **−2** (now **{standing}/10**)."
+        f"_{reason}_\n\nstanding **−2** (now **{standing}/10**).{hostage_note}\n"
+        f"_**{user['wolf_name']}** carries this oath broken now too "
+        f"(**{personal_count}** personally); future negotiations they lead start with a wary den._"
+    )
+
+
+def send_hostage(
+    user, pack, *, guild_id: int, target_pack: str, hostage, day: int
+) -> tuple[bool, str]:
+    """Send `hostage` (one of pack's own wolves) to live with target_pack as a good-faith guarantee."""
+    if not can_forge_cat_pact(user, pack):
+        return False, "only the **alpha** or a **diplomat** can offer a hostage."
+
+    other, err = resolve_wolf_pack_target(target_pack)
+    if err:
+        return False, err
+    if int(other["id"]) == int(pack["id"]):
+        return False, "your own den doesn't need a hostage in itself."
+
+    treaty = db.get_wolf_treaty(pack["id"], other["id"])
+    if not treaty or treaty["status"] != "active":
+        other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+        return False, f"no active treaty with **{other_name}**; forge one first."
+
+    if hostage["hostage_at_pack_id"] if "hostage_at_pack_id" in hostage.keys() else None:
+        return False, f"**{hostage['wolf_name']}** is already hosted elsewhere; recall them first."
+    if int(hostage["pack_id"] or 0) != int(pack["id"]):
+        return False, f"**{hostage['wolf_name']}** isn't a member of **{pack['name']}**."
+
+    db.set_hostage(int(hostage["id"]), int(other["id"]))
+    from config import HOSTAGE_TREATY_STANDING_BONUS
+
+    new_rel = db.adjust_pack_relation(guild_id, pack["id"], other["id"], HOSTAGE_TREATY_STANDING_BONUS)
+    other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+    return True, (
+        f"**{hostage['wolf_name']}** goes to live in **{other_name}**'s den as a good-faith hostage.\n"
+        f"standing **+{HOSTAGE_TREATY_STANDING_BONUS}** (now **{new_rel}/10**). "
+        f"if **{pack['name']}** breaks faith with **{other_name}** while {hostage['wolf_name']} is there, it costs extra."
+    )
+
+
+def recall_hostage(user, pack, *, hostage) -> tuple[bool, str]:
+    if not can_forge_cat_pact(user, pack):
+        return False, "only the **alpha** or a **diplomat** can recall a hostage."
+    host_pack_id = hostage["hostage_at_pack_id"] if "hostage_at_pack_id" in hostage.keys() else None
+    if not host_pack_id:
+        return False, f"**{hostage['wolf_name']}** isn't hosted anywhere."
+    db.clear_hostage(int(hostage["id"]))
+    host = db.get_pack(int(host_pack_id))
+    host_name = host["name"] if host else "their host"
+    return True, f"**{hostage['wolf_name']}** comes home from **{host_name}**'s den."
+
+
+def infiltrate_pack(user, pack, *, target_pack: str, spy, day: int) -> tuple[bool, str]:
+    """Embed one of pack's own wolves in a rival den under a false claim of defection."""
+    if not can_forge_cat_pact(user, pack):
+        return False, "only the **alpha** or a **diplomat** can plant a spy."
+
+    other, err = resolve_wolf_pack_target(target_pack)
+    if err:
+        return False, err
+    if int(other["id"]) == int(pack["id"]):
+        return False, "you can't spy on your own den."
+    if int(spy["pack_id"] or 0) != int(pack["id"]):
+        return False, f"**{spy['wolf_name']}** isn't a member of **{pack['name']}**."
+    if spy["spy_for_pack_id"] if "spy_for_pack_id" in spy.keys() else None:
+        return False, f"**{spy['wolf_name']}** is already embedded elsewhere."
+    if spy["hostage_at_pack_id"] if "hostage_at_pack_id" in spy.keys() else None:
+        return False, f"**{spy['wolf_name']}** is currently a hostage elsewhere; recall them first."
+
+    other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+    db.plant_spy(int(spy["id"]), host_pack_id=int(other["id"]), host_great_pack=other["key"], home_pack_id=int(pack["id"]))
+    return True, (
+        f"**{spy['wolf_name']}** slips into **{other_name}**'s den, posing as a defector. "
+        f"use `/pact action:report` (as {spy['wolf_name']}) to send word home — every report risks exposure."
+    )
+
+
+def spy_report(spy, *, guild_id: int, day: int) -> tuple[bool, str]:
+    home_pack_id = spy["spy_for_pack_id"] if "spy_for_pack_id" in spy.keys() else None
+    if not home_pack_id:
+        return False, "you aren't embedded in a rival den."
+    last = int(spy["last_spy_report_day"]) if "last_spy_report_day" in spy.keys() else 0
+    if last >= day:
+        return False, "already sent word home this sunrise."
+
+    host_pack_id = int(spy["pack_id"])
+    host = db.get_pack(host_pack_id)
+    home = db.get_pack(int(home_pack_id))
+    if not host or not home:
+        return False, "den record missing; the spy thread is broken."
+
+    db.update_user_by_id(int(spy["id"]), last_spy_report_day=day)
+
+    from engine.dice import roll_d20
+    from engine.character import attr_modifier, parse_proficiencies
+    from config import SPY_CAUGHT_RELATION_PENALTY, SPY_CAUGHT_STANDING, SPY_REPORT_DISCOVERY_DC
+
+    profs = parse_proficiencies(spy["skill_proficiencies"])
+    die = roll_d20()
+    mod = attr_modifier(int(spy["attr_dex"]))
+    bonus = 2 if "stealth" in profs else 0
+    total = die + mod + bonus
+
+    if total < SPY_REPORT_DISCOVERY_DC:
+        db.unmask_spy(int(spy["id"]))
+        db.adjust_wolf_standing_by_id(int(spy["id"]), SPY_CAUGHT_STANDING)
+        new_rel = db.adjust_pack_relation(guild_id, int(home_pack_id), host_pack_id, SPY_CAUGHT_RELATION_PENALTY)
+        return False, (
+            f"**1d20** ({die}) {mod:+d} {f'+{bonus} stealth' if bonus else ''} = **{total}** vs dc **{SPY_REPORT_DISCOVERY_DC}**\n\n"
+            f"**{spy['wolf_name']}** is caught feeding word back to **{home['name']}**; exposed and cast out of "
+            f"**{host['name']}**'s den. standing **{SPY_CAUGHT_STANDING}**; pack relation **{SPY_CAUGHT_RELATION_PENALTY}** "
+            f"(now **{new_rel}/10**)."
+        )
+
+    return True, (
+        f"**1d20** ({die}) {mod:+d} {f'+{bonus} stealth' if bonus else ''} = **{total}** vs dc **{SPY_REPORT_DISCOVERY_DC}**\n\n"
+        f"**{spy['wolf_name']}** slips word home from inside **{host['name']}**'s den:\n"
+        f"treasury **{int(host['treasury'])}** bones · tax **{host['tax_rate']}%** · unity **{host['pack_unity']}**."
+    )
+
+
+def sanction_political_match(user, pack, *, guild_id: int, own_wolf, day: int) -> tuple[bool, str]:
+    """
+    Formally recognize an existing cross-pack bonded pair as a deliberate
+    political alliance — the active counterpart to the passive marriage
+    bonus baked into forge_wolf_pack_pact. Requires the two wolves already
+    chose each other (no third-party-arranged consent flow); the alpha is
+    just the one who makes it official den policy.
+    """
+    if not can_forge_cat_pact(user, pack):
+        return False, "only the **alpha** or a **diplomat** can sanction a political match."
+
+    from engine.attraction import are_bonded_mates
+
+    if int(own_wolf["pack_id"] or 0) != int(pack["id"]):
+        return False, f"**{own_wolf['wolf_name']}** isn't a member of **{pack['name']}**."
+    mate_id = own_wolf["bonded_mate_id"] if "bonded_mate_id" in own_wolf.keys() else None
+    if not mate_id:
+        return False, f"**{own_wolf['wolf_name']}** has no bonded mate to sanction a match with."
+    mate = db.get_user_by_id(int(mate_id))
+    if not mate or not are_bonded_mates(own_wolf, mate):
+        return False, "that bond isn't mutual on file; both wolves need to be bonded mates."
+    mate_pack_id = mate["pack_id"]
+    if not mate_pack_id or int(mate_pack_id) == int(pack["id"]):
+        return False, f"**{own_wolf['wolf_name']}**'s mate must belong to a **different** great pack to sanction a political match."
+
+    if db.is_match_sanctioned(int(own_wolf["id"]), int(mate["id"])):
+        return False, "this match is already sanctioned; the alliance bonus already applied."
+
+    mate_pack = db.get_pack(int(mate_pack_id))
+    db.mark_match_sanctioned(int(own_wolf["id"]), int(mate["id"]))
+
+    from config import POLITICAL_MATCH_STANDING_BONUS
+
+    new_rel = db.adjust_pack_relation(guild_id, int(pack["id"]), int(mate_pack_id), POLITICAL_MATCH_STANDING_BONUS)
+    return True, (
+        f"**{pack['name']}** sanctions the bond between **{own_wolf['wolf_name']}** and **{mate['wolf_name']}** "
+        f"of **{mate_pack['name']}** as a deliberate alliance.\n"
+        f"pack relation **+{POLITICAL_MATCH_STANDING_BONUS}** (now **{new_rel}/10**); future treaties between these "
+        f"two dens carry the existing marriage-alliance bonus."
     )
 
 

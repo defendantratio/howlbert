@@ -248,6 +248,93 @@ def run_broken_canine_rite(
     }
 
 
+def run_vacancy_rite(
+    conn: sqlite3.Connection,
+    *,
+    pack_id: int,
+    excluded_discord_id: int | None,
+    triggered_day: int,
+) -> dict | None:
+    """
+    There are no heirs in this den; the Alpha's seat is earned through the
+    Rite of the Broken Canine, the same combat trial that decides a
+    challenge against a sitting Alpha whose standing collapses. When the
+    seat is simply empty (the old Alpha left, was exiled, or died) and more
+    than one eligible wolf remains, a silent auto-promote by raw standing
+    number isn't how this den picks a leader — so this runs the same
+    single-elimination bracket against the same eligibility rule
+    (`is_eligible_challenger`) and logs into the same `broken_canine_rites`
+    history as a standing-collapse challenge.
+    `excluded_discord_id` mirrors `_promote_pack_alpha`'s `exclude_id` (the
+    player account vacating the seat, if any).
+    Returns None when there's 0 or 1 eligible wolf (caller falls back to its
+    existing instant-promote logic — no fight needed when there's no contest).
+    """
+    import database as db
+
+    pack = conn.execute("SELECT * FROM packs WHERE id = ?", (pack_id,)).fetchone()
+    if not pack:
+        return None
+
+    vacated_by_wolf_id = 0
+    if excluded_discord_id:
+        vacated_row = conn.execute(
+            "SELECT id FROM users WHERE pack_id = ? AND discord_id = ?",
+            (pack_id, excluded_discord_id),
+        ).fetchone()
+        if vacated_row:
+            vacated_by_wolf_id = int(vacated_row["id"])
+
+    query = "SELECT * FROM users WHERE pack_id = ?"
+    params: tuple = (pack_id,)
+    if excluded_discord_id:
+        query += " AND discord_id != ?"
+        params = (pack_id, excluded_discord_id)
+    members = conn.execute(query, params).fetchall()
+    candidates = [m for m in members if is_eligible_challenger(m, incumbent_id=vacated_by_wolf_id)]
+    if len(candidates) <= 1:
+        return None
+
+    logs: list[str] = [
+        f"**{RITE_NAME}**; **{pack['name']}**'s seat stands empty. "
+        "The pack gathers for a leadership challenge."
+    ]
+    winner, bout_logs = _single_elimination_bracket(candidates)
+    logs.extend(bout_logs)
+    winner_role = ROLE_LABELS.get(winner["wolf_role"], winner["wolf_role"])
+    logs.append(f"**{winner['wolf_name']}** ({winner_role}) wins the rite and claims the den.")
+
+    _install_pack_alpha(conn, int(winner["id"]), pack_id)
+
+    is_silverrush = pack["key"] == "silverrush" if "key" in pack.keys() else False
+    if is_silverrush:
+        mark = _maybe_grant_drown_rite_mark(conn, int(winner["id"]))
+        if mark:
+            logs.append(
+                f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
+                f"emerges **{mark}** — brilliant and a little mad in equal measure."
+            )
+
+    conn.execute(
+        """
+        INSERT INTO broken_canine_rites (
+            pack_id, incumbent_wolf_id, winner_wolf_id, log_json, outcome, triggered_day, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (pack_id, vacated_by_wolf_id, int(winner["id"]), json.dumps(logs), "vacancy_rite", triggered_day, db.utcnow()),
+    )
+    return {
+        "ok": True,
+        "outcome": "vacancy_rite",
+        "winner_name": winner["wolf_name"],
+        "winner_wolf_id": int(winner["id"]),
+        "candidate_count": len(candidates),
+        "log": logs,
+        "pack_name": pack["name"],
+    }
+
+
 def maybe_trigger_broken_canine_rite(
     conn: sqlite3.Connection,
     user: sqlite3.Row,

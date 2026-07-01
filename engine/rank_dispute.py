@@ -38,8 +38,18 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
 
     db.update_user(challenger["discord_id"], wolf_id=challenger["id"], last_rank_dispute_day=day)
 
+    rivalry = db.get_bond(challenger["id"], defender["id"], "rivalry")
+    rivalry_mod = 0
+    if rivalry:
+        s = int(rivalry["strength"])
+        if s >= 70:
+            rivalry_mod = 2  # a long-stoked grudge sharpens every blow
+        elif s >= 40:
+            rivalry_mod = 1  # genuine competition; the challenger knows their teeth
+
     c_die, c_total = _rank_roll(challenger)
     d_die, d_total = _rank_roll(defender)
+    c_total += rivalry_mod  # challenger pressed this dispute; the rivalry drives them
     if c_die == 20 and d_die != 20:
         challenger_wins, note = True, " (critical)"
     elif d_die == 20 and c_die != 20:
@@ -61,8 +71,9 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
     db.update_user_by_id(winner["id"], pack_rank=new_winner_rank)
     db.update_user_by_id(loser["id"], pack_rank=new_loser_rank)
 
+    rivalry_note = f" _(+{rivalry_mod} grudge)_" if rivalry_mod else ""
     line = (
-        f"**{challenger['wolf_name']}** {c_total} vs **{defender['wolf_name']}** {d_total}{note}\n"
+        f"**{challenger['wolf_name']}** {c_total}{rivalry_note} vs **{defender['wolf_name']}** {d_total}{note}\n"
         f"**{winner['wolf_name']}** holds the better ground; **{loser['wolf_name']}** yields a step.\n"
         f"den feed priority shifts accordingly."
     )

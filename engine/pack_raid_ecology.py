@@ -20,7 +20,7 @@ from config import (
     RAID_SURVEY_VICTIM_BONE_BONUS,
 )
 from engine.dice import format_roll_result, resolve_check
-from engine.role_privileges import is_scout
+from engine.role_privileges import is_guard
 from utils.currency import format_bones
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
 
@@ -131,10 +131,10 @@ def collect_raid_den_news(guild_id: int, day: int) -> list[str]:
 def try_treasury_audit(interaction: discord.Interaction, user, pack, day: int) -> discord.Embed:
     from engine.pack_leadership import is_pack_alpha, is_pack_beta
 
-    if not (is_scout(user) or is_pack_alpha(user, pack) or is_pack_beta(user, pack)):
+    if not (is_guard(user) or is_pack_alpha(user, pack) or is_pack_beta(user, pack)):
         return howlbert_embed(
             "not authorized",
-            "only **scouts**, **alpha**, or **beta (advisor)** can audit the treasury pit.",
+            "only **guards**, **alpha**, or **beta (advisor)** can audit the treasury pit.",
             color=ERROR_COLOR,
         )
     guild_id = interaction.guild.id

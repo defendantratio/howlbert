@@ -31,19 +31,29 @@ RAIN_MARK_WASHOUT_WEATHER = frozenset({"rain", "storm", "thunderstorm", "sleet"}
 
 
 def home_turf_hunt_bonus(
-    pack_id: int | None, pack_key: str | None, guild_id: int | None, day: int, *, weather: str | None = None
+    pack_id: int | None,
+    pack_key: str | None,
+    guild_id: int | None,
+    day: int,
+    *,
+    weather: str | None = None,
+    territory: str | None = None,
 ) -> tuple[float, str]:
     """
     +10% hunt bones when hunting ground your own pack both owns and has
     freshly marked (within HOME_TURF_MARK_WINDOW_DAYS); rewards holding and
     maintaining territory instead of treating /pack territory as cosmetic.
     Heavy rain washes scent out faster, shrinking that window.
+    If `territory` is given, only that specific ground counts (the hunter chose
+    where to hunt); otherwise any owned/marked ground qualifies.
     Returns (multiplier, note); multiplier is 1.0 / note is "" when no bonus.
     """
     if not pack_id or not pack_key or not guild_id or day <= 0:
         return 1.0, ""
     territories = db.get_territories(guild_id)
     owned_keys = {t["key"] for t in territories if t["owner_pack_id"] == pack_id}
+    if territory:
+        owned_keys &= {territory}
     if not owned_keys:
         return 1.0, ""
     window = HOME_TURF_MARK_WINDOW_DAYS
@@ -60,11 +70,14 @@ def home_turf_hunt_bonus(
 ALLIED_TERRITORY_HUNT_MULT = 1.05
 
 
-def allied_territory_hunt_bonus(pack_id: int | None, guild_id: int | None) -> tuple[float, str]:
+def allied_territory_hunt_bonus(
+    pack_id: int | None, guild_id: int | None, *, territory: str | None = None
+) -> tuple[float, str]:
     """
     +5% hunt bones when your pack holds an active alliance or hunting_rights
     treaty with the pack that owns ground you're hunting on; hunting_rights
     is supposed to mean real access to a rival's territory, not just flavor.
+    If `territory` is given, only that specific ground qualifies.
     Returns (multiplier, note); multiplier is 1.0 / note is "" when no bonus.
     """
     if not pack_id or not guild_id:
@@ -76,6 +89,8 @@ def allied_territory_hunt_bonus(pack_id: int | None, guild_id: int | None) -> tu
     if not granted_pack_ids:
         return 1.0, ""
     territories = db.get_territories(guild_id)
+    if territory:
+        territories = [t for t in territories if t["key"] == territory]
     if not any(t["owner_pack_id"] in granted_pack_ids for t in territories):
         return 1.0, ""
     pct = int(round((ALLIED_TERRITORY_HUNT_MULT - 1.0) * 100))

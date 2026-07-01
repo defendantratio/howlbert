@@ -112,5 +112,70 @@ class Rite(commands.Cog):
         log_rite(target['id'], 'rite_mourning', journal_note, guild_id=interaction.guild.id, day=day)
         await interaction.response.send_message(embed=embed)
 
+    @rite.command(name='trial', description='trial by combat to settle an accusation; the loser pays, win or lose as the accuser.')
+    @app_commands.describe(accused='the wolf you accuse', claim='what you accuse them of')
+    async def trial(self, interaction: discord.Interaction, accused: discord.Member, claim: str):
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        accuser = _active_wolf(interaction)
+        if not accuser:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        if accused.bot or accused.id == interaction.user.id:
+            await interaction.response.send_message(embed=howlbert_embed('Pick Another Wolf', 'You cannot put yourself on trial.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        accused_row = db.get_user(accused.id)
+        if not accused_row:
+            await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
+            return
+
+        from engine.dice import roll_d20
+        from engine.character import attr_modifier
+        from engine.character_traits import trait_combat_modifier
+
+        def _trial_roll(wolf) -> tuple[int, dict]:
+            die = roll_d20()
+            mod = max(attr_modifier(int(wolf['attr_str'])), attr_modifier(int(wolf['attr_dex'])))
+            trait_mod = trait_combat_modifier(wolf)
+            total = die + mod + trait_mod
+            return total, {'die': die, 'mod': mod, 'trait_mod': trait_mod}
+
+        a_total, a_detail = _trial_roll(accuser)
+        b_total, b_detail = _trial_roll(accused_row)
+        note = ''
+        if a_detail['die'] == 20 and b_detail['die'] != 20:
+            winner, loser = accuser, accused_row
+            note = ' (critical)'
+        elif b_detail['die'] == 20 and a_detail['die'] != 20:
+            winner, loser = accused_row, accuser
+            note = ' (critical)'
+        elif a_detail['die'] == 1 and b_detail['die'] != 1:
+            winner, loser = accused_row, accuser
+            note = ' (fumble)'
+        elif b_detail['die'] == 1 and a_detail['die'] != 1:
+            winner, loser = accuser, accused_row
+            note = ' (fumble)'
+        elif a_total >= b_total:
+            winner, loser = accuser, accused_row
+        else:
+            winner, loser = accused_row, accuser
+
+        from config import TRIAL_BY_COMBAT_LOSER_STANDING
+        kick = db.adjust_wolf_standing(loser['discord_id'], TRIAL_BY_COMBAT_LOSER_STANDING)
+        standing_note = '**cast out**' if kick == 'kicked' else f'standing **{TRIAL_BY_COMBAT_LOSER_STANDING}**'
+        day = _world_day(interaction.guild.id)
+        body = (
+            f"**{accuser['wolf_name']}** accuses **{accused_row['wolf_name']}**: _{claim.strip()[:200]}_\n\n"
+            f"the den calls a trial by combat to settle it.\n"
+            f"**{accuser['wolf_name']}** {a_total} vs **{accused_row['wolf_name']}** {b_total}{note}\n\n"
+            f"**{winner['wolf_name']}** wins; the den sides with them. "
+            f"**{loser['wolf_name']}** carries the loss — {standing_note}."
+        )
+        log_rite(winner['id'], 'rite_trial', f"Won a trial by combat against **{loser['wolf_name']}**.", guild_id=interaction.guild.id, day=day)
+        log_rite(loser['id'], 'rite_trial', f"Lost a trial by combat against **{winner['wolf_name']}**.", guild_id=interaction.guild.id, day=day)
+        embed = howlbert_embed('⚔ Trial by Combat', body, color=SUCCESS_COLOR if winner['id'] == accuser['id'] else ERROR_COLOR)
+        await interaction.response.send_message(embed=embed)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Rite(bot))

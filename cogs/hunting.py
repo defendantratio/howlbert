@@ -55,7 +55,7 @@ class Hunting(commands.Cog):
         world = db.get_world(interaction.guild.id)
         stacks = db.get_prey_stacks(user['id'])
         if not stacks:
-            embed = howlbert_embed('Empty Hoard', 'No carcasses yet.\n· `/bones action:hunt` or `collaborate:true` pack hunt\n· `/explore venture` · `/field action:track` · `action:fishing` · `action:scavenge`\n· `/world action:encounter`')
+            embed = howlbert_embed('Empty Hoard', 'No carcasses yet.\n· `/bones action:hunt` or `collaborate:true` pack hunt\n· `/explore` · `/field action:track` · `action:fishing` · `action:scavenge`\n· `/world action:encounter`')
             embed.set_footer(text=format_prey_hoard_footer(empty=True))
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
@@ -175,11 +175,11 @@ class Hunting(commands.Cog):
             return
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
-    @app_commands.command(name='field', description='scavenge, track, fish, forage, verge-forage, mark territory, sniff, or crime.')
-    @app_commands.describe(action='scavenge, track, fishing, forage, verge, mark, sniff, or crime', rarity='herb rarity (territory forage only)', verge_site='roadside or twoleg compound (verge forage only)', trail_age='trail age (track only)', territory='territory key (mark only; see /pack territory)', scene='optional rp scene note (crime only)', staff='flag for staff to weave your rp scene (crime only)')
-    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff'), app_commands.Choice(name='petty crime', value='crime')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1-6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6-24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1-3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
+    @app_commands.command(name='field', description='scavenge, track, fish, forage, verge-forage, mark territory, or sniff.')
+    @app_commands.describe(action='scavenge, track, fishing, forage, verge, mark, or sniff', rarity='herb rarity (territory forage only)', verge_site='roadside or twoleg compound (verge forage only)', trail_age='trail age (track only)', territory='territory key (mark only; see /pack territory)')
+    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1-6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6-24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1-3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
     @app_commands.autocomplete(territory=_territory_field_autocomplete)
-    async def field(self, interaction: discord.Interaction, action: str, rarity: str='common', verge_site: str='roadside', trail_age: str='recent', territory: str | None=None, scene: str | None=None, staff: bool=False):
+    async def field(self, interaction: discord.Interaction, action: str, rarity: str='common', verge_site: str='roadside', trail_age: str='recent', territory: str | None=None):
         if action == 'scavenge':
             await self._scavenge(interaction)
         elif action == 'track':
@@ -194,15 +194,6 @@ class Hunting(commands.Cog):
             await self._mark_territory(interaction, territory)
         elif action == 'sniff':
             await self._sniff(interaction)
-        elif action == 'crime':
-            await self._crime(interaction, scene=scene, staff=staff)
-
-    async def _crime(self, interaction: discord.Interaction, scene: str | None=None, staff: bool=False):
-        from engine.activities import try_crime
-
-        embed = try_crime(interaction, scene=scene, staff=staff)
-        if embed:
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _mark_territory(self, interaction: discord.Interaction, territory: str | None):
         user = db.get_user(interaction.user.id)

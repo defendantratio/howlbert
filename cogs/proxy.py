@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.avatar_crop import validate_avatar_upload
+from engine.chat_xp import try_chat_message_xp
 from engine.proxy_avatar_ui import AvatarCropView
 from engine.proxy import get_proxy_webhook, parse_bracket_string, parse_tupperbox_export, sanitize_webhook_name
 from engine.proxy_ooc import split_ooc
@@ -325,6 +326,9 @@ class Proxy(commands.Cog):
                 wolf_name=wolf['wolf_name'],
                 content=ic_text,
             )
+            # Chat xp is for actually playing your wolf, not server chatter —
+            # only a real proxied in-character line earns it.
+            try_chat_message_xp(message)
         try:
             await message.delete()
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):

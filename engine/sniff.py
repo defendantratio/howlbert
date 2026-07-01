@@ -39,6 +39,46 @@ SNIFF_ENCOUNTER_STRANGER = (
 )
 
 
+_BOND_ENCOUNTER_LINES = {
+    "friendship": (
+        "an old friend; something in your shoulders loosens.",
+        "familiar warmth on the wind — you knew who it was before you saw them.",
+        "you've walked this stretch together before. the ridge feels smaller.",
+    ),
+    "rivalry": (
+        "the air goes taut. you've tangled before, and you both know it.",
+        "old tension surfaces before either of you speaks. the trail suddenly feels contested.",
+        "the body language is instinctive; weight forward, ears back, assessing.",
+    ),
+    "kin": (
+        "blood is blood, even out here. something in you settles.",
+        "kin on the wind; the trail feels less alone.",
+        "family doesn't need a reason to find each other in the same territory.",
+    ),
+    "mentor": (
+        "the old rhythm comes back easy — the one who taught you, on the same ground.",
+        "you catch yourself reading the trail the way they showed you.",
+        "mentor and mentee, out on the same ridge. habits die hard.",
+    ),
+    "romance": (
+        "the scent hits before the sight, and your pace slows without thinking.",
+        "the world quiets a little. just the two of you, and the trail.",
+        "every encounter still carries that particular warmth.",
+    ),
+}
+
+
+def _bond_encounter_note(user, encounter) -> str | None:
+    import database as _db
+    for bond_type in ("romance", "kin", "mentor", "friendship", "rivalry"):
+        bond = _db.get_bond(user["id"], encounter["id"], bond_type)
+        if bond and int(bond["strength"]) >= 30:
+            lines = _BOND_ENCOUNTER_LINES.get(bond_type)
+            if lines:
+                return f"_({random.choice(lines)})_"
+    return None
+
+
 def sniff_bonus_active(user, day: int) -> bool:
     bonus_day = int(user["sniff_bonus_day"]) if "sniff_bonus_day" in user.keys() else 0
     return bonus_day >= day
@@ -166,6 +206,12 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
 
     encounter = None
     sniff_odds = SNIFF_WOLF_ENCOUNTER_CHANCE + alert_bonus
+    if "shedding_until_day" in user.keys() and int(user["shedding_until_day"] or 0) >= day > 0:
+        sniff_odds += 0.08
+    howl_exposed = int(user["howl_exposed_day"]) if "howl_exposed_day" in user.keys() else 0
+    if howl_exposed > 0 and day > 0 and howl_exposed >= day - 1:
+        from config import HOWL_EXPOSED_BORDER_BONUS
+        sniff_odds += HOWL_EXPOSED_BORDER_BONUS
     if interaction.guild and user["pack_id"]:
         from engine.pack_raid_ecology import sniff_encounter_chance_bonus
 
@@ -206,6 +252,13 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
                 footer_bits.append("Hostile rival; combat panel below")
         else:
             body += f"\n\n{_encounter_flavor(user, encounter)}"
+            bond_line = _bond_encounter_note(user, encounter)
+            if bond_line:
+                body += f"\n\n{bond_line}"
+            rival_bond = db.get_bond(user["id"], encounter["id"], "rivalry")
+            if rival_bond and int(rival_bond["strength"]) >= 50:
+                db.adjust_wolf_standing(user["discord_id"], 1)
+                body += "\n_your rival is out here too. the standing you carry sharpens._"
             new_mood = db.adjust_mood(user["id"], SNIFF_WOLF_ENCOUNTER_MOOD)
             body += f"\n\n**+{SNIFF_WOLF_ENCOUNTER_MOOD} mood** (now **{new_mood}**)."
             if user["pack_id"] and user["pack_id"] == encounter["pack_id"]:
@@ -213,6 +266,10 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
                     "\npackmate on the trail; try **`/playpen action:socialize`** "
                     "if you haven't mingled today."
                 )
+            from engine.disease_contract import try_spread_from_close_contact
+            disease_note = try_spread_from_close_contact(user, encounter)
+            if disease_note:
+                body += f"\n\n{disease_note}"
         footer_bits.append("Wolf encounter")
     else:
         border_odds = (SNIFF_CAT_ENCOUNTER_CHANCE + alert_bonus) * pact_border_chance_multiplier(
@@ -223,7 +280,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         border_odds *= wolf_pact_border_multiplier(interaction.guild.id, user["pack_id"])
         from engine.plot_blinking import plot_sniff_border_mult
 
-        border_odds *= plot_sniff_border_mult(interaction.guild.id)
+        border_odds *= plot_sniff_border_mult(interaction.guild.id, user=user)
         if (
             border_odds > 0
             and random.random() < border_odds
@@ -262,6 +319,36 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     if hoard_caught:
         body += f"\n\n{hoard_caught}"
         footer_bits.append("poison herbs seized")
+
+    wis = int(user["attr_wis"]) if "attr_wis" in user.keys() else 0
+    if wis >= 6 and user["pack_id"] and day > 0:
+        packmates = [
+            w for w in db.get_pack_den_wolves(int(user["pack_id"]))
+            if w["id"] != user["id"] and (w["condition"] if "condition" in w.keys() else "healthy") != "dead"
+        ]
+        if packmates:
+            import random as _r
+            pm = _r.choice(packmates)
+            pm_name = pm["wolf_name"]
+            PREV = day - 1
+            _ACT_HINTS = [
+                ("last_hunt_day", "hunted"),
+                ("last_forage_day", "foraged"),
+                ("last_explore_day", "explored"),
+                ("last_socialize_day", "socialized"),
+                ("last_groom_day", "groomed someone"),
+                ("last_sniff_day", "read the wind"),
+                ("last_fishing_day", "fished"),
+                ("last_work_day", "worked"),
+                ("last_howl_day", "howled for the den"),
+            ]
+            pm_acts = [label for col, label in _ACT_HINTS if col in pm.keys() and int(pm[col] or 0) == PREV]
+            if pm_acts:
+                act_str = " and ".join(pm_acts[:2])
+                body += f"\n\n_your nose catches **{pm_name}**'s trail from yesterday — they {act_str}._"
+            else:
+                body += f"\n\n_your nose catches **{pm_name}**'s scent; quiet, unremarkable — they kept to themselves._"
+            footer_bits.append("den read")
 
     from engine.plot_blinking import try_plot_sniff_extras
 
