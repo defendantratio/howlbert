@@ -60,7 +60,7 @@ def _append_success_recovery(
         lines.append(note)
 
 
-def _weather_scent_dc_mod(weather: str, *, rained: bool = False) -> tuple[int, str]:
+def _weather_scent_dc_mod(weather: str, *, rained: bool = False, great_pack: str | None = None) -> tuple[int, str]:
     notes = []
     mod = 0
     if weather in ("rain", "sleet", "storm", "thunderstorm"):
@@ -75,6 +75,12 @@ def _weather_scent_dc_mod(weather: str, *, rained: bool = False) -> tuple[int, s
     if rained:
         mod += 5
         notes.append("recent rain (+5 DC)")
+    from engine.humidity import humidity_scent_dc_modifier
+
+    humidity_mod = humidity_scent_dc_modifier(great_pack, weather)
+    if humidity_mod:
+        mod += humidity_mod
+        notes.append(f"humid air carries scent ({humidity_mod:+d} DC)" if humidity_mod < 0 else f"arid air dries scent ({humidity_mod:+d} DC)")
     return mod, " · ".join(notes)
 
 
@@ -561,7 +567,8 @@ def run_skill_scenario(
     dc = scenario.dc
     extra_notes = []
     if scenario.category == "tracking":
-        mod, note = _weather_scent_dc_mod(weather, rained=rained)
+        user_pack = user["great_pack"] if "great_pack" in user.keys() else None
+        mod, note = _weather_scent_dc_mod(weather, rained=rained, great_pack=user_pack)
         # An older trail has less scent left to begin with, so the same rain
         # or wind erases proportionally more of it; a fresh trail shrugs off
         # weather that would wipe out a faint, day-old one.

@@ -145,8 +145,97 @@ def injury_check_adjustments(
     return penalty, disadvantage
 
 
+def injury_hunt_multiplier(user) -> tuple[float, str]:
+    """
+    Non-blocking injuries still cost hunt yield — sprained leg, infected wound,
+    etc. slow a wolf without stopping them entirely. Stacks up to −50%.
+    """
+    injuries = active_injury_keys(user)
+    if not injuries:
+        return 1.0, ""
+    PENALTIES: dict[str, tuple[float, str]] = {
+        "sprained_leg":   (0.25, "sprained leg; speed cut on the hunt (**−25%**)"),
+        "punctured_paw":  (0.20, "punctured paw; every stride costs (**−20%**)"),
+        "concussion":     (0.20, "concussion; disoriented tracking (**−20%**)"),
+        "deep_gash":      (0.15, "deep gash; blood loss and pain (**−15%**)"),
+        "infected_wound": (0.15, "infected wound; fever and fatigue (**−15%**)"),
+        "torn_claw":      (0.10, "torn claw; reduced grip on prey (**−10%**)"),
+        "broken_tooth":   (0.10, "broken tooth; bite strength reduced (**−10%**)"),
+        "torn_ear":       (0.05, "torn ear; tracking by sound impaired (**−5%**)"),
+    }
+    total = 0.0
+    worst_label = ""
+    worst_pen = 0.0
+    for key in injuries:
+        pen, label = PENALTIES.get(key, (0.0, ""))
+        if pen > worst_pen:
+            worst_pen = pen
+            worst_label = label
+        total += pen
+    total = min(total, 0.50)
+    if total <= 0:
+        return 1.0, ""
+    pct = int(total * 100)
+    note = worst_label if pct == int(worst_pen * 100) else f"injuries; reduced effectiveness (**−{pct}%**)"
+    return 1.0 - total, note
+
+
+def injury_patrol_standing_bonus(user) -> int:
+    """
+    Standing bonus for patrolling with a non-blocking physical injury — putting
+    the pack ahead of your own pain is noticed and respected. Capped at +2.
+    """
+    injuries = active_injury_keys(user)
+    PATROL_BONUSES: dict[str, int] = {
+        "sprained_leg": 1,
+        "punctured_paw": 1,
+        "deep_gash": 1,
+        "infected_wound": 1,
+        "concussion": 1,
+    }
+    return min(2, sum(PATROL_BONUSES.get(k, 0) for k in injuries))
+
+
+def injury_caught_standing_penalty(user) -> int:
+    """
+    Extra standing loss when a patrol goes wrong (spotted, ambushed) and the
+    wolf was already hurt — the injury is why they couldn't get away clean.
+    """
+    injuries = active_injury_keys(user)
+    CAUGHT_PENALTIES: dict[str, int] = {
+        "sprained_leg": -1,
+        "punctured_paw": -1,
+        "deep_gash": -1,
+        "infected_wound": -1,
+        "concussion": -1,
+    }
+    return max(-2, sum(CAUGHT_PENALTIES.get(k, 0) for k in injuries))
+
+
 def format_injury_brief(key: str) -> str:
     info = INJURIES.get(key)
     if not info:
         return key
     return f"**{info['name']}**; {info['effect']}"
+
+
+def try_prey_counter_injury(user, amount: int, day: int) -> str | None:
+    """15% chance of sprained_leg or punctured_paw on a failed hunt (amount <= 0)."""
+    import json
+    import random
+    from engine.conditions import add_injury, parse_injuries
+    import database as db
+
+    if amount > 0:
+        return None
+    if random.random() >= 0.15:
+        return None
+    key = random.choice(("sprained_leg", "punctured_paw"))
+    current = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
+    if key in current:
+        return None
+    updated = add_injury(current, key)
+    db.set_user_conditions(user["discord_id"], active_injuries=json.dumps(updated), wolf_id=user["id"])
+    info = INJURIES.get(key)
+    name = info["name"] if info else key
+    return f"_prey fought back; **{name}** ({info['effect'] if info else ''})._"

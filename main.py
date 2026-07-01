@@ -120,6 +120,7 @@ class HowlbertBot(commands.Bot):
         await self.load_extension("cogs.role")
         await self.load_extension("cogs.bonds")
         await self.load_extension("cogs.skills")
+        await self.load_extension("cogs.crime")
         await self.load_extension("cogs.help")
         await self.load_extension("cogs.lexicon")
 

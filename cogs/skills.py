@@ -144,6 +144,7 @@ class Skills(commands.Cog):
         footer = f'/skills · {SKILL_CATEGORIES.get(category, category)}'
         if scenario.opposed:
             footer += ' · opposed'
+        footer += ' · freeform roll: /rpg action:roll'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 

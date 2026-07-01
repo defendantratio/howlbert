@@ -84,7 +84,7 @@ class Wolvden(commands.Cog):
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
         embed.add_field(name='Thirst', value=format_thirst_line(user), inline=True)
-        embed.set_footer(text='/hoarding action:shred · /food · /playpen action:toys · /raccoon buy')
+        embed.set_footer(text='/hoarding action:shred · /food · /playpen action:toys · /bones action:raccoonbuy')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _shred(self, interaction: discord.Interaction, toy: str):

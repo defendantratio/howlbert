@@ -47,6 +47,21 @@ def log_registered(wolf_id: int, wolf_name: str, affiliation: str | None) -> Non
     _write(wolf_id, "registered", f"joined the den as **{wolf_name}** ({pack}).")
 
 
+_ARRIVAL_SUMMARIES = {
+    "bold_arrival": "strode into the den head-high; the pack took notice.",
+    "quiet_arrival": "slipped into the den without a sound; learned the den's rhythms before anyone learned their name.",
+    "wary_arrival": "came in half-starved and watchful; carried every scar of the road that led here.",
+    "bold_birth": "came into the litter loud and already fighting for space.",
+    "quiet_birth": "came into the litter small and still; took the world in before making a sound.",
+    "wary_birth": "came into the litter faint-breathed and fragile; survival was the first lesson.",
+}
+
+
+def log_arrival(wolf_id: int, wolf_name: str, arrival_key: str) -> None:
+    summary = _ARRIVAL_SUMMARIES.get(arrival_key, f"arrived ({arrival_key}).")
+    _write(wolf_id, "arrival", f"**{wolf_name}** {summary}")
+
+
 def log_born(
     pup_id: int,
     pup_name: str,

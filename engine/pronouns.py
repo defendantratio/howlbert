@@ -22,6 +22,7 @@ CHARACTER_PRONOUN_OVERRIDES: dict[str, str] = {
     "Barkhollow": "he/she",
     "Ashbark": "he/him",
     "Mosspup": "he/him",
+    "MaggotBrain": "she/her",
 }
 
 # Named roles: subject, object, possessive determiner, possessive pronoun, reflexive

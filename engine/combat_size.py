@@ -81,7 +81,7 @@ def format_size_class_profile(user) -> str:
     effective = size_class_for_wolf(user)
     label = SIZE_LABELS.get(effective, effective.title())
     if explicit:
-        return f"**{label}** _(custom · `/wolfset field:size`)_"
+        return f"**{label}** _(custom · `/character size:`)_"
     role = user["wolf_role"] if hasattr(user, "keys") and "wolf_role" in user.keys() else user.get("wolf_role", "") if isinstance(user, dict) else ""
     if role in ("pup", "juvenile"):
         return f"**{label}** _(auto · young wolf)_"

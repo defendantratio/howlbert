@@ -4,7 +4,7 @@ from discord.ext import commands
 import sqlite3
 import database as db
 from cogs.profile import PACK_CHOICES, _pack_display
-from engine.attraction import BIRTH_SEX_LABELS, SEXUALITY_LABELS, SEXUALITY_OPTIONS, is_pup_age
+from engine.attraction import BIRTH_SEX_LABELS, SEXUALITY_LABELS, SEXUALITY_OPTIONS
 from engine.aging import format_wolf_age, stage_for_age, stage_label
 from engine.family import XP_PER_ROLE_FEATURE
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS
@@ -53,7 +53,7 @@ class WolfAdmin(commands.Cog):
 
     @wolfadmin.command(name='assign', description='create a wolf and assign it to a player.')
     @app_commands.describe(player='discord member who will own this wolf', name='wolf name', pack='great pack or loner', birth_sex='birth sex', sexuality='attraction', role='wolf role (stats and skills)', starting_age='starting age in moons, 0-120 (optional)', set_active='make this their active wolf immediately')
-    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=name, value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS])
+    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS])
     async def wolfadmin_assign(self, interaction: discord.Interaction, player: discord.User, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, set_active: bool=True):
         if not await self._require_admin(interaction):
             return
@@ -87,6 +87,45 @@ class WolfAdmin(commands.Cog):
         embed.add_field(name='Age', value=f'{format_wolf_age(age_mo)} ({stage_label(stage_for_age(age_mo))})', inline=True)
         embed.add_field(name='Pack', value=_pack_display(pack), inline=False)
         await interaction.response.send_message(embed=embed)
+
+    @wolfadmin.command(name='arrival', description='post the arrival/birth scene for an already-registered wolf.')
+    @app_commands.describe(wolf_name='wolf to post the scene for')
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_arrival(self, interaction: discord.Interaction, wolf_name: str):
+        if not await self._require_admin(interaction):
+            return
+        wolf = db.get_wolf_by_name(wolf_name.strip())
+        if not wolf:
+            embed = howlbert_embed('Not Found', f'No wolf named **{wolf_name}** is registered.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        from engine.long_term_injuries import parse_long_term_injuries
+        ARRIVAL_KEYS = {'bold_arrival', 'quiet_arrival', 'wary_arrival',
+                        'bold_birth', 'quiet_birth', 'wary_birth'}
+        current = parse_long_term_injuries(wolf['long_term_injuries'])
+        cleaned = [e for e in current if e not in ARRIVAL_KEYS]
+        import json
+        db.update_user_by_id(wolf['id'], long_term_injuries=json.dumps(cleaned))
+        from engine.aging import stage_for_age
+        from config import UNAFFILIATED_KEYS
+        age_mo = wolf['age_months'] if 'age_months' in wolf.keys() else 24
+        pack = wolf['great_pack'] if 'great_pack' in wolf.keys() else None
+        is_pup = stage_for_age(age_mo) == 'pup'
+        is_loner = pack in UNAFFILIATED_KEYS if UNAFFILIATED_KEYS else False
+        if is_pup and is_loner:
+            title = 'how were they born?'
+            desc = f'before **{wolf["wolf_name"]}** opens their eyes for good, no den walls around them yet.'
+        elif is_pup:
+            title = 'how were they born?'
+            desc = f'before **{wolf["wolf_name"]}** opens their eyes for good, the litter takes shape.'
+        else:
+            title = 'how did they arrive?'
+            desc = f'before **{wolf["wolf_name"]}** settles in, the den watches them come.'
+        from utils.embeds import howlbert_embed
+        from utils.views import make_arrival_scene_view
+        scene_embed = howlbert_embed(title, desc)
+        view = make_arrival_scene_view(wolf['id'], wolf['wolf_name'], wolf['discord_id'], pup=is_pup, loner=is_loner)
+        await interaction.response.send_message(embed=scene_embed, view=view)
 
     @wolfadmin.command(name='transfer', description='move an existing wolf from one player to another.')
     @app_commands.describe(from_player='current owner', wolf_name='which wolf to move', to_player='new owner', set_active='make this their active wolf immediately')
@@ -174,10 +213,10 @@ class WolfAdmin(commands.Cog):
         embed = howlbert_embed(title, msg, color=color)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @wolfadmin.command(name='setage', description="set a wolf's age in moons (0-120).")
-    @app_commands.describe(player='wolf owner', moons='new age in moons', wolf_name='which wolf (defaults to their active wolf)')
+    @wolfadmin.command(name='refimage', description="set or clear a wolf's reference image (admin only).")
+    @app_commands.describe(player='wolf owner', image_url='direct http(s) image url (omit to clear)', wolf_name='which wolf (defaults to their active wolf)')
     @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
-    async def wolfadmin_setage(self, interaction: discord.Interaction, player: discord.User, moons: app_commands.Range[int, 0, 120], wolf_name: str | None=None):
+    async def wolfadmin_refimage(self, interaction: discord.Interaction, player: discord.User, image_url: str | None=None, wolf_name: str | None=None):
         if not await self._require_admin(interaction):
             return
         if wolf_name:
@@ -191,21 +230,24 @@ class WolfAdmin(commands.Cog):
                 embed = howlbert_embed('No Wolf', f'**{player.display_name}** has no active wolf.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
-        result = db.set_wolf_age_moons(wolf['id'], moons)
-        if not result:
-            embed = howlbert_embed('Error', 'Could not update age.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        if image_url is None:
+            db.set_wolf_identity(wolf['id'], ref_image_url=None)
+            await interaction.response.send_message(embed=howlbert_embed('Ref Image Cleared', f"**{wolf['wolf_name']}** ({player.mention}) no longer has a reference image.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
             return
-        embed = howlbert_embed('Age Updated', color=SUCCESS_COLOR)
-        embed.description = f"**{wolf['wolf_name']}** ({player.mention}); **{format_wolf_age(result['old_age'])}** → **{format_wolf_age(result['new_age'])}** ({stage_label(stage_for_age(result['new_age']))})."
-        if result['new_role'] != result['old_role']:
-            embed.add_field(name='Role', value=f"{ROLE_LABELS.get(result['old_role'], result['old_role'])} → **{ROLE_LABELS.get(result['new_role'], result['new_role'])}**", inline=False)
-        for note in result['notes']:
-            embed.add_field(name='Milestone', value=note, inline=False)
-        if is_pup_age(result['new_age']):
-            embed.set_footer(text='pup age; sexuality set to too young / none.')
-        else:
-            embed.set_footer(text='each `/rollover` still ages every wolf by 1 moon.')
+        if not image_url.lower().startswith(('http://', 'https://')):
+            await interaction.response.send_message(embed=howlbert_embed('Bad URL', '`image_url` needs a direct http(s) image link.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        db.set_wolf_identity(wolf['id'], ref_image_url=image_url)
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                    if resp.status == 200:
+                        db.set_wolf_ref_image_cache(wolf['id'], await resp.read())
+        except Exception:
+            pass
+        embed = howlbert_embed('Ref Image Set', f"**{wolf['wolf_name']}** ({player.mention}) now has a reference image. See `/profile`.", color=SUCCESS_COLOR)
+        embed.set_thumbnail(url=image_url)
         await interaction.response.send_message(embed=embed)
 
     @wolfadmin.command(name='dormant', description="toggle a wolf's dormant flag (exempt from hunger/thirst/mood decay on /rollover).")
@@ -427,76 +469,6 @@ class WolfAdmin(commands.Cog):
             return
         db.set_autoproxy_wolf(player.id, wolf['id'])
         await interaction.response.send_message(embed=howlbert_embed('Autoproxy On', f"**{player.display_name}**'s untagged messages now post as **{wolf['wolf_name']}**. They can escape once with `\\` at the start of a message.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
-
-    @wolfadmin.command(name='import_sheet', description='parse a pasted/attached rp character sheet into a new wolf (admin).')
-    @app_commands.describe(player='who will own this wolf (defaults to you)', text='paste the sheet text (Name/Pack/Rank/Age/... fields)', file='or attach the sheet as a .txt file instead of pasting', pack='override the detected pack (optional)', dormant='exempt from need decay until claimed (default true; false if player starts now)', dry_run='preview only; rerun with dry_run:False to actually register')
-    @app_commands.choices(pack=PACK_CHOICES)
-    async def wolfadmin_import_sheet(self, interaction: discord.Interaction, player: discord.User | None=None, text: str | None=None, file: discord.Attachment | None=None, pack: str | None=None, dormant: bool=True, dry_run: bool=True):
-        if not await self._require_admin(interaction):
-            return
-        if not text and not file:
-            embed = howlbert_embed('nothing to parse', 'paste the sheet in `text`, or attach it as a `.txt` file.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if file:
-            try:
-                sheet_text = (await file.read()).decode('utf-8')
-            except UnicodeDecodeError:
-                embed = howlbert_embed('bad file', 'could not read that file as utf-8 text.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-        else:
-            sheet_text = text
-        from engine.sheet_import import parse_character_sheet
-        parsed = parse_character_sheet(sheet_text)
-        if not parsed:
-            embed = howlbert_embed('no name found', "couldn't find a **name:** field in that text.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        target_player = player or interaction.user
-        if target_player.bot:
-            embed = howlbert_embed('Invalid Player', 'Bots cannot own wolves.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        affiliation = pack or parsed.affiliation
-        embed = howlbert_embed('sheet preview' if dry_run else 'wolf imported', color=SUCCESS_COLOR)
-        name_note = ' ✅ canon match; lore/skills/bonds attach automatically' if parsed.canonical_match else ' _(no canon lore on file for this name)_'
-        embed.add_field(name='name', value=parsed.wolf_name + name_note, inline=False)
-        embed.add_field(name='pack', value=_pack_display(affiliation) if affiliation else '⚠️ not detected; pass `pack:`', inline=True)
-        embed.add_field(name='role', value=ROLE_LABELS.get(parsed.role, parsed.role.title()), inline=True)
-        embed.add_field(name='age', value=format_wolf_age(parsed.age_months) if parsed.age_months is not None else 'default for role', inline=True)
-        embed.add_field(name='birth sex', value=BIRTH_SEX_LABELS.get(parsed.birth_sex, parsed.birth_sex.title()) if parsed.birth_sex else 'unset', inline=True)
-        embed.add_field(name='sexuality', value=SEXUALITY_LABELS.get(parsed.sexuality, parsed.sexuality.title()) if parsed.sexuality else 'default for role/age', inline=True)
-        embed.add_field(name='owner', value=target_player.mention, inline=True)
-        embed.add_field(name='dormant', value='yes (exempt from vitals decay)' if dormant else 'no (ages and hungers normally)', inline=True)
-        if parsed.avatar_url:
-            embed.set_thumbnail(url=parsed.avatar_url)
-        if dry_run:
-            embed.set_footer(text='dry run; nothing created. rerun with dry_run:False to register.')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if not affiliation:
-            embed = howlbert_embed('pack required', "couldn't detect a pack from the sheet's **pack:** field; pass `pack:` explicitly.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        try:
-            wolf_id = db.register_user(target_player.id, parsed.wolf_name, affiliation, wolf_role=parsed.role, birth_sex=parsed.birth_sex, sexuality=parsed.sexuality, age_months=parsed.age_months, set_active=False)
-        except ValueError as exc:
-            msg = str(exc)
-            title = 'Name Taken' if 'already taken' in msg or 'reserved' in msg else 'Invalid Name'
-            embed = howlbert_embed(title, msg, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if parsed.avatar_url:
-            db.update_user(target_player.id, wolf_id=wolf_id, avatar_url=parsed.avatar_url, ref_image_url=parsed.avatar_url)
-        if dormant:
-            db.set_wolf_dormant(wolf_id, True)
-        user = db.get_user_by_id(wolf_id)
-        from engine.character_lore import has_character_lore
-        lore_note = 'Canon lore, skills, and bonds attached automatically.' if has_character_lore(user) else 'No canon lore on file for this name; registered with default stats only.'
-        embed.add_field(name='Canon Data', value=lore_note, inline=False)
-        embed.set_footer(text=f'wolf id {wolf_id} · not active yet · use /switchwolf to play as them')
-        await interaction.response.send_message(embed=embed)
 
     @wolfadmin.command(name='deaths', description='death log: recent deaths and current dead wolves with causes.')
     @app_commands.describe(player="filter to one player's wolves (optional)", limit='how many log entries to show (default 20, max 50)')

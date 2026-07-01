@@ -3,9 +3,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from engine.maw_belief import MAW_BELIEF_OPTIONS
 from engine.death_saves import roll_death_save, stabilize_check
-from engine.attraction import BIRTH_SEX_LABELS, BOND_FIRST_SEXUALITIES, SEXUALITY_LABELS, SEXUALITY_OPTIONS, are_bonded_mates, court_attraction_allowed, get_sexuality
+from engine.attraction import BIRTH_SEX_LABELS, BOND_FIRST_SEXUALITIES, are_bonded_mates, court_attraction_allowed, get_sexuality
 from engine.family import GESTATION_DAYS, XP_PER_ATTRIBUTE, XP_PER_ROLE_FEATURE, XP_PER_SKILL, birth_check, courtship_check, generate_pup_stats, spend_xp_attribute, spend_xp_trait_bonus
 from engine.aging import stage_for_age, stage_label
 from engine.youth_lineage import adoption_eligibility_error, parse_litter_names, random_birth_sex
@@ -27,6 +26,60 @@ from cogs.care_handlers import lay_to_rest, naming_ceremony, quarantine_command,
 def _resolve_own_wolf(discord_id: int, name: str):
     rows = db.list_user_wolves(discord_id)
     return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
+
+
+def _mentor_court_approval_note(courter, target) -> str | None:
+    """
+    If the courter has a mentor bond, the mentor's feelings about the target
+    affect the courtship — approval eases it, disapproval adds shadow.
+    Returns a note prefixed with '+' (ease) or '-' (tension) or None.
+    """
+    import random
+    mentor_bonds = db.get_bonds_for_wolf(courter['id'])
+    for row in mentor_bonds:
+        if row['bond_type'] != 'mentor':
+            continue
+        mentor_id = row['wolf_b_id'] if row['wolf_a_id'] == courter['id'] else row['wolf_a_id']
+        if int(row['strength']) < 40:
+            continue
+        mentor = db.get_user_by_id(mentor_id)
+        if not mentor:
+            continue
+        rivalry = db.get_bond(mentor_id, target['id'], 'rivalry')
+        friendship = db.get_bond(mentor_id, target['id'], 'friendship')
+        if rivalry and int(rivalry['strength']) >= 50:
+            return (
+                f"-_**{mentor['wolf_name']}** knows **{target['wolf_name']}** — and not warmly. "
+                f"their disapproval hangs in the air._"
+            )
+        if friendship and int(friendship['strength']) >= 50:
+            return (
+                f"+_**{mentor['wolf_name']}** thinks well of **{target['wolf_name']}**. "
+                f"that quietly opens a door._"
+            )
+    return None
+
+
+def _kin_protective_court_note(courter, target) -> str | None:
+    """If a kin of the target has a rivalry with the courter, surface a protective note."""
+    import random
+    kin_bonds = db.get_bonds_for_wolf(target['id'])
+    for row in kin_bonds:
+        if row['bond_type'] != 'kin':
+            continue
+        kin_id = row['wolf_b_id'] if row['wolf_a_id'] == target['id'] else row['wolf_a_id']
+        rivalry = db.get_bond(kin_id, courter['id'], 'rivalry')
+        if rivalry and int(rivalry['strength']) >= 40:
+            kin_wolf = db.get_user_by_id(kin_id)
+            if not kin_wolf:
+                continue
+            phrases = (
+                f"_word is already reaching **{kin_wolf['wolf_name']}** — and they don't feel warmly about you._",
+                f"_**{kin_wolf['wolf_name']}** has their eye on this. the history between you two runs cold._",
+                f"_**{kin_wolf['wolf_name']}** catches the scent of this. kin protect their own._",
+            )
+            return random.choice(phrases)
+    return None
 
 def _resolve_partner_wolf(user, interaction: discord.Interaction, *, partner: discord.Member | None, own_wolf: str | None) -> tuple[object | None, str | None]:
     if partner and own_wolf:
@@ -401,82 +454,6 @@ class Life(commands.Cog):
             embed = howlbert_embed('Request Submitted', 'Request submitted; an **admin** must approve before XP is spent.', color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @app_commands.command(name='wolfset', description='update birth sex, sexuality, maw belief, or combat size.')
-    @app_commands.describe(field='what to update', birth_sex='birth sex (field: birth_sex)', sexuality='attraction (field: sexuality)', maw_belief='faith in the maw (field: maw_belief)', size='combat build size (field: size)')
-    @app_commands.choices(field=[app_commands.Choice(name='birth sex', value='birth_sex'), app_commands.Choice(name='sexuality', value='sexuality'), app_commands.Choice(name='maw belief', value='maw_belief'), app_commands.Choice(name='combat size', value='size')], birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=name, value=value) for name, value in SEXUALITY_OPTIONS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS], size=[app_commands.Choice(name='auto (role / age)', value='auto'), app_commands.Choice(name='small', value='small'), app_commands.Choice(name='medium', value='medium'), app_commands.Choice(name='large', value='large')])
-    async def wolfset(self, interaction: discord.Interaction, field: str, birth_sex: str | None=None, sexuality: str | None=None, maw_belief: str | None=None, size: str | None=None):
-        if field == 'birth_sex':
-            if not birth_sex:
-                await interaction.response.send_message(player_message('Pick a **birth_sex**.'), ephemeral=reply_ephemeral())
-                return
-            await self._setbirthsex(interaction, birth_sex)
-        elif field == 'sexuality':
-            if not sexuality:
-                await interaction.response.send_message(player_message('Pick a **sexuality**.'), ephemeral=reply_ephemeral())
-                return
-            await self._setsexuality(interaction, sexuality)
-        elif field == 'maw_belief':
-            if not maw_belief:
-                await interaction.response.send_message(player_message('Pick a **maw_belief**.'), ephemeral=reply_ephemeral())
-                return
-            await self._setmawbelief(interaction, maw_belief)
-        elif field == 'size':
-            if not size:
-                await interaction.response.send_message(player_message('Pick a **size**.'), ephemeral=reply_ephemeral())
-                return
-            await self._setsize(interaction, size)
-
-    async def _setsize(self, interaction: discord.Interaction, size: str):
-        user = await self._require_user(interaction)
-        if not user:
-            return
-        ok, err = db.set_size_class(interaction.user.id, size)
-        if not ok:
-            embed = howlbert_embed('Cannot Update', err or 'Invalid size.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        from engine.combat_size import format_size_class_profile
-        updated = db.get_user(interaction.user.id)
-        embed = howlbert_embed('Combat Size Updated', format_size_class_profile(updated), color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
-    async def _setbirthsex(self, interaction: discord.Interaction, birth_sex: str):
-        user = await self._require_user(interaction)
-        if not user:
-            return
-        db.set_birth_sex(interaction.user.id, birth_sex)
-        label = BIRTH_SEX_LABELS.get(birth_sex, birth_sex.title())
-        embed = howlbert_embed('Birth Sex Updated', f'Recorded as **{label}**.', color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
-    async def _setsexuality(self, interaction: discord.Interaction, sexuality: str):
-        user = await self._require_user(interaction)
-        if not user:
-            return
-        ok, err = db.set_sexuality(interaction.user.id, sexuality)
-        if not ok:
-            embed = howlbert_embed('Cannot Update', err or 'Invalid sexuality.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        label = SEXUALITY_LABELS.get(sexuality, sexuality.title())
-        embed = howlbert_embed('Sexuality Updated', f'Recorded as **{label}**.', color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
-    async def _setmawbelief(self, interaction: discord.Interaction, maw_belief: str):
-        user = await self._require_user(interaction)
-        if not user:
-            return
-        ok, err = db.set_maw_belief(interaction.user.id, maw_belief)
-        if not ok:
-            embed = howlbert_embed('Cannot Update', err or 'Invalid belief.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        from engine.maw_belief import format_maw_belief
-        user = db.get_user(interaction.user.id)
-        text = format_maw_belief(user) or maw_belief
-        embed = howlbert_embed('Maw Belief Updated', text, color=SUCCESS_COLOR)
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
     async def _other_wolf_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         active_id = db.get_active_wolf_id(interaction.user.id)
         choices = []
@@ -524,7 +501,7 @@ class Life(commands.Cog):
 
     @app_commands.command(name='courtship', description='court, mate, or check pregnancy status.')
     @app_commands.describe(action='court, mate, pregnancy, or rival', target='defender wolf (another player)', partner='challenger wolf (another player; default: you)', rival_mode='physical pin or vocal howl (rival)', favor_challenger='receptive female favors challenger (+2)', own_wolf='one of your other wolves (court/mate)', difficulty='social difficulty (court)', respond='accept or decline pending request (mate)')
-    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (spring)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
+    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (winter)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete)
     async def courtship(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', respond: str | None=None, rival_mode: str='physical', favor_challenger: bool=False):
         if action == 'court':
@@ -549,6 +526,15 @@ class Life(commands.Cog):
         mind_block = social_activity_block(user)
         if mind_block:
             embed = howlbert_embed('Mind Lost', mind_block, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        grief = int(user["grief_sunrises"]) if "grief_sunrises" in user.keys() else 0
+        if grief > 0:
+            embed = howlbert_embed(
+                'Still Grieving',
+                f'**{user["wolf_name"]}** is not ready to court again; the wound is too fresh. ({grief} sunrise{"s" if grief != 1 else ""} remain.)',
+                color=ERROR_COLOR,
+            )
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         target_user, err = _resolve_partner_wolf(user, interaction, partner=target, own_wolf=own_wolf)
@@ -598,6 +584,9 @@ class Life(commands.Cog):
             return
         guild_id = interaction.guild.id if interaction.guild else None
         effective, override_note = resolve_court_difficulty(user, target_user, guild_id, difficulty)
+        mentor_note = _mentor_court_approval_note(user, target_user)
+        if mentor_note and mentor_note.startswith('+'):
+            effective = 'friendly' if effective in ('neutral', 'hostile') else effective
         result = run_court_check(user, effective)
         mood_line = apply_court_outcome(user, target_user, result, effective, guild_id=guild_id, day=day)
         if result['success']:
@@ -609,6 +598,8 @@ class Life(commands.Cog):
             lines.append(f'_Difficulty: **{effective}**._')
         if override_note:
             lines.append(override_note)
+        if mentor_note:
+            lines.append(mentor_note)
         if result['outcome'] == 'critical_success':
             lines.append('**Critical success**: lasting attraction.')
         elif result['success']:
@@ -630,6 +621,13 @@ class Life(commands.Cog):
             scandal = apply_medic_court_caught(user, target_user)
             if scandal:
                 lines.extend(scandal)
+            from engine.bonds import apply_mentor_mate_caught
+            mentor_caught = apply_mentor_mate_caught(user, target_user, guild_id=guild_id, day=day)
+            if mentor_caught:
+                lines.append(mentor_caught)
+        protective_kin = _kin_protective_court_note(user, target_user)
+        if protective_kin:
+            lines.append(protective_kin)
         embed = howlbert_embed('Courtship', '\n'.join(lines), color=SUCCESS_COLOR if result['success'] else ERROR_COLOR)
         rel_note = court_relation_note(user, target_user, guild_id, effective)
         if rel_note:
@@ -646,8 +644,8 @@ class Life(commands.Cog):
             await interaction.response.send_message(player_message('Use in a server.'), ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
-        if world['season'] != 'spring':
-            embed = howlbert_embed('Wrong Season', 'Rival challenges only occur during **mating season** (spring).', color=ERROR_COLOR)
+        if world['season'] != 'winter':
+            embed = howlbert_embed('Wrong Season', 'Rival challenges only occur during **mating season** (winter).', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not defender_target:
@@ -687,6 +685,15 @@ class Life(commands.Cog):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use in a server.'), ephemeral=reply_ephemeral())
             return
+        grief = int(user["grief_sunrises"]) if "grief_sunrises" in user.keys() else 0
+        if grief > 0 and respond not in ('accept', 'decline'):
+            embed = howlbert_embed(
+                'Still Grieving',
+                f'**{user["wolf_name"]}** cannot take a new mate while still raw from loss. ({grief} sunrise{"s" if grief != 1 else ""} remain.)',
+                color=ERROR_COLOR,
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
         if respond in ('accept', 'decline'):
             pending = db.get_pending_mate_for_partner(interaction.user.id)
             if not pending:
@@ -702,6 +709,13 @@ class Life(commands.Cog):
             if not initiator or not partner_user:
                 db.set_pending_mate_status(pending['id'], 'expired')
                 embed = howlbert_embed('Expired', 'One of the wolves no longer exists.', color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+            from engine.attraction import kinship_blocked
+            kin_block = kinship_blocked(initiator, partner_user)
+            if kin_block:
+                db.set_pending_mate_status(pending['id'], 'declined')
+                embed = howlbert_embed('Forbidden', kin_block, color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
@@ -726,6 +740,11 @@ class Life(commands.Cog):
             else:
                 db.set_pending_mate_status(pending['id'], 'expired')
             title = mating_embed_title(body, hard_fail=hard_fail or not ok)
+            if ok and not hard_fail:
+                from engine.bonds import apply_mentor_mate_caught
+                mentor_caught = apply_mentor_mate_caught(initiator, partner_user, guild_id=interaction.guild.id, day=world['day_number'])
+                if mentor_caught:
+                    body += f'\n\n{mentor_caught}'
             await interaction.response.send_message(embed=howlbert_embed(title, body, color=color))
             return
         block = young_wolf_block(user, action='mate')
@@ -763,6 +782,12 @@ class Life(commands.Cog):
             embed = howlbert_embed('Mind Lost', f"**{partner_user['wolf_name']}**: {partner_mind}", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
+        from engine.attraction import kinship_blocked
+        kin_block = kinship_blocked(user, partner_user)
+        if kin_block:
+            embed = howlbert_embed('Forbidden', kin_block, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
         same_owner = partner_user['discord_id'] == interaction.user.id
         if not same_owner and partner_user['receptive_day'] < world['day_number']:
             embed = howlbert_embed('Not Receptive', 'Court them first with `/courtship action:court`, or they may refuse.', color=ERROR_COLOR)
@@ -794,6 +819,11 @@ class Life(commands.Cog):
             return
         ok, body, color, hard_fail = execute_mating(user, partner_user, day_number=world['day_number'], guild_id=interaction.guild.id)
         title = mating_embed_title(body, hard_fail=hard_fail or not ok)
+        if ok and not hard_fail:
+            from engine.bonds import apply_mentor_mate_caught
+            mentor_caught = apply_mentor_mate_caught(user, partner_user, guild_id=interaction.guild.id, day=world['day_number'])
+            if mentor_caught:
+                body += f'\n\n{mentor_caught}'
         await interaction.response.send_message(embed=howlbert_embed(title, body, color=color))
 
     async def _pregnancy(self, interaction: discord.Interaction):
@@ -843,17 +873,17 @@ class Life(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='pupcare', description='list pups, birth a litter, save a dying pup, train a pup, or adopt.')
-    @app_commands.describe(action='list, birth, feed, save, train, or adopt', names='comma-separated pup names (birth)', name='pup name (save, feed, or train one pup)', partner='bonded mate (adopt)', own_wolf='your bonded mate wolf (adopt) or trainer wolf (train)', youth="another player's wolf to adopt", own_youth='your pup or juvenile to adopt', respond='accept or decline adoption request', attribute='attribute to train (train)')
+    @app_commands.describe(action='list, birth, feed, save, train, or adopt', names='comma-separated pup names (birth)', name='pup name (save, feed, or train one pup)', partner='bonded mate (adopt)', own_wolf='your bonded mate wolf (adopt) or trainer wolf (train)', youth="another player's wolf to adopt", own_youth='your pup or juvenile to adopt', respond='accept or decline adoption request', attribute='attribute to train (train)', hide_father="don't reveal the sire publicly; only you and the father's player will know (birth)")
     @app_commands.choices(action=[app_commands.Choice(name='list your pups', value='list'), app_commands.Choice(name='birth litter', value='birth'), app_commands.Choice(name='feed / nurse pups', value='feed'), app_commands.Choice(name='save dying pup', value='save'), app_commands.Choice(name='train a pup', value='train'), app_commands.Choice(name='adopt youth', value='adopt')], respond=[app_commands.Choice(name='accept pending adoption', value='accept'), app_commands.Choice(name='decline pending adoption', value='decline')], attribute=[app_commands.Choice(name='strength', value='str'), app_commands.Choice(name='dexterity', value='dex'), app_commands.Choice(name='constitution', value='con'), app_commands.Choice(name='intelligence', value='int'), app_commands.Choice(name='charisma', value='cha'), app_commands.Choice(name='wisdom', value='wis')])
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, own_youth=_young_wolf_autocomplete, name=_nursing_pup_autocomplete)
-    async def pupcare(self, interaction: discord.Interaction, action: str, names: str | None=None, name: str | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None, attribute: str | None=None):
+    async def pupcare(self, interaction: discord.Interaction, action: str, names: str | None=None, name: str | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None, attribute: str | None=None, hide_father: bool=False):
         if action == 'list':
             await self._pups(interaction)
         elif action == 'birth':
             if not names:
                 await interaction.response.send_message(player_message('Provide **names** for the litter.'), ephemeral=reply_ephemeral())
                 return
-            await self._birth(interaction, names)
+            await self._birth(interaction, names, hide_father=hide_father)
         elif action == 'feed':
             await self._feedpups(interaction, name, own_wolf)
         elif action == 'save':
@@ -869,7 +899,7 @@ class Life(commands.Cog):
         elif action == 'adopt':
             await self._adoptpup(interaction, partner, own_wolf, youth, own_youth, respond)
 
-    async def _birth(self, interaction: discord.Interaction, names: str):
+    async def _birth(self, interaction: discord.Interaction, names: str, *, hide_father: bool=False):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -926,7 +956,7 @@ class Life(commands.Cog):
                 stillborn_lines.append(format_stillborn_save_hint(pup_name, conditions))
                 continue
             stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
-            pup_id = db.register_born_wolf(discord_id=user['discord_id'], wolf_name=pup_name, mother_wolf_id=user['id'], father_wolf_id=father_id, stats=stats, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), genetic_conditions=encode_genetic_conditions(conditions))
+            pup_id = db.register_born_wolf(discord_id=user['discord_id'], wolf_name=pup_name, mother_wolf_id=user['id'], father_wolf_id=father_id, stats=stats, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), genetic_conditions=encode_genetic_conditions(conditions), father_hidden=hide_father)
             born_pup_ids.append(pup_id)
             born_names.append(pup_name)
             if conditions:
@@ -976,6 +1006,8 @@ class Life(commands.Cog):
             elif user['pack_id'] and int(father['pack_id']) != int(user['pack_id']):
                 father_line += f"\n_**{father['wolf_name']}** is from another Great Pack; pups start in **{user['wolf_name']}**'s den._"
         body = f"Birth check: **{result['total']}** vs DC 12; **{len(born_names)}** pup(s) born: {name_line}.{father_line}\nBorn pups use **extra slots** (not your 3 `/register` slots). Use `/switchwolf` to play them."
+        if hide_father and father:
+            body += "\n\n_the sire's name stays off the litter's public family tree; only you and **" + father['wolf_name'] + "**'s player will see it._"
         if mutation_lines:
             body += '\n\n**Mutations:**\n' + '\n'.join(mutation_lines)
         if inheritance_lines:

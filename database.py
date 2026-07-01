@@ -1086,6 +1086,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_finnpelt_reward_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "last_maggotbrain_reward_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_maggotbrain_reward_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_named_wolf_blink_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_named_wolf_blink_day INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_plot_witness_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_plot_witness_day INTEGER NOT NULL DEFAULT 0"
@@ -1507,10 +1515,61 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_freeze_at TEXT NOT NULL DEFAULT ''"
         )
+    if "exiled_from_pack_id" not in user_cols_late:
+        conn.execute("ALTER TABLE users ADD COLUMN exiled_from_pack_id INTEGER")
+    if "exiled_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN exiled_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "father_hidden" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN father_hidden INTEGER NOT NULL DEFAULT 0"
+        )
+    if "oathbreaker_count" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN oathbreaker_count INTEGER NOT NULL DEFAULT 0"
+        )
+    if "hostage_at_pack_id" not in user_cols_late:
+        conn.execute("ALTER TABLE users ADD COLUMN hostage_at_pack_id INTEGER")
+    if "spy_for_pack_id" not in user_cols_late:
+        conn.execute("ALTER TABLE users ADD COLUMN spy_for_pack_id INTEGER")
+    if "last_spy_report_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_spy_report_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "low_mood_streak" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN low_mood_streak INTEGER NOT NULL DEFAULT 0"
+        )
+    if "grief_sunrises" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN grief_sunrises INTEGER NOT NULL DEFAULT 0"
+        )
+    if "howl_exposed_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN howl_exposed_day INTEGER NOT NULL DEFAULT 0"
+        )
 
     scene_cols = {row[1] for row in conn.execute("PRAGMA table_info(rp_scenes)")}
     if "roster_message_id" not in scene_cols:
         conn.execute("ALTER TABLE rp_scenes ADD COLUMN roster_message_id INTEGER")
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pending_rumors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            wolf_a_id INTEGER NOT NULL,
+            wolf_b_id INTEGER,
+            kind TEXT NOT NULL,
+            standing_delta INTEGER NOT NULL DEFAULT 0,
+            flavor_text TEXT NOT NULL,
+            reveal_day INTEGER NOT NULL,
+            queued_day INTEGER NOT NULL,
+            revealed INTEGER NOT NULL DEFAULT 0
+        )
+        """
+    )
 
     conn.execute(
         """
@@ -2015,6 +2074,59 @@ def _migrate(conn: sqlite3.Connection) -> None:
             notes TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL,
             fulfilled_at TEXT
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sanctioned_matches (
+            wolf_a_id INTEGER NOT NULL,
+            wolf_b_id INTEGER NOT NULL,
+            PRIMARY KEY (wolf_a_id, wolf_b_id)
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_denouncements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pack_id INTEGER NOT NULL,
+            target_wolf_id INTEGER NOT NULL,
+            target_name TEXT NOT NULL,
+            denouncer_wolf_id INTEGER NOT NULL,
+            denouncer_name TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            seconds_count INTEGER NOT NULL DEFAULT 0,
+            resolved INTEGER NOT NULL DEFAULT 0,
+            day INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_denouncement_seconds (
+            denouncement_id INTEGER NOT NULL,
+            wolf_id INTEGER NOT NULL,
+            PRIMARY KEY (denouncement_id, wolf_id)
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_dissents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pack_id INTEGER NOT NULL,
+            dissenter_wolf_id INTEGER NOT NULL,
+            dissenter_name TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            day INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
         )
         """
     )
@@ -4363,7 +4475,17 @@ def _claim_pack_alpha_if_eligible(
     )
 
 
-def _promote_pack_alpha(conn: sqlite3.Connection, pack_id: int, exclude_id: int | None = None) -> None:
+def _promote_pack_alpha(
+    conn: sqlite3.Connection, pack_id: int, exclude_id: int | None = None, *, triggered_day: int = 0
+) -> None:
+    from engine.broken_canine import run_vacancy_rite
+
+    rite = run_vacancy_rite(
+        conn, pack_id=pack_id, excluded_discord_id=exclude_id, triggered_day=triggered_day
+    )
+    if rite:
+        return
+
     base = "SELECT id, discord_id FROM users WHERE pack_id = ?"
     if exclude_id:
         base += " AND discord_id != ?"
@@ -4382,7 +4504,7 @@ def _promote_pack_alpha(conn: sqlite3.Connection, pack_id: int, exclude_id: int 
         conn.execute("UPDATE packs SET alpha_id = NULL WHERE id = ?", (pack_id,))
 
 
-def assign_pack_affiliation(discord_id: int, affiliation: str) -> str | None:
+def assign_pack_affiliation(discord_id: int, affiliation: str, *, guild_id: int | None = None) -> str | None:
     """
     Join a Great Pack, switch packs, or go loner.
     Returns error message or None on success.
@@ -4394,9 +4516,28 @@ def assign_pack_affiliation(discord_id: int, affiliation: str) -> str | None:
     if not user:
         return "Not registered."
 
+    if affiliation in GREAT_PACKS and "exiled_from_pack_id" in user.keys() and user["exiled_from_pack_id"]:
+        from config import EXILE_REJOIN_COOLDOWN_DAYS
+
+        target_pack_row = get_pack_by_key(affiliation)
+        if target_pack_row and int(user["exiled_from_pack_id"]) == int(target_pack_row["id"]):
+            day = 0
+            if guild_id:
+                world = get_world(guild_id)
+                if world:
+                    day = int(world["day_number"])
+            ready_day = int(user["exiled_day"] or 0) + EXILE_REJOIN_COOLDOWN_DAYS
+            if day < ready_day:
+                remaining = ready_day - day
+                return (
+                    f"that den cast you out; they won't take you back for **{remaining}** "
+                    "more sunrise(s) unless their alpha pardons you (`/pack pardon`)."
+                )
+
     wolf_id = user["id"]
     old_great_pack = user["great_pack"] if "great_pack" in user.keys() else None
     old_pack_id = user["pack_id"]
+    went_loner_key: str | None = None
     with get_db() as conn:
         if old_pack_id:
             old_pack = conn.execute(
@@ -4414,34 +4555,267 @@ def assign_pack_affiliation(discord_id: int, affiliation: str) -> str | None:
                 """,
                 (None if affiliation == LONER_KEY else ROGUE_KEY, wolf_id),
             )
-            new_key = None if affiliation == LONER_KEY else ROGUE_KEY
-            from engine.wolf_journal import log_pack_change
+            went_loner_key = None if affiliation == LONER_KEY else ROGUE_KEY
+        else:
+            pack = conn.execute(
+                "SELECT * FROM packs WHERE key = ?", (affiliation,)
+            ).fetchone()
+            if not pack:
+                return "That Great Pack is not set up yet. Restart the bot."
 
-            log_pack_change(wolf_id, user["wolf_name"], old_great_pack, new_key)
-            return None
+            wolf_role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
+            conn.execute(
+                """
+                UPDATE users
+                SET great_pack = ?, pack_id = ?, exiled_from_pack_id = NULL, exiled_day = 0
+                WHERE id = ?
+                """,
+                (affiliation, pack["id"], wolf_id),
+            )
+            _claim_pack_alpha_if_eligible(conn, pack["id"], discord_id, wolf_role)
 
-        pack = conn.execute(
-            "SELECT * FROM packs WHERE key = ?", (affiliation,)
+    from engine.wolf_journal import log_pack_change
+
+    if went_loner_key is not None or affiliation in (LONER_KEY, ROGUE_KEY):
+        log_pack_change(wolf_id, user["wolf_name"], old_great_pack, went_loner_key)
+        return None
+
+    if old_great_pack and old_great_pack != affiliation:
+        new_standing = _standing_on_pack_switch(
+            old_standing=int(user["standing"]) if "standing" in user.keys() else 0,
+            old_pack_id=old_pack_id,
+            new_pack_affiliation=affiliation,
+            guild_id=guild_id,
+        )
+        update_user(discord_id, wolf_id=wolf_id, standing=new_standing)
+
+    if not old_great_pack and affiliation in GREAT_PACKS:
+        grant_great_pack_starting_herbs(wolf_id, affiliation)
+    log_pack_change(wolf_id, user["wolf_name"], old_great_pack, affiliation)
+    return None
+
+
+def _standing_on_pack_switch(
+    old_standing: int,
+    old_pack_id: int | None,
+    new_pack_affiliation: str,
+    guild_id: int | None,
+) -> int:
+    """
+    Joining a new pack resets standing to 0 — you're unknown there.
+    Exception: if you had high standing (≥4) in your old pack AND the two
+    packs have a neutral or better relation (pack_relations standing ≥5),
+    reputation travels via inter-pack contact (+1; +2 if allied ≥8).
+    Hostile relations grant no benefit — being the enemy's champion is a liability.
+    """
+    if not old_pack_id or not guild_id:
+        return 0
+    if old_standing < 4:
+        return 0
+    new_pack = get_pack_by_key(new_pack_affiliation)
+    if not new_pack:
+        return 0
+    with get_db() as conn:
+        rel = conn.execute(
+            """
+            SELECT standing FROM pack_relations
+            WHERE guild_id = ?
+              AND ((pack_a_id = ? AND pack_b_id = ?) OR (pack_a_id = ? AND pack_b_id = ?))
+            """,
+            (guild_id, old_pack_id, int(new_pack["id"]), int(new_pack["id"]), old_pack_id),
         ).fetchone()
-        if not pack:
-            return "That Great Pack is not set up yet. Restart the bot."
+    if not rel:
+        return 0
+    rel_standing = int(rel["standing"])
+    if rel_standing >= 8:
+        return 2
+    if rel_standing >= 5:
+        return 1
+    return 0
 
-        wolf_role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
+
+def pardon_exile(discord_id: int, pack_id: int) -> bool:
+    """Alpha lifts the rejoin cooldown for a wolf exiled from their den. Returns False if no matching exile on file."""
+    user = get_user(discord_id)
+    if not user or "exiled_from_pack_id" not in user.keys() or not user["exiled_from_pack_id"]:
+        return False
+    if int(user["exiled_from_pack_id"]) != int(pack_id):
+        return False
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET exiled_from_pack_id = NULL, exiled_day = 0 WHERE id = ?",
+            (user["id"],),
+        )
+    return True
+
+
+def mark_oathbreaker(wolf_id: int) -> int:
+    """
+    Record that this specific wolf personally broke a treaty (pack-level
+    relation/unity already takes the diplomatic hit elsewhere; this is the
+    individual's own reputation, separate from their den's). Returns the new
+    count.
+    """
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET oathbreaker_count = oathbreaker_count + 1 WHERE id = ?",
+            (wolf_id,),
+        )
+        row = conn.execute(
+            "SELECT oathbreaker_count FROM users WHERE id = ?", (wolf_id,)
+        ).fetchone()
+        return int(row["oathbreaker_count"]) if row else 0
+
+
+def oathbreaker_count(user) -> int:
+    return int(user["oathbreaker_count"]) if user and "oathbreaker_count" in user.keys() else 0
+
+
+def record_pack_dissent(
+    *, pack_id: int, dissenter_wolf_id: int, dissenter_name: str, subject: str, reason: str, day: int
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO pack_dissents (
+                pack_id, dissenter_wolf_id, dissenter_name, subject, reason, day, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (pack_id, dissenter_wolf_id, dissenter_name, subject, reason, day, utcnow()),
+        )
+
+
+def list_recent_pack_dissents(pack_id: int, *, limit: int = 5) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pack_dissents
+            WHERE pack_id = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (pack_id, limit),
+        ).fetchall()
+
+
+def create_denouncement(
+    *, pack_id: int, target_wolf_id: int, target_name: str, denouncer_wolf_id: int, denouncer_name: str, reason: str, day: int
+) -> int:
+    with get_db() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO pack_denouncements (
+                pack_id, target_wolf_id, target_name, denouncer_wolf_id, denouncer_name, reason, day, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (pack_id, target_wolf_id, target_name, denouncer_wolf_id, denouncer_name, reason, day, utcnow()),
+        )
+        return int(cursor.lastrowid)
+
+
+def get_open_denouncement_for_target(pack_id: int, target_wolf_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pack_denouncements
+            WHERE pack_id = ? AND target_wolf_id = ? AND resolved = 0
+            ORDER BY id DESC LIMIT 1
+            """,
+            (pack_id, target_wolf_id),
+        ).fetchone()
+
+
+def second_denouncement(denouncement_id: int, wolf_id: int) -> int | None:
+    """Add this wolf's second; returns new seconds_count, or None if already seconded / not found."""
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT * FROM pack_denouncements WHERE id = ? AND resolved = 0", (denouncement_id,)
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            conn.execute(
+                "INSERT INTO pack_denouncement_seconds (denouncement_id, wolf_id) VALUES (?, ?)",
+                (denouncement_id, wolf_id),
+            )
+        except sqlite3.IntegrityError:
+            return None
+        new_count = int(row["seconds_count"]) + 1
+        conn.execute(
+            "UPDATE pack_denouncements SET seconds_count = ? WHERE id = ?",
+            (new_count, denouncement_id),
+        )
+        return new_count
+
+
+def resolve_denouncement(denouncement_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE pack_denouncements SET resolved = 1 WHERE id = ?", (denouncement_id,))
+
+
+def get_denouncement(denouncement_id: int) -> sqlite3.Row | None:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM pack_denouncements WHERE id = ?", (denouncement_id,)
+        ).fetchone()
+
+
+def set_hostage(wolf_id: int, host_pack_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE users SET hostage_at_pack_id = ? WHERE id = ?", (host_pack_id, wolf_id))
+
+
+def clear_hostage(wolf_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE users SET hostage_at_pack_id = NULL WHERE id = ?", (wolf_id,))
+
+
+def get_hostages_at_pack_from(host_pack_id: int, home_pack_id: int) -> list[sqlite3.Row]:
+    """Wolves of home_pack_id currently hosted at host_pack_id."""
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM users WHERE hostage_at_pack_id = ? AND pack_id = ?",
+            (host_pack_id, home_pack_id),
+        ).fetchall()
+
+
+def plant_spy(wolf_id: int, *, host_pack_id: int, host_great_pack: str, home_pack_id: int) -> None:
+    """Embed a wolf in a rival den (pack_id/great_pack switch to the host) while remembering their true loyalty."""
+    with get_db() as conn:
         conn.execute(
             """
             UPDATE users
-            SET great_pack = ?, pack_id = ?
+            SET pack_id = ?, great_pack = ?, spy_for_pack_id = ?
             WHERE id = ?
             """,
-            (affiliation, pack["id"], wolf_id),
+            (host_pack_id, host_great_pack, home_pack_id, wolf_id),
         )
-        _claim_pack_alpha_if_eligible(conn, pack["id"], discord_id, wolf_role)
-    if not old_great_pack and affiliation in GREAT_PACKS:
-        grant_great_pack_starting_herbs(wolf_id, affiliation)
-    from engine.wolf_journal import log_pack_change
 
-    log_pack_change(wolf_id, user["wolf_name"], old_great_pack, affiliation)
-    return None
+
+def unmask_spy(wolf_id: int) -> None:
+    """Caught (or recalled): leave the host den; clear spy status. Caller adjusts standing/relations separately."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET pack_id = NULL, great_pack = NULL, spy_for_pack_id = NULL WHERE id = ?",
+            (wolf_id,),
+        )
+
+
+def is_match_sanctioned(wolf_a_id: int, wolf_b_id: int) -> bool:
+    a, b = sorted((wolf_a_id, wolf_b_id))
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM sanctioned_matches WHERE wolf_a_id = ? AND wolf_b_id = ?", (a, b)
+        ).fetchone()
+        return row is not None
+
+
+def mark_match_sanctioned(wolf_a_id: int, wolf_b_id: int) -> None:
+    a, b = sorted((wolf_a_id, wolf_b_id))
+    with get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO sanctioned_matches (wolf_a_id, wolf_b_id) VALUES (?, ?)", (a, b)
+        )
 
 
 def get_user_affiliation(user) -> str:
@@ -5103,6 +5477,17 @@ def _age_wolves_on_rollover(months: int, rollover_at: datetime | None = None) ->
                     (new_age, lunation, user["id"]),
                 )
             wolves_aged += 1
+            from config import ELDER_STAT_DRIFT_INTERVAL_MOONS, ELDER_STAT_DRIFT_START_MOONS
+            if new_age >= ELDER_STAT_DRIFT_START_MOONS and new_age % ELDER_STAT_DRIFT_INTERVAL_MOONS == 0:
+                elder = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+                if elder:
+                    new_str = max(1, int(elder["attr_str"]) - 1)
+                    new_wis = min(10, int(elder["attr_wis"]) + 1)
+                    new_max_hp = max(1, int(elder["max_hp"]) + (new_str - int(elder["attr_str"])))
+                    conn.execute(
+                        "UPDATE users SET attr_str = ?, attr_wis = ?, max_hp = ? WHERE id = ?",
+                        (new_str, new_wis, new_max_hp, user["id"]),
+                    )
             if check_age_milestones(old_age, new_age, role) or new_age != old_age:
                 milestones.append(
                     {
@@ -5160,19 +5545,37 @@ def set_wolf_age_moons(wolf_id: int, new_age: int) -> dict | None:
     }
 
 
-def _decay_vitals_on_rollover() -> None:
-    """Mood, hunger, and thirst slip each sunrise; dormant wolves are exempt."""
+def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
+    """Mood, hunger, and thirst slip each sunrise; dormant and inactive wolves are exempt."""
     from config import (
+        AUTO_DORMANT_INACTIVE_DAYS,
+        HUNGER_PASSIVE_MOOD_DRAIN,
+        HUNGER_LOW_THRESHOLD_MOOD_DRAIN,
         HUNGER_ROLLOVER_DECAY,
         HUNGER_SICK_EXTRA_DECAY,
         MOOD_ROLLOVER_DECAY,
         THIRST_ROLLOVER_DECAY,
+        THIRST_ROLLOVER_HEATWAVE_EXTRA,
+        THIRST_ROLLOVER_HEATWAVE_WEATHER,
+        THIRST_ROLLOVER_SNOW_REDUCTION,
+        THIRST_ROLLOVER_SNOW_WEATHER,
         THIRST_SICK_EXTRA_DECAY,
     )
 
+    thirst_weather_mod = 0
+    if weather in THIRST_ROLLOVER_HEATWAVE_WEATHER:
+        thirst_weather_mod = THIRST_ROLLOVER_HEATWAVE_EXTRA
+    elif weather in THIRST_ROLLOVER_SNOW_WEATHER:
+        thirst_weather_mod = -THIRST_ROLLOVER_SNOW_REDUCTION
+    thirst_decay = max(0, THIRST_ROLLOVER_DECAY + thirst_weather_mod)
+    thirst_sick_decay = max(0, THIRST_ROLLOVER_DECAY + THIRST_SICK_EXTRA_DECAY + thirst_weather_mod)
+
+    last_seen_expr = "MAX(" + ", ".join(f"COALESCE({c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    active_since = max(0, day - AUTO_DORMANT_INACTIVE_DAYS)
+
     with get_db() as conn:
         conn.execute(
-            """
+            f"""
             UPDATE users
             SET mood = MAX(0, mood - ?),
                 hunger = MAX(0, hunger - ?),
@@ -5181,11 +5584,12 @@ def _decay_vitals_on_rollover() -> None:
                 raccoon_buys_today = 0,
                 drinks_today = 0
             WHERE dormant = 0 AND (disease IS NULL OR disease = '')
+              AND ({last_seen_expr} >= ? OR ? <= 1)
             """,
-            (MOOD_ROLLOVER_DECAY, HUNGER_ROLLOVER_DECAY, THIRST_ROLLOVER_DECAY),
+            (MOOD_ROLLOVER_DECAY, HUNGER_ROLLOVER_DECAY, thirst_decay, active_since, day),
         )
         conn.execute(
-            """
+            f"""
             UPDATE users
             SET mood = MAX(0, mood - ?),
                 hunger = MAX(0, hunger - ?),
@@ -5194,18 +5598,98 @@ def _decay_vitals_on_rollover() -> None:
                 raccoon_buys_today = 0,
                 drinks_today = 0
             WHERE dormant = 0 AND disease IS NOT NULL AND disease != ''
+              AND ({last_seen_expr} >= ? OR ? <= 1)
             """,
             (
                 MOOD_ROLLOVER_DECAY * 2,
                 HUNGER_ROLLOVER_DECAY + HUNGER_SICK_EXTRA_DECAY,
-                THIRST_ROLLOVER_DECAY + THIRST_SICK_EXTRA_DECAY,
+                thirst_sick_decay,
+                active_since,
+                day,
             ),
+        )
+        conn.execute(
+            f"""
+            UPDATE users
+            SET mood = MAX(0, mood - ?)
+            WHERE dormant = 0 AND hunger < ?
+              AND condition NOT IN ('dead', 'dying')
+              AND ({last_seen_expr} >= ? OR ? <= 1)
+            """,
+            (HUNGER_PASSIVE_MOOD_DRAIN, HUNGER_LOW_THRESHOLD_MOOD_DRAIN, active_since, day),
+        )
+        conn.execute(
+            """
+            UPDATE users SET grief_sunrises = MAX(0, grief_sunrises - 1)
+            WHERE grief_sunrises > 0 AND condition NOT IN ('dead', 'dying')
+            """
         )
 
 
 def _decay_mood_on_rollover() -> None:
     """Legacy alias; vitals decay includes mood."""
     _decay_vitals_on_rollover()
+
+
+def _update_mood_streak_on_rollover(day: int) -> None:
+    """Increment low_mood_streak for active wolves below the mood threshold; reset otherwise."""
+    from config import AUTO_DORMANT_INACTIVE_DAYS, LOW_MOOD_STREAK_THRESHOLD
+
+    last_seen_expr = "MAX(" + ", ".join(f"COALESCE({c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    active_since = max(0, day - AUTO_DORMANT_INACTIVE_DAYS)
+    with get_db() as conn:
+        conn.execute(
+            f"""
+            UPDATE users
+            SET low_mood_streak = CASE
+                WHEN dormant = 0
+                  AND ({last_seen_expr} >= ? OR ? <= 1)
+                  AND mood < ?
+                THEN low_mood_streak + 1
+                ELSE 0
+            END
+            WHERE condition NOT IN ('dead', 'dying')
+            """,
+            (active_since, day, LOW_MOOD_STREAK_THRESHOLD),
+        )
+
+
+def _small_pack_unity_drain_on_rollover(guild_id: int) -> None:
+    """Packs with fewer than SMALL_PACK_ACTIVE_THRESHOLD active wolves lose unity each sunrise."""
+    from config import SMALL_PACK_ACTIVE_THRESHOLD, SMALL_PACK_UNITY_DRAIN
+
+    with get_db() as conn:
+        packs = conn.execute(
+            "SELECT id FROM packs WHERE guild_id = ?", (guild_id,)
+        ).fetchall()
+        for pack in packs:
+            pid = pack["id"]
+            count = conn.execute(
+                """
+                SELECT COUNT(*) AS c FROM users
+                WHERE pack_id = ? AND dormant = 0 AND condition NOT IN ('dead', 'dying')
+                """,
+                (pid,),
+            ).fetchone()
+            if count and int(count["c"]) < SMALL_PACK_ACTIVE_THRESHOLD:
+                conn.execute(
+                    "UPDATE packs SET pack_unity = MAX(0, pack_unity - ?) WHERE id = ?",
+                    (SMALL_PACK_UNITY_DRAIN, pid),
+                )
+
+
+def prune_old_scent_marks_on_rollover(guild_id: int, day: int) -> None:
+    """Delete scent marks older than SCENT_MARK_PRUNE_DAYS from the DB."""
+    from config import SCENT_MARK_PRUNE_DAYS
+
+    cutoff = day - SCENT_MARK_PRUNE_DAYS
+    if cutoff <= 0:
+        return
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM scent_marks WHERE guild_id = ? AND marked_day < ?",
+            (guild_id, cutoff),
+        )
 
 
 def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
@@ -5291,7 +5775,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         with get_db() as conn:
             from engine.disease_spread import apply_disease_spread_on_rollover
 
-            spread_notes = apply_disease_spread_on_rollover(conn)
+            spread_notes = apply_disease_spread_on_rollover(conn, weather=new_weather, day=new_day)
         condition_notes.extend(spread_notes)
         _long_rest_all_wolves_on_rollover(new_day)
         from engine.character_traits import decay_skill_strain_on_rollover
@@ -5316,7 +5800,8 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
                 }
                 for row in hoard_audit
             )
-        _decay_vitals_on_rollover()
+        _decay_vitals_on_rollover(new_day, weather=new_weather)
+        _update_mood_streak_on_rollover(new_day)
         with get_db() as conn:
             from engine.nursing import apply_reproduction_vitals_drain_on_rollover
 
@@ -5383,6 +5868,8 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     close_prey_piles_for_guild(guild_id)
     close_collab_hunts_for_guild(guild_id)
     close_collab_patrols_for_guild(guild_id)
+    _small_pack_unity_drain_on_rollover(guild_id)
+    prune_old_scent_marks_on_rollover(guild_id, new_day)
     prey_rot_notes = rot_prey_stacks(guild_id, new_day)
     pack_prey_rot_notes = rot_pack_prey_stacks(guild_id, new_day)
     prey_spoilage = prey_rot_notes + pack_prey_rot_notes
@@ -5402,9 +5889,12 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     rhythm_notes = apply_den_rhythm_unity(guild_id, new_day - 1)
     bond_notes = apply_bond_relation_pressure(guild_id, new_day)
     raid_news = collect_raid_den_news(guild_id, new_day - 1)
-    if rhythm_notes or bond_notes or raid_news:
+    from engine.rumor_mill import reveal_due_rumors
+
+    rumor_news = reveal_due_rumors(guild_id, new_day)
+    if rhythm_notes or bond_notes or raid_news or rumor_news:
         pack_events = needs_crisis.setdefault("den_news", {}).setdefault("pack_events", [])
-        pack_events.extend(rhythm_notes + bond_notes + raid_news)
+        pack_events.extend(rhythm_notes + bond_notes + raid_news + rumor_news)
     needs_crisis["condition_notes"] = condition_notes
     from engine.forager_perk import apply_forager_daily_herbs_on_rollover
 
@@ -5505,6 +5995,10 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         decay_idle_bonds_on_rollover(conn, new_day)
         decay_idle_standing_on_rollover(conn, new_day)
         decay_stalled_mentorships_on_rollover(conn, new_day)
+        graduate_mentor_bonds_on_rollover(conn, new_day)
+        bond_news = collect_bond_den_news_on_rollover(conn, new_day)
+        if bond_news:
+            needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).extend(bond_news)
         from engine.long_term_injuries import (
             LONG_TERM_TYPES,
             convert_untreated_injuries_on_rollover,
@@ -7152,7 +7646,11 @@ def _dissolve_pack_conn(conn: sqlite3.Connection, pack_id: int) -> int:
 
 
 def _expel_wolf_from_pack_conn(
-    conn: sqlite3.Connection, wolf_id: int, *, reset_standing: bool = True
+    conn: sqlite3.Connection,
+    wolf_id: int,
+    *,
+    reset_standing: bool = True,
+    record_exile_day: int | None = None,
 ) -> None:
     user = conn.execute("SELECT * FROM users WHERE id = ?", (wolf_id,)).fetchone()
     if not user or not user["pack_id"]:
@@ -7164,14 +7662,25 @@ def _expel_wolf_from_pack_conn(
         _promote_pack_alpha(conn, pack_id, exclude_id=user["discord_id"])
 
     if reset_standing:
-        conn.execute(
-            """
-            UPDATE users
-            SET great_pack = NULL, pack_id = NULL, standing = 0
-            WHERE id = ?
-            """,
-            (wolf_id,),
-        )
+        if record_exile_day is not None:
+            conn.execute(
+                """
+                UPDATE users
+                SET great_pack = NULL, pack_id = NULL, standing = 0,
+                    exiled_from_pack_id = ?, exiled_day = ?
+                WHERE id = ?
+                """,
+                (pack_id, record_exile_day, wolf_id),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE users
+                SET great_pack = NULL, pack_id = NULL, standing = 0
+                WHERE id = ?
+                """,
+                (wolf_id,),
+            )
     else:
         conn.execute(
             """
@@ -7220,7 +7729,7 @@ def adjust_wolf_standing_by_id(wolf_id: int, delta: int, *, triggered_day: int =
                 pack = get_pack(user["pack_id"]) if user["pack_id"] else None
                 cast_out_wolf_name = user["wolf_name"]
                 cast_out_pack_name = pack["name"] if pack else "the pack"
-                _expel_wolf_from_pack_conn(conn, wolf_id, reset_standing=True)
+                _expel_wolf_from_pack_conn(conn, wolf_id, reset_standing=True, record_exile_day=triggered_day)
                 result = "kicked"
     if result == "kicked" and cast_out_wolf_name is not None:
         # log_cast_out opens its own get_db() connection; must run after the
@@ -7291,7 +7800,7 @@ def expel_wolves_below_standing_threshold(guild_id: int | None = None) -> int:
                         triggered_day=day,
                     )
                 continue
-            _expel_wolf_from_pack_conn(conn, user["id"], reset_standing=True)
+            _expel_wolf_from_pack_conn(conn, user["id"], reset_standing=True, record_exile_day=day)
             expelled += 1
     return expelled
 
@@ -7307,6 +7816,7 @@ def get_latest_broken_canine_rite(pack_id: int) -> sqlite3.Row | None:
             """,
             (pack_id,),
         ).fetchone()
+
 
 
 def get_pack_unity(pack_id: int) -> int:
@@ -7426,6 +7936,23 @@ def get_pack_relation(guild_id: int, pack_a: int, pack_b: int) -> int:
             (guild_id, a, b),
         ).fetchone()
         return row["standing"] if row else 5
+
+
+def has_cross_pack_bonded_mate(pack_a_id: int, pack_b_id: int) -> bool:
+    """True if a bonded mate pair spans these two packs (a marriage tie between dens)."""
+    if not pack_a_id or not pack_b_id or pack_a_id == pack_b_id:
+        return False
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT 1 FROM users a
+            JOIN users b ON a.bonded_mate_id = b.id
+            WHERE a.pack_id = ? AND b.pack_id = ?
+            LIMIT 1
+            """,
+            (pack_a_id, pack_b_id),
+        ).fetchone()
+        return row is not None
 
 
 def adjust_pack_relation(guild_id: int, pack_a: int, pack_b: int, delta: int) -> int:
@@ -9664,6 +10191,11 @@ def handle_mate_grief_on_wolf_death(conn: sqlite3.Connection, dead_wolf_id: int)
     )
     if not partner or partner["condition"] in ("dead", "dying"):
         return None
+    from config import MATE_GRIEF_SUNRISES
+    conn.execute(
+        "UPDATE users SET grief_sunrises = ? WHERE id = ?",
+        (MATE_GRIEF_SUNRISES, partner_id),
+    )
     from engine.disease_contract import try_grief_on_bond_loss
 
     note = try_grief_on_bond_loss(partner, bond_type="mate", conn=conn)
@@ -9818,6 +10350,52 @@ def get_pending_stillborn(discord_id: int, pup_name: str) -> sqlite3.Row | None:
         ).fetchone()
 
 
+def list_pending_stillborn_for_discord(discord_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM pending_stillborn WHERE discord_id = ?", (discord_id,)
+        ).fetchall()
+
+
+def queue_pending_rumor(
+    *,
+    guild_id: int,
+    wolf_a_id: int,
+    wolf_b_id: int | None,
+    kind: str,
+    standing_delta: int,
+    flavor_text: str,
+    queued_day: int,
+    reveal_day: int,
+) -> None:
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO pending_rumors (
+                guild_id, wolf_a_id, wolf_b_id, kind, standing_delta,
+                flavor_text, reveal_day, queued_day, revealed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            (guild_id, wolf_a_id, wolf_b_id, kind, standing_delta, flavor_text, reveal_day, queued_day),
+        )
+
+
+def get_due_rumors(guild_id: int, day: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT * FROM pending_rumors
+            WHERE guild_id = ? AND revealed = 0 AND reveal_day <= ?
+            """,
+            (guild_id, day),
+        ).fetchall()
+
+
+def mark_rumor_revealed(rumor_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE pending_rumors SET revealed = 1 WHERE id = ?", (rumor_id,))
+
+
 def delete_pending_stillborn(row_id: int) -> None:
     with get_db() as conn:
         conn.execute("DELETE FROM pending_stillborn WHERE id = ?", (row_id,))
@@ -9845,6 +10423,7 @@ def register_born_wolf(
     age_months: int = 3,
     birth_sex: str | None = None,
     genetic_conditions: str | None = None,
+    father_hidden: bool = False,
 ) -> int:
     import json
 
@@ -9935,6 +10514,8 @@ def register_born_wolf(
             )
         if pack_id:
             _claim_pack_alpha_if_eligible(conn, pack_id, discord_id, role)
+        if father_hidden and father_wolf_id:
+            conn.execute("UPDATE users SET father_hidden = 1 WHERE id = ?", (wolf_id,))
     if great_pack and great_pack in GREAT_PACKS:
         grant_great_pack_starting_herbs(wolf_id, great_pack)
     mother = get_user_by_id(mother_wolf_id)
@@ -9997,10 +10578,21 @@ def wolf_display_name(wolf_id: int | None) -> str | None:
     return row["wolf_name"] if row else None
 
 
-def format_lineage_for_profile(user) -> str | None:
+def format_lineage_for_profile(user, *, viewer_discord_id: int | None = None) -> str | None:
     parts: list[str] = []
-    bio1 = wolf_display_name(user["bio_parent_1_id"] if "bio_parent_1_id" in user.keys() else None)
-    bio2 = wolf_display_name(user["bio_parent_2_id"] if "bio_parent_2_id" in user.keys() else None)
+    bio1_id = user["bio_parent_1_id"] if "bio_parent_1_id" in user.keys() else None
+    bio2_id = user["bio_parent_2_id"] if "bio_parent_2_id" in user.keys() else None
+    bio1 = wolf_display_name(bio1_id)
+    bio2 = wolf_display_name(bio2_id)
+    father_hidden = bool(user["father_hidden"]) if "father_hidden" in user.keys() else False
+    if father_hidden and bio2:
+        mother_row = get_user_by_id(bio1_id) if bio1_id else None
+        father_row = get_user_by_id(bio2_id) if bio2_id else None
+        in_the_know = {
+            row["discord_id"] for row in (mother_row, father_row) if row
+        }
+        if viewer_discord_id not in in_the_know:
+            bio2 = "unknown sire"
     if bio1 or bio2:
         names = " & ".join(n for n in (bio1, bio2) if n)
         parts.append(f"**Biological:** {names}")
@@ -10371,6 +10963,56 @@ def decay_idle_standing_on_rollover(conn, current_day: int) -> int:
     return decayed
 
 
+def graduate_mentor_bonds_on_rollover(conn, current_day: int) -> int:
+    """
+    When neither wolf in a mentor bond is an apprentice anymore, the
+    teaching relationship is done — convert it to a friendship so the
+    bond history isn't erased, and log it as a life event.
+    """
+    from engine.apprentice_roles import APPRENTICE_ROLES
+
+    rows = conn.execute(
+        """
+        SELECT wb.wolf_a_id, wb.wolf_b_id, wb.strength,
+               ua.wolf_name AS name_a, ua.wolf_role AS role_a, ua.discord_id AS discord_a,
+               ub.wolf_name AS name_b, ub.wolf_role AS role_b
+        FROM wolf_bonds wb
+        JOIN users ua ON ua.id = wb.wolf_a_id
+        JOIN users ub ON ub.id = wb.wolf_b_id
+        WHERE wb.bond_type = 'mentor'
+          AND ua.condition NOT IN ('dead', 'dying')
+          AND ub.condition NOT IN ('dead', 'dying')
+        """
+    ).fetchall()
+    graduated = 0
+    for row in rows:
+        if row["role_a"] in APPRENTICE_ROLES or row["role_b"] in APPRENTICE_ROLES:
+            continue
+        conn.execute(
+            "DELETE FROM wolf_bonds WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = 'mentor'",
+            (row["wolf_a_id"], row["wolf_b_id"]),
+        )
+        existing_friend = conn.execute(
+            "SELECT strength FROM wolf_bonds WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = 'friendship'",
+            (row["wolf_a_id"], row["wolf_b_id"]),
+        ).fetchone()
+        if not existing_friend:
+            new_strength = max(30, min(70, int(row["strength"])))
+            conn.execute(
+                """
+                INSERT INTO wolf_bonds (wolf_a_id, wolf_b_id, bond_type, strength, note, created_day, updated_day)
+                VALUES (?, ?, 'friendship', ?, 'former mentor', ?, ?)
+                ON CONFLICT DO NOTHING
+                """,
+                (row["wolf_a_id"], row["wolf_b_id"], new_strength, current_day, current_day),
+            )
+        from engine.wolf_journal import _write as _jwrite
+        _jwrite(row["wolf_a_id"], "mentor_graduated", f"mentorship with **{row['name_b']}** complete; a new friendship takes root.", day=current_day)
+        _jwrite(row["wolf_b_id"], "mentor_graduated", f"mentorship with **{row['name_a']}** complete; a new friendship takes root.", day=current_day)
+        graduated += 1
+    return graduated
+
+
 def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
     """
     Friendships, rivalries, and romances that haven't been touched in a
@@ -10392,7 +11034,11 @@ def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
     ).fetchall()
     decayed = 0
     for row in rows:
-        new_strength = max(0, int(row["strength"]) - BOND_DECAY_AMOUNT)
+        # Grudges fade faster than affection — a rivalry not fed by real conflict
+        # softens more quickly than a friendship left to drift on its own.
+        amount = BOND_DECAY_AMOUNT * 2 if row["bond_type"] == "rivalry" else BOND_DECAY_AMOUNT
+        old_strength = int(row["strength"])
+        new_strength = max(0, old_strength - amount)
         conn.execute(
             """
             UPDATE wolf_bonds SET strength = ?, updated_day = ?
@@ -10402,6 +11048,53 @@ def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
         )
         decayed += 1
     return decayed
+
+
+def collect_bond_den_news_on_rollover(conn, current_day: int) -> list[str]:
+    """Produce den-news lines for meaningful bond tier crossings this rollover."""
+    from engine.den_news_bonds import bond_tier, bond_cooling_line, bond_graduation_line
+    from engine.apprentice_roles import APPRENTICE_ROLES
+
+    lines: list[str] = []
+    TIER_THRESHOLDS = (80, 60, 40, 20)
+
+    # Bonds that just decayed across a tier threshold
+    stale_before = current_day - 1
+    decay_rows = conn.execute(
+        """
+        SELECT wb.wolf_a_id, wb.wolf_b_id, wb.bond_type, wb.strength,
+               ua.wolf_name AS name_a, ub.wolf_name AS name_b
+        FROM wolf_bonds wb
+        JOIN users ua ON ua.id = wb.wolf_a_id
+        JOIN users ub ON ub.id = wb.wolf_b_id
+        WHERE wb.bond_type IN ('friendship', 'romance')
+          AND wb.updated_day = ? AND wb.strength > 0
+        """,
+        (current_day,),
+    ).fetchall()
+    for row in decay_rows:
+        prev = int(row["strength"]) + (3 if row["bond_type"] == "rivalry" else 3)
+        crossed = [t for t in TIER_THRESHOLDS if prev >= t > int(row["strength"])]
+        if crossed:
+            lines.append(bond_cooling_line(row["name_a"], row["name_b"], row["bond_type"], crossed[0]))
+
+    # Mentorships that just graduated (friendship bonds created today with 'former mentor' note)
+    grad_rows = conn.execute(
+        """
+        SELECT wb.wolf_a_id, wb.wolf_b_id,
+               ua.wolf_name AS name_a, ub.wolf_name AS name_b
+        FROM wolf_bonds wb
+        JOIN users ua ON ua.id = wb.wolf_a_id
+        JOIN users ub ON ub.id = wb.wolf_b_id
+        WHERE wb.bond_type = 'friendship' AND wb.note = 'former mentor'
+          AND wb.created_day = ?
+        """,
+        (current_day,),
+    ).fetchall()
+    for row in grad_rows:
+        lines.append(bond_graduation_line(row["name_a"], row["name_b"]))
+
+    return lines
 
 
 def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | None:
@@ -10418,6 +11111,39 @@ def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | No
         ).fetchone()
 
 
+# Friendship and rivalry pull against each other — a wolf's regard for another
+# is finite. Growing one bleeds a fraction off the other instead of letting
+# both climb to 100 independently, while still allowing real "complicated"
+# relationships (old friends turned rivals, respected enemies) to coexist.
+_OPPOSING_BOND = {"friendship": "rivalry", "rivalry": "friendship"}
+_BOND_BLEED_RATE = 0.4
+
+
+def _bleed_opposing_bond(low: int, high: int, bond_type: str, gain: int, day: int) -> None:
+    opposing = _OPPOSING_BOND.get(bond_type)
+    if not opposing or gain <= 0:
+        return
+    existing = get_bond(low, high, opposing)
+    if not existing or int(existing["strength"]) <= 0:
+        return
+    bleed = max(1, round(gain * _BOND_BLEED_RATE))
+    new_strength = max(0, int(existing["strength"]) - bleed)
+    with get_db() as conn:
+        if new_strength <= 0:
+            conn.execute(
+                "DELETE FROM wolf_bonds WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = ?",
+                (low, high, opposing),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE wolf_bonds SET strength = ?, updated_day = ?
+                WHERE wolf_a_id = ? AND wolf_b_id = ? AND bond_type = ?
+                """,
+                (new_strength, day, low, high, opposing),
+            )
+
+
 def set_bond(
     wolf_a_id: int,
     wolf_b_id: int,
@@ -10432,6 +11158,8 @@ def set_bond(
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     strength = max(0, min(100, int(strength)))
     note = (note or "").strip()[:120]
+    prior = get_bond(low, high, bond_type)
+    prior_strength = int(prior["strength"]) if prior else 0
     with get_db() as conn:
         conn.execute(
             """
@@ -10444,6 +11172,7 @@ def set_bond(
             """,
             (low, high, bond_type, strength, note, day, day),
         )
+    _bleed_opposing_bond(low, high, bond_type, strength - prior_strength, day)
     return get_bond(low, high, bond_type)
 
 
@@ -10463,9 +11192,6 @@ def adjust_bond_strength(
     existing = get_bond(low, high, bond_type)
     if existing:
         new_strength = max(0, min(100, int(existing["strength"]) + delta))
-        if new_strength <= 0 and bond_type != "rivalry":
-            clear_bond(low, high, bond_type)
-            return None
         if new_strength <= 0:
             clear_bond(low, high, bond_type)
             return None
@@ -10477,10 +11203,13 @@ def adjust_bond_strength(
                 """,
                 (new_strength, day, low, high, bond_type),
             )
+        if delta > 0:
+            _bleed_opposing_bond(low, high, bond_type, delta, day)
         return get_bond(low, high, bond_type)
     if delta <= 0:
         return None
-    return set_bond(low, high, bond_type, strength=min(100, 40 + delta), day=day)
+    new = set_bond(low, high, bond_type, strength=min(100, 40 + delta), day=day)
+    return new
 
 
 def clear_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> bool:
@@ -10587,6 +11316,7 @@ def join_wolf_family(wolf_id: int, name: str, *, role: str = "member", day: int 
     if not family:
         return None, f"No found family named **{name.strip()}**; create it with `/bonds action:Family`."
     role = role if role in ("parent", "sibling", "cub", "member") else "member"
+    existing = get_family_members(family["id"])
     with get_db() as conn:
         conn.execute(
             """
@@ -10595,6 +11325,10 @@ def join_wolf_family(wolf_id: int, name: str, *, role: str = "member", day: int 
             """,
             (family["id"], wolf_id, role, day),
         )
+    bond_note = f'found family: {family["name"]}'
+    for mem in existing:
+        if int(mem["wolf_id"]) != wolf_id:
+            set_bond(wolf_id, int(mem["wolf_id"]), "kin", strength=50, note=bond_note, day=day)
     return get_wolf_family(wolf_id), None
 
 

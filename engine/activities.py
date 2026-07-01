@@ -30,9 +30,12 @@ from engine.infractions import (
     crime_caught_standing,
     cross_pack_steal_caught_standing,
     cross_pack_steal_standing,
+    individual_steal_caught_standing,
+    individual_steal_standing,
     pick_crime_caught_flavor,
     pick_cross_pack_steal_caught_flavor,
     roll_crime_caught,
+    roll_individual_steal_caught,
 )
 from engine.role_privileges import (
     can_forage_again,
@@ -237,7 +240,7 @@ def _append_notes_to_footer(embed, *notes: str | None) -> None:
     embed.set_footer(text=f"{footer} · {extra}" if footer else extra)
 
 
-def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bool, int | None]:
+def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) -> tuple[discord.Embed | None, bool, int | None]:
     """Returns (embed, show_prey_buttons, hunt_combat_encounter_id)."""
     user = db.get_user(interaction.user.id)
     if not user:
@@ -330,7 +333,7 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
         amount += dex_bonus
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
-        user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id, day=day
+        user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id, day=day, territory=territory
     )
     prey_key = prey_key_for_payout(payout, user=user, season=world["season"]) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
@@ -417,6 +420,11 @@ def try_hunt(interaction: discord.Interaction) -> tuple[discord.Embed | None, bo
     hazard = try_hunt_flea_exposure(user, day=day) or try_insect_sting_exposure(user, chance=0.05)
     if hazard:
         embed.description = (embed.description or "") + f"\n\n{hazard}"
+    if net_amount <= 0:
+        from engine.injury_effects import try_prey_counter_injury
+        injury_note = try_prey_counter_injury(updated, net_amount, day)
+        if injury_note:
+            embed.description = (embed.description or "") + f"\n\n{injury_note}"
     return embed, net_amount > 0, None
 
 
@@ -1116,6 +1124,7 @@ def try_crime(
     interaction: discord.Interaction,
     *,
     target_pack: str | None = None,
+    target_wolf: "discord.Member | None" = None,
     raid_type: str = "bones",
     scene: str | None = None,
     staff: bool = False,
@@ -1144,6 +1153,16 @@ def try_crime(
             day=day,
             target_pack=target_pack,
             raid_type=raid_type,
+            scene=scene,
+            staff=staff,
+        )
+
+    if target_wolf:
+        return _try_individual_steal(
+            interaction,
+            user,
+            day=day,
+            target_wolf=target_wolf,
             scene=scene,
             staff=staff,
         )
@@ -1192,6 +1211,76 @@ def try_crime(
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
     if net == 0:
         embed.set_footer(text=embed_footer("today's score is spent; try again after the next sunrise."))
+    return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
+
+
+def _try_individual_steal(
+    interaction: discord.Interaction,
+    user,
+    *,
+    day: int,
+    target_wolf: "discord.Member",
+    scene: str | None,
+    staff: bool,
+) -> discord.Embed | None:
+    from config import INDIVIDUAL_STEAL_PCT, INDIVIDUAL_STEAL_RIVALRY_GAIN
+
+    if target_wolf.id == interaction.user.id:
+        return howlbert_embed("your own paws", "you can't pick your own pocket.", color=ERROR_COLOR)
+
+    victim = db.get_user(target_wolf.id)
+    if not victim:
+        return howlbert_embed("no wolf", f"**{target_wolf.display_name}** has no registered wolf.", color=ERROR_COLOR)
+
+    if int(victim["bones"]) <= 0:
+        return howlbert_embed(
+            "empty pockets",
+            f"**{victim['wolf_name']}** has no bones worth lifting.",
+            color=ERROR_COLOR,
+        )
+
+    db.update_user(interaction.user.id, last_crime_day=day)
+
+    if roll_individual_steal_caught():
+        penalty = individual_steal_caught_standing()
+        kick = db.adjust_wolf_standing(interaction.user.id, penalty)
+        db.adjust_bond_strength(user["id"], victim["id"], "rivalry", INDIVIDUAL_STEAL_RIVALRY_GAIN, day=day)
+        embed = howlbert_embed(
+            "caught red-pawed",
+            f"**{victim['wolf_name']}** wakes mid-theft and snaps at your heels.",
+            color=ERROR_COLOR,
+        )
+        embed.add_field(
+            name="standing",
+            value=f"{penalty}" + ("; **cast out** as loner" if kick == "kicked" else ""),
+            inline=False,
+        )
+        embed.set_footer(text=f"no bones taken from {victim['wolf_name']}. rivalry deepens.")
+        return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
+
+    pct = random.uniform(*INDIVIDUAL_STEAL_PCT)
+    attempted = max(1, int(int(victim["bones"]) * pct))
+    stolen_ok = db.transfer_bones(target_wolf.id, interaction.user.id, attempted)
+    if not stolen_ok:
+        return howlbert_embed(
+            "raid failed",
+            f"**{victim['wolf_name']}**'s stash was lighter than it looked.",
+            color=ERROR_COLOR,
+        )
+
+    standing_gain = individual_steal_standing()
+    db.adjust_wolf_standing(interaction.user.id, standing_gain)
+    db.adjust_bond_strength(user["id"], victim["id"], "rivalry", INDIVIDUAL_STEAL_RIVALRY_GAIN, day=day)
+    updated = db.get_user(interaction.user.id)
+    embed = howlbert_embed(
+        "score pulled",
+        f"you lift **{format_bones(attempted)}** off of **{victim['wolf_name']}** while they're not looking.",
+        color=SUCCESS_COLOR,
+    )
+    embed.add_field(name="stolen", value=format_bones(attempted, signed=True), inline=True)
+    embed.add_field(name="standing", value=f"+{standing_gain}", inline=True)
+    embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
+    embed.set_footer(text=f"{victim['wolf_name']} won't forget this. rivalry deepens.")
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 

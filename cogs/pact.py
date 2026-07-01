@@ -52,10 +52,10 @@ class Pact(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='pact', description='negotiate treaties with cat clans or other great wolf packs (alpha or diplomat).')
-    @app_commands.describe(action='view, forge, renew, break, gift, trade, tradefood, receive, or raid', target='cat clan or great wolf pack (e.g. thunderclan, greyspire)', pact_type='treaty type when forging', terms='short rp terms (optional)', stack='food/forage stack to trade (for tradefood)', raid_type='what to steal: food, herbs, or amusement (raid only)', amount='bones to send as tribute, 0 or more; more bones = more trust/standing (gift only)')
-    @app_commands.choices(action=[app_commands.Choice(name='view pacts', value='view'), app_commands.Choice(name='forge treaty', value='forge'), app_commands.Choice(name='renew treaty', value='renew'), app_commands.Choice(name='break treaty', value='break'), app_commands.Choice(name='send tribute gift', value='gift'), app_commands.Choice(name='trade duplicates', value='trade'), app_commands.Choice(name='trade food', value='tradefood'), app_commands.Choice(name='receive border goods', value='receive'), app_commands.Choice(name='raid camp/den', value='raid')], pact_type=[app_commands.Choice(name='border truce (12 sunrises)', value='truce'), app_commands.Choice(name='alliance (18 sunrises)', value='alliance'), app_commands.Choice(name='hunting rights (8 sunrises)', value='hunting_rights')], raid_type=[app_commands.Choice(name='food reserve', value='food'), app_commands.Choice(name='herb store', value='herbs'), app_commands.Choice(name='toy store', value='amusement')])
+    @app_commands.describe(action='view/forge/renew/break/gift/trade/tradefood/receive/hostage/recall/infiltrate/report/match', target='cat clan or wolf pack (e.g. thunderclan, greyspire)', pact_type='treaty type when forging', terms='short rp terms (optional)', stack='food/forage stack to trade (for tradefood)', amount='bones to send as tribute, 0 or more; more bones = more trust/standing (gift only)', own_wolf='which of your wolves (hostage/spy/match); defaults to your active wolf')
+    @app_commands.choices(action=[app_commands.Choice(name='view pacts', value='view'), app_commands.Choice(name='forge treaty', value='forge'), app_commands.Choice(name='renew treaty', value='renew'), app_commands.Choice(name='break treaty', value='break'), app_commands.Choice(name='send tribute gift', value='gift'), app_commands.Choice(name='trade duplicates', value='trade'), app_commands.Choice(name='trade food', value='tradefood'), app_commands.Choice(name='receive border goods', value='receive'), app_commands.Choice(name='send hostage (wolf packs only)', value='hostage'), app_commands.Choice(name='recall hostage', value='recall'), app_commands.Choice(name='plant a spy (wolf packs only)', value='infiltrate'), app_commands.Choice(name='spy: report home', value='report'), app_commands.Choice(name='sanction political match (wolf packs only)', value='match')], pact_type=[app_commands.Choice(name='border truce (12 sunrises)', value='truce'), app_commands.Choice(name='alliance (18 sunrises)', value='alliance'), app_commands.Choice(name='hunting rights (8 sunrises)', value='hunting_rights')])
     @app_commands.autocomplete(target=_pact_target_autocomplete, stack=_food_stack_autocomplete)
-    async def pact(self, interaction: discord.Interaction, action: str='view', target: str | None=None, pact_type: str | None=None, terms: str | None=None, stack: int | None=None, raid_type: str='food', amount: app_commands.Range[int, 0, None] | None=None):
+    async def pact(self, interaction: discord.Interaction, action: str='view', target: str | None=None, pact_type: str | None=None, terms: str | None=None, stack: int | None=None, amount: app_commands.Range[int, 0, None] | None=None, own_wolf: str | None=None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(embed=howlbert_embed('not registered', 'use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -77,6 +77,36 @@ class Pact(commands.Cog):
             embed = howlbert_embed(f"{pack['name']}; treaties", body)
             embed.set_footer(text=f"treasury: {format_bones(int(pack['treasury']))} · `/pact action:forge`")
             await interaction.response.send_message(embed=embed)
+            return
+        if action == 'recall':
+            hostage_row = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else user
+            if not hostage_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.wolf_pack_pacts import recall_hostage
+            ok, msg = recall_hostage(user, pack, hostage=hostage_row)
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(embed=howlbert_embed('hostage recalled' if ok else 'recall failed', msg, color=color), ephemeral=False if ok else reply_ephemeral())
+            return
+        if action == 'report':
+            spy_row = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else user
+            if not spy_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.wolf_pack_pacts import spy_report
+            ok, msg = spy_report(spy_row, guild_id=guild_id, day=day)
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(embed=howlbert_embed('word from the den' if ok else 'spy exposed' if 'caught' in msg else 'cannot report', msg, color=color), ephemeral=ok)
+            return
+        if action == 'match':
+            match_row = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else user
+            if not match_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.wolf_pack_pacts import sanction_political_match
+            ok, msg = sanction_political_match(user, pack, guild_id=guild_id, own_wolf=match_row, day=day)
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(embed=howlbert_embed('match sanctioned' if ok else 'cannot sanction', msg, color=color), ephemeral=False if ok else reply_ephemeral())
             return
         if not target:
             await interaction.response.send_message(embed=howlbert_embed('treaty target', 'name a **cat clan** or **great wolf pack** (greyspire, mistmoor, thistlehide, silverrush, thunderclan, …).', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -157,22 +187,31 @@ class Pact(commands.Cog):
                 embed.set_footer(text='/food · /bones action:inventory · /playpen action:toys')
             await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
             return
-        if action == 'raid':
-            if wolf_target:
-                from config import GREAT_PACKS
-                from engine.activities import try_crime
-
-                gp_key = next((k for k, info in GREAT_PACKS.items() if target.strip().lower() in (k, info['name'].lower())), None)
-                embed = try_crime(interaction, target_pack=gp_key, raid_type=raid_type)
-                if embed:
-                    await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        if action == 'hostage':
+            if not wolf_target:
+                await interaction.response.send_message(embed=howlbert_embed('wolf packs only', 'cat clans keep no den to host a hostage in; pick a great wolf pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            from engine.cat_pacts import raid_cat_clan
-
-            ok, msg = raid_cat_clan(user, pack, guild_id=guild_id, clan_name=target, raid_type=raid_type, day=day)
+            hostage_row = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else user
+            if not hostage_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.wolf_pack_pacts import send_hostage
+            ok, msg = send_hostage(user, pack, guild_id=guild_id, target_pack=target, hostage=hostage_row, day=day)
             color = SUCCESS_COLOR if ok else ERROR_COLOR
-            embed = howlbert_embed('raid successful' if ok else 'caught at the border', msg, color=color)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-
+            await interaction.response.send_message(embed=howlbert_embed('hostage sent' if ok else 'cannot send hostage', msg, color=color), ephemeral=False if ok else reply_ephemeral())
+            return
+        if action == 'infiltrate':
+            if not wolf_target:
+                await interaction.response.send_message(embed=howlbert_embed('wolf packs only', 'cat clans are too small to embed a spy in unnoticed; pick a great wolf pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            spy_row = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else user
+            if not spy_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.wolf_pack_pacts import infiltrate_pack
+            ok, msg = infiltrate_pack(user, pack, target_pack=target, spy=spy_row, day=day)
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            await interaction.response.send_message(embed=howlbert_embed('spy planted' if ok else 'cannot plant spy', msg, color=color), ephemeral=True)
+            return
 async def setup(bot: commands.Bot):
     await bot.add_cog(Pact(bot))
