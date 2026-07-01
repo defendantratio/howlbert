@@ -23,12 +23,22 @@ def _safe_label(name: str | None) -> str:
     return name.replace('"', "'").replace("\n", " ").strip()[:32] or "unknown"
 
 
-def build_family_mermaid(wolf) -> tuple[str, int]:
+def build_family_mermaid(wolf, *, viewer_discord_id: int | None = None) -> tuple[str, int]:
     """Return (mermaid_source, relationship_count) for a wolf's family web."""
     lines = ["graph td"]
     rel = 0
     node_ids: dict[int, str] = {}
     counter = 0
+
+    father_hidden = bool(wolf["father_hidden"]) if "father_hidden" in wolf.keys() else False
+    hide_bio2 = False
+    if father_hidden:
+        bio1_id = wolf["bio_parent_1_id"] if "bio_parent_1_id" in wolf.keys() else None
+        bio2_id = wolf["bio_parent_2_id"] if "bio_parent_2_id" in wolf.keys() else None
+        mother_row = db.get_user_by_id(bio1_id) if bio1_id else None
+        father_row = db.get_user_by_id(bio2_id) if bio2_id else None
+        in_the_know = {row["discord_id"] for row in (mother_row, father_row) if row}
+        hide_bio2 = viewer_discord_id not in in_the_know
 
     def node(wolf_id: int | None, name: str | None, *, focus: bool = False) -> str | None:
         nonlocal counter
@@ -55,8 +65,13 @@ def build_family_mermaid(wolf) -> tuple[str, int]:
     def col(key):
         return wolf[key] if key in wolf.keys() else None
 
-    # Biological parents (solid), adoptive parents (dashed).
+    # Biological parents (solid), adoptive parents (dashed). The sire is left
+    # off the diagram entirely (not just unlabeled) when his identity is a
+    # secret the viewer isn't in on — a labeled "unknown" node would still
+    # confirm a hidden-paternity pup exists, which defeats the point.
     for pkey in ("bio_parent_1_id", "bio_parent_2_id"):
+        if pkey == "bio_parent_2_id" and hide_bio2:
+            continue
         pid = col(pkey)
         if pid:
             pn = node(pid, name_of(pid))
@@ -105,9 +120,9 @@ def mermaid_image_url(code: str, *, theme: str = "dark") -> str:
     return f"https://mermaid.ink/img/pako:{packed}?type=png"
 
 
-def family_tree_image_url(wolf) -> tuple[str | None, int]:
+def family_tree_image_url(wolf, *, viewer_discord_id: int | None = None) -> tuple[str | None, int]:
     """Build the family-tree image URL for a wolf; (url, relationship_count)."""
-    code, rel = build_family_mermaid(wolf)
+    code, rel = build_family_mermaid(wolf, viewer_discord_id=viewer_discord_id)
     if rel == 0:
         return None, 0
     return mermaid_image_url(code), rel

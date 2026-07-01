@@ -98,9 +98,29 @@ FIREPAW_NAME = "Firepaw"
 SOOT_NAME = "Soot"
 RIVERSHROUD_NAME = "RiverShroud"
 FINNPELT_NAME = "Finnpelt"
+MAGGOTBRAIN_NAME = "MaggotBrain"
+VULCAN_NAME = "Vulcan Stonehide"
+RIME_NAME = "Rime"
+ROOT_NAME = "Root"
+MIREWORT_NAME = "mirewort"
+DRIFTPUP_NAME = "Driftpup"
+PALESTEP_NAME = "Pale'Step"
+BRACKENPELT_NAME = "Brackenpelt"
+ICEFANG_NAME = "Icefang"
+HEMLOCK_NAME = "Hemlock"
+RIPPLE_NAME = "Ripple"
+SYPHA_NAME = "Sypha"
+MURKVEIN_NAME = "Murkvein"
+AROMIS_NAME = "Aromis"
+LUCID_NAME = "Lucid"
+ELTANIN_NAME = "Eltanin"
+CLOVERFERN_NAME = "Cloverfern"
+KANAMI_NAME = "Kanami"
+SKYE_NAME = "Skye"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
+MAGGOTBRAIN_PLOT_PHASES = frozenset(range(5, 11))
 
 PACK_LABELS = {
     "thistlehide": "thistlehide",
@@ -131,6 +151,36 @@ def rivershroud_plot_active(user, guild_id: int) -> bool:
 
 def finnpelt_plot_active(user, guild_id: int) -> bool:
     return _thistlehide_canon_plot_active(user, guild_id, FINNPELT_NAME, "hunter")
+
+
+def _mistmoor_canon_plot_active(user, guild_id: int, canon_name: str, role: str) -> bool:
+    if plot_phase(guild_id) <= 0 or not _is_plot_wolf(user, canon_name):
+        return False
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    if gp != "mistmoor":
+        return False
+    from engine.pack_leadership import wolf_role_key
+
+    return wolf_role_key(user) == role
+
+
+def maggotbrain_plot_active(user, guild_id: int) -> bool:
+    return _mistmoor_canon_plot_active(user, guild_id, MAGGOTBRAIN_NAME, "hunter")
+
+
+def _silverrush_canon_plot_active(user, guild_id: int, canon_name: str, role: str) -> bool:
+    if plot_phase(guild_id) <= 0 or not _is_plot_wolf(user, canon_name):
+        return False
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    if gp != "silverrush":
+        return False
+    from engine.pack_leadership import wolf_role_key
+
+    return wolf_role_key(user) == role
+
+
+def vulcan_plot_active(user, guild_id: int) -> bool:
+    return _silverrush_canon_plot_active(user, guild_id, VULCAN_NAME, "hunter")
 
 
 def is_plot_healer_role(user) -> bool:
@@ -289,6 +339,60 @@ def plot_status_fields(world) -> list[tuple[str, str, bool]]:
     ]
 
 
+def _named_wolf_blink_presence(conn: sqlite3.Connection, day: int) -> str:
+    """
+    Every canonical named wolf is part of Book One, not just the handful with
+    deep bespoke lanes (Soot, Finnpelt, RiverShroud, Firepaw, MaggotBrain) — a
+    small, real mood lift for whoever is currently playing a canon name while
+    the plot runs, plus an occasional den-news name-drop, so the rest of the
+    canon roster isn't purely decorative once the plot goes live.
+    """
+    from config import NAMED_WOLF_BLINK_MOOD
+    from engine.character_lore_data import CHARACTER_LORE_BY_NAME
+
+    canon_lower = [name.lower() for name in CHARACTER_LORE_BY_NAME]
+    if not canon_lower:
+        return ""
+    placeholders = ", ".join("?" for _ in canon_lower)
+    rows = conn.execute(
+        f"""
+        SELECT id, wolf_name FROM users
+        WHERE LOWER(wolf_name) IN ({placeholders})
+          AND condition NOT IN ('dead', 'dying')
+          AND (last_named_wolf_blink_day IS NULL OR last_named_wolf_blink_day < ?)
+        """,
+        (*canon_lower, day),
+    ).fetchall()
+    if not rows:
+        return ""
+    ids = [row["id"] for row in rows]
+    id_placeholders = ", ".join("?" for _ in ids)
+    conn.execute(
+        f"""
+        UPDATE users
+        SET mood = MIN(100, mood + ?), last_named_wolf_blink_day = ?
+        WHERE id IN ({id_placeholders})
+        """,
+        (NAMED_WOLF_BLINK_MOOD, day, *ids),
+    )
+
+    spotlight = random.choice(rows)
+    raw = next(
+        (raw for key, raw in CHARACTER_LORE_BY_NAME.items() if key.lower() == spotlight["wolf_name"].lower()),
+        None,
+    )
+    blurb = ""
+    if raw:
+        from engine.character_lore import parse_character_lore
+
+        lore = parse_character_lore(raw) or {}
+        personality = lore.get("personality", "")
+        blurb = personality.split(".")[0].strip()
+    if blurb:
+        return f"**{spotlight['wolf_name']}** is felt in the blinking: _{blurb}._"
+    return f"**{spotlight['wolf_name']}** is felt in the blinking."
+
+
 def apply_plot_rollover_effects(
     conn: sqlite3.Connection, guild_id: int, day: int, phase: int
 ) -> list[str]:
@@ -298,25 +402,90 @@ def apply_plot_rollover_effects(
     notes: list[str] = []
 
     if phase == 1:
-        conn.execute(
-            """
-            UPDATE users
-            SET mood = MAX(0, mood - 1)
-            WHERE condition NOT IN ('dead', 'dying')
-            """
-        )
+        shielded_packs = []
+        for name, pack in ((RIME_NAME, "greyspire"), (ROOT_NAME, "thistlehide")):
+            watching = conn.execute(
+                """
+                SELECT 1 FROM users
+                WHERE LOWER(wolf_name) = LOWER(?)
+                  AND great_pack = ?
+                  AND condition NOT IN ('dead', 'dying')
+                LIMIT 1
+                """,
+                (name, pack),
+            ).fetchone()
+            if watching:
+                shielded_packs.append(pack)
+        if shielded_packs:
+            placeholders = ", ".join("?" for _ in shielded_packs)
+            conn.execute(
+                f"""
+                UPDATE users
+                SET mood = MAX(0, mood - 1)
+                WHERE condition NOT IN ('dead', 'dying')
+                  AND NOT (wolf_role = 'pup' AND great_pack IN ({placeholders}))
+                """,
+                tuple(shielded_packs),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE users
+                SET mood = MAX(0, mood - 1)
+                WHERE condition NOT IN ('dead', 'dying')
+                """
+            )
         notes.append("The bitten moon weighs on every wolf; **−1 mood**.")
+        if "greyspire" in shielded_packs:
+            notes.append("**Rime** keeps the Greyspire pups close; they are spared the moon's weight.")
+        if "thistlehide" in shielded_packs:
+            notes.append("**Root** wraps her tail around the Thistlehide pups; they are spared the moon's weight.")
 
     if phase in WARM_RIVER_PHASES:
-        conn.execute(
+        vulcan_watching = conn.execute(
             """
+            SELECT 1 FROM users
+            WHERE LOWER(wolf_name) = LOWER(?)
+              AND great_pack = 'silverrush'
+              AND wolf_role = 'hunter'
+              AND condition NOT IN ('dead', 'dying')
+            LIMIT 1
+            """,
+            (VULCAN_NAME,),
+        ).fetchone()
+        pup_shield = " AND wolf_role != 'pup'" if vulcan_watching else ""
+        conn.execute(
+            f"""
             UPDATE users
             SET thirst = MAX(0, thirst - 2)
             WHERE great_pack = 'silverrush'
               AND condition NOT IN ('dead', 'dying')
+              {pup_shield}
             """
         )
         notes.append("Silverrush wolves feel the warm river; **−2 thirst**.")
+        if vulcan_watching:
+            notes.append(
+                "**Vulcan Stonehide** keeps watch over the den's youngest; Silverrush pups are spared the thirst."
+            )
+        driftpup = conn.execute(
+            """
+            SELECT id FROM users
+            WHERE LOWER(wolf_name) = LOWER(?)
+              AND great_pack = 'silverrush'
+              AND condition NOT IN ('dead', 'dying')
+            LIMIT 1
+            """,
+            (DRIFTPUP_NAME,),
+        ).fetchone()
+        if driftpup:
+            conn.execute(
+                "UPDATE users SET mood = MIN(100, mood + 1) WHERE id = ?",
+                (driftpup["id"],),
+            )
+            notes.append(
+                "**Driftpup** keeps carrying stones across the warm shallows, proving himself stone by stone; **+1 mood**."
+            )
 
     if phase == 5:
         notes.extend(_mistmoor_silence_disease_pressure(conn))
@@ -344,6 +513,10 @@ def apply_plot_rollover_effects(
         if n:
             notes.append(f"warm water spoils **{n}** pack fish stack(s) early.")
 
+    named_note = _named_wolf_blink_presence(conn, day)
+    if named_note:
+        notes.append(named_note)
+
     return notes
 
 
@@ -352,6 +525,17 @@ def _mistmoor_silence_disease_pressure(conn: sqlite3.Connection) -> list[str]:
     from engine.diseases import encode_disease, spread_stage_for
 
     notes: list[str] = []
+    mirewort_tending = conn.execute(
+        """
+        SELECT 1 FROM users
+        WHERE LOWER(wolf_name) = LOWER(?)
+          AND great_pack = 'mistmoor'
+          AND condition NOT IN ('dead', 'dying')
+        LIMIT 1
+        """,
+        (MIREWORT_NAME,),
+    ).fetchone()
+    chance = 0.03 if mirewort_tending else 0.05
     rows = conn.execute(
         """
         SELECT id, wolf_name FROM users
@@ -362,13 +546,15 @@ def _mistmoor_silence_disease_pressure(conn: sqlite3.Connection) -> list[str]:
         """
     ).fetchall()
     for row in rows:
-        if random.random() >= 0.05:
+        if random.random() >= chance:
             continue
         encoded = encode_disease("rot_lung", spread_stage_for("rot_lung"))
         conn.execute("UPDATE users SET disease = ? WHERE id = ?", (encoded, row["id"]))
         notes.append(f"**{row['wolf_name']}**: rot-lung in the belly's silence.")
     if not notes:
         notes.append("Mistmoor dens hold their breath; disease pressure rises.")
+    if mirewort_tending:
+        notes.append("**mirewort** works the swamp's medicine against the silence; the worst of it is held back.")
     return notes
 
 
@@ -413,7 +599,7 @@ def _accelerate_pack_fish_rot(conn: sqlite3.Connection, guild_id: int, day: int)
 
 
 def plot_activity_payout_mult(
-    guild_id: int, activity: str, *, great_pack: str | None
+    guild_id: int, activity: str, *, great_pack: str | None, user=None
 ) -> tuple[float, str]:
     """Return (multiplier, footer note) for hunt/fish/scavenge payouts."""
     phase = plot_phase(guild_id)
@@ -422,10 +608,25 @@ def plot_activity_payout_mult(
     gp = great_pack or ""
     if activity == "fishing" and phase in WARM_RIVER_PHASES:
         if gp == "silverrush":
+            if user and _is_plot_wolf(user, AROMIS_NAME):
+                from config import AROMIS_PLOT_FISHING_MULT
+                return AROMIS_PLOT_FISHING_MULT, "blinking; Aromis refuses to let the warm water win (**+15%** fish)."
             return 0.70, "blinking; warm silverrush water (**−30%** fish)."
         return 0.85, "blinking; river sickness (**−15%** fish)."
     if activity in ("hunt", "scavenge", "track") and phase == 3 and gp == "greyspire":
         return 1.10, "blinking; iron-scented ridge (**+10%** hunt)."
+    if activity == "hunt" and phase in PARANOIA_PHASES and gp == "thistlehide":
+        if user and _is_plot_wolf(user, ELTANIN_NAME):
+            from config import ELTANIN_PLOT_HUNT_MULT
+            return ELTANIN_PLOT_HUNT_MULT, "blinking; Eltanin is already moving (**+10%** hunt)."
+    if activity == "track" and phase in PARANOIA_PHASES and gp == "thistlehide":
+        if user and _is_plot_wolf(user, LUCID_NAME):
+            from config import LUCID_PLOT_TRACK_MULT
+            return LUCID_PLOT_TRACK_MULT, "blinking; Lucid reads the border where others hesitate (**+10%** track)."
+    if activity == "scavenge" and phase > 0 and gp == "thistlehide":
+        if user and _is_plot_wolf(user, CLOVERFERN_NAME):
+            from config import CLOVERFERN_PLOT_SCAVENGE_MULT
+            return CLOVERFERN_PLOT_SCAVENGE_MULT, "blinking; Cloverfern finds what the forest is still willing to give (**+10%** scavenge)."
     return 1.0, ""
 
 
@@ -460,9 +661,15 @@ def plot_cat_pact_forge_dc_bonus(guild_id: int) -> int:
     return 0
 
 
-def plot_sniff_border_mult(guild_id: int) -> float:
+def plot_sniff_border_mult(guild_id: int, user=None) -> float:
     phase = plot_phase(guild_id)
     if phase in PARANOIA_PHASES:
+        if user and _is_plot_wolf(user, KANAMI_NAME):
+            from config import KANAMI_PLOT_BORDER_MULT
+            return KANAMI_PLOT_BORDER_MULT
+        if user and _is_plot_wolf(user, SKYE_NAME):
+            from config import SKYE_PLOT_BORDER_MULT
+            return SKYE_PLOT_BORDER_MULT
         return 1.25
     return 1.0
 
@@ -501,7 +708,11 @@ def plot_thistlehide_patrol_standing_bonus(
     if plot_phase(guild_id) == 2 and great_pack == "thistlehide":
         bonus += 1
     if user and great_pack == "thistlehide" and plot_phase(guild_id) in PARANOIA_PHASES:
-        from config import FINNPELT_PLOT_PATROL_STANDING, RIVERSHROUD_PLOT_PATROL_STANDING
+        from config import (
+            BRACKENPELT_PLOT_PATROL_STANDING,
+            FINNPELT_PLOT_PATROL_STANDING,
+            RIVERSHROUD_PLOT_PATROL_STANDING,
+        )
         from engine.pack_leadership import wolf_role_key
 
         role = wolf_role_key(user)
@@ -509,6 +720,13 @@ def plot_thistlehide_patrol_standing_bonus(
             bonus += RIVERSHROUD_PLOT_PATROL_STANDING
         elif _is_plot_wolf(user, FINNPELT_NAME) and role == "hunter":
             bonus += FINNPELT_PLOT_PATROL_STANDING
+        elif _is_plot_wolf(user, BRACKENPELT_NAME):
+            bonus += BRACKENPELT_PLOT_PATROL_STANDING
+    if user and great_pack == "greyspire" and plot_phase(guild_id) in PARANOIA_PHASES:
+        if _is_plot_wolf(user, ICEFANG_NAME):
+            from config import ICEFANG_PLOT_PATROL_STANDING
+
+            bonus += ICEFANG_PLOT_PATROL_STANDING
     return bonus
 
 
@@ -523,14 +741,24 @@ def try_plot_mill_investigate(
     phase = plot_phase(guild_id)
     if not success or phase not in MILL_PHASES:
         return ""
-    if random.random() > 0.45:
+    odds = 0.45
+    if _is_plot_wolf(user, PALESTEP_NAME):
+        odds = 0.65
+    if random.random() > odds:
         return ""
     bones = random.randint(15, 35)
+    if _is_plot_wolf(user, PALESTEP_NAME):
+        bones += 10
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
     standing = db.adjust_wolf_standing(user["discord_id"], 2)
     kick = " standing **+2**" if standing != "kicked" else " (**cast out**)"
+    iron_note = (
+        "\n_**Pale'Step**'s nose for iron finds it before anyone else even smells the rust._"
+        if _is_plot_wolf(user, PALESTEP_NAME)
+        else ""
+    )
     return (
-        f"\n\n_under the mill timbers you uncover a **fossil tooth** wrapped in rust._\n"
+        f"\n\n_under the mill timbers you uncover a **fossil tooth** wrapped in rust._{iron_note}\n"
         f"**+{bones}** bones{kick}; report with `/world action:plot`."
     )
 
@@ -580,11 +808,26 @@ def plot_soot_heal_bonus(healer, patient, guild_id: int | None) -> int:
     return bonus
 
 
+def _pack_healer_plot_bonus(healer, guild_id: int | None, canon_name: str, pack: str, config_key: str) -> int:
+    if not guild_id or plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return 0
+    if not _is_plot_wolf(healer, canon_name):
+        return 0
+    gp = healer["great_pack"] if "great_pack" in healer.keys() else None
+    if gp != pack:
+        return 0
+    import config as _cfg
+    return getattr(_cfg, config_key, 0)
+
+
 def plot_healer_heal_bonus(healer, patient, guild_id: int | None) -> int:
     """stacked book one heal bonuses for canon healer wolves."""
-    return plot_firepaw_heal_bonus(healer, guild_id) + plot_soot_heal_bonus(
-        healer, patient, guild_id
-    )
+    bonus = plot_firepaw_heal_bonus(healer, guild_id) + plot_soot_heal_bonus(healer, patient, guild_id)
+    bonus += _pack_healer_plot_bonus(healer, guild_id, HEMLOCK_NAME, "greyspire", "HEMLOCK_PLOT_TREAT_HEAL_BONUS")
+    bonus += _pack_healer_plot_bonus(healer, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_TREAT_HEAL_BONUS")
+    bonus += _pack_healer_plot_bonus(healer, guild_id, SYPHA_NAME, "thistlehide", "SYPHA_PLOT_TREAT_HEAL_BONUS")
+    bonus += _pack_healer_plot_bonus(healer, guild_id, MURKVEIN_NAME, "mistmoor", "MURKVEIN_PLOT_TREAT_HEAL_BONUS")
+    return bonus
 
 
 def _firepaw_daily_available(user, day: int) -> bool:
@@ -629,6 +872,19 @@ def _finnpelt_daily_available(user, day: int) -> bool:
 
 def _mark_finnpelt_daily(user, day: int) -> None:
     db.update_user_by_id(user["id"], last_finnpelt_reward_day=day)
+
+
+def _maggotbrain_daily_available(user, day: int) -> bool:
+    last = (
+        int(user["last_maggotbrain_reward_day"])
+        if "last_maggotbrain_reward_day" in user.keys()
+        else 0
+    )
+    return last < day
+
+
+def _mark_maggotbrain_daily(user, day: int) -> None:
+    db.update_user_by_id(user["id"], last_maggotbrain_reward_day=day)
 
 
 def apply_plot_rivershroud_sniff(user, guild_id: int, day: int) -> str:
@@ -709,6 +965,40 @@ def apply_plot_finnpelt_sniff(user, guild_id: int, day: int) -> str:
             else "**cast out**"
         )
         lines.append(f"ridge held without the crown — {standing_note}.")
+    return "\n\n_" + " ".join(lines) + "_"
+
+
+def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
+    """Rot-reading rewards for MaggotBrain on /sniff during Belly Silence through Blame Spiral."""
+    if not maggotbrain_plot_active(user, guild_id):
+        return ""
+    from config import (
+        MAGGOTBRAIN_PLOT_SNIFF_MOOD,
+        MAGGOTBRAIN_PLOT_SNIFF_STANDING,
+        SNIFF_HUNT_BONUS_PCT,
+    )
+
+    phase = plot_phase(guild_id)
+    if phase not in MAGGOTBRAIN_PLOT_PHASES:
+        return ""
+    lines: list[str] = []
+
+    mood = db.adjust_mood(user["id"], MAGGOTBRAIN_PLOT_SNIFF_MOOD)
+    db.update_user(user["discord_id"], wolf_id=user["id"], sniff_bonus_day=day)
+    lines.append(f"**+{MAGGOTBRAIN_PLOT_SNIFF_MOOD} mood** (now **{mood}**).")
+    lines.append(
+        f"**sniff bonus** active (**+{SNIFF_HUNT_BONUS_PCT}%** hunt/track); "
+        "the rot tells you exactly where to look."
+    )
+    if _maggotbrain_daily_available(user, day):
+        _mark_maggotbrain_daily(user, day)
+        kick = db.adjust_wolf_standing(user["discord_id"], MAGGOTBRAIN_PLOT_SNIFF_STANDING)
+        standing_note = (
+            f"**+{MAGGOTBRAIN_PLOT_SNIFF_STANDING} standing**"
+            if kick != "kicked"
+            else "**cast out**"
+        )
+        lines.append(f"a corpse found before the patrol smelled it — {standing_note}.")
     return "\n\n_" + " ".join(lines) + "_"
 
 
@@ -988,7 +1278,8 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
         soot_block = apply_plot_soot_sniff(user, guild_id, day)
         rivershroud_block = apply_plot_rivershroud_sniff(user, guild_id, day)
         finnpelt_block = apply_plot_finnpelt_sniff(user, guild_id, day)
-        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block):
+        maggotbrain_block = apply_plot_maggotbrain_sniff(user, guild_id, day)
+        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block, maggotbrain_block):
             if block:
                 healer_blocks.append(block.strip().strip("_"))
     else:
@@ -1017,6 +1308,8 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
         lines.append(
             "_mismatched eyes catch reed-shift and fever-breath on the border before patrol speaks it._"
         )
+    elif _is_plot_wolf(user, MAGGOTBRAIN_NAME) and phase in MAGGOTBRAIN_PLOT_PHASES:
+        lines.append("_the rot names every wolf who passed before the patrol counts the tracks._")
     if witness:
         lines.append(witness.strip())
     return ("\n\n" + "\n".join(lines)) if lines else witness

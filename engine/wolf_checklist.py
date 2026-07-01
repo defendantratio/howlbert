@@ -107,15 +107,35 @@ def _pending_daily_items(
         if daily_status == "ready":
             items.append("collect den stipend (`/bones action:daily`)")
 
+    # Pregnancy-ready and dying-pup saves don't always reach a player via DM
+    # (some have the bot's DMs off), so the checklist is the one place this
+    # is guaranteed to surface.
+    if _field(user, "is_pregnant"):
+        from engine.family import GESTATION_DAYS
+
+        elapsed = max(0, day - int(_field(user, "pregnancy_start_day", 0) or 0))
+        if elapsed >= GESTATION_DAYS:
+            items.append("give birth — gestation complete (`/pupcare action:birth`)")
+
     if stage == "pup":
         if not _used_today(user, day, "last_play_day"):
             items.append("play in the den (`/playpen action:play`)")
         return items
 
+    # Sniff first: it grants a hunt/track/fish bone bonus for the rest of the
+    # sunrise, so doing it before those activities (not after) is the order
+    # that actually pays off.
+    if not _used_today(user, day, "last_sniff_day"):
+        items.append("sniff the wind (`/field action:sniff`)")
+
     if can_hunt_again(user, day):
         items.append("hunt (`/bones action:hunt`)")
-    if not _used_today(user, day, "last_work_day"):
-        items.append("den work (`/bones action:work`)")
+
+    if not _used_today(user, day, "last_fishing_day"):
+        items.append("fish (`/field action:fishing`)")
+
+    if _can_forage_again(user, day):
+        items.append("forage (`/field action:forage`)")
 
     if is_rogue_wolf(user):
         if not _used_today(user, day, "last_scavenge_day"):
@@ -123,17 +143,11 @@ def _pending_daily_items(
     elif not pack_id and not _used_today(user, day, "last_scavenge_day"):
         items.append("scavenge (`/field action:scavenge`)")
 
-    if _can_forage_again(user, day):
-        items.append("forage (`/field action:forage`)")
-
     if _can_explore_again(user, day):
-        items.append("explore (`/explore venture`)")
+        items.append("explore (`/explore`)")
 
-    if not _used_today(user, day, "last_sniff_day"):
-        items.append("sniff the wind (`/field action:sniff`)")
-
-    if not _used_today(user, day, "last_fishing_day"):
-        items.append("fish (`/field action:fishing`)")
+    if not _used_today(user, day, "last_work_day"):
+        items.append("den work (`/bones action:work`)")
 
     wolf_id = int(_field(user, "id", 0) or 0)
     if wolf_id:
@@ -143,11 +157,25 @@ def _pending_daily_items(
         if any(pup_needs_milk_today(c, day) for c in children):
             items.append("feed pups (`/pupcare action:feed`)")
 
+    from engine.diseases import disease_display
+
+    if disease_display(user):
+        name, _effect = disease_display(user)
+        items.append(f"treat **{name}** — see a medic (`/medic action:treat`)")
+
     if pack_id:
         if not _used_today(user, day, "last_howl_day"):
             items.append("pack howl (`/howl`)")
         if not _used_today(user, day, "last_socialize_day"):
             items.append("socialize (`/playpen action:socialize`)")
+        if not _used_today(user, day, "last_groom_day"):
+            items.append("groom a packmate (`/playpen action:groom`)")
+
+    if stage not in ("pup", "juvenile") and not _field(user, "is_pregnant") and not _used_today(user, day, "last_court_day"):
+        items.append("court a wolf (`/courtship action:court`) — conception only in winter")
+
+    if not _used_today(user, day, "last_raccoon_offer_day"):
+        items.append("offer the raccoon an acorn (`/bones action:raccoonoffer`)")
 
     if stage != "pup" and not _used_today(user, day, "last_role_event_day"):
         items.append("role event (`/role action:event`)")
@@ -225,6 +253,14 @@ def _pending_daily_items(
         ):
             items.append("review treaties (`/pact action:view`)")
 
+        if db.get_active_war_for_pack(guild_id, pack_id):
+            items.append("war patrol (`/pack patrol`)")
+            items.append("war scout (`/pack scout`)")
+
+        spy_for = _field(user, "spy_for_pack_id")
+        if spy_for and not _used_today(user, day, "last_spy_report_day"):
+            items.append("send word home (`/pact action:report`)")
+
         from engine.pack_amusement_store import count_depositable_amusement
         from engine.pack_herb_store import count_depositable_inventory_herbs
 
@@ -243,13 +279,21 @@ def _pending_daily_items(
 
 
 def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
+    items: list[str] = []
+    discord_id = int(_field(user, "discord_id", 0) or 0)
+    if discord_id:
+        for stillborn in db.list_pending_stillborn_for_discord(discord_id):
+            items.append(
+                f"**{stillborn['pup_name']}** is dying — save them before the window closes "
+                "(`/pupcare action:save`)."
+            )
+
     pack_id = _field(user, "pack_id")
     if not guild_id or not pack_id or day <= 0:
-        return []
+        return items
     from engine.pack_relations import HOSTILE_STANDING_THRESHOLD
 
     wolf_id = int(_field(user, "id", 0) or 0)
-    items: list[str] = []
     for row in db.list_pack_relations(guild_id, pack_id):
         if int(row["standing"]) <= HOSTILE_STANDING_THRESHOLD:
             line = (

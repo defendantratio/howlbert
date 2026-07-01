@@ -233,7 +233,7 @@ def try_explore(
 
     if not can_explore_again(user, day):
         hint = (
-            "Scouts may **`/explore venture`** or **`/scout rescout`** again this sunrise."
+            "Scouts may **`/explore`** or **`/scout rescout`** again this sunrise."
             if is_scout(user)
             else "Resets next sunrise · check **`/checklist`**"
         )
@@ -378,7 +378,7 @@ def try_explore(
         + (f"\n\n{hazard_note}" if hazard_note else ""),
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="amusement: `/playpen` · carcasses: `/food` · sell scraps: `/raccoon sell`")
+    embed.set_footer(text="amusement: `/playpen` · carcasses: `/food` · sell scraps: `/bones action:raccoonsell`")
     if is_scout(user):
         from config import SCOUT_EXPLORE_DC_BONUS
 
@@ -443,7 +443,7 @@ def try_rescout(interaction) -> discord.Embed | None:
         return howlbert_embed(
             "scouts only",
             "only wolves with the **scout** role can rescout the biome. "
-            "Hunters and others use **`/explore venture`** once per sunrise.",
+            "Hunters and others use **`/explore`** once per sunrise.",
             color=ERROR_COLOR,
         )
     if not interaction.guild:

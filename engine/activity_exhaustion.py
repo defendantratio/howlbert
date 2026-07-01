@@ -21,8 +21,6 @@ ACTIVITY_SKILL: dict[str, str] = {
     "survey": "stealth",
     "trail": "tracking",
     "skill": "survival",
-    "work": "survival",
-    "crime": "stealth",
 }
 
 ACTIVITY_LABEL: dict[str, str] = {
@@ -36,8 +34,6 @@ ACTIVITY_LABEL: dict[str, str] = {
     "survey": "surveying",
     "trail": "trailing",
     "skill": "field work",
-    "work": "labor",
-    "crime": "sneaking",
 }
 
 
@@ -173,10 +169,13 @@ def apply_activity_fatigue(
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_ex)
 
     label = ACTIVITY_LABEL.get(activity_key, activity_key)
-    if proficient:
-        reason = f"repeated {label} ({activity_count}×) without rest"
+    if activity_count >= 2:
+        if proficient:
+            reason = f"repeated {label} ({activity_count}×) without rest"
+        else:
+            reason = f"repeated {label} ({activity_count}×) — you're not trained for this"
     else:
-        reason = f"repeated {label} ({activity_count}×) — you're not trained for this"
+        reason = f"a full sunrise of fieldwork ({total_count} strenuous actions) catches up with you"
     note = f"**+{gain} exhaustion** — {reason}"
     if skipped:
         note += " _(burnet softened the worst of it)_"

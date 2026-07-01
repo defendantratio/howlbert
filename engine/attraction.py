@@ -17,6 +17,7 @@ SEXUALITY_OPTIONS_ADULT: tuple[tuple[str, str], ...] = (
     ("Asexual", "asexual"),
     ("Demisexual", "demisexual"),
     ("Demiromantic", "demiromantic"),
+    ("Undiscovered", "undiscovered"),
 )
 SEXUALITY_OPTIONS: tuple[tuple[str, str], ...] = (
     ("Too young / none", PUP_SEXUALITY),
@@ -85,7 +86,7 @@ def get_sexuality(user) -> str:
 def is_attracted_to(sexuality: str, my_birth_sex: str, their_birth_sex: str) -> bool:
     if not their_birth_sex:
         return True
-    if sexuality in ("bisexual", "pansexual", "demisexual", "demiromantic"):
+    if sexuality in ("bisexual", "pansexual", "demisexual", "demiromantic", "undiscovered"):
         return True
     if sexuality in ("asexual", PUP_SEXUALITY):
         return False
@@ -144,8 +145,39 @@ def conception_parents(user, partner):
     return None, None
 
 
+def _parent_ids(wolf) -> set[int]:
+    keys = wolf.keys()
+    ids: set[int] = set()
+    for col in ("bio_parent_1_id", "bio_parent_2_id", "adopt_parent_1_id", "adopt_parent_2_id"):
+        if col in keys and wolf[col]:
+            ids.add(int(wolf[col]))
+    return ids
+
+
+def kinship_blocked(courter, target) -> str | None:
+    """
+    Direct parent/offspring and full-or-adoptive siblings are off-limits to court
+    or mate, no matter how sentient and political this den's wolves are; this
+    checks blood (bio_parent_1_id/bio_parent_2_id) and adoptive
+    (adopt_parent_1_id/adopt_parent_2_id) parentage both ways.
+    Returns an error string if blocked, else None.
+    """
+    if courter["id"] == target["id"]:
+        return "you can't court yourself."
+    courter_parents = _parent_ids(courter)
+    target_parents = _parent_ids(target)
+    if target["id"] in courter_parents or courter["id"] in target_parents:
+        return "you share a parent/offspring bond with them. that line isn't crossed here."
+    if courter_parents and target_parents and courter_parents & target_parents:
+        return "you're kin; raised by the same den parent. that line isn't crossed here."
+    return None
+
+
 def court_attraction_allowed(courter, target) -> tuple[bool, str | None]:
     """whether courter may attempt courtship with target."""
+    kin_block = kinship_blocked(courter, target)
+    if kin_block:
+        return False, kin_block
     u_sex = get_birth_sex(courter)
     t_sex = get_birth_sex(target)
     if not u_sex or not t_sex:

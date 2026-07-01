@@ -4,7 +4,6 @@ from discord.ext import commands
 import database as db
 from config import WEATHER_HUNT_MODIFIERS
 from engine.season_effects import season_hunt_modifier_label
-from engine.chat_xp import try_chat_message_xp
 from utils.permissions import is_howlbert_admin
 from engine.donor import donor_daily_bonus
 from engine.lexicon import format_sunrise
@@ -21,19 +20,15 @@ class World(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        try_chat_message_xp(message)
-
     def _guild_id(self, interaction: discord.Interaction) -> int | None:
         if interaction.guild:
             return interaction.guild.id
         return None
 
-    @app_commands.command(name='world', description='time, weather, hazards, travel, cooldowns, or plot for this den.')
-    @app_commands.describe(action='time, weather, forecast, cooldowns, plot, hazard, travel, encounter, or omen', hazard_type='weather hazard (action:hazard)', severity='hazard severity (action:hazard)', territory='territory type (action:travel)')
-    @app_commands.choices(action=[app_commands.Choice(name='time & moon', value='time'), app_commands.Choice(name='weather', value='weather'), app_commands.Choice(name='forecast', value='forecast'), app_commands.Choice(name='cooldowns', value='cooldowns'), app_commands.Choice(name='plot (the blinking)', value='plot'), app_commands.Choice(name='weather hazard', value='hazard'), app_commands.Choice(name='travel hazard', value='travel'), app_commands.Choice(name='wilderness encounter', value='encounter'), app_commands.Choice(name='rest omen', value='omen')], hazard_type=HAZARD_CHOICES, severity=HAZARD_SEVERITY_CHOICES, territory=TRAVEL_TERRITORY_CHOICES)
-    async def world_info(self, interaction: discord.Interaction, action: str='time', hazard_type: str='blizzard', severity: str='severe', territory: str='forest'):
+    @app_commands.command(name='world', description='time, weather, forecast, cooldowns, or plot for this den.')
+    @app_commands.describe(action='time, weather, forecast, cooldowns, or plot')
+    @app_commands.choices(action=[app_commands.Choice(name='time & moon', value='time'), app_commands.Choice(name='weather', value='weather'), app_commands.Choice(name='forecast', value='forecast'), app_commands.Choice(name='cooldowns', value='cooldowns'), app_commands.Choice(name='plot (the blinking)', value='plot')])
+    async def world_info(self, interaction: discord.Interaction, action: str='time'):
         if action == 'time':
             await self._time(interaction)
         elif action == 'weather':
@@ -44,14 +39,6 @@ class World(commands.Cog):
             await self._cooldowns(interaction)
         elif action == 'plot':
             await self._plot(interaction)
-        elif action == 'hazard':
-            await self._run_weather_hazard(interaction, hazard_type, severity)
-        elif action == 'travel':
-            await self._run_travel_hazard(interaction, territory)
-        elif action == 'encounter':
-            await self._run_wilderness_encounter(interaction)
-        elif action == 'omen':
-            await self._run_rest_omen(interaction)
 
     async def _time(self, interaction: discord.Interaction):
         guild_id = self._guild_id(interaction)
@@ -162,7 +149,15 @@ class World(commands.Cog):
         modifier = WEATHER_HUNT_MODIFIERS.get(world['weather'], 0)
         effect = 'No effect on hunts.' if modifier == 0 else f'{modifier:+d}% hunt bones (weather).'
         season_effect = season_hunt_modifier_label(world['season'])
-        embed = howlbert_embed(weather_label(world['weather']), f'{effect}\n{season_effect.capitalize()}.')
+        body = f'{effect}\n{season_effect.capitalize()}.'
+        user = db.get_user(interaction.user.id)
+        if user and user['great_pack']:
+            from engine.humidity import humidity_label, humidity_scent_dc_modifier
+            label = humidity_label(user['great_pack'], world['weather'])
+            dc_mod = humidity_scent_dc_modifier(user['great_pack'], world['weather'])
+            dc_note = f' ({dc_mod:+d} dc tracking/sniff)' if dc_mod else ''
+            body += f'\n**{label}**{dc_note}.'
+        embed = howlbert_embed(weather_label(world['weather']), body)
         await interaction.response.send_message(embed=embed)
 
     async def _weatherforecast(self, interaction: discord.Interaction):

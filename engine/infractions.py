@@ -16,6 +16,9 @@ from config import (
     CROSS_PACK_STEAL_CAUGHT_STANDING,
     CROSS_PACK_STEAL_CAUGHT_TEXT,
     CROSS_PACK_STEAL_STANDING,
+    INDIVIDUAL_STEAL_CATCH_CHANCE,
+    INDIVIDUAL_STEAL_CAUGHT_STANDING,
+    INDIVIDUAL_STEAL_STANDING,
     MEDIC_MATE_CATCH_CHANCE,
     MEDIC_MATE_CAUGHT_STANDING,
     MEDIC_MATE_CAUGHT_TEXT,
@@ -75,6 +78,18 @@ def roll_yield_caught() -> bool:
 
 def crime_caught_standing() -> int:
     return CRIME_CAUGHT_STANDING
+
+
+def roll_individual_steal_caught() -> bool:
+    return random.random() < INDIVIDUAL_STEAL_CATCH_CHANCE
+
+
+def individual_steal_caught_standing() -> int:
+    return INDIVIDUAL_STEAL_CAUGHT_STANDING
+
+
+def individual_steal_standing() -> int:
+    return INDIVIDUAL_STEAL_STANDING
 
 
 def cross_pack_steal_standing() -> int:

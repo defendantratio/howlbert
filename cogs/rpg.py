@@ -101,8 +101,9 @@ class Rpg(commands.Cog):
         body = role_reroll_note + format_roll_result(result) + setback_note
         embed = howlbert_embed(title, body, color=color)
         tier_name = next((k for k, v in DC_TIERS.items() if v == dc), None)
-        if tier_name:
-            embed.set_footer(text=f'dc tier: {tier_name.title()} ({dc})')
+        footer = f'dc tier: {tier_name.title()} ({dc})' if tier_name else ''
+        footer += (' · ' if footer else '') + 'for guided skill checks with bonuses & dice: /skills'
+        embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
     async def _deleteprofile(self, interaction: discord.Interaction, confirm: str):

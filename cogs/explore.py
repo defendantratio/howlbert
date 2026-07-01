@@ -1,17 +1,14 @@
-"""Wolvden-style explore, amusement, socialize, and raccoon trading."""
+"""Wolvden-style explore, amusement, and socialize."""
 import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from config import MOOD_LOW_THRESHOLD, RACCOON_BUNDLES, RACCOON_DAILY_BUYS, RACCOON_DAILY_SELLS, RACCOON_PREY_KEYS
-from engine.amusement_items import amusement_meta
-from engine.amusement_storage import format_amusement_line, grant_amusement, play_amusement
+from config import MOOD_LOW_THRESHOLD
+from engine.amusement_storage import format_amusement_line, play_amusement
 from engine.explore import try_explore
 from engine.pack_play import run_playall
 from utils.permissions import is_howlbert_admin
 from engine.socialize import run_socialize
-from engine.prey_items import prey_meta
-from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
@@ -47,30 +44,15 @@ def _resolve_own_wolf(discord_id: int, name: str):
     rows = db.list_user_wolves(discord_id)
     return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
-async def _prey_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-    user = db.get_user(interaction.user.id)
-    if not user or not interaction.guild:
-        return []
-    world = db.get_world(interaction.guild.id)
-    stacks = db.get_prey_stacks(user['id'])
-    choices = []
-    for stack in stacks:
-        label = format_prey_hoard_line(stack, world['day_number'])
-        if current and current not in label.lower() and (current not in str(stack['id'])):
-            continue
-        choices.append(app_commands.Choice(name=choice_label(label), value=str(stack['id'])))
-    return choices[:25]
-
 class Explore(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-    explore = app_commands.Group(name='explore', description='range the biome for loot.')
 
-    @explore.command(name='venture', description='dig, follow scent, or investigate (scouts: unlimited · others once per sunrise).')
+    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (scouts: unlimited · others once per sunrise).')
     @app_commands.describe(action='what you try in the wild')
     @app_commands.choices(action=[app_commands.Choice(name='🕳️ dig', value='dig'), app_commands.Choice(name='👃 follow scent', value='follow'), app_commands.Choice(name='🔍 investigate', value='investigate')])
-    async def explore_venture(self, interaction: discord.Interaction, action: str):
+    async def explore(self, interaction: discord.Interaction, action: str):
         embed, combat_enc = try_explore(interaction, action)
         if not embed:
             await interaction.response.send_message(embed=howlbert_embed('Explore Failed', 'Something went wrong.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -111,7 +93,7 @@ class Explore(commands.Cog):
         stacks = db.get_amusement_stacks(user['id'])
         mood = int(user['mood']) if 'mood' in user.keys() else 75
         if not stacks:
-            embed = howlbert_embed('No Toys', f'Mood: **{mood}/100**\n\nNothing yet; try `/explore venture`.')
+            embed = howlbert_embed('No Toys', f'Mood: **{mood}/100**\n\nNothing yet; try `/explore`.')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         lines = [format_amusement_line(s) for s in stacks]
@@ -393,125 +375,5 @@ class Explore(commands.Cog):
         elif not ok:
             embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
-    raccoon = app_commands.Group(name='raccoon', description='sell small carcass scraps to the raccoon trader.')
-
-    @raccoon.command(name='sell', description='sell a small carcass for bones (5 sales per sunrise).')
-    @app_commands.describe(prey='vole, rabbit, hare, or fish from `/food`')
-    @app_commands.autocomplete(prey=_prey_autocomplete)
-    async def raccoon_sell(self, interaction: discord.Interaction, prey: str):
-        user = db.get_user(interaction.user.id)
-        if not user:
-            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
-            return
-        if not interaction.guild:
-            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
-            return
-        try:
-            stack_id = int(prey)
-        except ValueError:
-            await interaction.response.send_message(player_message('Pick a carcass from `/food`.'), ephemeral=reply_ephemeral())
-            return
-        world = db.get_world(interaction.guild.id)
-        day = world['day_number']
-        sells = int(user['raccoon_sells_today']) if 'raccoon_sells_today' in user.keys() else 0
-        if int(user['last_raccoon_day']) < day:
-            sells = 0
-        if sells >= RACCOON_DAILY_SELLS:
-            embed = howlbert_embed('Raccoon Broke', f'The raccoon spent his purse for today (**{RACCOON_DAILY_SELLS}** sales max). Try again after sunrise.', color=ERROR_COLOR)
-            embed.set_footer(text='/checklist · /raccoon buy')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        stack = db.get_prey_stack(stack_id)
-        if not stack or stack['wolf_id'] != user['id']:
-            await interaction.response.send_message(player_message("You don't carry that carcass."), ephemeral=reply_ephemeral())
-            return
-        if stack['prey_key'] not in RACCOON_PREY_KEYS:
-            await interaction.response.send_message(embed=howlbert_embed("Won't Buy", 'The raccoon only wants **small** carcasses; vole, rabbit, hare, or fish. Salvage or `/preypile` the big kills.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
-        pay = min(12, max(2, stack['uses_left'] * 3))
-        db.remove_prey_stack(stack_id)
-        db.add_bones(interaction.user.id, pay, wolf_id=user['id'])
-        db.update_user(interaction.user.id, last_raccoon_day=day, raccoon_sells_today=sells + 1)
-        meta = prey_meta(stack['prey_key'])
-        embed = howlbert_embed('Raccoon Wares', color=SUCCESS_COLOR)
-        embed.description = f"The raccoon weighs **{meta['name']}**, flips a silver cone, and pays you **{format_bones(pay)}**.\nSales today: **{sells + 1}/{RACCOON_DAILY_SELLS}**"
-        embed.set_footer(text='/raccoon buy · /food · /playpen action:toys')
-        await interaction.response.send_message(embed=embed)
-
-    @raccoon.command(name='buy', description='buy a toy bundle from the raccoon (3 purchases per sunrise).')
-    @app_commands.describe(bundle='toy bundle to buy')
-    @app_commands.choices(bundle=[app_commands.Choice(name='scrap bundle; bone + feather', value='scrap'), app_commands.Choice(name='plume bundle; feathers + shell', value='plume'), app_commands.Choice(name='gnaw bundle; bone + stick + acorn', value='gnaw')])
-    async def raccoon_buy(self, interaction: discord.Interaction, bundle: str):
-        user = db.get_user(interaction.user.id)
-        if not user:
-            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
-            return
-        if not interaction.guild:
-            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
-            return
-        spec = RACCOON_BUNDLES.get(bundle)
-        if not spec:
-            await interaction.response.send_message(player_message('Unknown bundle.'), ephemeral=reply_ephemeral())
-            return
-        world = db.get_world(interaction.guild.id)
-        day = world['day_number']
-        buys = int(user['raccoon_buys_today']) if 'raccoon_buys_today' in user.keys() else 0
-        if int(user['last_raccoon_day']) < day:
-            buys = 0
-        if buys >= RACCOON_DAILY_BUYS:
-            embed = howlbert_embed('Raccoon Broke', f'No more bundles today (**{RACCOON_DAILY_BUYS}** buys max).', color=ERROR_COLOR)
-            embed.set_footer(text='/checklist · /playpen action:toys')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if user['bones'] < spec['price']:
-            await interaction.response.send_message(embed=howlbert_embed('Too Poor', f"Need **{spec['price']}** bones.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
-        db.add_bones(interaction.user.id, -spec['price'], wolf_id=user['id'])
-        for toy_key in spec['toys']:
-            grant_amusement(user['id'], toy_key)
-        db.update_user(interaction.user.id, last_raccoon_day=day, raccoon_buys_today=buys + 1)
-        toys = ', '.join((amusement_meta(k)['name'] for k in spec['toys']))
-        embed = howlbert_embed('Raccoon Wares', color=SUCCESS_COLOR)
-        embed.description = f"The raccoon flips a bundle; **{spec['name']}** for **{spec['price']}** bones.\nYou gain: {toys}\nBuys today: **{buys + 1}/{RACCOON_DAILY_BUYS}**"
-        embed.set_footer(text='/playpen action:toys · /raccoon sell · /raccoon offer')
-        await interaction.response.send_message(embed=embed)
-
-    @raccoon.command(name='offer', description='offer an acorn to the raccoon; he trades a random toy (once per sunrise).')
-    @app_commands.describe(toy='acorn stack from `/playpen action:toys`')
-    @app_commands.autocomplete(toy=_amusement_autocomplete)
-    async def raccoon_offer(self, interaction: discord.Interaction, toy: str):
-        user = db.get_user(interaction.user.id)
-        if not user:
-            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
-            return
-        if not interaction.guild:
-            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
-            return
-        world = db.get_world(interaction.guild.id)
-        day = world['day_number']
-        if int(user['last_raccoon_offer_day']) >= day:
-            embed = howlbert_embed('Already Offered', 'The raccoon took an acorn this sunrise.\n\n_Resets next sunrise · `/checklist`_', color=ERROR_COLOR)
-            embed.set_footer(text='/playpen action:toys · /raccoon sell')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        try:
-            stack_id = int(toy)
-        except ValueError:
-            await interaction.response.send_message(player_message('Pick a toy from `/playpen action:toys`.'), ephemeral=reply_ephemeral())
-            return
-        stack = db.get_amusement_stack(stack_id)
-        if not stack or stack['wolf_id'] != user['id'] or stack['item_key'] != 'acorn':
-            await interaction.response.send_message(embed=howlbert_embed('Needs Acorn', 'The raccoon only haggles for **Acorn** toys.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
-        import random
-        db.remove_amusement_stack(stack_id)
-        reward_key = random.choice(['feather', 'shell', 'stick', 'bone', 'talon'])
-        grant_amusement(user['id'], reward_key)
-        db.update_user(interaction.user.id, last_raccoon_offer_day=day)
-        meta = amusement_meta(reward_key)
-        embed = howlbert_embed('Raccoon Trade', f"You set an acorn on his stone; he pushes back **{meta['name']}** with a silver cone wink.", color=SUCCESS_COLOR)
-        embed.set_footer(text='once per sunrise · /playpen action:toys')
-        await interaction.response.send_message(embed=embed)
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Explore(bot))

@@ -110,6 +110,10 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
         db.update_user(interaction.user.id, last_howl_day=day)
         db.increment_quest_progress(interaction.user.id, "howl", guild_id=interaction.guild.id)
+        for rel in db.list_pack_relations(interaction.guild.id, pack["id"]):
+            if int(rel["standing"]) <= 3:
+                db.update_user(interaction.user.id, howl_exposed_day=day)
+                break
 
         if dissolve == "dissolved":
             body = (

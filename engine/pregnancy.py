@@ -28,6 +28,21 @@ def in_late_pregnancy(user, day: int) -> bool:
     return elapsed >= GESTATION_DAYS - LATE_PREGNANCY_SUNRISES
 
 
+def pregnancy_hunt_multiplier(user, day: int) -> tuple[float, str]:
+    """Reduces hunt/fish/scavenge yield during pregnancy — gestation burns energy."""
+    if not user or not int(user["is_pregnant"] if "is_pregnant" in user.keys() else 0):
+        return 1.0, ""
+    elapsed = pregnancy_elapsed(user, day)
+    if elapsed <= 0:
+        return 1.0, ""
+    if elapsed >= GESTATION_DAYS - LATE_PREGNANCY_SUNRISES:
+        # final third already fully blocked by pregnancy_activity_block
+        return 1.0, ""
+    if elapsed >= GESTATION_DAYS // 2:
+        return 0.80, "mid-to-late pregnancy; carrying a litter slows the hunt (**−20%**)."
+    return 0.90, "early pregnancy; the extra weight is already felt (**−10%**)."
+
+
 def pregnancy_activity_block(user, action: str, day: int) -> str | None:
     """Block strenuous work for pregnant females in the final third of gestation."""
     if action not in STRENUOUS_ACTIONS:

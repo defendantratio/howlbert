@@ -74,4 +74,4 @@ They shared cold fish in silence, watching the sun bleed through the trees. Rive
 
 **Family ties:** Hunter mother (alive), Driftwood-born father (alive). Secret lover is Mossheart, a scout from rival Thistlehide.
 
-**Open plots:** Their border romance is exposed, forcing Rivenmaw to choose between his pack and Mossheart or become an unwilling informant. A rivalry with Churn over the best fishing spots could be complicated by his need for secrecy. The warming water and the tooth could lead them both down a path that challenges the Maw-belief of all the river packs.
+**Open plots:** Their border romance is exposed, forcing Rivenmaw to choose between his pack and Mossheart or become an unwilling informant. The warming water and the tooth could lead them both down a path that challenges the Maw-belief of all the river packs.

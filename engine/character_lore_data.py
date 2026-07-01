@@ -736,37 +736,37 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Heretical beliefs discovered; challenged for rank; mate who shares faer philosophy."
         ),
     ),
-    "Churn": _sheet(
+    "Vulcan Stonehide": _sheet(
         appearance=(
-            "Thick-necked, barrel-chested wolf with dark gray and white coat; like a storm cloud over the "
-            "river. Fur short and water-repellent; always damp from swimming. Cold pale gray eyes; deep "
-            "jagged scar across shoulder (beaver trap). Thick muscular tail used as a rudder in fast "
-            "current. Rolling, powerful gait, never hurried."
+            "Thick-set and broad through the shoulders, base coat of creamy white broken by irregular "
+            "patches of light brown and tan, heaviest across his back, shoulders, and head. Fur thick and "
+            "somewhat shaggy around the neck and chest, giving him a wild, unkempt look that never quite "
+            "settles. Piercing yellow eyes, always scanning, rarely soft."
         ),
         personality=(
-            "Strongest swimmer in Silverrush, though he never brags. Hunts deep channels where current "
-            "could drown a wolf, brings back the largest fish. Other hunters respect him; do not like him. "
-            "Too quiet, too intense, too focused. Fiercely competitive with Aromis; does not hate him, "
-            "simply cannot stand being second-best. Trains in secret, pushing harder, hoping to catch more "
-            "fish, run faster, hunt longer."
+            "Stoic, reserved, fiercely protective of the few he lets close, governed by a strong sense of "
+            "justice he delivers in his own harsh way. Quiet wisdom under the cold front, earned the hard "
+            "way. Does not trust easily and does not explain himself; the wolves of Silverrush respect him "
+            "more than they know him."
         ),
         backstory=(
-            "Born in Silverrush to hunter mother and guard father. Mother drowned in a flash flood that "
-            "swept her off a sandbar when he was a pup; Churn watched it happen. Afraid of deep water "
-            "ever since. Hides it by being the best; swims where others dare not, not from bravery but "
-            "refusal to let the river win. Hunts in memory of his mother, hoping enough fish will let the "
-            "Maw let her rest."
+            "Born into a thriving forest pack, elder brother and shadow to a younger pup named Zephyr. "
+            "Humans descended on their den with traps and machines; in the chaos Vulcan watched Zephyr "
+            "die buying time for the litter to flee. The pack was scattered and broken within the hour. "
+            "Vulcan fled alone and stayed alone for years, a nomad who kept his distance from anything "
+            "that might give him something else to lose. He has only recently let Silverrush close enough "
+            "to call it a den again."
         ),
-        family_ties="Mother drowned (flash flood). Guard father. Rivalry with hunter Aromis.",
+        family_ties="Younger brother Zephyr (deceased; died protecting the pack's pups). Birth pack scattered, presumed lost. No known living kin.",
         rp_sample=(
-            "Churn stood at the river's edge, pale gray eyes on dark water. Current strong today; he did "
-            "not hesitate, stepped in and let it take him. Swam deep, kicked with powerful hind legs, tail "
-            "as rudder. A sturgeon three deer-lengths long; he dove, grabbed its tail, let it drag him, "
-            "never let go. When it tired, he bit through its spine and paddled to bank. Aromis on the "
-            "shore: \"Good catch.\" Churn did not answer. He needed the river to know he was not afraid."
+            "A younger wolf trotted up beside him on the ridge, tail giving a tentative wag. \"Anything, "
+            "Vulcan?\" He didn't look over. \"Too much. Humans, moving in.\" A flicker of grim resolve. "
+            "\"We go around. Higher up. No sense drawing attention.\" He moved off, a silent shadow against "
+            "the fading light, leaving no room to argue. His survival wasn't just his own anymore."
         ),
         open_plots=(
-            "Fear of deep water exposed; rivalry with Aromis becomes alliance or open feud."
+            "Protecting a young or innocent wolf the way he couldn't protect Zephyr; a chance at something "
+            "like redemption finally within reach, if he can let himself take it."
         ),
     ),
     "Aromis": _sheet(
@@ -1146,9 +1146,8 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "The river burbled on, indifferent to two wolves caught between duty and something far more dangerous."
         ),
         open_plots=(
-            "Border romance exposed; choose pack or Mossheart, or become unwilling informant. Rivalry with "
-            "Churn over fishing spots complicated by secrecy. Warming water and the tooth challenge river "
-            "packs' Maw-belief."
+            "Border romance exposed; choose pack or Mossheart, or become unwilling informant. Warming "
+            "water and the tooth challenge river packs' Maw-belief."
         ),
     ),
     "Kanami": _sheet(
@@ -1783,33 +1782,48 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Mimicry mistaken for magic; forced into a fight he cannot win; border duty despite his fear."
         ),
     ),
-    "Gristle": _sheet(
+    "MaggotBrain": _sheet(
         appearance=(
-            "Thick-necked broad-chested wolf, coarse wiry fur like dead bracken; brown, gray, faded orange. Fur "
-            "crusted with dried blood and mud he does not clean. Flat dark brown eyes deep in a scarred face. Left ear "
-            "ragged stump from a boar; muzzle crossed with old bite scars. Missing three claws on right forepaw from "
-            "leaf-bare frostbite. Smells of old carrion and swamp gas."
+            "Small and wiry, a runt who never filled out; short grey pelt darkening toward black at the edges, "
+            "with a wild overgrown ruff bristling around her neck. Striking pale yellow eyes, always faintly "
+            "furious. Part of her upper lip is torn away, baring teeth on one side even at rest; half of one ear "
+            "is gone. Ribs always visible under the coat."
         ),
         personality=(
-            "Not subtle; charges, crashes through reeds, splashes shallows, drags prey down with raw strength. Other "
-            "hunters despise him for scaring prey; when the pack starves, Gristle brings meat. Foul-mouthed, "
-            "ill-tempered; calls pups frog-guts and vole-snouts as endearments. Picks fights with larger wolves, "
-            "loses, gets up, does it again. Not smart, not graceful; useful."
+            "Delirious, erratic, and running on a moral code no one else shares. She hears the swamp talking "
+            "through mosquito-hum and bubbling marsh gas, and believes the rot itself gives her orders. Dead "
+            "silent one moment, cackling the next; her mood rises and falls with the tide. To her a living "
+            "creature is just unmaggoted waste; a corpse is complete, beautiful, finished. Still, cruelty is "
+            "something innocent creatures don't deserve."
         ),
         backstory=(
-            "Born a Lowbelly in Greyspire; fled to Mistmoor six years ago half-dead. Does not say why; rumors of "
-            "killing a Stoneguard or stealing from fresh-kill. Rotmother took him in; he repaid with meat a hundred "
-            "times. Still feels outsider, expects exile, hunts harder than anyone hoping usefulness earns his place."
+            "Born the runt of her litter and named Silt; denied milk, used as a chew toy by bigger littermates. "
+            "When the dens flooded she was left behind, and crawled into the hollow trunk of a dead cypress to "
+            "escape the rising water. Trapped a week with no food and a voice in the rot telling her the tree "
+            "wasn't empty, she found a swamp panther's cached kills liquefying in the summer heat above her; "
+            "maggots rained down as the carcasses broke down, and to survive she ate them. Starved, fevered, and "
+            "breathing swamp gas, her mind came apart; she stopped screaming and started laughing, and came to "
+            "believe the voice in the rot was the Maw itself. When her birth pack found her skeletal and "
+            "sludge-caked beneath the tree, she no longer answered to Silt. She cut ties with her birth kin, all "
+            "gone now, and serves the Maw and its hunger."
         ),
-        family_ties="No named family. Former Greyspire Lowbelly; exile or flight.",
+        family_ties="No claimed family; severed ties with her birth kin, all deceased.",
         rp_sample=(
-            "Gristle charged. The boar heard him; sounded like a rockslide; and turned tusks lowered. Gristle did "
-            "not slow. A tusk went deep in his shoulder; he clamped jaws on the boar's throat and held through mud "
-            "and thrashing. When it collapsed he snarled at hunters watching from safety: \"Fresh-kill. Now help me "
-            "drag it, you scat-lickers.\" He limped back bleeding, never asked for the healer."
+            "She lay belly-up in the grey silt, tongue lolling, marsh flies swarming her fur; three days dead, or "
+            "so the outcast thought as he lowered his jaws for an easy meal. She came alive mid-bite, a "
+            "bone-splinter snare tied into her jaws tearing his muzzle open before he could close his teeth. He "
+            "reeled back roaring; she answered with a cackle and a head full of questions about his skull. A wave "
+            "of blinding black muck off her paws took his eyes; a low gator-growl pulled his snapping jaws the "
+            "wrong way while she vanished into the moss overhead, then dropped onto his back and tore at his "
+            "scalp. He slammed her into a cypress trunk; she held on, until lightning split the sky and thunder "
+            "cracked directly over them. The noise in her own skull went louder than the fight; she let go, "
+            "scrambled back into the muck on all fours, clawing at her own ears and screaming at the sky, every "
+            "advantage gone."
         ),
         open_plots=(
-            "Greyspire past catches up; refusal to ask for help finally kills him; hunted with Croaker causes prey scare-offs."
+            "A loud border skirmish or thunderstorm catching her mid-fight and breaking her focus when it "
+            "matters most; another wolf trying to use her swamp-prophet reputation for their own ends; what's "
+            "left of her birth pack's bones, somewhere in the rot."
         ),
     ),
     "Sludge": _sheet(
@@ -1838,7 +1852,7 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "nose to mud: \"Thank you, Maw. I was patient.\" He dragged fresh-kill back limping, trail of blood and water."
         ),
         open_plots=(
-            "Superstition aborts critical hunt; missing toes fail at lunge; contrast with loud Gristle on shared territory."
+            "Superstition aborts critical hunt; missing toes fail at lunge; contrast with manic MaggotBrain on shared territory."
         ),
     ),
     "Rotteddust": _sheet(

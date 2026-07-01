@@ -85,16 +85,6 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     vitals_block = full_activity_block(user, day, action="survey")
     if vitals_block:
         return howlbert_embed("cannot survey", vitals_block, color=ERROR_COLOR)
-    if int(user["last_survey_day"]) >= day:
-        embed = howlbert_embed(
-            "already surveyed",
-            "you've mapped the border this sunrise.\n\n"
-            "_resets next sunrise · try **`/scout trail`** · **`/scout rescout`** · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="scouts · survey once per sunrise · rescout unlimited")
-        return embed
-
     profs = parse_proficiencies(user["skill_proficiencies"])
     from engine.pack_raid_ecology import survey_dc_modifiers, survey_victim_bone_bonus
 
@@ -201,7 +191,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         + f"\n\n{crit} intel for the alpha; **+{bones}** bones, standing **+{standing}**.{intel}{hide_note}{extra}",
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="scouts · once per sunrise · counts toward survey & patrol quests")
+    embed.set_footer(text="scouts · unlimited · counts toward survey & patrol quests")
     append_fatigue_to_footer(embed, survey_fatigue)
     return embed
 
@@ -224,16 +214,6 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     vitals_block = full_activity_block(user, day, action="trail")
     if vitals_block:
         return howlbert_embed("cannot trail", vitals_block, color=ERROR_COLOR)
-    if int(user["last_trail_day"]) >= day:
-        embed = howlbert_embed(
-            "already trailed",
-            "you've run a cold trail this sunrise.\n\n"
-            "_resets next sunrise · try **`/scout survey`** · **`/scout rescout`** · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="scouts · trail once per sunrise · rescout unlimited")
-        return embed
-
     profs = parse_proficiencies(user["skill_proficiencies"])
     result = resolve_check(
         user,
@@ -279,7 +259,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
             + hazard_note,
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="trail spent · `/scout rescout` · /checklist")
+        embed.set_footer(text="try again · `/scout rescout` · /checklist")
         append_fatigue_to_footer(embed, trail_fatigue)
         return embed
 
@@ -320,6 +300,6 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         + f"\n\n{crit} **+{bones}** bones.{prey_line}{intel}",
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="scouts · once per sunrise · counts toward trail quests")
+    embed.set_footer(text="scouts · unlimited · counts toward trail quests")
     append_fatigue_to_footer(embed, trail_fatigue)
     return embed

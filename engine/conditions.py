@@ -40,6 +40,10 @@ def injury_heal_note(key: str, since: dict[str, int], day: int, user=None) -> st
         heal_days = max(1, int(heal_days * injury_heal_multiplier(user)))
         if key in ("sprained_leg", "fractured_rib", "broken_jaw", "spinal_injury", "punctured_paw"):
             heal_days = max(1, heal_days - bone_heal_days_reduction(user))
+        con = int(user["attr_con"]) if "attr_con" in user.keys() else 5
+        survival_reduction = max(0, (con - 6) // 2)
+        if survival_reduction:
+            heal_days = max(1, heal_days - survival_reduction)
     start = since.get(key)
     if start is not None and day > start:
         elapsed = day - start
