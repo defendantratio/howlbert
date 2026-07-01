@@ -37,7 +37,7 @@ stop the running process first; only one instance may run (`.howlbert.lock`). if
 ```powershell
 cd C:\path\to\howlbert
 # stop: Ctrl+C in the bot terminal, or:
-Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*howlbert*" } | Stop-Process
+Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "howlbert" } | Stop-Process
 # stale lock after a crash (only if start still says another instance is running):
 Remove-Item -Force .howlbert.lock -ErrorAction SilentlyContinue
 .\.venv\Scripts\Activate.ps1
