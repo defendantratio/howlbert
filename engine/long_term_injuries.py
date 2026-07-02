@@ -392,3 +392,37 @@ def check_adjustments(
             notes.append(sc_note)
 
     return mod, disadvantage, " · ".join(notes)
+
+
+SEVERE_INJURIES = frozenset({"fractured_rib", "spinal_injury", "paralysis"})
+
+
+def apply_winter_cold_injury_on_rollover(conn, season: str) -> list[dict]:
+    """Winter cold worsens severe injuries: −1 HP per sunrise for fractured ribs,
+    spinal injuries, and paralysis. Doesn't kill outright (floor 1 HP) so medics
+    still have a window to intervene."""
+    if season != "winter":
+        return []
+    from engine.conditions import parse_injuries
+
+    rows = conn.execute(
+        "SELECT * FROM users WHERE condition NOT IN ('dead', 'dying') AND active_injuries IS NOT NULL AND active_injuries != ''"
+    ).fetchall()
+    notes: list[dict] = []
+    for wolf in rows:
+        injuries = set(parse_injuries(wolf["active_injuries"]))
+        severe = injuries & SEVERE_INJURIES
+        if not severe:
+            continue
+        hp = int(wolf["hp"])
+        if hp <= 1:
+            continue
+        new_hp = max(1, hp - 1)
+        conn.execute("UPDATE users SET hp = ? WHERE id = ?", (new_hp, wolf["id"]))
+        label = ", ".join(k.replace("_", " ") for k in sorted(severe))
+        notes.append({
+            "wolf_name": wolf["wolf_name"],
+            "discord_id": int(wolf["discord_id"]),
+            "line": f"winter cold deepens **{label}** (−1 hp → **{new_hp}**); see a medic.",
+        })
+    return notes

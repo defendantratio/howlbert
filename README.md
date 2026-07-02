@@ -75,6 +75,7 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ **genetic conditions** (blindness, deafness, muteness, and more) are inherited or rolled at birth; some block howls, hunts, or perception  
 ✦ **cat clans**: trade meat and forage, and form pacts via `/pack pact` (see `docs/CAT_CLANS.md`)  
 ✦ **forage food** (berries, windfall fruit, roots, greens) drops from `/field forage` and `scavenge`; it ripens then overripens, just like meat rots  
+✦ **The Rotting Mere** (Mistmoor location): set IC location to "The Rotting Mere" and `/field forage` yields marsh-mallow, belly-rip fungus, or death-cap mushroom; each forage has a chance of Maw-contact flavor, swamp disease exposure, and (Mistmoor wolves only) rare Drown-Sick transformation  
 ✦ **passive scavenge**: unfed wolves forage a little each sunrise so neglect bites without instantly starving the den  
 ✦ **death log**: `/wolfadmin deaths` records cause of death each rollover  
 ✦ **admin tooling**: `/wolfadmin assign` registers a wolf to a player (paste sheets directly in chat); `/wolfadmin arrival` posts the arrival/birth scene for an already-registered wolf so it grants its long-term trait properly; `/wolfadmin dormant` exempts admin-held NPC wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
@@ -101,7 +102,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 
 | hub          | actions (examples)                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| `/bones`     | `balance`, `daily`, `hunt`, `work`, `crime`, `shop`, `buy`, `sell`, `inventory`, `use`, `give`, `leaderboard` |
+| `/bones`     | `balance`, `daily`, `hunt`, `pray` (hunt prayer; once/sunrise), `work`, `crime`, `shop`, `buy`, `sell`, `inventory`, `use`, `give`, `leaderboard` |
 | `/field`     | `forage`, `verge`, `scavenge`, `track`, `fishing`, `sniff`                                                    |
 | `/hoarding`  | `hoard`, `gift`, `shred`                                                                                      |
 | `/playpen`   | `toys`, `play`, `playall`, `toystore`, `socialize`, `groom`                                                   |
@@ -118,8 +119,9 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/pupcare`   | `birth`, `feed`, `list`, `save`, `adopt`                                                                      |
 | `/wolfset`   | `birthsex`, `sexuality`, `mawbelief`, `size` (combat build)                                                    |
 | `/advance`   | `view`, `spend` (attribute, **skill trait**, role feature)                                  |
-| `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe` |
+| `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe`; full medic: sick packmates show in `/checklist` |
 | `/herbs`     | `bag`, `guide`, `prepare`, `dryall`, `store`, `turnin`                                                      |
+| `/faction`   | human faction relations: `status` (standings overview) · `observe` (flavor; once/sunrise) · `approach` (roll wis vs dc 12; ±standing) · `trade` (costs 3 bones; +2 standing; pack-specific) · `raid` (roll str vs dc 13; −faction standing; if caught −1 all factions) · `sabotage` (Thistlehide→thorne_lumber; Silverrush→river_mill; dc 15; Memory-Knot tracker) |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
 | `/skills`    | catalogued checks (`category:` · `check:` · `group:` · `helper:` · `opponent:`)                         |
 | `/skilllist` | reference DCs by category                                                                                     |
@@ -139,7 +141,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/say` `/whisper`                                      | quick IC lines and styled IC DMs (no message content intent needed) |
 | `/location`                                            | set, clear, or show your wolf's in-character whereabouts |
 | `/journal`                                             | read-only automatic life timeline (birth, pack, bonds, blooding, death, rites) |
-| `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning` |
+| `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning`, `trial` · mate rituals: `bone_gift` (costs 3 bones, +5 mood to target), `joining_howl` (one-time; +1 maw_favor each), `moon_witness` (full moon only; +2 maw_favor each, seals romance bond) |
 | `/npc`                                                 | server NPC registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
 | `/weep`                                                 | silverrush only, once per sunrise: release grief at the weep stone |
 | `/proxy`                                               | speak in-character as your wolves; import from Tupperbox |
@@ -148,9 +150,9 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/explore venture`                                     | dig, scent, investigate                                |
 | `/scout rescout` `/survey` `/trail`                    | scout field commands                                   |
 | `/pack …`                                              | treasury, stash, tax, territory, wars, unity, `pact` (cat clans), `share`/`aid`, `tradepack`, `brokenrite` |
-| `/bonds`                                               | friendships, rivalries, kin, mentors, found families   |
+| `/bonds`                                               | friendships, rivalries, kin, mentors, found families; fling auto-detected on profile when mated pair has no romance bond |
 | `/sign`                                                | body/visual language; mute wolves rally without a howl; unlimited, diminishing returns on repeat partners |
-| `/combat …`                                            | initiative combat; `/combat encounter` for ambushes    |
+| `/combat …`                                            | initiative combat; `/combat encounter` for ambushes; combat panel: **bite**, **claw**, **maneuver**, **run away**, **submit** (yield + submission/spare/finish mechanics) |
 | `/hazard`                                              | weather opposed roll                                   |
 | `/medic action:quarantine`                               | isolate sick wolves (or `action:quarantine`)           |
 | `/trade`                                               | player item and bone trades                            |
@@ -270,7 +272,8 @@ speak in-character as your wolves, tupperbox-style — plus slash tools that wor
 ✦ `/location set` · `clear` · `show` — IC whereabouts on `/profile` and proxy footers  
 ✦ `/journal` reads your wolf's **automatic** timeline (register, birth, pack moves, bonds, blooding, death, rites); no player editing  
 ✦ `/scene start` opens a roleplay **thread** with a **pinned living roster**; posting auto-joins you (`/scene poke` pings the scene)  
-✦ `/rite naming` · `blooding` · `mourning` — pack ceremonies in-channel  
+✦ `/rite naming` · `blooding` · `mourning` · `trial` — pack ceremonies in-channel  
+✦ `/rite bone_gift` · `joining_howl` · `moon_witness` — mate rituals: bone-gift costs 3 bones and lifts mood; joining howl announces a bond publicly (+1 maw_favor each, once per pair); moon's witness seals true mateship under the full moon (+2 maw_favor each, romance bond sealed, once per pair)  
 ✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
 ✦ `/family` — relationship web rendered as a diagram, with the focus wolf's proxy avatar  
 ✦ `/sign` — body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  

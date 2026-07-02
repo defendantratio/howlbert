@@ -337,7 +337,7 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
     notes: list[dict] = []
     rows = conn.execute(
         """
-        SELECT id, wolf_name, discord_id, hunger, thirst, is_pregnant
+        SELECT id, wolf_name, discord_id, hunger, thirst, exhaustion, is_pregnant
         FROM users
         WHERE condition NOT IN ('dead', 'dying')
           AND birth_sex = 'female'
@@ -346,6 +346,7 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
     for row in rows:
         hunger_loss = 0
         thirst_loss = 0
+        exhaustion_gain = 0
         parts: list[str] = []
         if int(row["is_pregnant"]):
             hunger_loss += PREGNANCY_HUNGER
@@ -364,23 +365,101 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
         if pup_count:
             hunger_loss += pup_count * MOTHER_NURSE_HUNGER_COST_PER_PUP
             thirst_loss += pup_count * NURSING_THIRST_PER_PUP
+            exhaustion_gain += 1
             parts.append(f"nursing {pup_count} pup(s)")
-        if not hunger_loss and not thirst_loss:
+        if not hunger_loss and not thirst_loss and not exhaustion_gain:
             continue
         new_hunger = max(0, int(row["hunger"]) - hunger_loss)
         new_thirst = max(0, int(row["thirst"]) - thirst_loss)
+        new_exhaustion = min(5, int(row["exhaustion"]) + exhaustion_gain)
         conn.execute(
-            "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
-            (new_hunger, new_thirst, row["id"]),
+            "UPDATE users SET hunger = ?, thirst = ?, exhaustion = ? WHERE id = ?",
+            (new_hunger, new_thirst, new_exhaustion, row["id"]),
         )
+        drain_parts = []
+        if hunger_loss:
+            drain_parts.append(f"hunger **−{hunger_loss}**")
+        if thirst_loss:
+            drain_parts.append(f"thirst **−{thirst_loss}**")
+        if exhaustion_gain:
+            drain_parts.append(f"exhaustion **+{exhaustion_gain}** (now {new_exhaustion})")
         notes.append(
             {
                 "wolf_name": row["wolf_name"],
                 "discord_id": row["discord_id"],
                 "line": (
                     f"extra drain from {' and '.join(parts)} "
-                    f"(hunger **−{hunger_loss}**, thirst **−{thirst_loss}**)."
+                    f"({', '.join(drain_parts)})."
                 ),
             }
         )
+    return notes
+
+
+FOSTER_HEALER_STANDING_BONUS = 1
+
+
+def apply_foster_pup_rollover(conn) -> list[dict]:
+    """
+    Each sunrise: pack healers earn standing for hosting a foster pup in good health.
+    """
+    notes: list[dict] = []
+    foster_pups = conn.execute(
+        "SELECT * FROM users WHERE foster_pack_id IS NOT NULL AND condition NOT IN ('dead', 'dying')"
+    ).fetchall()
+    for pup in foster_pups:
+        host_pack_id = int(pup["pack_id"]) if pup["pack_id"] else None
+        origin_pack_id = int(pup["foster_pack_id"])
+        if not host_pack_id or host_pack_id == origin_pack_id:
+            continue
+        medics = conn.execute(
+            "SELECT * FROM users WHERE pack_id = ? AND wolf_role IN ('healer', 'healer_apprentice') AND condition NOT IN ('dead', 'dying')",
+            (host_pack_id,),
+        ).fetchall()
+        for medic in medics:
+            conn.execute(
+                "UPDATE users SET standing = MIN(10, standing + ?) WHERE id = ?",
+                (FOSTER_HEALER_STANDING_BONUS, medic["id"]),
+            )
+        if medics:
+            notes.append({
+                "wolf_name": pup["wolf_name"],
+                "discord_id": None,
+                "line": (
+                    f"**{pup['wolf_name']}** (foster pup) cared for; "
+                    f"{len(medics)} healer(s) earn standing **+{FOSTER_HEALER_STANDING_BONUS}** for the work."
+                ),
+            })
+    return notes
+
+
+def apply_winter_pup_cold_on_rollover(conn, season: str) -> list[dict]:
+    """Pups in winter gain exhaustion from cold exposure each sunrise even when
+    fed. Real pup mortality peaks in winter; here it shows as compounding
+    exhaustion rather than instant death so players still have a chance to act."""
+    import random
+    if season != "winter":
+        return []
+    from config import PUP_MAX_MOONS, PUP_WINTER_COLD_EXHAUSTION_CHANCE
+
+    rows = conn.execute(
+        """
+        SELECT id, wolf_name, discord_id, exhaustion, age_months
+        FROM users
+        WHERE age_months < ? AND condition NOT IN ('dead', 'dying')
+        """,
+        (PUP_MAX_MOONS,),
+    ).fetchall()
+    notes: list[dict] = []
+    for pup in rows:
+        if random.random() > PUP_WINTER_COLD_EXHAUSTION_CHANCE:
+            continue
+        old_ex = int(pup["exhaustion"]) if pup["exhaustion"] is not None else 0
+        new_ex = old_ex + 1
+        conn.execute("UPDATE users SET exhaustion = ? WHERE id = ?", (new_ex, pup["id"]))
+        notes.append({
+            "wolf_name": pup["wolf_name"],
+            "discord_id": int(pup["discord_id"]) if pup["discord_id"] else None,
+            "line": f"cold night — exhaustion **{old_ex}** → **{new_ex}** (`/pupcare action:feed` with honey eases the chill).",
+        })
     return notes

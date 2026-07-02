@@ -11,6 +11,7 @@ from engine.combat_status import apply_crit_status_effects, apply_fumble_status_
 from engine.conditions import add_injury, injury_roll_label, parse_injuries
 from engine.combat_injuries import apply_injury_to_list, injury_label, resolve_player_injury_key
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 from utils.combat_views import COMBAT_DYNAMIC_ITEMS, make_combat_view, refresh_combat_panel
 from engine.role_restrictions import young_wolf_block
 from engine.vitals import full_activity_block
@@ -21,6 +22,8 @@ from engine.ambush_activity import ambush_victory_embed
 from engine.border_combat import try_complete_border_victory
 from engine.infractions import apply_yield_caught, yield_caught_standing
 from utils.replies import reply_ephemeral
+
+_ally_wolf_autocomplete = make_member_wolf_autocomplete("ally")
 
 async def _combat_reply(interaction: discord.Interaction, **kwargs) -> None:
     """Send combat UI response; works whether or not the interaction was deferred."""
@@ -57,6 +60,13 @@ async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot
     if new_hp == 0 and (not _is_npc(defender_f)):
         footer += ' · `/medic action:deathsaves`'
     embed.set_footer(text=footer)
+    if hit and not _is_npc(defender_f) and db.row_val(defender_f, 'wolf_id'):
+        from engine.role_features import is_full_medic
+        defender_wolf = db.get_user_by_id(db.row_val(defender_f, 'wolf_id'))
+        if defender_wolf and is_full_medic(defender_wolf):
+            from engine.healer_code import apply_medic_neutrality_violated
+            note = apply_medic_neutrality_violated(interaction.user.id, defender_wolf)
+            embed.add_field(name='Healer\'s Neutrality', value=note, inline=False)
     kill_note = None
     if new_hp == 0:
         kill_note = try_grant_combat_kill_carcass(enc_id, interaction.user.id, defender_f)
@@ -204,6 +214,12 @@ def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str,
                     world = db.get_world(enc['guild_id'])
                     db.record_injury_since(wolf_id, inj_key, world['day_number'])
                 injury_note = f'\n**Injury:** {injury_label(inj_key)}'
+                import random as _random
+                _INFECTABLE = frozenset({"deep_gash", "torn_claw", "punctured_paw", "torn_ear"})
+                if inj_key in _INFECTABLE and "infected_wound" not in injuries and _random.random() < 0.15:
+                    injuries = add_injury(injuries, "infected_wound")
+                    db.set_user_conditions(defender_f['discord_id'], active_injuries=json.dumps(injuries))
+                    injury_note += '\n_the wound already looks wrong — **infected wound** sets in._'
         if new_hp == 0:
             from engine.chronic_conditions import try_near_death_mental_trauma
             trauma = try_near_death_mental_trauma(defender_stats)
@@ -274,9 +290,77 @@ async def handle_combat_button(interaction: discord.Interaction, enc_id: int, bo
         await _combat_reply(interaction, embed=howlbert_embed(title, body, color=color), view=view)
         await refresh_combat_panel(interaction, enc_id, bot)
         return
+    if action == 'submit':
+        fighter = db.resolve_player_fighter(enc_id, interaction.user.id)
+        if not fighter:
+            await _combat_reply(interaction, embed=howlbert_embed('Not In Combat', "You're not in this encounter.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if fighter['hp'] <= 0:
+            await _combat_reply(interaction, embed=howlbert_embed('Cannot Submit', 'You are already down.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        existing_sub = db.get_submitted_fighter(enc_id)
+        if existing_sub and existing_sub['id'] == fighter['id']:
+            await _combat_reply(interaction, embed=howlbert_embed('Already Submitted', 'You have declared submission. Wait for the response.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        db.set_fighter_submitted(fighter['id'])
+        fighter_wolf_id = fighter['wolf_id'] if 'wolf_id' in fighter.keys() else None
+        sub_row = db.get_user_by_id(int(fighter_wolf_id)) if fighter_wolf_id else None
+        sub_name = sub_row['wolf_name'] if sub_row else user['wolf_name']
+        body = f"**{sub_name}** drops low, ears flat, throat exposed.\n\nThe current fighter may now **spare** or **finish**."
+        enc = db.get_encounter(enc_id)
+        view = make_combat_view(enc_id, bot) if enc and enc['status'] == 'active' else None
+        await _combat_reply(interaction, embed=howlbert_embed('Submission Declared', body, color=discord.Color.gold()), view=view)
+        await refresh_combat_panel(interaction, enc_id, bot)
+        return
     attacker_f = db.resolve_player_fighter(enc_id, interaction.user.id)
     if not attacker_f:
         await _combat_reply(interaction, embed=howlbert_embed('Not In Combat', "You're not in this encounter.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        return
+    if action in ('spare', 'finish'):
+        current = _current_fighter_static(enc)
+        if not current or current['id'] != attacker_f['id']:
+            await _combat_reply(interaction, embed=howlbert_embed('Not Your Turn', 'Only the active fighter can spare or finish.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        sub = db.get_submitted_fighter(enc_id)
+        if not sub:
+            await _combat_reply(interaction, embed=howlbert_embed('No Submission', 'No wolf has submitted in this fight.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        sub_wolf_id = sub['wolf_id'] if 'wolf_id' in sub.keys() else None
+        sub_discord_id = sub['discord_id'] if 'discord_id' in sub.keys() else None
+        sub_wolf = db.get_user_by_id(int(sub_wolf_id)) if sub_wolf_id else None
+        sub_name = sub_wolf['wolf_name'] if sub_wolf else (sub['npc_name'] if 'npc_name' in sub.keys() and sub['npc_name'] else 'unknown')
+        att_name = user['wolf_name']
+        db.clear_fighter_submitted(sub['id'])
+        if action == 'spare':
+            outcome = db.yield_fighter(enc_id, sub['id'])
+            new_favor = db.adjust_maw_favor(interaction.user.id, 1)
+            body = (
+                f"**{att_name}** steps back. **{sub_name}** is spared and leaves the field.\n\n"
+                f"_The Maw honors the hierarchy._ +1 Maw Favor → {new_favor}"
+            )
+            if outcome != 'ended':
+                db.advance_combat_turn(enc_id)
+                enc_new = db.get_encounter(enc_id)
+                if enc_new and enc_new['status'] == 'active':
+                    body += f'\n\n{_turn_footer_static(enc_new, bot)}'
+            view = make_combat_view(enc_id, bot) if outcome != 'ended' else None
+            await _combat_reply(interaction, embed=howlbert_embed('Spared', body, color=SUCCESS_COLOR), view=view)
+            await refresh_combat_panel(interaction, enc_id, bot)
+        else:  # finish
+            db.update_fighter_hp(sub['id'], 0)
+            if not _is_npc(sub) and sub_discord_id:
+                db.sync_fighter_hp_to_user(int(sub_discord_id), 0)
+            sub_updated = db.get_combat_fighter(enc_id, sub['id'])
+            new_karma = db.adjust_maw_karma(interaction.user.id, 3)
+            body = (
+                f"**{att_name}** does not relent. **{sub_name}** is struck down.\n\n"
+                f"_Blood above hierarchy._ +3 Maw Karma → {new_karma}"
+            )
+            if not _is_npc(sub) and sub_discord_id:
+                kill_note = finalize_cross_pack_pvp_death(enc['guild_id'], interaction.user.id, int(sub_discord_id))
+                if kill_note:
+                    body += f'\n{kill_note}'
+            await finish_attack_turn(interaction, bot, enc_id, body, True, sub_updated, 0, title='Finish')
         return
     from engine.combat_display import pick_combat_target
     target_id = pick_combat_target(interaction.user.id, enc_id, attacker_f['id'])
@@ -558,15 +642,16 @@ class Combat(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     @combat.command(name='hazard', description='human-world hazards; two-legs, thunderpath, traps, fences.')
-    @app_commands.describe(topic='hazard reference', ally='packmate to encourage past fire')
+    @app_commands.describe(topic='hazard reference', ally='packmate to encourage past fire', ally_wolf="specific wolf from that player's roster", own_ally='your other wolf to encourage past fire')
     @app_commands.choices(topic=[app_commands.Choice(name='humans (two-legs)', value='humans'), app_commands.Choice(name='thunderpath (road)', value='thunderpath'), app_commands.Choice(name='traps', value='traps'), app_commands.Choice(name='two-leg nests (buildings)', value='twoleg_nests'), app_commands.Choice(name='fences', value='fences'), app_commands.Choice(name='fire fear (campfire/torch)', value='fire'), app_commands.Choice(name='wildfire fear + smoke', value='wildfire'), app_commands.Choice(name='stand against fire (intimidation)', value='fire_stand'), app_commands.Choice(name='encourage ally past fire', value='fire_encourage')])
-    async def combat_hazard(self, interaction: discord.Interaction, topic: str, ally: discord.Member | None=None):
+    @app_commands.autocomplete(ally_wolf=_ally_wolf_autocomplete)
+    async def combat_hazard(self, interaction: discord.Interaction, topic: str, ally: discord.Member | None=None, ally_wolf: str | None=None, own_ally: str | None=None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return
         if topic in ('fire', 'wildfire', 'fire_stand', 'fire_encourage'):
-            await self._fire_hazard(interaction, user, topic, ally)
+            await self._fire_hazard(interaction, user, topic, ally, own_ally, ally_wolf=ally_wolf)
             return
         from engine.combat_hazards import resolve_combat_hazard
         world = db.get_world(interaction.guild.id) if interaction.guild else None
@@ -578,18 +663,31 @@ class Combat(commands.Cog):
         embed.set_footer(text=_hazard_footer(user))
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    async def _fire_hazard(self, interaction: discord.Interaction, user, topic: str, ally: discord.Member | None):
+    async def _fire_hazard(self, interaction: discord.Interaction, user, topic: str, ally: discord.Member | None, own_ally: str | None = None, *, ally_wolf: str | None = None):
         from engine.fire_fear import encourage_through_fire, fire_fear_save, stand_against_fire, wildfire_heat_save
         world = db.get_world(interaction.guild.id) if interaction.guild else None
         day = world['day_number'] if world else 1
         if topic == 'fire_encourage':
-            if not ally:
-                await interaction.response.send_message(player_message('Pick an **ally** packmate to encourage past the flame.'), ephemeral=reply_ephemeral())
+            if ally and own_ally:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `ally` or `own_ally` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            target = db.get_user(ally.id)
-            if not target:
-                await interaction.response.send_message(player_message('Ally is not registered.'), ephemeral=reply_ephemeral())
+            if not ally and not own_ally:
+                await interaction.response.send_message(player_message('Pick an **ally** or **own_ally** to encourage past the flame.'), ephemeral=reply_ephemeral())
                 return
+            if own_ally:
+                rows = db.list_user_wolves(interaction.user.id)
+                target = next((w for w in rows if w['wolf_name'].lower() == own_ally.strip().lower() and w['id'] != user['id']), None)
+                if not target:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_ally}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            else:
+                if ally_wolf:
+                    target = db.find_user_wolf(ally.id, ally_wolf)
+                else:
+                    target = db.get_user(ally.id)
+                if not target:
+                    await interaction.response.send_message(player_message('Ally is not registered.'), ephemeral=reply_ephemeral())
+                    return
             ok, body = encourage_through_fire(user, target, day=day)
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             embed = howlbert_embed('Encouragement', body, color=color)

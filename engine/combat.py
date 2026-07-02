@@ -571,4 +571,11 @@ def finalize_cross_pack_pvp_death(
     name = victim_den["name"] if victim_den else GREAT_PACKS[v_gp]["name"]
     note = f"pack standing with **{name}** **−3** (now **{new_standing}/10**)."
     note += format_standing_war_flash(guild_id, k_pack, v_pack, new_standing)
+    from engine.battle_fatigue import record_pack_combat_day
+    world = db.get_world(guild_id)
+    if world:
+        record_pack_combat_day(k_pack, world["day_number"])
+        record_pack_combat_day(v_pack, world["day_number"])
+        debt = db.add_pack_blood_debt(guild_id, k_pack, v_pack, world["day_number"])
+        note += f"\n_a life taken; **{debt}** blood debt owed by {db.get_pack(k_pack)['name'] if db.get_pack(k_pack) else 'killer pack'} to {db.get_pack(v_pack)['name'] if db.get_pack(v_pack) else 'victim pack'} — clear it with `/pack tribute`._"
     return note

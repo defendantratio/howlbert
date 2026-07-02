@@ -322,6 +322,14 @@ HERBS = {
         ("mistmoor",),
         cures=("rot_lung",),
     ),
+    "death_cap": _h(
+        "Death-Cap Mushroom",
+        "rare",
+        "Pale mushroom found only in the Rotting Mere. Intensely toxic; 3d6 poison (DC 18 half). Healers may use trace amounts experimentally.",
+        ("mistmoor",),
+        poison=True,
+        habitat=("rotting_mere",),
+    ),
     "lizards_tail": _h(
         "Lizard's Tail",
         "common",

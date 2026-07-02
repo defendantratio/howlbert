@@ -8,7 +8,29 @@ from discord.ext import commands
 import database as db
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, choice_label
 from utils.replies import reply_ephemeral
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 
+
+_wolf_name_autocomplete = make_member_wolf_autocomplete("target_wolf")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    from utils.embeds import choice_label
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
+
+def _resolve_own_wolf(discord_id: int, name: str):
+    rows = db.list_user_wolves(discord_id)
+    return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
 async def _crime_target_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     from config import GREAT_PACKS
@@ -35,6 +57,8 @@ class Crime(commands.Cog):
     @app_commands.command(name='crime', description='petty theft or pocket-picking; or raid a rival wolf-pack den / cat-clan camp.')
     @app_commands.describe(
         target_wolf='wolf to pick a pocket from (individual crime; omit for a generic petty score)',
+        wolf_name="specific wolf from that player's roster",
+        own_wolf='your other wolf to pick from (multi-wolf players)',
         target='wolf pack or cat clan to raid (raid only; pick from autocomplete)',
         raid_type='what to steal from a den or camp (raid only; treasury = bones, wolf packs only)',
         scene='optional rp scene note',
@@ -46,19 +70,27 @@ class Crime(commands.Cog):
         app_commands.Choice(name='herb store', value='herbs'),
         app_commands.Choice(name='toy store / amusement', value='amusement'),
     ])
-    @app_commands.autocomplete(target=_crime_target_autocomplete)
+    @app_commands.autocomplete(target=_crime_target_autocomplete, own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
     async def crime(
         self,
         interaction: discord.Interaction,
         target_wolf: discord.Member | None = None,
+        wolf_name: str | None = None,
+        own_wolf: str | None = None,
         target: str | None = None,
         raid_type: str = 'food',
         scene: str | None = None,
         staff: bool = False,
     ) -> None:
-        if target_wolf and target:
+        if (target_wolf or own_wolf) and target:
             await interaction.response.send_message(
-                embed=howlbert_embed('Pick One', 'Use **target_wolf** for an individual pick-pocket or **target** for a den/camp raid — not both.', color=ERROR_COLOR),
+                embed=howlbert_embed('Pick One', 'Use **target_wolf**/**own_wolf** for a pick-pocket or **target** for a den/camp raid — not both.', color=ERROR_COLOR),
+                ephemeral=reply_ephemeral(),
+            )
+            return
+        if target_wolf and own_wolf:
+            await interaction.response.send_message(
+                embed=howlbert_embed('Pick One', 'Use **target_wolf** or **own_wolf**; not both.', color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return
@@ -68,7 +100,24 @@ class Crime(commands.Cog):
             return
 
         from engine.activities import try_crime
-        embed = try_crime(interaction, target_wolf=target_wolf, scene=scene, staff=staff)
+        if own_wolf:
+            victim_row = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not victim_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            active = db.get_user(interaction.user.id)
+            if active and victim_row['id'] == active['id']:
+                await interaction.response.send_message(embed=howlbert_embed('Same Wolf', 'Switch active wolf with `/switchwolf`, or pick a different `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            embed = try_crime(interaction, victim_row=victim_row, scene=scene, staff=staff)
+        elif target_wolf and wolf_name:
+            victim_row = db.find_user_wolf(target_wolf.id, wolf_name)
+            if not victim_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(target_wolf.id, wolf_name, player_label=target_wolf.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            embed = try_crime(interaction, victim_row=victim_row, scene=scene, staff=staff)
+        else:
+            embed = try_crime(interaction, target_wolf=target_wolf, scene=scene, staff=staff)
         if embed:
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 

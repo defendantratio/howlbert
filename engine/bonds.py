@@ -16,7 +16,7 @@ from config import (
     MENTOR_MATE_CAUGHT_TEXT,
 )
 
-BOND_TYPES = frozenset({"friendship", "rivalry", "kin", "mentor", "romance"})
+BOND_TYPES = frozenset({"friendship", "rivalry", "kin", "mentor", "romance", "fling"})
 
 BOND_LABELS = {
     "friendship": "friendship",
@@ -24,6 +24,7 @@ BOND_LABELS = {
     "kin": "kin",
     "mentor": "mentor",
     "romance": "romance",
+    "fling": "fling",
 }
 
 FAMILY_ROLES = frozenset({"founder", "parent", "sibling", "cub", "member"})
@@ -39,6 +40,14 @@ FAMILY_ROLE_LABELS = {
 
 POSITIVE_BOND_TYPES = ("friendship", "romance", "kin", "mentor")
 STRONG_BOND_THRESHOLD = 60
+
+
+def has_romance_bond(wolf_a_id: int, wolf_b_id: int) -> bool:
+    """True if these two wolves have an active romance bond (strength > 0)."""
+    if not wolf_a_id or not wolf_b_id:
+        return False
+    bond = db.get_bond(wolf_a_id, wolf_b_id, "romance")
+    return bool(bond and int(bond["strength"]) > 0)
 
 
 def has_strong_positive_bond(wolf_a_id: int, wolf_b_id: int) -> bool:
@@ -157,7 +166,7 @@ def strength_bar(strength: int) -> str:
 def _format_bond_note(partner_name: str, bond_type: str, row, *, label: str | None = None) -> str:
     display = label or BOND_LABELS.get(bond_type, bond_type.title()).lower()
     rival = bond_type == "rivalry"
-    romantic = bond_type == "romance"
+    romantic = bond_type in ("romance", "fling")
     return (
         f"bond; **{partner_name}**: {display} **{strength_bar(row['strength'])}** "
         f"({strength_tier(row['strength'], rivalry=rival, romance=romantic)})"
@@ -172,7 +181,7 @@ def _pair_bond_kind(user, partner) -> tuple[str, str | None]:
         return "romance", "mate"
 
     best = None
-    for bond_type in ("kin", "mentor", "romance", "friendship", "rivalry"):
+    for bond_type in ("kin", "mentor", "romance", "fling", "friendship", "rivalry"):
         row = db.get_bond(user["id"], partner["id"], bond_type)
         if not row:
             continue
@@ -285,10 +294,19 @@ def apply_groom_bonds(user, partner, *, day: int = 0) -> str | None:
     if not row:
         return None
     bond_note = _format_bond_note(partner["wolf_name"], bond_type, row, label=label)
-    from engine.disease_contract import try_spread_from_close_contact
-    disease_note = try_spread_from_close_contact(user, partner) or try_spread_from_close_contact(partner, user)
-    if disease_note:
-        bond_note = bond_note + f"\n{disease_note}" if bond_note else disease_note
+    # Grooming removes fleas from the partner — picking out parasites is exactly what this does.
+    from engine.diseases import parse_disease
+    partner_disease_raw = partner["disease"] if "disease" in partner.keys() else None
+    flea_key, _ = parse_disease(partner_disease_raw)
+    if flea_key == "fleas":
+        db.set_user_conditions(partner["discord_id"], clear_disease=True, wolf_id=partner["id"])
+        bond_note = (bond_note + "\n_parasites gone — careful grooming cleared the fleas._") if bond_note else "_careful grooming cleared the fleas._"
+    # Mutual: also clear groomer's fleas
+    user_disease_raw = user["disease"] if "disease" in user.keys() else None
+    user_flea_key, _ = parse_disease(user_disease_raw)
+    if user_flea_key == "fleas":
+        db.set_user_conditions(user["discord_id"], clear_disease=True, wolf_id=user["id"])
+        bond_note = (bond_note + "\n_the grooming works both ways — your own coat is clear too._") if bond_note else "_the grooming works both ways — your own coat is clear too._"
     distressed = int(partner.get("distressed", 0) if hasattr(partner, "get") else partner["distressed"] if "distressed" in partner.keys() else 0)
     partner_grief = int(partner["grief_sunrises"]) if "grief_sunrises" in partner.keys() else 0
     if distressed:
@@ -350,7 +368,7 @@ def format_bonds_embed_body(user) -> str:
         lines = []
         for name, row in sorted(rows, key=lambda x: -x[1]["strength"])[:8]:
             rival = bond_type == "rivalry"
-            romantic = bond_type == "romance"
+            romantic = bond_type in ("romance", "fling")
             tier = strength_tier(row["strength"], rivalry=rival, romance=romantic)
             bar = strength_bar(row["strength"])
             note = f"; _{row['note']}_" if row["note"] else ""
@@ -365,7 +383,7 @@ def format_bonds_embed_body(user) -> str:
     if not sections:
         return (
             "no bonds recorded yet.\n\n"
-            "use **`/bonds action:set`** to mark friendships, rivalries, kin, or romances. "
+            "use **`/bonds action:set`** to mark friendships, rivalries, kin, romances, or flings. "
             "**`/playpen action:socialize`** and **`action:groom`** deepen friendships over time."
         )
     return "\n\n".join(sections)

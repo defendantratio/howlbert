@@ -10,12 +10,14 @@ from engine.signing import NPC_CAPABLE_SIGNALS, SIGNAL_CATALOG, apply_signal_to_
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, PlayerEmbed, choice_label
 from utils.permissions import is_howlbert_admin
 from utils.replies import reply_ephemeral
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 logger = logging.getLogger('howlbert')
 
 # Only signals with a real mechanical effect on a target are offered here;
 # pack-wide signals (alert/rally/freeze) and no-target "track" have no
 # equivalent for an npc, which has no den, mood, or standing of its own.
 _NPC_SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']} — {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items() if key in NPC_CAPABLE_SIGNALS]
+_member_wolf_autocomplete = make_member_wolf_autocomplete("member")
 
 async def _npc_name_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     if not interaction.guild:
@@ -102,10 +104,10 @@ class Npc(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @npc.command(name='sign', description="body-language a registered npc at a player's wolf; most npcs don't share a wolf's tongue.")
-    @app_commands.describe(name='npc name', signal='the body-language signal to give', member="the player whose wolf reacts (it's their mood/standing that changes)", line='optional roleplay line')
+    @app_commands.describe(name='npc name', signal='the body-language signal to give', member="the player whose wolf reacts (it's their mood/standing that changes)", member_wolf="specific wolf from that player's roster", line='optional roleplay line')
     @app_commands.choices(signal=_NPC_SIGNAL_CHOICES)
-    @app_commands.autocomplete(name=_npc_name_autocomplete)
-    async def sign_npc(self, interaction: discord.Interaction, name: str, signal: app_commands.Choice[str], member: discord.Member, line: str | None=None):
+    @app_commands.autocomplete(name=_npc_name_autocomplete, member_wolf=_member_wolf_autocomplete)
+    async def sign_npc(self, interaction: discord.Interaction, name: str, signal: app_commands.Choice[str], member: discord.Member, member_wolf: str | None=None, line: str | None=None):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
@@ -116,7 +118,10 @@ class Npc(commands.Cog):
         if member.bot:
             await interaction.response.send_message(embed=howlbert_embed('Invalid Player', 'Bots cannot own wolves.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        target = db.get_user(member.id)
+        if member_wolf:
+            target = db.find_user_wolf(member.id, member_wolf)
+        else:
+            target = db.get_user(member.id)
         if not target:
             await interaction.response.send_message(embed=howlbert_embed('No Wolf', f"**{member.display_name}** hasn't registered a wolf yet.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return

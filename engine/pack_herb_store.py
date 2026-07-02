@@ -53,6 +53,26 @@ def count_depositable_inventory_herbs(user) -> int:
     return total
 
 
+def count_fresh_herbs_total(user) -> int:
+    """Count fresh herbs available to dryall: inventory herb quantities + fresh den-store stacks."""
+    from engine.restricted_herbs import is_restricted_herb
+
+    total = 0
+    for row in db.get_inventory(user["discord_id"]):
+        key = row["key"]
+        if not key.startswith("herb_"):
+            continue
+        herb_key = key.replace("herb_", "", 1)
+        if is_restricted_herb(herb_key):
+            continue
+        total += int(row["quantity"])
+    pack_id = int(user["pack_id"]) if user and user["pack_id"] else None
+    if pack_id:
+        stacks = db.get_pack_herb_stacks(pack_id)
+        total += sum(1 for s in stacks if "form" in s.keys() and s["form"] == "fresh")
+    return total
+
+
 def deposit_inventory_herb_to_store(
     user,
     item_key: str,

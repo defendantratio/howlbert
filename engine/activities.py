@@ -332,9 +332,28 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     if amount > 0:
         amount += dex_bonus
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
+
+    # prayer bonus (set by /bones action:pray same day)
+    from engine.hunt_prayer import HUNT_PRAYER_BONE_BONUS
+    _pray_day = user["hunt_prayer_day"] if "hunt_prayer_day" in user.keys() else 0
+    prayer_bonus = HUNT_PRAYER_BONE_BONUS if (_pray_day == day and amount > 0) else 0
+    if prayer_bonus:
+        amount += prayer_bonus
+
+    # --- loner penalty (if no pack) ---
+    loner_note = ""
+    pack_id = user["pack_id"] if "pack_id" in user.keys() else None
+    if not pack_id and amount > 0:
+        from config import LONER_HUNT_PENALTY_PCT
+        penalty = max(1, int(amount * LONER_HUNT_PENALTY_PCT // 100))
+        amount = max(0, amount - penalty)
+        loner_note = f"hunting alone: −{LONER_HUNT_PENALTY_PCT}% yield"
+
+    # --- always calculate payout (important: unindented from the if above) ---
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, amount, world["weather"], "hunt", season=world["season"], guild_id=guild_id, day=day, territory=territory
     )
+
     prey_key = prey_key_for_payout(payout, user=user, season=world["season"]) if payout > 0 else None
     flavor = hunt_flavor_for_payout(payout, prey_key)
     record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
@@ -359,6 +378,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     embed.add_field(name="earned", value=format_bones(net_amount, signed=True), inline=True)
     if sniff_bonus > 0:
         embed.add_field(name="sniff bonus", value=format_bones(sniff_bonus, signed=True), inline=True)
+    if prayer_bonus > 0:
+        embed.add_field(name="hunt prayer", value=format_bones(prayer_bonus, signed=True), inline=True)
     if lucky_bonus > 0:
         embed.add_field(name="lucky tooth", value=format_bones(lucky_bonus, signed=True), inline=True)
     if tax > 0:
@@ -382,7 +403,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
 
         if is_nursing_mother(updated):
             footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
-        notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        notes = [n for n in (loner_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if hunt_shift:
             notes.append(hunt_shift.strip("_"))
         from utils.hunting import weather_hunt_modifier_label
@@ -453,6 +474,9 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         return blocked
     gross = roll_range(SCAVENGE_BONES)
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
+    from engine.shop_items import raven_companion_scavenge_bonus
+    gross, raven_scavenge_bonus = raven_companion_scavenge_bonus(user["discord_id"], gross)
+    raven_scavenge_note = f"raven companion (+{raven_scavenge_bonus} bones)" if raven_scavenge_bonus > 0 else ""
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
@@ -485,7 +509,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note) if n]
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note) if n]
         footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
@@ -561,6 +585,9 @@ def try_track(
     wis_bonus = max(0, attr_modifier(get_attr(user, "wis")))
     gross = roll_range(TRACK_BONES) + wis_bonus
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
+    from engine.shop_items import raven_companion_track_bonus
+    gross, raven_track_bonus = raven_companion_track_bonus(user["discord_id"], gross)
+    raven_track_note = f"raven companion (+{raven_track_bonus} bones)" if raven_track_bonus > 0 else ""
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "track", season=world["season"], guild_id=guild_id
     )
@@ -590,12 +617,14 @@ def try_track(
     embed.add_field(name="earned", value=format_bones(net, signed=True), inline=True)
     if sniff_bonus > 0:
         embed.add_field(name="sniff bonus", value=format_bones(sniff_bonus, signed=True), inline=True)
+    if raven_track_bonus > 0:
+        embed.add_field(name="raven bonus", value=format_bones(raven_track_bonus, signed=True), inline=True)
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
     if net > 0:
         footer = f"{prey_name} in hoard (`/food`) · `/preypile` to share at the den"
-        notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         from engine.nursing import is_nursing_mother
@@ -605,7 +634,7 @@ def try_track(
         embed.set_footer(text=footer)
     else:
         footer = "today's track is spent; try again after the next sunrise."
-        notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
@@ -762,6 +791,12 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         game_day=day,
     )
     db.update_user(interaction.user.id, last_forage_day=day)
+    from engine.rotting_mere import is_rotting_mere, try_rotting_mere_exposure
+
+    at_mere = is_rotting_mere(user)
+    mere_note, _role_changed = try_rotting_mere_exposure(user, interaction.user.id) if at_mere else (None, False)
+    if _role_changed:
+        user = db.get_user(interaction.user.id)
     fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "forage", day)
     if result["outcome"] == "critical_failure":
         from engine.disease_contract import try_nettle_sting_exposure
@@ -773,7 +808,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
             + "\n\nyou damaged the patch or gathered something toxic."
             + (f"\n\n{nettle_note}" if nettle_note else "")
             + forager_note
-            + season_suffix,
+            + season_suffix
+            + (f"\n\n{mere_note}" if mere_note else ""),
             color=ERROR_COLOR,
         )
         embed.set_footer(text=embed_footer(forage_sunrise_footer(user)))
@@ -785,7 +821,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         spoil_note = maybe_spoil_herb_on_forage_fail(user, season=world["season"])
         embed = howlbert_embed(
             "forage failed",
-            format_roll_result(result) + forager_note + season_suffix + spoil_note,
+            format_roll_result(result) + forager_note + season_suffix + spoil_note
+            + (f"\n\n{mere_note}" if mere_note else ""),
             color=ERROR_COLOR,
         )
         embed.set_footer(text=embed_footer(forage_sunrise_footer(user)))
@@ -810,6 +847,9 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
             if m["rarity"] == "common" and "wild" in m.get("habitat", ("wild",))
         ]
     herb_key = random.choice(pool)
+    if at_mere:
+        from engine.rotting_mere import pick_mere_herb
+        herb_key = pick_mere_herb()
     meta = HERBS[herb_key]
     item_key, hoard_note = grant_fresh_herb(
         user["id"],
@@ -896,7 +936,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         + food_note
         + season_suffix
         + (f"\n\n{sting_note}" if sting_note else "")
-        + (f"\n\n{nettle_note}" if nettle_note else ""),
+        + (f"\n\n{nettle_note}" if nettle_note else "")
+        + (f"\n\n{mere_note}" if mere_note else ""),
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text=embed_footer(forage_sunrise_footer(user, success_hint=True)))
@@ -1125,6 +1166,7 @@ def try_crime(
     *,
     target_pack: str | None = None,
     target_wolf: "discord.Member | None" = None,
+    victim_row=None,
     raid_type: str = "bones",
     scene: str | None = None,
     staff: bool = False,
@@ -1153,6 +1195,16 @@ def try_crime(
             day=day,
             target_pack=target_pack,
             raid_type=raid_type,
+            scene=scene,
+            staff=staff,
+        )
+
+    if victim_row is not None:
+        return _try_individual_steal(
+            interaction,
+            user,
+            day=day,
+            victim_row=victim_row,
             scene=scene,
             staff=staff,
         )
@@ -1219,18 +1271,21 @@ def _try_individual_steal(
     user,
     *,
     day: int,
-    target_wolf: "discord.Member",
+    target_wolf: "discord.Member | None" = None,
+    victim_row=None,
     scene: str | None,
     staff: bool,
 ) -> discord.Embed | None:
     from config import INDIVIDUAL_STEAL_PCT, INDIVIDUAL_STEAL_RIVALRY_GAIN
 
-    if target_wolf.id == interaction.user.id:
-        return howlbert_embed("your own paws", "you can't pick your own pocket.", color=ERROR_COLOR)
+    if victim_row is None:
+        if target_wolf.id == interaction.user.id:
+            return howlbert_embed("your own paws", "you can't pick your own pocket.", color=ERROR_COLOR)
+        victim_row = db.get_user(target_wolf.id)
+        if not victim_row:
+            return howlbert_embed("no wolf", f"**{target_wolf.display_name}** has no registered wolf.", color=ERROR_COLOR)
 
-    victim = db.get_user(target_wolf.id)
-    if not victim:
-        return howlbert_embed("no wolf", f"**{target_wolf.display_name}** has no registered wolf.", color=ERROR_COLOR)
+    victim = victim_row
 
     if int(victim["bones"]) <= 0:
         return howlbert_embed(
@@ -1240,6 +1295,9 @@ def _try_individual_steal(
         )
 
     db.update_user(interaction.user.id, last_crime_day=day)
+
+    from engine.role_features import is_full_medic
+    targeting_medic = is_full_medic(victim)
 
     if roll_individual_steal_caught():
         penalty = individual_steal_caught_standing()
@@ -1255,12 +1313,16 @@ def _try_individual_steal(
             value=f"{penalty}" + ("; **cast out** as loner" if kick == "kicked" else ""),
             inline=False,
         )
+        if targeting_medic:
+            from engine.healer_code import apply_medic_neutrality_violated
+            medic_note = apply_medic_neutrality_violated(interaction.user.id, victim)
+            embed.add_field(name="Healer's Neutrality", value=medic_note, inline=False)
         embed.set_footer(text=f"no bones taken from {victim['wolf_name']}. rivalry deepens.")
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
     pct = random.uniform(*INDIVIDUAL_STEAL_PCT)
     attempted = max(1, int(int(victim["bones"]) * pct))
-    stolen_ok = db.transfer_bones(target_wolf.id, interaction.user.id, attempted)
+    stolen_ok = db.transfer_bones_by_wolf_id(victim["id"], user["id"], attempted)
     if not stolen_ok:
         return howlbert_embed(
             "raid failed",
@@ -1280,6 +1342,15 @@ def _try_individual_steal(
     embed.add_field(name="stolen", value=format_bones(attempted, signed=True), inline=True)
     embed.add_field(name="standing", value=f"+{standing_gain}", inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
+    if targeting_medic:
+        from config import MAW_MEDIC_CRIME_KARMA
+        new_karma = db.adjust_maw_karma(interaction.user.id, MAW_MEDIC_CRIME_KARMA)
+        maw_note = (
+            "the Maw's eye does not leave you — **divine displeasure grows**."
+            if new_karma >= 10
+            else "the healer's sanctity was violated; the Maw saw what you did in the dark."
+        )
+        embed.add_field(name="the Great Maw watches", value=maw_note, inline=False)
     embed.set_footer(text=f"{victim['wolf_name']} won't forget this. rivalry deepens.")
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
@@ -1684,4 +1755,3 @@ def _migrate_legacy_prey_to_hoard(user, guild_id: int, day: int) -> None:
         bone_value=bones,
         prey_key=prey_key,
     )
-

@@ -9,6 +9,7 @@ from config import (
     MEDIC_MATE_CATCH_CHANCE,
     MEDIC_MATE_CAUGHT_STANDING,
     MEDIC_MATE_CAUGHT_TEXT,
+    MEDIC_NEUTRAL_STANDING,
     MEDIC_PUP_SCANDAL_STANDING,
     MEDIC_PUP_SCANDAL_TEXT,
 )
@@ -162,6 +163,18 @@ def process_medic_violation(
         pass  # caller handles both medics separately
 
     return lines, expulsion_note
+
+
+def apply_medic_neutrality_violated(attacker_discord_id: int, medic) -> str:
+    """Standing penalty for hitting or stealing from a neutral medic. Returns a note line."""
+    kick = db.adjust_wolf_standing(attacker_discord_id, MEDIC_NEUTRAL_STANDING)
+    note = (
+        f"violated **healer's neutrality** — the den does not forgive striking the healer; "
+        f"standing **{MEDIC_NEUTRAL_STANDING}**"
+    )
+    if kick == "kicked":
+        note += " — **cast out**"
+    return note
 
 
 def apply_medic_court_caught(user, target) -> list[str]:

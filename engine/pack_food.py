@@ -96,6 +96,59 @@ def deposit_to_pack_stash(user, stack_id: int, *, pack_id: int, guild_id: int, d
     return True, msg
 
 
+def deposit_all_to_pack_stash(user, *, pack_id: int, guild_id: int, day: int) -> tuple[int, str]:
+    """Deposit all fresh personal prey stacks to the den reserve. Returns (count, message)."""
+    stacks = db.get_prey_stacks(user["id"])
+    fresh = [s for s in stacks if int(s["uses_left"] or 0) > 0 and not int(s["is_rotting"] or 0)]
+    if not fresh:
+        return 0, "nothing fresh in your hoard to deposit."
+
+    names: list[str] = []
+    for stack in fresh:
+        db.add_pack_prey_stack(
+            pack_id,
+            stack["prey_key"],
+            uses_left=stack["uses_left"],
+            bone_value=stack["bone_value"],
+            acquired_day=stack["acquired_day"],
+            guild_id=guild_id,
+            deposited_by=user["id"],
+            is_rotting=int(stack["is_rotting"]),
+        )
+        db.remove_prey_stack(stack["id"])
+        meta = prey_meta(stack["prey_key"])
+        names.append(meta["name"])
+
+    count = len(fresh)
+    name_list = ", ".join(f"**{n}**" for n in names)
+    msg = f"{count} item{'s' if count > 1 else ''} added to the den food reserve: {name_list}."
+
+    from config import HUNTER_HEALER_TRIBUTE_STANDING
+    from engine.role_privileges import is_hunter
+
+    last_tribute = int(user["last_healer_tribute_day"] if "last_healer_tribute_day" in user.keys() else 0)
+    if is_hunter(user) and last_tribute < day:
+        db.adjust_pack_unity(pack_id, 1)
+        db.update_user_by_id(user["id"], last_healer_tribute_day=day)
+        db.adjust_wolf_standing_by_id(user["id"], HUNTER_HEALER_TRIBUTE_STANDING)
+        msg += (
+            "\n\n_Hunters feed the healer den: **+1 pack unity**, "
+            f"**+{HUNTER_HEALER_TRIBUTE_STANDING} standing** (once per sunrise)._"
+        )
+
+    from engine.pack_season_goals import record_stash_deposit
+
+    season = db.get_world(guild_id)["season"]
+    goal_line = None
+    for _ in range(count):
+        goal_line = record_stash_deposit(pack_id, season)
+    if goal_line:
+        msg += f"\n\n{goal_line}"
+
+    msg += pack_treasury_pinch_line(pack_id)
+    return count, msg
+
+
 def withdraw_from_pack_stash(user, stack_id: int, *, pack_id: int) -> tuple[bool, str]:
     stack = db.get_pack_prey_stack(stack_id)
     if not stack or stack["pack_id"] != pack_id:
@@ -357,6 +410,11 @@ def auto_feed_wolves_on_rollover(conn, day: int, season: str | None = None) -> l
             "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
             (new_hunger, new_thirst, wolf["id"]),
         )
+        notes.append({
+            "wolf_name": wolf["wolf_name"],
+            "discord_id": int(wolf["discord_id"]),
+            "line": "foraged for themselves (reserve ran short).",
+        })
 
     return notes
 

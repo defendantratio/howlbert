@@ -38,6 +38,36 @@ async def _territory_field_autocomplete(interaction: discord.Interaction, curren
         choices.append(app_commands.Choice(name=choice_label(label), value=t['key']))
     return choices[:25]
 
+
+async def _drink_source_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    """Autocomplete for /drink source: owned territories, allied pack territories, active cat pacts."""
+    if not interaction.guild:
+        return []
+    user = db.get_user(interaction.user.id)
+    if not user or "pack_id" not in user.keys() or not user["pack_id"]:
+        return []
+    guild_id = interaction.guild.id
+    pack_id = user["pack_id"]
+    all_territories = db.get_territories(guild_id)
+    choices: list[app_commands.Choice[str]] = []
+    for t in all_territories:
+        if t["owner_pack_id"] == pack_id:
+            label = f"own territory: {t['name']}"
+            if not current or current.lower() in label.lower():
+                choices.append(app_commands.Choice(name=choice_label(label), value=t["key"]))
+    ally_pack_ids = {row["other_pack_id"] for row in db.list_active_wolf_treaties(guild_id, pack_id)}
+    for t in all_territories:
+        if t["owner_pack_id"] in ally_pack_ids:
+            label = f"ally territory: {t['name']} ({t['owner_name'] or '?'})"
+            if not current or current.lower() in label.lower():
+                choices.append(app_commands.Choice(name=choice_label(label), value=t["key"]))
+    for pact in db.list_active_cat_pacts(guild_id, pack_id):
+        clan = pact["clan_name"]
+        label = f"cat clan: {clan}"
+        if not current or current.lower() in label.lower():
+            choices.append(app_commands.Choice(name=choice_label(label), value=f"clan:{clan}"))
+    return choices[:25]
+
 class Hunting(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
@@ -92,7 +122,9 @@ class Hunting(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='drink', description='drink at the creek (−2 exhaustion, once per hour, no daily cap).')
-    async def drink_creek(self, interaction: discord.Interaction):
+    @app_commands.describe(source='Mistmoor wolves: pick an owned or allied territory / cat clan for clean water (skips swamp disease).')
+    @app_commands.autocomplete(source=_drink_source_autocomplete)
+    async def drink_creek(self, interaction: discord.Interaction, source: str | None = None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
@@ -100,8 +132,44 @@ class Hunting(commands.Cog):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        world = db.get_world(interaction.guild.id)
-        ok, msg = drink_at_creek(user, day=world['day_number'], season=world['season'], guild_id=interaction.guild.id)
+        guild_id = interaction.guild.id
+        clean_water = False
+        if source and user.get('pack_id'):
+            pack_id = user['pack_id']
+            if source.startswith('clan:'):
+                clan_name = source[5:]
+                pacts = db.list_active_cat_pacts(guild_id, pack_id)
+                if any(p['clan_name'].lower() == clan_name.lower() for p in pacts):
+                    clean_water = True
+                else:
+                    await interaction.response.send_message(
+                        player_message(f'No active cat pact with **{clan_name}** — pick a territory or clan from the list.'),
+                        ephemeral=reply_ephemeral(),
+                    )
+                    return
+            else:
+                territory = db.get_territory_by_key(guild_id, source)
+                if not territory or not territory['owner_pack_id']:
+                    await interaction.response.send_message(
+                        player_message('That territory has no owner — pick from the autocomplete list.'),
+                        ephemeral=reply_ephemeral(),
+                    )
+                    return
+                owner_id = territory['owner_pack_id']
+                if owner_id == pack_id:
+                    clean_water = True
+                else:
+                    treaties = db.list_active_wolf_treaties(guild_id, pack_id)
+                    if any(t['other_pack_id'] == owner_id for t in treaties):
+                        clean_water = True
+                    else:
+                        await interaction.response.send_message(
+                            player_message(f'**{territory["name"]}** is not owned by your pack or an active ally.'),
+                            ephemeral=reply_ephemeral(),
+                        )
+                        return
+        world = db.get_world(guild_id)
+        ok, msg = drink_at_creek(user, day=world['day_number'], season=world['season'], guild_id=guild_id, clean_water=clean_water)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = 'Drink' if ok else 'Creek Cooldown' if 'min' in msg else 'Cannot Drink'
         embed = howlbert_embed(title, msg, color=color)

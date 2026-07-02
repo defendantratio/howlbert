@@ -139,17 +139,28 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
         await execute_npc_attack(interaction, self.bot, self.enc_id, tid)
 
 
-class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):(?P<action>bite|claw|yield)$"):
-    def __init__(self, enc_id: int, action: str):
-        labels = {"bite": "bite", "claw": "claw", "yield": "yield"}
+class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):(?P<action>bite|claw|yield|submit|spare|finish)$"):
+    def __init__(self, enc_id: int, action: str, *, label_override: str | None = None):
+        labels = {
+            "bite": "bite",
+            "claw": "claw",
+            "yield": "run away",
+            "submit": "submit",
+            "spare": "spare",
+            "finish": "finish",
+        }
         styles = {
             "bite": discord.ButtonStyle.danger,
             "claw": discord.ButtonStyle.primary,
             "yield": discord.ButtonStyle.secondary,
+            "submit": discord.ButtonStyle.secondary,
+            "spare": discord.ButtonStyle.success,
+            "finish": discord.ButtonStyle.danger,
         }
+        label = label_override if label_override is not None else labels[action]
         super().__init__(
             ui.Button(
-                label=labels[action],
+                label=label[:80],
                 style=styles[action],
                 custom_id=f"fable_combat:{enc_id}:{action}",
             )
@@ -230,7 +241,19 @@ def _make_player_turn_view(enc_id: int, bot: commands.Bot) -> discord.ui.View:
     view.add_item(CombatActionButton(enc_id, "bite"))
     view.add_item(CombatActionButton(enc_id, "claw"))
     view.add_item(CombatActionButton(enc_id, "yield"))
+    view.add_item(CombatActionButton(enc_id, "submit"))
     view.add_item(CombatManeuverSelect(enc_id))
+    submitted = db.get_submitted_fighter(enc_id)
+    if submitted:
+        sub_name = submitted["npc_name"] or "?"
+        wolf_id = submitted["wolf_id"] if "wolf_id" in submitted.keys() else None
+        if wolf_id:
+            wolf = db.get_user_by_id(int(wolf_id))
+            if wolf:
+                sub_name = wolf["wolf_name"]
+        short = sub_name[:20]
+        view.add_item(CombatActionButton(enc_id, "spare", label_override=f"spare {short}"))
+        view.add_item(CombatActionButton(enc_id, "finish", label_override=f"finish {short}"))
     return view
 
 

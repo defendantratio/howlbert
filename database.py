@@ -512,6 +512,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN last_blood_oath_day INTEGER NOT NULL DEFAULT 0")
     if "scout_hidden_day" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN scout_hidden_day INTEGER NOT NULL DEFAULT 0")
+    if "maw_karma" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN maw_karma INTEGER NOT NULL DEFAULT 0")
+    if "maw_favor" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN maw_favor INTEGER NOT NULL DEFAULT 0")
+    if "hunt_prayer_day" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN hunt_prayer_day INTEGER NOT NULL DEFAULT 0")
+    if "joining_howl_done" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN joining_howl_done INTEGER NOT NULL DEFAULT 0")
+    if "moon_witness_done" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN moon_witness_done INTEGER NOT NULL DEFAULT 0")
+    if "last_faction_action_day" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN last_faction_action_day INTEGER NOT NULL DEFAULT 0")
 
     quest_cols = {row[1] for row in conn.execute("PRAGMA table_info(quests)")}
     if "required_role" not in quest_cols:
@@ -1161,6 +1173,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE combat_fighters ADD COLUMN combat_flags TEXT NOT NULL DEFAULT '{}'"
         )
+    if cf_cols_late and "is_submitted" not in cf_cols_late:
+        conn.execute("ALTER TABLE combat_fighters ADD COLUMN is_submitted INTEGER NOT NULL DEFAULT 0")
 
     user_cols_inj = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
     if user_cols_inj and "injury_since" not in user_cols_inj:
@@ -1211,6 +1225,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE combat_encounters ADD COLUMN collab_patrol_id INTEGER")
 
     pack_cols_late = {row[1] for row in conn.execute("PRAGMA table_info(packs)")}
+    if pack_cols_late and "war_strain" not in pack_cols_late:
+        conn.execute("ALTER TABLE packs ADD COLUMN war_strain INTEGER NOT NULL DEFAULT 0")
+    if pack_cols_late and "last_combat_day" not in pack_cols_late:
+        conn.execute("ALTER TABLE packs ADD COLUMN last_combat_day INTEGER NOT NULL DEFAULT 0")
     if pack_cols_late and "last_cat_pact_gift_day" not in pack_cols_late:
         conn.execute(
             "ALTER TABLE packs ADD COLUMN last_cat_pact_gift_day INTEGER NOT NULL DEFAULT 0"
@@ -1257,6 +1275,22 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN season_changed_day INTEGER NOT NULL DEFAULT 0"
         )
+    if world_cols and "oak_knot" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN oak_knot INTEGER NOT NULL DEFAULT 0"
+        )
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS faction_relations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            great_pack TEXT NOT NULL,
+            faction TEXT NOT NULL,
+            standing INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(great_pack, faction)
+        )
+        """
+    )
 
     conn.execute(
         """
@@ -1460,6 +1494,22 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "last_wild_encounter_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_wild_encounter_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_whisper_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_whisper_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "scent_disguise_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN scent_disguise_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "scent_disguise_pack" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN scent_disguise_pack TEXT"
+        )
+    if "foster_pack_id" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN foster_pack_id INTEGER"
         )
     if "last_wild_encounter_at" not in user_cols_late:
         conn.execute(
@@ -2173,6 +2223,27 @@ def _migrate(conn: sqlite3.Connection) -> None:
             (new_max, new_hp, row["id"]),
         )
 
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pack_blood_debts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            debtor_pack_id INTEGER NOT NULL,
+            creditor_pack_id INTEGER NOT NULL,
+            debt INTEGER NOT NULL DEFAULT 1,
+            cleared INTEGER NOT NULL DEFAULT 0,
+            last_kill_day INTEGER NOT NULL DEFAULT 0,
+            UNIQUE (guild_id, debtor_pack_id, creditor_pack_id),
+            FOREIGN KEY (debtor_pack_id) REFERENCES packs(id),
+            FOREIGN KEY (creditor_pack_id) REFERENCES packs(id)
+        )
+        """
+    )
+    terr_cols = {row[1] for row in conn.execute("PRAGMA table_info(territories)")}
+    if "seasonal_hunt_count" not in terr_cols:
+        conn.execute("ALTER TABLE territories ADD COLUMN seasonal_hunt_count INTEGER NOT NULL DEFAULT 0")
+    if "seasonal_hunt_reset_season" not in terr_cols:
+        conn.execute("ALTER TABLE territories ADD COLUMN seasonal_hunt_reset_season TEXT NOT NULL DEFAULT ''")
     _migrate_wolf_name_uniqueness(conn)
     _migrate_merge_suffix_duplicate_wolves(conn)
     _migrate_pending_stillborn_name_uniqueness(conn)
@@ -4649,6 +4720,21 @@ def pardon_exile(discord_id: int, pack_id: int) -> bool:
     return True
 
 
+def pardon_exile_by_wolf_id(wolf_id: int, pack_id: int) -> bool:
+    """Alpha lifts the rejoin cooldown for a specific wolf row. Returns False if no matching exile on file."""
+    user = get_user_by_id(wolf_id)
+    if not user or "exiled_from_pack_id" not in user.keys() or not user["exiled_from_pack_id"]:
+        return False
+    if int(user["exiled_from_pack_id"]) != int(pack_id):
+        return False
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET exiled_from_pack_id = NULL, exiled_day = 0 WHERE id = ?",
+            (wolf_id,),
+        )
+    return True
+
+
 def mark_oathbreaker(wolf_id: int) -> int:
     """
     Record that this specific wolf personally broke a treaty (pack-level
@@ -5659,9 +5745,7 @@ def _small_pack_unity_drain_on_rollover(guild_id: int) -> None:
     from config import SMALL_PACK_ACTIVE_THRESHOLD, SMALL_PACK_UNITY_DRAIN
 
     with get_db() as conn:
-        packs = conn.execute(
-            "SELECT id FROM packs WHERE guild_id = ?", (guild_id,)
-        ).fetchall()
+        packs = conn.execute("SELECT id FROM packs").fetchall()
         for pack in packs:
             pid = pack["id"]
             count = conn.execute(
@@ -5772,11 +5856,6 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     mood_exhaustion: list = []
     if run_global:
         condition_notes = _progress_conditions(guild_id)
-        with get_db() as conn:
-            from engine.disease_spread import apply_disease_spread_on_rollover
-
-            spread_notes = apply_disease_spread_on_rollover(conn, weather=new_weather, day=new_day)
-        condition_notes.extend(spread_notes)
         _long_rest_all_wolves_on_rollover(new_day)
         from engine.character_traits import decay_skill_strain_on_rollover
 
@@ -5803,15 +5882,46 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         _decay_vitals_on_rollover(new_day, weather=new_weather)
         _update_mood_streak_on_rollover(new_day)
         with get_db() as conn:
-            from engine.nursing import apply_reproduction_vitals_drain_on_rollover
+            from engine.nursing import apply_reproduction_vitals_drain_on_rollover, apply_foster_pup_rollover
 
             repro_notes = apply_reproduction_vitals_drain_on_rollover(conn)
+            foster_notes = apply_foster_pup_rollover(conn)
         if repro_notes:
             condition_notes.extend(repro_notes)
+        if foster_notes:
+            condition_notes.extend(foster_notes)
+        with get_db() as conn:
+            from engine.lone_wolf import apply_lone_wolf_loneliness_on_rollover
+
+            lone_notes = apply_lone_wolf_loneliness_on_rollover(conn, new_day)
+        if lone_notes:
+            condition_notes.extend(lone_notes)
+        with get_db() as conn:
+            from engine.battle_fatigue import apply_battle_fatigue_on_rollover
+
+            fatigue_notes = apply_battle_fatigue_on_rollover(conn, new_day)
+        if fatigue_notes:
+            needs_crisis.setdefault("season_notes", []).extend(
+                n["line"] for n in fatigue_notes
+            )
         with get_db() as conn:
             from engine.pack_food import auto_feed_wolves_on_rollover
 
-            auto_feed_wolves_on_rollover(conn, new_day, new_season)
+            passive_scavenge_notes = auto_feed_wolves_on_rollover(conn, new_day, new_season)
+        if passive_scavenge_notes:
+            needs_crisis["passive_scavenge"] = passive_scavenge_notes
+        with get_db() as conn:
+            from engine.long_term_injuries import apply_winter_cold_injury_on_rollover
+
+            cold_injury_notes = apply_winter_cold_injury_on_rollover(conn, new_season)
+        if cold_injury_notes:
+            needs_crisis["cold_injury"] = cold_injury_notes
+        with get_db() as conn:
+            from engine.nursing import apply_winter_pup_cold_on_rollover
+
+            pup_cold_notes = apply_winter_pup_cold_on_rollover(conn, new_season)
+        if pup_cold_notes:
+            needs_crisis["pup_cold"] = pup_cold_notes
         with get_db() as conn:
             from engine.disease_contract import apply_mental_illness_rollover
 
@@ -5958,6 +6068,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     if expired_wolf_treaties:
         needs_crisis.setdefault("expired_wolf_treaties", expired_wolf_treaties)
     if old_season != new_season:
+        reset_territory_season_hunts(guild_id, new_season)
         from engine.cat_gathering import apply_gathering_on_season_change
 
         with get_db() as conn:
@@ -5995,7 +6106,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         decay_idle_bonds_on_rollover(conn, new_day)
         decay_idle_standing_on_rollover(conn, new_day)
         decay_stalled_mentorships_on_rollover(conn, new_day)
-        graduate_mentor_bonds_on_rollover(conn, new_day)
+        graduate_mentor_bonds_on_rollover(conn, new_day, guild_id=guild_id)
         bond_news = collect_bond_den_news_on_rollover(conn, new_day)
         if bond_news:
             needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).extend(bond_news)
@@ -6208,7 +6319,6 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                         "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
                     }
                 )
-    from engine.chronic_conditions import apply_elder_chronic_on_rollover
     from engine.disease_contract import apply_pending_milk_fever_on_rollover
 
     world = get_world(guild_id)
@@ -6219,14 +6329,6 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                     "wolf_name": entry["wolf_name"],
                     "discord_id": entry["discord_id"],
                     "line": entry["line"],
-                }
-            )
-        for entry in apply_elder_chronic_on_rollover(conn):
-            notes.append(
-                {
-                    "wolf_name": entry["wolf_name"],
-                    "discord_id": entry["discord_id"],
-                    "line": entry["message"],
                 }
             )
     return notes
@@ -7270,6 +7372,77 @@ def get_territory_by_key(guild_id: int, key: str) -> sqlite3.Row | None:
         ).fetchone()
 
 
+def increment_territory_season_hunt(guild_id: int, territory_key: str, season: str) -> int:
+    """Increment seasonal hunt count for this territory (reset if season changed). Returns new count."""
+    ensure_territories(guild_id)
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT id, seasonal_hunt_count, seasonal_hunt_reset_season FROM territories "
+            "WHERE guild_id = ? AND key = ? COLLATE NOCASE",
+            (guild_id, territory_key.strip()),
+        ).fetchone()
+        if not row:
+            return 0
+        if row["seasonal_hunt_reset_season"] != season:
+            new_count = 1
+        else:
+            new_count = int(row["seasonal_hunt_count"]) + 1
+        conn.execute(
+            "UPDATE territories SET seasonal_hunt_count = ?, seasonal_hunt_reset_season = ? WHERE id = ?",
+            (new_count, season, row["id"]),
+        )
+        return new_count
+
+
+def add_pack_blood_debt(guild_id: int, debtor_pack_id: int, creditor_pack_id: int, day: int) -> int:
+    """Record a kill owed by debtor to creditor. Returns new debt total."""
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO pack_blood_debts (guild_id, debtor_pack_id, creditor_pack_id, debt, last_kill_day)
+            VALUES (?, ?, ?, 1, ?)
+            ON CONFLICT(guild_id, debtor_pack_id, creditor_pack_id)
+            DO UPDATE SET debt = debt + 1, cleared = 0, last_kill_day = excluded.last_kill_day
+            """,
+            (guild_id, debtor_pack_id, creditor_pack_id, day),
+        )
+        row = conn.execute(
+            "SELECT debt FROM pack_blood_debts WHERE guild_id=? AND debtor_pack_id=? AND creditor_pack_id=?",
+            (guild_id, debtor_pack_id, creditor_pack_id),
+        ).fetchone()
+        return int(row["debt"]) if row else 1
+
+
+def get_pack_blood_debt(guild_id: int, debtor_pack_id: int, creditor_pack_id: int) -> int:
+    """Return outstanding (uncleared) debt owed by debtor to creditor."""
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT debt FROM pack_blood_debts WHERE guild_id=? AND debtor_pack_id=? AND creditor_pack_id=? AND cleared=0",
+            (guild_id, debtor_pack_id, creditor_pack_id),
+        ).fetchone()
+        return int(row["debt"]) if row else 0
+
+
+def clear_pack_blood_debt(guild_id: int, debtor_pack_id: int, creditor_pack_id: int) -> bool:
+    """Mark debt as cleared (after tribute). Returns True if there was active debt."""
+    with get_db() as conn:
+        cur = conn.execute(
+            "UPDATE pack_blood_debts SET cleared=1, debt=0 WHERE guild_id=? AND debtor_pack_id=? AND creditor_pack_id=? AND cleared=0",
+            (guild_id, debtor_pack_id, creditor_pack_id),
+        )
+        return cur.rowcount > 0
+
+
+def reset_territory_season_hunts(guild_id: int, season: str) -> None:
+    """Called at season rollover; marks all territories as reset for new season."""
+    ensure_territories(guild_id)
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE territories SET seasonal_hunt_count = 0, seasonal_hunt_reset_season = ? WHERE guild_id = ?",
+            (season, guild_id),
+        )
+
+
 def claim_unowned_territory(territory_id: int, pack_id: int) -> bool:
     """Claim an unowned territory by marking it; contested ground still needs a war."""
     with get_db() as conn:
@@ -7755,6 +7928,189 @@ def adjust_wolf_standing(discord_id: int, delta: int) -> str:
     if not user:
         return ""
     return adjust_wolf_standing_by_id(user["id"], delta)
+
+
+def adjust_maw_karma(discord_id: int, delta: int) -> int:
+    """Add to or remove from the active wolf's Great Maw karma. Returns new total (min 0)."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET maw_karma = MAX(0, maw_karma + ?) WHERE discord_id = ? AND condition NOT IN ('dead', 'dying')",
+            (delta, discord_id),
+        )
+    row = get_user(discord_id)
+    return int(row["maw_karma"]) if row else 0
+
+
+def get_maw_karma(discord_id: int) -> int:
+    """Return the active wolf's current Great Maw karma."""
+    row = get_user(discord_id)
+    return int(row["maw_karma"]) if row else 0
+
+
+def adjust_maw_favor(discord_id: int, delta: int) -> int:
+    """Add to or remove from the active wolf's Great Maw favor. Returns new total (min 0)."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET maw_favor = MAX(0, maw_favor + ?) WHERE discord_id = ? AND condition NOT IN ('dead', 'dying')",
+            (delta, discord_id),
+        )
+    row = get_user(discord_id)
+    return int(row["maw_favor"]) if row else 0
+
+
+def get_maw_favor(discord_id: int) -> int:
+    """Return the active wolf's current Great Maw favor."""
+    row = get_user(discord_id)
+    return int(row["maw_favor"]) if row else 0
+
+
+def set_hunt_prayer_day(discord_id: int, day: int) -> None:
+    """Record that this wolf prayed before the hunt on the given world day."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET hunt_prayer_day = ? WHERE discord_id = ?",
+            (day, discord_id),
+        )
+
+
+def set_fighter_submitted(fighter_id: int) -> None:
+    """Mark a combat fighter as having declared submission."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE combat_fighters SET is_submitted = 1 WHERE id = ?",
+            (fighter_id,),
+        )
+
+
+def get_submitted_fighter(enc_id: int):
+    """Return the first submitted fighter in this encounter, or None."""
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM combat_fighters WHERE encounter_id = ? AND is_submitted = 1 LIMIT 1",
+            (enc_id,),
+        ).fetchone()
+
+
+def set_joining_howl_done(wolf_a_id: int, wolf_b_id: int) -> None:
+    """Mark both wolves as having performed the joining howl together (one-time)."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET joining_howl_done = 1 WHERE id IN (?, ?)",
+            (wolf_a_id, wolf_b_id),
+        )
+
+
+def set_moon_witness_done(wolf_a_id: int, wolf_b_id: int) -> None:
+    """Mark both wolves as moon-witnessed mates (one-time)."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET moon_witness_done = 1 WHERE id IN (?, ?)",
+            (wolf_a_id, wolf_b_id),
+        )
+
+
+# --- Human Faction Relations ---
+
+FACTION_STANDING_MAX = 30
+FACTION_STANDING_MIN = -30
+
+FACTION_STARTING_STANDINGS: dict[str, dict[str, int]] = {
+    "greyspire": {"the_crows": 15},
+    "silverrush": {"river_mill": -10},
+    "thistlehide": {"thorne_lumber": -10},
+}
+
+
+def ensure_faction_standings(great_pack: str) -> None:
+    """Seed starting standings for a pack if they don't exist yet."""
+    factions = [
+        "lowland_settlements",
+        "thorne_lumber",
+        "river_mill",
+        "the_crows",
+        "university_expedition",
+    ]
+    defaults = FACTION_STARTING_STANDINGS.get(great_pack, {})
+    with get_db() as conn:
+        for faction in factions:
+            default = defaults.get(faction, 0)
+            conn.execute(
+                """
+                INSERT INTO faction_relations (great_pack, faction, standing)
+                VALUES (?, ?, ?)
+                ON CONFLICT(great_pack, faction) DO NOTHING
+                """,
+                (great_pack, faction, default),
+            )
+
+
+def get_faction_standing(great_pack: str, faction: str) -> int:
+    ensure_faction_standings(great_pack)
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT standing FROM faction_relations WHERE great_pack = ? AND faction = ?",
+            (great_pack, faction),
+        ).fetchone()
+        return int(row["standing"]) if row else 0
+
+
+def adjust_faction_standing(great_pack: str, faction: str, delta: int) -> int:
+    ensure_faction_standings(great_pack)
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE faction_relations
+            SET standing = MAX(?, MIN(?, standing + ?))
+            WHERE great_pack = ? AND faction = ?
+            """,
+            (FACTION_STANDING_MIN, FACTION_STANDING_MAX, delta, great_pack, faction),
+        )
+        row = conn.execute(
+            "SELECT standing FROM faction_relations WHERE great_pack = ? AND faction = ?",
+            (great_pack, faction),
+        ).fetchone()
+        return int(row["standing"]) if row else 0
+
+
+def get_all_faction_standings(great_pack: str) -> dict[str, int]:
+    ensure_faction_standings(great_pack)
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT faction, standing FROM faction_relations WHERE great_pack = ?",
+            (great_pack,),
+        ).fetchall()
+        return {row["faction"]: int(row["standing"]) for row in rows}
+
+
+def set_last_faction_action_day(discord_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE users SET last_faction_action_day = ? WHERE discord_id = ?",
+            (day, discord_id),
+        )
+
+
+def get_world_oak_knot(guild_id: int) -> int:
+    world = get_world(guild_id)
+    return int(world["oak_knot"]) if world and "oak_knot" in world.keys() else 0
+
+
+def increment_world_oak_knot(guild_id: int) -> int:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET oak_knot = oak_knot + 1 WHERE guild_id = ?",
+            (guild_id,),
+        )
+    return get_world_oak_knot(guild_id)
+
+
+def clear_fighter_submitted(fighter_id: int) -> None:
+    """Clear the submitted flag on a fighter."""
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE combat_fighters SET is_submitted = 0 WHERE id = ?",
+            (fighter_id,),
+        )
 
 
 def expel_wolves_below_standing_threshold(guild_id: int | None = None) -> int:
@@ -8282,9 +8638,10 @@ def get_scent_marks_for_pack(guild_id: int, pack_key: str, *, since_day: int = 0
     with get_db() as conn:
         return conn.execute(
             """
-            SELECT sm.*, t.name AS territory_name
+            SELECT sm.*, t.name AS territory_name, u.wolf_name AS marker_wolf_name
             FROM scent_marks sm
             LEFT JOIN territories t ON t.guild_id = sm.guild_id AND t.key = sm.territory_key
+            LEFT JOIN users u ON u.id = sm.marker_wolf_id
             WHERE sm.guild_id = ? AND sm.pack_key = ? AND sm.marked_day >= ?
             ORDER BY sm.marked_day DESC
             """,
@@ -9970,6 +10327,22 @@ def stabilize_patient(discord_id: int) -> None:
         )
 
 
+def stabilize_patient_by_wolf_id(wolf_id: int) -> None:
+    from config import NEEDS_SURVIVAL_RESTORE
+    with get_db() as conn:
+        conn.execute(
+            """
+            UPDATE users
+            SET hp = 1, condition = 'healthy',
+                death_save_round = 0, death_save_fails = 0, death_save_successes = 0,
+                hunger = CASE WHEN hunger <= 0 THEN ? ELSE hunger END,
+                thirst = CASE WHEN thirst <= 0 THEN ? ELSE thirst END
+            WHERE id = ?
+            """,
+            (NEEDS_SURVIVAL_RESTORE, NEEDS_SURVIVAL_RESTORE, wolf_id),
+        )
+
+
 def get_bonded_mate(user) -> sqlite3.Row | None:
     if "bonded_mate_id" not in user.keys() or not user["bonded_mate_id"]:
         return None
@@ -10963,7 +11336,7 @@ def decay_idle_standing_on_rollover(conn, current_day: int) -> int:
     return decayed
 
 
-def graduate_mentor_bonds_on_rollover(conn, current_day: int) -> int:
+def graduate_mentor_bonds_on_rollover(conn, current_day: int, guild_id: int | None = None) -> int:
     """
     When neither wolf in a mentor bond is an apprentice anymore, the
     teaching relationship is done — convert it to a friendship so the
@@ -11007,8 +11380,8 @@ def graduate_mentor_bonds_on_rollover(conn, current_day: int) -> int:
                 (row["wolf_a_id"], row["wolf_b_id"], new_strength, current_day, current_day),
             )
         from engine.wolf_journal import _write as _jwrite
-        _jwrite(row["wolf_a_id"], "mentor_graduated", f"mentorship with **{row['name_b']}** complete; a new friendship takes root.", day=current_day)
-        _jwrite(row["wolf_b_id"], "mentor_graduated", f"mentorship with **{row['name_a']}** complete; a new friendship takes root.", day=current_day)
+        _jwrite(row["wolf_a_id"], "mentor_graduated", f"mentorship with **{row['name_b']}** complete; a new friendship takes root.", day=current_day, guild_id=guild_id, conn=conn)
+        _jwrite(row["wolf_b_id"], "mentor_graduated", f"mentorship with **{row['name_a']}** complete; a new friendship takes root.", day=current_day, guild_id=guild_id, conn=conn)
         graduated += 1
     return graduated
 
@@ -11098,7 +11471,7 @@ def collect_bond_den_news_on_rollover(conn, current_day: int) -> list[str]:
 
 
 def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance", "fling"):
         return None
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     with get_db() as conn:
@@ -11153,7 +11526,7 @@ def set_bond(
     note: str = "",
     day: int = 0,
 ) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance", "fling"):
         return None
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     strength = max(0, min(100, int(strength)))
@@ -11184,7 +11557,7 @@ def adjust_bond_strength(
     *,
     day: int = 0,
 ) -> sqlite3.Row | None:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance", "fling"):
         return None
     if wolf_a_id == wolf_b_id:
         return None
@@ -11213,7 +11586,7 @@ def adjust_bond_strength(
 
 
 def clear_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> bool:
-    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance"):
+    if bond_type not in ("friendship", "rivalry", "kin", "mentor", "romance", "fling"):
         return False
     low, high = _bond_pair(wolf_a_id, wolf_b_id)
     with get_db() as conn:

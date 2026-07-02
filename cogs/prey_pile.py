@@ -115,7 +115,7 @@ class PreyWolfSelect(discord.ui.Select):
     def __init__(self, pile_id: int, choice: str, wolves: list):
         self.pile_id = pile_id
         self.choice = choice
-        options = [discord.SelectOption(label=w['wolf_name'][:100], value=str(w['id']), description='respond as this wolf') for w in wolves[:25]]
+        options = [discord.SelectOption(label=choice_label(w['wolf_name']), value=str(w['id']), description='respond as this wolf') for w in wolves[:25]]
         super().__init__(placeholder='Which wolf responds?', options=options, min_values=1, max_values=1)
 
     async def callback(self, interaction: discord.Interaction):
@@ -225,6 +225,10 @@ class PreyPileCog(commands.Cog):
             await interaction.response.send_message(player_message('Unknown choice.'), ephemeral=reply_ephemeral())
             return
         available = db.wolves_available_for_prey_pile(interaction.user.id, pile_id)
+        hunter = db.get_user_by_id(pile['hunter_wolf_id'])
+        pile_pack_id = int(hunter['pack_id']) if hunter and hunter['pack_id'] else None
+        if pile_pack_id:
+            available = [w for w in available if w['pack_id'] and int(w['pack_id']) == pile_pack_id]
         if not available:
             embed = howlbert_embed('Already Chosen', 'Every wolf on your account has already responded to this prey pile.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

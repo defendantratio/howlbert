@@ -22,9 +22,9 @@ async def herb_inventory_autocomplete(
         if current and current.lower() not in row["key"] and current.lower() not in row["name"].lower():
             continue
         if prepare_action and action == "prepare":
-            name = f"{row['name']} x{row['quantity']} · inventory (prepare)"[:100]
+            name = f"{row['name'].lower()} x{row['quantity']} · inventory (prepare)"[:100]
         else:
-            name = f"{row['name']} x{row['quantity']} ({row['key']})"[:100]
+            name = f"{row['name'].lower()} x{row['quantity']} ({row['key']})"[:100]
         choices.append(app_commands.Choice(name=name, value=row["key"]))
     return choices[:25]
 

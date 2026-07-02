@@ -9,7 +9,28 @@ from engine.role_content import pick_prophecy, pick_role_event
 from rpg_rules import ROLE_FEATURES, ROLE_LABELS
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
+
+_mentor_wolf_autocomplete = make_member_wolf_autocomplete("mentor")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
+
+def _resolve_own_wolf(discord_id: int, name: str):
+    rows = db.list_user_wolves(discord_id)
+    return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
 def _standing_note(kick: str, user) -> str:
     from engine.broken_canine import standing_expulsion_note
@@ -25,9 +46,10 @@ class RoleCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='role', description='role quests, role events, prophecy, shadowing, or rank disputes.')
-    @app_commands.describe(action='quests, event, prophecy, shadow, or challenge', mentor='full-ranked packmate to shadow (action:shadow), or packmate to contest (action:challenge)')
+    @app_commands.describe(action='quests, event, prophecy, shadow, or challenge', mentor='full-ranked packmate to shadow (action:shadow), or packmate to contest (action:challenge)', own_wolf='your other wolf to shadow or challenge (multi-wolf players)', mentor_wolf="specific wolf from that player's roster")
     @app_commands.choices(action=[app_commands.Choice(name='role quests', value='quests'), app_commands.Choice(name='role event', value='event'), app_commands.Choice(name='prophecy (drown-sick)', value='prophecy'), app_commands.Choice(name='shadow a mentor (apprentice)', value='shadow'), app_commands.Choice(name='challenge pack rank', value='challenge')])
-    async def role(self, interaction: discord.Interaction, action: str, mentor: discord.Member | None=None):
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, mentor_wolf=_mentor_wolf_autocomplete)
+    async def role(self, interaction: discord.Interaction, action: str, mentor: discord.Member | None = None, own_wolf: str | None = None, mentor_wolf: str | None = None):
         if action == 'quests':
             await self._rolequests(interaction)
         elif action == 'event':
@@ -35,9 +57,13 @@ class RoleCog(commands.Cog):
         elif action == 'prophecy':
             await self._prophecy(interaction)
         elif action == 'shadow':
-            await self._shadow(interaction, mentor)
+            mentor_row = await self._resolve_role_target(interaction, mentor, own_wolf, label='mentor', mentor_wolf=mentor_wolf)
+            if mentor_row is not None:
+                await self._shadow(interaction, mentor_row)
         elif action == 'challenge':
-            await self._rankdispute(interaction, mentor)
+            target_row = await self._resolve_role_target(interaction, mentor, own_wolf, label='target', mentor_wolf=mentor_wolf)
+            if target_row is not None:
+                await self._rankdispute(interaction, target_row)
 
     async def _rolequests(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -110,6 +136,11 @@ class RoleCog(commands.Cog):
             if event.get('standing'):
                 kick = db.adjust_wolf_standing(interaction.user.id, event['standing'])
                 outcome += _standing_note(kick, user)
+            if role == 'hunter':
+                from engine.hunt_payout import grant_prey_carcass_canonical, prey_key_for_payout
+                prey_key = prey_key_for_payout(event['bones'], user=user, season=world['season'])
+                carcass_name = grant_prey_carcass_canonical(user['id'], guild_id=interaction.guild.id, day=day, prey_key=prey_key)
+                outcome += f'\n\n{carcass_name} dragged to your hoard (`/food`).'
             color = SUCCESS_COLOR
         else:
             outcome = event['failure']
@@ -169,22 +200,42 @@ class RoleCog(commands.Cog):
         embed.set_footer(text='it will make sense when it happens; or after it does.')
         await interaction.response.send_message(embed=embed)
 
-    async def _shadow(self, interaction: discord.Interaction, mentor: discord.Member | None):
+    async def _resolve_role_target(self, interaction: discord.Interaction, member: discord.Member | None, own_wolf: str | None, *, label: str, mentor_wolf: str | None = None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
-            return
-        if not mentor:
-            await interaction.response.send_message(player_message('Pick a full-ranked packmate to shadow with the `mentor` option.'), ephemeral=reply_ephemeral())
-            return
-        if mentor.bot or mentor.id == interaction.user.id:
-            embed = howlbert_embed('Pick a Mentor', "Shadow a packmate who's earned the full rank; not yourself.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        mentor_row = db.get_user(mentor.id)
-        if not mentor_row:
-            embed = howlbert_embed('Not Registered', 'That mentor is not on Howlbert.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return None
+        if member and own_wolf:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', f'Use **mentor** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return None
+        if own_wolf:
+            row = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return None
+            if row['id'] == user['id']:
+                await interaction.response.send_message(embed=howlbert_embed('Same Wolf', 'Switch active wolf with `/switchwolf`, or pick a different `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return None
+            return row
+        if member:
+            if member.bot or member.id == interaction.user.id:
+                await interaction.response.send_message(embed=howlbert_embed('Invalid', f'Pick a different wolf for the `mentor` option.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return None
+            if mentor_wolf:
+                row = db.find_user_wolf(member.id, mentor_wolf)
+            else:
+                row = db.get_user(member.id)
+            if not row:
+                await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'That wolf is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return None
+            return row
+        await interaction.response.send_message(player_message(f'Pick a wolf via `mentor` or your own wolf via `own_wolf`.'), ephemeral=reply_ephemeral())
+        return None
+
+    async def _shadow(self, interaction: discord.Interaction, mentor_row):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
@@ -198,22 +249,10 @@ class RoleCog(commands.Cog):
             embed.set_footer(text='medics use `/medic action:observe` instead · once per sunrise')
         await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
 
-    async def _rankdispute(self, interaction: discord.Interaction, target: discord.Member | None):
+    async def _rankdispute(self, interaction: discord.Interaction, target_row):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
-            return
-        if not target:
-            await interaction.response.send_message(player_message('Pick a packmate to contest with the `mentor` option.'), ephemeral=reply_ephemeral())
-            return
-        if target.bot or target.id == interaction.user.id:
-            embed = howlbert_embed('Pick Someone Else', "Contest your place against a packmate; not yourself.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        target_row = db.get_user(target.id)
-        if not target_row:
-            embed = howlbert_embed('Not Registered', 'That wolf is not on Howlbert.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())

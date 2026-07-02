@@ -7,11 +7,13 @@ import database as db
 LUCKY_TOOTH_HUNT_BONUS_PCT = 15
 RABBIT_PELT_GIFT_BONES = 10
 RABBIT_PELT_STANDING = 2
+RAVEN_COMPANION_SCAVENGE_BONUS_PCT = 20
+RAVEN_COMPANION_TRACK_BONUS_PCT = 10
 
 USABLE_ITEM_KEYS = frozenset(
     {"herb_bundle", "prey_bundle", "den_charm", "rabbit_pelt", "revive", "reincarnation"}
 )
-PASSIVE_ITEM_KEYS = frozenset({"lucky_tooth"})
+PASSIVE_ITEM_KEYS = frozenset({"lucky_tooth", "raven_companion"})
 ROLL_ITEM_KEYS = frozenset({"safe_roll"})
 RP_ITEM_KEYS = frozenset({"extra_paw"})
 
@@ -35,6 +37,22 @@ def lucky_tooth_hunt_bonus(discord_id: int, amount: int) -> tuple[int, int]:
     if amount <= 0 or not has_item(discord_id, "lucky_tooth"):
         return amount, 0
     bonus = max(1, int(amount * LUCKY_TOOTH_HUNT_BONUS_PCT / 100))
+    return amount + bonus, bonus
+
+
+def raven_companion_scavenge_bonus(discord_id: int, amount: int) -> tuple[int, int]:
+    """Return (new_amount, bonus_added) for scavenge payouts."""
+    if amount <= 0 or not has_item(discord_id, "raven_companion"):
+        return amount, 0
+    bonus = max(1, int(amount * RAVEN_COMPANION_SCAVENGE_BONUS_PCT / 100))
+    return amount + bonus, bonus
+
+
+def raven_companion_track_bonus(discord_id: int, amount: int) -> tuple[int, int]:
+    """Return (new_amount, bonus_added) for track payouts."""
+    if amount <= 0 or not has_item(discord_id, "raven_companion"):
+        return amount, 0
+    bonus = max(1, int(amount * RAVEN_COMPANION_TRACK_BONUS_PCT / 100))
     return amount + bonus, bonus
 
 

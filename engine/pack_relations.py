@@ -195,6 +195,12 @@ def sniff_encounter_lines(
     gp = other["great_pack"] if "great_pack" in other.keys() and other["great_pack"] else None
     pack_name = GREAT_PACKS[gp]["name"] if gp and gp in GREAT_PACKS else "a rival den"
 
+    if _scent_disguise_active(user, guild_id, other):
+        return (
+            f"\n\n_you carry **{pack_name}**'s scent today; **{other['wolf_name']}** reads you as one of theirs — or close enough not to ask. "
+            f"the disguise holds._",
+            None,
+        )
     if (is_war_relation(standing) or is_hostile_relation(standing)) and not _bonded_enough_to_skip_fight(user, other):
         pool = SNIFF_ENCOUNTER_WAR if is_war_relation(standing) else SNIFF_ENCOUNTER_HOSTILE
         line = random.choice(pool).format(
@@ -237,12 +243,45 @@ def sniff_encounter_lines(
                 f"\n_word of **{other['wolf_name']}**'s name has clearly reached this far; "
                 f"**+{WOLF_NOTORIETY_SNIFF_MOOD} mood** crossing paths with them (now **{new_mood}**)._"
             )
+        blood_note = _blood_debt_encounter_note(guild_id, user, other)
         return (
             f"\n\n_a **{pack_name}** wolf on the wind; standing **{standing}/10** — "
-            f"friendly enough to share the trail today._{notoriety_note}",
+            f"friendly enough to share the trail today._{notoriety_note}{blood_note}",
             None,
         )
+
+    blood_note = _blood_debt_encounter_note(guild_id, user, other)
+    if blood_note:
+        return f"\n\n_a **{pack_name}** wolf; standing **{standing}/10**.{blood_note}", None
     return "", None
+
+
+def _scent_disguise_active(user, guild_id: int, other) -> bool:
+    """True if user is currently wearing another pack's scent and the other wolf belongs to that pack."""
+    disguise_day = int(user.get("scent_disguise_day") or 0) if hasattr(user, "get") else int(user["scent_disguise_day"] or 0) if "scent_disguise_day" in user.keys() else 0
+    disguise_pack = (user.get("scent_disguise_pack") if hasattr(user, "get") else user["scent_disguise_pack"] if "scent_disguise_pack" in user.keys() else None)
+    if not disguise_pack or not disguise_day:
+        return False
+    world = db.get_world(guild_id)
+    if not world or int(world["day_number"]) > disguise_day:
+        return False
+    other_gp = other["great_pack"] if "great_pack" in other.keys() else None
+    return disguise_pack == other_gp
+
+
+def _blood_debt_encounter_note(guild_id: int, user, other) -> str:
+    """Append blood debt context if debtor meets creditor's packmate on the trail."""
+    u_pack = int(user["pack_id"]) if user.get("pack_id") else None
+    o_pack = int(other["pack_id"]) if other.get("pack_id") else None
+    if not u_pack or not o_pack or u_pack == o_pack:
+        return ""
+    debt = db.get_pack_blood_debt(guild_id, u_pack, o_pack)
+    if debt <= 0:
+        return ""
+    return (
+        f"\n_**{debt}** blood debt unpaid — your pack took lives from theirs. "
+        f"the meeting carries that weight. clear it with `/pack tribute`._"
+    )
 
 
 def start_rival_wolf_skirmish(
