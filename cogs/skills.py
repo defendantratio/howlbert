@@ -6,6 +6,7 @@ from engine.skill_checks import SKILL_CATEGORIES, SKILL_SCENARIOS, opponent_requ
 from engine.skill_runner import run_skill_scenario
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 
 async def _category_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     choices = []
@@ -26,6 +27,22 @@ async def _check_autocomplete(interaction: discord.Interaction, current: str) ->
         if current and current.lower() not in key and (current.lower() not in label.lower()):
             continue
         choices.append(app_commands.Choice(name=choice_label(label), value=key))
+    return choices[:25]
+
+_helper_wolf_autocomplete = make_member_wolf_autocomplete("helper")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
     return choices[:25]
 
 async def _opponent_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -64,9 +81,9 @@ class Skills(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='skills', description='run a catalogued survival skill check (tracking, stealth, herbs, …).')
-    @app_commands.describe(category='skill category', check='specific check from the basil rules', opponent='wolf to roll against (required for opposed checks)', helper='medic or packmate assisting your roll (advantage if they pass dc 10)', group='run as a pack group check (half must succeed)', rained='recent rain/snow washed scent (tracking)', yarrow='force yarrow on stabilize (auto-used if in herb bag)')
-    @app_commands.autocomplete(category=_category_autocomplete, check=_check_autocomplete, opponent=_opponent_autocomplete)
-    async def skills(self, interaction: discord.Interaction, category: str, check: str, opponent: str | None=None, helper: discord.Member | None=None, group: bool=False, rained: bool=False, yarrow: bool=False):
+    @app_commands.describe(category='skill category', check='specific check from the basil rules', opponent='wolf to roll against (required for opposed checks)', helper='medic or packmate assisting your roll (advantage if they pass dc 10)', helper_wolf="specific wolf from that player's roster", own_helper='your other wolf as helper (advantage if they pass dc 10)', group='run as a pack group check (half must succeed)', rained='recent rain/snow washed scent (tracking)', yarrow='force yarrow on stabilize (auto-used if in herb bag)')
+    @app_commands.autocomplete(category=_category_autocomplete, check=_check_autocomplete, opponent=_opponent_autocomplete, own_helper=_other_wolf_autocomplete, helper_wolf=_helper_wolf_autocomplete)
+    async def skills(self, interaction: discord.Interaction, category: str, check: str, opponent: str | None=None, helper: discord.Member | None=None, helper_wolf: str | None=None, own_helper: str | None=None, group: bool=False, rained: bool=False, yarrow: bool=False):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
@@ -117,9 +134,22 @@ class Skills(commands.Cog):
             embed.set_footer(text='/skills group:true · pack howl coordination')
             await interaction.response.send_message(embed=embed)
             return
+        if helper and own_helper:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
         helper_row = None
-        if helper:
-            helper_row = db.get_user(helper.id)
+        if own_helper:
+            active = db.get_user(interaction.user.id)
+            rows = db.list_user_wolves(interaction.user.id)
+            helper_row = next((w for w in rows if w['wolf_name'].lower() == own_helper.strip().lower() and w['id'] != (active['id'] if active else -1)), None)
+            if not helper_row:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_helper}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        elif helper:
+            if helper_wolf:
+                helper_row = db.find_user_wolf(helper.id, helper_wolf)
+            else:
+                helper_row = db.get_user(helper.id)
             if not helper_row:
                 await interaction.response.send_message(player_message("Helper isn't registered."), ephemeral=reply_ephemeral())
                 return

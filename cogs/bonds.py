@@ -6,6 +6,9 @@ import database as db
 from engine.bonds import BOND_LABELS, FAMILY_ROLE_LABELS, format_bonds_embed_body
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
+
+_wolf_name_autocomplete = make_member_wolf_autocomplete("wolf")
 
 async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)
@@ -36,7 +39,7 @@ def _resolve_subject(interaction: discord.Interaction, own_wolf: str | None):
         return (None, '__not_registered__')
     return (subject, None)
 
-def _resolve_bond_target(subject, interaction: discord.Interaction, *, wolf: discord.Member | None, target_own_wolf: str | None) -> tuple[object | None, str | None]:
+def _resolve_bond_target(subject, interaction: discord.Interaction, *, wolf: discord.Member | None, target_own_wolf: str | None, wolf_name: str | None = None) -> tuple[object | None, str | None]:
     if wolf and target_own_wolf:
         return (None, 'Pick either another **player** (`wolf`) or `target_own_wolf`, not both.')
     if target_own_wolf:
@@ -49,7 +52,10 @@ def _resolve_bond_target(subject, interaction: discord.Interaction, *, wolf: dis
     if wolf:
         if wolf.id == interaction.user.id:
             return (None, 'Use `target_own_wolf` for another character you own.')
-        target = db.get_user(wolf.id)
+        if wolf_name:
+            target = db.find_user_wolf(wolf.id, wolf_name)
+        else:
+            target = db.get_user(wolf.id)
         if not target:
             return (None, '__not_registered__')
         return (target, None)
@@ -61,10 +67,10 @@ class BondsCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='bonds', description='view or manage friendships, rivalries, kin, mentors, romances, and found families.')
-    @app_commands.describe(action='what to do', own_wolf='your other wolf; whose bonds to view or edit (default: active wolf)', wolf="another player's wolf (set/clear target)", target_own_wolf='your other wolf as set/clear target', bond_type='bond to set or clear', strength='bond strength 0-100 (set only; default 40)', note='short label; e.g. litter-mate, old feud (set only)', family_name='found family name (create or join)', family_role='your role in the family (join only)', leave='leave your current found family')
+    @app_commands.describe(action='what to do', own_wolf='your other wolf; whose bonds to view or edit (default: active wolf)', wolf="another player's wolf (set/clear target)", wolf_name="specific wolf from that player's roster", target_own_wolf='your other wolf as set/clear target', bond_type='bond to set or clear', strength='bond strength 0-100 (set only; default 40)', note='short label; e.g. litter-mate, old feud (set only)', family_name='found family name (create or join)', family_role='your role in the family (join only)', leave='leave your current found family')
     @app_commands.choices(action=[app_commands.Choice(name='view bonds', value='view'), app_commands.Choice(name='set bond', value='set'), app_commands.Choice(name='clear bond', value='clear'), app_commands.Choice(name='found family', value='family')], bond_type=[app_commands.Choice(name='friendship', value='friendship'), app_commands.Choice(name='rivalry', value='rivalry'), app_commands.Choice(name='kin', value='kin'), app_commands.Choice(name='mentor', value='mentor'), app_commands.Choice(name='romance', value='romance')], family_role=[app_commands.Choice(name='parent', value='parent'), app_commands.Choice(name='sibling', value='sibling'), app_commands.Choice(name='cub', value='cub'), app_commands.Choice(name='member', value='member')])
-    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_own_wolf=_other_wolf_autocomplete)
-    async def bonds(self, interaction: discord.Interaction, action: str='view', own_wolf: str | None=None, wolf: discord.Member | None=None, target_own_wolf: str | None=None, bond_type: str | None=None, strength: app_commands.Range[int, 0, 100] | None=None, note: str | None=None, family_name: str | None=None, family_role: str | None=None, leave: bool=False):
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def bonds(self, interaction: discord.Interaction, action: str='view', own_wolf: str | None=None, wolf: discord.Member | None=None, wolf_name: str | None=None, target_own_wolf: str | None=None, bond_type: str | None=None, strength: app_commands.Range[int, 0, 100] | None=None, note: str | None=None, family_name: str | None=None, family_role: str | None=None, leave: bool=False):
         subject, err = _resolve_subject(interaction, own_wolf)
         if err == '__not_registered__':
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
@@ -109,7 +115,7 @@ class BondsCog(commands.Cog):
                 return
             await interaction.response.send_message(embed=howlbert_embed('Found Family', f"**{subject['wolf_name']}** founds **{family['name']}**; invite packmates to join with the same name.", color=SUCCESS_COLOR))
             return
-        target, terr = _resolve_bond_target(subject, interaction, wolf=wolf, target_own_wolf=target_own_wolf)
+        target, terr = _resolve_bond_target(subject, interaction, wolf=wolf, target_own_wolf=target_own_wolf, wolf_name=wolf_name)
         if terr == '__not_registered__':
             await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
             return
@@ -128,6 +134,17 @@ class BondsCog(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Clear Bond', f"Cleared **{label.lower()}** between **{subject['wolf_name']}** and **{target['wolf_name']}**.", color=SUCCESS_COLOR))
             return
         if action == 'set':
+            if bond_type == 'fling':
+                await interaction.response.send_message(
+                    embed=howlbert_embed(
+                        'Fling',
+                        'Fling is shown automatically when two wolves have mated without a romance bond. '
+                        'To become mates, set a **romance** bond instead.',
+                        color=ERROR_COLOR,
+                    ),
+                    ephemeral=reply_ephemeral(),
+                )
+                return
             if not interaction.guild:
                 await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
                 return
@@ -139,9 +156,18 @@ class BondsCog(commands.Cog):
             note_line = f"\n_{row['note']}_" if row['note'] else ''
             from engine.bonds import strength_bar, strength_tier
             rival = bond_type == 'rivalry'
-            tier = strength_tier(row['strength'], rivalry=rival)
+            romantic = bond_type in ('romance', 'fling')
+            tier = strength_tier(row['strength'], rivalry=rival, romance=romantic)
             bar = strength_bar(row['strength'])
-            await interaction.response.send_message(embed=howlbert_embed('Set Bond', f"**{subject['wolf_name']}** ↔ **{target['wolf_name']}**; **{label}** **{bar}** ({tier}){note_line}", color=SUCCESS_COLOR))
+            body = f"**{subject['wolf_name']}** ↔ **{target['wolf_name']}**; **{label}** **{bar}** ({tier}){note_line}"
+            hc_lines: list[str] = []
+            if bond_type == 'fling':
+                from engine.healer_code import apply_medic_court_caught
+                hc_lines = apply_medic_court_caught(subject, target)
+            embed = howlbert_embed('Set Bond', body, color=SUCCESS_COLOR)
+            for hc in hc_lines:
+                embed.add_field(name="Healer's Code", value=hc, inline=False)
+            await interaction.response.send_message(embed=embed)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(BondsCog(bot))

@@ -4,7 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.pack_leadership import can_act_as_pack_alpha, can_act_as_pack_officer, can_resolve_war
-from engine.pack_food import deposit_to_pack_stash, format_pack_stash_line, run_feedall, withdraw_from_pack_stash
+from engine.pack_food import deposit_all_to_pack_stash, deposit_to_pack_stash, format_pack_stash_line, run_feedall, withdraw_from_pack_stash
 from engine.thirst import run_drinkall
 from engine.pack_unity import format_unity_meter, standing_effect_text, unity_effect_text
 from engine.character import attr_modifier, get_attr
@@ -14,12 +14,34 @@ from utils.currency import format_bones
 from utils.replies import reply_ephemeral
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.permissions import is_howlbert_admin
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 
 def _is_pack_officer(user, pack, *, discord_admin: bool=False) -> bool:
     return can_act_as_pack_officer(user, pack, discord_admin=discord_admin)
 
 def _is_alpha(user, pack, *, discord_admin: bool=False) -> bool:
     return can_act_as_pack_alpha(user, pack, discord_admin=discord_admin)
+
+_target_wolf_name_autocomplete = make_member_wolf_autocomplete("target")
+_wolf_name_autocomplete = make_member_wolf_autocomplete("wolf")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
+
+def _resolve_own_wolf(discord_id: int, name: str):
+    rows = db.list_user_wolves(discord_id)
+    return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
 async def _personal_prey_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     user = db.get_user(interaction.user.id)
@@ -191,6 +213,21 @@ class Pack(commands.Cog):
             db.increment_quest_progress(interaction.user.id, 'deposit')
         await interaction.response.send_message(embed=howlbert_embed('Food Reserve', msg, color=color))
 
+    @stash.command(name='depositall', description='deposit all fresh kills from your hoard to the den reserve.')
+    async def stash_depositall(self, interaction: discord.Interaction):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        count, msg = deposit_all_to_pack_stash(user, pack_id=pack['id'], guild_id=interaction.guild.id, day=world['day_number'])
+        color = SUCCESS_COLOR if count > 0 else ERROR_COLOR
+        if count > 0:
+            db.increment_quest_progress(interaction.user.id, 'deposit')
+        await interaction.response.send_message(embed=howlbert_embed('Food Reserve', msg, color=color))
+
     @stash.command(name='withdraw', description='take food from the reserve into your hoard.')
     @app_commands.describe(food='stack id from `/pack stash list`')
     @app_commands.autocomplete(food=_pack_stash_autocomplete)
@@ -267,8 +304,9 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name='pardon', description='lift the rejoin cooldown for a wolf this den exiled (alpha only).')
-    @app_commands.describe(wolf='the exiled wolf to pardon')
-    async def pack_pardon(self, interaction: discord.Interaction, wolf: discord.Member):
+    @app_commands.describe(wolf='the exiled wolf to pardon', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf to pardon (multi-wolf players)')
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def pack_pardon(self, interaction: discord.Interaction, wolf: discord.Member | None = None, wolf_name: str | None = None, own_wolf: str | None = None):
         user, pack = await self._require_pack_member(interaction)
         if not user:
             return
@@ -276,12 +314,27 @@ class Pack(commands.Cog):
             embed = howlbert_embed('Alpha Only', 'Your active wolf must have the **Alpha** role and lead this pack.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        target = db.get_user(wolf.id)
-        if not target:
-            embed = howlbert_embed('Not Registered', f'{wolf.display_name} is not on Howlbert.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        if wolf and own_wolf:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **wolf** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        ok = db.pardon_exile(wolf.id, pack['id'])
+        if own_wolf:
+            target = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not target:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        elif wolf:
+            if wolf_name:
+                target = db.find_user_wolf(wolf.id, wolf_name)
+            else:
+                target = db.get_user(wolf.id)
+            if not target:
+                embed = howlbert_embed('Not Registered', f'{wolf.display_name} is not on Howlbert.', color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+        else:
+            await interaction.response.send_message(embed=howlbert_embed('No Target', 'Provide a **wolf** or **own_wolf** to pardon.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        ok = db.pardon_exile_by_wolf_id(target['id'], pack['id'])
         if not ok:
             embed = howlbert_embed('Nothing to Pardon', f"**{target['wolf_name']}** isn't under an exile from **{pack['name']}**.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -607,20 +660,39 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @pack.command(name='tradepack', description='trade all duplicate hoard items to a wolf in another great pack.')
-    @app_commands.describe(wolf='wolf in another pack (must accept standing)', pack_name='their great pack name (optional check)')
-    async def pack_tradepack(self, interaction: discord.Interaction, wolf: discord.Member, pack_name: str | None=None):
+    @app_commands.describe(wolf='wolf in another pack (must accept standing)', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf in another pack (multi-wolf players)', pack_name='their great pack name (optional check)')
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def pack_tradepack(self, interaction: discord.Interaction, wolf: discord.Member | None = None, wolf_name: str | None = None, own_wolf: str | None = None, pack_name: str | None = None):
         user, pack = await self._require_pack_member(interaction)
         if not user:
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        if wolf.bot or wolf.id == interaction.user.id:
-            await interaction.response.send_message(embed=howlbert_embed('Invalid Target', 'Pick another wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        if wolf and own_wolf:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **wolf** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        recipient = db.get_user(wolf.id)
-        if not recipient:
-            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'They have no wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        if own_wolf:
+            recipient = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not recipient:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if recipient['id'] == user['id']:
+                await interaction.response.send_message(embed=howlbert_embed('Same Wolf', 'Switch active wolf with `/switchwolf`, or pick a different `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        elif wolf:
+            if wolf.bot or wolf.id == interaction.user.id:
+                await interaction.response.send_message(embed=howlbert_embed('Invalid Target', 'Pick another wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if wolf_name:
+                recipient = db.find_user_wolf(wolf.id, wolf_name)
+            else:
+                recipient = db.get_user(wolf.id)
+            if not recipient:
+                await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'They have no wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        else:
+            await interaction.response.send_message(embed=howlbert_embed('No Target', 'Provide a **wolf** or **own_wolf**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if pack_name:
             other = db.get_pack_by_name(pack_name)
@@ -638,8 +710,8 @@ class Pack(commands.Cog):
 
     @pack.command(name='brokenrite', description='read the latest rite of the broken canine in your great pack.')
     async def pack_brokenrite(self, interaction: discord.Interaction):
-        user, pack, err = await self._require_pack_member(interaction)
-        if err:
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
             return
         import json
         from engine.broken_canine import RITE_NAME
@@ -660,11 +732,12 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @pack.command(name='judge', description='dissent, view dissents, denounce a packmate, or second a denouncement.')
-    @app_commands.describe(action='dissent, dissents, denounce, or second', target='the packmate (denounce/second)', subject='decision you object to (dissent)', reason='why (dissent/denounce)')
+    @app_commands.describe(action='dissent, dissents, denounce, or second', target='the packmate (denounce/second)', target_wolf_name="specific wolf from that player's roster", own_wolf='your other wolf as target (multi-wolf players)', subject='decision you object to (dissent)', reason='why (dissent/denounce)')
     @app_commands.choices(action=[app_commands.Choice(name='file dissent (officer only)', value='dissent'), app_commands.Choice(name='view recorded dissents', value='dissents'), app_commands.Choice(name='denounce a packmate', value='denounce'), app_commands.Choice(name='second a denouncement', value='second')])
-    async def pack_judge(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, subject: str | None=None, reason: str | None=None):
-        user, pack, err = await self._require_pack_member(interaction)
-        if err:
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf_name=_target_wolf_name_autocomplete)
+    async def pack_judge(self, interaction: discord.Interaction, action: str, target: discord.Member | None = None, target_wolf_name: str | None = None, own_wolf: str | None = None, subject: str | None = None, reason: str | None = None):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
             return
         if action == 'dissent':
             if not subject or not reason:
@@ -706,19 +779,37 @@ class Pack(commands.Cog):
             await interaction.response.send_message(embed=embed)
             return
 
-        if action == 'denounce':
-            if not target:
-                await interaction.response.send_message(player_message('Pick a **target** packmate.'), ephemeral=reply_ephemeral())
+        if action in ('denounce', 'second'):
+            if target and own_wolf:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **target** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
+            if own_wolf:
+                target_row = _resolve_own_wolf(interaction.user.id, own_wolf)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+                if target_row['id'] == user['id']:
+                    await interaction.response.send_message(embed=howlbert_embed('Same Wolf', 'Switch active wolf with `/switchwolf`, or pick a different `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            elif target:
+                if target.bot or target.id == interaction.user.id:
+                    await interaction.response.send_message(embed=howlbert_embed('Pick Another Wolf', 'You cannot target yourself.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+                if target_wolf_name:
+                    target_row = db.find_user_wolf(target.id, target_wolf_name)
+                else:
+                    target_row = db.get_user(target.id)
+            else:
+                await interaction.response.send_message(player_message('Pick a **target** packmate or your own wolf via `own_wolf`.'), ephemeral=reply_ephemeral())
+                return
+
+        if action == 'denounce':
             if not reason:
                 await interaction.response.send_message(player_message('Provide a **reason**.'), ephemeral=reply_ephemeral())
                 return
-            if target.bot or target.id == interaction.user.id:
-                await interaction.response.send_message(embed=howlbert_embed('Pick Another Wolf', 'You cannot denounce yourself.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-                return
-            target_row = db.get_user(target.id)
             if not target_row or target_row['pack_id'] != pack['id']:
-                await interaction.response.send_message(embed=howlbert_embed('Not a Packmate', f'{target.display_name} is not in **{pack["name"]}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                target_label = own_wolf or (target.display_name if target else '?')
+                await interaction.response.send_message(embed=howlbert_embed('Not a Packmate', f'**{target_label}** is not in **{pack["name"]}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if db.get_open_denouncement_for_target(pack['id'], target_row['id']):
                 await interaction.response.send_message(embed=howlbert_embed('Already Open', f"**{target_row['wolf_name']}** already has an open denouncement; use `action:second` to back it.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -738,7 +829,7 @@ class Pack(commands.Cog):
                 'Denouncement Raised',
                 f"**{user['wolf_name']}** denounces **{target_row['wolf_name']}**:\n_{reason.strip()[:300]}_\n\n"
                 f"this costs **{target_row['wolf_name']}** nothing yet — it needs **{DENOUNCEMENT_SECONDS_REQUIRED}** "
-                f"other packmates to `/pack judge action:second target:{target.display_name}` before the den actually acts on it.",
+                f"other packmates to second it before the den actually acts on it.",
                 color=EMBED_COLOR,
             )
             embed.set_footer(text=f'denouncement #{denouncement_id}')
@@ -746,12 +837,9 @@ class Pack(commands.Cog):
             return
 
         if action == 'second':
-            if not target:
-                await interaction.response.send_message(player_message('Pick the denounced **target**.'), ephemeral=reply_ephemeral())
-                return
-            target_row = db.get_user(target.id)
             if not target_row or target_row['pack_id'] != pack['id']:
-                await interaction.response.send_message(embed=howlbert_embed('Not a Packmate', f'{target.display_name} is not in **{pack["name"]}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                target_label = own_wolf or (target.display_name if target else '?')
+                await interaction.response.send_message(embed=howlbert_embed('Not a Packmate', f'**{target_label}** is not in **{pack["name"]}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             row = db.get_open_denouncement_for_target(pack['id'], target_row['id'])
             if not row:
@@ -767,7 +855,7 @@ class Pack(commands.Cog):
             from config import DENOUNCEMENT_SECONDS_REQUIRED, DENOUNCEMENT_STANDING_PENALTY
             if new_count >= DENOUNCEMENT_SECONDS_REQUIRED:
                 db.resolve_denouncement(row['id'])
-                kick = db.adjust_wolf_standing(target_row['discord_id'], DENOUNCEMENT_STANDING_PENALTY)
+                kick = db.adjust_wolf_standing_by_id(target_row['id'], DENOUNCEMENT_STANDING_PENALTY)
                 standing_note = '**cast out**' if kick == 'kicked' else f'standing **{DENOUNCEMENT_STANDING_PENALTY}**'
                 embed = howlbert_embed(
                     'Denouncement Upheld',
@@ -783,6 +871,109 @@ class Pack(commands.Cog):
                 )
             await interaction.response.send_message(embed=embed)
             return
+
+    @app_commands.command(name='foster', description='send a pup to an allied pack as a diplomatic gesture (alpha only).')
+    @app_commands.describe(pup='the pup to foster out (their wolf name)', target_pack='name of the receiving pack')
+    async def foster(self, interaction: discord.Interaction, pup: str, target_pack: str):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not _is_alpha(user, pack, discord_admin=is_howlbert_admin(interaction)):
+            await interaction.response.send_message(embed=howlbert_embed('Alpha Only', 'Only the alpha can send a pup to another den.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            return
+        with db.get_db() as conn:
+            pup_row = conn.execute(
+                "SELECT * FROM users WHERE pack_id = ? AND wolf_name = ? COLLATE NOCASE AND condition NOT IN ('dead', 'dying')",
+                (pack['id'], pup.strip()),
+            ).fetchone()
+        if not pup_row:
+            await interaction.response.send_message(embed=howlbert_embed('Pup Not Found', f'No living wolf named **{pup}** in your pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from config import PUP_MAX_MOONS
+        if int(pup_row['age_months']) > PUP_MAX_MOONS:
+            await interaction.response.send_message(embed=howlbert_embed('Not a Pup', f'**{pup_row["wolf_name"]}** is grown — fostering is for young wolves only.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        other = db.get_pack_by_name(target_pack)
+        if not other:
+            with db.get_db() as conn:
+                other = conn.execute("SELECT * FROM packs WHERE name LIKE ? COLLATE NOCASE", (f'%{target_pack}%',)).fetchone()
+        if not other or int(other['id']) == int(pack['id']):
+            await interaction.response.send_message(embed=howlbert_embed('Pack Not Found', f'No pack matching **{target_pack}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        standing = db.get_pack_relation(interaction.guild.id, int(pack['id']), int(other['id']))
+        if standing < 5:
+            await interaction.response.send_message(embed=howlbert_embed('Too Hostile', f'Standing with **{other["name"]}** is **{standing}/10** — foster requires neutral or better standing.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        with db.get_db() as conn:
+            conn.execute(
+                "UPDATE users SET pack_id = ?, foster_pack_id = ? WHERE id = ?",
+                (other['id'], pack['id'], pup_row['id']),
+            )
+        body = (
+            f"**{pup_row['wolf_name']}** leaves **{pack['name']}** and is received by **{other['name']}**.\n\n"
+            f"The host den's healers earn standing each sunrise for keeping them well. "
+            f"If standing between the dens falls below **5**, the arrangement becomes a hostage situation.\n\n"
+            f"_Use `/wolfadmin` to return the pup if the foster arrangement ends._"
+        )
+        await interaction.response.send_message(embed=howlbert_embed('Pup Fostered', body, color=SUCCESS_COLOR))
+
+    @app_commands.command(name='schism', description='break from your pack and found a new den. requires pack unity below 30.')
+    @app_commands.describe(new_pack_name='name for the den you are founding')
+    async def schism(self, interaction: discord.Interaction, new_pack_name: str):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not interaction.guild:
+            return
+        if not new_pack_name or len(new_pack_name.strip()) < 2:
+            await interaction.response.send_message(embed=howlbert_embed('Name Required', 'Give the new den a name.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if db.get_pack_by_name(new_pack_name.strip()):
+            await interaction.response.send_message(embed=howlbert_embed('Name Taken', f'A pack named **{new_pack_name}** already exists.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.pack_schism import execute_schism
+        world = db.get_world(interaction.guild.id)
+        ok, body = execute_schism(user, pack=pack, guild_id=interaction.guild.id, new_pack_name=new_pack_name.strip(), day=world['day_number'])
+        color = SUCCESS_COLOR if ok else ERROR_COLOR
+        title = 'Den Fractures' if ok else 'Schism Blocked'
+        await interaction.response.send_message(embed=howlbert_embed(title, body, color=color))
+
+    @app_commands.command(name='tribute', description='send bones to another pack to clear blood debt (alpha/advisor only).')
+    @app_commands.describe(target_pack='name of the pack you owe blood debt to', amount='bones to send from your treasury')
+    async def tribute(self, interaction: discord.Interaction, target_pack: str, amount: int):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not _is_pack_officer(user, pack, discord_admin=is_howlbert_admin(interaction)):
+            await interaction.response.send_message(embed=howlbert_embed('Officers Only', 'Alpha or Advisor required to offer tribute.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if amount <= 0:
+            await interaction.response.send_message(embed=howlbert_embed('Invalid Amount', 'Enter a positive number.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            return
+        other = db.get_pack_by_name(target_pack)
+        if not other:
+            with db.get_db() as conn:
+                other = conn.execute("SELECT * FROM packs WHERE name LIKE ? COLLATE NOCASE", (f'%{target_pack}%',)).fetchone()
+        if not other or int(other['id']) == int(pack['id']):
+            await interaction.response.send_message(embed=howlbert_embed('Pack Not Found', f'No pack named **{target_pack}**. Check `/pack relations`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if int(pack['treasury']) < amount:
+            await interaction.response.send_message(embed=howlbert_embed('Short on Bones', f'Treasury holds **{pack["treasury"]}** — tribute requires **{amount}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        debt = db.get_pack_blood_debt(interaction.guild.id, int(pack['id']), int(other['id']))
+        with db.get_db() as conn:
+            conn.execute("UPDATE packs SET treasury = treasury - ? WHERE id = ?", (amount, pack['id']))
+            conn.execute("UPDATE packs SET treasury = treasury + ? WHERE id = ?", (amount, other['id']))
+        cleared = debt > 0 and amount >= debt * 50
+        if cleared:
+            db.clear_pack_blood_debt(interaction.guild.id, int(pack['id']), int(other['id']))
+        debt_line = f"\n**{debt}** blood debt **cleared**. the obligation is settled." if cleared else (f"\n**{debt}** blood debt remains — increase the tribute to clear it fully." if debt > 0 else "\nno blood debt between your dens; this tribute is a gesture of goodwill.")
+        await interaction.response.send_message(embed=howlbert_embed('Tribute Sent', f"**{amount:,}** bones sent from **{pack['name']}** to **{other['name']}**.{debt_line}", color=SUCCESS_COLOR))
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Pack(bot))

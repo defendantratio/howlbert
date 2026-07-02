@@ -21,6 +21,7 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.notifications import notify_consent_request
 from utils.herb_autocomplete import herb_inventory_autocomplete
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 from cogs.care_handlers import lay_to_rest, naming_ceremony, quarantine_command, sacred_visit, spirit_ritual, treat
 
 def _resolve_own_wolf(discord_id: int, name: str):
@@ -81,7 +82,7 @@ def _kin_protective_court_note(courter, target) -> str | None:
             return random.choice(phrases)
     return None
 
-def _resolve_partner_wolf(user, interaction: discord.Interaction, *, partner: discord.Member | None, own_wolf: str | None) -> tuple[object | None, str | None]:
+def _resolve_partner_wolf(user, interaction: discord.Interaction, *, partner: discord.Member | None, own_wolf: str | None, partner_wolf: str | None = None) -> tuple[object | None, str | None]:
     if partner and own_wolf:
         return (None, 'Pick either another **player** or one of your other wolves (`own_wolf`), not both.')
     if own_wolf:
@@ -94,13 +95,18 @@ def _resolve_partner_wolf(user, interaction: discord.Interaction, *, partner: di
     if partner:
         if partner.id == interaction.user.id:
             return (None, 'Use `own_wolf` to court or mate another character you own.')
-        target = db.get_user(partner.id)
+        if partner_wolf:
+            target = db.find_user_wolf(partner.id, partner_wolf)
+            if not target:
+                return (None, db.explain_wolf_not_found(partner.id, partner_wolf, player_label=partner.display_name))
+        else:
+            target = db.get_user(partner.id)
         if not target:
             return (None, '__not_registered__')
         return (target, None)
     return (None, 'Specify another player or your wolf name in `own_wolf`.')
 
-def _resolve_adoptee(user, interaction: discord.Interaction, *, youth: discord.Member | None, own_youth: str | None) -> tuple[object | None, str | None]:
+def _resolve_adoptee(user, interaction: discord.Interaction, *, youth: discord.Member | None, own_youth: str | None, youth_wolf: str | None = None) -> tuple[object | None, str | None]:
     if youth and own_youth:
         return (None, 'Pick either another **player** (`youth`) or one of your young wolves (`own_youth`), not both.')
     if own_youth:
@@ -113,11 +119,22 @@ def _resolve_adoptee(user, interaction: discord.Interaction, *, youth: discord.M
     if youth:
         if youth.id == interaction.user.id:
             return (None, 'Use `own_youth` for one of your other pups or juveniles.')
-        target = db.get_user(youth.id)
+        if youth_wolf:
+            target = db.find_user_wolf(youth.id, youth_wolf)
+        else:
+            target = db.get_user(youth.id)
         if not target:
             return (None, '__not_registered__')
         return (target, None)
     return (None, 'Specify who to adopt with `youth` or `own_youth`.')
+
+_patient_wolf_autocomplete = make_member_wolf_autocomplete("patient")
+_helper_wolf_autocomplete = make_member_wolf_autocomplete("helper")
+_deceased_wolf_autocomplete = make_member_wolf_autocomplete("deceased")
+_quarantine_wolf_autocomplete = make_member_wolf_autocomplete("wolf")
+_target_wolf_autocomplete = make_member_wolf_autocomplete("target")
+_partner_wolf_autocomplete = make_member_wolf_autocomplete("partner")
+_youth_wolf_autocomplete = make_member_wolf_autocomplete("youth")
 
 async def _quarantine_own_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)
@@ -146,68 +163,134 @@ class Life(commands.Cog):
         return user
 
     @app_commands.command(name='medic', description='clinical care, herb treatment, spirit rites, and sick-den quarantine.')
-    @app_commands.describe(action='medic action (see dropdown for the full list)', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', helper='assisting medic for surgery (medicine dc 10 → advantage)', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf to prepare (lay_to_rest)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
+    @app_commands.describe(action='medic action (see dropdown for the full list)', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', patient_wolf="specific wolf from that player's roster", own_patient='your other wolf as patient (stabilize, surgery, observe, ritual, naming)', helper='assisting medic for surgery (medicine dc 10 → advantage)', helper_wolf="specific wolf from helper's roster", own_helper='your other wolf as surgery helper', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf to prepare (lay_to_rest)', deceased_wolf="specific wolf from that player's roster (lay_to_rest)", own_deceased='your own dead wolf (lay_to_rest)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', wolf_name="specific wolf from that player's roster (quarantine)", own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
     @app_commands.choices(action=[app_commands.Choice(name='death save (dying wolf)', value='deathsaves'), app_commands.Choice(name='stabilize packmate', value='stabilize'), app_commands.Choice(name='surgery on patient', value='surgery'), app_commands.Choice(name='treat with herb', value='treat'), app_commands.Choice(name='den checkup', value='checkup'), app_commands.Choice(name='sacred visit (medic)', value='sacred'), app_commands.Choice(name='spirit ritual', value='ritual'), app_commands.Choice(name='pup naming rite', value='naming'), app_commands.Choice(name='lay wolf to rest', value='lay_to_rest'), app_commands.Choice(name='swim therapy (river)', value='swim'), app_commands.Choice(name='quarantine sick wolf', value='quarantine'), app_commands.Choice(name='observe case (apprentice)', value='observe')], procedure=[app_commands.Choice(name='stitch wound (deep gash / infection)', value='stitch'), app_commands.Choice(name='set bone / splint (comfrey + bindweed + 2 sticks)', value='set_bone'), app_commands.Choice(name='extract thorn or splinter', value='extract'), app_commands.Choice(name='amputate ruined limb', value='amputate')])
-    @app_commands.autocomplete(herb=herb_inventory_autocomplete, own_wolf=_quarantine_own_wolf_autocomplete)
-    async def medic(self, interaction: discord.Interaction, action: str, patient: discord.Member | None=None, helper: discord.Member | None=None, procedure: str='stitch', herb: str | None=None, ritual_herb: str | None=None, deceased: discord.Member | None=None, lay_herb: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False, use_yarrow: bool=False, use_cobwebs: bool=False, use_poppy: bool=False, use_meadowsweet: bool=False, use_loosestrife: bool=False, use_plantain: bool=False, use_rush_stalks: bool=False):
+    @app_commands.autocomplete(herb=herb_inventory_autocomplete, own_wolf=_quarantine_own_wolf_autocomplete, own_patient=_quarantine_own_wolf_autocomplete, own_helper=_quarantine_own_wolf_autocomplete, own_deceased=_quarantine_own_wolf_autocomplete, patient_wolf=_patient_wolf_autocomplete, helper_wolf=_helper_wolf_autocomplete, deceased_wolf=_deceased_wolf_autocomplete, wolf_name=_quarantine_wolf_autocomplete)
+    async def medic(self, interaction: discord.Interaction, action: str, patient: discord.Member | None=None, own_patient: str | None=None, helper: discord.Member | None=None, own_helper: str | None=None, procedure: str='stitch', herb: str | None=None, ritual_herb: str | None=None, deceased: discord.Member | None=None, own_deceased: str | None=None, lay_herb: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False, use_yarrow: bool=False, use_cobwebs: bool=False, use_poppy: bool=False, use_meadowsweet: bool=False, use_loosestrife: bool=False, use_plantain: bool=False, use_rush_stalks: bool=False, patient_wolf: str | None=None, helper_wolf: str | None=None, deceased_wolf: str | None=None, wolf_name: str | None=None):
         if action == 'deathsaves':
             await self._deathsaves(interaction)
         elif action == 'stabilize':
-            if not patient:
-                embed = howlbert_embed('Pick a Patient', 'Stabilize requires a **patient** packmate.', color=ERROR_COLOR)
+            if not patient and not own_patient:
+                embed = howlbert_embed('Pick a Patient', 'Stabilize requires a **patient** or **own_patient**.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
-            await self._stabilize(interaction, patient, use_yarrow, use_cobwebs)
+            if patient and own_patient:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if own_patient:
+                target_row = _resolve_own_wolf(interaction.user.id, own_patient)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_patient}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            else:
+                if patient_wolf:
+                    target_row = db.find_user_wolf(patient.id, patient_wolf)
+                    if not target_row:
+                        await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                        return
+                else:
+                    target_row = db.get_user(patient.id)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Patient is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            await self._stabilize(interaction, target_row, use_yarrow, use_cobwebs)
         elif action == 'surgery':
-            if not patient:
-                embed = howlbert_embed('Pick a Patient', 'Surgery requires a **patient** wolf.', color=ERROR_COLOR)
+            if not patient and not own_patient:
+                embed = howlbert_embed('Pick a Patient', 'Surgery requires a **patient** or **own_patient**.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
-            await self._surgery(interaction, patient, helper, procedure, use_poppy, use_meadowsweet, use_loosestrife, use_plantain, use_rush_stalks)
+            if patient and own_patient:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if own_patient:
+                target_row = _resolve_own_wolf(interaction.user.id, own_patient)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_patient}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            else:
+                if patient_wolf:
+                    target_row = db.find_user_wolf(patient.id, patient_wolf)
+                    if not target_row:
+                        await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                        return
+                else:
+                    target_row = db.get_user(patient.id)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Patient is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            if helper and own_helper:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if own_helper:
+                helper_row = _resolve_own_wolf(interaction.user.id, own_helper)
+                if not helper_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_helper}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            elif helper:
+                if helper_wolf:
+                    helper_row = db.find_user_wolf(helper.id, helper_wolf)
+                    if not helper_row:
+                        await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(helper.id, helper_wolf, player_label=helper.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                        return
+                else:
+                    helper_row = db.get_user(helper.id)
+                if not helper_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Helper is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            else:
+                helper_row = None
+            await self._surgery(interaction, target_row, helper_row, procedure, use_poppy, use_meadowsweet, use_loosestrife, use_plantain, use_rush_stalks)
         elif action == 'treat':
             if not herb:
                 await interaction.response.send_message(player_message('Provide an inventory **herb** key from `/bones action:inventory` (e.g. `herb_yarrow`).'), ephemeral=reply_ephemeral())
                 return
-            await treat(interaction, herb, patient, own_wolf)
+            await treat(interaction, herb, patient, own_wolf, patient_wolf=patient_wolf)
         elif action == 'observe':
-            if not patient:
-                await interaction.response.send_message(embed=howlbert_embed('Pick a Patient', 'Observe requires a **patient**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            if not patient and not own_patient:
+                await interaction.response.send_message(embed=howlbert_embed('Pick a Patient', 'Observe requires a **patient** or **own_patient**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            await self._observe(interaction, patient)
+            if patient and own_patient:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if own_patient:
+                target_row = _resolve_own_wolf(interaction.user.id, own_patient)
+                if not target_row:
+                    await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_patient}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                    return
+            else:
+                if patient_wolf:
+                    target_row = db.find_user_wolf(patient.id, patient_wolf)
+                    if not target_row:
+                        await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                        return
+                else:
+                    target_row = db.get_user(patient.id)
+                if not target_row:
+                    await interaction.response.send_message(player_message('Patient is not on Howlbert.'), ephemeral=reply_ephemeral())
+                    return
+            await self._observe(interaction, target_row)
         elif action in ('rounds', 'checkup'):
             await self._medic_rounds(interaction)
         elif action == 'sacred':
             await sacred_visit(interaction)
         elif action == 'ritual':
-            await spirit_ritual(interaction, patient, ritual_herb)
+            await spirit_ritual(interaction, patient, ritual_herb, own_patient=own_patient, patient_wolf=patient_wolf)
         elif action == 'naming':
-            await naming_ceremony(interaction, patient)
+            await naming_ceremony(interaction, patient, own_patient=own_patient, patient_wolf=patient_wolf)
         elif action == 'lay_to_rest':
-            await lay_to_rest(interaction, deceased, lay_herb)
+            await lay_to_rest(interaction, deceased, lay_herb, own_deceased=own_deceased, deceased_wolf=deceased_wolf)
         elif action == 'swim':
             await self._swim_therapy(interaction)
         elif action == 'quarantine':
-            await quarantine_command(interaction, wolf, own_wolf, release)
+            await quarantine_command(interaction, wolf, own_wolf, release, wolf_name=wolf_name)
 
-    async def _surgery(self, interaction: discord.Interaction, patient: discord.Member, helper: discord.Member | None, procedure: str, use_poppy: bool, use_meadowsweet: bool, use_loosestrife: bool, use_plantain: bool, use_rush_stalks: bool):
+    async def _surgery(self, interaction: discord.Interaction, target: dict, helper_row: dict | None, procedure: str, use_poppy: bool, use_meadowsweet: bool, use_loosestrife: bool, use_plantain: bool, use_rush_stalks: bool):
         surgeon = await self._require_user(interaction)
         if not surgeon:
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use in a server.'), ephemeral=reply_ephemeral())
             return
-        target = db.get_user(patient.id)
-        if not target:
-            embed = howlbert_embed('Not Registered', 'Patient is not on Howlbert.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        helper_row = None
-        if helper:
-            helper_row = db.get_user(helper.id)
-            if not helper_row:
-                embed = howlbert_embed('Not Registered', 'Helper is not on Howlbert.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
         world = db.get_world(interaction.guild.id)
         from engine.surgery import run_surgery
         ok, body = run_surgery(surgeon, target, procedure, day=world['day_number'], use_poppy=use_poppy, use_meadowsweet=use_meadowsweet, use_loosestrife=use_loosestrife, use_plantain=use_plantain, use_rush_stalks=use_rush_stalks, helper=helper_row, guild_id=interaction.guild.id if interaction.guild else None)
@@ -217,16 +300,12 @@ class Life(commands.Cog):
             gid = interaction.guild.id if interaction.guild else None
             db.increment_quest_progress(interaction.user.id, 'treat', guild_id=gid)
 
-    async def _observe(self, interaction: discord.Interaction, patient: discord.Member):
+    async def _observe(self, interaction: discord.Interaction, target: dict):
         medic = await self._require_user(interaction)
         if not medic:
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use in a server.'), ephemeral=reply_ephemeral())
-            return
-        target = db.get_user(patient.id)
-        if not target:
-            await interaction.response.send_message(player_message('Patient is not on Howlbert.'), ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
         from engine.medical_care import run_observe_apprentice
@@ -306,13 +385,12 @@ class Life(commands.Cog):
             color = SUCCESS_COLOR
         await interaction.response.send_message(embed=howlbert_embed('Death Save', body, color=color))
 
-    async def _stabilize(self, interaction: discord.Interaction, patient: discord.Member, use_yarrow: bool=False, use_cobwebs: bool=False):
+    async def _stabilize(self, interaction: discord.Interaction, target: dict, use_yarrow: bool=False, use_cobwebs: bool=False):
         healer = await self._require_user(interaction)
         if not healer:
             return
-        target = db.get_user(patient.id)
-        if not target or (target['hp'] > 0 and target['condition'] != 'dying'):
-            embed = howlbert_embed('Not Dying', f'{patient.display_name} is not at 0 HP.', color=ERROR_COLOR)
+        if target['hp'] > 0 and target['condition'] != 'dying':
+            embed = howlbert_embed('Not Dying', f"**{target['wolf_name']}** is not at 0 HP.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if interaction.guild:
@@ -329,7 +407,7 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             db.consume_item(interaction.user.id, item['id'])
-            db.stabilize_patient(patient.id)
+            db.stabilize_patient_by_wolf_id(target['id'])
             body = f"Cobwebs hold; **{target['wolf_name']}** stabilizes at 1 HP."
             from engine.medical_access import apply_stabilize_standing
             body += apply_stabilize_standing(healer, target, interaction.guild.id if interaction.guild else None, success=True)
@@ -347,11 +425,11 @@ class Life(commands.Cog):
             db.consume_item(interaction.user.id, item['id'])
         check = stabilize_check(healer, yarrow=use_yarrow, patient=target)
         if check.get('consume_fields'):
-            db.update_user(patient.id, wolf_id=target['id'], **check['consume_fields'])
+            db.update_user(target['discord_id'], wolf_id=target['id'], **check['consume_fields'])
         from engine.medical_access import apply_stabilize_standing
         standing_note = apply_stabilize_standing(healer, target, interaction.guild.id if interaction.guild else None, success=bool(check['success']))
         if check['success']:
-            db.stabilize_patient(patient.id)
+            db.stabilize_patient_by_wolf_id(target['id'])
             gid = interaction.guild.id if interaction.guild else None
             db.increment_quest_progress(interaction.user.id, 'treat', guild_id=gid)
             embed = howlbert_embed('Stabilized', f"Medicine: **{check['total']}** vs DC 15; **{target['wolf_name']}** at 1 HP." + standing_note, color=SUCCESS_COLOR)
@@ -500,20 +578,20 @@ class Life(commands.Cog):
         return choices[:25]
 
     @app_commands.command(name='courtship', description='court, mate, or check pregnancy status.')
-    @app_commands.describe(action='court, mate, pregnancy, or rival', target='defender wolf (another player)', partner='challenger wolf (another player; default: you)', rival_mode='physical pin or vocal howl (rival)', favor_challenger='receptive female favors challenger (+2)', own_wolf='one of your other wolves (court/mate)', difficulty='social difficulty (court)', respond='accept or decline pending request (mate)')
+    @app_commands.describe(action='court, mate, pregnancy, or rival', target='defender wolf (another player)', target_wolf="specific wolf from that player's roster (rival)", partner='challenger wolf (another player; default: you)', partner_wolf="specific wolf from that player's roster (court/mate)", rival_mode='physical pin or vocal howl (rival)', favor_challenger='receptive female favors challenger (+2)', own_wolf='one of your other wolves (court/mate)', difficulty='social difficulty (court)', respond='accept or decline pending request (mate)')
     @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (winter)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
-    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete)
-    async def courtship(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', respond: str | None=None, rival_mode: str='physical', favor_challenger: bool=False):
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf=_target_wolf_autocomplete, partner_wolf=_partner_wolf_autocomplete)
+    async def courtship(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', respond: str | None=None, rival_mode: str='physical', favor_challenger: bool=False, target_wolf: str | None=None, partner_wolf: str | None=None):
         if action == 'court':
-            await self._court(interaction, target, own_wolf, difficulty)
+            await self._court(interaction, target, own_wolf, difficulty, target_wolf=target_wolf)
         elif action == 'mate':
-            await self._mate(interaction, partner, own_wolf, respond)
+            await self._mate(interaction, partner, own_wolf, respond, partner_wolf=partner_wolf)
         elif action == 'pregnancy':
             await self._pregnancy(interaction)
         elif action == 'rival':
-            await self._rival_challenge(interaction, target, partner, own_wolf, rival_mode, favor_challenger)
+            await self._rival_challenge(interaction, target, partner, own_wolf, rival_mode, favor_challenger, target_wolf=target_wolf, partner_wolf=partner_wolf)
 
-    async def _court(self, interaction: discord.Interaction, target: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto'):
+    async def _court(self, interaction: discord.Interaction, target: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', *, target_wolf: str | None=None):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -537,7 +615,7 @@ class Life(commands.Cog):
             )
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        target_user, err = _resolve_partner_wolf(user, interaction, partner=target, own_wolf=own_wolf)
+        target_user, err = _resolve_partner_wolf(user, interaction, partner=target, own_wolf=own_wolf, partner_wolf=target_wolf)
         if err:
             if err == '__not_registered__':
                 embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -636,7 +714,7 @@ class Life(commands.Cog):
             embed.set_footer(text='/courtship action:mate · /checklist')
         await interaction.response.send_message(embed=embed)
 
-    async def _rival_challenge(self, interaction: discord.Interaction, defender_target: discord.Member | None, challenger_partner: discord.Member | None, own_wolf: str | None, mode: str, favor_challenger: bool):
+    async def _rival_challenge(self, interaction: discord.Interaction, defender_target: discord.Member | None, challenger_partner: discord.Member | None, own_wolf: str | None, mode: str, favor_challenger: bool, *, target_wolf: str | None=None, partner_wolf: str | None=None):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -644,21 +722,31 @@ class Life(commands.Cog):
             await interaction.response.send_message(player_message('Use in a server.'), ephemeral=reply_ephemeral())
             return
         world = db.get_world(interaction.guild.id)
-        if world['season'] != 'winter':
-            embed = howlbert_embed('Wrong Season', 'Rival challenges only occur during **mating season** (winter).', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
         if not defender_target:
             embed = howlbert_embed('Need Defender', 'Pick a **target** player as the wolf defending mating access.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        defender = db.get_user(defender_target.id)
+        if target_wolf:
+            defender = db.find_user_wolf(defender_target.id, target_wolf)
+            if not defender:
+                embed = howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(defender_target.id, target_wolf, player_label=defender_target.display_name), color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+        else:
+            defender = db.get_user(defender_target.id)
         if not defender:
             embed = howlbert_embed('Not Registered', 'Defender is not on Howlbert.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if challenger_partner:
-            challenger = db.get_user(challenger_partner.id)
+            if partner_wolf:
+                challenger = db.find_user_wolf(challenger_partner.id, partner_wolf)
+                if not challenger:
+                    embed = howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(challenger_partner.id, partner_wolf, player_label=challenger_partner.display_name), color=ERROR_COLOR)
+                    await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                    return
+            else:
+                challenger = db.get_user(challenger_partner.id)
         elif own_wolf:
             wolves = db.list_user_wolves(interaction.user.id)
             challenger = next((w for w in wolves if w['wolf_name'] == own_wolf), None)
@@ -678,7 +766,7 @@ class Life(commands.Cog):
         embed = howlbert_embed(f'Rival Challenge: {winner} wins', body + '\n\n' + footer, color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 
-    async def _mate(self, interaction: discord.Interaction, partner: discord.Member | None=None, own_wolf: str | None=None, respond: str | None=None):
+    async def _mate(self, interaction: discord.Interaction, partner: discord.Member | None=None, own_wolf: str | None=None, respond: str | None=None, *, partner_wolf: str | None=None):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -760,11 +848,7 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
         world = db.get_world(interaction.guild.id)
-        if world['season'] != 'spring':
-            embed = howlbert_embed('Wrong Season', 'Females can only conceive during **Newgrowth** (spring mating season).', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        partner_user, err = _resolve_partner_wolf(user, interaction, partner=partner, own_wolf=own_wolf)
+        partner_user, err = _resolve_partner_wolf(user, interaction, partner=partner, own_wolf=own_wolf, partner_wolf=partner_wolf)
         if err:
             if err == '__not_registered__':
                 embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -873,10 +957,10 @@ class Life(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='pupcare', description='list pups, birth a litter, save a dying pup, train a pup, or adopt.')
-    @app_commands.describe(action='list, birth, feed, save, train, or adopt', names='comma-separated pup names (birth)', name='pup name (save, feed, or train one pup)', partner='bonded mate (adopt)', own_wolf='your bonded mate wolf (adopt) or trainer wolf (train)', youth="another player's wolf to adopt", own_youth='your pup or juvenile to adopt', respond='accept or decline adoption request', attribute='attribute to train (train)', hide_father="don't reveal the sire publicly; only you and the father's player will know (birth)")
+    @app_commands.describe(action='list, birth, feed, save, train, or adopt', names='comma-separated pup names (birth)', name='pup name (save, feed, or train one pup)', partner='bonded mate (adopt)', partner_wolf="specific wolf from partner's roster", own_wolf='your bonded mate wolf (adopt) or trainer wolf (train)', youth="another player's wolf to adopt", youth_wolf="specific wolf from that player's roster to adopt", own_youth='your pup or juvenile to adopt', respond='accept or decline adoption request', attribute='attribute to train (train)', hide_father="don't reveal the sire publicly; only you and the father's player will know (birth)")
     @app_commands.choices(action=[app_commands.Choice(name='list your pups', value='list'), app_commands.Choice(name='birth litter', value='birth'), app_commands.Choice(name='feed / nurse pups', value='feed'), app_commands.Choice(name='save dying pup', value='save'), app_commands.Choice(name='train a pup', value='train'), app_commands.Choice(name='adopt youth', value='adopt')], respond=[app_commands.Choice(name='accept pending adoption', value='accept'), app_commands.Choice(name='decline pending adoption', value='decline')], attribute=[app_commands.Choice(name='strength', value='str'), app_commands.Choice(name='dexterity', value='dex'), app_commands.Choice(name='constitution', value='con'), app_commands.Choice(name='intelligence', value='int'), app_commands.Choice(name='charisma', value='cha'), app_commands.Choice(name='wisdom', value='wis')])
-    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, own_youth=_young_wolf_autocomplete, name=_nursing_pup_autocomplete)
-    async def pupcare(self, interaction: discord.Interaction, action: str, names: str | None=None, name: str | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None, attribute: str | None=None, hide_father: bool=False):
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, own_youth=_young_wolf_autocomplete, name=_nursing_pup_autocomplete, partner_wolf=_partner_wolf_autocomplete, youth_wolf=_youth_wolf_autocomplete)
+    async def pupcare(self, interaction: discord.Interaction, action: str, names: str | None=None, name: str | None=None, partner: discord.Member | None=None, partner_wolf: str | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, youth_wolf: str | None=None, own_youth: str | None=None, respond: str | None=None, attribute: str | None=None, hide_father: bool=False):
         if action == 'list':
             await self._pups(interaction)
         elif action == 'birth':
@@ -897,7 +981,7 @@ class Life(commands.Cog):
                 return
             await self._trainpup(interaction, name, attribute, own_wolf)
         elif action == 'adopt':
-            await self._adoptpup(interaction, partner, own_wolf, youth, own_youth, respond)
+            await self._adoptpup(interaction, partner, own_wolf, youth, own_youth, respond, youth_wolf=youth_wolf, partner_wolf=partner_wolf)
 
     async def _birth(self, interaction: discord.Interaction, names: str, *, hide_father: bool=False):
         user = await self._require_user(interaction)
@@ -1130,7 +1214,7 @@ class Life(commands.Cog):
         embed.set_footer(text='/pupcare action:feed · /switchwolf · /checklist')
         await interaction.response.send_message(embed=embed)
 
-    async def _adoptpup(self, interaction: discord.Interaction, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None):
+    async def _adoptpup(self, interaction: discord.Interaction, partner: discord.Member | None=None, own_wolf: str | None=None, youth: discord.Member | None=None, own_youth: str | None=None, respond: str | None=None, *, youth_wolf: str | None=None, partner_wolf: str | None=None):
         user = await self._require_user(interaction)
         if not user:
             return
@@ -1151,7 +1235,7 @@ class Life(commands.Cog):
             title = 'Adopted' if ok and respond == 'accept' else 'Declined' if ok else 'Failed'
             await interaction.response.send_message(embed=howlbert_embed(title, msg, color=color))
             return
-        partner_user, err = _resolve_partner_wolf(user, interaction, partner=partner, own_wolf=own_wolf)
+        partner_user, err = _resolve_partner_wolf(user, interaction, partner=partner, own_wolf=own_wolf, partner_wolf=partner_wolf)
         if err:
             if err == '__not_registered__':
                 embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -1171,7 +1255,7 @@ class Life(commands.Cog):
             embed = howlbert_embed('Already Adopted', 'Each bonded pair may adopt **once per rollover**.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        adoptee, adoptee_err = _resolve_adoptee(user, interaction, youth=youth, own_youth=own_youth)
+        adoptee, adoptee_err = _resolve_adoptee(user, interaction, youth=youth, own_youth=own_youth, youth_wolf=youth_wolf)
         if adoptee_err:
             if adoptee_err == '__not_registered__':
                 embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)

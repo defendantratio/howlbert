@@ -55,4 +55,4 @@ The chill wind whipped through the mountain pass, tugging at Vulcan's thick fur.
 
 A younger wolf, perhaps a year old, trotted up beside him, panting slightly from the climb. "Anything, Vulcan?" the pup asked, his tail giving a tentative wag.
 
-Vulcan didn't look at him. "Too much," he rumbled, his voice a low vibration in his chest. "Humans. Moving in." He paused, a flicker of grim determination in his eyes. "We go around. Higher up. No sense in drawing attention." He began to move, a silent, powerful shadow against the fading light, leaving no room for argument. His survival wasn't just his own anymore.
+Vulcan didn't look at him. "Too much," he rumbled, his voice a low vibration in his chest. "Twolegs. Moving in." He paused, a flicker of grim determination in his eyes. "We go around. Higher up. No sense in drawing attention." He began to move, a silent, powerful shadow against the fading light, leaving no room for argument. His survival wasn't just his own anymore.

@@ -12,6 +12,7 @@ from engine.socialize import run_socialize
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 
 async def _amusement_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     user = db.get_user(interaction.user.id)
@@ -25,6 +26,9 @@ async def _amusement_autocomplete(interaction: discord.Interaction, current: str
             continue
         choices.append(app_commands.Choice(name=choice_label(label), value=str(stack['id'])))
     return choices[:25]
+
+_target_wolf_name_autocomplete = make_member_wolf_autocomplete("target")
+_wolf_name_autocomplete = make_member_wolf_autocomplete("wolf")
 
 async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)
@@ -65,10 +69,10 @@ class Explore(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='playpen', description='toys, play, socialize, groom, den romp, or toy store.')
-    @app_commands.describe(action='toys, play, socialize, groom, playall, or toystore', mode='toystore: list, deposit, depositall, withdraw, or withdrawall', toy='toy stack (play / toystore deposit or withdraw)', wolf='packmate (socialize/groom)', own_wolf='your other wolf (socialize/groom)')
+    @app_commands.describe(action='toys, play, socialize, groom, playall, or toystore', mode='toystore: list, deposit, depositall, withdraw, or withdrawall', toy='toy stack (play / toystore deposit or withdraw)', wolf='packmate (socialize/groom)', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf (socialize/groom)')
     @app_commands.choices(action=[app_commands.Choice(name='view toys', value='toys'), app_commands.Choice(name='play with toy', value='play'), app_commands.Choice(name='socialize', value='socialize'), app_commands.Choice(name='groom packmate', value='groom'), app_commands.Choice(name='play with whole den (alpha)', value='playall'), app_commands.Choice(name='den toy store', value='toystore')], mode=[app_commands.Choice(name='list store', value='list'), app_commands.Choice(name='deposit toy', value='deposit'), app_commands.Choice(name='deposit all toys', value='depositall'), app_commands.Choice(name='withdraw toy', value='withdraw'), app_commands.Choice(name='withdraw all toys', value='withdrawall')])
-    @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete)
-    async def playpen(self, interaction: discord.Interaction, action: str, mode: str='list', toy: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None):
+    @app_commands.autocomplete(toy=_amusement_autocomplete, own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def playpen(self, interaction: discord.Interaction, action: str, mode: str='list', toy: str | None=None, wolf: discord.Member | None=None, wolf_name: str | None=None, own_wolf: str | None=None):
         if action == 'toys':
             await self._toys(interaction)
         elif action == 'play':
@@ -77,9 +81,9 @@ class Explore(commands.Cog):
                 return
             await self._play(interaction, toy)
         elif action == 'socialize':
-            await self._socialize(interaction, wolf, own_wolf)
+            await self._socialize(interaction, wolf, own_wolf, wolf_name=wolf_name)
         elif action == 'groom':
-            await self._groom(interaction, wolf, own_wolf)
+            await self._groom(interaction, wolf, own_wolf, wolf_name=wolf_name)
         elif action == 'playall':
             await self._playall(interaction)
         elif action == 'toystore':
@@ -173,7 +177,7 @@ class Explore(commands.Cog):
             embed.set_footer(text='/playpen action:socialize · /checklist')
         await interaction.response.send_message(embed=embed)
 
-    async def _socialize(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None):
+    async def _socialize(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None, *, wolf_name: str | None=None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
@@ -197,7 +201,10 @@ class Explore(commands.Cog):
             if wolf.bot or wolf.id == interaction.user.id:
                 await interaction.response.send_message(embed=howlbert_embed('Pick Another Wolf', 'Use another **player**, or your other wolf via `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            partner = db.get_user(wolf.id)
+            if wolf_name:
+                partner = db.find_user_wolf(wolf.id, wolf_name)
+            else:
+                partner = db.get_user(wolf.id)
             if not partner:
                 await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
                 return
@@ -241,7 +248,7 @@ class Explore(commands.Cog):
                 view = make_combat_view(combat_enc, self.bot)
                 await interaction.response.send_message(embed=embed, view=view)
                 return
-        result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day, cross_pack=cross_pack)
+        result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day, cross_pack=cross_pack, season = world["season"] if "season" in world.keys() else None)
         color = SUCCESS_COLOR if result['success'] else ERROR_COLOR
         embed = howlbert_embed('Socialize', result['body'], color=color)
         footer = '/bonds · once per sunrise · /checklist'
@@ -250,7 +257,7 @@ class Explore(commands.Cog):
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
-    async def _groom(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None):
+    async def _groom(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None, *, wolf_name: str | None=None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
@@ -274,7 +281,10 @@ class Explore(commands.Cog):
             if wolf.bot or wolf.id == interaction.user.id:
                 await interaction.response.send_message(embed=howlbert_embed('Pick Another Wolf', 'Use another **player**, or your other wolf via `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            partner = db.get_user(wolf.id)
+            if wolf_name:
+                partner = db.find_user_wolf(wolf.id, wolf_name)
+            else:
+                partner = db.get_user(wolf.id)
             if not partner:
                 await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
                 return
@@ -338,7 +348,8 @@ class Explore(commands.Cog):
             unity_line = '\nDen unity **+1**.'
         from engine.disease_contract import try_spread_from_close_contact
         spread_notes = []
-        for note in (try_spread_from_close_contact(user, partner), try_spread_from_close_contact(partner, user)):
+        _season = world.get('season') if hasattr(world, 'get') else (world['season'] if 'season' in world.keys() else None)
+        for note in (try_spread_from_close_contact(user, partner, season=_season), try_spread_from_close_contact(partner, user, season=_season)):
             if note:
                 spread_notes.append(note)
         spread_line = '\n' + '\n'.join(spread_notes) if spread_notes else ''
@@ -375,5 +386,132 @@ class Explore(commands.Cog):
         elif not ok:
             embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='disguise', description='roll in another pack\'s scent to pass on their territory undetected. risky.')
+    @app_commands.describe(target_pack='the Great Pack whose territory you want to move through undetected')
+    async def disguise(self, interaction: discord.Interaction, target_pack: str):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Register first.'), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            return
+        world = db.get_world(interaction.guild.id)
+        day = world['day_number']
+        from config import GREAT_PACKS
+        pack_key = target_pack.strip().lower()
+        pack_data = next(((k, v) for k, v in GREAT_PACKS.items() if k == pack_key or v['name'].lower() == pack_key), None)
+        if not pack_data:
+            choices_list = ', '.join(f"`{v['name']}`" for v in GREAT_PACKS.values())
+            await interaction.response.send_message(embed=howlbert_embed('Unknown Pack', f'No Great Pack matching **{target_pack}**. Options: {choices_list}', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        gp_key, gp_info = pack_data
+        if user.get('great_pack') == gp_key:
+            await interaction.response.send_message(embed=howlbert_embed('Already Yours', "You can't disguise yourself as your own den.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.dice import roll_d20
+        from engine.character import attr_modifier
+        import random
+        roll = roll_d20() + attr_modifier(int(user.get('attr_wis') or 1))
+        DC = 14
+        success = roll >= DC
+        if success:
+            db.update_user(interaction.user.id, scent_disguise_day=day, scent_disguise_pack=gp_key)
+            DISGUISE_FLAVOR = (
+                "you find a fresh border mark and press deep into it. the scent settles wrong on your fur — but it settles.",
+                "it takes longer than expected. rolling in old scat and pine needles, you rebuild your scent line, strand by strand.",
+                "your own scent retreats under the work. you smell of **{pack}** now. try not to meet anyone who knows you.",
+            )
+            body = random.choice(DISGUISE_FLAVOR).format(pack=gp_info['name'])
+            body += f"\n\nDisguise as **{gp_info['name']}** active until next sunrise. Cross-pack aggression checks pass as neutral while you hold the mark.\n\nRolled **{roll}** vs dc **{DC}**."
+            color = SUCCESS_COLOR
+        else:
+            db.adjust_wolf_standing(interaction.user.id, -2)
+            CAUGHT_FLAVOR = (
+                "a patrol wolf catches you mid-roll. you scramble away, but the witness saw everything. your standing suffers.",
+                "you misread the wind. a **{pack}** wolf was downwind, and now they know exactly what you were doing.",
+                "the mark you chose was fresher than it looked. you weren't alone. standing **−2** — word will spread.",
+            )
+            body = random.choice(CAUGHT_FLAVOR).format(pack=gp_info['name'])
+            body += f"\n\nFailed: rolled **{roll}** vs dc **{DC}**. Standing **−2**."
+            color = ERROR_COLOR
+        embed = howlbert_embed('Scent Disguise', body, color=color)
+        embed.set_footer(text='disguise lasts one sunrise · failing costs standing · /sniff')
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='gossip', description='plant a damaging rumor about another wolf. once per sunrise. backfires if traced.')
+    @app_commands.describe(target='the wolf whose reputation you want to undermine', own_wolf='your other wolf to whisper against', target_wolf_name="specific wolf from target's roster")
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf_name=_target_wolf_name_autocomplete)
+    async def gossip(self, interaction: discord.Interaction, target: discord.Member | None = None, own_wolf: str | None = None, target_wolf_name: str | None = None):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Register first.'), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            return
+        world = db.get_world(interaction.guild.id)
+        day = world['day_number']
+        if int(user.get('last_whisper_day') or 0) >= day:
+            await interaction.response.send_message(embed=howlbert_embed('Already Whispered', 'You have already worked the shadows this sunrise. Wait until tomorrow.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if target and own_wolf:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **target** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if own_wolf:
+            victim = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not victim:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if victim['id'] == user['id']:
+                await interaction.response.send_message(embed=howlbert_embed('Same Wolf', 'Switch active wolf with `/switchwolf`, or pick a different `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        elif target:
+            if target.id == interaction.user.id:
+                await interaction.response.send_message(embed=howlbert_embed('No Target', 'You cannot whisper against yourself.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            if target_wolf_name:
+                victim = db.find_user_wolf(target.id, target_wolf_name)
+            else:
+                victim = db.get_user(target.id)
+            if not victim:
+                await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
+                return
+        else:
+            await interaction.response.send_message(embed=howlbert_embed('No Target', 'Pick a **target** wolf or your own wolf via `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.dice import roll_d20
+        from engine.character import attr_modifier
+        db.update_user(interaction.user.id, last_whisper_day=day)
+        attacker_roll = roll_d20() + attr_modifier(int(user.get('attr_cha') or 1))
+        victim_standing = int(victim.get('standing') or 0)
+        dc = 10 + max(0, victim_standing // 3)
+        success = attacker_roll >= dc
+        import random
+        if success:
+            db.adjust_wolf_standing_by_id(victim['id'], -1)
+            db.adjust_bond_strength(user['id'], victim['id'], 'rivalry', 5, day=day)
+            WHISPER_FLAVOR = (
+                "the right word in the right ear; **{name}**'s reputation takes a quiet nick.",
+                "you don't need to shout. a well-placed pause does the same work.",
+                "the rumor finds its legs before **{name}** even knows it exists.",
+            )
+            body = random.choice(WHISPER_FLAVOR).format(name=victim['wolf_name'])
+            body += f"\n\n**{victim['wolf_name']}**: standing **−1**. rolled **{attacker_roll}** vs dc **{dc}**."
+            color = SUCCESS_COLOR
+        else:
+            db.adjust_wolf_standing(interaction.user.id, -1)
+            db.adjust_bond_strength(user['id'], victim['id'], 'rivalry', 8, day=day)
+            TRACED_FLAVOR = (
+                "the word got back. **{name}** knows exactly who started it — and so does everyone else.",
+                "your source wasn't as quiet as you thought. this one is going to sting.",
+                "traced. **{name}** heard it straight from the wolf who told you. your standing takes the hit.",
+            )
+            body = random.choice(TRACED_FLAVOR).format(name=victim['wolf_name'])
+            body += f"\n\nYour standing **−1** — caught in the act. rolled **{attacker_roll}** vs dc **{dc}**."
+            color = ERROR_COLOR
+        embed = howlbert_embed('Whisper Campaign', body, color=color)
+        embed.set_footer(text='once per sunrise · /gossip · standing game · /rivals')
+        await interaction.response.send_message(embed=embed)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Explore(bot))

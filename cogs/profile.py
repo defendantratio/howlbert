@@ -18,6 +18,9 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, trim_embed_fields, PlayerEmbed, choice_label
 from utils.names import validate_display_name
 from utils.permissions import is_howlbert_admin
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
+
+_member_wolf_autocomplete = make_member_wolf_autocomplete("member")
 
 class _EmbedPaginator(discord.ui.View):
 
@@ -420,11 +423,13 @@ class Profile(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='family', description="show a wolf's family tree / relationship web as a diagram.")
-    @app_commands.describe(member='whose family to show (defaults to you)', own_wolf='one of your wolves (defaults to your active wolf)')
-    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
-    async def family(self, interaction: discord.Interaction, member: discord.Member | None=None, own_wolf: str | None=None):
+    @app_commands.describe(member='whose family to show (defaults to you)', own_wolf='one of your wolves (defaults to your active wolf)', member_wolf="specific wolf from that player's roster")
+    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete, member_wolf=_member_wolf_autocomplete)
+    async def family(self, interaction: discord.Interaction, member: discord.Member | None=None, own_wolf: str | None=None, member_wolf: str | None=None):
         if own_wolf:
             wolf = db.find_user_wolf(interaction.user.id, own_wolf)
+        elif member and member_wolf:
+            wolf = db.find_user_wolf(member.id, member_wolf)
         elif member:
             wolf = db.get_user(member.id)
         else:
@@ -483,14 +488,17 @@ class Profile(commands.Cog):
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     @app_commands.command(name='profile', description="view a wolf's profile or character sheet.")
-    @app_commands.describe(member='the wolf to look up (defaults to you)', sheet='show lore sheet (appearance, backstory)', own_wolf='one of your other wolves (sheet only; defaults to active wolf)')
-    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
-    async def profile(self, interaction: discord.Interaction, member: discord.Member | None=None, sheet: bool=False, own_wolf: str | None=None):
+    @app_commands.describe(member='the wolf to look up (defaults to you)', sheet='show lore sheet (appearance, backstory)', own_wolf='one of your other wolves (sheet only; defaults to active wolf)', member_wolf="specific wolf from that player's roster")
+    @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete, member_wolf=_member_wolf_autocomplete)
+    async def profile(self, interaction: discord.Interaction, member: discord.Member | None=None, sheet: bool=False, own_wolf: str | None=None, member_wolf: str | None=None):
         if sheet:
-            await self._bio(interaction, member, own_wolf=own_wolf)
+            await self._bio(interaction, member, own_wolf=own_wolf, member_wolf=member_wolf)
             return
         target = member or interaction.user
-        user = db.get_user(target.id)
+        if member and member_wolf:
+            user = db.find_user_wolf(member.id, member_wolf)
+        else:
+            user = db.get_user(target.id)
         if not user:
             message = "You haven't registered yet. Use `/register` to create your wolf." if target == interaction.user else f"{target.display_name} hasn't registered a wolf yet."
             embed = howlbert_embed('No Profile Found', message, color=ERROR_COLOR)
@@ -548,7 +556,10 @@ class Profile(commands.Cog):
         if 'bonded_mate_id' in user.keys() and user['bonded_mate_id']:
             bonded = db.get_bonded_mate(user)
             if bonded:
-                embed.add_field(name='Bonded Mate', value=bonded['wolf_name'], inline=True)
+                from engine.bonds import has_romance_bond
+                is_fling = not has_romance_bond(user['id'], bonded['id'])
+                field_name = 'Fling' if is_fling else 'Bonded Mate'
+                embed.add_field(name=field_name, value=bonded['wolf_name'], inline=True)
         lineage = db.format_lineage_for_profile(user, viewer_discord_id=interaction.user.id)
         if lineage:
             embed.add_field(name='Family', value=lineage, inline=False)
@@ -661,7 +672,7 @@ class Profile(commands.Cog):
         view = _EmbedPaginator(pages=pages, owner_id=interaction.user.id)
         await interaction.response.send_message(embed=pages[0], view=view)
 
-    async def _bio(self, interaction: discord.Interaction, member: discord.Member | None=None, *, own_wolf: str | None=None):
+    async def _bio(self, interaction: discord.Interaction, member: discord.Member | None=None, *, own_wolf: str | None=None, member_wolf: str | None=None):
         if member and own_wolf:
             embed = howlbert_embed('Pick One', "Use **member** for another player's active wolf, or **own_wolf** for one of yours — not both.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -677,7 +688,10 @@ class Profile(commands.Cog):
             avatar = interaction.user.display_avatar.url
         else:
             target = member or interaction.user
-            user = db.get_user(target.id)
+            if member and member_wolf:
+                user = db.find_user_wolf(member.id, member_wolf)
+            else:
+                user = db.get_user(target.id)
             title_name = user['wolf_name'] if user else ''
             avatar = target.display_avatar.url
         if not user:

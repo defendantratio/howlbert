@@ -89,7 +89,7 @@ def format_thirst_line(user) -> str:
     return f"**{thirst}/{THIRST_MAX}**{note}"
 
 
-def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) -> tuple[bool, str]:
+def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, clean_water: bool = False) -> tuple[bool, str]:
     """Creek drink; once per hour (real time), unlimited over a long day."""
     from engine.vitals import living_wolf_block
 
@@ -136,11 +136,15 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None) 
         msg += f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"
     if plot_line:
         msg += f"\n_{plot_line}_"
-    from engine.disease_contract import try_silverrush_sewage_exposure
+    from engine.disease_contract import try_silverrush_sewage_exposure, try_mistmoor_swamp_exposure
 
     rot_note = try_silverrush_sewage_exposure(user)
     if rot_note:
         msg += f"\n_{rot_note}_"
+    if not clean_water:
+        swamp_note = try_mistmoor_swamp_exposure(user)
+        if swamp_note:
+            msg += f"\n_{swamp_note}_"
     if guild_id is not None:
         from engine.plot_blinking import try_plot_witness
 

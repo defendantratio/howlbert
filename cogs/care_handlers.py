@@ -34,7 +34,7 @@ async def prepare_herb_inventory(interaction: discord.Interaction, item_key: str
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Herb Preparation', msg, color=color))
 
-async def treat(interaction: discord.Interaction, herb: str, patient: discord.Member | None=None, own_wolf: str | None=None):
+async def treat(interaction: discord.Interaction, herb: str, patient: discord.Member | None=None, own_wolf: str | None=None, patient_wolf: str | None=None):
     if patient and own_wolf:
         embed = howlbert_embed('Pick One', 'Choose another **patient** or your **own_wolf** — not both.', color=ERROR_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -115,7 +115,13 @@ async def treat(interaction: discord.Interaction, herb: str, patient: discord.Me
         if not (is_full_medic(user) or has_any_role(user, 'medic_apprentice')):
             await interaction.response.send_message(embed=howlbert_embed('Medic Only', 'Only **Medics** and **Medic apprentices** may treat a **patient** from `/bones action:inventory` herbs.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        treat_patient = db.get_user(patient.id)
+        if patient_wolf:
+            treat_patient = db.find_user_wolf(patient.id, patient_wolf)
+            if not treat_patient:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        else:
+            treat_patient = db.get_user(patient.id)
         if not treat_patient:
             await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Patient is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
@@ -364,21 +370,37 @@ async def sacred_visit(interaction: discord.Interaction):
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Sacred Visit', body, color=color))
 
-async def spirit_ritual(interaction: discord.Interaction, patient: discord.Member | None, ritual_herb: str | None):
+async def spirit_ritual(interaction: discord.Interaction, patient: discord.Member | None, ritual_herb: str | None, own_patient: str | None = None, patient_wolf: str | None = None):
     medic = db.get_user(interaction.user.id)
     if not medic or not interaction.guild:
         await interaction.response.send_message(player_message('Use `/register` in a server.'), ephemeral=reply_ephemeral())
         return
-    if not patient:
-        await interaction.response.send_message(player_message('Pick a **patient** for the cleansing ritual.'), ephemeral=reply_ephemeral())
+    if patient and own_patient:
+        await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        return
+    if not patient and not own_patient:
+        await interaction.response.send_message(player_message('Pick a **patient** or **own_patient** for the cleansing ritual.'), ephemeral=reply_ephemeral())
         return
     if not ritual_herb:
         await interaction.response.send_message(player_message('Pick **douglas_sagewort**, **lavender**, or **mountain_ash** (rowan).'), ephemeral=reply_ephemeral())
         return
-    target = db.get_user(patient.id)
-    if not target:
-        await interaction.response.send_message(player_message('Patient is not on Howlbert.'), ephemeral=reply_ephemeral())
-        return
+    if own_patient:
+        rows = db.list_user_wolves(interaction.user.id)
+        target = next((w for w in rows if w['wolf_name'].lower() == own_patient.strip().lower()), None)
+        if not target:
+            await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_patient}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+    else:
+        if patient_wolf:
+            target = db.find_user_wolf(patient.id, patient_wolf)
+            if not target:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        else:
+            target = db.get_user(patient.id)
+        if not target:
+            await interaction.response.send_message(player_message('Patient is not on Howlbert.'), ephemeral=reply_ephemeral())
+            return
     world = db.get_world(interaction.guild.id)
     from engine.medical_care import run_spirit_ritual
     ok, body = run_spirit_ritual(medic, target, ritual_herb, day=world['day_number'], guild_id=interaction.guild.id if interaction.guild else None)
@@ -388,36 +410,71 @@ async def spirit_ritual(interaction: discord.Interaction, patient: discord.Membe
         gid = interaction.guild.id if interaction.guild else None
         db.increment_quest_progress(interaction.user.id, 'treat', guild_id=gid)
 
-async def naming_ceremony(interaction: discord.Interaction, patient: discord.Member | None):
+async def naming_ceremony(interaction: discord.Interaction, patient: discord.Member | None, own_patient: str | None = None, patient_wolf: str | None = None):
     medic = db.get_user(interaction.user.id)
     if not medic or not interaction.guild:
         await interaction.response.send_message(player_message('Use `/register` in a server.'), ephemeral=reply_ephemeral())
         return
-    if not patient:
-        await interaction.response.send_message(player_message('Pick the **pup** (`patient`) for the naming rite.'), ephemeral=reply_ephemeral())
+    if patient and own_patient:
+        await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
         return
-    pup = db.get_user(patient.id)
-    if not pup:
-        await interaction.response.send_message(player_message('That wolf is not on Howlbert.'), ephemeral=reply_ephemeral())
+    if not patient and not own_patient:
+        await interaction.response.send_message(player_message('Pick the **pup** (`patient` or `own_patient`) for the naming rite.'), ephemeral=reply_ephemeral())
         return
+    if own_patient:
+        rows = db.list_user_wolves(interaction.user.id)
+        pup = next((w for w in rows if w['wolf_name'].lower() == own_patient.strip().lower()), None)
+        if not pup:
+            await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_patient}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+    else:
+        if patient_wolf:
+            pup = db.find_user_wolf(patient.id, patient_wolf)
+            if not pup:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(patient.id, patient_wolf, player_label=patient.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        else:
+            pup = db.get_user(patient.id)
+        if not pup:
+            await interaction.response.send_message(player_message('That wolf is not on Howlbert.'), ephemeral=reply_ephemeral())
+            return
     world = db.get_world(interaction.guild.id)
     from engine.medical_care import run_naming_ceremony
     ok, body = run_naming_ceremony(medic, pup, day=world['day_number'])
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Naming Ceremony', body, color=color))
 
-async def lay_to_rest(interaction: discord.Interaction, deceased: discord.Member | None, lay_herb: str | None):
+async def lay_to_rest(interaction: discord.Interaction, deceased: discord.Member | None, lay_herb: str | None, own_deceased: str | None = None, deceased_wolf: str | None = None):
     medic = db.get_user(interaction.user.id)
     if not medic:
         await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
         return
-    if not deceased or not lay_herb:
-        await interaction.response.send_message(player_message('Pick **deceased** and **lay_herb** (rosemary, lavender, mint).'), ephemeral=reply_ephemeral())
+    if deceased and own_deceased:
+        await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `deceased` or `own_deceased` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
         return
-    target = db.get_user(deceased.id)
-    if not target:
-        await interaction.response.send_message(player_message('That wolf is not on Howlbert.'), ephemeral=reply_ephemeral())
+    if not deceased and not own_deceased:
+        await interaction.response.send_message(player_message('Pick **deceased** (or `own_deceased`) and **lay_herb** (rosemary, lavender, mint).'), ephemeral=reply_ephemeral())
         return
+    if not lay_herb:
+        await interaction.response.send_message(player_message('Pick a **lay_herb** (rosemary, lavender, mint).'), ephemeral=reply_ephemeral())
+        return
+    if own_deceased:
+        rows = db.list_user_wolves(interaction.user.id)
+        target = next((w for w in rows if w['wolf_name'].lower() == own_deceased.strip().lower()), None)
+        if not target:
+            await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_deceased}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+    else:
+        if deceased_wolf:
+            target = db.find_user_wolf(deceased.id, deceased_wolf)
+            if not target:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(deceased.id, deceased_wolf, player_label=deceased.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        else:
+            target = db.get_user(deceased.id)
+        if not target:
+            await interaction.response.send_message(player_message('That wolf is not on Howlbert.'), ephemeral=reply_ephemeral())
+            return
     from engine.medical_care import run_lay_to_rest
     world = db.get_world(interaction.guild.id) if interaction.guild else None
     day = world['day_number'] if world else 0
@@ -425,7 +482,7 @@ async def lay_to_rest(interaction: discord.Interaction, deceased: discord.Member
     color = SUCCESS_COLOR if ok else ERROR_COLOR
     await interaction.response.send_message(embed=howlbert_embed('Lay to Rest', body, color=color))
 
-async def quarantine_command(interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False):
+async def quarantine_command(interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False, wolf_name: str | None=None):
     from engine.diseases import disease_display
     from engine.quarantine import can_manage_quarantine, is_quarantined
     actor = db.get_user(interaction.user.id)
@@ -470,7 +527,14 @@ async def quarantine_command(interaction: discord.Interaction, wolf: discord.Mem
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
     else:
-        target = db.get_user(wolf.id)
+        if wolf_name:
+            target = db.find_user_wolf(wolf.id, wolf_name)
+            if not target:
+                embed = howlbert_embed('Unknown Wolf', db.explain_wolf_not_found(wolf.id, wolf_name, player_label=wolf.display_name), color=ERROR_COLOR)
+                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                return
+        else:
+            target = db.get_user(wolf.id)
         if not target:
             embed = howlbert_embed('Not Registered', "That wolf isn't registered.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

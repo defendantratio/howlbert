@@ -299,9 +299,6 @@ class Proxy(commands.Cog):
             ic_text = f'{reply_line}\n{ic_text}' if ic_text else reply_line
         allowed = discord.AllowedMentions(everyone=False, users=True, roles=False)
         footer_bits: list[str] = []
-        loc = wolf['ic_location'] if 'ic_location' in wolf.keys() else None
-        if loc and str(loc).strip():
-            footer_bits.append(f'📍 {str(loc).strip()}')
         if ooc_text:
             ooc_short = ooc_text if len(ooc_text) <= 180 else ooc_text[:177] + '…'
             footer_bits.append(f'OOC: {ooc_short}')

@@ -13,6 +13,7 @@ from config import (
     SOCIALIZE_STANDING_GOOD,
     SOCIALIZE_STANDING_SCRAP,
     SOCIALIZE_UNITY_AWKWARD,
+    SOCIALIZE_UNITY_GOOD,
     SOCIALIZE_UNITY_SCRAP,
     SOCIALIZE_UNITY_WARM,
 )
@@ -143,7 +144,7 @@ def _expulsion_from_standing(kick: str, pack_id: int | None) -> str:
     return f"\n\n{note}" if note else ""
 
 
-def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool = False) -> dict:
+def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool = False, season: str | None = None) -> dict:
     """
     apply socialize effects. caller must set last_socialize_day first or after.
     cross_pack=True (secret/cross-den meetings) skips den unity changes; the
@@ -216,6 +217,9 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
         standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
+        if pack_id and not cross_pack:
+            db.adjust_pack_unity(pack_id, SOCIALIZE_UNITY_GOOD)
+            unity_note = f"den unity **+{SOCIALIZE_UNITY_GOOD}**."
 
     elif outcome == "awkward":
         lines.append(_pick(bond_pools.get("awkward", AWKWARD_FLAVOR), name))
@@ -259,8 +263,8 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
 
     from engine.disease_contract import try_spread_from_close_contact
 
-    spread_you = try_spread_from_close_contact(user, partner)
-    spread_them = try_spread_from_close_contact(partner, user)
+    spread_you = try_spread_from_close_contact(user, partner, season=season)
+    spread_them = try_spread_from_close_contact(partner, user, season=season)
     if spread_you:
         lines.append(spread_you)
     if spread_them:

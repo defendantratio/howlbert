@@ -112,7 +112,9 @@ def read_marks_for_sniff(pack_key: str, *, guild_id: int, day: int, lookback_day
         else:
             age_note = f"{age} sunrises ago"
         marker_pack = GREAT_PACKS.get(row["pack_key"], {}).get("name", row["pack_key"])
-        lines.append(f"**{marker_pack}** on **{terr}** ({age_note})")
+        marker_name = row["marker_wolf_name"] if "marker_wolf_name" in row.keys() and row["marker_wolf_name"] else None
+        who = f"**{marker_name}** of **{marker_pack}**" if marker_name else f"**{marker_pack}**"
+        lines.append(f"{who} on **{terr}** ({age_note})")
     return lines
 
 

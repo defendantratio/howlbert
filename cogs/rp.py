@@ -10,10 +10,31 @@ from engine.journal_backfill import backfill_wolf_journal
 from engine.wolf_journal import format_journal_embed_chunks
 from utils.embeds import EMBED_COLOR, ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, PlayerEmbed, choice_label
 from utils.replies import reply_ephemeral
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 logger = logging.getLogger('howlbert')
 _MAX_SAY = 500
 _MAX_WHISPER = 1000
 _MAX_LOCATION = 120
+
+_member_wolf_autocomplete = make_member_wolf_autocomplete("member")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
+
+def _resolve_own_wolf(discord_id: int, name: str):
+    rows = db.list_user_wolves(discord_id)
+    return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
 def _active_wolf(interaction: discord.Interaction):
     return db.get_user(interaction.user.id)
@@ -157,28 +178,52 @@ class Roleplay(commands.Cog):
         await interaction.response.send_message(embed=howlbert_embed('Location Cleared', f"**{wolf['wolf_name']}**'s whereabouts are unstated.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
     @location.command(name='show', description="show your or another wolf's ic location.")
-    @app_commands.describe(member='whose wolf to check (defaults to you)')
-    async def location_show(self, interaction: discord.Interaction, member: discord.Member | None=None):
-        target = member or interaction.user
-        wolf = db.get_user(target.id)
-        if not wolf:
-            msg = "You haven't registered yet." if target == interaction.user else f'{target.display_name} has no wolf.'
-            await interaction.response.send_message(embed=howlbert_embed('No Wolf', msg, color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
+    @app_commands.describe(member='whose wolf to check (defaults to you)', own_wolf='your other wolf to check (multi-wolf players)', member_wolf="specific wolf from that player's roster")
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, member_wolf=_member_wolf_autocomplete)
+    async def location_show(self, interaction: discord.Interaction, member: discord.Member | None = None, own_wolf: str | None = None, member_wolf: str | None = None):
+        if own_wolf:
+            wolf = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not wolf:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            is_own = True
+        else:
+            target = member or interaction.user
+            if member and member_wolf:
+                wolf = db.find_user_wolf(member.id, member_wolf)
+            else:
+                wolf = db.get_user(target.id)
+            if not wolf:
+                msg = "You haven't registered yet." if target == interaction.user else f'{target.display_name} has no wolf.'
+                await interaction.response.send_message(embed=howlbert_embed('No Wolf', msg, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            is_own = (target == interaction.user)
         loc = wolf['ic_location'] if 'ic_location' in wolf.keys() else None
         if not loc:
             await interaction.response.send_message(embed=howlbert_embed('No Location', f"**{wolf['wolf_name']}** hasn't set a location (`/location set`).", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        await interaction.response.send_message(embed=howlbert_embed(f"📍 {wolf['wolf_name']}", str(loc), color=SUCCESS_COLOR), ephemeral=reply_ephemeral() if target != interaction.user else False)
+        await interaction.response.send_message(embed=howlbert_embed(f"📍 {wolf['wolf_name']}", str(loc), color=SUCCESS_COLOR), ephemeral=reply_ephemeral() if not is_own else False)
 
     @app_commands.command(name='journal', description="read your wolf's automatic life journal (major events only).")
-    @app_commands.describe(member="another player's active wolf (optional)")
-    async def journal(self, interaction: discord.Interaction, member: discord.Member | None=None):
-        target = member or interaction.user
-        wolf = db.get_user(target.id)
-        if not wolf:
-            await interaction.response.send_message(embed=howlbert_embed('No Wolf', 'No registered wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
+    @app_commands.describe(member="another player's active wolf (optional)", own_wolf='your other wolf to read (multi-wolf players)', member_wolf="specific wolf from that player's roster")
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, member_wolf=_member_wolf_autocomplete)
+    async def journal(self, interaction: discord.Interaction, member: discord.Member | None = None, own_wolf: str | None = None, member_wolf: str | None = None):
+        if own_wolf:
+            wolf = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not wolf:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            is_own = True
+        else:
+            target = member or interaction.user
+            if member and member_wolf:
+                wolf = db.find_user_wolf(member.id, member_wolf)
+            else:
+                wolf = db.get_user(target.id)
+            if not wolf:
+                await interaction.response.send_message(embed=howlbert_embed('No Wolf', 'No registered wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            is_own = (target == interaction.user)
         backfill_wolf_journal(wolf['id'])
         chunks = format_journal_embed_chunks(wolf['id'], limit=200)
         embeds: list[discord.Embed] = []
@@ -190,7 +235,7 @@ class Roleplay(commands.Cog):
             embeds[-1].set_footer(text='showing first 10 pages · older entries omitted')
         elif embeds:
             embeds[-1].set_footer(text='recorded automatically · backfilled from lore and gameplay')
-        await interaction.response.send_message(embeds=embeds, ephemeral=reply_ephemeral() if target != interaction.user else False)
+        await interaction.response.send_message(embeds=embeds, ephemeral=reply_ephemeral() if not is_own else False)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Roleplay(bot))

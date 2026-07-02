@@ -33,6 +33,12 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
         return False, "alphas, advisors, and pups don't contest pack rank this way."
     if not is_eligible_for_rank_dispute(defender):
         return False, f"**{defender['wolf_name']}** is outside the pecking order (alpha, advisor, or pup)."
+    if int(defender["pack_rank"]) >= RANK_DISPUTE_MAX:
+        return False, (
+            f"**{defender['wolf_name']}** holds the omega position — the bottom of the line. "
+            f"the pack doesn't kick down; they've yielded all there is to yield. "
+            f"challenge someone above you instead."
+        )
     if int(challenger["last_rank_dispute_day"]) >= day:
         return False, "you've already pressed your place in line this sunrise."
 

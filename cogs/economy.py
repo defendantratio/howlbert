@@ -12,10 +12,13 @@ from engine.shop_items import RABBIT_PELT_GIFT_BONES, RABBIT_PELT_STANDING, USAB
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 from engine.trade import build_trade_embed
 from utils.trade_views import TRADE_DYNAMIC_ITEMS, make_trade_view
 from utils.views import build_shop_embed, make_hunt_followup_view, make_shop_view
 from utils.combat_views import make_combat_view
+
+_wolf_name_autocomplete = make_member_wolf_autocomplete("wolf")
 
 async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     active = db.get_user(interaction.user.id)
@@ -47,7 +50,7 @@ def _resolve_own_wolf(discord_id: int, name: str):
     rows = db.list_user_wolves(discord_id)
     return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
-def _resolve_gift_recipient(interaction: discord.Interaction, user, wolf: discord.Member | None, own_wolf: str | None) -> tuple[object | None, str | None]:
+def _resolve_gift_recipient(interaction: discord.Interaction, user, wolf: discord.Member | None, own_wolf: str | None, wolf_name: str | None = None) -> tuple[object | None, str | None]:
     if wolf and own_wolf:
         return (None, 'Pick either another **player** or `own_wolf`; not both.')
     if own_wolf:
@@ -60,11 +63,65 @@ def _resolve_gift_recipient(interaction: discord.Interaction, user, wolf: discor
     if wolf:
         if wolf.bot or wolf.id == interaction.user.id:
             return (None, 'Use another **player**, or your other wolf via `own_wolf`.')
-        recipient = db.get_user(wolf.id)
+        if wolf_name:
+            recipient = db.find_user_wolf(wolf.id, wolf_name)
+        else:
+            recipient = db.get_user(wolf.id)
         if not recipient:
             return (None, f"{wolf.display_name} hasn't registered a wolf yet.")
         return (recipient, None)
     return (None, 'Pick another **player** or one of your wolves with `own_wolf`.')
+
+
+class ReincarnationModal(discord.ui.Modal, title='Reincarnation'):
+    new_name: discord.ui.TextInput = discord.ui.TextInput(
+        label='New name',
+        placeholder='A new identity for the same soul…',
+        min_length=1,
+        max_length=30,
+    )
+
+    def __init__(self, shop_item_id: int, old_name: str):
+        super().__init__()
+        self._shop_item_id = shop_item_id
+        self._old_name = old_name
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        name = self.new_name.value.strip()
+        err = db.reincarnate_as_new_life(interaction.user.id, name)
+        if err == 'not_dead':
+            embed = howlbert_embed('Still Breathing', '**Reincarnation** only works when your active wolf is **dead**.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if err == 'same_name':
+            embed = howlbert_embed('Same Name', 'Pick a **new** name; reincarnation is a new identity.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if err == 'name_taken':
+            embed = howlbert_embed('Name Taken', 'Another wolf already uses that name. Choose a different one.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if err and err.startswith('name:'):
+            embed = howlbert_embed('Invalid Name', err[5:], color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if err:
+            embed = howlbert_embed("Can't Reincarnate", str(err), color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        db.consume_item(interaction.user.id, self._shop_item_id)
+        reborn = db.get_user(interaction.user.id)
+        from config import REINCARNATION_START_AGE_MOONS
+        from rpg_rules import ROLE_LABELS
+        role_label = ROLE_LABELS.get(reborn['wolf_role'], reborn['wolf_role'])
+        embed = howlbert_embed('Reincarnated', color=SUCCESS_COLOR)
+        embed.description = (
+            f"The mist takes **{self._old_name}**; **{reborn['wolf_name']}** wakes in a younger body.\n\n"
+            f"**{REINCARNATION_START_AGE_MOONS} moons** · **{role_label}** · stats & standing kept\n"
+            f"Food hoard & toys cleared · `/food` `/playpen action:toys`"
+        )
+        await interaction.response.send_message(embed=embed)
+
 
 class Economy(commands.Cog):
     trade = app_commands.Group(name='trade', description='offer items and bones to another wolf (they must accept).')
@@ -89,11 +146,6 @@ class Economy(commands.Cog):
         return None
 
     async def _inventory_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        action = interaction.namespace.action if hasattr(interaction.namespace, 'action') else None
-        if action == 'raccoonsell':
-            return await self._raccoon_prey_autocomplete(interaction, current)
-        if action == 'raccoonoffer':
-            return await self._raccoon_acorn_autocomplete(interaction, current)
         items = db.get_inventory(interaction.user.id)
         choices = []
         for row in items:
@@ -256,10 +308,10 @@ class Economy(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='bones', description='balance, daily, hunt, shop, inventory, work, give, raccoon trades, and more.')
-    @app_commands.describe(action='see dropdown for the full action list', amount='bones amount (give)', wolf='recipient player (give / giveitem)', own_wolf='your other wolf (give / giveitem)', item='item key (giveitem/buy/sell/use); carcass (raccoonsell); acorn stack (raccoonoffer)', quantity='item quantity', new_name='rename item (use)', collaborate='call a pack hunt (hunt only; same great pack joins via buttons)', territory='territory to hunt in (hunt only; boosts home turf/ally bonuses on that ground)', scene='optional rp scene note (work only)', staff='flag for staff to weave your rp scene (work only)', bundle='toy bundle to buy (raccoonbuy only)')
-    @app_commands.choices(action=[app_commands.Choice(name='balance', value='balance'), app_commands.Choice(name='daily stipend', value='daily'), app_commands.Choice(name='hunt for bones', value='hunt'), app_commands.Choice(name='give bones', value='give'), app_commands.Choice(name='give item', value='giveitem'), app_commands.Choice(name='leaderboard', value='leaderboard'), app_commands.Choice(name='work', value='work'), app_commands.Choice(name='shop', value='shop'), app_commands.Choice(name='buy item', value='buy'), app_commands.Choice(name='sell item', value='sell'), app_commands.Choice(name='inventory', value='inventory'), app_commands.Choice(name='use item', value='use'), app_commands.Choice(name='raccoon: sell small carcass', value='raccoonsell'), app_commands.Choice(name='raccoon: buy toy bundle', value='raccoonbuy'), app_commands.Choice(name='raccoon: offer acorn', value='raccoonoffer')], bundle=[app_commands.Choice(name='scrap bundle; bone + feather', value='scrap'), app_commands.Choice(name='plume bundle; feathers + shell', value='plume'), app_commands.Choice(name='gnaw bundle; bone + stick + acorn', value='gnaw')])
-    @app_commands.autocomplete(item=_inventory_item_autocomplete, own_wolf=_other_wolf_autocomplete, territory=_hunt_territory_autocomplete)
-    async def bones(self, interaction: discord.Interaction, action: str, amount: int | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, item: str | None=None, quantity: int=1, new_name: str | None=None, collaborate: bool=False, territory: str | None=None, scene: str | None=None, staff: bool=False, bundle: str | None=None):
+    @app_commands.describe(action='see dropdown for the full action list', amount='bones amount (give)', wolf='recipient player (give / giveitem / use)', wolf_name="specific wolf from that player's roster (give/giveitem)", own_wolf='your other wolf (give / giveitem / use)', item='item key (giveitem/buy/sell/use)', quantity='item quantity', collaborate='call a pack hunt (hunt only; same great pack joins via buttons)', territory='territory to hunt in (hunt only; boosts home turf/ally bonuses on that ground)', scene='optional rp scene note (work only)', staff='flag for staff to weave your rp scene (work only)')
+    @app_commands.choices(action=[app_commands.Choice(name='balance', value='balance'), app_commands.Choice(name='daily stipend', value='daily'), app_commands.Choice(name='hunt for bones', value='hunt'), app_commands.Choice(name='pray before hunt', value='pray'), app_commands.Choice(name='give bones', value='give'), app_commands.Choice(name='give item', value='giveitem'), app_commands.Choice(name='leaderboard', value='leaderboard'), app_commands.Choice(name='work', value='work'), app_commands.Choice(name='shop', value='shop'), app_commands.Choice(name='buy item', value='buy'), app_commands.Choice(name='sell item', value='sell'), app_commands.Choice(name='inventory', value='inventory'), app_commands.Choice(name='use item', value='use')])
+    @app_commands.autocomplete(item=_inventory_item_autocomplete, own_wolf=_other_wolf_autocomplete, territory=_hunt_territory_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def bones(self, interaction: discord.Interaction, action: str, amount: int | None=None, wolf: discord.Member | None=None, wolf_name: str | None=None, own_wolf: str | None=None, item: str | None=None, quantity: int=1, collaborate: bool=False, territory: str | None=None, scene: str | None=None, staff: bool=False):
         if action == 'balance':
             await self._balance(interaction)
         elif action == 'daily':
@@ -270,16 +322,18 @@ class Economy(commands.Cog):
                 await post_collab_hunt_call(interaction, self.bot)
             else:
                 await self._hunt(interaction, territory=territory)
+        elif action == 'pray':
+            await self._pray(interaction)
         elif action == 'give':
             if amount is None:
                 await interaction.response.send_message(player_message('Provide `amount`.'), ephemeral=reply_ephemeral())
                 return
-            await self._give(interaction, amount, wolf, own_wolf)
+            await self._give(interaction, amount, wolf, own_wolf, wolf_name=wolf_name)
         elif action == 'giveitem':
             if not item:
                 await interaction.response.send_message(player_message('Provide `item`.'), ephemeral=reply_ephemeral())
                 return
-            await self._giveitem(interaction, item, wolf, own_wolf, quantity)
+            await self._giveitem(interaction, item, wolf, own_wolf, quantity, wolf_name=wolf_name)
         elif action == 'leaderboard':
             await self._leaderboard(interaction)
         elif action == 'work':
@@ -302,13 +356,7 @@ class Economy(commands.Cog):
             if not item:
                 await interaction.response.send_message(player_message('Provide `item`.'), ephemeral=reply_ephemeral())
                 return
-            await self._use(interaction, item, wolf, new_name)
-        elif action == 'raccoonsell':
-            await self._raccoonsell(interaction, item)
-        elif action == 'raccoonbuy':
-            await self._raccoonbuy(interaction, bundle)
-        elif action == 'raccoonoffer':
-            await self._raccoonoffer(interaction, item)
+            await self._use(interaction, item, wolf, own_wolf)
 
     async def _balance(self, interaction: discord.Interaction):
         user = await self._require_registered(interaction)
@@ -349,11 +397,23 @@ class Economy(commands.Cog):
         else:
             await interaction.followup.send(embed=embed)
 
-    async def _give(self, interaction: discord.Interaction, amount: int, wolf: discord.Member | None=None, own_wolf: str | None=None):
+    async def _pray(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            await interaction.response.send_message(embed=howlbert_embed('Server Only', 'Pray in a server channel.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
         user = await self._require_registered(interaction)
         if not user:
             return
-        recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf)
+        world = db.get_world(interaction.guild.id)
+        from engine.hunt_prayer import try_hunt_prayer
+        embed = try_hunt_prayer(interaction.user.id, user, world['day_number'])
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
+    async def _give(self, interaction: discord.Interaction, amount: int, wolf: discord.Member | None=None, own_wolf: str | None=None, *, wolf_name: str | None=None):
+        user = await self._require_registered(interaction)
+        if not user:
+            return
+        recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf, wolf_name)
         if err:
             embed = howlbert_embed('Invalid Target', err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -376,11 +436,11 @@ class Economy(commands.Cog):
         embed.set_footer(text='/bones action:balance · /trade offer')
         await interaction.response.send_message(embed=embed)
 
-    async def _giveitem(self, interaction: discord.Interaction, item: str, wolf: discord.Member | None=None, own_wolf: str | None=None, quantity: int=1):
+    async def _giveitem(self, interaction: discord.Interaction, item: str, wolf: discord.Member | None=None, own_wolf: str | None=None, quantity: int=1, *, wolf_name: str | None=None):
         user = await self._require_registered(interaction)
         if not user:
             return
-        recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf)
+        recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf, wolf_name)
         if err:
             embed = howlbert_embed('Invalid Target', err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -409,9 +469,9 @@ class Economy(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @trade.command(name='offer', description='propose a trade; items and/or bones.')
-    @app_commands.describe(wolf='wolf to trade with', offer_item='item you give (key from `/bones action:inventory`)', offer_quantity='how many you give (default 1)', offer_bones='bones you give (default 0)', for_item='item you want from them (optional)', for_quantity='how many you want (default 1)', for_bones='bones you want from them (default 0)')
-    @app_commands.autocomplete(offer_item=_inventory_item_autocomplete, for_item=_all_item_autocomplete)
-    async def trade_offer(self, interaction: discord.Interaction, wolf: discord.Member, offer_item: str | None=None, offer_quantity: int=1, offer_bones: int=0, for_item: str | None=None, for_quantity: int=1, for_bones: int=0):
+    @app_commands.describe(wolf='wolf to trade with', wolf_name="specific wolf from that player's roster", offer_item='item you give (key from `/bones action:inventory`)', offer_quantity='how many you give (default 1)', offer_bones='bones you give (default 0)', for_item='item you want from them (optional)', for_quantity='how many you want (default 1)', for_bones='bones you want from them (default 0)')
+    @app_commands.autocomplete(offer_item=_inventory_item_autocomplete, for_item=_all_item_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def trade_offer(self, interaction: discord.Interaction, wolf: discord.Member, wolf_name: str | None=None, offer_item: str | None=None, offer_quantity: int=1, offer_bones: int=0, for_item: str | None=None, for_quantity: int=1, for_bones: int=0):
         user = await self._require_registered(interaction)
         if not user:
             return
@@ -419,7 +479,10 @@ class Economy(commands.Cog):
             embed = howlbert_embed('Invalid Target', 'Choose another wolf.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        target = db.get_user(wolf.id)
+        if wolf_name:
+            target = db.find_user_wolf(wolf.id, wolf_name)
+        else:
+            target = db.get_user(wolf.id)
         if not target:
             embed = howlbert_embed('Not Registered', f"{wolf.display_name} hasn't registered a wolf yet.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -476,8 +539,9 @@ class Economy(commands.Cog):
         db.set_pending_trade_message_id(trade_id, msg.id)
 
     @trade.command(name='duplicates', description='instantly give all duplicate hoard items to another wolf (once per sunrise).')
-    @app_commands.describe(wolf='wolf to receive extras (keeps one of each type for you)')
-    async def trade_duplicates(self, interaction: discord.Interaction, wolf: discord.Member):
+    @app_commands.describe(wolf='wolf to receive extras (keeps one of each type for you)', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf to receive extras')
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
+    async def trade_duplicates(self, interaction: discord.Interaction, wolf: discord.Member | None = None, wolf_name: str | None = None, own_wolf: str | None = None):
         user = await self._require_registered(interaction)
         if not user:
             return
@@ -485,14 +549,9 @@ class Economy(commands.Cog):
         if not guild_id:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        if wolf.bot or wolf.id == interaction.user.id:
-            embed = howlbert_embed('Invalid Target', 'Choose another wolf.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        recipient = db.get_user(wolf.id)
-        if not recipient:
-            embed = howlbert_embed('Not Registered', f"{wolf.display_name} hasn't registered a wolf yet.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+        recipient, err = _resolve_gift_recipient(interaction, user, wolf, own_wolf, wolf_name)
+        if err:
+            await interaction.response.send_message(embed=howlbert_embed('Invalid Target', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         world = db.get_world(guild_id)
         from engine.duplicate_trade import trade_duplicates_between_wolves
@@ -680,7 +739,7 @@ class Economy(commands.Cog):
             choices.append(app_commands.Choice(name=choice_label(f"{row['name']} ({row['key']})"), value=row['key']))
         return choices[:25]
 
-    async def _use(self, interaction: discord.Interaction, item: str, recipient: discord.Member | None=None, new_name: str | None=None):
+    async def _use(self, interaction: discord.Interaction, item: str, recipient: discord.Member | None=None, own_recipient: str | None=None):
         user = await self._require_registered(interaction)
         if not user:
             return
@@ -743,17 +802,31 @@ class Economy(commands.Cog):
             await interaction.response.send_message(embed=embed)
             return
         if key == 'rabbit_pelt':
-            if not recipient or recipient.bot or recipient.id == interaction.user.id:
-                embed = howlbert_embed('Need a Packmate', 'Use `/bones action:use item:rabbit_pelt wolf:@player` to trade the pelt.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            if recipient and own_recipient:
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `wolf` or `own_wolf` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            target = db.get_user(recipient.id)
-            if not target:
-                embed = howlbert_embed('Not Registered', f"{recipient.display_name} hasn't registered a wolf yet.", color=ERROR_COLOR)
+            if own_recipient:
+                target_rows = db.list_user_wolves(interaction.user.id)
+                active = user
+                target = next((w for w in target_rows if w['wolf_name'].lower() == own_recipient.strip().lower() and w['id'] != active['id']), None)
+                if not target:
+                    embed = howlbert_embed('Unknown Wolf', f'No wolf named **{own_recipient}** on your account.', color=ERROR_COLOR)
+                    await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                    return
+                pelt_discord_id = target['discord_id']
+            elif recipient and not (recipient.bot or recipient.id == interaction.user.id):
+                target = db.get_user(recipient.id)
+                if not target:
+                    embed = howlbert_embed('Not Registered', f"{recipient.display_name} hasn't registered a wolf yet.", color=ERROR_COLOR)
+                    await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+                    return
+                pelt_discord_id = recipient.id
+            else:
+                embed = howlbert_embed('Need a Packmate', 'Use `/bones action:use item:rabbit_pelt wolf:@player` or `own_wolf:` to trade the pelt.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             db.consume_item(interaction.user.id, shop_item['id'])
-            db.add_bones(recipient.id, RABBIT_PELT_GIFT_BONES)
+            db.add_bones(pelt_discord_id, RABBIT_PELT_GIFT_BONES)
             db.adjust_wolf_standing(interaction.user.id, RABBIT_PELT_STANDING)
             embed = howlbert_embed('Pelt Traded', color=SUCCESS_COLOR)
             embed.add_field(name='To', value=target['wolf_name'], inline=True)
@@ -788,40 +861,7 @@ class Economy(commands.Cog):
                 embed = howlbert_embed('Still Breathing', '**Reincarnation** only works when your active wolf is **dead**.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
-            if not new_name or not new_name.strip():
-                embed = howlbert_embed('Need a New Name', 'Use `/bones action:use item:reincarnation new_name:<name>`; a new identity for the same soul.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            old_name = user['wolf_name']
-            err = db.reincarnate_as_new_life(interaction.user.id, new_name)
-            if err == 'not_dead':
-                embed = howlbert_embed('Still Breathing', '**Reincarnation** only works when your active wolf is **dead**.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            if err == 'same_name':
-                embed = howlbert_embed('Same Name', 'Pick a **new** name; reincarnation is a new identity.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            if err == 'name_taken':
-                embed = howlbert_embed('Name Taken', 'Another wolf already uses that name. Choose a different one.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            if err and err.startswith('name:'):
-                embed = howlbert_embed('Invalid Name', err[5:], color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            if err:
-                embed = howlbert_embed("Can't Reincarnate", str(err), color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            db.consume_item(interaction.user.id, shop_item['id'])
-            reborn = db.get_user(interaction.user.id)
-            from config import REINCARNATION_START_AGE_MOONS
-            from rpg_rules import ROLE_LABELS
-            role_label = ROLE_LABELS.get(reborn['wolf_role'], reborn['wolf_role'])
-            embed = howlbert_embed('Reincarnated', color=SUCCESS_COLOR)
-            embed.description = f"The mist takes **{old_name}**; **{reborn['wolf_name']}** wakes in a younger body.\n\n**{REINCARNATION_START_AGE_MOONS} moons** · **{role_label}** · stats & standing kept\nFood hoard & toys cleared · `/food` `/playpen action:toys`"
-            await interaction.response.send_message(embed=embed)
+            await interaction.response.send_modal(ReincarnationModal(shop_item_id=shop_item['id'], old_name=user['wolf_name']))
             return
 
 async def setup(bot: commands.Bot):

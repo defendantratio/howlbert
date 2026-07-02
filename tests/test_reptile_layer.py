@@ -33,10 +33,10 @@ def test_combat_prey_mapping() -> None:
 def test_marsh_hunt_bias_frog() -> None:
     hits = sum(
         1
-        for _ in range(80)
+        for _ in range(200)
         if prey_key_from_hunt_amount(6, great_pack="mistmoor") == "frog"
     )
-    assert hits >= 10
+    assert hits >= 20
 
 
 def test_reptile_bestiary_templates() -> None:

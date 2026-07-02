@@ -35,15 +35,16 @@ def _invite_payouts_this_month(discord_id: int) -> int:
     return count
 
 
-def _increment_invite_payout(discord_id: int) -> None:
+def _increment_invite_payout(discord_id: int, conn=None) -> None:
     month = _month_key()
-    with db.get_db() as conn:
-        row = conn.execute(
+
+    def _run(c) -> None:
+        row = c.execute(
             "SELECT invite_reward_month, invite_reward_count FROM account_progress WHERE discord_id = ?",
             (discord_id,),
         ).fetchone()
         if not row:
-            conn.execute(
+            c.execute(
                 "INSERT INTO account_progress (discord_id, invite_reward_month, invite_reward_count) VALUES (?, ?, 1)",
                 (discord_id, month),
             )
@@ -51,7 +52,7 @@ def _increment_invite_payout(discord_id: int) -> None:
         count = 1
         if row["invite_reward_month"] == month:
             count = int(row["invite_reward_count"]) + 1
-        conn.execute(
+        c.execute(
             """
             UPDATE account_progress
             SET invite_reward_month = ?, invite_reward_count = ?
@@ -59,6 +60,12 @@ def _increment_invite_payout(discord_id: int) -> None:
             """,
             (month, count, discord_id),
         )
+
+    if conn is not None:
+        _run(conn)
+    else:
+        with db.get_db() as c:
+            _run(c)
 
 
 def record_invite_join(guild_id: int, invitee_id: int, inviter_id: int, day: int) -> None:
@@ -174,7 +181,7 @@ def process_invite_rollovers(guild_id: int, day: int) -> list[str]:
                 (INVITE_REFERRER_STANDING, inviter_id),
             )
 
-            _increment_invite_payout(inviter_id)
+            _increment_invite_payout(inviter_id, conn=conn)
             notes.append(
                 f"<@{inviter_id}> earned **{INVITE_REFERRER_BONES}** bones + "
                 f"**{INVITE_REFERRER_STANDING}** standing; "

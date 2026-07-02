@@ -491,8 +491,9 @@ def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
     return notes
 
 
-def try_spread_from_close_contact(healthy, carrier) -> str | None:
-    """groom, socialize; immediate transmission roll at half pack contagion rate."""
+def try_spread_from_close_contact(healthy, carrier, *, season: str | None = None) -> str | None:
+    """groom, socialize; immediate transmission roll at half pack contagion rate.
+    Respiratory diseases spread 40% more readily in winter (confined dens)."""
     from engine.quarantine import is_quarantined
 
     if is_quarantined(carrier) or is_quarantined(healthy):
@@ -500,11 +501,13 @@ def try_spread_from_close_contact(healthy, carrier) -> str | None:
     key, stage = parse_disease(carrier["disease"] if "disease" in carrier.keys() else None)
     if not key:
         return None
-    from engine.diseases import contagious_rate, spread_stage_for
+    from engine.diseases import DISEASES, contagious_rate, spread_stage_for
 
     rate = contagious_rate(key) * (1.0 if key == "yellowcough" else 0.5)
     if rate <= 0:
         return None
+    if season == "winter" and DISEASES.get(key, {}).get("respiratory"):
+        rate = min(1.0, rate * 1.4)
     spread = spread_stage_for(key)
     note = try_contract_disease(healthy, key, spread, chance=rate)
     if note:

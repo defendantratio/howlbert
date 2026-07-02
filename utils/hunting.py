@@ -158,6 +158,19 @@ def award_bones(
                 if over_mult != 1.0:
                     amount = int(amount * over_mult)
                     season_note = f"{season_note} · {over_note}" if season_note else over_note
+                if territory and guild_id is not None and season:
+                    season_count = db.increment_territory_season_hunt(guild_id, territory, season)
+                    if season_count > 100:
+                        dep_mult, dep_label = 0.60, "territory heavily depleted (−40%)"
+                    elif season_count > 50:
+                        dep_mult, dep_label = 0.75, "territory showing strain (−25%)"
+                    elif season_count > 20:
+                        dep_mult, dep_label = 0.90, "prey thinning in territory (−10%)"
+                    else:
+                        dep_mult, dep_label = 1.0, ""
+                    if dep_mult != 1.0:
+                        amount = int(amount * dep_mult)
+                        season_note = f"{season_note} · {dep_label}" if season_note else dep_label
     net, tax = apply_pack_tax(amount, user["pack_id"])
     if net > 0:
         db.add_bones(user["discord_id"], net, wolf_id=user["id"])

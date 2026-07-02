@@ -356,6 +356,53 @@ DISEASES: dict[str, dict] = {
             },
         },
     },
+    "leafbare_cough": {
+        "label": "Leaf-Bare Cough",
+        "contagious": 0.22,
+        "respiratory": True,
+        "spread_stage": "chill",
+        "stages": {
+            "chill": {
+                "name": "Leaf-Bare Cough (Chill)",
+                "dc": 11,
+                "next": "hacking",
+                "effect": (
+                    "Cold air bites deep; a dry rasp at the back of the throat; "
+                    "−4 mood each sunrise. "
+                    "**Catmint**, **honey**, or **thyme** soothes it early."
+                ),
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+            "hacking": {
+                "name": "Leaf-Bare Cough (Hacking)",
+                "dc": 13,
+                "next": "congestion",
+                "effect": (
+                    "The cough turns bark-deep and relentless; lungs ache with every breath; "
+                    "−6 mood and −15% hunt bones each sunrise. "
+                    "**Catmint** (2 doses), **lungwort**, or **mullein**."
+                ),
+                "mood_loss": 6,
+                "hunt_mult": 0.85,
+            },
+            "congestion": {
+                "name": "Leaf-Bare Cough (Congestion)",
+                "dc": 15,
+                "next": None,
+                "effect": (
+                    "Chest fills; breathing rattles; fever climbs: "
+                    "+1 exhaustion and −1 HP each sunrise. "
+                    "Without **catmint**, **mullein**, or **lungwort** this turns deadly."
+                ),
+                "exhaustion_gain": 1,
+                "hp_loss": 1,
+                "mood_loss": 4,
+                "hunt_mult": 0.75,
+                "lethal": True,
+            },
+        },
+    },
     "shock_emotional": {
         "label": "Shock (Emotional)",
         "contagious": 0.0,
@@ -1030,6 +1077,7 @@ MULTI_STAGE_DISEASES = frozenset(
         "chronic_stress",
         "eating_distress",
         "mild_poison",
+        "leafbare_cough",
     }
 )
 
@@ -1066,6 +1114,7 @@ HERB_CURE_STAGES: dict[str, frozenset[str]] = {
     "chronic_stress": frozenset({"tense", "strained"}),
     "eating_distress": frozenset({"picky", "refusing"}),
     "shock_emotional": frozenset({"active"}),
+    "leafbare_cough": frozenset({"chill", "hacking"}),
 }
 
 

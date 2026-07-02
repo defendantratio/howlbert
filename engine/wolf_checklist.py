@@ -56,8 +56,6 @@ def _pending_setup_items(user) -> list[str]:
 
     if not _has_proxy(user):
         items.append("set proxy tag (`/proxy set`)")
-    if not _has_text(user, "ic_location"):
-        items.append("set ic location (`/location set`)")
 
     age = int(_field(user, "age_months", 24) or 24)
     stage = stage_for_age(age)
@@ -80,6 +78,48 @@ def _pending_setup_items(user) -> list[str]:
                 items.append("hold blooding rite (`/rite blooding`)")
 
     return items
+
+
+def _medic_patient_items(user, pack_id: int) -> list[str]:
+    """Checklist lines for each packmate needing medical care."""
+    from engine.conditions import parse_injuries
+    from engine.diseases import disease_display
+    from herbs import INJURIES
+
+    self_id = int(_field(user, "id", 0) or 0)
+    lines: list[str] = []
+
+    for wolf in db.get_pack_den_wolves(pack_id):
+        if int(_field(wolf, "id", 0) or 0) == self_id:
+            continue
+        cond = _field(wolf, "condition", "healthy") or "healthy"
+        if cond == "dead":
+            continue
+
+        name = _field(wolf, "wolf_name", "packmate")
+
+        if cond == "dying":
+            lines.append(f"stabilize **{name}** — dying (`/medic action:stabilize`)")
+            if len(lines) >= 8:
+                break
+            continue
+
+        parts: list[str] = []
+        ill = disease_display(wolf)
+        if ill:
+            parts.append(ill[0])
+        for key in parse_injuries(_field(wolf, "active_injuries"))[:2]:
+            inj = INJURIES.get(key, {})
+            parts.append(inj.get("name", key.replace("_", " ").title()))
+
+        if not parts:
+            continue
+
+        lines.append(f"treat **{name}** — {', '.join(parts)} (`/medic action:treat`)")
+        if len(lines) >= 8:
+            break
+
+    return lines
 
 
 def _pending_daily_items(
@@ -171,11 +211,16 @@ def _pending_daily_items(
         if not _used_today(user, day, "last_groom_day"):
             items.append("groom a packmate (`/playpen action:groom`)")
 
-    if stage not in ("pup", "juvenile") and not _field(user, "is_pregnant") and not _used_today(user, day, "last_court_day"):
-        items.append("court a wolf (`/courtship action:court`) — conception only in winter")
-
-    if not _used_today(user, day, "last_raccoon_offer_day"):
-        items.append("offer the raccoon an acorn (`/bones action:raccoonoffer`)")
+    from engine.role_features import is_full_medic
+    has_mate = bool(_field(user, "bonded_mate_id"))
+    if (
+        stage not in ("pup", "juvenile")
+        and not _field(user, "is_pregnant")
+        and not _used_today(user, day, "last_court_day")
+        and not has_mate
+        and not is_full_medic(user)
+    ):
+        items.append("court a wolf (`/courtship action:court`)")
 
     if stage != "pup" and not _used_today(user, day, "last_role_event_day"):
         items.append("role event (`/role action:event`)")
@@ -202,6 +247,8 @@ def _pending_daily_items(
         if sacred_visit_due(user, day):
             items.append("sacred visit (`/medic action:sacred`)")
         if int(_field(user, "last_medic_rounds_day", 0) or 0) < day:
+            if pack_id:
+                items.extend(_medic_patient_items(user, pack_id))
             items.append("den checkup (`/medic action:checkup`)")
 
     if pack_id and guild_id and not is_rogue_wolf(user):
@@ -270,10 +317,20 @@ def _pending_daily_items(
             items.append("deposit toys to den store (`/playpen action:toystore mode:depositall`)")
 
         from engine.role_features import has_any_role, is_full_medic
+        from engine.pack_herb_store import count_fresh_herbs_total
 
         is_medic_track = is_full_medic(user) or has_any_role(user, "medic_apprentice")
-        if (is_medic_track or is_forager(user)) and count_depositable_inventory_herbs(user) > 0:
+        if (is_medic_track or is_forager(user)) and count_fresh_herbs_total(user) >= 2:
             items.append("dry all herbs (`/herbs action:dryall`)")
+
+        wolf_id = int(_field(user, "id", 0) or 0)
+        if wolf_id:
+            fresh_stacks = [
+                s for s in db.get_prey_stacks(wolf_id)
+                if int(s["uses_left"] or 0) > 0 and not int(s["is_rotting"] or 0)
+            ]
+            if fresh_stacks:
+                items.append("deposit fresh kills to den reserve (`/pack stash depositall`)")
 
     return items
 
@@ -282,6 +339,13 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
     items: list[str] = []
     discord_id = int(_field(user, "discord_id", 0) or 0)
     if discord_id:
+        maw_karma = db.get_maw_karma(discord_id)
+        if maw_karma >= 5:
+            severity = "**divine wrath stirs**" if maw_karma >= 10 else "divine attention accumulates"
+            items.append(
+                f"the Great Maw's gaze rests upon you (karma {maw_karma}) — "
+                f"{severity}; sacred debts are long remembered."
+            )
         for stillborn in db.list_pending_stillborn_for_discord(discord_id):
             items.append(
                 f"**{stillborn['pup_name']}** is dying — save them before the window closes "
@@ -310,7 +374,7 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
                     line += f" **{rival['name']}** is watching that border (grudge {rival['grudge']}/100)."
             items.append(line)
     alert = db.get_active_raid_alert_for_victim(guild_id, pack_id, day)
-    if alert:
+    if alert and not int(alert["accuse_day"] or 0):
         suspect = db.get_pack(int(alert["suspect_pack_id"]))
         sname = suspect["name"] if suspect else "a rival"
         items.append(

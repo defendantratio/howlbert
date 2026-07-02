@@ -9,10 +9,27 @@ from engine.scene_roster import build_roster_embed, refresh_scene_roster
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.permissions import is_howlbert_admin
 from utils.replies import reply_ephemeral
+from utils.wolf_autocomplete import make_member_wolf_autocomplete
 logger = logging.getLogger('howlbert')
 
 def _active_wolf(interaction: discord.Interaction):
     return db.get_user(interaction.user.id)
+
+_with_member_wolf_autocomplete = make_member_wolf_autocomplete("with_member")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
 
 class Scene(commands.Cog):
 
@@ -21,8 +38,9 @@ class Scene(commands.Cog):
     scene = app_commands.Group(name='scene', description='run roleplay scenes in threads with a roster.')
 
     @scene.command(name='start', description='open an rp scene as a thread in this channel.')
-    @app_commands.describe(with_member='another player in the scene (optional)', location='where the scene happens (defaults to your ic location)', topic="what's happening — goes in the opening post, not the thread title")
-    async def start(self, interaction: discord.Interaction, with_member: discord.Member | None=None, location: str | None=None, topic: str | None=None):
+    @app_commands.describe(with_member='another player in the scene (optional)', own_wolf='your other wolf in the scene (optional)', with_member_wolf="specific wolf from that player's roster", location='where the scene happens (defaults to your ic location)', topic="what's happening — goes in the opening post, not the thread title")
+    @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, with_member_wolf=_with_member_wolf_autocomplete)
+    async def start(self, interaction: discord.Interaction, with_member: discord.Member | None=None, own_wolf: str | None=None, with_member_wolf: str | None=None, location: str | None=None, topic: str | None=None):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
@@ -38,14 +56,26 @@ class Scene(commands.Cog):
         if not perms.create_public_threads:
             await interaction.response.send_message(embed=howlbert_embed('Missing Permission', 'I need **Create Public Threads** here.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
+        if with_member and own_wolf:
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `with_member` or `own_wolf` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
         await interaction.response.defer(ephemeral=reply_ephemeral())
         from engine.scene_titles import build_scene_thread_title
         partner_wolf = None
-        if with_member:
+        if own_wolf:
+            rows = db.list_user_wolves(interaction.user.id)
+            partner_wolf = next((w for w in rows if w['wolf_name'].lower() == own_wolf.strip().lower() and w['id'] != wolf['id']), None)
+            if not partner_wolf:
+                await interaction.followup.send(embed=howlbert_embed('Unknown Wolf', f'No wolf named **{own_wolf}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        elif with_member:
             if with_member.bot:
                 await interaction.followup.send(embed=howlbert_embed('No', "You can't scene with a bot.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
-            partner_wolf = db.get_user(with_member.id)
+            if with_member_wolf:
+                partner_wolf = db.find_user_wolf(with_member.id, with_member_wolf)
+            else:
+                partner_wolf = db.get_user(with_member.id)
             if not partner_wolf:
                 await interaction.followup.send(embed=howlbert_embed('No Wolf', f"**{with_member.display_name}** hasn't registered a wolf yet.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
@@ -65,7 +95,8 @@ class Scene(commands.Cog):
         scene_id = db.create_scene(interaction.guild.id, thread.id, title, topic, interaction.user.id, day)
         db.join_scene(scene_id, wolf['id'], wolf['wolf_name'], interaction.user.id)
         if partner_wolf:
-            db.join_scene(scene_id, partner_wolf['id'], partner_wolf['wolf_name'], with_member.id)
+            partner_discord_id = with_member.id if with_member else interaction.user.id
+            db.join_scene(scene_id, partner_wolf['id'], partner_wolf['wolf_name'], partner_discord_id)
         body = topic.strip() if topic else '_The scene is set. Wolves, take your places._'
         opening = howlbert_embed(f'🎬 {title}', body, color=SUCCESS_COLOR)
         opener_line = f"**{wolf['wolf_name']}**"

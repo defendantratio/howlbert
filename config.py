@@ -21,8 +21,6 @@ AUTO_ROLLOVER_ENABLED = os.getenv("AUTO_ROLLOVER_ENABLED", "false").strip().lowe
 ROLLOVER_TIMEZONE = os.getenv("ROLLOVER_TIMEZONE", "America/New_York").strip() or "America/New_York"
 ROLLOVER_HOUR = max(0, min(23, int(os.getenv("ROLLOVER_HOUR", "0") or 0)))
 ROLLOVER_MINUTE = max(0, min(59, int(os.getenv("ROLLOVER_MINUTE", "0") or 0)))
-# After missed sunrise: DM den news on bot startup if online within this many hours of rollover
-ROLLOVER_STARTUP_DM_HOURS = max(1, min(24, int(os.getenv("ROLLOVER_STARTUP_DM_HOURS", "8") or 8)))
 AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID = os.getenv("AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID", "").strip()
 _auto_ch = AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID
 AUTO_ROLLOVER_ANNOUNCE_CHANNEL_ID = int(_auto_ch) if _auto_ch.isdigit() else None
@@ -168,6 +166,13 @@ DEFAULT_SHOP_ITEMS = (
         20,
     ),
     (
+        "raven_companion",
+        "Raven Companion",
+        "Passive: +20% bones on `/field action:scavenge` and +10% on `/field action:track` while carried.",
+        300,
+        85,
+    ),
+    (
         "den_charm",
         "Den Charm",
         "Use `/bones action:use item:den_charm`; +1 pack unity once per rollover (must be in a pack).",
@@ -268,6 +273,13 @@ HUNGER_SICK_EXTRA_DECAY = 6
 ROLLOVER_SCAVENGE_BASE_CHANCE = 0.70
 ROLLOVER_SCAVENGE_HUNGER = 14  # small; enough to get by, not to thrive
 ROLLOVER_SCAVENGE_THIRST = 6
+
+# Solo hunters (loners / rogues) miss pack coordination. Applied after
+# sniff/dex bonuses so individual traits can still compensate somewhat.
+LONER_HUNT_PENALTY_PCT = 20  # % reduction on hunt yield when no pack_id
+
+# Pups in winter gain exhaustion from cold exposure each sunrise even when fed.
+PUP_WINTER_COLD_EXHAUSTION_CHANCE = 0.15  # 15% per sunrise in winter
 
 # Nursing; mothers feed milk until pups reach juvenile stage (PUP_MAX_MOONS)
 MILK_HUNGER_GAIN = 28
@@ -410,6 +422,7 @@ SOCIALIZE_MOOD_GOOD = 8
 SOCIALIZE_MOOD_AWKWARD = -4
 SOCIALIZE_MOOD_SCRAP = -7
 SOCIALIZE_UNITY_WARM = 1
+SOCIALIZE_UNITY_GOOD = 1
 SOCIALIZE_UNITY_AWKWARD = -1
 SOCIALIZE_UNITY_SCRAP = -2
 SOCIALIZE_STANDING_GOOD = 1
@@ -485,6 +498,8 @@ KIN_REUNION_BOND_GAIN = 10
 # flavor.
 FIDELITY_BOND_LOSS = 10
 FIDELITY_BOND_MIN_TO_CARE = 40
+BONE_GIFT_COST = 3
+BONE_GIFT_MOOD_GAIN = 5
 # Jealousy: a bonded mate isn't present for /playpen socialize, but a "warm"
 # outcome with someone else still costs them something real.
 JEALOUSY_MOOD_PENALTY = 4
@@ -861,6 +876,8 @@ MENTOR_MATE_CAUGHT_TEXT = [
     "Someone saw the lesson turn to something else. The Alpha will want a word.",
 ]
 MEDIC_PUP_SCANDAL_STANDING = -5
+MEDIC_NEUTRAL_STANDING = -3
+MAW_MEDIC_CRIME_KARMA = 3
 RESTRICTED_HERB_MISUSE_STANDING = -4
 RESTRICTED_HERB_HOARD_STANDING = -3
 RESTRICTED_HERB_HOARD_CATCH_CHANCE = 0.38
@@ -1181,6 +1198,7 @@ RP_LOCATIONS = (
     # Mistmoor (Swamp) — "the Maw's belly"
     "Mistmoor Den",
     "The Belly-Rip",
+    "The Rotting Mere",
     "The Bog",
     "Glow-Fungus Hollow",
     "The Sick Den",

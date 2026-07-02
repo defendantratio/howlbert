@@ -109,6 +109,38 @@ def _call_name(node: ast.Call) -> str:
     return ""
 
 
+def _top_level_command_names_in_cog(path: Path) -> list[tuple[str, int]]:
+    """Return (name, lineno) for every @app_commands.command in this cog file.
+
+    Only matches `@app_commands.command(name='X')` — i.e., decorators where the
+    receiver is exactly `app_commands`, not a group variable like `@pack.command`.
+    Those are the only ones that register top-level slash commands and can collide.
+    """
+    source = path.read_text(encoding="utf-8")
+    try:
+        tree = ast.parse(source, filename=str(path))
+    except SyntaxError:
+        return []
+    results: list[tuple[str, int]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for deco in node.decorator_list:
+            if not isinstance(deco, ast.Call):
+                continue
+            func = deco.func
+            if not (isinstance(func, ast.Attribute) and func.attr == "command"):
+                continue
+            if not (isinstance(func.value, ast.Name) and func.value.id == "app_commands"):
+                continue
+            for kw in deco.keywords:
+                if kw.arg == "name":
+                    name = _str_const(kw.value)
+                    if name:
+                        results.append((name, node.lineno))
+    return results
+
+
 def _discord_length_problems_for(path: Path, tree: ast.AST) -> list[str]:
     problems: list[str] = []
     for node in ast.walk(tree):
@@ -188,6 +220,25 @@ def main() -> None:
         )
     else:
         check(f"no undefined-name / redefinition / duplicate-key issues across {len(files)} files", True)
+
+    # Command name collision check — catches CommandAlreadyRegistered at startup.
+    cogs_dir = ROOT / "cogs"
+    all_command_names: dict[str, list[str]] = {}
+    for cog_path in sorted(cogs_dir.glob("*.py")):
+        for cmd_name, lineno in _top_level_command_names_in_cog(cog_path):
+            all_command_names.setdefault(cmd_name, []).append(f"{cog_path.name}:{lineno}")
+    collisions = {n: locs for n, locs in all_command_names.items() if len(locs) > 1}
+    if collisions:
+        detail = "; ".join(
+            f"'{n}' defined in {', '.join(locs)}" for n, locs in sorted(collisions.items())
+        )
+        check("no duplicate top-level @app_commands.command names across cogs", False, detail)
+    else:
+        check(
+            f"no duplicate top-level @app_commands.command names across cogs"
+            f" ({len(all_command_names)} commands checked)",
+            True,
+        )
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
