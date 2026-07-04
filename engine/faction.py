@@ -210,8 +210,11 @@ def try_faction_observe(user, faction: str) -> tuple[str, int]:
     return line + extra, 0
 
 
-def try_faction_approach(user, faction: str, *, day: int) -> tuple[str, int]:
-    """Roll approach. Returns (flavor, standing_delta)."""
+_CROWS_CACHE_LINE = "They leave a small cache of bones and metal scraps near the usual crossing. The message is clear enough."
+
+
+def try_faction_approach(user, faction: str, *, day: int) -> tuple[str, int, int]:
+    """Roll approach. Returns (flavor, standing_delta, bonus_bones)."""
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     die = roll_d20()
     attr_wis = int(user["attr_wis"]) if "attr_wis" in user.keys() else 0
@@ -232,8 +235,11 @@ def try_faction_approach(user, faction: str, *, day: int) -> tuple[str, int]:
         pool = _APPROACH_FAIL.get(faction, ["A poor showing."])
         delta = -3
     text = random.choice(pool)
+    bonus_bones = 0
+    if text == _CROWS_CACHE_LINE:
+        bonus_bones = random.randint(5, 10)
     roll_note = f"\n\n_roll: **{die}** + wis **{mod:+}** = **{total}** vs dc {dc}_ · standing change: **{delta:+}**"
-    return text + roll_note, delta
+    return text + roll_note, delta, bonus_bones
 
 
 def try_faction_trade(user, faction: str) -> tuple[str, int]:
@@ -275,7 +281,18 @@ def try_faction_raid(user, faction: str) -> tuple[str, int, bool]:
     text = random.choice(pool)
     roll_note = f"\n\n_roll: **{die}** + str **{mod:+}** = **{total}** vs dc {dc}_"
     caught_note = "\n_word spreads — all factions note the aggression_ (−1 each)" if caught else ""
-    return text + roll_note + caught_note, delta, caught
+    burn_note = ""
+    if caught and faction in ("thorne_lumber", "river_mill") and random.random() < 0.15:
+        import json
+        from engine.conditions import add_injury, parse_injuries
+        injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
+        if "scorched_hide" not in injuries:
+            injuries = add_injury(injuries, "scorched_hide")
+            day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
+            db.set_user_conditions(user["discord_id"], active_injuries=json.dumps(injuries), wolf_id=user["id"])
+            db.record_injury_since(user["id"], "scorched_hide", day)
+            burn_note = "\n_something burning caught you on the way out — **scorched hide** (+1 exhaustion/sunrise until healed)._"
+    return text + roll_note + caught_note + burn_note, delta, caught
 
 
 def try_faction_sabotage(user, faction: str, *, guild_id: int, day: int) -> tuple[str, int]:

@@ -289,7 +289,40 @@ class Explore(commands.Cog):
                 await interaction.response.send_message(player_message("They haven't registered a wolf."), ephemeral=reply_ephemeral())
                 return
         else:
-            await interaction.response.send_message(embed=howlbert_embed('No Target', 'Pick another **player** or one of your wolves with `own_wolf`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            # self-groom: no partner specified
+            if not user['pack_id']:
+                await interaction.response.send_message(embed=howlbert_embed('No Den', 'Join a great pack first; `/playpen` is a den activity.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from engine.quarantine import quarantine_activity_block
+            sg_block = quarantine_activity_block(user)
+            if sg_block:
+                await interaction.response.send_message(embed=howlbert_embed('Quarantined', sg_block, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            sg_world = db.get_world(interaction.guild.id)
+            sg_day = sg_world['day_number']
+            import random as _sg_rand
+            from engine.diseases import parse_disease
+            sg_flea_key, _ = parse_disease(user['disease'] if 'disease' in user.keys() else None)
+            flea_note = ''
+            if sg_flea_key == 'fleas' and _sg_rand.random() < 0.30:
+                db.set_user_conditions(user['discord_id'], clear_disease=True, wolf_id=user['id'])
+                flea_note = '\n_careful grooming cleared the fleas._'
+            # no cooldown: the first self-groom each sunrise lifts mood; grooming
+            # again still clears fleas but the coat is already clean, so there is
+            # nothing left to soothe (diminishing returns, not a block).
+            already_groomed = int(user['last_groom_day']) >= sg_day
+            if already_groomed:
+                mood_bit = 'your coat is already clean; there is little left to soothe.'
+                sg_embed = howlbert_embed('Self-Groom', f"you work through your coat again. {mood_bit}{flea_note}", color=SUCCESS_COLOR)
+                sg_embed.set_footer(text='mood lifts once per sunrise; fleas can always be worked out')
+                await interaction.response.send_message(embed=sg_embed)
+                return
+            db.update_user(interaction.user.id, last_groom_day=sg_day)
+            sg_mood_gain = 3
+            sg_new_mood = db.adjust_mood(user['id'], sg_mood_gain)
+            sg_embed = howlbert_embed('Self-Groom', f"you work through your own coat, pulling burrs and mites. mood **+{sg_mood_gain}** (now {sg_new_mood}).{flea_note}", color=SUCCESS_COLOR)
+            sg_embed.set_footer(text='/checklist · groom a packmate: /playpen groom @player')
+            await interaction.response.send_message(embed=sg_embed)
             return
         if not user['pack_id']:
             await interaction.response.send_message(embed=howlbert_embed('No Den', 'Join a great pack first; `/playpen` is a den activity.', color=ERROR_COLOR), ephemeral=reply_ephemeral())

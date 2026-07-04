@@ -1,240 +1,240 @@
-# Ko-fi Shop; Howlbert
+# ko-fi shop; howlbert
 
-Paste these into Ko-fi Shop listings. **Product titles should include the keywords shown** so the webhook can match them (or add each item's `direct_link_code` to `KOFI_SHOP_CATALOG` in `config.py` after creation).
+paste these into ko-fi shop listings. **product titles should include the keywords shown** so the webhook can match them (or add each item's `direct_link_code` to `KOFI_SHOP_CATALOG` in `config.py` after creation).
 
-**On every order:** buyer must be in Discord, have used `/register`, and put their **Discord user ID** in the order message (see `/patron`).
+**on every order:** buyer must be in discord, have used `/register`, and put their **discord user id** in the order message (see `/patron`).
 
 ---
 
-## Tier 1; Digital & bones
+## tier 1; digital and bones
 
-### Bone Pouch; $5
+### bone pouch; $5
 
-**One-time in-game thank-you for Howlbert (Discord wolf RP bot).**
+**one-time in-game thank-you for howlbert (discord wolf rp bot).**
 
 - **75 bones** on your wolf (15 per $1)
-- Delivered automatically if your Discord user ID is in the order message
-- Personal reward; never taken from pack treasury
-- Requires `/register` in our Discord server
+- delivered automatically if your discord user id is in the order message
+- personal reward; never taken from pack treasury
+- requires `/register` in our discord server
 
-Put your **Discord user ID** in the order notes. You'll get bones instantly or a `/redeem` code via DM.
+put your **discord user id** in the order notes. you'll get bones instantly or a `/redeem` code via dm.
 
 ---
 
-### Bone Cache; $10
+### bone cache; $10
 
-**Larger one-time bone thank-you.**
+**larger one-time bone thank-you.**
 
 - **150 bones** on your wolf
-- Same rules as Bone Pouch; Discord ID required, `/register` first
-- Great for a bigger thank-you without a monthly membership
+- same rules as bone pouch; discord id required, `/register` first
+- great for a bigger thank-you without a monthly membership
 
 ---
 
-### Gift a Bone Pouch; $5
+### gift a bone pouch; $5
 
-**Buy a bone pouch for another player.**
+**buy a bone pouch for another player.**
 
-- You receive a **one-time redeem code** via Discord DM
-- Any registered player can use `/redeem CODE` for **75 bones**
-- Perfect for birthdays, packmates, or welcoming a new wolf
+- you receive a **one-time redeem code** via discord dm
+- any registered player can use `/redeem CODE` for **75 bones**
+- perfect for birthdays, packmates, or welcoming a new wolf
 
-Put **your** Discord user ID in the message so we know where to send the gift code.
-
----
-
-### Supporter Badge (Digital); $5
-
-**Name on the den wall; no in-game stats.**
-
-- Your name (Discord or wolf name) on the **supporters list** in Discord + README
-- Thank-you post in our announcements channel (opt out anytime)
-- Delivered within **7 days** via Discord DM
-
-Not a substitute for memberships; pure recognition.
+put **your** discord user id in the message so we know where to send the gift code.
 
 ---
 
-### Den Wallpaper Pack; $8
+### supporter badge (digital); $5
 
-**Digital download; wolf & landscape art for your desktop or phone.**
+**name on the den wall; no in-game stats.**
 
-- ZIP of den-themed wallpapers (personal use only)
-- Ko-fi digital delivery + confirmation DM
-- Delivered within **3 days**
+- your name (discord or wolf name) on the **supporters list** in discord + readme
+- thank-you post in our announcements channel (opt out anytime)
+- delivered within **7 days** via discord dm
 
-No in-game bones included.
+not a substitute for memberships; pure recognition.
 
 ---
 
-## Tier 2; RP extras
+### den wallpaper pack; $8
 
-### Revive; $35
+**digital download; wolf and landscape art for your desktop or phone.**
 
-**Listing title (use exactly):** `Revive`
+- zip of den-themed wallpapers (personal use only)
+- ko-fi digital delivery + confirmation dm
+- delivered within **3 days**
 
-**Paste into Ko-fi description:**
+no in-game bones included.
+
+---
+
+## tier 2; rp extras
+
+### revive; $35
+
+**listing title (use exactly):** `revive`
+
+**paste into ko-fi description:**
 
 ```
-When your wolf falls in Mistmoor, not every story has to end.
+when your wolf falls in mistmoor, not every story has to end.
 
-Revive is a one-time in-game item for Howlbert, our Discord wolf RP bot. Purchase grants a Revive token to your inventory; use it when your active wolf is dead to pull them back from the mist.
+revive is a one-time in-game item for howlbert, our discord wolf rp bot. purchase grants a revive token to your inventory; use it when your active wolf is dead to pull them back from the mist.
 
-What you get
-• Same wolf; same name, attributes, skills, standing, bones, pack, and inventory
-• Returned at 1 HP with hunger and thirst restored
-• If they died of old age (120 moons), they return at 60 moons
+what you get
+• same wolf; same name, attributes, skills, standing, bones, pack, and inventory
+• returned at 1 hp with hunger and thirst restored
+• if they died of old age (120 moons), they return at 60 moons
 
-How to use
-1. Join our Discord server and /register your wolf first
-2. Put your Discord user ID in this order message (see /patron in-server for help)
-3. After purchase, check /inventory for Revive
-4. When your wolf dies: `/bones action:use item:revive`
+how to use
+1. join our discord server and /register your wolf first
+2. put your discord user id in this order message (see /patron in-server for help)
+3. after purchase, check /inventory for revive
+4. when your wolf dies: `/bones action:use item:revive`
 
-Not sold for bones at the in-game trading post. Personal reward only; never taken from pack treasury. One Revive item per purchase.
+not sold for bones at the in-game trading post. personal reward only; never taken from pack treasury. one revive item per purchase.
 
-Questions? Open a ticket in Discord or DM staff.
+questions? open a ticket in discord or dm staff.
 ```
 
-**Webhook keywords:** revive, second chance, bring back
+**webhook keywords:** revive, second chance, bring back
 
-**Ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/revive.png`). Pale mist, wolf rising from snow, cool moon; breath returning.
+**ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/revive.png`). pale mist, wolf rising from snow, cool moon; breath returning.
 
-Put your **Discord user ID** in the order notes.
+put your **discord user id** in the order notes.
 
 ---
 
-### Reincarnation; $28
+### reincarnation; $28
 
-**Listing title (use exactly):** `Reincarnation`
+**listing title (use exactly):** `reincarnation`
 
-**Paste into Ko-fi description:**
+**paste into ko-fi description:**
 
 ```
-The soul remembers. The body changes.
+the soul remembers. the body changes.
 
-Reincarnation is a one-time in-game item for Howlbert, our Discord wolf RP bot. For wolves who died but whose story isn't finished; return in a new body with a new name, while keeping the build you earned.
+reincarnation is a one-time in-game item for howlbert, our discord wolf rp bot. for wolves who died but whose story isn't finished; return in a new body with a new name, while keeping the build you earned.
 
-What you keep
-• Attributes, skills, standing, bones, Great Pack, and inventory items
-• Your account, legacy, and wolf slot on your profile
+what you keep
+• attributes, skills, standing, bones, great pack, and inventory items
+• your account, legacy, and wolf slot on your profile
 
-What's new
-• A new wolf name you choose at use
+what's new
+• a new wolf name you choose at use
 • 12 moons of age (juvenile); a second life in the pack
-• Role synced to your new age
+• role synced to your new age
 
-What resets
-• Prey hoard and toys cleared (fresh start for `/prey` and `/playpen action:toys`)
-• Full HP, healthy condition, no injuries or disease
+what resets
+• prey hoard and toys cleared (fresh start for `/prey` and `/playpen action:toys`)
+• full hp, healthy condition, no injuries or disease
 
-How to use
-1. Join our Discord server and /register first
-2. Put your Discord user ID in this order message (see /patron in-server)
-3. After purchase, check /inventory for Reincarnation
-4. When your wolf dies: `/bones action:use item:reincarnation new_name:YourNewName`
+how to use
+1. join our discord server and /register first
+2. put your discord user id in this order message (see /patron in-server)
+3. after purchase, check /inventory for reincarnation
+4. when your wolf dies: `/bones action:use item:reincarnation new_name:YourNewName`
 
-Not the same as Reincarnation ($28); Revive brings back the same wolf unchanged. Reincarnation is for a new identity with the same soul and stats.
+not the same as revive ($35); revive brings back the same wolf unchanged. reincarnation is for a new identity with the same soul and stats.
 
-Not sold for bones. Personal reward only. One item per purchase.
+not sold for bones. personal reward only. one item per purchase.
 
-Questions? Open a ticket in Discord or DM staff.
+questions? open a ticket in discord or dm staff.
 ```
 
-**Webhook keywords:** reincarnation, new life, new body
+**webhook keywords:** reincarnation, new life, new body
 
-**Ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/reincarnation.png`). Ghost wolf + younger wolf through mist/stones; same soul, new body.
+**ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/reincarnation.png`). ghost wolf + younger wolf through mist/stones; same soul, new body.
 
-Put your **Discord user ID** in the order notes.
-
----
-
-### Den Landmark Name; $20
-
-**Name a place in the world's lore.**
-
-- A creek bend, rock outcrop, trail fork, or similar landmark named after your wolf or chosen name
-- Added to the server lore doc / map notes
-- Delivered within **14 days**; we'll confirm the name with you first
+put your **discord user id** in the order notes.
 
 ---
 
-### Quest Hook Commission; $30
+### den landmark name; $20
 
-**A personal story hook for your wolf.**
+**name a place in the world's lore.**
 
-- Short custom quest premise (hunt, patrol, explore, or social)
-- Run with you and staff in RP; not a guaranteed auto-complete bot quest
-- Delivered within **14 days** via Discord DM to plan session
-
----
-
-### First Hunt Story Snippet; $10
-
-**Short prose piece about your wolf's first kill or first journey.**
-
-- ~200-400 words, digital (Discord post or PDF)
-- You provide wolf details and any tone preferences
-- Delivered within **7 days**
+- a creek bend, rock outcrop, trail fork, or similar landmark named after your wolf or chosen name
+- added to the server lore doc / map notes
+- delivered within **14 days**; we'll confirm the name with you first
 
 ---
 
-## Tier 3; Premium
+### quest hook commission; $30
 
-### Wolf Portrait (Digital Commission); $40
+**a personal story hook for your wolf.**
 
-**Custom digital art of your wolf.**
-
-- One character, simple background
-- Style and reference discussed via DM after purchase
-- Delivered within **21 days** (or agreed timeline)
-- Personal use; ask about server RP posting rights
-
-**Commission; not instant.** We'll contact you within 3 days to start.
+- short custom quest premise (hunt, patrol, explore, or social)
+- run with you and staff in rp; not a guaranteed auto-complete bot quest
+- delivered within **14 days** via discord dm to plan session
 
 ---
 
-### Custom Item Name (Cosmetic); $35
+### first hunt story snippet; $10
 
-**Name a cosmetic in-game item** (toy bundle, trinket, etc.)
+**short prose piece about your wolf's first kill or first journey.**
 
-- Cosmetic flavor only; **no stat boosts or combat advantage**
-- Subject to balance and theme approval
-- Delivered within **14 days**
-
----
-
-### Legend Gift Card (1 Month); $25
-
-**Gift Legend-tier thank-yous to any registered player.**
-
-- Redeem code for **225 bones**, **Legend** recognition, **+3 `/bones action:daily`** for **35 days**, +10 mood / +2 standing on redeem
-- You receive the code via DM; keep it or give it away
-- Recipient uses `/redeem CODE`
-
-Put your Discord user ID in the order message.
+- ~200 to 400 words, digital (discord post or pdf)
+- you provide wolf details and any tone preferences
+- delivered within **7 days**
 
 ---
 
-## Shop link codes (configured in bot)
+## tier 3; premium
 
-| # | Product | Ko-fi link |
+### wolf portrait (digital commission); $40
+
+**custom digital art of your wolf.**
+
+- one character, simple background
+- style and reference discussed via dm after purchase
+- delivered within **21 days** (or agreed timeline)
+- personal use; ask about server rp posting rights
+
+**commission; not instant.** we'll contact you within 3 days to start.
+
+---
+
+### custom item name (cosmetic); $35
+
+**name a cosmetic in-game item** (toy bundle, trinket, etc.)
+
+- cosmetic flavor only; **no stat boosts or combat advantage**
+- subject to balance and theme approval
+- delivered within **14 days**
+
+---
+
+### legend gift card (1 month); $25
+
+**gift legend-tier thank-yous to any registered player.**
+
+- redeem code for **225 bones**, **legend** recognition, **+3 `/bones action:daily`** for **35 days**, +10 mood / +2 standing on redeem
+- you receive the code via dm; keep it or give it away
+- recipient uses `/redeem CODE`
+
+put your discord user id in the order message.
+
+---
+
+## shop link codes (configured in bot)
+
+| # | product | ko-fi link |
 |---|---------|------------|
-| 1 | Bone Pouch | https://ko-fi.com/s/f5d07feec4 |
-| 2 | Bone Cache | https://ko-fi.com/s/86a62f713a |
-| 3 | Gift a Bone Pouch | https://ko-fi.com/s/79c40a6fa6 |
-| 4 | Supporter Badge | https://ko-fi.com/s/4bd6954008 |
-| 5 | Den Wallpaper Pack | https://ko-fi.com/s/c862f55df1 |
-| 6 | Den Landmark Name | https://ko-fi.com/s/5cb52af6e0 |
-| 7 | Quest Hook Commission | https://ko-fi.com/s/f565f7daee |
-| 8 | First Hunt Story Snippet | https://ko-fi.com/s/bba5807b42 |
-| 9 | Wolf Portrait | https://ko-fi.com/s/1acef91903 |
-| 10 | Custom Item Name | https://ko-fi.com/s/7293d845b2 |
-| 11 | Legend Gift Card | https://ko-fi.com/s/ff775b47c9 |
-| 12 | Revive ($35) | https://ko-fi.com/s/75109e65b8 |
-| 13 | Reincarnation ($28) | https://ko-fi.com/s/931aa27911 |
+| 1 | bone pouch | https://ko-fi.com/s/f5d07feec4 |
+| 2 | bone cache | https://ko-fi.com/s/86a62f713a |
+| 3 | gift a bone pouch | https://ko-fi.com/s/79c40a6fa6 |
+| 4 | supporter badge | https://ko-fi.com/s/4bd6954008 |
+| 5 | den wallpaper pack | https://ko-fi.com/s/c862f55df1 |
+| 6 | den landmark name | https://ko-fi.com/s/5cb52af6e0 |
+| 7 | quest hook commission | https://ko-fi.com/s/f565f7daee |
+| 8 | first hunt story snippet | https://ko-fi.com/s/bba5807b42 |
+| 9 | wolf portrait | https://ko-fi.com/s/1acef91903 |
+| 10 | custom item name | https://ko-fi.com/s/7293d845b2 |
+| 11 | legend gift card | https://ko-fi.com/s/ff775b47c9 |
+| 12 | revive ($35) | https://ko-fi.com/s/75109e65b8 |
+| 13 | reincarnation ($28) | https://ko-fi.com/s/931aa27911 |
 
-## Admin
+## admin
 
 - `/patronadmin orders`; pending manual fulfillments
 - `/patronadmin fulfill`; mark delivered

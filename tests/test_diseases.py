@@ -191,7 +191,7 @@ def test_exposure_vectors() -> None:
             from engine.disease_contract import try_carrion_exposure
 
             car = try_carrion_exposure(user)
-    check("carrion can seed distemper", car and "Distemper" in car)
+    check("carrion can seed weeping-scale", car and "weeping-scale" in car)
     with patch("engine.disease_contract.random.random", side_effect=[0.50, 0.10]):
         with patch("engine.disease_contract.db.set_user_conditions"):
             from engine.disease_contract import try_rotting_meat_exposure

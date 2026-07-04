@@ -25,7 +25,7 @@ Fresh herbs rot after **1 sunrise** without drying. Shop/inventory herbs stay st
 | tracking | fresh trail DC 8 → faint DC 25, blood scent, covered trail |
 | stealth | silent move, hide, sneak prey (advantage) |
 | howling | locate packmate, storm howl |
-| social | intimidate, persuade Alpha, truce DC 18 |
+| social | intimidate, persuade alpha, truce DC 18 |
 | spiritual | omen, ancestors DC 20, cleansing ritual |
 | survival | river, blizzard shelter, stabilize, set bone |
 | herb_prep | chew poultice, tonic, dry storage, antidote |

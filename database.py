@@ -186,6 +186,7 @@ def init_db():
         _seed_herb_items(conn)
         _seed_prey_items(conn)
         _seed_amusement_items(conn)
+        _seed_liquid_items(conn)
         _seed_quests(conn)
     _run_journal_backfill_once()
     _run_canonical_bonds_once()
@@ -524,6 +525,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN moon_witness_done INTEGER NOT NULL DEFAULT 0")
     if "last_faction_action_day" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN last_faction_action_day INTEGER NOT NULL DEFAULT 0")
+    if "pain_exhaustion" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN pain_exhaustion INTEGER NOT NULL DEFAULT 0")
 
     quest_cols = {row[1] for row in conn.execute("PRAGMA table_info(quests)")}
     if "required_role" not in quest_cols:
@@ -902,6 +905,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "size_class" not in user_cols_needs:
         conn.execute("ALTER TABLE users ADD COLUMN size_class TEXT NOT NULL DEFAULT ''")
     conn.execute("UPDATE users SET disease = 'redscratch' WHERE disease = 'den_fever'")
+    conn.execute("UPDATE users SET disease = REPLACE(disease, 'distemper', 'hard_paw') WHERE disease LIKE '%distemper%'")
 
     conn.execute(
         """
@@ -1175,6 +1179,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
     if cf_cols_late and "is_submitted" not in cf_cols_late:
         conn.execute("ALTER TABLE combat_fighters ADD COLUMN is_submitted INTEGER NOT NULL DEFAULT 0")
+    if cf_cols_late and "npc_disease" not in cf_cols_late:
+        conn.execute("ALTER TABLE combat_fighters ADD COLUMN npc_disease TEXT")
 
     user_cols_inj = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
     if user_cols_inj and "injury_since" not in user_cols_inj:
@@ -1598,6 +1604,22 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "howl_exposed_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN howl_exposed_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "last_lick_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_lick_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "herb_use_log" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN herb_use_log TEXT NOT NULL DEFAULT '{}'"
+        )
+    if "vitals_decayed_at" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN vitals_decayed_at TEXT NOT NULL DEFAULT ''"
+        )
+    if "last_meat_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_meat_day INTEGER NOT NULL DEFAULT 0"
         )
 
     scene_cols = {row[1] for row in conn.execute("PRAGMA table_info(rp_scenes)")}
@@ -3054,6 +3076,43 @@ def _seed_prey_items(conn: sqlite3.Connection) -> None:
             WHERE key = ?
             """,
             (meta["name"], desc, price, sell, item_key),
+        )
+
+
+def _seed_liquid_items(conn: sqlite3.Connection) -> None:
+    """Liquid foods: sipped via /drink type:broth|milk; feed partially, bypass broken-jaw pain."""
+    liquids = (
+        (
+            "liquid_broth",
+            "Broth",
+            "simmered bones and scraps. `/drink type:broth` to sip; feeds partially "
+            "and never hurts a broken jaw. buy at the trading post or boil your own "
+            "with `/hoarding action:craft recipe:broth`.",
+            6,
+            2,
+        ),
+        (
+            "liquid_milk",
+            "Milk",
+            "milk from cat clans (`/pact action:receive`) or a settlement livestock raid "
+            "(`/faction action:raid`). `/drink type:milk` to sip; nourishing but a wolf "
+            "lapping milk loses face (standing). weaned wolves without lactase persistence "
+            "get an upset gut.",
+            0,
+            2,
+        ),
+    )
+    for key, name, description, price, sell_price in liquids:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO items (key, name, description, price, sell_price)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (key, name, description, price, sell_price),
+        )
+        conn.execute(
+            "UPDATE items SET name = ?, description = ?, price = ?, sell_price = ? WHERE key = ?",
+            (name, description, price, sell_price, key),
         )
 
 
@@ -5710,6 +5769,23 @@ def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
             WHERE grief_sunrises > 0 AND condition NOT IN ('dead', 'dying')
             """
         )
+        # Restart the intra-day decay clock so overnight time isn't double-counted
+        # against the sunrise tick above (see engine/vitals_decay.py).
+        conn.execute(
+            "UPDATE users SET vitals_decayed_at = ? WHERE condition NOT IN ('dead', 'dying')",
+            (utcnow(),),
+        )
+        # Pain from 3+ injuries drains mood: chronic suffering wears on the spirit.
+        conn.execute(
+            f"""
+            UPDATE users SET mood = MAX(0, mood - 1)
+            WHERE dormant = 0 AND condition NOT IN ('dead', 'dying')
+              AND active_injuries IS NOT NULL
+              AND json_array_length(active_injuries) >= 3
+              AND ({last_seen_expr} >= ? OR ? <= 1)
+            """,
+            (active_since, day),
+        )
 
 
 def _decay_mood_on_rollover() -> None:
@@ -5776,7 +5852,7 @@ def prune_old_scent_marks_on_rollover(guild_id: int, day: int) -> None:
         )
 
 
-def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
+def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = None) -> None:
     """Living wolves sleep through the rollover; same as a long rest."""
     from engine.conditions import apply_long_rest_benefits
 
@@ -5788,10 +5864,30 @@ def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
             """
         ).fetchall()
         for user in rows:
-            rest = apply_long_rest_benefits(user)
+            rest = apply_long_rest_benefits(user, season=season)
+            # Medic overextension: 5+ treatments in one sunrise → +1 exhaustion on rollover.
+            treats_today = int(user["herb_treats_today"]) if "herb_treats_today" in user.keys() else 0
+            if treats_today >= 5:
+                rest["exhaustion"] = min(10, rest["exhaustion"] + 1)
             from engine.herb_buffs import tick_buffs_for_rollover
 
             tick_fields = tick_buffs_for_rollover(user, day_number)
+            rest_hp = rest["hp"]
+            rest_exhaustion = rest["exhaustion"]
+            # Blood loss expiry: remove injury and restore -1 max HP penalty.
+            clear_blood_loss = tick_fields.pop("_clear_blood_loss", False)
+            if clear_blood_loss:
+                import json as _jbl
+                from engine.conditions import parse_injuries as _pibll, add_injury as _aibll
+                _inj_raw = user["active_injuries"] if "active_injuries" in user.keys() else None
+                _injs = _pibll(_inj_raw)
+                if "blood_loss" in _injs:
+                    _injs.remove("blood_loss")
+                    conn.execute(
+                        "UPDATE users SET active_injuries = ?, max_hp = MAX(1, max_hp + 1) WHERE id = ?",
+                        (_jbl.dumps(_injs), user["id"]),
+                    )
+                    from engine.conditions import clear_injury_since as _cisbl
             conn.execute(
                 """
                 UPDATE users
@@ -5804,8 +5900,8 @@ def _long_rest_all_wolves_on_rollover(day_number: int) -> None:
                 WHERE id = ?
                 """,
                 (
-                    rest["hp"],
-                    rest["exhaustion"],
+                    rest_hp,
+                    rest_exhaustion,
                     rest["mood"],
                     day_number,
                     tick_fields.get(
@@ -5855,8 +5951,13 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     vitals_exhaustion: list = []
     mood_exhaustion: list = []
     if run_global:
-        condition_notes = _progress_conditions(guild_id)
-        _long_rest_all_wolves_on_rollover(new_day)
+        condition_notes = _progress_conditions(guild_id, day=new_day)
+        with get_db() as conn:
+            from engine.disease_spread import apply_disease_spread_on_rollover
+
+            spread_notes = apply_disease_spread_on_rollover(conn, weather=new_weather, day=new_day, season=new_season)
+        condition_notes.extend(spread_notes)
+        _long_rest_all_wolves_on_rollover(new_day, season=new_season)
         from engine.character_traits import decay_skill_strain_on_rollover
 
         decay_skill_strain_on_rollover()
@@ -6139,7 +6240,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
     return world, needs_crisis
 
 
-def _progress_conditions(guild_id: int) -> list[dict]:
+def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
     """Daily disease and injury progression for all wolves. Returns rollover notes."""
     from engine.conditions import progress_disease, progress_injuries, progress_mental_overlay
     from engine.exhaustion_effects import consume_march_exhaustion_skip
@@ -6159,16 +6260,40 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                 if outcome.get("cleared"):
                     disease = None
                     conn.execute("UPDATE users SET quarantined = 0 WHERE id = ?", (user["id"],))
+                    # Post-recovery immunity: 7 sunrises before the same disease can re-infect.
+                    if day and outcome.get("disease_key"):
+                        from engine.herb_buffs import get_buffs as _gbimm, merge_buff_fields as _mbfimm
+                        _imm_key = f"immune_until_{outcome['disease_key']}"
+                        _imm_fields = _mbfimm(user, **{_imm_key: day + 7})
+                        conn.execute(
+                            "UPDATE users SET herb_buffs = ? WHERE id = ?",
+                            (_imm_fields["herb_buffs"], user["id"]),
+                        )
                 if outcome.get("hp_loss"):
                     new_hp = max(0, user["hp"] - outcome["hp_loss"])
                 if outcome.get("exhaustion_gain"):
                     gain = outcome["exhaustion_gain"]
                     gain, _ = consume_march_exhaustion_skip(conn, user, gain)
-                    from engine.exhaustion_effects import consume_pain_exhaustion_skip
+                    from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_PC, consume_pain_exhaustion_skip
 
                     gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
                     if gain:
-                        exhaustion = min(6, user["exhaustion"] + gain)
+                        exhaustion = min(_EXMAX_PC, user["exhaustion"] + gain)
+                if outcome.get("pain_exhaustion_gain"):
+                    from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX as _PE_MAX, user_pain_exhaustion as _upe
+                    from engine.herb_buffs import get_buffs as _gb_pr2
+                    _pr2_until = _gb_pr2(user).get("pain_relief_until_day", 0)
+                    _pe_suppressed = _pr2_until and day and int(_pr2_until) >= day
+                    if not _pe_suppressed:
+                        _old_pe = _upe(user)
+                        _new_pe = min(_PE_MAX, _old_pe + outcome["pain_exhaustion_gain"])
+                        if _new_pe > _old_pe:
+                            conn.execute(
+                                "UPDATE users SET pain_exhaustion = ? WHERE id = ?",
+                                (_new_pe, user["id"]),
+                            )
+                            if _new_pe >= _PE_MAX:
+                                exhaustion = min(_EXMAX_PC, user["exhaustion"] + 1)
                 if outcome.get("hunger_loss"):
                     conn.execute(
                         "UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id = ?",
@@ -6276,32 +6401,46 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                 continue
             new_hp = user["hp"]
             exhaustion = user["exhaustion"]
+            pain_ex = int(user["pain_exhaustion"]) if "pain_exhaustion" in user.keys() else 0
             if outcome.get("hp_loss"):
                 new_hp = max(0, user["hp"] - outcome["hp_loss"])
             if outcome.get("exhaustion_gain"):
                 gain = outcome["exhaustion_gain"]
                 gain, _ = consume_march_exhaustion_skip(conn, user, gain)
-                from engine.exhaustion_effects import consume_pain_exhaustion_skip
+                from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_PI, PAIN_EXHAUSTION_MAX as _PEXMAX_PI, consume_pain_exhaustion_skip
 
                 gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
                 if gain:
-                    exhaustion = min(6, user["exhaustion"] + gain)
+                    exhaustion = min(_EXMAX_PI, user["exhaustion"] + gain)
+            if outcome.get("pain_exhaustion_gain"):
+                from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX as _PEXMAX_PIB
+                pain_ex = min(_PEXMAX_PIB, pain_ex + outcome["pain_exhaustion_gain"])
+            if outcome.get("pain_exhaustion_drain"):
+                pain_ex = max(0, pain_ex - 1)
+            # Pain exhaustion 5: overflow into main exhaustion.
+            from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_PIO, PAIN_EXHAUSTION_MAX as _PEXMAX_PIO
+            if pain_ex >= _PEXMAX_PIO:
+                exhaustion = min(_EXMAX_PIO, exhaustion + 1)
+            new_mood = user["mood"]
+            if outcome.get("mood_loss"):
+                new_mood = max(0, user["mood"] - outcome["mood_loss"])
             cond = user["condition"] if "condition" in user.keys() else "healthy"
             collapsed = new_hp <= 0 and cond not in ("dead", "dying")
             if collapsed:
                 conn.execute(
                     """
-                    UPDATE users SET hp = 0, exhaustion = ?,
+                    UPDATE users SET hp = 0, exhaustion = ?, pain_exhaustion = ?,
+                        mood = ?,
                         condition = 'dying', death_save_round = 1,
                         death_save_fails = 0, death_save_successes = 0
                     WHERE id = ?
                     """,
-                    (exhaustion, user["id"]),
+                    (exhaustion, pain_ex, new_mood, user["id"]),
                 )
             else:
                 conn.execute(
-                    "UPDATE users SET hp = ?, exhaustion = ? WHERE id = ?",
-                    (new_hp, exhaustion, user["id"]),
+                    "UPDATE users SET hp = ?, exhaustion = ?, pain_exhaustion = ?, mood = ? WHERE id = ?",
+                    (new_hp, exhaustion, pain_ex, new_mood, user["id"]),
                 )
             for line in outcome.get("messages", []):
                 notes.append(
@@ -6319,6 +6458,117 @@ def _progress_conditions(guild_id: int) -> list[dict]:
                         "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
                     }
                 )
+    # Genetic condition sunrise effects (pain_exhaustion_gain, hunger_drain).
+    with get_db() as conn:
+        from engine.genetics import genetic_pain_exhaustion_gain, genetic_hunger_drain
+        from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX as _PE_MAX_G, EXHAUSTION_MAX as _EX_MAX_G
+
+        gen_rows = conn.execute(
+            """
+            SELECT * FROM users
+            WHERE genetic_conditions IS NOT NULL
+              AND genetic_conditions != ''
+              AND genetic_conditions != '[]'
+              AND condition NOT IN ('dead', 'dying')
+            """
+        ).fetchall()
+        for user in gen_rows:
+            pe_gain = genetic_pain_exhaustion_gain(user)
+            h_drain = genetic_hunger_drain(user)
+            if not pe_gain and not h_drain:
+                continue
+            updates: list[str] = []
+            params: list = []
+            if pe_gain:
+                from engine.herb_buffs import get_buffs as _gb_gen
+                _pr_until = _gb_gen(user).get("pain_relief_until_day", 0)
+                _day_ok = _pr_until and day and int(_pr_until) >= day
+                if not _day_ok:
+                    old_pe = int(user["pain_exhaustion"]) if "pain_exhaustion" in user.keys() else 0
+                    new_pe = min(_PE_MAX_G, old_pe + pe_gain)
+                    if new_pe > old_pe:
+                        updates.append("pain_exhaustion = ?")
+                        params.append(new_pe)
+                        if new_pe >= _PE_MAX_G:
+                            old_ex = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
+                            updates.append("exhaustion = ?")
+                            params.append(min(_EX_MAX_G, old_ex + 1))
+            if h_drain:
+                conn.execute(
+                    "UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id = ?",
+                    (h_drain, user["id"]),
+                )
+            if updates:
+                conn.execute(
+                    f"UPDATE users SET {', '.join(updates)} WHERE id = ?",
+                    (*params, user["id"]),
+                )
+
+    # Herb addiction: withdrawal for dependent wolves; tolerance decay otherwise.
+    with get_db() as conn:
+        from engine.herb_addiction import herb_withdrawal_at_rollover
+
+        addict_rows = conn.execute(
+            """
+            SELECT * FROM users
+            WHERE herb_use_log IS NOT NULL
+              AND herb_use_log != ''
+              AND herb_use_log != '{}'
+              AND condition NOT IN ('dead', 'dying')
+            """
+        ).fetchall()
+        for user in addict_rows:
+            fields, note = herb_withdrawal_at_rollover(user, day)
+            if fields:
+                cols = ", ".join(f"{k} = ?" for k in fields)
+                conn.execute(
+                    f"UPDATE users SET {cols} WHERE id = ?",
+                    (*fields.values(), user["id"]),
+                )
+            if note:
+                notes.append(
+                    {
+                        "wolf_name": user["wolf_name"],
+                        "discord_id": user["discord_id"],
+                        "line": note,
+                    }
+                )
+
+    # Meatless wasting: carnivores that go too long without real prey risk
+    # malnutrition (forage and liquids keep you alive, not thriving).
+    with get_db() as conn:
+        from config import MEATLESS_WASTING_DAYS, MEATLESS_WASTING_CHANCE
+        from engine.aging import stage_for_age
+        from engine.disease_contract import try_contract_disease
+
+        meat_rows = conn.execute(
+            """
+            SELECT * FROM users
+            WHERE dormant = 0 AND condition NOT IN ('dead', 'dying')
+              AND (disease IS NULL OR disease = '')
+            """
+        ).fetchall()
+        for user in meat_rows:
+            age = int(user["age_months"]) if "age_months" in user.keys() else 24
+            if stage_for_age(age) == "pup":
+                continue  # pups nurse; not held to the meat clock
+            last_meat = int(user["last_meat_day"]) if "last_meat_day" in user.keys() else 0
+            if last_meat <= 0:
+                # start the clock on first sighting so a never-fed wolf isn't
+                # instantly starving, but can't dodge the mechanic forever
+                conn.execute("UPDATE users SET last_meat_day = ? WHERE id = ?", (day, user["id"]))
+                continue
+            if day - last_meat >= MEATLESS_WASTING_DAYS and random.random() < MEATLESS_WASTING_CHANCE:
+                note = try_contract_disease(user, "wasting_sickness", "waning", chance=1.0, conn=conn)
+                if note:
+                    notes.append(
+                        {
+                            "wolf_name": user["wolf_name"],
+                            "discord_id": user["discord_id"],
+                            "line": "goes gaunt from a meatless stretch; " + note,
+                        }
+                    )
+
     from engine.disease_contract import apply_pending_milk_fever_on_rollover
 
     world = get_world(guild_id)

@@ -446,6 +446,59 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         injury_note = try_prey_counter_injury(updated, net_amount, day)
         if injury_note:
             embed.description = (embed.description or "") + f"\n\n{injury_note}"
+    # Surgery rest violation: hunting within surgery rest window extends rest and risks reopening.
+    from engine.herb_buffs import get_buffs as _get_buffs_h, merge_buff_fields as _mbf_sr
+    _h_buffs = _get_buffs_h(user)
+    _rest_until = _h_buffs.get("surgery_rest_until_day", 0)
+    if _rest_until and int(_rest_until) >= day:
+        import random as _rand_sr
+        _sr_user = db.get_user(interaction.user.id)
+        if _sr_user:
+            _new_rest = int(_rest_until) + 2
+            _ext_fields = _mbf_sr(_sr_user, surgery_rest_until_day=_new_rest)
+            db.update_user_by_id(_sr_user["id"], **_ext_fields)
+            embed.description = (embed.description or "") + f"\n\n_over-exertion; rest window extended to sunrise **{_new_rest}**._"
+            if _rand_sr.random() < 0.30:
+                import json as _json_sr
+                from engine.conditions import parse_injuries as _parse_inj_sr, add_injury as _add_inj_sr
+                _sr_user2 = db.get_user(interaction.user.id)
+                if _sr_user2:
+                    _sr_injs = _parse_inj_sr(_sr_user2["active_injuries"] if "active_injuries" in _sr_user2.keys() else None)
+                    if "deep_gash" not in _sr_injs:
+                        _sr_injs = _add_inj_sr(_sr_injs, "deep_gash")
+                        db.set_user_conditions(interaction.user.id, wolf_id=_sr_user2["id"], active_injuries=_json_sr.dumps(_sr_injs))
+                        embed.description = (embed.description or "") + " **deep gash** re-opens."
+    # Concussion escalation: strenuous activity worsens untreated concussion.
+    from engine.conditions import parse_injuries as _parse_conc
+    _conc_injs = _parse_conc(user["active_injuries"] if "active_injuries" in user.keys() else None)
+    if "concussion" in _conc_injs and "swollen_eye" not in _conc_injs:
+        import random as _rand_conc
+        if _rand_conc.random() < 0.30:
+            import json as _json_conc
+            from engine.conditions import add_injury as _add_conc
+            _conc_fresh = db.get_user(interaction.user.id)
+            if _conc_fresh:
+                _conc_list = _parse_conc(_conc_fresh["active_injuries"] if "active_injuries" in _conc_fresh.keys() else None)
+                _conc_list = _add_conc(_conc_list, "swollen_eye")
+                db.set_user_conditions(interaction.user.id, wolf_id=_conc_fresh["id"], active_injuries=_json_conc.dumps(_conc_list))
+                embed.description = (embed.description or "") + "\n\n_running with a concussion; the blow to the eye socket swells — **swollen eye** early onset._"
+    # Heat exhaustion: summer hunts at exhaustion ≥ 3 risk +1 exhaustion (10%, DC 10 CON save).
+    _world_season = world["season"] if "season" in world.keys() else None
+    _u_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
+    if _world_season == "summer" and _u_exhaustion >= 3:
+        import random as _rand_he
+        if _rand_he.random() < 0.10:
+            from engine.rolls import roll_d20 as _roll_he
+            from engine.character import attr_modifier as _amod_he
+            from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_HE
+            _con_mod = _amod_he(int(user["attr_con"]) if "attr_con" in user.keys() else 5)
+            _heat_roll = _roll_he() + _con_mod
+            if _heat_roll < 10:
+                _he_user = db.get_user(interaction.user.id)
+                if _he_user:
+                    _new_ex = min(_EXMAX_HE, int(_he_user["exhaustion"]) + 1)
+                    db.set_user_conditions(interaction.user.id, wolf_id=_he_user["id"], exhaustion=_new_ex)
+                    embed.description = (embed.description or "") + f"\n\n_summer heat strain (con **{_heat_roll}** vs dc **10**); **+1 exhaustion** (now **{_new_ex}/{_EXMAX_HE}**)._"
     return embed, net_amount > 0, None
 
 
@@ -800,12 +853,31 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     fatigue = _activity_fatigue_note(db.get_user(interaction.user.id), "forage", day)
     if result["outcome"] == "critical_failure":
         from engine.disease_contract import try_nettle_sting_exposure
+        from engine.character import attr_modifier
 
         nettle_note = try_nettle_sting_exposure(user, chance=0.35) or ""
+        # a botched forage always bites: you test-taste a misidentified plant.
+        # con save or swallow the toxin and sicken; either way it costs hp.
+        con_mod = attr_modifier(int(user["attr_con"]) if "attr_con" in user.keys() else 5)
+        save_total = random.randint(1, 20) + con_mod
+        if save_total >= 12:
+            dmg = 1
+            tox_note = f"a bitter mouthful; you spit most of it out in time. **minus 1 hp**. _(con {save_total} vs 12)_"
+        else:
+            dmg = random.randint(2, 4)
+            tox_note = f"you swallow a toxic sample before the taste warns you. **minus {dmg} hp**. _(con {save_total} vs 12)_"
+            from engine.disease_contract import try_contract_disease
+
+            gi = try_contract_disease(user, "diarrhea", chance=1.0)
+            if gi:
+                tox_note += f"\n{gi}"
+        new_hp = max(1, int(user["hp"]) - dmg)
+        db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=new_hp)
         embed = howlbert_embed(
             "misidentified!",
             format_roll_result(result)
-            + "\n\nyou damaged the patch or gathered something toxic."
+            + "\n\nyou gathered the wrong plant and tested it on your tongue.\n"
+            + tox_note
             + (f"\n\n{nettle_note}" if nettle_note else "")
             + forager_note
             + season_suffix

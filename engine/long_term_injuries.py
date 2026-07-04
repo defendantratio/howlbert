@@ -15,8 +15,9 @@ LONG_TERM_TYPES = {
     },
     "scarring": {
         "label": "Scarring",
-        "effect": "Visible scars; **+1** on Intimidation when the scar is seen.",
+        "effect": "Visible scars; **+1** Intimidation and **+1** Deception in confrontational contexts.",
         "intimidate_bonus": 1,
+        "deception_bonus": 1,
     },
     "chronic_pain": {
         "label": "Chronic Pain",
@@ -46,6 +47,29 @@ LONG_TERM_TYPES = {
     "runt": {
         "label": "Runt of the Litter",
         "effect": "Smallest of a large litter; one attribute permanently weaker.",
+        "intimidate_bonus": 0,
+    },
+    "battle_hardened": {
+        "label": "Battle-Hardened",
+        "effect": "Survived five or more serious fights; **+1** on attack rolls. Immune to winded state and round-count fatigue penalties in combat.",
+        "intimidate_bonus": 1,
+    },
+    "scarred_hide": {
+        "label": "Scarred Hide",
+        "effect": "Took three or more serious wounds in a single fight; hide toughened by damage — **+1 max HP** permanently, **+1 CHA** (battle-worn authority). Stacks with scarring.",
+        "intimidate_bonus": 0,
+        "max_hp_bonus": 1,
+        "cha_bonus": 1,
+    },
+    "healer_instinct": {
+        "label": "Healer's Instinct",
+        "effect": "Performed 20+ successful treatments; deepened knowledge of the body — **+1 WIS** permanently.",
+        "intimidate_bonus": 0,
+        "wis_bonus": 1,
+    },
+    "arthritis": {
+        "label": "Arthritis",
+        "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
         "intimidate_bonus": 0,
     },
 }
@@ -139,6 +163,7 @@ CHRONIC_CONVERSION_TARGET = {
     "fractured_rib": "chronic_pain",
     "concussion": "chronic_pain",
     "torn_claw": "scarring",
+    "festering_wound": "chronic_pain",
 }
 
 
@@ -316,6 +341,37 @@ def try_cure_long_term(herb_key: str, user) -> tuple[bool, str]:
     return True, "marsh milk breaks the old curse; long-term injuries ease."
 
 
+COMBAT_VICTORIES_FOR_BATTLE_HARDENED = 5
+
+
+def record_combat_victory(wolf_id: int) -> str | None:
+    """
+    Increment a wolf's combat-victory counter. Grants battle_hardened at 5 wins.
+    Returns a player-facing note when the trait is earned, or None.
+    """
+    wolf = db.get_user_by_id(wolf_id)
+    if not wolf:
+        return None
+    current_lt = parse_long_term_injuries(
+        wolf["long_term_injuries"] if "long_term_injuries" in wolf.keys() else None
+    )
+    if "battle_hardened" in current_lt:
+        return None
+    from engine.herb_buffs import buffs_json, get_buffs
+
+    buffs = get_buffs(wolf)
+    wins = int(buffs.get("combat_victories", 0)) + 1
+    buffs["combat_victories"] = wins
+    db.update_user_by_id(wolf_id, herb_buffs=buffs_json(buffs))
+    if wins >= COMBAT_VICTORIES_FOR_BATTLE_HARDENED:
+        add_long_term_injury(wolf_id, "battle_hardened")
+        return (
+            f"**{wolf['wolf_name']}** has fought through {wins} serious battles — "
+            f"they are now **Battle-Hardened**; {LONG_TERM_TYPES['battle_hardened']['effect']}"
+        )
+    return None
+
+
 def check_adjustments(
     user,
     *,
@@ -345,6 +401,12 @@ def check_adjustments(
     if "scarring" in entries and skill_key == "intimidation":
         mod += 1
         notes.append("Scars (+1 Intimidation)")
+    if "scarring" in entries and skill_key == "deception":
+        mod += 1
+        notes.append("Scars (+1 Deception; unsettling presence)")
+    if "battle_hardened" in entries and skill_key == "intimidation":
+        mod += 1
+        notes.append("Battle-Hardened (+1 Intimidation)")
     if "bold_arrival" in entries and skill_key == "intimidation":
         mod += 1
         notes.append("Bold arrival (+1 Intimidation)")
@@ -370,6 +432,19 @@ def check_adjustments(
     if shedding and skill_key == "stealth":
         mod -= 1
         notes.append("Mid-shed; loose fur clings to everything (−1 Stealth)")
+    if "arthritis" in entries and "attr_dex" in attr_keys:
+        from engine.herb_buffs import pain_relief_active
+
+        day = day_number
+        if pain_relief_active(user, day):
+            notes.append("pain relief (arthritis ease active)")
+        else:
+            mod -= 1
+            notes.append("Arthritis (-1 Dex)")
+            if weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind"):
+                disadvantage = True
+                notes.append("joints seize in cold and wet (disadvantage)")
+
     if "chronic_pain" in entries and first_physical_today:
         from engine.herb_buffs import pain_relief_active
 

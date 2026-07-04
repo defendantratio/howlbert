@@ -53,7 +53,7 @@ class Wolvden(commands.Cog):
 
     @app_commands.command(name='hoarding', description='hoard overview, shred toys, or gift toys.')
     @app_commands.describe(action='hoard, shred, gift, or craft', toy='toy stack (shred/gift)', wolf='packmate (gift)', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf (gift)', message='optional note on gifts', recipe='craft recipe (bone_toy or stick_bundle)')
-    @app_commands.choices(action=[app_commands.Choice(name='hoard overview', value='hoard'), app_commands.Choice(name='shred toy', value='shred'), app_commands.Choice(name='gift toy', value='gift'), app_commands.Choice(name='craft from remnants', value='craft')], recipe=[app_commands.Choice(name='bone toy (8 remnants)', value='bone_toy'), app_commands.Choice(name='stick bundle (6 remnants)', value='stick_bundle')])
+    @app_commands.choices(action=[app_commands.Choice(name='hoard overview', value='hoard'), app_commands.Choice(name='shred toy', value='shred'), app_commands.Choice(name='gift toy', value='gift'), app_commands.Choice(name='craft from remnants', value='craft')], recipe=[app_commands.Choice(name='bone toy (8 remnants)', value='bone_toy'), app_commands.Choice(name='stick bundle (6 remnants)', value='stick_bundle'), app_commands.Choice(name='broth (3 bones)', value='broth')])
     @app_commands.autocomplete(toy=_toy_autocomplete, own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
     async def hoarding(self, interaction: discord.Interaction, action: str, toy: str | None=None, wolf: discord.Member | None=None, wolf_name: str | None=None, own_wolf: str | None=None, message: str | None=None, recipe: str | None=None):
         if action == 'hoard':
@@ -152,7 +152,11 @@ class Wolvden(commands.Cog):
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return
-        ok, msg = craft_from_remnants(user, recipe)
+        if recipe == 'broth':
+            from engine.liquid_diet import brew_broth
+            ok, msg = brew_broth(user)
+        else:
+            ok, msg = craft_from_remnants(user, recipe)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         await interaction.response.send_message(embed=howlbert_embed('Craft', msg, color=color))
 

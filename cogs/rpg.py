@@ -157,14 +157,18 @@ class Rpg(commands.Cog):
         embed.description = f'STR {strength} · DEX {dexterity} · CON {constitution}\nINT {intelligence} · CHA {charisma} · WIS {wisdom}\n**Total: {total}**\n**Max HP:** {format_max_hp_breakdown(strength, constitution, max_hp=max_hp)}'
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='vitals', description='view conditions or rest.')
-    @app_commands.describe(action='condition or rest', rest_type='short or long rest (rest)', use_herb='use comfrey for short rest healing (rest)')
-    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest')], rest_type=[app_commands.Choice(name='long rest (6-8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10-30 min)', value='short')])
+    @app_commands.command(name='vitals', description='view conditions, rest, lick wounds, or escape quarantine.')
+    @app_commands.describe(action='condition, rest, lick_wound, or escape_quarantine', rest_type='short or long rest (rest)', use_herb='use comfrey for short rest healing (rest)')
+    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (1 hp, once per sunrise)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6-8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10-30 min)', value='short')])
     async def vitals(self, interaction: discord.Interaction, action: str, rest_type: str='long', use_herb: bool=False):
         if action == 'condition':
             await self._condition(interaction)
         elif action == 'rest':
             await self._rest(interaction, rest_type, use_herb)
+        elif action == 'lick_wound':
+            await self._lick_wound(interaction)
+        elif action == 'escape_quarantine':
+            await self._escape_quarantine(interaction)
 
     async def _condition(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
@@ -172,6 +176,10 @@ class Rpg(commands.Cog):
             embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
+        from engine.vitals_decay import apply_time_decay
+        _decay_applied, _ = apply_time_decay(user)
+        if _decay_applied:
+            user = db.get_user(interaction.user.id) or user
         from engine.character import format_max_hp_breakdown
         from engine.conditions import format_conditions
         from engine.exhaustion_effects import effective_max_hp, user_exhaustion
@@ -229,7 +237,7 @@ class Rpg(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             from engine.activity_exhaustion import clear_activity_fatigue
-            rest = apply_long_rest_benefits(user)
+            rest = apply_long_rest_benefits(user, season=world['season'] if world and 'season' in world.keys() else None)
             clear_activity_fatigue(user, day)
             mark_manual_long_rest(user, day)
             db.set_user_conditions(interaction.user.id, hp=rest['hp'], exhaustion=rest['exhaustion'], last_rest_day=day, herb_heals_today=0)
@@ -271,6 +279,95 @@ class Rpg(commands.Cog):
             msg += f' _(Clears activity strain; reduces exhaustion by {SHORT_REST_EXHAUSTION_RELIEF} per rest. HP recovery needs comfrey.)_'
         embed = howlbert_embed('Short Rest', msg, color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
+
+    async def _escape_quarantine(self, interaction: discord.Interaction):
+        import random
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.quarantine import is_quarantined
+        if not is_quarantined(user):
+            await interaction.response.send_message(embed=howlbert_embed('Not Quarantined', 'you are not in the sick den.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.character import attr_modifier
+        attr_dex = int(user['attr_dex']) if 'attr_dex' in user.keys() else 0
+        mod = attr_modifier(attr_dex)
+        die = random.randint(1, 20)
+        total = die + mod
+        dc = 12
+        if total >= dc:
+            db.set_quarantined(interaction.user.id, False, wolf_id=user['id'])
+            embed = howlbert_embed(
+                'Escaped',
+                f'you slip out of the sick den while the medic is away. quarantine lifted.\n\n_roll: **{die}** + dex **{mod:+}** = **{total}** vs dc {dc}_\n\n_if a medic or alpha notices you are gone, they may re-quarantine you._',
+                color=SUCCESS_COLOR,
+            )
+            embed.set_footer(text='ephemeral — only you see this')
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            result = db.adjust_wolf_standing(interaction.user.id, -5)
+            caught_note = ''
+            if result == 'kicked':
+                caught_note = '\n_standing so low you have been cast out of the pack._'
+            embed = howlbert_embed(
+                'Caught',
+                f'you are caught mid-sneak. the medic scent-marks you back to the den. **−5 standing**.{caught_note}\n\n_roll: **{die}** + dex **{mod:+}** = **{total}** vs dc {dc}_',
+                color=ERROR_COLOR,
+            )
+            embed.set_footer(text='ephemeral — only you see this')
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    async def _lick_wound(self, interaction: discord.Interaction):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        cond = user['condition'] if 'condition' in user.keys() else 'healthy'
+        if cond in ('dead', 'dying'):
+            await interaction.response.send_message(embed=howlbert_embed('Cannot Act', 'a wolf in this condition cannot tend to themselves.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild_id:
+            await interaction.response.send_message(embed=howlbert_embed('Server Only', 'Use this in a server.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.conditions import parse_injuries
+        injuries = parse_injuries(user['active_injuries'] if 'active_injuries' in user.keys() else None)
+        if not injuries:
+            await interaction.response.send_message(embed=howlbert_embed('No Wounds', 'you have no active injuries to tend to.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        import random
+        world = db.get_world(interaction.guild_id)
+        day = world['day_number'] if world else 1
+        last_lick = int(user['last_lick_day']) if 'last_lick_day' in user.keys() else 0
+        max_hp = int(user['max_hp']) if 'max_hp' in user.keys() else 10
+        current_hp = int(user['hp']) if 'hp' in user.keys() else max_hp
+        # no cooldown: the first tending each sunrise heals; licking again only
+        # irritates the raw skin (diminishing returns), and over-licking can
+        # fester into a sore, so spamming it backfires instead of being blocked.
+        already_tended = last_lick >= day
+        if already_tended:
+            msg = 'you lick at the wounds again, but they are already tended; more licking only worries the raw skin.'
+            color = ERROR_COLOR
+            if 'infected_wound' not in injuries and random.random() < 0.15:
+                import json
+                from engine.conditions import add_injury
+                injuries = add_injury(injuries, 'infected_wound')
+                db.set_user_conditions(interaction.user.id, wolf_id=user['id'], active_injuries=json.dumps(injuries))
+                msg += ' licked raw, it festers; **infected wound**.'
+            embed = howlbert_embed('Lick Wound', msg, color=color)
+            embed.set_footer(text='/vitals action:condition · /medic action:treat')
+            await interaction.response.send_message(embed=embed)
+            return
+        db.update_user(interaction.user.id, wolf_id=user['id'], last_lick_day=day)
+        if current_hp >= max_hp:
+            await interaction.response.send_message(embed=howlbert_embed('Lick Wound', 'you work your tongue along each wound carefully. your hp is already full; the licking soothes but heals nothing new.', color=SUCCESS_COLOR))
+            return
+        new_hp = min(max_hp, current_hp + 1)
+        db.set_user_conditions(interaction.user.id, wolf_id=user['id'], hp=new_hp)
+        embed = howlbert_embed('Lick Wound', f'you work your tongue carefully across each wound, cleaning dirt and slowing the bleed. **+1 hp** (now {new_hp}/{max_hp}).\n\n_tend again and the raw skin only worsens; pairs with medic treatment_', color=SUCCESS_COLOR)
+        embed.set_footer(text='/vitals action:condition · /medic action:treat')
+        await interaction.response.send_message(embed=embed)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Rpg(bot))
