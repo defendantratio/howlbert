@@ -53,7 +53,7 @@ async def herb_inventory_autocomplete(
     needle = current.lower()
     items = db.get_inventory(interaction.user.id)
 
-    # build herb_key -> {form: potency} — one entry per form, most recent wins
+    # build herb_key -> {form: potency}; one entry per form, most recent wins
     # (get_herb_stacks returns rows ORDER BY acquired_day DESC so first seen = most recent)
     stacks_by_herb: dict[str, dict[str, int]] = {}
     try:
@@ -86,7 +86,7 @@ async def herb_inventory_autocomplete(
             pot_str = f" {potency}%" if potency is not None else ""
             label = f"{display_name} - {form}{pot_str} x{qty}"
         else:
-            # raw herb — annotate with any prepared stacks (one per unique form)
+            # raw herb; annotate with any prepared stacks (one per unique form)
             herb_forms = stacks_by_herb.get(herb_key, {})
             if herb_forms:
                 prep_note = "; ".join(f"{f} {p}%" for f, p in list(herb_forms.items())[:3])

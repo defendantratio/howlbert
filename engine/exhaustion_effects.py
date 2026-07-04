@@ -16,9 +16,49 @@ from engine.mood import user_mood
 
 
 
-EXHAUSTION_MAX = 6
+EXHAUSTION_MAX = 10
+
+# Pain exhaustion is a separate 0 to 5 pool from painful injuries and diseases;
+# at the cap it overflows into main exhaustion.
+PAIN_EXHAUSTION_MAX = 5
 
 
+def user_pain_exhaustion(user) -> int:
+    if not user or "pain_exhaustion" not in user.keys():
+        return 0
+    try:
+        return int(user["pain_exhaustion"] or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def pain_exhaustion_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bool]:
+    """Accumulated physical pain impairs checks. Returns (flat_penalty, disadvantage).
+
+    Only physical attributes (str/dex/con) are dulled by pain; a wolf can still
+    think and read the pack through it. 3+ pain is a flat penalty; the full pool
+    also imposes disadvantage.
+    """
+    pe = user_pain_exhaustion(user)
+    if pe <= 0:
+        return 0, False
+    if not (set(attr_keys) & {"attr_str", "attr_dex", "attr_con"}):
+        return 0, False
+    penalty = -1 if pe >= 3 else 0
+    if pe >= PAIN_EXHAUSTION_MAX:
+        penalty -= 1
+    disadvantage = pe >= PAIN_EXHAUSTION_MAX
+    return penalty, disadvantage
+
+
+def pain_exhaustion_hunt_multiplier(user) -> tuple[float, str]:
+    """Pain drags on field yield: ~5% per point of pain exhaustion, up to 25%."""
+    pe = user_pain_exhaustion(user)
+    if pe <= 0:
+        return 1.0, ""
+    mult = max(0.75, 1.0 - 0.05 * pe)
+    pct = int(round((1.0 - mult) * 100))
+    return mult, f"pain exhaustion {pe}; the ache slows the hunt (**-{pct}%**)"
 
 
 
@@ -96,7 +136,7 @@ def effective_max_hp(user) -> int:
 
     base = int(user["max_hp"]) if user and "max_hp" in user.keys() else 11
 
-    if user_exhaustion(user) >= 4:
+    if user_exhaustion(user) >= 6:
 
         return max(1, base // 2)
 
@@ -110,7 +150,7 @@ def exhaustion_activity_block(user) -> str | None:
 
     ex = user_exhaustion(user)
 
-    if ex >= 5:
+    if ex >= 8:
 
         return (
 
@@ -237,7 +277,7 @@ def apply_exhaustion_death_on_rollover(
     day: int | None = None,
 ) -> list[dict]:
 
-    """Exhaustion 6: death at sunrise."""
+    """Exhaustion at EXHAUSTION_MAX (10): death at sunrise."""
     import database as db
 
     rows = conn.execute(
@@ -290,7 +330,7 @@ def clamp_hp_for_exhaustion_on_rollover(conn: sqlite3.connection) -> None:
 
         FROM users
 
-        WHERE condition NOT IN ('dead') AND exhaustion >= 4
+        WHERE condition NOT IN ('dead') AND exhaustion >= 6
 
         """
 

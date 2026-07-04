@@ -94,12 +94,12 @@ def enrich_large_prey_embed(
         current = current_fighter_for_enc(enc_id)
         actor = (current["npc_name"] if current and current["npc_name"] else hunter_name) if current else hunter_name
         lines.append(
-            f"\n**round {enc['round']}** — **{actor}** acts first. "
+            f"\n**round {enc['round']}**; **{actor}** acts first. "
             "on your turn: **bite** or **claw** (auto-targets lone prey), or pick from the target menu."
         )
     else:
         lines.append(
-            f"\n_combat status **{enc['status']}** — `/combat status encounter:{enc_id}` to recover the panel._"
+            f"\n_combat status **{enc['status']}**; `/combat status encounter:{enc_id}` to recover the panel._"
         )
 
     embed.description = (embed.description or "") + "\n\n" + "\n".join(lines)

@@ -113,7 +113,7 @@ class Roleplay(commands.Cog):
         try:
             await member.send(embed=embed)
         except discord.Forbidden:
-            await interaction.response.send_message(embed=howlbert_embed('DMs Closed', f"Couldn't reach **{member.display_name}** — their DMs may be off.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('DMs Closed', f"Couldn't reach **{member.display_name}**; their DMs may be off.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         await interaction.response.send_message(embed=howlbert_embed('Whisper Sent', f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
@@ -136,14 +136,12 @@ class Roleplay(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if int(wolf['last_weep_day']) >= day:
-            embed = howlbert_embed('already wept', 'the river already holds what you gave it this sunrise.', color=ERROR_COLOR)
-            embed.set_footer(text='resets next sunrise · what happens at the weep stone stays in the river\'s memory')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import next_use_multiplier
+        _weep_mult, _weep_n = next_use_multiplier(wolf, 'weep', day)
         db.update_user(interaction.user.id, last_weep_day=day, wolf_id=wolf['id'])
-        mood = db.adjust_mood(wolf['id'], 10)
-        lines = [f"**{wolf['wolf_name']}** goes alone to the weep stone; no one watches. the river takes the rest.", f"mood **{mood}** (+10)."]
+        _weep_gain = max(1, int(10 * _weep_mult))
+        mood = db.adjust_mood(wolf['id'], _weep_gain)
+        lines = [f"**{wolf['wolf_name']}** goes alone to the weep stone; no one watches. the river takes the rest.", f"mood **{mood}** (+{_weep_gain})."]
         from engine.diseases import parse_disease
         key, stage = parse_disease(wolf['disease'] if 'disease' in wolf.keys() else None)
         if key == 'grief_melancholy':

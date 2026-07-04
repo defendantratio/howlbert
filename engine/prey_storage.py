@@ -75,7 +75,7 @@ def format_prey_hoard_line(stack, current_day: int) -> str:
 def format_prey_hoard_footer(*, empty: bool = False) -> str:
     if empty:
         return (
-            "fresh kills rot by type (3–8 sunrises); `/eat` before spoil · "
+            "fresh kills rot by type (3 to 8 sunrises); `/eat` before spoil · "
             "rotting → `/salvage` · `/checklist`"
         )
     return (

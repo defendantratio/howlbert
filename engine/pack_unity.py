@@ -177,5 +177,5 @@ def format_howl_carry(reach: int, *, natural_20: bool = False) -> str:
     unit = "tree-length" if reach == 1 else "tree-lengths"
     text = f"carries **{reach}** {unit} on the wind"
     if natural_20:
-        text += " — the note doubles back across the ridges"
+        text += "; the note doubles back across the ridges"
     return text

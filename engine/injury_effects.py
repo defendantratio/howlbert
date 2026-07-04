@@ -79,7 +79,7 @@ def meal_jaw_pain_note(user) -> str:
     old_pe = int(user["pain_exhaustion"]) if "pain_exhaustion" in user.keys() else 0
     new_pe = min(_PE_MAX, old_pe + 3)
     _inj_db.update_user(int(user["discord_id"]), wolf_id=int(user["id"]), pain_exhaustion=new_pe)
-    return "\n_eating with a **broken jaw** is agonizing — **+3 pain exhaustion**. slippery elm removes this._"
+    return "\n_eating with a **broken jaw** is agonizing; **+3 pain exhaustion**. slippery elm removes this._"
 
 
 def attack_roll_modifiers(user, attack_type: str) -> tuple[int, bool]:
@@ -164,14 +164,14 @@ def injury_check_adjustments(
     smoke = int(user["smoke_debuff"]) if user and "smoke_debuff" in user.keys() else 0
     if smoke and "attr_wis" in attrs:
         disadvantage = True
-    # Exhaustion 4: body past its limit — disadvantage on all physical attribute checks.
-    if user and "exhaustion" in user.keys() and int(user["exhaustion"]) >= 4:
+    # Exhaustion 6: body past its limit; disadvantage on all physical attribute checks.
+    if user and "exhaustion" in user.keys() and int(user["exhaustion"]) >= 6:
         if bool(attrs & {"attr_str", "attr_dex", "attr_con"}):
             disadvantage = True
     # Compound injury burden: each injury beyond the first adds -1 to all checks (cap -4).
     if len(injuries) > 1:
         penalty -= min(4, len(injuries) - 1)
-    # Critical mood: wolf is barely present — WIS disadvantage on field checks.
+    # Critical mood: wolf is barely present; WIS disadvantage on field checks.
     if user and "mood" in user.keys() and int(user["mood"]) < MOOD_CRITICAL_THRESHOLD:
         if "attr_wis" in attrs:
             disadvantage = True
@@ -186,7 +186,7 @@ def injury_check_adjustments(
 
 def injury_hunt_multiplier(user) -> tuple[float, str]:
     """
-    Non-blocking injuries still cost hunt yield — sprained leg, infected wound,
+    Non-blocking injuries still cost hunt yield; sprained leg, infected wound,
     etc. slow a wolf without stopping them entirely. Stacks up to −50%.
     """
     injuries = active_injury_keys(user)
@@ -242,7 +242,7 @@ def injury_hunt_multiplier(user) -> tuple[float, str]:
 
 def injury_patrol_standing_bonus(user) -> int:
     """
-    Standing bonus for patrolling with a non-blocking physical injury — putting
+    Standing bonus for patrolling with a non-blocking physical injury; putting
     the pack ahead of your own pain is noticed and respected. Capped at +2.
     """
     injuries = active_injury_keys(user)
@@ -259,7 +259,7 @@ def injury_patrol_standing_bonus(user) -> int:
 def injury_caught_standing_penalty(user) -> int:
     """
     Extra standing loss when a patrol goes wrong (spotted, ambushed) and the
-    wolf was already hurt — the injury is why they couldn't get away clean.
+    wolf was already hurt; the injury is why they couldn't get away clean.
     """
     injuries = active_injury_keys(user)
     CAUGHT_PENALTIES: dict[str, int] = {
@@ -273,7 +273,7 @@ def injury_caught_standing_penalty(user) -> int:
 
 
 def in_shock(fighter_f) -> bool:
-    """True when a fighter's in-combat HP falls below 25% of their max — shock sets in."""
+    """True when a fighter's in-combat HP falls below 25% of their max; shock sets in."""
     if not fighter_f:
         return False
     try:

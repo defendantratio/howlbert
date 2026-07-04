@@ -29,7 +29,7 @@ GENERAL_PROMPTS: tuple[dict, ...] = (
     {"text": "Your wolf catches their reflection in still water and doesn't recognize themself for a moment. Why?", "mood": "reflective"},
     {"text": "A rival pack member is caught alone on your territory, unarmed and lost. What does your wolf do?", "mood": "tense"},
     {"text": "It's the first warm day after a long winter. Your wolf drags a packmate out to enjoy it, whether they want to or not.", "mood": "playful"},
-    {"text": "Your wolf finds an old scent trail that shouldn't still be there — it belongs to someone long gone.", "mood": "eerie"},
+    {"text": "Your wolf finds an old scent trail that shouldn't still be there; it belongs to someone long gone.", "mood": "eerie"},
     {"text": "A game of chase turns into something more serious when someone gets a little too competitive.", "mood": "mischievous"},
     {"text": "Your wolf is asked to keep a secret that could hurt someone they love if it came out. Do they keep it?", "mood": "tense"},
     {"text": "A young wolf challenges your wolf to a wrestling match in front of the whole den. Pride is on the line.", "mood": "playful"},
@@ -42,14 +42,14 @@ GENERAL_PROMPTS: tuple[dict, ...] = (
     {"text": "An old wound aches worse than usual tonight. Your wolf can't sleep, and someone notices.", "mood": "somber"},
     {"text": "A courting gift goes hilariously wrong. What was it supposed to be, and what happened instead?", "mood": "romantic"},
     {"text": "Your wolf overhears something they weren't meant to hear. Now what?", "mood": "tense"},
-    {"text": "The pack gathers to howl at the full moon. Someone's voice breaks partway through — why?", "mood": "somber"},
+    {"text": "The pack gathers to howl at the full moon. Someone's voice breaks partway through; why?", "mood": "somber"},
     {"text": "Your wolf finds someone else's claw marks on a tree at the edge of their territory, fresh and deliberate.", "mood": "eerie"},
     {"text": "A packmate returns from a long patrol with news that changes everything for the evening.", "mood": "tense"},
     {"text": "Your wolf tries (and fails) to teach a pup how to hunt. The pup has other ideas.", "mood": "playful"},
     {"text": "Someone your wolf cares for is grieving, and they don't know how to help.", "mood": "somber"},
     {"text": "A long-buried rivalry resurfaces over something as small as a contested kill.", "mood": "tense"},
     {"text": "Your wolf finds themself drawn to a stranger's scent on the wind, and can't explain why.", "mood": "romantic"},
-    {"text": "The den is quiet tonight — too quiet. Your wolf goes looking for why.", "mood": "eerie"},
+    {"text": "The den is quiet tonight; too quiet. Your wolf goes looking for why.", "mood": "eerie"},
     {"text": "A favor owed finally gets called in, at the worst possible time.", "mood": "tense"},
     {"text": "Your wolf shares a meal with someone they shouldn't trust, and finds themself trusting them anyway.", "mood": "hopeful"},
 )
@@ -58,8 +58,8 @@ GENERAL_PROMPTS: tuple[dict, ...] = (
 PACK_PROMPTS: dict[str, tuple[dict, ...]] = {
     "greyspire": (
         {"text": "A rockslide blocks the High Pass. Someone has to be the one to clear it, alone, in the cold.", "mood": "tense"},
-        {"text": "A Greyspire elder tells a pup that 'strength is truth, blood is law' — and the pup asks what that really means.", "mood": "reflective"},
-        {"text": "Two wolves spar at Stoneguard Watch to settle who leads the next patrol. No hard feelings — mostly.", "mood": "playful"},
+        {"text": "A Greyspire elder tells a pup that 'strength is truth, blood is law'; and the pup asks what that really means.", "mood": "reflective"},
+        {"text": "Two wolves spar at Stoneguard Watch to settle who leads the next patrol. No hard feelings; mostly.", "mood": "playful"},
     ),
     "mistmoor": (
         {"text": "The swamp fog rolls in thick tonight, and something is moving just out of sight.", "mood": "eerie"},
@@ -79,7 +79,7 @@ PACK_PROMPTS: dict[str, tuple[dict, ...]] = {
 }
 
 LONER_PROMPTS: tuple[dict, ...] = (
-    {"text": "A loner crosses paths with a pack patrol on neutral ground. Neither side wants trouble — yet.", "mood": "tense"},
+    {"text": "A loner crosses paths with a pack patrol on neutral ground. Neither side wants trouble; yet.", "mood": "tense"},
     {"text": "Your wolf has gone without company for so long that a simple kind word from a stranger catches them off guard.", "mood": "reflective"},
     {"text": "A loner is offered a place in a den for the night. Do they take the risk?", "mood": "hopeful"},
 )
@@ -87,10 +87,10 @@ LONER_PROMPTS: tuple[dict, ...] = (
 ROGUE_PROMPTS: tuple[dict, ...] = (
     {"text": "Your wolf is caught stealing from a pack's cache. There's no good way to explain this.", "mood": "tense"},
     {"text": "An old grudge against a Great Pack finally comes to a head.", "mood": "tense"},
-    {"text": "A rogue offers information to a pack — for a price they know the pack won't like.", "mood": "mischievous"},
+    {"text": "A rogue offers information to a pack; for a price they know the pack won't like.", "mood": "mischievous"},
 )
 
-# Book One: The Blinking — phase-tagged prompts that lean on the plot's news beats.
+# Book One: The Blinking; phase-tagged prompts that lean on the plot's news beats.
 # Phase numbers match engine.plot_blinking.PHASES.
 BLINKING_PROMPTS: dict[int, tuple[str, ...]] = {
     1: (
@@ -123,7 +123,7 @@ BLINKING_PROMPTS: dict[int, tuple[str, ...]] = {
     ),
     8: (
         "Something ancient seems to sleep beneath the mill's rotted timbers. Your wolf swears they can taste iron on the air.",
-        "A find at the mill could be worth bones and standing both — if it's safe to take.",
+        "A find at the mill could be worth bones and standing both; if it's safe to take.",
     ),
     9: (
         "A howl carries the names of the forgotten dead, and your wolf flinches at one name in particular.",

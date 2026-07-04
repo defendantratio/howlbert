@@ -1,4 +1,4 @@
-"""Forest cat clans; Warrior Cats canon names for wolf–cat pacts."""
+"""Forest cat clans; Warrior Cats canon names for wolf; cat pacts."""
 
 from __future__ import annotations
 
@@ -157,7 +157,7 @@ def forge_success_flavor(clan_name: str) -> str:
 def validate_clan_name(name: str) -> tuple[str | None, str | None]:
     name = normalize_clan_name(name)
     if len(name) < 3 or len(name) > 24:
-        return None, "clan name must be 3-24 characters."
+        return None, "clan name must be 3 to 24 characters."
     if not _CLAN_RE.match(name):
         return None, "use letters only (e.g. **thunderclan**)."
     canon = canon_clan_name(name)

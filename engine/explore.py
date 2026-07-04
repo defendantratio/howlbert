@@ -378,7 +378,7 @@ def try_explore(
         + (f"\n\n{hazard_note}" if hazard_note else ""),
         color=SUCCESS_COLOR,
     )
-    embed.set_footer(text="amusement: `/playpen` · carcasses: `/food` · sell scraps: `/bones action:raccoonsell`")
+    embed.set_footer(text="amusement: `/playpen` · carcasses: `/food` · salvage scraps: `/salvage`")
     if is_scout(user):
         from config import SCOUT_EXPLORE_DC_BONUS
 

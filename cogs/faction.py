@@ -71,7 +71,7 @@ class Faction(commands.Cog):
             bar = "█" * bar_filled + "░" * (10 - bar_filled)
             lines.append(f"**{label}** `{bar}` {s:+} ({standing_label(s)})")
         embed = howlbert_embed(
-            f"Faction Standing — {gp.title()}",
+            f"Faction Standing; {gp.title()}",
             "\n".join(lines),
             color=EMBED_COLOR,
         )
@@ -91,10 +91,6 @@ class Faction(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
-        last = int(user["last_faction_action_day"]) if "last_faction_action_day" in user.keys() else 0
-        if last >= day:
-            await interaction.response.send_message(embed=howlbert_embed("Already Acted", "You've already taken a faction action this sunrise. Resets at next rollover.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
         gp = user["great_pack"] if "great_pack" in user.keys() else None
         if not gp:
             await interaction.response.send_message(embed=howlbert_embed("No Pack", "Faction actions require a Great Pack affiliation.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -103,7 +99,7 @@ class Faction(commands.Cog):
         standing = db.get_faction_standing(gp, faction)
         db.set_last_faction_action_day(interaction.user.id, day)
         embed = howlbert_embed(
-            f"Observe — {faction_display_name(faction)}",
+            f"Observe; {faction_display_name(faction)}",
             flavor,
             color=EMBED_COLOR,
         )
@@ -124,22 +120,25 @@ class Faction(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
-        last = int(user["last_faction_action_day"]) if "last_faction_action_day" in user.keys() else 0
-        if last >= day:
-            await interaction.response.send_message(embed=howlbert_embed("Already Acted", "You've already taken a faction action this sunrise.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
         gp = user["great_pack"] if "great_pack" in user.keys() else None
         if not gp:
             await interaction.response.send_message(embed=howlbert_embed("No Pack", "Faction actions require a Great Pack affiliation.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         flavor, delta, bonus_bones = try_faction_approach(user, faction, day=day)
+        from engine.diminishing import next_use_multiplier
+        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
+        if delta > 0:
+            delta = max(1, int(delta * _fmult))
+            bonus_bones = int(bonus_bones * _fmult)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
+        if _fn > 1:
+            flavor += "\n_the same overture, repeated in a day, wins less ground._"
         if bonus_bones > 0:
             db.add_bones(interaction.user.id, bonus_bones, wolf_id=user["id"])
         color = SUCCESS_COLOR if delta > 0 else ERROR_COLOR
         embed = howlbert_embed(
-            f"Approach — {faction_display_name(faction)}",
+            f"Approach; {faction_display_name(faction)}",
             flavor,
             color=color,
         )
@@ -170,18 +169,20 @@ class Faction(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
-        last = int(user["last_faction_action_day"]) if "last_faction_action_day" in user.keys() else 0
-        if last >= day:
-            await interaction.response.send_message(embed=howlbert_embed("Already Acted", "You've already taken a faction action this sunrise.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
         flavor, delta = try_faction_trade(user, faction)
         if delta == 0:
             await interaction.response.send_message(embed=howlbert_embed("Trade Failed", flavor, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
+        from engine.diminishing import next_use_multiplier
+        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
+        if delta > 0:
+            delta = max(1, int(delta * _fmult))
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
+        if _fn > 1:
+            flavor += "\n_repeated tribute in one day is worth less._"
         embed = howlbert_embed(
-            f"Trade — {faction_display_name(faction)}",
+            f"Trade; {faction_display_name(faction)}",
             flavor,
             color=SUCCESS_COLOR,
         )
@@ -205,29 +206,28 @@ class Faction(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
-        last = int(user["last_faction_action_day"]) if "last_faction_action_day" in user.keys() else 0
-        if last >= day:
-            await interaction.response.send_message(embed=howlbert_embed("Already Acted", "You've already taken a faction action this sunrise.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
         flavor, delta, caught = try_faction_raid(user, faction)
+        from engine.diminishing import next_use_multiplier
+        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
         if caught:
             for f in FACTIONS:
                 if f != faction:
                     db.adjust_faction_standing(gp, f, -1)
-        # a successful settlement raid can carry off livestock milk
+        # a successful settlement raid can carry off livestock milk; a barn
+        # picked over again the same day has far less left to take
         milk_note = ""
         if not caught and faction == "lowland_settlements":
             import random as _milk_rand
             milk_item = db.get_item_by_key("liquid_milk")
-            if milk_item and _milk_rand.random() < 0.6:
+            if milk_item and _milk_rand.random() < 0.6 * _fmult:
                 got = _milk_rand.randint(1, 2)
                 db.grant_item(interaction.user.id, milk_item["id"], got)
                 milk_note = f"you knock over a pail in the barn and carry off **{got}× milk**."
         color = SUCCESS_COLOR if not caught else ERROR_COLOR
         embed = howlbert_embed(
-            f"Raid — {faction_display_name(faction)}",
+            f"Raid; {faction_display_name(faction)}",
             flavor,
             color=color,
         )
@@ -264,16 +264,18 @@ class Faction(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
-        last = int(user["last_faction_action_day"]) if "last_faction_action_day" in user.keys() else 0
-        if last >= day:
-            await interaction.response.send_message(embed=howlbert_embed("Already Acted", "You've already taken a faction action this sunrise.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
         flavor, delta = try_faction_sabotage(user, faction, guild_id=interaction.guild.id, day=day)
+        from engine.diminishing import next_use_multiplier
+        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
+        if delta < 0:
+            delta = min(-1, int(delta * _fmult))
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
+        if _fn > 1:
+            flavor += "\n_a second strike the same day lands softer; they are watching now._"
         color = SUCCESS_COLOR if delta <= -3 else ERROR_COLOR
         embed = howlbert_embed(
-            f"Sabotage — {faction_display_name(faction)}",
+            f"Sabotage; {faction_display_name(faction)}",
             flavor,
             color=color,
         )

@@ -35,6 +35,30 @@ OVERVIEW_BODY = (
 )
 
 
+def _derive_prep_methods(herb_key: str, meta: dict) -> list[str]:
+    """Valid preparation methods for an herb; explicit prep_methods win, else
+    derived from its HerbFormRule."""
+    explicit = meta.get("prep_methods") or ()
+    if explicit:
+        return list(explicit)
+    from engine.herb_properties import herb_form_rule
+
+    rule = herb_form_rule(herb_key)
+    if rule.requires_decoction:
+        return ["decoction"]
+    if rule.requires_tonic:
+        return ["tonic"]
+    if rule.dried_only:
+        return ["dried"]
+    if rule.external_only and rule.requires_poultice:
+        return ["poultice"]
+    if rule.requires_poultice:
+        return ["poultice", "chewed"]
+    if rule.external_only:
+        return ["poultice"]
+    return ["chewed", "tea"]
+
+
 def _cure_labels(cures: tuple) -> str:
     if not cures:
         return ""

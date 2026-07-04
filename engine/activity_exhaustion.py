@@ -163,7 +163,7 @@ def apply_activity_fatigue(
         gain, skipped = consume_march_exhaustion_skip(conn, fresh, gain)
         if gain <= 0:
             if skipped:
-                return "_burnet eases the worst of the strain — no exhaustion this time._"
+                return "_burnet eases the worst of the strain; no exhaustion this time._"
             return None
         new_ex = min(EXHAUSTION_MAX, int(fresh["exhaustion"]) + gain)
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_ex)
@@ -173,10 +173,10 @@ def apply_activity_fatigue(
         if proficient:
             reason = f"repeated {label} ({activity_count}×) without rest"
         else:
-            reason = f"repeated {label} ({activity_count}×) — you're not trained for this"
+            reason = f"repeated {label} ({activity_count}×); you're not trained for this"
     else:
         reason = f"a full sunrise of fieldwork ({total_count} strenuous actions) catches up with you"
-    note = f"**+{gain} exhaustion** — {reason}"
+    note = f"**+{gain} exhaustion**; {reason}"
     if skipped:
         note += " _(burnet softened the worst of it)_"
     return note

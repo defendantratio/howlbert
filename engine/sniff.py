@@ -42,7 +42,7 @@ SNIFF_ENCOUNTER_STRANGER = (
 _BOND_ENCOUNTER_LINES = {
     "friendship": (
         "an old friend; something in your shoulders loosens.",
-        "familiar warmth on the wind — you knew who it was before you saw them.",
+        "familiar warmth on the wind; you knew who it was before you saw them.",
         "you've walked this stretch together before. the ridge feels smaller.",
     ),
     "rivalry": (
@@ -56,7 +56,7 @@ _BOND_ENCOUNTER_LINES = {
         "family doesn't need a reason to find each other in the same territory.",
     ),
     "mentor": (
-        "the old rhythm comes back easy — the one who taught you, on the same ground.",
+        "the old rhythm comes back easy; the one who taught you, on the same ground.",
         "you catch yourself reading the trail the way they showed you.",
         "mentor and mentee, out on the same ridge. habits die hard.",
     ),
@@ -155,7 +155,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         body += f"\n\n**+{SNIFF_THIRST_RESTORE} thirst** (now **{new_thirst}**); the damp air wets your tongue."
     elif kind == "alert":
         alert_bonus = SNIFF_ALERT_ENCOUNTER_BONUS
-        body += "\n\nyour hackles rise — whoever left that is close. you stay sharp on the way back."
+        body += "\n\nyour hackles rise; whoever left that is close. you stay sharp on the way back."
         footer_bits.append("on alert")
         if user["pack_id"]:
             from engine.rival_npcs import pick_rival_for_hostile_pack, record_rival_encounter
@@ -191,7 +191,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             body += (
                 "\n\n**hostile scent:** "
                 + ", ".join(hostile[:3])
-                + " — sniff/survey fights more likely until standing rises."
+                + "; sniff/survey fights more likely until standing rises."
             )
             footer_bits.append("border tension")
 
@@ -345,9 +345,9 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             pm_acts = [label for col, label in _ACT_HINTS if col in pm.keys() and int(pm[col] or 0) == PREV]
             if pm_acts:
                 act_str = " and ".join(pm_acts[:2])
-                body += f"\n\n_your nose catches **{pm_name}**'s trail from yesterday — they {act_str}._"
+                body += f"\n\n_your nose catches **{pm_name}**'s trail from yesterday; they {act_str}._"
             else:
-                body += f"\n\n_your nose catches **{pm_name}**'s scent; quiet, unremarkable — they kept to themselves._"
+                body += f"\n\n_your nose catches **{pm_name}**'s scent; quiet, unremarkable; they kept to themselves._"
             footer_bits.append("den read")
 
     from engine.plot_blinking import try_plot_sniff_extras

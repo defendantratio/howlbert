@@ -44,13 +44,13 @@ SCRAP_FLAVOR = (
 )
 
 RIVAL_WARM_FLAVOR = (
-    "something shifts — a rare unguarded moment with **{partner}**; neither of you will mention it.",
+    "something shifts; a rare unguarded moment with **{partner}**; neither of you will mention it.",
     "you and **{partner}** run the same trail at the same pace, for once. the silence isn't hostile.",
 )
 RIVAL_GOOD_FLAVOR = (
-    "not warmth, exactly — but **{partner}** and you circle each other without teeth today.",
+    "not warmth, exactly; but **{partner}** and you circle each other without teeth today.",
     "a truce in everything but name. you and **{partner}** share the ridge without incident.",
-    "**{partner}** acknowledges you. you acknowledge them. the needle doesn't move — but it doesn't bite, either.",
+    "**{partner}** acknowledges you. you acknowledge them. the needle doesn't move; but it doesn't bite, either.",
 )
 RIVAL_AWKWARD_FLAVOR = (
     "old friction surfaces. you and **{partner}** manage not to draw blood, barely.",
@@ -185,7 +185,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
     bond_row = db.get_bond(user["id"], partner["id"], existing_bond_type) if existing_bond_type else None
     bond_strength = int(bond_row["strength"]) if bond_row else 0
     outcome = roll_socialize_outcome(existing_bond_type, bond_strength)
-    # Grief suppresses warmth — a wolf still raw from mate-loss can't fully open up.
+    # Grief suppresses warmth; a wolf still raw from mate-loss can't fully open up.
     grief = int(user["grief_sunrises"]) if "grief_sunrises" in user.keys() else 0
     if grief > 0 and outcome == "warm":
         outcome = "good"

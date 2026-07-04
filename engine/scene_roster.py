@@ -18,7 +18,7 @@ def build_roster_embed(scene, members) -> discord.Embed:
             f"• **{m['wolf_name']}** (<@{m['discord_id']}>)" for m in members
         )
     else:
-        roster = "_No wolves present yet — post or `/scene join` to enter._"
+        roster = "_No wolves present yet; post or `/scene join` to enter._"
     embed = howlbert_embed(f"🎬 {scene['name']}", roster, color=SUCCESS_COLOR)
     if scene["topic"]:
         embed.add_field(name="topic", value=scene["topic"], inline=False)

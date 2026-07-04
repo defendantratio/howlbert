@@ -37,6 +37,6 @@ def bond_cooling_line(name_a: str, name_b: str, bond_type: str, threshold: int) 
 
 def bond_graduation_line(name_a: str, name_b: str) -> str:
     return (
-        f"**{name_a}** and **{name_b}**; their mentorship has run its course — "
+        f"**{name_a}** and **{name_b}**; their mentorship has run its course; "
         f"something quieter and steadier has taken root."
     )

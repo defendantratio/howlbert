@@ -319,7 +319,7 @@ async def treat(
     if outcome == 'no_effect' and (not special) and (herb_key not in ('comfrey', 'cobwebs')):
         _check_dc = 15 + _tol_penalty
         if _tol_blocked:
-            tol_note = f" (herb tolerance: same herb used on same wound recently - dc raised to {_check_dc})"
+            tol_note = f" (herb tolerance: same herb used on same wound recently; dc raised to {_check_dc})"
         else:
             tol_note = ''
         check = medicine_check(user, dc=_check_dc)
@@ -659,13 +659,13 @@ async def field_dressing(interaction: discord.Interaction, own_wolf: str | None 
         from engine.herb_buffs import grant_bleed_dressed as _gbd
         db.update_user(interaction.user.id, wolf_id=user['id'], **_gbd(user, day=treat_day))
         msg = (
-            f"**{user['wolf_name']}** packs cobwebs into the wound - the bleeding is slowed. "
+            f"**{user['wolf_name']}** packs cobwebs into the wound; the bleeding is slowed. "
             f"deep gash won't bleed at the next sunrise. (-1 cobweb){roll_note}"
         )
         embed = howlbert_embed('field dressing', msg, color=SUCCESS_COLOR)
     else:
         msg = (
-            f"**{user['wolf_name']}** fumbles the dressing - the wound stays open. "
+            f"**{user['wolf_name']}** fumbles the dressing; the wound stays open. "
             f"the cobweb is lost. (-1 cobweb){roll_note}"
         )
         embed = howlbert_embed('field dressing failed', msg, color=ERROR_COLOR)
@@ -729,13 +729,13 @@ async def wound_wash(interaction: discord.Interaction, own_wolf: str | None = No
             injuries.remove('infected_wound')
         db.set_user_conditions(user['discord_id'], active_injuries=json.dumps(injuries))
         msg = (
-            f"**{user['wolf_name']}** flushes the wound with {herb_label} - the infection clears. "
+            f"**{user['wolf_name']}** flushes the wound with {herb_label}; the infection clears. "
             f"(-1 {herb_label}){roll_note}"
         )
         embed = howlbert_embed('wound wash', msg, color=SUCCESS_COLOR)
     else:
         msg = (
-            f"**{user['wolf_name']}** struggles to clean the wound - the infection lingers. "
+            f"**{user['wolf_name']}** struggles to clean the wound; the infection lingers. "
             f"the {herb_label} is spent. (-1 {herb_label}){roll_note}"
         )
         embed = howlbert_embed('wound wash failed', msg, color=ERROR_COLOR)

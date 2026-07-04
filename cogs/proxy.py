@@ -83,13 +83,13 @@ class Proxy(commands.Cog):
             return
         if clear:
             if image or url:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `clear:true` by itself, or provide an image — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `clear:true` by itself, or provide an image; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             db.set_wolf_identity(wolf['id'], avatar_url=None)
             await interaction.response.send_message(embed=howlbert_embed(f"{wolf['wolf_name']}", 'Proxy avatar cleared.', color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
             return
         if image and url:
-            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Attach an **image** or give a **url** — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Attach an **image** or give a **url**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if not image and (not url):
             await interaction.response.send_message(embed=howlbert_embed('No Image', 'Attach an **image** to this command, paste a direct **url**, or use `clear:true`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -135,7 +135,7 @@ class Proxy(commands.Cog):
             tag = f'`{prefix}text{suffix}`' if prefix or suffix else '_no tag_'
             star = ' ⭐ autoproxy' if auto_id == w['id'] else ''
             av = ' 🖼️' if w['avatar_url'] else ''
-            lines.append(f"**{w['wolf_name']}** — {tag}{av}{star}")
+            lines.append(f"**{w['wolf_name']}**; {tag}{av}{star}")
         embed = howlbert_embed('Your Proxies', '\n'.join(lines), color=SUCCESS_COLOR)
         embed.set_footer(text='/proxy set · /proxy avatar · /proxy autoproxy · /proxy import')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -323,7 +323,7 @@ class Proxy(commands.Cog):
                 wolf_name=wolf['wolf_name'],
                 content=ic_text,
             )
-            # Chat xp is for actually playing your wolf, not server chatter —
+            # Chat xp is for actually playing your wolf, not server chatter ; 
             # only a real proxied in-character line earns it.
             try_chat_message_xp(message)
         try:

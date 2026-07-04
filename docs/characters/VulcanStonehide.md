@@ -31,7 +31,7 @@ Years of solitude followed. Vulcan became a nomad, his fur bristling with a cold
 
 **Guarded (Charisma −3):** Years of solitude and distrust run deep. He keeps almost everyone at arm's length, and most wolves sense the wall before they ever get close enough to test it.
 
-**Overprotective (Dexterity −2, combat only):** The moment someone he cares about is threatened, he steps in front of the danger — leaving himself with moderate defense at best and no room to maneuver.
+**Overprotective (Dexterity −2, combat only):** The moment someone he cares about is threatened, he steps in front of the danger; leaving himself with moderate defense at best and no room to maneuver.
 
 **Haunted by the Past (Wisdom −2):** Zephyr's death and the destruction of his birth pack surface without warning in nightmares and unguarded moments, pulling his focus somewhere the fight cannot follow.
 
@@ -51,7 +51,7 @@ Wisdom: 2 (−2)
 **Maw-Belief:** Doubter 
 
 **RP Sample:** 
-The chill wind whipped through the mountain pass, tugging at Vulcan's thick fur. He stood silhouetted against the jagged peaks, his gaze sweeping the valley below. No immediate threats, but he felt it—a subtle shift in the air, a scent carried on the breeze that spoke of something new, something out of place. His ears swiveled, catching the distant snap of a twig, too regular to be an animal.
+The chill wind whipped through the mountain pass, tugging at Vulcan's thick fur. He stood silhouetted against the jagged peaks, his gaze sweeping the valley below. No immediate threats, but he felt it; a subtle shift in the air, a scent carried on the breeze that spoke of something new, something out of place. His ears swiveled, catching the distant snap of a twig, too regular to be an animal.
 
 A younger wolf, perhaps a year old, trotted up beside him, panting slightly from the climb. "Anything, Vulcan?" the pup asked, his tail giving a tentative wag.
 

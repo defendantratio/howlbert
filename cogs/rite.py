@@ -67,7 +67,7 @@ class Rite(commands.Cog):
             return
         day = _world_day(interaction.guild.id)
         speech = words.strip() if words else '_The den speaks the name aloud._'
-        embed = howlbert_embed(f"🌿 Naming Rite — {target_row['wolf_name']}", f"**{actor['wolf_name']}** leads the den in naming **{target_row['wolf_name']}**.\n\n{speech}", color=SUCCESS_COLOR)
+        embed = howlbert_embed(f"🌿 Naming Rite; {target_row['wolf_name']}", f"**{actor['wolf_name']}** leads the den in naming **{target_row['wolf_name']}**.\n\n{speech}", color=SUCCESS_COLOR)
         log_rite(target_row['id'], 'rite_naming', f"Naming rite led by **{actor['wolf_name']}**.", guild_id=interaction.guild.id, day=day)
         await interaction.response.send_message(embed=embed)
 
@@ -95,8 +95,8 @@ class Rite(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Not Yet', 'They must earn blooding on a hunt first (`/bones action:hunt`), then hold the rite.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         day = _world_day(interaction.guild.id)
-        speech = words.strip() if words else '_Blood on muzzle, name on the wind — the den witnesses._'
-        embed = howlbert_embed(f"🩸 Blooding Rite — {target['wolf_name']}", f"**{actor['wolf_name']}** calls the pack to witness **{target['wolf_name']}**'s blooding.\n\n{speech}", color=EMBED_COLOR)
+        speech = words.strip() if words else '_Blood on muzzle, name on the wind; the den witnesses._'
+        embed = howlbert_embed(f"🩸 Blooding Rite; {target['wolf_name']}", f"**{actor['wolf_name']}** calls the pack to witness **{target['wolf_name']}**'s blooding.\n\n{speech}", color=EMBED_COLOR)
         log_blooded(target['id'], target['wolf_name'], ceremonial=True)
         await interaction.response.send_message(embed=embed)
 
@@ -125,7 +125,7 @@ class Rite(commands.Cog):
             journal_note = f'{journal_note} {grave_journal}'
         else:
             speech = words.strip() if words else '_The den sits in silence._'
-        embed = howlbert_embed(f"🕯 Mourning — {target['wolf_name']}", f"**{actor['wolf_name']}** leads mourning for **{target['wolf_name']}** _(died of {cause})_.\n\n{speech}", color=EMBED_COLOR)
+        embed = howlbert_embed(f"🕯 Mourning; {target['wolf_name']}", f"**{actor['wolf_name']}** leads mourning for **{target['wolf_name']}** _(died of {cause})_.\n\n{speech}", color=EMBED_COLOR)
         log_rite(target['id'], 'rite_mourning', journal_note, guild_id=interaction.guild.id, day=day)
         await interaction.response.send_message(embed=embed)
 
@@ -141,7 +141,7 @@ class Rite(commands.Cog):
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return
         if accused and own_accused:
-            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `accused` or `own_accused` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `accused` or `own_accused`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if not accused and not own_accused:
             await interaction.response.send_message(embed=howlbert_embed('Pick an Accused', 'Specify `accused` or `own_accused`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -204,7 +204,7 @@ class Rite(commands.Cog):
             f"the den calls a trial by combat to settle it.\n"
             f"**{accuser['wolf_name']}** {a_total} vs **{accused_row['wolf_name']}** {b_total}{note}\n\n"
             f"**{winner['wolf_name']}** wins; the den sides with them. "
-            f"**{loser['wolf_name']}** carries the loss — {standing_note}."
+            f"**{loser['wolf_name']}** carries the loss; {standing_note}."
         )
         log_rite(winner['id'], 'rite_trial', f"Won a trial by combat against **{loser['wolf_name']}**.", guild_id=interaction.guild.id, day=day)
         log_rite(loser['id'], 'rite_trial', f"Lost a trial by combat against **{winner['wolf_name']}**.", guild_id=interaction.guild.id, day=day)
@@ -287,7 +287,7 @@ class Rite(commands.Cog):
         if favor_b is not None:
             favor_line += f" · **{favor_b}** ({bonded_mate['wolf_name']})"
         body = (
-            f"**{actor['wolf_name']}** throws back their head and calls — and **{bonded_mate['wolf_name']}** answers.\n"
+            f"**{actor['wolf_name']}** throws back their head and calls; and **{bonded_mate['wolf_name']}** answers.\n"
             "_Two voices become one sound, rising until the trees hold it._\n\n"
             f"The pack hears. The Maw hears.\n\n{favor_line}{pack_note}"
         )
@@ -295,7 +295,7 @@ class Rite(commands.Cog):
         embed.set_footer(text='a one-time rite · the bond is witnessed')
         await interaction.response.send_message(embed=embed)
 
-    @rite.command(name='moon_witness', description='seal a mated bond under the full moon — true mateship (+2 maw_favor each, once per pair).')
+    @rite.command(name='moon_witness', description='seal a mated bond under the full moon; true mateship (+2 maw_favor each, once per pair).')
     async def moon_witness(self, interaction: discord.Interaction):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
@@ -345,7 +345,7 @@ class Rite(commands.Cog):
         body = (
             f"**{actor['wolf_name']}** and **{bonded_mate['wolf_name']}** stand beneath the full moon, pelt to pelt.\n"
             "_No words. The light is enough. The Maw is watching and does not look away._\n\n"
-            f"Their bond is witnessed. Not by pack or packmate — by the moon itself.\n\n"
+            f"Their bond is witnessed. Not by pack or packmate; by the moon itself.\n\n"
             f"{favor_line}{pack_note}{bond_note}"
         )
         embed = howlbert_embed("Moon's Witness", body, color=SUCCESS_COLOR)

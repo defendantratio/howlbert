@@ -12,7 +12,7 @@ from utils.embeds import ERROR_COLOR, SUCCESS_COLOR
 
 def _fidelity_cost(cheater, mating_partner, *, day: int) -> str | None:
     """Mating with someone who isn't your bonded mate, while that bond still
-    means something, costs real bond strength and mood — not just an RP
+    means something, costs real bond strength and mood; not just an RP
     label that nothing in the system actually reacts to."""
     mate = db.get_bonded_mate(cheater)
     if not mate or mate["id"] == mating_partner["id"]:

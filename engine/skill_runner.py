@@ -350,7 +350,7 @@ def apply_scenario_mechanics(
 
                 info = get_stage_info(key, stage)
                 if info:
-                    lines.append(f"_diagnosis: **{info['name']}** — {info['effect']}_")
+                    lines.append(f"_diagnosis: **{info['name']}**; {info['effect']}_")
             else:
                 lines.append("_no active illness; vitals read clear._")
         if scenario.key == "social_truce" and opponent:

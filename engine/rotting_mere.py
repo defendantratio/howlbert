@@ -15,7 +15,7 @@ _MERE_HERBS = [
 
 _MAW_CONTACT_LINES = (
     "The water is not still. Something below the surface watches back.",
-    "You feel it before you see it — a second heartbeat in the mud beneath your paws.",
+    "You feel it before you see it; a second heartbeat in the mud beneath your paws.",
     "The mushrooms glow brighter as you approach, then dim. A warning, or a welcome.",
     "The Maw does not only live in the mountain's mouth. It is here. It has always been here.",
     "You did not choose to come here. You were called.",
@@ -24,7 +24,7 @@ _MAW_CONTACT_LINES = (
 
 _DROWN_SICK_LINES = (
     "The bank gives way and you are under before you can stop it. For one heartbeat "
-    "— only one — the water is inside your skull. When you pull yourself out the fog "
+    ";  only one; the water is inside your skull. When you pull yourself out the fog "
     "speaks to you. It has been speaking. You just couldn't hear it before.",
     "Your paw slips on the slick root. The mere takes you face-first. You rise "
     "coughing pale water. Something in the depths stays behind your eyes.",
@@ -55,7 +55,7 @@ def try_rotting_mere_exposure(user, discord_id: int) -> tuple[str | None, bool]:
     role_changed = False
 
     if random.random() < _MAW_CONTACT_CHANCE:
-        lines.append(f"_— {random.choice(_MAW_CONTACT_LINES)}_")
+        lines.append(f"_;  {random.choice(_MAW_CONTACT_LINES)}_")
 
     if random.random() < _SLIP_CHANCE:
         from engine.disease_contract import try_mistmoor_swamp_exposure
@@ -71,7 +71,7 @@ def try_rotting_mere_exposure(user, discord_id: int) -> tuple[str | None, bool]:
             role_changed = True
             lines.append(
                 f"\n**Drown-Sick:**\n{random.choice(_DROWN_SICK_LINES)}\n\n"
-                "Your wolf is now **Drown-Sick** — a Mistmoor oracle changed by the water. "
+                "Your wolf is now **Drown-Sick**; a Mistmoor oracle changed by the water. "
                 "Use `/role action:event`, `/role action:prophecy`, and `/role action:quests`."
             )
 

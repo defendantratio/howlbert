@@ -139,14 +139,14 @@ DEFAULT_SHOP_ITEMS = (
     (
         "herb_bundle",
         "Herb Bundle",
-        "Use `/bones action:use item:herb_bundle`; random common herbs (2-4) added to `/bones action:inventory`.",
+        "Use `/bones action:use item:herb_bundle`; random common herbs (2 to 4) added to `/bones action:inventory`.",
         40,
         12,
     ),
     (
         "prey_bundle",
         "Prey Bundle",
-        "Use `/bones action:use item:prey_bundle`; random carcasses (2-3) added to `/food`.",
+        "Use `/bones action:use item:prey_bundle`; random carcasses (2 to 3) added to `/food`.",
         55,
         18,
     ),
@@ -509,7 +509,7 @@ SIGN_NUZZLE_BOND_GAIN = 4
 SIGN_STRETCH_EXHAUSTION_RELIEF = 1
 # ASL-style /sign composition (base/motion/field) isn't flavor-only: matching
 # the anatomically correct combo for the signal (engine.signing.CANONICAL_POSTURE)
-# grants a real bonus on top of the signal's normal effect — bond strength
+# grants a real bonus on top of the signal's normal effect; bond strength
 # with the target when one exists, standing when the signal is pack-wide.
 # Getting 2 of 3 parts right grants half (rounded down, min 1); all 3 grants
 # the full bonus.
@@ -521,7 +521,7 @@ SIGN_ASL_MATCH_STANDING_BONUS = 2
 MENTOR_BONUS_VALUE = 2
 # Each /role action:shadow session also deepens a real mentor bond; once it
 # crosses the threshold the apprentice gains one permanent rank in the
-# mentor's focus skill — a one-time payoff for a mentorship that actually
+# mentor's focus skill; a one-time payoff for a mentorship that actually
 # ran deep, not just a repeatable temp buff.
 MENTOR_BOND_SKILL_TRANSFER_GAIN = 8
 MENTOR_BOND_SKILL_TRANSFER_THRESHOLD = 70
@@ -564,13 +564,13 @@ PUP_TRAIT_INHERIT_CHANCE = 0.20
 # coat mid-cycle; even winter_survivor doesn't fully insulate during it.
 SHEDDING_WINDOW_DAYS = 4
 # Lower-stakes rank disputes between ordinary pack members (not alpha/advisor
-# — that's the Rite of the Broken Canine's domain). Winner climbs, loser
+#; that's the Rite of the Broken Canine's domain). Winner climbs, loser
 # drops, breaking ties in den feed priority; once per sunrise per challenger.
 RANK_DISPUTE_SHIFT = 1
 RANK_DISPUTE_MIN = -10
 RANK_DISPUTE_MAX = 10
 # A wolf back after a long absence doesn't slot back into the den instantly
-# — a brief "stranger scent" beat on their first socialize back.
+#; a brief "stranger scent" beat on their first socialize back.
 STRANGER_SCENT_ABSENCE_DAYS = 15
 STRANGER_SCENT_MOOD_PENALTY = 3
 # A temporary injury left untreated long past its normal heal time doesn't
@@ -597,7 +597,7 @@ MENTOR_STALL_DECAY_AMOUNT = 3
 STRONG_BOND_GRIEF_THRESHOLD = 50
 STRONG_BOND_GRIEF_MOOD_CAP = 25
 STRONG_BOND_GRIEF_CHANCE_CAP = 0.7
-# Pup training; `/pupcare action:train` — a deliberate, capped stat nudge
+# Pup training; `/pupcare action:train`; a deliberate, capped stat nudge
 # distinct from feed/save/adopt. Once per sunrise per pup; lifetime-capped
 # so it can't replace genetics/traits as a power source.
 PUP_TRAIN_SUCCESS_DC = 12
@@ -617,14 +617,6 @@ SIGN_MUTE_DIMINISH_FLOOR = 0.6
 SIGN_READ_MOOD = 4
 SIGN_READ_RALLY_UNITY = 1
 SIGN_READ_STANDING = 1
-RACCOON_DAILY_SELLS = 5
-RACCOON_DAILY_BUYS = 3
-RACCOON_BUNDLES = {
-    "scrap": {"name": "Scrap Bundle", "price": 14, "toys": ("bone", "feather")},
-    "plume": {"name": "Plume Bundle", "price": 22, "toys": ("feather", "shell", "feather")},
-    "gnaw": {"name": "Gnaw Bundle", "price": 18, "toys": ("bone", "stick", "acorn")},
-}
-RACCOON_PREY_KEYS = frozenset({"vole", "rabbit", "hare", "fish"})
 
 # Invite & server boost rewards (booster perks are personal only; not pack treasury)
 INVITE_WELCOME_BONES = 25
@@ -819,7 +811,7 @@ RAID_SURVEY_DC_VICTIM = -2
 RAID_SURVEY_VICTIM_BONE_BONUS = 5
 RAID_AUDIT_RECOVER_PCT = 0.40
 RAID_ACCUSE_RECOVER_PCT = 0.30
-# Trial by combat: whoever loses pays, win or lose as the accuser — makes a
+# Trial by combat: whoever loses pays, win or lose as the accuser; makes a
 # false accusation as risky as the thing it's accusing someone of.
 TRIAL_BY_COMBAT_LOSER_STANDING = -4
 # Crowd-sourced denouncement: one wolf's say-so isn't a verdict; the den has
@@ -833,12 +825,12 @@ DENOUNCEMENT_STANDING_PENALTY = -3
 HOSTAGE_TREATY_STANDING_BONUS = 1
 HOSTAGE_BETRAYAL_STANDING_PENALTY = -4
 # Espionage: a planted spy reporting back risks discovery every time, not
-# just once — real ongoing risk for real ongoing intel.
+# just once; real ongoing risk for real ongoing intel.
 SPY_REPORT_DISCOVERY_DC = 14
 SPY_CAUGHT_STANDING = -4
 SPY_CAUGHT_RELATION_PENALTY = -3
 # Active political matchmaking: an alpha/diplomat formally sanctioning an
-# existing bonded pair across pack lines as a deliberate alliance act — a
+# existing bonded pair across pack lines as a deliberate alliance act; a
 # one-time upfront bump on top of the passive marriage-alliance forge bonus.
 POLITICAL_MATCH_STANDING_BONUS = 2
 DEN_RHYTHM_MIN_WOLVES = 2
@@ -1027,7 +1019,7 @@ GREAT_PACKS = {
         "terrain": "River",
         "starting_herbs": ("meadowsweet", "alder_bark", "cattail", "purple_loosestrife"),
         "pack_trait": (
-            "Swift Current - +2 to Dexterity checks involving swimming or crossing water."
+            "Swift Current; +2 to Dexterity checks involving swimming or crossing water."
         ),
     },
 }
@@ -1093,7 +1085,7 @@ CAT_PACT_VIOLATION_TRUST = -30
 CAT_PACT_VIOLATION_UNITY = -4
 CAT_PACT_VIOLATION_STANDING = -3
 
-# Wolf pack treaties (standing 0–10 scale)
+# Wolf pack treaties (standing 0 to 10 scale)
 WOLF_PACT_RECEIVE_MIN_STANDING = 7
 WOLF_PACT_GIFT_STANDING = 1
 WOLF_PACT_FOOD_STANDING_MAX = 2
@@ -1120,7 +1112,7 @@ FIREPAW_PLOT_TREAT_STANDING = 1
 FIREPAW_PLOT_TREAT_MOOD_SELF = 2
 FIREPAW_PLOT_OBSERVE_MOOD = 2
 FIREPAW_PLOT_OBSERVE_STRAIN_RELIEF = 2
-# Soot plot mechanics (Book One: The Blinking — Mistmoor rot-lung lane)
+# Soot plot mechanics (Book One: The Blinking; Mistmoor rot-lung lane)
 SOOT_PLOT_SNIFF_MOOD = 2
 SOOT_PLOT_SNIFF_STANDING = 1
 SOOT_PLOT_TREAT_HEAL_BONUS = 2
@@ -1129,17 +1121,17 @@ SOOT_PLOT_TREAT_STANDING = 1
 SOOT_PLOT_TREAT_MOOD_SELF = 2
 SOOT_PLOT_OBSERVE_MOOD = 2
 SOOT_PLOT_OBSERVE_STRAIN_RELIEF = 2
-# River'Shroud alpha plot (Book One — Thistlehide border)
+# River'Shroud alpha plot (Book One; Thistlehide border)
 RIVERSHROUD_PLOT_SNIFF_MOOD_EARLY = 1
 RIVERSHROUD_PLOT_SNIFF_MOOD_LATE = 1
 RIVERSHROUD_PLOT_SNIFF_STANDING = 2
 RIVERSHROUD_PLOT_PATROL_STANDING = 1
-RIVERSHROUD_PLOT_HOWL_UNITY = 1  # phases 9–11, stacks with Ash Naming unity
-# Finnpelt hunter plot (Book One — Greyspire ridge)
+RIVERSHROUD_PLOT_HOWL_UNITY = 1  # phases 9 to 11, stacks with Ash Naming unity
+# Finnpelt hunter plot (Book One; Greyspire ridge)
 FINNPELT_PLOT_SNIFF_MOOD = 2
 FINNPELT_PLOT_SNIFF_STANDING = 1
 FINNPELT_PLOT_PATROL_STANDING = 1
-# MaggotBrain hunter plot (Book One — Mistmoor rot)
+# MaggotBrain hunter plot (Book One; Mistmoor rot)
 MAGGOTBRAIN_PLOT_SNIFF_MOOD = 2
 MAGGOTBRAIN_PLOT_SNIFF_STANDING = 1
 # Universal plot witness (once per sunrise, any wolf)
@@ -1149,27 +1141,27 @@ NAMED_WOLF_BLINK_MOOD = 2
 PLOT_GENERIC_HEALER_STANDING = 1
 PLOT_GENERIC_HEALER_MOOD = 1
 FISHING_BONES = (10, 22)
-# Brackenpelt hunter plot (Book One — Thistlehide border)
+# Brackenpelt hunter plot (Book One; Thistlehide border)
 BRACKENPELT_PLOT_PATROL_STANDING = 1
-# Icefang Stoneguard plot (Book One — Greyspire border)
+# Icefang Stoneguard plot (Book One; Greyspire border)
 ICEFANG_PLOT_PATROL_STANDING = 1
-# Hemlock healer plot (Book One — Greyspire den)
+# Hemlock healer plot (Book One; Greyspire den)
 HEMLOCK_PLOT_TREAT_HEAL_BONUS = 1
-# Ripple healer plot (Book One — Silverrush den)
+# Ripple healer plot (Book One; Silverrush den)
 RIPPLE_PLOT_TREAT_HEAL_BONUS = 1
-# Sypha healer plot (Book One — Thistlehide den)
+# Sypha healer plot (Book One; Thistlehide den)
 SYPHA_PLOT_TREAT_HEAL_BONUS = 1
-# Murkvein healer plot (Book One — Mistmoor den)
+# Murkvein healer plot (Book One; Mistmoor den)
 MURKVEIN_PLOT_TREAT_HEAL_BONUS = 1
-# Aromis fishing plot (Book One — Silverrush, Warm Below)
+# Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
-# Lucid tracking plot (Book One — Thistlehide border)
+# Lucid tracking plot (Book One; Thistlehide border)
 LUCID_PLOT_TRACK_MULT = 1.10
-# Eltanin hunting plot (Book One — Thistlehide border)
+# Eltanin hunting plot (Book One; Thistlehide border)
 ELTANIN_PLOT_HUNT_MULT = 1.10
-# Cloverfern scavenge plot (Book One — Thistlehide den)
+# Cloverfern scavenge plot (Book One; Thistlehide den)
 CLOVERFERN_PLOT_SCAVENGE_MULT = 1.10
-# Kanami and Skye border-sense plot (Book One — Thistlehide paranoia)
+# Kanami and Skye border-sense plot (Book One; Thistlehide paranoia)
 KANAMI_PLOT_BORDER_MULT = 0.75
 SKYE_PLOT_BORDER_MULT = 0.75
 
@@ -1213,7 +1205,7 @@ DEFAULT_TERRITORIES = (
 # Grouped by Great Pack terrain, plus the contestable DEFAULT_TERRITORIES and a
 # handful of shared/neutral spots referenced across pack lore and pack traits.
 RP_LOCATIONS = (
-    # Greyspire (Mountain) — "the mouth of the world"
+    # Greyspire (Mountain); "the mouth of the world"
     "Greyspire Den",
     "Greyspire High Ridge",
     "The High Pass",
@@ -1224,7 +1216,7 @@ RP_LOCATIONS = (
     "The High Ledge",  # exile/death-by-cold site
     "The Miners' Camp",
     "The Screaming Earth",  # the blast zone
-    # Silverrush (River) — "the Maw's tears"
+    # Silverrush (River); "the Maw's tears"
     "Silverrush Den",
     "The River's Edge",
     "The Sandbar",
@@ -1236,7 +1228,7 @@ RP_LOCATIONS = (
     "The Weep Stone",
     "The Dam",
     "Riverbank Dens",
-    # Mistmoor (Swamp) — "the Maw's belly"
+    # Mistmoor (Swamp); "the Maw's belly"
     "Mistmoor Den",
     "The Belly-Rip",
     "The Rotting Mere",
@@ -1249,7 +1241,7 @@ RP_LOCATIONS = (
     "The Half-Sunken Chapel",
     "The Collapsed Bridge",
     "The Brackish Reach",  # MaggotBrain's stretch of stagnant water and cypress
-    # Thistlehide (Forest) — "the Maw's fur"
+    # Thistlehide (Forest); "the Maw's fur"
     "Thistlehide Den",
     "The Whisper Tree",
     "The Thistle Thicket",

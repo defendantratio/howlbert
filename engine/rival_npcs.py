@@ -236,7 +236,7 @@ def rival_status_lines(wolf_id: int) -> list[str]:
         name = _rival_display_name(row["rival_key"])
         grudge = int(row["grudge"])
         lines.append(
-            f"**{name}** — grudge **{grudge}/100** ({grudge_label(grudge)}); "
+            f"**{name}**; grudge **{grudge}/100** ({grudge_label(grudge)}); "
             f"{int(row['encounters'])} encounter(s)"
         )
     return lines

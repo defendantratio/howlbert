@@ -26,15 +26,8 @@ def format_amusement_line(stack) -> str:
 
 
 def play_amusement(user, stack_id: int, *, day: int | None = None) -> tuple[bool, str, int]:
-    if day is not None:
-        last = int(user["last_play_day"] if "last_play_day" in user.keys() else 0)
-        if last >= day:
-            return (
-                False,
-                "you already played with a toy this sunrise.\n\n"
-                "_resets next sunrise · `/checklist`_",
-                0,
-            )
+    # no block: play as often as you like; each toy has limited uses, so the
+    # fun is naturally bounded by the toy wearing out.
     stack = db.get_amusement_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "you don't have that toy.", 0

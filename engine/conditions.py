@@ -80,8 +80,9 @@ def format_conditions(user, *, day: int | None = None) -> str:
         )
     exhaustion = user["exhaustion"] if "exhaustion" in user.keys() else 0
     if exhaustion:
+        from engine.exhaustion_effects import EXHAUSTION_MAX
         effect = EXHAUSTION_EFFECTS.get(exhaustion, "Unknown")
-        lines.append(f"**exhaustion {exhaustion}/6**; {effect}")
+        lines.append(f"**exhaustion {exhaustion}/{EXHAUSTION_MAX}**; {effect}")
 
     smoke = int(user["smoke_debuff"]) if "smoke_debuff" in user.keys() else 0
     if smoke:
@@ -199,7 +200,7 @@ def validate_stats(role: str, stats: dict) -> str | None:
         if val < 1 or val > 10:
             return "each attribute must be between 1 and 10."
     if total < lo or total > hi:
-        return f"attribute total must be {lo}–{hi} for your role (yours: {total})."
+        return f"attribute total must be {lo}; {hi} for your role (yours: {total})."
     return None
 
 
@@ -232,9 +233,14 @@ def apply_long_rest_healing(user) -> tuple[int, int]:
     return benefits["hp"], benefits["exhaustion"]
 
 
-def apply_long_rest_benefits(user) -> dict[str, int]:
+def apply_long_rest_benefits(user, *, season: str | None = None) -> dict[str, int]:
     """long rest: hp recovery, exhaustion relief, modest mood lift. does not replace eating or drinking."""
-    from config import LONG_REST_EXHAUSTION_RELIEF, LONG_REST_HP_GAIN, LONG_REST_MOOD_GAIN
+    from config import (
+        HUNGER_LOW_THRESHOLD,
+        LONG_REST_EXHAUSTION_RELIEF,
+        LONG_REST_HP_GAIN,
+        LONG_REST_MOOD_GAIN,
+    )
 
     cond = user["condition"] if "condition" in user.keys() else "healthy"
     hp = int(user["hp"]) if user and "hp" in user.keys() and user["hp"] is not None else 0
@@ -243,8 +249,17 @@ def apply_long_rest_benefits(user) -> dict[str, int]:
     if cond in ("dead", "dying"):
         return {"hp": hp, "exhaustion": exhaustion, "mood": mood}
     cap = effective_max_hp(user)
+    # recovery variance: injuries and hunger slow healing; winter denning helps a little
+    injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
+    hunger = int(user["hunger"]) if "hunger" in user.keys() and user["hunger"] is not None else 100
+    hp_gain = LONG_REST_HP_GAIN - len(injuries)
+    if hunger < HUNGER_LOW_THRESHOLD:
+        hp_gain -= 1
+    if season == "winter":
+        hp_gain += 1
+    hp_gain = max(0, hp_gain)
     return {
-        "hp": min(cap, hp + LONG_REST_HP_GAIN),
+        "hp": min(cap, hp + hp_gain),
         "exhaustion": max(0, exhaustion - LONG_REST_EXHAUSTION_RELIEF),
         "mood": min(100, mood + LONG_REST_MOOD_GAIN),
     }

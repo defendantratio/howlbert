@@ -12,7 +12,7 @@ WAR_STANDING_THRESHOLD = 0
 NEUTRAL_STANDING = 5
 
 SNIFF_ENCOUNTER_HOSTILE = (
-    "**{pack}** scent on the wind; **{name}** bares teeth — hostile ground, attack on sight.",
+    "**{pack}** scent on the wind; **{name}** bares teeth; hostile ground, attack on sight.",
     "A **{pack}** patrol; **{name}** blocks the trail, hackles raised. Your dens are not friends.",
     "**{name}** of **{pack}** catches your mark and lunges; standing **{standing}/10** reads as open feud.",
 )
@@ -113,7 +113,7 @@ def can_aid_rival(guild_id: int, pack_a_id: int, pack_b_id: int) -> tuple[bool, 
     standing = pack_relation(guild_id, pack_a_id, pack_b_id)
     if is_war_relation(standing):
         return False, (
-            f"standing **{standing}/10**; your dens are at war — send aid after parley, not blades."
+            f"standing **{standing}/10**; your dens are at war; send aid after parley, not blades."
         )
     if is_hostile_relation(standing):
         return False, (
@@ -197,7 +197,7 @@ def sniff_encounter_lines(
 
     if _scent_disguise_active(user, guild_id, other):
         return (
-            f"\n\n_you carry **{pack_name}**'s scent today; **{other['wolf_name']}** reads you as one of theirs — or close enough not to ask. "
+            f"\n\n_you carry **{pack_name}**'s scent today; **{other['wolf_name']}** reads you as one of theirs; or close enough not to ask. "
             f"the disguise holds._",
             None,
         )
@@ -245,7 +245,7 @@ def sniff_encounter_lines(
             )
         blood_note = _blood_debt_encounter_note(guild_id, user, other)
         return (
-            f"\n\n_a **{pack_name}** wolf on the wind; standing **{standing}/10** — "
+            f"\n\n_a **{pack_name}** wolf on the wind; standing **{standing}/10**; "
             f"friendly enough to share the trail today._{notoriety_note}{blood_note}",
             None,
         )
@@ -279,7 +279,7 @@ def _blood_debt_encounter_note(guild_id: int, user, other) -> str:
     if debt <= 0:
         return ""
     return (
-        f"\n_**{debt}** blood debt unpaid — your pack took lives from theirs. "
+        f"\n_**{debt}** blood debt unpaid; your pack took lives from theirs. "
         f"the meeting carries that weight. clear it with `/pack tribute`._"
     )
 

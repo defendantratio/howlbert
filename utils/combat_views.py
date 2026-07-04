@@ -89,7 +89,7 @@ class CombatTargetSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
         attacker = db.resolve_player_fighter(self.enc_id, interaction.user.id)
         if attacker and tid == attacker["id"]:
             await interaction.response.send_message(
-                player_message("you can't target yourself — pick an **enemy** from the menu."),
+                player_message("you can't target yourself; pick an **enemy** from the menu."),
                 ephemeral=reply_ephemeral(),
             )
             return

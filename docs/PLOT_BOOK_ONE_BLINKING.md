@@ -10,7 +10,7 @@ Staff reference for the in-bot plot system (`world_state.plot_phase`). **Game ca
 | `/setplotphase phase:N` | Admin | Set phase `0` (off) through `12` |
 | `/plotadvance` | Admin | Bump phase by 1 |
 
-Advance phases when RP earns them — not on a fixed day counter.
+Advance phases when RP earns them; not on a fixed day counter.
 
 ## Phases (mechanical summary)
 
@@ -31,12 +31,12 @@ Advance phases when RP earns them — not on a fixed day counter.
 
 ## Quest board keys
 
-- `blink_border_patrol` — patrol
-- `blink_river_crisis` — fishing ×2
-- `blink_wind_witness` — sniff (phase 6+)
-- `blink_mill_scout` — explore
-- `blink_ash_naming` — howl ×3
-- `blink_rogue_ledger` — crime ×2 (rogues)
+- `blink_border_patrol`; patrol
+- `blink_river_crisis`; fishing ×2
+- `blink_wind_witness`; sniff (phase 6+)
+- `blink_mill_scout`; explore
+- `blink_ash_naming`; howl ×3
+- `blink_rogue_ledger`; crime ×2 (rogues)
 
 ## Splinter (rogue lane)
 
@@ -54,10 +54,10 @@ While **plot_phase > 0**, every wolf can take part in Book One:
 | Mechanic | Who | When |
 |----------|-----|------|
 | **Plot witness** | Everyone | First plot-tagged action each sunrise: **+1 mood** + flavor (`/field action:sniff`, `/howl`, `/drink`, scout survey, `/explore`, `/medic action:treat`) |
-| **Sniff quests** | Everyone | `/field action:sniff` progresses **blink_healer_listen** (phases 1–5) and **blink_wind_witness** (phase 6+) |
-| **Healer quests** | Medics & apprentices | `/medic action:treat` or `action:observe` during phases **5–11** → **blink_healer_touch** (+1 standing or +1 mood once/day for non-canon healers) |
-| **Rollover pressure** | Everyone | Mood, thirst, disease, cat trust, unity — see phase table |
-| **Activity modifiers** | Pack-tinted | Fishing debuff, travel DC, mill tooth, rogue crime, howl costs — see phase table |
+| **Sniff quests** | Everyone | `/field action:sniff` progresses **blink_healer_listen** (phases 1 to 5) and **blink_wind_witness** (phase 6+) |
+| **Healer quests** | Medics & apprentices | `/medic action:treat` or `action:observe` during phases **5 to 11** → **blink_healer_touch** (+1 standing or +1 mood once/day for non-canon healers) |
+| **Rollover pressure** | Everyone | Mood, thirst, disease, cat trust, unity; see phase table |
+| **Activity modifiers** | Pack-tinted | Fishing debuff, travel DC, mill tooth, rogue crime, howl costs; see phase table |
 
 Canon wolves (**Firepaw**, **Soot**, **Splinter**) keep **extra** rewards on top of the universal layer (see below).
 
@@ -67,11 +67,11 @@ Thistlehide **Medic Apprentice** under Sypha. **Requires wolf name Firepaw + thi
 
 | Phase | Mechanic |
 |-------|----------|
-| **1–5** | `/field action:sniff`: **+2 mood**, **sniff bonus** (hunt/track +15%), quest **blink_healer_listen** progress *(+ universal witness)* |
-| **6–10** | First `/field action:sniff` each sunrise: **+1 standing**, **+1 mood** (once/day plot reward) |
-| **5–11** | `/medic action:treat`: **+2 HP** on heal outcomes; quest **blink_healer_touch** progress |
-| **5–11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
-| **5–11** | **Firepaw** may **`/medic action:treat patient:`** (apprentice border-triage) |
+| **1 to 5** | `/field action:sniff`: **+2 mood**, **sniff bonus** (hunt/track +15%), quest **blink_healer_listen** progress *(+ universal witness)* |
+| **6 to 10** | First `/field action:sniff` each sunrise: **+1 standing**, **+1 mood** (once/day plot reward) |
+| **5 to 11** | `/medic action:treat`: **+2 HP** on heal outcomes; quest **blink_healer_touch** progress |
+| **5 to 11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
+| **5 to 11** | **Firepaw** may **`/medic action:treat patient:`** (apprentice border-triage) |
 | **5+** | `/medic action:observe`: **+2 mood**, **−2 medicine strain**, treat quest progress |
 
 Quest skill rewards: **blink_healer_listen** → medicine +1 · **blink_healer_touch** → medicine +1
@@ -82,11 +82,11 @@ Mistmoor **Medic** under Mirewort. **Requires wolf name Soot + mistmoor affiliat
 
 | Phase | Mechanic |
 |-------|----------|
-| **5–11** | `/field action:sniff`: **+2 mood**, **sniff bonus** (+15% hunt/track), quest **blink_healer_listen** progress |
-| **6–10** | First `/field action:sniff` each sunrise: **+1 standing** (second sight; once/day plot reward) |
-| **5–11** | `/medic action:treat`: **+2 HP** on heal outcomes (**+1** more on **rot-lung** patients) |
-| **5–11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
-| **5–11** | `/medic action:observe`: **+2 mood**, **−2 medicine strain**, treat quest progress |
+| **5 to 11** | `/field action:sniff`: **+2 mood**, **sniff bonus** (+15% hunt/track), quest **blink_healer_listen** progress |
+| **6 to 10** | First `/field action:sniff` each sunrise: **+1 standing** (second sight; once/day plot reward) |
+| **5 to 11** | `/medic action:treat`: **+2 HP** on heal outcomes (**+1** more on **rot-lung** patients) |
+| **5 to 11** | First `/medic action:treat` each sunrise: **+1 standing** (packmate) or **+2 mood** (self) |
+| **5 to 11** | `/medic action:observe`: **+2 mood**, **−2 medicine strain**, treat quest progress |
 
 Shares healer quests with Firepaw: **blink_healer_listen**, **blink_healer_touch**.
 
@@ -100,11 +100,11 @@ Thistlehide **Alpha**. Requires wolf name **RiverShroud** + `wolf_role:alpha` + 
 
 | Phase | Mechanic |
 |-------|----------|
-| **2–5** | `/field action:sniff`: **+1 mood**, **sniff bonus** (+15% hunt/track) |
-| **6–10** | Every sniff: **+1 mood**, **sniff bonus**; first sniff each sunrise: **+2 standing** |
-| **6–10** | `/pack patrol` / scout **survey**: **+1 standing** (on top of phase-2 Thistlehide patrol bonus) |
+| **2 to 5** | `/field action:sniff`: **+1 mood**, **sniff bonus** (+15% hunt/track) |
+| **6 to 10** | Every sniff: **+1 mood**, **sniff bonus**; first sniff each sunrise: **+2 standing** |
+| **6 to 10** | `/pack patrol` / scout **survey**: **+1 standing** (on top of phase-2 Thistlehide patrol bonus) |
 | **9** | `/howl`: **waives Memory Bites** mood penalty when pack unity < 5 |
-| **9–11** | `/howl`: **+1 pack unity** (stacks with phase **11** Ash Naming unity) |
+| **9 to 11** | `/howl`: **+1 pack unity** (stacks with phase **11** Ash Naming unity) |
 
 ### Finnpelt (hunter lane)
 
@@ -112,12 +112,12 @@ Thistlehide **hunter** (former Alpha). Requires wolf name **Finnpelt** + `wolf_r
 
 | Phase | Mechanic |
 |-------|----------|
-| **6–10** | `/field action:sniff`: **+2 mood**, **sniff bonus**; first sniff each sunrise: **+1 standing** |
-| **6–10** | `/pack patrol` / scout **survey**: **+1 standing** |
+| **6 to 10** | `/field action:sniff`: **+2 mood**, **sniff bonus**; first sniff each sunrise: **+1 standing** |
+| **6 to 10** | `/pack patrol` / scout **survey**: **+1 standing** |
 
 ## Living world (use alongside phases)
 
-Cat pacts, `/field action:sniff` border fights, season stash failures, territory wars, diseases, restricted herbs, sacred visits, collab hunt/patrol, raccoon, predators, Whispering Wild — all continue during Book One.
+Cat pacts, `/field action:sniff` border fights, season stash failures, territory wars, diseases, restricted herbs, sacred visits, collab hunt/patrol, raccoon, predators, Whispering Wild; all continue during Book One.
 
 ## Canon anchors (affiliations)
 

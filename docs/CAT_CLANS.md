@@ -1,6 +1,6 @@
 # Cat Clans (Warrior Cats)
 
-Staff reference for wolf–cat diplomacy in the **Warrior Cats lake territory** setting.
+Staff reference for wolf; cat diplomacy in the **Warrior Cats lake territory** setting.
 
 ## The four Clans
 
@@ -72,13 +72,13 @@ Named patrol cats (original OC names, WC-style) appear on `/field action:sniff` 
 
 ## Key files
 
-- `engine/cat_clans.py` — Clan list, territory, patrol names, scent flavor
-- `engine/cat_pacts.py` — Treaty logic
-- `engine/cat_clan_goods.py` — Loot tables
-- `engine/cat_gathering.py` — Season rollover Gathering
-- `engine/starclan_omens.py` — Omen text
-- `engine/border_combat.py` — `/field action:sniff` cat fights
-- `engine/travel_hazards.py` — Twolegplace travel
+- `engine/cat_clans.py`; Clan list, territory, patrol names, scent flavor
+- `engine/cat_pacts.py`; Treaty logic
+- `engine/cat_clan_goods.py`; Loot tables
+- `engine/cat_gathering.py`; Season rollover Gathering
+- `engine/starclan_omens.py`; Omen text
+- `engine/border_combat.py`; `/field action:sniff` cat fights
+- `engine/travel_hazards.py`; Twolegplace travel
 
 ## Tests
 

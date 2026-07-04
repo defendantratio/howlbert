@@ -50,7 +50,7 @@ def young_wolf_block(user, *, action: str) -> str | None:
     if action in ("court", "mate", "birth") and (is_young_wolf(role) or stage in ("pup", "juvenile")):
         return (
             f"**{label}** wolves are forbidden to mate. "
-            "juveniles (6-24 moons) and pups (under 6 moons) cannot court or breed."
+            "juveniles (6 to 24 moons) and pups (under 6 moons) cannot court or breed."
         )
 
     if action == "hunt" and (is_pup(role) or stage == "pup"):

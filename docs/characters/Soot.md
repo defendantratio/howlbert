@@ -52,7 +52,7 @@ Wisdom: 5 (+0)
 
 ## Maw-Belief
 
-**Orthodox** — she believes because Mirewort believes. She has not questioned it yet.
+**Orthodox**; she believes because Mirewort believes. She has not questioned it yet.
 
 ## RP Sample
 
@@ -62,7 +62,7 @@ Soot balanced the gourd on her nose, trying to pour the murky liquid into a smal
 
 She spilled it.
 
-"Sorry! I'm sorry. I'll get more—" She scrambled for the herb pile, knocked over three more containers, and landed face-first in a patch of stinging nettle.
+"Sorry! I'm sorry. I'll get more; " She scrambled for the herb pile, knocked over three more containers, and landed face-first in a patch of stinging nettle.
 
 Mirewort sighed. But he did not yell. He never yelled. He just walked over, helped her up, and started picking nettles out of her fur.
 
@@ -80,4 +80,4 @@ She blinked at him. Was that… encouragement? She could not tell. But he did no
 
 **Open plots:** Must heal someone on her own; mismatched eyes reveal something supernatural; attachment to Mirewort tested.
 
-**Book One (*The Blinking*):** Mirewort's den runs hot in phases **5–11**; `/field action:sniff` and `/medic action:treat` / `action:observe` add Soot flavor (+standing/mood; extra heal on **rot-lung**). Shares **blink_healer_listen** and **blink_healer_touch** with Firepaw's lane.
+**Book One (*The Blinking*):** Mirewort's den runs hot in phases **5 to 11**; `/field action:sniff` and `/medic action:treat` / `action:observe` add Soot flavor (+standing/mood; extra heal on **rot-lung**). Shares **blink_healer_listen** and **blink_healer_touch** with Firepaw's lane.

@@ -47,7 +47,7 @@ Cloverfern still forages daily. She supplies Sypha's satchel, Brackenpelt's patr
 
 **Too Trusting (Charisma -2):** Assumes good intent. Has been cheated out of herb credit by lazy packmates more than once.
 
-## Statistics (Total: 18, Forager range 15-20)
+## Statistics (Total: 18, Forager range 15 to 20)
 
 Strength: 2 (-2)  
 Dexterity: 4 (-1)  

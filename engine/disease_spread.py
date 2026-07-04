@@ -26,7 +26,7 @@ def _was_in_field(wolf, day: int) -> bool:
 
 
 def apply_disease_spread_on_rollover(
-    conn: sqlite3.Connection, *, weather: str | None = None, day: int = 0
+    conn: sqlite3.Connection, *, weather: str | None = None, day: int = 0, season: str | None = None
 ) -> list[dict]:
     """
     Infected wolves may pass illness to packmates who share a den.
@@ -56,6 +56,9 @@ def apply_disease_spread_on_rollover(
         carrier_pack = carrier["great_pack"] if "great_pack" in carrier.keys() else None
         rate = min(1.0, rate * humidity_disease_spread_mult(carrier_pack, weather))
         is_respiratory = bool(DISEASES.get(disease_key, {}).get("respiratory"))
+        # cold, denbound winters push respiratory illness through a pack faster
+        if is_respiratory and season == "winter":
+            rate = min(1.0, rate * 1.3)
 
         packmates = conn.execute(
             """

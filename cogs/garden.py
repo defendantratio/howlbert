@@ -97,11 +97,11 @@ class Garden(commands.Cog):
             planter = db.get_user_by_id(p['wolf_id'])
             who = planter['wolf_name'] if planter else 'a packmate'
             if res.dead:
-                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}** — dead ({res.note}) · {who}")
+                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}**; dead ({res.note}) · {who}")
             elif res.ready:
-                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}** — ready to harvest! · {who}")
+                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}**; ready to harvest! · {who}")
             else:
-                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}** — {res.progress_pct}% · HP {res.health} · {res.note} · planted by {who}")
+                lines.append(f"{icon} `#{p['id']}` **{_herb_name(p['herb_key'])}**; {res.progress_pct}% · HP {res.health} · {res.note} · planted by {who}")
         body = '\n'.join(lines)
         embed = howlbert_embed(f"{pack['name']} Herb Garden", body, color=SUCCESS_COLOR)
         embed.set_footer(text=f'season: {season} · /garden tend · /garden harvest · {len(plantings)}/{GARDEN_MAX_PLOTS} plots')
@@ -116,7 +116,7 @@ class Garden(commands.Cog):
         if not rows:
             body = f'Your seed pouch is empty.\n\nGet seeds by **foraging** (`/field action:forage`), buying a packet (`/garden buy`, **{GARDEN_SEED_BONE_COST} bones**), or **harvesting** a mature plant (keeps seeds for next time). Seeds are yours; plots belong to the pack.'
         else:
-            body = '\n'.join((f"**{_herb_name(r['herb_key'])}** ×{r['qty']} — {growing_blurb(r['herb_key'])}" for r in rows))
+            body = '\n'.join((f"**{_herb_name(r['herb_key'])}** ×{r['qty']}; {growing_blurb(r['herb_key'])}" for r in rows))
         embed = howlbert_embed('Seed Pouch', body, color=SUCCESS_COLOR)
         embed.set_footer(text='/garden plant herb:<name> · /garden guide')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -145,7 +145,7 @@ class Garden(commands.Cog):
         warn = ''
         if season not in profile.seasons:
             warn = "\n\n_⚠ Off-season sowing; it'll grow slowly_" if profile.hardy else '\n\n_⚠ Wrong season; it may struggle or die_'
-        embed = howlbert_embed('Seed Sown', f"**{user['wolf_name']}** presses a **{_herb_name(herb)}** seed into **{pack['name']}**'s plot `#{pid}`.\n\n{growing_blurb(herb)}{warn}\n\n_Sowing isn't tending — water it with `/garden tend`._", color=SUCCESS_COLOR)
+        embed = howlbert_embed('Seed Sown', f"**{user['wolf_name']}** presses a **{_herb_name(herb)}** seed into **{pack['name']}**'s plot `#{pid}`.\n\n{growing_blurb(herb)}{warn}\n\n_Sowing isn't tending; water it with `/garden tend`._", color=SUCCESS_COLOR)
         embed.set_footer(text='/garden tend each sunrise · /garden plots')
         await interaction.response.send_message(embed=embed)
 
@@ -205,7 +205,7 @@ class Garden(commands.Cog):
             db.add_herb_seeds(user['id'], p['herb_key'], seeds_back)
             db.remove_herb_planting(p['id'])
             harvested += 1
-            lines.append(f"🌼 **{_herb_name(p['herb_key'])}** — {count} fresh stack(s) + {seeds_back} seed(s) to your pouch.")
+            lines.append(f"🌼 **{_herb_name(p['herb_key'])}**; {count} fresh stack(s) + {seeds_back} seed(s) to your pouch.")
         if not lines:
             await interaction.response.send_message(embed=howlbert_embed('Nothing Ready', 'No plots are mature yet. Check `/garden plots` and keep tending.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
@@ -261,7 +261,7 @@ class Garden(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         keys = cultivable_herbs()[:40]
-        lines = [f'**{_herb_name(k)}** — {growing_blurb(k)}' for k in keys]
+        lines = [f'**{_herb_name(k)}**; {growing_blurb(k)}' for k in keys]
         embed = howlbert_embed('Herb Growing Guide', '\n'.join(lines), color=SUCCESS_COLOR)
         embed.set_footer(text='/garden guide herb:<name> for one herb · /garden buy · /garden plant')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

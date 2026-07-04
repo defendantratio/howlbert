@@ -31,7 +31,7 @@ STATIC_HINTS: dict[str, str] = {
     "holly_berries": "Restricted poison: **2d4** damage (CON DC **12** half); non-Medic **−4 standing**.",
     "poison_ivy": "Restricted contact toxin: CHA penalty; hoarding without Medic turn-in **−3 standing if caught**.",
     "wintergreen": "Avoid: resembles holly; toxic if eaten; non-Medic misuse **−4 standing**.",
-    "wolfsbane": "Clears **long-term injuries**; **2-6 poison HP**; non-Medic misuse **−4 standing**.",
+    "wolfsbane": "Clears **long-term injuries**; **2 to 6 poison HP**; non-Medic misuse **−4 standing**.",
     "swamp_milkweed": "Clears **long-term injuries** without poison cost; soothes rheumatic pain.",
     "yarrow": "Treats **deep gash** / **infected wound**; **+2 stabilize** from herb stack; stops **shaking sickness** hemorrhage.",
     "oak_bark": "Treats bleeding wounds; **+2 stabilize** from herb stack.",

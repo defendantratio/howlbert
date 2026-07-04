@@ -45,7 +45,7 @@ _OBSERVE_FLAVOR: dict[str, list[str]] = {
         "They have set up a camera trap near the east border. The light blinks red in the dark.",
         "The expedition tent is larger than last week. More of them have arrived. One has binoculars.",
         "The researcher with the red jacket is taking samples from the creek bed again. She doesn't look up.",
-        "Their notebook — left open on a rock — shows a sketch of wolf tracks. Your tracks, probably.",
+        "Their notebook; left open on a rock; shows a sketch of wolf tracks. Your tracks, probably.",
     ],
 }
 
@@ -161,20 +161,20 @@ _SABOTAGE_SUCCESS_MILL = [
 ]
 
 _SABOTAGE_FAIL = [
-    "The attempt fails — heard, spotted, or simply wrong-timed. You pull back with nothing to show.",
+    "The attempt fails; heard, spotted, or simply wrong-timed. You pull back with nothing to show.",
     "A guard catches your scent before you reach the objective. You scatter into the dark.",
 ]
 
 _ELIZA_HARROW_LINES = [
-    "A woman in field gear crouches over her notes. You can read, just barely: **'Skye = Bitterroot'** — a name for a plant, or for a wolf. Hard to say.",
+    "A woman in field gear crouches over her notes. You can read, just barely: **'Skye = Bitterroot'**; a name for a plant, or for a wolf. Hard to say.",
     "The researcher you know as **Eliza Harrow** is here again. She speaks quietly into a recorder, says the name *Skye* twice, pauses, then writes something down.",
-    "She hasn't seen you. Her notebook is open. The page header reads: **E. HARROW — SILVERRUSH TERRITORY SURVEY**. One line is circled: *Bitterroot stands at the crossing.*",
+    "She hasn't seen you. Her notebook is open. The page header reads: **E. HARROW; SILVERRUSH TERRITORY SURVEY**. One line is circled: *Bitterroot stands at the crossing.*",
 ]
 
 _LUCID_LINES = [
-    "A dog emerges from the shadow of the wheel-house. **Not feral — domestic.** Collar, clipped nails, fed. It looks at you the way a wolf looks at a wolf. Then it sits. Then it leaves.",
+    "A dog emerges from the shadow of the wheel-house. **Not feral; domestic.** Collar, clipped nails, fed. It looks at you the way a wolf looks at a wolf. Then it sits. Then it leaves.",
     "The mill's dog is not like other dogs. It holds your gaze for fifteen seconds before turning away. Its name, you somehow know without knowing, is **Lucid**.",
-    "The domestic dog — Lucid, the workers call it — plants itself between you and the outflow pipe. Not aggressive. Just present. Like it's been waiting.",
+    "The domestic dog; Lucid, the workers call it; plants itself between you and the outflow pipe. Not aggressive. Just present. Like it's been waiting.",
 ]
 
 
@@ -280,7 +280,7 @@ def try_faction_raid(user, faction: str) -> tuple[str, int, bool]:
         caught = True
     text = random.choice(pool)
     roll_note = f"\n\n_roll: **{die}** + str **{mod:+}** = **{total}** vs dc {dc}_"
-    caught_note = "\n_word spreads — all factions note the aggression_ (−1 each)" if caught else ""
+    caught_note = "\n_word spreads; all factions note the aggression_ (−1 each)" if caught else ""
     burn_note = ""
     if caught and faction in ("thorne_lumber", "river_mill") and random.random() < 0.15:
         import json
@@ -291,7 +291,7 @@ def try_faction_raid(user, faction: str) -> tuple[str, int, bool]:
             day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
             db.set_user_conditions(user["discord_id"], active_injuries=json.dumps(injuries), wolf_id=user["id"])
             db.record_injury_since(user["id"], "scorched_hide", day)
-            burn_note = "\n_something burning caught you on the way out — **scorched hide** (+1 exhaustion/sunrise until healed)._"
+            burn_note = "\n_something burning caught you on the way out; **scorched hide** (+1 exhaustion/sunrise until healed)._"
     return text + roll_note + caught_note + burn_note, delta, caught
 
 

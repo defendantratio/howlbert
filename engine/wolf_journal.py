@@ -128,7 +128,7 @@ def log_bonded(wolf_a_id: int, wolf_b_id: int) -> None:
 def log_blooded(wolf_id: int, wolf_name: str, *, ceremonial: bool = False) -> None:
     key = "rite_blooding" if ceremonial else "blooded"
     verb = "Received the **blooding rite**" if ceremonial else "Earned **blooding** on first kill"
-    _write(wolf_id, key, f"{verb} — **{wolf_name}** is blooded.")
+    _write(wolf_id, key, f"{verb}; **{wolf_name}** is blooded.")
 
 
 def log_stabilized(wolf_id: int, wolf_name: str) -> None:
@@ -262,7 +262,7 @@ def log_rite(
 
 def format_journal_embed_body(wolf_id: int, *, limit: int = 200) -> str:
     chunks = format_journal_embed_chunks(wolf_id, limit=limit)
-    return chunks[0] if chunks else "_no journal entries yet — life events are recorded automatically._"
+    return chunks[0] if chunks else "_no journal entries yet; life events are recorded automatically._"
 
 
 def _journal_entry_tier(event_key: str) -> int:
@@ -280,7 +280,7 @@ def format_journal_bullet_lines(wolf_id: int, *, limit: int = 200) -> list[str]:
     for row in rows:
         tier = _journal_entry_tier(str(row["event_key"]))
         if tier == 2 and last_tier != 2:
-            lines.append("_**earlier life — den records on file**_")
+            lines.append("_**earlier life; den records on file**_")
         last_tier = tier
         day = row["day"]
         prefix = f"**day {day}** · " if day is not None else ""
@@ -290,7 +290,7 @@ def format_journal_bullet_lines(wolf_id: int, *, limit: int = 200) -> list[str]:
 
 def chunk_journal_lines(lines: list[str], *, max_chars: int = 3900) -> list[str]:
     if not lines:
-        return ["_no journal entries yet — life events are recorded automatically._"]
+        return ["_no journal entries yet; life events are recorded automatically._"]
     chunks: list[str] = []
     current: list[str] = []
     current_len = 0

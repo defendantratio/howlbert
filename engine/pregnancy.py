@@ -29,7 +29,7 @@ def in_late_pregnancy(user, day: int) -> bool:
 
 
 def pregnancy_hunt_multiplier(user, day: int) -> tuple[float, str]:
-    """Reduces hunt/fish/scavenge yield during pregnancy — gestation burns energy."""
+    """Reduces hunt/fish/scavenge yield during pregnancy; gestation burns energy."""
     if not user or not int(user["is_pregnant"] if "is_pregnant" in user.keys() else 0):
         return 1.0, ""
     elapsed = pregnancy_elapsed(user, day)

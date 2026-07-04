@@ -17,7 +17,7 @@ class Rpg(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='rpg', description='roll checks, set attributes, or delete your profile.')
-    @app_commands.describe(action='roll, setstats, or delete', skill='skill to roll (roll)', attribute='raw attribute check (roll)', dc='difficulty (roll)', use_safe_roll='spend a safe roll on failure (roll)', use_role_reroll='elder/diplomat role reroll on failure (roll)', strength='strength 1-10 (setstats)', dexterity='dexterity 1-10 (setstats)', constitution='constitution 1-10 (setstats)', intelligence='intelligence 1-10 (setstats)', charisma='charisma 1-10 (setstats)', wisdom='wisdom 1-10 (setstats)', confirm='type delete to confirm profile deletion')
+    @app_commands.describe(action='roll, setstats, or delete', skill='skill to roll (roll)', attribute='raw attribute check (roll)', dc='difficulty (roll)', use_safe_roll='spend a safe roll on failure (roll)', use_role_reroll='elder/diplomat role reroll on failure (roll)', strength='strength 1 to 10 (setstats)', dexterity='dexterity 1 to 10 (setstats)', constitution='constitution 1 to 10 (setstats)', intelligence='intelligence 1 to 10 (setstats)', charisma='charisma 1 to 10 (setstats)', wisdom='wisdom 1 to 10 (setstats)', confirm='type delete to confirm profile deletion')
     @app_commands.choices(action=[app_commands.Choice(name='roll a check', value='roll'), app_commands.Choice(name='set attributes', value='setstats'), app_commands.Choice(name='delete profile', value='delete')], skill=[app_commands.Choice(name=label, value=key) for key, (_, label) in SKILLS.items()], attribute=[app_commands.Choice(name='strength', value='attr_str'), app_commands.Choice(name='dexterity', value='attr_dex'), app_commands.Choice(name='survival / constitution', value='attr_con'), app_commands.Choice(name='intelligence', value='attr_int'), app_commands.Choice(name='charisma', value='attr_cha'), app_commands.Choice(name='wisdom', value='attr_wis')], dc=[app_commands.Choice(name='easy (10): routine', value=10), app_commands.Choice(name='moderate (15): challenging', value=15), app_commands.Choice(name='hard (20): desperate', value=20), app_commands.Choice(name='legendary (25): nearly impossible', value=25)])
     async def rpg_hub(self, interaction: discord.Interaction, action: str, skill: str | None=None, attribute: str | None=None, dc: app_commands.Range[int, 1, 40]=15, use_safe_roll: bool=False, use_role_reroll: bool=False, strength: app_commands.Range[int, 1, 10] | None=None, dexterity: app_commands.Range[int, 1, 10] | None=None, constitution: app_commands.Range[int, 1, 10] | None=None, intelligence: app_commands.Range[int, 1, 10] | None=None, charisma: app_commands.Range[int, 1, 10] | None=None, wisdom: app_commands.Range[int, 1, 10] | None=None, confirm: str | None=None):
         if action == 'roll':
@@ -146,7 +146,7 @@ class Rpg(commands.Cog):
         if error:
             from rpg_rules import ROLE_ATTRIBUTE_RANGES
             lo, hi = ROLE_ATTRIBUTE_RANGES.get(role, (16, 20))
-            embed = howlbert_embed('Invalid Spread', f'{error}\n\nYour role **{ROLE_LABELS.get(role, role)}** allows total **{lo}–{hi}**.', color=ERROR_COLOR)
+            embed = howlbert_embed('Invalid Spread', f'{error}\n\nYour role **{ROLE_LABELS.get(role, role)}** allows total **{lo}; {hi}**.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         db.set_user_stats(interaction.user.id, stats)
@@ -159,7 +159,7 @@ class Rpg(commands.Cog):
 
     @app_commands.command(name='vitals', description='view conditions, rest, lick wounds, or escape quarantine.')
     @app_commands.describe(action='condition, rest, lick_wound, or escape_quarantine', rest_type='short or long rest (rest)', use_herb='use comfrey for short rest healing (rest)')
-    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (1 hp, once per sunrise)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6-8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10-30 min)', value='short')])
+    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (1 hp, once per sunrise)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6 to 8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10 to 30 min)', value='short')])
     async def vitals(self, interaction: discord.Interaction, action: str, rest_type: str='long', use_herb: bool=False):
         if action == 'condition':
             await self._condition(interaction)
@@ -194,7 +194,7 @@ class Rpg(commands.Cog):
         embed = howlbert_embed(f"{user['wolf_name']}: Conditions", format_conditions(user, day=day))
         str_val = int(user['attr_str']) if 'attr_str' in user.keys() else 5
         con_val = int(user['attr_con']) if 'attr_con' in user.keys() else 5
-        embed.add_field(name='HP', value=f"{user['hp']}/{effective_max_hp(user)}\n{format_max_hp_breakdown(str_val, con_val, max_hp=int(user['max_hp']))}" + (f"\n_(exhaustion cap {effective_max_hp(user)}; base {user['max_hp']})_" if user_exhaustion(user) >= 4 else ''), inline=True)
+        embed.add_field(name='HP', value=f"{user['hp']}/{effective_max_hp(user)}\n{format_max_hp_breakdown(str_val, con_val, max_hp=int(user['max_hp']))}" + (f"\n_(exhaustion cap {effective_max_hp(user)}; base {user['max_hp']})_" if user_exhaustion(user) >= 6 else ''), inline=True)
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
         embed.add_field(name='Thirst', value=format_thirst_line(user), inline=True)
@@ -290,7 +290,6 @@ class Rpg(commands.Cog):
         if not is_quarantined(user):
             await interaction.response.send_message(embed=howlbert_embed('Not Quarantined', 'you are not in the sick den.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        from engine.character import attr_modifier
         attr_dex = int(user['attr_dex']) if 'attr_dex' in user.keys() else 0
         mod = attr_modifier(attr_dex)
         die = random.randint(1, 20)
@@ -303,7 +302,7 @@ class Rpg(commands.Cog):
                 f'you slip out of the sick den while the medic is away. quarantine lifted.\n\n_roll: **{die}** + dex **{mod:+}** = **{total}** vs dc {dc}_\n\n_if a medic or alpha notices you are gone, they may re-quarantine you._',
                 color=SUCCESS_COLOR,
             )
-            embed.set_footer(text='ephemeral — only you see this')
+            embed.set_footer(text='ephemeral; only you see this')
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             result = db.adjust_wolf_standing(interaction.user.id, -5)
@@ -315,7 +314,7 @@ class Rpg(commands.Cog):
                 f'you are caught mid-sneak. the medic scent-marks you back to the den. **−5 standing**.{caught_note}\n\n_roll: **{die}** + dex **{mod:+}** = **{total}** vs dc {dc}_',
                 color=ERROR_COLOR,
             )
-            embed.set_footer(text='ephemeral — only you see this')
+            embed.set_footer(text='ephemeral; only you see this')
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _lick_wound(self, interaction: discord.Interaction):

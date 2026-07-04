@@ -6,7 +6,7 @@ DEATH_SAVE_DCS = (10, 12, 15)
 
 
 def roll_death_save(user) -> dict:
-    """Round 1-3: CON save vs escalating DC. Three successes → stabilize at 1 HP."""
+    """Round 1 to 3: CON save vs escalating DC. Three successes → stabilize at 1 HP."""
     round_num = user["death_save_round"] if user["death_save_round"] else 1
     round_num = min(3, max(1, round_num))
     dc = DEATH_SAVE_DCS[round_num - 1]

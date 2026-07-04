@@ -101,7 +101,7 @@ class RpPrompts(commands.Cog):
         prompt = random_prompt(guild_id, pack=pack, mood=mood, plot_phase=plot_phase)
         if not prompt:
             await interaction.response.send_message(
-                embed=howlbert_embed('No Prompts', 'Nothing matches those filters yet — try fewer, or `/rpprompt action:suggest` one.', color=ERROR_COLOR),
+                embed=howlbert_embed('No Prompts', 'Nothing matches those filters yet; try fewer, or `/rpprompt action:suggest` one.', color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return

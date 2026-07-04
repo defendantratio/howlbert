@@ -285,7 +285,7 @@ class Pack(commands.Cog):
         embed = howlbert_embed(f"{pack['name']} Tax", f"**{pack['tax_rate']}%** of hunt earnings go to the treasury.")
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @pack.command(name='settax', description='set pack tax rate 0-25% (alpha only).')
+    @pack.command(name='settax', description='set pack tax rate 0 to 25% (alpha only).')
     @app_commands.describe(rate='tax percentage on hunt earnings')
     async def pack_settax(self, interaction: discord.Interaction, rate: int):
         user, pack = await self._require_pack_member(interaction)
@@ -461,11 +461,11 @@ class Pack(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
         user = db.get_user(interaction.user.id)
-        if user[day_column] >= day:
-            embed = howlbert_embed('Already Done', "You've patrolled this rollover.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import next_use_multiplier
+        _pat_mult, _pat_n = next_use_multiplier(user, day_column, day)
         points = points_fn(user)
+        if _pat_n > 1:
+            points = max(1, int(points * _pat_mult))
         db.add_war_score(war['id'], pack['id'], points)
         db.increment_quest_progress(interaction.user.id, 'patrol', guild_id=interaction.guild.id)
         db.update_user(interaction.user.id, **{day_column: day})
@@ -477,7 +477,7 @@ class Pack(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @pack.command(name='patrol', description='patrol contested territory during a pack war.')
-    @app_commands.describe(collaborate='call a collab war patrol; packmates join via buttons (2-4 wolves)')
+    @app_commands.describe(collaborate='call a collab war patrol; packmates join via buttons (2 to 4 wolves)')
     async def pack_patrol(self, interaction: discord.Interaction, collaborate: bool=False):
         if collaborate:
             from cogs.collab_patrol import post_collab_war_patrol_call
@@ -510,7 +510,7 @@ class Pack(commands.Cog):
         embed.set_footer(text='gain: /howl, den charms, fresh-kill, pups, winning wars. loss: losing wars, declaring war. at −5: pack dissolves.')
         await interaction.response.send_message(embed=embed)
 
-    @pack.command(name='relations', description='rival standing with neighboring dens (0-10).')
+    @pack.command(name='relations', description='rival standing with neighboring dens (0 to 10).')
     async def pack_relations(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user or not user['pack_id']:
@@ -759,7 +759,7 @@ class Pack(commands.Cog):
             embed = howlbert_embed(
                 'Dissent Recorded',
                 f"**{user['wolf_name']}** formally objects to **{subject.strip()[:120]}**:\n_{reason.strip()[:300]}_\n\n"
-                "on the record. it changes nothing by itself — but the den remembers who spoke against it.",
+                "on the record. it changes nothing by itself; but the den remembers who spoke against it.",
                 color=EMBED_COLOR,
             )
             await interaction.response.send_message(embed=embed)
@@ -772,7 +772,7 @@ class Pack(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             lines = [
-                f"sunrise **{row['day']}** — **{row['dissenter_name']}** on **{row['subject']}**: _{row['reason']}_"
+                f"sunrise **{row['day']}**; **{row['dissenter_name']}** on **{row['subject']}**: _{row['reason']}_"
                 for row in rows
             ]
             embed = howlbert_embed(f"{pack['name']}; Recorded Dissents", '\n\n'.join(lines))
@@ -828,7 +828,7 @@ class Pack(commands.Cog):
             embed = howlbert_embed(
                 'Denouncement Raised',
                 f"**{user['wolf_name']}** denounces **{target_row['wolf_name']}**:\n_{reason.strip()[:300]}_\n\n"
-                f"this costs **{target_row['wolf_name']}** nothing yet — it needs **{DENOUNCEMENT_SECONDS_REQUIRED}** "
+                f"this costs **{target_row['wolf_name']}** nothing yet; it needs **{DENOUNCEMENT_SECONDS_REQUIRED}** "
                 f"other packmates to second it before the den actually acts on it.",
                 color=EMBED_COLOR,
             )
@@ -893,7 +893,7 @@ class Pack(commands.Cog):
             return
         from config import PUP_MAX_MOONS
         if int(pup_row['age_months']) > PUP_MAX_MOONS:
-            await interaction.response.send_message(embed=howlbert_embed('Not a Pup', f'**{pup_row["wolf_name"]}** is grown — fostering is for young wolves only.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Not a Pup', f'**{pup_row["wolf_name"]}** is grown; fostering is for young wolves only.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         other = db.get_pack_by_name(target_pack)
         if not other:
@@ -904,7 +904,7 @@ class Pack(commands.Cog):
             return
         standing = db.get_pack_relation(interaction.guild.id, int(pack['id']), int(other['id']))
         if standing < 5:
-            await interaction.response.send_message(embed=howlbert_embed('Too Hostile', f'Standing with **{other["name"]}** is **{standing}/10** — foster requires neutral or better standing.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Too Hostile', f'Standing with **{other["name"]}** is **{standing}/10**; foster requires neutral or better standing.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         with db.get_db() as conn:
             conn.execute(
@@ -962,7 +962,7 @@ class Pack(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Pack Not Found', f'No pack named **{target_pack}**. Check `/pack relations`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if int(pack['treasury']) < amount:
-            await interaction.response.send_message(embed=howlbert_embed('Short on Bones', f'Treasury holds **{pack["treasury"]}** — tribute requires **{amount}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Short on Bones', f'Treasury holds **{pack["treasury"]}**; tribute requires **{amount}**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         debt = db.get_pack_blood_debt(interaction.guild.id, int(pack['id']), int(other['id']))
         with db.get_db() as conn:
@@ -971,7 +971,7 @@ class Pack(commands.Cog):
         cleared = debt > 0 and amount >= debt * 50
         if cleared:
             db.clear_pack_blood_debt(interaction.guild.id, int(pack['id']), int(other['id']))
-        debt_line = f"\n**{debt}** blood debt **cleared**. the obligation is settled." if cleared else (f"\n**{debt}** blood debt remains — increase the tribute to clear it fully." if debt > 0 else "\nno blood debt between your dens; this tribute is a gesture of goodwill.")
+        debt_line = f"\n**{debt}** blood debt **cleared**. the obligation is settled." if cleared else (f"\n**{debt}** blood debt remains; increase the tribute to clear it fully." if debt > 0 else "\nno blood debt between your dens; this tribute is a gesture of goodwill.")
         await interaction.response.send_message(embed=howlbert_embed('Tribute Sent', f"**{amount:,}** bones sent from **{pack['name']}** to **{other['name']}**.{debt_line}", color=SUCCESS_COLOR))
 
 

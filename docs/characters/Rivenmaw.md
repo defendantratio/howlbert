@@ -45,7 +45,7 @@ The Maw was once as straightforward as the current. The river provides, the rive
 
 **Pack Loyalty vs Heart (Charisma -2):** If Saltmuzzle orders him to report Thistlehide movements, he will fracture.
 
-## Statistics (Total: 20, Hunter range 16-20)
+## Statistics (Total: 20, Hunter range 16 to 20)
 
 Strength: 6 (+1)  
 Dexterity: 5 (0)  

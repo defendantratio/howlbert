@@ -204,7 +204,7 @@ def signal_choices() -> list[tuple[str, str]]:
 # parameters built from the same four parameters real ASL signs use
 # (handshape -> base, location -> field, movement -> motion). Picking the
 # anatomically-correct combination for a signal (see CANONICAL_POSTURE)
-# is a real, if small, mechanical bonus — not flavor-only — rewarding
+# is a real, if small, mechanical bonus; not flavor-only; rewarding
 # players who engage with the composition instead of just reskinning text.
 BASE_PHRASES = {
     "ears": "ears",
@@ -253,7 +253,7 @@ CANONICAL_POSTURE: dict[str, tuple[str, str, str]] = {
 
 
 def asl_posture_match_score(signal_key: str, base: str | None, motion: str | None, field: str | None) -> int:
-    """0-3: how many of (base, motion, field) match the canonical posture for this signal."""
+    """0 to 3: how many of (base, motion, field) match the canonical posture for this signal."""
     canonical = CANONICAL_POSTURE.get(signal_key)
     if not canonical or not base or not motion or not field:
         return 0
@@ -496,7 +496,7 @@ async def execute_sign(
             user["id"], target["id"], window_minutes=SIGN_DIMINISH_WINDOW_MINUTES
         )
         if silenced:
-            # sign isn't a supplement to howling/talking for a mute wolf —
+            # sign isn't a supplement to howling/talking for a mute wolf ; 
             # it's the only voice they have, so it doesn't get throttled
             # the same way a repeat-sign-instead-of-talking shortcut would.
             mood_mult = max(SIGN_MUTE_DIMINISH_FLOOR, SIGN_DIMINISH_FACTOR ** (streak - 1))

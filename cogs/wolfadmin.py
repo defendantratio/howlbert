@@ -52,7 +52,7 @@ class WolfAdmin(commands.Cog):
         return False
 
     @wolfadmin.command(name='assign', description='create a wolf and assign it to a player.')
-    @app_commands.describe(player='discord member who will own this wolf', name='wolf name', pack='great pack or loner', birth_sex='birth sex', sexuality='attraction', role='wolf role (stats and skills)', starting_age='starting age in moons, 0-120 (optional)', set_active='make this their active wolf immediately')
+    @app_commands.describe(player='discord member who will own this wolf', name='wolf name', pack='great pack or loner', birth_sex='birth sex', sexuality='attraction', role='wolf role (stats and skills)', starting_age='starting age in moons, 0 to 120 (optional)', set_active='make this their active wolf immediately')
     @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS])
     async def wolfadmin_assign(self, interaction: discord.Interaction, player: discord.User, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, set_active: bool=True):
         if not await self._require_admin(interaction):
@@ -429,8 +429,8 @@ class WolfAdmin(commands.Cog):
                 tag_label = f'`{prefix}text{suffix}`' if prefix or suffix else '_no tag_'
                 star = ' ⭐ autoproxy' if auto_id == w['id'] else ''
                 av = ' 🖼️' if w['avatar_url'] else ''
-                lines.append(f"**{w['wolf_name']}** — {tag_label}{av}{star}")
-            embed = howlbert_embed(f'Proxies — {player.display_name}', '\n'.join(lines), color=SUCCESS_COLOR)
+                lines.append(f"**{w['wolf_name']}**; {tag_label}{av}{star}")
+            embed = howlbert_embed(f'Proxies; {player.display_name}', '\n'.join(lines), color=SUCCESS_COLOR)
             embed.set_footer(text='player uses /proxy avatar for crop · /proxy import for tupperbox')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
@@ -486,7 +486,7 @@ class WolfAdmin(commands.Cog):
                 cause = row['cause_of_death'] or 'unknown'
                 day = row['death_day']
                 day_bit = f' · day **{day}**' if day else ''
-                lines.append(f"**{row['wolf_name']}** (<@{row['discord_id']}>) — {cause}{day_bit}")
+                lines.append(f"**{row['wolf_name']}** (<@{row['discord_id']}>); {cause}{day_bit}")
             sections.append('**Currently dead**\n' + '\n'.join(lines))
         else:
             sections.append('_No wolves are dead right now._')
@@ -495,13 +495,13 @@ class WolfAdmin(commands.Cog):
             for row in log_rows:
                 day = row['day']
                 day_bit = f'day **{day}** · ' if day else ''
-                log_lines.append(f"`#{row['id']}` {day_bit}**{row['wolf_name']}** (<@{row['discord_id']}>) — {row['cause']}")
+                log_lines.append(f"`#{row['id']}` {day_bit}**{row['wolf_name']}** (<@{row['discord_id']}>); {row['cause']}")
             sections.append('**Death log**\n' + '\n'.join(log_lines))
         else:
             sections.append('_Death log is empty._')
         title = 'Death Log'
         if player:
-            title = f'Death Log — {player.display_name}'
+            title = f'Death Log; {player.display_name}'
         embed = howlbert_embed(title, '\n\n'.join(sections), color=SUCCESS_COLOR)
         embed.set_footer(text='cause is recorded at death; log persists after revive.')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

@@ -1,4 +1,4 @@
-"""Book One: The Blinking — plot phases with mechanical pressure (not lore-only)."""
+"""Book One: The Blinking; plot phases with mechanical pressure (not lore-only)."""
 
 from __future__ import annotations
 
@@ -190,7 +190,7 @@ def is_plot_healer_role(user) -> bool:
 
 
 def increment_plot_sniff_quests(user, guild_id: int) -> None:
-    """Progress phase-appropriate blink sniff quests (listen 1–5, witness 6+)."""
+    """Progress phase-appropriate blink sniff quests (listen 1 to 5, witness 6+)."""
     from engine.plot_quests import plot_sniff_quest_keys
 
     keys = plot_sniff_quest_keys(guild_id)
@@ -236,7 +236,7 @@ def try_plot_witness(user, guild_id: int, day: int, *, action: str) -> str:
         "patrol": "paws on the border",
     }.get(action, "paw in the story")
     return (
-        f"\n\n_**the blinking** — {pack}, **{title}**: you mark the sunrise "
+        f"\n\n_**the blinking**; {pack}, **{title}**: you mark the sunrise "
         f"({action_hint}) · **+{PLOT_WITNESS_MOOD} mood** (now **{mood}**)._"
     )
 
@@ -264,7 +264,7 @@ def apply_plot_generic_healer_treat_rewards(
     if healer["id"] != patient["id"]:
         kick = db.adjust_wolf_standing(healer["discord_id"], PLOT_GENERIC_HEALER_STANDING)
         if kick == "kicked":
-            return "\n\n_the den needed your hands — but the pack casts you out._"
+            return "\n\n_the den needed your hands; but the pack casts you out._"
         return (
             f"\n\n_the blinking strains every shelf; your touch earns trust "
             f"(**+{PLOT_GENERIC_HEALER_STANDING} standing**). "
@@ -342,7 +342,7 @@ def plot_status_fields(world) -> list[tuple[str, str, bool]]:
 def _named_wolf_blink_presence(conn: sqlite3.Connection, day: int) -> str:
     """
     Every canonical named wolf is part of Book One, not just the handful with
-    deep bespoke lanes (Soot, Finnpelt, RiverShroud, Firepaw, MaggotBrain) — a
+    deep bespoke lanes (Soot, Finnpelt, RiverShroud, Firepaw, MaggotBrain); a
     small, real mood lift for whoever is currently playing a canon name while
     the plot runs, plus an occasional den-news name-drop, so the rest of the
     canon roster isn't purely decorative once the plot goes live.
@@ -930,7 +930,7 @@ def apply_plot_rivershroud_sniff(user, guild_id: int, day: int) -> str:
                 if kick != "kicked"
                 else "**cast out**"
             )
-            lines.append(f"antlered alpha on the ridge — {standing_note}.")
+            lines.append(f"antlered alpha on the ridge; {standing_note}.")
     return ("\n\n_" + " ".join(lines) + "_") if lines else ""
 
 
@@ -964,7 +964,7 @@ def apply_plot_finnpelt_sniff(user, guild_id: int, day: int) -> str:
             if kick != "kicked"
             else "**cast out**"
         )
-        lines.append(f"ridge held without the crown — {standing_note}.")
+        lines.append(f"ridge held without the crown; {standing_note}.")
     return "\n\n_" + " ".join(lines) + "_"
 
 
@@ -998,7 +998,7 @@ def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
             if kick != "kicked"
             else "**cast out**"
         )
-        lines.append(f"a corpse found before the patrol smelled it — {standing_note}.")
+        lines.append(f"a corpse found before the patrol smelled it; {standing_note}.")
     return "\n\n_" + " ".join(lines) + "_"
 
 
@@ -1038,7 +1038,7 @@ def apply_plot_firepaw_sniff(user, guild_id: int, day: int) -> str:
             else "**cast out**"
         )
         lines.append(
-            f"border mapped by ear — {standing_note} · **+{FIREPAW_PLOT_SNIFF_MOOD_LATE} mood** "
+            f"border mapped by ear; {standing_note} · **+{FIREPAW_PLOT_SNIFF_MOOD_LATE} mood** "
             f"(now **{mood}**)."
         )
     return ("\n\n_" + " ".join(lines) + "_") if lines else ""
@@ -1076,7 +1076,7 @@ def apply_plot_soot_sniff(user, guild_id: int, day: int) -> str:
             else "**cast out**"
         )
         lines.append(
-            f"mirewort's second sight on the border — {standing_note}."
+            f"mirewort's second sight on the border; {standing_note}."
         )
     return "\n\n_" + " ".join(lines) + "_"
 
@@ -1112,7 +1112,7 @@ def apply_plot_firepaw_treat_rewards(
                 healer["discord_id"], FIREPAW_PLOT_TREAT_STANDING
             )
             if kick == "kicked":
-                lines.append("sypha's den trusts your touch — but the pack casts you out.")
+                lines.append("sypha's den trusts your touch; but the pack casts you out.")
             else:
                 lines.append(
                     f"sypha's den trusts your touch (**+{FIREPAW_PLOT_TREAT_STANDING} standing**)."
@@ -1169,7 +1169,7 @@ def apply_plot_soot_treat_rewards(
                 healer["discord_id"], SOOT_PLOT_TREAT_STANDING
             )
             if kick == "kicked":
-                lines.append("mirewort's den trusts your hands — but the pack casts you out.")
+                lines.append("mirewort's den trusts your hands; but the pack casts you out.")
             else:
                 lines.append(
                     f"mirewort's den trusts your hands (**+{SOOT_PLOT_TREAT_STANDING} standing**)."
@@ -1182,7 +1182,7 @@ def apply_plot_soot_treat_rewards(
             )
 
     if phase == 5:
-        lines.append("the belly falls silent; rot-lung walks the reeds — your litter's ghost in every wheeze.")
+        lines.append("the belly falls silent; rot-lung walks the reeds; your litter's ghost in every wheeze.")
     elif phase == 11:
         lines.append("ash naming at the creek; each fever cooled is a name remembered.")
     return ("\n\n" + "\n".join(lines)) if lines else ""
@@ -1296,7 +1296,7 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
     lines: list[str] = []
     if phase in PARANOIA_PHASES and random.random() < 0.22:
         lines.append(
-            "_limp rogue scent on the border — three-legged gait, fish-grease and guilt._"
+            "_limp rogue scent on the border; three-legged gait, fish-grease and guilt._"
         )
     if _is_plot_wolf(user, SPLINTER_NAME):
         lines.append("_your own trail doubles back; even you are not sure who you are stealing for._")
@@ -1340,7 +1340,7 @@ def try_plot_rogue_crime(
         penalty = -4 if is_splinter else -3
         kick = db.adjust_wolf_standing(interaction.user.id, penalty)
         caught = (
-            f"**{name}** is cornered on the **silverrush** shallows — patrol scent, no escape.\n"
+            f"**{name}** is cornered on the **silverrush** shallows; patrol scent, no escape.\n"
             if is_splinter
             else f"border patrol catches **{name}** red-pawed at a rival mark.\n"
         )

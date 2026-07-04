@@ -229,11 +229,8 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if int(user['last_socialize_day']) >= day:
-            embed = howlbert_embed('Already Socialized', "You've mingled this sunrise.\n\n_Resets next sunrise · `/checklist`_", color=ERROR_COLOR)
-            embed.set_footer(text='/bonds · /playpen action:groom · once per sunrise')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import record_use
+        record_use(user, 'socialize', day)
         db.update_user(interaction.user.id, last_socialize_day=day)
         cross_pack = user['pack_id'] != partner['pack_id']
         if cross_pack:
@@ -342,11 +339,8 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if int(user['last_groom_day']) >= day:
-            embed = howlbert_embed('Already Groomed', "You've shared tongues this sunrise.\n\n_Resets next sunrise · `/checklist`_", color=ERROR_COLOR)
-            embed.set_footer(text='/bonds · caretaker bonus on low mood · once per sunrise')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import record_use
+        record_use(user, 'groom', day)
         db.update_user(interaction.user.id, last_groom_day=day)
         cross_pack = user['pack_id'] != partner['pack_id']
         if cross_pack:
@@ -451,7 +445,7 @@ class Explore(commands.Cog):
         if success:
             db.update_user(interaction.user.id, scent_disguise_day=day, scent_disguise_pack=gp_key)
             DISGUISE_FLAVOR = (
-                "you find a fresh border mark and press deep into it. the scent settles wrong on your fur — but it settles.",
+                "you find a fresh border mark and press deep into it. the scent settles wrong on your fur; but it settles.",
                 "it takes longer than expected. rolling in old scat and pine needles, you rebuild your scent line, strand by strand.",
                 "your own scent retreats under the work. you smell of **{pack}** now. try not to meet anyone who knows you.",
             )
@@ -463,7 +457,7 @@ class Explore(commands.Cog):
             CAUGHT_FLAVOR = (
                 "a patrol wolf catches you mid-roll. you scramble away, but the witness saw everything. your standing suffers.",
                 "you misread the wind. a **{pack}** wolf was downwind, and now they know exactly what you were doing.",
-                "the mark you chose was fresher than it looked. you weren't alone. standing **−2** — word will spread.",
+                "the mark you chose was fresher than it looked. you weren't alone. standing **−2**; word will spread.",
             )
             body = random.choice(CAUGHT_FLAVOR).format(pack=gp_info['name'])
             body += f"\n\nFailed: rolled **{roll}** vs dc **{DC}**. Standing **−2**."
@@ -484,9 +478,8 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if int(user.get('last_whisper_day') or 0) >= day:
-            await interaction.response.send_message(embed=howlbert_embed('Already Whispered', 'You have already worked the shadows this sunrise. Wait until tomorrow.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import record_use as _rec_whisper
+        _rec_whisper(user, 'whisper', day)
         if target and own_wolf:
             await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **target** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
@@ -535,12 +528,12 @@ class Explore(commands.Cog):
             db.adjust_wolf_standing(interaction.user.id, -1)
             db.adjust_bond_strength(user['id'], victim['id'], 'rivalry', 8, day=day)
             TRACED_FLAVOR = (
-                "the word got back. **{name}** knows exactly who started it — and so does everyone else.",
+                "the word got back. **{name}** knows exactly who started it; and so does everyone else.",
                 "your source wasn't as quiet as you thought. this one is going to sting.",
                 "traced. **{name}** heard it straight from the wolf who told you. your standing takes the hit.",
             )
             body = random.choice(TRACED_FLAVOR).format(name=victim['wolf_name'])
-            body += f"\n\nYour standing **−1** — caught in the act. rolled **{attacker_roll}** vs dc **{dc}**."
+            body += f"\n\nYour standing **−1**; caught in the act. rolled **{attacker_roll}** vs dc **{dc}**."
             color = ERROR_COLOR
         embed = howlbert_embed('Whisper Campaign', body, color=color)
         embed.set_footer(text='once per sunrise · /gossip · standing game · /rivals')

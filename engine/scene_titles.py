@@ -13,7 +13,7 @@ def build_scene_thread_title(
     max_len: int = DISCORD_THREAD_NAME_MAX,
 ) -> str:
     """
-  Build a thread name like ``Mirewort + Puddlebane — Greyspire ridge``.
+  Build a thread name like ``Mirewort + Puddlebane; Greyspire ridge``.
 
   Location is omitted when unset; a solo scene is just the wolf name.
   """
@@ -27,7 +27,7 @@ def build_scene_thread_title(
         cast = opener
 
     if loc:
-        title = f"{cast} — {loc}"
+        title = f"{cast}; {loc}"
     else:
         title = cast
 
@@ -35,5 +35,5 @@ def build_scene_thread_title(
         return title
     if loc and len(loc) + 3 < max_len:
         keep = max_len - len(loc) - 3
-        return f"{cast[:keep].rstrip()} — {loc}"
+        return f"{cast[:keep].rstrip()}; {loc}"
     return title[: max_len - 1].rstrip() + "…"

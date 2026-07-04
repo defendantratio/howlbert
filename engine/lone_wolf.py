@@ -27,6 +27,6 @@ def apply_lone_wolf_loneliness_on_rollover(conn: sqlite3.Connection, day: int) -
         notes.append({
             "wolf_name": wolf["wolf_name"],
             "discord_id": wolf["discord_id"],
-            "line": f"lone wolf loneliness — mood **−{drain}** (now **{new_mood}**).",
+            "line": f"lone wolf loneliness; mood **−{drain}** (now **{new_mood}**).",
         })
     return notes

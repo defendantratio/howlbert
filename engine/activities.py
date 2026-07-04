@@ -38,8 +38,6 @@ from engine.infractions import (
     roll_individual_steal_caught,
 )
 from engine.role_privileges import (
-    can_forage_again,
-    can_hunt_again,
     hunts_left_footer,
     hunts_used_today,
     is_hunter,
@@ -259,21 +257,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     blocked = _activity_block_embed(user, title="cannot hunt", day=day, action="hunt")
     if blocked:
         return blocked, False, None
-    if not can_hunt_again(user, day):
-        if is_hunter(user):
-            body = (
-                f"you've used all **{hunts_used_today(user, day)}** hunts this sunrise.\n\n"
-                "_resets next sunrise · `/checklist`_"
-            )
-        else:
-            body = (
-                "you've hunted this sunrise.\n\n"
-                "_hunters get more daily hunts · `/checklist`_"
-            )
-        embed = howlbert_embed("already hunted", body, color=ERROR_COLOR)
-        embed.set_footer(text="/checklist · pack hunt: `/bones action:hunt collaborate:true`")
-        return embed, False, None
-
+    # no hunt cap: hunt as often as you like, but each hunt past your daily
+    # allotment yields steadily less (diminishing returns, not a block).
     if roll_large_prey_encounter():
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
@@ -331,6 +316,13 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     amount = roll_hunt_amount()
     if amount > 0:
         amount += dex_bonus
+    # diminishing returns past the wolf's daily hunt allotment
+    from config import HUNTER_HUNTS_PER_SUNRISE
+    from engine.diminishing import multiplier_for_use as _hunt_dim
+    _free_hunts = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
+    _hunt_over = hunts_used_today(user, day) - _free_hunts + 1
+    if _hunt_over > 0 and amount > 0:
+        amount = max(1, int(amount * _hunt_dim(_hunt_over + 1)))
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
 
     # prayer bonus (set by /bones action:pray same day)
@@ -481,7 +473,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
                 _conc_list = _parse_conc(_conc_fresh["active_injuries"] if "active_injuries" in _conc_fresh.keys() else None)
                 _conc_list = _add_conc(_conc_list, "swollen_eye")
                 db.set_user_conditions(interaction.user.id, wolf_id=_conc_fresh["id"], active_injuries=_json_conc.dumps(_conc_list))
-                embed.description = (embed.description or "") + "\n\n_running with a concussion; the blow to the eye socket swells — **swollen eye** early onset._"
+                embed.description = (embed.description or "") + "\n\n_running with a concussion; the blow to the eye socket swells; **swollen eye** early onset._"
     # Heat exhaustion: summer hunts at exhaustion ≥ 3 risk +1 exhaustion (10%, DC 10 CON save).
     _world_season = world["season"] if "season" in world.keys() else None
     _u_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
@@ -511,21 +503,15 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR)
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if user["last_scavenge_day"] >= day:
-        embed = howlbert_embed(
-            "already done",
-            "you've scavenged this sunrise.\n\n_resets next sunrise · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="/checklist")
-        return embed
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured
     blocked = _activity_block_embed(user, title="cannot scavenge", day=day, action="scavenge")
     if blocked:
         return blocked
-    gross = roll_range(SCAVENGE_BONES)
+    from engine.diminishing import next_use_multiplier
+    _scav_mult, _scav_n = next_use_multiplier(user, "scavenge", day)
+    gross = int(roll_range(SCAVENGE_BONES) * _scav_mult)
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     from engine.shop_items import raven_companion_scavenge_bonus
     gross, raven_scavenge_bonus = raven_companion_scavenge_bonus(user["discord_id"], gross)
@@ -590,20 +576,14 @@ def try_track(
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR), False
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if user["last_track_day"] >= day:
-        embed = howlbert_embed(
-            "already done",
-            "you've tracked this sunrise.\n\n_resets next sunrise · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="/checklist · try `/field action:sniff` before next track")
-        return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured, False
     blocked = _activity_block_embed(user, title="cannot track", day=day, action="track")
     if blocked:
         return blocked, False
+    from engine.diminishing import record_use
+    record_use(user, "track", day)
 
     trail_map = {
         "fresh": "track_fresh",
@@ -708,21 +688,15 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR), False
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if user["last_fishing_day"] >= day:
-        embed = howlbert_embed(
-            "already done",
-            "you've fished this sunrise.\n\n_resets next sunrise · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="/checklist · waters shift with `/world` weather & time")
-        return embed, False
     injured = _strenuous_injury_embed(user)
     if injured:
         return injured, False
     blocked = _activity_block_embed(user, title="cannot fish", day=day, action="fishing")
     if blocked:
         return blocked, False
-    gross = roll_range(FISHING_BONES)
+    from engine.diminishing import next_use_multiplier
+    _fish_mult, _fish_n = next_use_multiplier(user, "fishing", day)
+    gross = int(roll_range(FISHING_BONES) * _fish_mult)
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "fishing", season=world["season"], guild_id=guild_id
@@ -810,24 +784,19 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR)
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if not can_forage_again(user, day):
-        embed = howlbert_embed(
-            "already foraged",
-            "you've foraged this sunrise.\n\n_resets next sunrise · `/checklist`_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="/checklist")
-        return embed
     blocked = _activity_block_embed(user, title="cannot forage")
     if blocked:
         return blocked
+    from engine.diminishing import use_count_today, record_use
+    _forage_repeat = use_count_today(user, "forage", day)
+    record_use(user, "forage", day)
     from engine.forager_perk import grant_forager_auto_herb
 
     auto_herb = grant_forager_auto_herb(user, day=day, guild_id=guild_id)
     forager_note = (
         f"\n\n_forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
     )
-    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"])
+    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"]) + 3 * _forage_repeat
     season_note = season_forage_modifier_label(world["season"])
     season_suffix = f"\n_{season_note}_" if season_forage_dc_mod(world["season"]) else ""
     profs = parse_proficiencies(user["skill_proficiencies"])
@@ -1213,12 +1182,13 @@ def try_work(
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR)
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if user["last_work_day"] >= day:
-        return howlbert_embed("already worked", "you've worked this rollover.", color=ERROR_COLOR)
     blocked = _activity_block_embed(user, title="cannot work")
     if blocked:
         return blocked
-    gross = roll_range(WORK_BONES)
+    from engine.diminishing import next_use_multiplier, diminishing_note
+
+    mult, use_n = next_use_multiplier(user, "work", day)
+    gross = int(roll_range(WORK_BONES) * mult)
     net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)
@@ -1228,8 +1198,11 @@ def try_work(
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
-    if net == 0:
-        embed.set_footer(text=embed_footer("today's work is spent; try again after the next sunrise."))
+    dim = diminishing_note(use_n)
+    if dim:
+        embed.set_footer(text=embed_footer(dim))
+    elif net == 0:
+        embed.set_footer(text=embed_footer("today's work turned up nothing; try again."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 
@@ -1254,11 +1227,11 @@ def try_crime(
         return howlbert_embed("server only", "use this in a server.", color=ERROR_COLOR)
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if user["last_crime_day"] >= day:
-        return howlbert_embed("already done", "you've run your score this rollover.", color=ERROR_COLOR)
     blocked = _activity_block_embed(user, title="cannot run a score")
     if blocked:
         return blocked
+    from engine.diminishing import record_use
+    record_use(user, "crime", day)
 
     if target_pack:
         return _try_cross_pack_steal(
@@ -1418,7 +1391,7 @@ def _try_individual_steal(
         from config import MAW_MEDIC_CRIME_KARMA
         new_karma = db.adjust_maw_karma(interaction.user.id, MAW_MEDIC_CRIME_KARMA)
         maw_note = (
-            "the Maw's eye does not leave you — **divine displeasure grows**."
+            "the Maw's eye does not leave you; **divine displeasure grows**."
             if new_karma >= 10
             else "the healer's sanctity was violated; the Maw saw what you did in the dark."
         )
@@ -1799,8 +1772,7 @@ def preypile_error(interaction: discord.Interaction) -> str | None:
         return (
             "no fresh carcass in your hoard; hunt, track, or fish first (`/food` to check)."
         )
-    if user["last_prey_pile_day"] >= day:
-        return "you've already laid out fresh-kill at the cache this sunrise."
+    # no block: lay out fresh-kill as often as there is carcass to share
     return None
 
 

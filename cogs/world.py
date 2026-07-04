@@ -71,8 +71,8 @@ class World(commands.Cog):
             embed.set_footer(text=f"sunrise {world['day_number']} · {season_label(world['season'])} · accept plot quests on `/quest action:board`")
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='setplotphase', description='set book one plot phase 0–12 (server admin). 0 = off.')
-    @app_commands.describe(phase='0 = off, 1–12 = the blinking beats')
+    @app_commands.command(name='setplotphase', description='set book one plot phase 0 to 12 (server admin). 0 = off.')
+    @app_commands.describe(phase='0 = off, 1 to 12 = the blinking beats')
     async def setplotphase(self, interaction: discord.Interaction, phase: int):
         if not is_howlbert_admin(interaction):
             embed = howlbert_embed('Denied', 'Only server admins may set the plot phase.', color=ERROR_COLOR)
@@ -86,7 +86,7 @@ class World(commands.Cog):
         from engine.plot_blinking import PLOT_TITLE, phase_meta
         meta = phase_meta(int(world['plot_phase']))
         if meta:
-            body = f"Phase **{world['plot_phase']}** — **{meta['title']}**\n_{meta['news']}_"
+            body = f"Phase **{world['plot_phase']}**; **{meta['title']}**\n_{meta['news']}_"
         else:
             body = 'Plot **off**; Book One mechanics paused.'
         embed = howlbert_embed(PLOT_TITLE, body, color=SUCCESS_COLOR)
@@ -106,7 +106,7 @@ class World(commands.Cog):
         from engine.plot_blinking import PLOT_TITLE, phase_meta
         meta = phase_meta(new_phase)
         if meta:
-            body = f"Advanced to phase **{new_phase}** — **{meta['title']}**\n_{meta['news']}_\n\n{meta['mechanics']}"
+            body = f"Advanced to phase **{new_phase}**; **{meta['title']}**\n_{meta['news']}_\n\n{meta['mechanics']}"
         else:
             body = 'Plot is off or already at phase 12.'
         embed = howlbert_embed(PLOT_TITLE, body, color=SUCCESS_COLOR)
@@ -173,7 +173,7 @@ class World(commands.Cog):
 
     async def _cooldowns(self, interaction: discord.Interaction):
         # `/checklist` is the single source of truth for "what's left this
-        # sunrise" — this action is now an alias so the two views can't drift.
+        # sunrise"; this action is now an alias so the two views can't drift.
         user = db.get_user(interaction.user.id)
         if not user:
             embed = howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR)
@@ -192,7 +192,7 @@ class World(commands.Cog):
             is_booster=is_booster, donor_bonus=donor_bonus,
         )
         if not body:
-            body = "nothing left this sunrise — you're caught up."
+            body = "nothing left this sunrise; you're caught up."
         embed = howlbert_embed(f"{user['wolf_name']}'s Checklist; Day {day}" if guild_id else f"{user['wolf_name']}'s Checklist", body)
         if guild_id:
             from config import LUNAR_BIRTH_AGING
@@ -329,12 +329,18 @@ class World(commands.Cog):
         if not guild_id:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
+        # a full rollover takes several seconds; acknowledge inside discord's 3s
+        # window and then follow up, so the interaction never expires (error 10062).
+        try:
+            await interaction.response.defer()
+        except discord.HTTPException:
+            return
         import asyncio
 
         world, crisis = await asyncio.to_thread(db.perform_rollover, guild_id)
         from engine.rollover_announce import build_rollover_embed
         embed = build_rollover_embed(world, crisis)
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
         from engine.rp_ambience import post_rp_ambience
         try:
             await post_rp_ambience(self.bot, guild_id, world)

@@ -1161,7 +1161,7 @@ def format_active_herb_buffs(user, day: int) -> str:
     if pain_relief_active(user, day):
         lines.append("**pain relief**; wounds and strain hurt less this sunrise.")
     if sedated_blocks_activity(user, day):
-        lines.append("**sedated**; drowsy from herbs — strenuous activity blocked.")
+        lines.append("**sedated**; drowsy from herbs; strenuous activity blocked.")
     if infection_ward_active(user, day):
         lines.append("**infection ward**; treated wounds resist festering.")
     if flea_ward_active(user, day):

@@ -52,7 +52,7 @@ class AvatarCropView(ui.View):
 
     def _embed(self) -> discord.Embed:
         embed = howlbert_embed(
-            f"crop — {self.wolf['wolf_name']}",
+            f"crop; {self.wolf['wolf_name']}",
             (
                 "move and zoom until the portrait looks right, then **save**.\n"
                 "The preview circle matches how Discord shows webhook avatars."

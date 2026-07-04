@@ -174,7 +174,7 @@ def generate_pup_stats(mother, father) -> dict:
 def inherit_parent_skill_trait(pup_id: int, mother, father) -> str | None:
     """
     A small chance for a pup to start with a one-rank head start in
-    whichever skill a parent has actually earned the most experience in —
+    whichever skill a parent has actually earned the most experience in ; 
     "comes from someone" instead of every litter starting blank regardless
     of what their parents spent seasons getting good at.
     """

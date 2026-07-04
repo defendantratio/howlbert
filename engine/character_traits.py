@@ -3524,7 +3524,7 @@ def compute_failure_strain_gain(
             margin = int(dc) - int(total)
         miss = max(0, int(margin or 0))
         if miss <= 1:
-            return 0, "_close call; nerves only — no lasting dent._"
+            return 0, "_close call; nerves only; no lasting dent._"
         if miss <= 4:
             gain = 1
             note = "the miss lingers in muscle memory."
@@ -3628,7 +3628,7 @@ def maybe_apply_success_recovery(
     from rpg_rules import SKILL_STRAIN_THRESHOLD
 
     return (
-        f"_success helps — strain down to **{new_strain}/{SKILL_STRAIN_THRESHOLD}**._"
+        f"_success helps; strain down to **{new_strain}/{SKILL_STRAIN_THRESHOLD}**._"
     )
 
 

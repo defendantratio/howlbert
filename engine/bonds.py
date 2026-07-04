@@ -53,7 +53,7 @@ def has_romance_bond(wolf_a_id: int, wolf_b_id: int) -> bool:
 def has_strong_positive_bond(wolf_a_id: int, wolf_b_id: int) -> bool:
     """
     True if these two wolves share a deep enough friendship/romance/kin/mentor
-    bond that it should matter beyond the bond list — personal trust
+    bond that it should matter beyond the bond list; personal trust
     outweighing pack politics, not just a number on a sheet.
     """
     if not wolf_a_id or not wolf_b_id:
@@ -86,13 +86,13 @@ def _is_former_mentor_pair(wolf_a_id: int, wolf_b_id: int) -> bool:
 
 def apply_mentor_mate_caught(user, target, *, guild_id: int | None, day: int) -> str | None:
     """
-    Mentor/mentee courtship and mating aren't blocked outright — the den isn't
-    that squeamish — but it's an abuse of trust and standing, not power, is
+    Mentor/mentee courtship and mating aren't blocked outright; the den isn't
+    that squeamish; but it's an abuse of trust and standing, not power, is
     the in-fiction currency here. If caught, the standing hit and public
     scandal don't land immediately; it queues as a rumor (engine.rumor_mill)
     that breaks at the den a couple sunrises later, same as real gossip.
     Former mentor-mentee pairs (after graduation) carry the same taboo at
-    reduced catch chance — the history still casts a shadow.
+    reduced catch chance; the history still casts a shadow.
     Returns an immediate "someone may have seen" notice if caught, else None.
     """
     current_mentor = is_mentor_bond(user["id"], target["id"])
@@ -284,7 +284,7 @@ def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str |
 _GRIEF_GROOM_LINES = (
     f"_there's a weight in their fur today. you groom carefully, saying nothing._",
     f"_they lean into it more than usual. sometimes this is all there is._",
-    f"_something is missing from their scent — or maybe from yours. you stay close anyway._",
+    f"_something is missing from their scent; or maybe from yours. you stay close anyway._",
 )
 
 
@@ -294,19 +294,19 @@ def apply_groom_bonds(user, partner, *, day: int = 0) -> str | None:
     if not row:
         return None
     bond_note = _format_bond_note(partner["wolf_name"], bond_type, row, label=label)
-    # Grooming removes fleas from the partner — picking out parasites is exactly what this does.
+    # Grooming removes fleas from the partner; picking out parasites is exactly what this does.
     from engine.diseases import parse_disease
     partner_disease_raw = partner["disease"] if "disease" in partner.keys() else None
     flea_key, _ = parse_disease(partner_disease_raw)
     if flea_key == "fleas":
         db.set_user_conditions(partner["discord_id"], clear_disease=True, wolf_id=partner["id"])
-        bond_note = (bond_note + "\n_parasites gone — careful grooming cleared the fleas._") if bond_note else "_careful grooming cleared the fleas._"
+        bond_note = (bond_note + "\n_parasites gone; careful grooming cleared the fleas._") if bond_note else "_careful grooming cleared the fleas._"
     # Mutual: also clear groomer's fleas
     user_disease_raw = user["disease"] if "disease" in user.keys() else None
     user_flea_key, _ = parse_disease(user_disease_raw)
     if user_flea_key == "fleas":
         db.set_user_conditions(user["discord_id"], clear_disease=True, wolf_id=user["id"])
-        bond_note = (bond_note + "\n_the grooming works both ways — your own coat is clear too._") if bond_note else "_the grooming works both ways — your own coat is clear too._"
+        bond_note = (bond_note + "\n_the grooming works both ways; your own coat is clear too._") if bond_note else "_the grooming works both ways; your own coat is clear too._"
     distressed = int(partner.get("distressed", 0) if hasattr(partner, "get") else partner["distressed"] if "distressed" in partner.keys() else 0)
     partner_grief = int(partner["grief_sunrises"]) if "grief_sunrises" in partner.keys() else 0
     if distressed:
@@ -378,7 +378,7 @@ def format_bonds_embed_body(user) -> str:
             lines.append(f"_+{len(rows) - 8} more._")
         sections.append(f"**{label}**\n" + "\n".join(lines))
     if complicated_names:
-        sections.append("_⁑ complicated — friendship and rivalry both run high._")
+        sections.append("_⁑ complicated; friendship and rivalry both run high._")
 
     if not sections:
         return (
