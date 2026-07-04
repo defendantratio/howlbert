@@ -38,7 +38,7 @@ def apply_gathering_on_season_change(
         season,
         ("clan gathering", "the four clans gather at **fourtrees** under the warrior code."),
     )
-    lines = [f"**{title}** — {flavor}"]
+    lines = [f"**{title}**; {flavor}"]
 
     pack_rows = conn.execute(
         """

@@ -169,11 +169,11 @@ def apply_medic_neutrality_violated(attacker_discord_id: int, medic) -> str:
     """Standing penalty for hitting or stealing from a neutral medic. Returns a note line."""
     kick = db.adjust_wolf_standing(attacker_discord_id, MEDIC_NEUTRAL_STANDING)
     note = (
-        f"violated **healer's neutrality** — the den does not forgive striking the healer; "
+        f"violated **healer's neutrality**; the den does not forgive striking the healer; "
         f"standing **{MEDIC_NEUTRAL_STANDING}**"
     )
     if kick == "kicked":
-        note += " — **cast out**"
+        note += "; **cast out**"
     return note
 
 

@@ -92,7 +92,7 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0-120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
     @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
     async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
@@ -150,11 +150,11 @@ class Profile(commands.Cog):
         elif user['wolf_role'] == 'juvenile':
             from engine.blooding import format_blooding_status, is_unblooded_juvenile
             blooding_line = format_blooding_status(user)
-            juvenile_path = 'You are **6-24 moons**; practice hunting; your **blooding** comes on your first kill. Forbidden to mate. Complete role quests and `/role action:event` to grow toward an adult role.'
+            juvenile_path = 'You are **6 to 24 moons**; practice hunting; your **blooding** comes on your first kill. Forbidden to mate. Complete role quests and `/role action:event` to grow toward an adult role.'
             if blooding_line:
                 juvenile_path = blooding_line
             elif not is_unblooded_juvenile(user):
-                juvenile_path = 'You are **6-24 moons** and **blooded**; role quests and `/role action:event` mark your path toward an adult role. Forbidden to mate.'
+                juvenile_path = 'You are **6 to 24 moons** and **blooded**; role quests and `/role action:event` mark your path toward an adult role. Forbidden to mate.'
             embed.add_field(name="Juvenile's Path", value=juvenile_path, inline=False)
         if genetic_keys:
             from engine.genetics import format_genetic_conditions
@@ -350,7 +350,7 @@ class Profile(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='character', description="set your wolf's identity: pronouns, birthday, birth sex, sexuality, maw belief, combat size, or age.")
-    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", birth_sex='biological sex (affects conception checks)', sexuality='romantic/sexual attraction', maw_belief='faith in the maw', size='combat build size (auto = role/age default)', age_moons='age in moons, 0-120 (role and proficiencies re-sync to the new age)', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
+    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", birth_sex='biological sex (affects conception checks)', sexuality='romantic/sexual attraction', maw_belief='faith in the maw', size='combat build size (auto = role/age default)', age_moons='age in moons, 0 to 120 (role and proficiencies re-sync to the new age)', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
     @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS], size=[app_commands.Choice(name='auto (role / age)', value='auto'), app_commands.Choice(name='small', value='small'), app_commands.Choice(name='medium', value='medium'), app_commands.Choice(name='large', value='large')], clear=[app_commands.Choice(name='pronouns', value='pronouns'), app_commands.Choice(name='birthday', value='birthday'), app_commands.Choice(name='birth sex', value='birth_sex'), app_commands.Choice(name='sexuality', value='sexuality'), app_commands.Choice(name='maw belief', value='maw_belief'), app_commands.Choice(name='combat size', value='size_class')])
     @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
     async def character(self, interaction: discord.Interaction, pronouns: str | None=None, birthday: str | None=None, birth_sex: str | None=None, sexuality: str | None=None, maw_belief: str | None=None, size: str | None=None, age_moons: app_commands.Range[int, 0, 120] | None=None, clear: str | None=None, own_wolf: str | None=None):
@@ -478,7 +478,7 @@ class Profile(commands.Cog):
         from engine.wolf_checklist import build_wolf_checklist
         body = build_wolf_checklist(target, day=day, guild_id=interaction.guild_id, prestige_tier=prestige_tier, is_booster=is_booster, donor_bonus=donor_bonus)
         if not body:
-            body = 'Nothing on your list — caught up.'
+            body = 'Nothing on your list; caught up.'
             footer = 'Use `/checklist` for full sunrise timers.'
         else:
             footer = f'Day {day} · `/checklist` for timers' if day else None
@@ -570,7 +570,7 @@ class Profile(commands.Cog):
                 bonds_preview = bonds_preview[:1021] + '…\n_Use `/bonds` for the full list._'
             embed.add_field(name='Bonds', value=bonds_preview, inline=False)
         elif target == interaction.user:
-            embed.add_field(name='Bonds', value='No bonds yet — `/playpen action:socialize`, `action:groom`, or `/bonds action:Set`.', inline=False)
+            embed.add_field(name='Bonds', value='No bonds yet; `/playpen action:socialize`, `action:groom`, or `/bonds action:Set`.', inline=False)
         embed.add_field(name='Condition', value=user['condition'].title(), inline=True)
 
         def fmt_attr(key: str) -> str:
@@ -584,7 +584,7 @@ class Profile(commands.Cog):
             str_val = int(user['attr_str']) if 'attr_str' in user.keys() else 5
             con_val = int(user['attr_con']) if 'attr_con' in user.keys() else 5
             hp_line = f"{user['hp']} / {cap}\n{format_max_hp_breakdown(str_val, con_val, max_hp=int(user['max_hp']))}"
-            if user_exhaustion(user) >= 4:
+            if user_exhaustion(user) >= 6:
                 hp_line += f"\n_(exhaustion cap {cap}; base {user['max_hp']})_"
             embed.add_field(name='HP', value=hp_line, inline=True)
         from engine.character_traits import format_traits_for_profile, format_skill_strain_line
@@ -674,7 +674,7 @@ class Profile(commands.Cog):
 
     async def _bio(self, interaction: discord.Interaction, member: discord.Member | None=None, *, own_wolf: str | None=None, member_wolf: str | None=None):
         if member and own_wolf:
-            embed = howlbert_embed('Pick One', "Use **member** for another player's active wolf, or **own_wolf** for one of yours — not both.", color=ERROR_COLOR)
+            embed = howlbert_embed('Pick One', "Use **member** for another player's active wolf, or **own_wolf** for one of yours; not both.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if own_wolf:

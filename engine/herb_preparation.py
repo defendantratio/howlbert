@@ -363,10 +363,10 @@ def dry_all_fresh_herbs(
                 lines.append(f"**{name}** → dried")
             elif "ruined" in msg.lower() or "spoiled" in msg.lower():
                 ruined += 1
-                lines.append(f"**{name}** — ruined")
+                lines.append(f"**{name}**; ruined")
             else:
                 failed += 1
-                lines.append(f"**{name}** — failed")
+                lines.append(f"**{name}**; failed")
 
     if pack_id:
         for store_id in pack_fresh_ids:
@@ -385,10 +385,10 @@ def dry_all_fresh_herbs(
                 lines.append(f"{label} → dried")
             elif "ruined" in msg.lower() or "spoiled" in msg.lower():
                 ruined += 1
-                lines.append(f"{label} — ruined")
+                lines.append(f"{label}; ruined")
             else:
                 failed += 1
-                lines.append(f"{label} — failed")
+                lines.append(f"{label}; failed")
 
     if dried == 0:
         summary = "\n".join(lines[:10])

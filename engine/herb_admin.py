@@ -1,4 +1,4 @@
-"""Fallback method requirements per disease — used when the herb itself has no override."""
+"""Fallback method requirements per disease; used when the herb itself has no override."""
 
 from __future__ import annotations
 

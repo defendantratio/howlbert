@@ -1,6 +1,6 @@
 """
 Delayed scandal reveal. Caught secrets don't land on the den the instant
-they happen — they spread over a few sunrises, the way real gossip does —
+they happen; they spread over a few sunrises, the way real gossip does ; 
 so there's a window where the truth is still just a rumor, not a verdict.
 """
 

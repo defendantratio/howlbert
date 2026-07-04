@@ -219,7 +219,7 @@ def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str,
                 if inj_key in _INFECTABLE and "infected_wound" not in injuries and _random.random() < 0.15:
                     injuries = add_injury(injuries, "infected_wound")
                     db.set_user_conditions(defender_f['discord_id'], active_injuries=json.dumps(injuries))
-                    injury_note += '\n_the wound already looks wrong — **infected wound** sets in._'
+                    injury_note += '\n_the wound already looks wrong; **infected wound** sets in._'
         if new_hp == 0:
             from engine.chronic_conditions import try_near_death_mental_trauma
             trauma = try_near_death_mental_trauma(defender_stats)
@@ -669,7 +669,7 @@ class Combat(commands.Cog):
         day = world['day_number'] if world else 1
         if topic == 'fire_encourage':
             if ally and own_ally:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `ally` or `own_ally` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `ally` or `own_ally`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if not ally and not own_ally:
                 await interaction.response.send_message(player_message('Pick an **ally** or **own_ally** to encourage past the flame.'), ephemeral=reply_ephemeral())

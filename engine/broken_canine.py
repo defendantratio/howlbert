@@ -92,7 +92,7 @@ def _maybe_grant_drown_rite_mark(conn: sqlite3.Connection, wolf_id: int) -> str 
     """
     Silverrush lore: alphas claim the seat by submerging in the Maw's Mouth
     until the current turns. Prolonged hypoxia sometimes leaves them
-    "brilliant and mad in equal measure" — a permanent +wisdom / -charisma
+    "brilliant and mad in equal measure"; a permanent +wisdom / -charisma
     trait pair, layered onto whatever traits the wolf already has.
     """
     from engine.character_traits import encode_character_traits, ensure_traits_dict, parse_character_traits
@@ -217,7 +217,7 @@ def run_broken_canine_rite(
             if mark:
                 logs.append(
                     f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
-                    f"emerges **{mark}** — brilliant and a little mad in equal measure."
+                    f"emerges **{mark}**; brilliant and a little mad in equal measure."
                 )
         outcome = "new_alpha"
 
@@ -261,14 +261,14 @@ def run_vacancy_rite(
     challenge against a sitting Alpha whose standing collapses. When the
     seat is simply empty (the old Alpha left, was exiled, or died) and more
     than one eligible wolf remains, a silent auto-promote by raw standing
-    number isn't how this den picks a leader — so this runs the same
+    number isn't how this den picks a leader; so this runs the same
     single-elimination bracket against the same eligibility rule
     (`is_eligible_challenger`) and logs into the same `broken_canine_rites`
     history as a standing-collapse challenge.
     `excluded_discord_id` mirrors `_promote_pack_alpha`'s `exclude_id` (the
     player account vacating the seat, if any).
     Returns None when there's 0 or 1 eligible wolf (caller falls back to its
-    existing instant-promote logic — no fight needed when there's no contest).
+    existing instant-promote logic; no fight needed when there's no contest).
     """
     import database as db
 
@@ -312,7 +312,7 @@ def run_vacancy_rite(
         if mark:
             logs.append(
                 f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
-                f"emerges **{mark}** — brilliant and a little mad in equal measure."
+                f"emerges **{mark}**; brilliant and a little mad in equal measure."
             )
 
     conn.execute(

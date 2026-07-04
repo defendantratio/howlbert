@@ -252,7 +252,7 @@ def make_arrival_scene_view(
     """
     One-time post-registration scene (Wolvden-style): how did this wolf
     arrive at the den (or come into the litter, for a pup)? Each pick is
-    real, not flavor-only — see engine.long_term_injuries.LONG_TERM_TYPES's
+    real, not flavor-only; see engine.long_term_injuries.LONG_TERM_TYPES's
     *_arrival entries.
     """
     from engine.long_term_injuries import add_long_term_injury

@@ -29,85 +29,85 @@ THE **PACKS**     `🐺`
 OPEN **ROLES**     `🐺`
 
 -# **Alpha** (0/1 per pack)
--# Greyspire — **OPEN** (Grim)
--# Mistmoor — **OPEN** (Murkvein)
--# Thistlehide — **TAKEN** (River'Shroud · Alpha; Finnpelt)
--# Silverrush — **OPEN** (Saltmuzzle)
+-# Greyspire; **OPEN** (Grim)
+-# Mistmoor; **OPEN** (Murkvein)
+-# Thistlehide; **TAKEN** (River'Shroud · Alpha; Finnpelt)
+-# Silverrush; **OPEN** (Saltmuzzle)
 
 -# **Alpha's Guard / Advisor** (0/1 per pack)
--# Greyspire — **OPEN** (Icefang)
--# Mistmoor — **OPEN** (Dusk)
--# Thistlehide — **TAKEN** (Skye)
--# Silverrush — **OPEN** (Rift)
+-# Greyspire; **OPEN** (Icefang)
+-# Mistmoor; **OPEN** (Dusk)
+-# Thistlehide; **TAKEN** (Skye)
+-# Silverrush; **OPEN** (Rift)
 
 -# **Diplomat** (0/1 per pack)
--# Greyspire — **OPEN** (Sleet)
--# Mistmoor — **OPEN** (Reedwhisper)
--# Thistlehide — **OPEN** (Thyme)
--# Silverrush — **OPEN** (Pebble)
+-# Greyspire; **OPEN** (Sleet)
+-# Mistmoor; **OPEN** (Reedwhisper)
+-# Thistlehide; **OPEN** (Thyme)
+-# Silverrush; **OPEN** (Pebble)
 
 -# **Medic** (0/2 per pack)
--# Greyspire — **OPEN** (Hemlock)
--# Mistmoor — **TAKEN** (Mirewort) · 1 slot **OPEN**
--# Thistlehide — **TAKEN** (Sypha) · 1 slot **OPEN**
--# Silverrush — **OPEN** (Ripple)
+-# Greyspire; **OPEN** (Hemlock)
+-# Mistmoor; **TAKEN** (Mirewort) · 1 slot **OPEN**
+-# Thistlehide; **TAKEN** (Sypha) · 1 slot **OPEN**
+-# Silverrush; **OPEN** (Ripple)
 
--# **Scout** — **OPEN**
+-# **Scout**; **OPEN**
 
 -# **Hunter**
--# **TAKEN** — Aromis (Silverrush)
--# **TAKEN** — Eltanin (Thistlehide)
--# **TAKEN** — Lucid (Thistlehide)
--# **TAKEN** — River'Shroud (Thistlehide)
--# Remaining slots — **OPEN**
+-# **TAKEN**; Aromis (Silverrush)
+-# **TAKEN**; Eltanin (Thistlehide)
+-# **TAKEN**; Lucid (Thistlehide)
+-# **TAKEN**; River'Shroud (Thistlehide)
+-# Remaining slots; **OPEN**
 
--# **Guard** — **OPEN**
+-# **Guard**; **OPEN**
 
--# **Forager** — **OPEN**
+-# **Forager**; **OPEN**
 
--# **Caretaker** — **OPEN**
+-# **Caretaker**; **OPEN**
 
--# **Elder** — **OPEN**
+-# **Elder**; **OPEN**
 
 -# **Juvenile**
--# **TAKEN** — Harepup (Greyspire)
--# Remaining slots — **OPEN**
+-# **TAKEN**; Harepup (Greyspire)
+-# Remaining slots; **OPEN**
 
 -# **Pup**
--# **TAKEN** — Kanami (Thistlehide)
--# **TAKEN** — Pale'Step (Thistlehide)
--# **TAKEN** — Driftpup (Silverrush)
--# Remaining slots — **OPEN**
+-# **TAKEN**; Kanami (Thistlehide)
+-# **TAKEN**; Pale'Step (Thistlehide)
+-# **TAKEN**; Driftpup (Silverrush)
+-# Remaining slots; **OPEN**
 
--# **Drown-Sick Oracle** — **OPEN**
+-# **Drown-Sick Oracle**; **OPEN**
 
--# **Bog-Born** — **OPEN**
+-# **Bog-Born**; **OPEN**
 
--# **Lowbelly** — **OPEN**
+-# **Lowbelly**; **OPEN**
 
--# **Loner / Rogue** — **OPEN**
+-# **Loner / Rogue**; **OPEN**
 
 -# **Medic Apprentice**
--# **TAKEN** — Firepaw (Thistlehide)
--# **TAKEN** — Rotteddust (Mistmoor)
--# **TAKEN** — Soot (Mistmoor)
--# Remaining slots — **OPEN**
+-# **TAKEN**; Firepaw (Thistlehide)
+-# **TAKEN**; Rotteddust (Mistmoor)
+-# **TAKEN**; Soot (Mistmoor)
+-# Remaining slots; **OPEN**
 
--# *Apprentice ranks* (Hunter, Scout, Forager, Diplomat, Caretaker) — **OPEN**
+-# *Apprentice ranks* (Hunter, Scout, Forager, Diplomat, Caretaker); **OPEN**
 
 OTHER **SPECIES**     `🐾`
 
 -# **Humans** (Twolegs)
 -# **Forest cats** (Clan warrior, loner, rogue, kittypet)
--# **Other non-wolf animals** — staff approval; DM for details
+-# **Other non-wolf animals**; staff approval; DM for details
 
 `🧭`     __WE OFFER:__
 
 > -# A brand new 18+ server
 > -# Personal character channels & pack dens
-> -# **Twelve phases. Three acts.** The plot advances when RP earns it – not on a fixed calendar.
+> -# **Twelve phases. Three acts.** The plot advances when RP earns it; not on a fixed calendar.
 > -# A slow-burn plotline with player-driven consequences
-> -# Wolf–cat border diplomacy on Warrior Cats lake territory
+> -# Wolf; cat border diplomacy on Warrior Cats lake territory
 > -# NPCs / adaptables / adoptables 
 > -# D&D style roleplay
 > -# 24/7 text RP

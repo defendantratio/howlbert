@@ -437,9 +437,6 @@ def gift_cat_pact(
     if not pact:
         return False, f"no active pact with **{clan}**."
 
-    if db.cat_pact_gift_used_today(pack["id"], day):
-        return False, "tribute was already sent this sunrise."
-
     spend = CAT_PACT_GIFT_TRIBUTE if amount is None else max(0, int(amount))
     if spend > 0 and not db.deduct_pack_treasury(pack["id"], spend):
         return False, f"treasury doesn't have **{spend}** bones to spare."
@@ -482,9 +479,6 @@ def raid_cat_clan(
         return False, "raid_type must be food, herbs, amusement, or bones for a clan camp."
     if not user["pack_id"]:
         return False, "join a great pack to run a den raid."
-
-    if int(user["last_crime_day"]) >= day:
-        return False, "you've run your score this rollover."
 
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     pact_type = pact["pact_type"] if pact else "truce"
@@ -553,9 +547,6 @@ def trade_duplicates_cat_pact(
     pact, stored_clan = resolve_active_cat_pact(guild_id, pack["id"], clan_name)
     if not pact:
         return False, f"no active pact with **{clan}**."
-
-    if int(user["last_duplicate_trade_day"]) >= day:
-        return False, "you already traded duplicates this sunrise."
 
     from engine.duplicate_trade import (
         collect_duplicates,
@@ -635,10 +626,6 @@ def trade_food_cat_pact(
     if not pact:
         return False, f"no active pact with **{clan}**."
 
-    last_food_trade = int(user["last_cat_food_trade_day"]) if "last_cat_food_trade_day" in user.keys() else 0
-    if last_food_trade >= day:
-        return False, "you already traded food at the border this sunrise."
-
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "you don't carry that carcass or forage (`/food` for stack ids)."
@@ -717,14 +704,17 @@ def receive_cat_goods(
             f"(need **{CAT_PACT_RECEIVE_MIN_TRUST}**). gift, barter, or patrol without violence."
         )
 
-    if int(user["last_cat_receive_day"]) >= day:
-        return False, "you already collected clan goods this sunrise."
-
     from engine.cat_clan_goods import grant_clan_loot, receive_loot_count, roll_clan_loot
+    from engine.diminishing import use_count_today, record_use
 
     count = receive_loot_count(trust, pact["pact_type"])
+    _recv_repeat = use_count_today(user, "cat_receive", day)
+    record_use(user, "cat_receive", day)
+    if _recv_repeat > 0:
+        # the clan already shared today; a second ask the same sunrise gets scraps
+        count = max(1, count - _recv_repeat) if count > 0 else 0
     if count <= 0:
-        return False, "trust is too low for border gifts."
+        return False, "trust is too low for border gifts, or the clan has nothing more to spare today."
 
     loot_entries = roll_clan_loot(
         stored_clan, pact_type=pact["pact_type"], count=count

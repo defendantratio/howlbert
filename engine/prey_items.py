@@ -333,7 +333,7 @@ def seasonal_forage_food(season: str | None) -> str | None:
     weights = [w for _, w in table]
     return random.choices(keys, weights=weights, k=1)[0]
 
-# Each sniff flavor carries a "kind" that decides its mechanical payoff —
+# Each sniff flavor carries a "kind" that decides its mechanical payoff ; 
 # no flavor-only text. "gather" flavors grant the hunt/track/scavenge/fish
 # bones bonus (sniff_bonus_day); "water" flavors restore a little thirst
 # from working close to the river; "alert" flavors raise this sniff's

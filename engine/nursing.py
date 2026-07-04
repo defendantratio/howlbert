@@ -460,6 +460,6 @@ def apply_winter_pup_cold_on_rollover(conn, season: str) -> list[dict]:
         notes.append({
             "wolf_name": pup["wolf_name"],
             "discord_id": int(pup["discord_id"]) if pup["discord_id"] else None,
-            "line": f"cold night — exhaustion **{old_ex}** → **{new_ex}** (`/pupcare action:feed` with honey eases the chill).",
+            "line": f"cold night; exhaustion **{old_ex}** → **{new_ex}** (`/pupcare action:feed` with honey eases the chill).",
         })
     return notes

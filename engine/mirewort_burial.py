@@ -25,10 +25,10 @@ MIREWORT_GRAVE_HERBS: tuple[str, ...] = (
 _MOURNING_LINES: tuple[str, ...] = (
     (
         "**{name}**'s mound is still wet when he presses **{herb}** into the soil and "
-        "whispers their name — by next moon the grave will show green."
+        "whispers their name; by next moon the grave will show green."
     ),
     (
-        "He lays **{herb}** over **{name}**'s folded earth the way he buried pups in rot-season — "
+        "He lays **{herb}** over **{name}**'s folded earth the way he buried pups in rot-season; "
         "medicine growing out of what the Maw took."
     ),
     (
@@ -81,11 +81,11 @@ def mirewort_carcass_burial_note(
     if ritual_herb_key and ritual_herb_key in MIREWORT_GRAVE_HERBS:
         herb = _herb_label(ritual_herb_key)
         return (
-            f"\n\n_habit from rot-lung seasons: **{herb}** takes on the mound — "
+            f"\n\n_habit from rot-lung seasons: **{herb}** takes on the mound; "
             f"the grave will green even though the carcass is gone._"
         )
     herb = _pick_grave_herb(herb_key)
     return (
-        f"\n\n_without thinking, he tucks **{herb}** cuttings along the mound's edge — "
+        f"\n\n_without thinking, he tucks **{herb}** cuttings along the mound's edge; "
         f"respect for the hole, not the meat._"
     )

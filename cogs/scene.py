@@ -38,7 +38,7 @@ class Scene(commands.Cog):
     scene = app_commands.Group(name='scene', description='run roleplay scenes in threads with a roster.')
 
     @scene.command(name='start', description='open an rp scene as a thread in this channel.')
-    @app_commands.describe(with_member='another player in the scene (optional)', own_wolf='your other wolf in the scene (optional)', with_member_wolf="specific wolf from that player's roster", location='where the scene happens (defaults to your ic location)', topic="what's happening — goes in the opening post, not the thread title")
+    @app_commands.describe(with_member='another player in the scene (optional)', own_wolf='your other wolf in the scene (optional)', with_member_wolf="specific wolf from that player's roster", location='where the scene happens (defaults to your ic location)', topic="what's happening; goes in the opening post, not the thread title")
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, with_member_wolf=_with_member_wolf_autocomplete)
     async def start(self, interaction: discord.Interaction, with_member: discord.Member | None=None, own_wolf: str | None=None, with_member_wolf: str | None=None, location: str | None=None, topic: str | None=None):
         if not interaction.guild:
@@ -57,7 +57,7 @@ class Scene(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Missing Permission', 'I need **Create Public Threads** here.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if with_member and own_wolf:
-            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `with_member` or `own_wolf` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `with_member` or `own_wolf`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         await interaction.response.defer(ephemeral=reply_ephemeral())
         from engine.scene_titles import build_scene_thread_title
@@ -201,7 +201,7 @@ class Scene(commands.Cog):
         wolf = _active_wolf(interaction)
         who = wolf['wolf_name'] if wolf else interaction.user.display_name
         body = note.strip() if note else '_The scene stirs._'
-        await interaction.response.send_message(f"🎬 **{scene['name']}** — **{who}** calls the scene.\n{body}\n{mentions}")
+        await interaction.response.send_message(f"🎬 **{scene['name']}**; **{who}** calls the scene.\n{body}\n{mentions}")
 
     @scene.command(name='end', description='close this scene (scene owner or admin).')
     async def end(self, interaction: discord.Interaction):

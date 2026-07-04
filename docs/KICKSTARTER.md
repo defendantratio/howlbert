@@ -106,8 +106,11 @@ copy-paste block:
 > - rollovers: admin `/rollover` advances the in-game day; hunger, thirst, mood, and age tick forward.
 > - four great packs: greyspire (mountain), mistmoor (swamp), thistlehide (forest), silverrush (river), or lone wolf.
 > - economy: bones from hunt, work, quests, and daily stipend; trading post, prey hoard, toys.
-> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, thirst, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves, old age at 120 moons; optional revive / reincarnation via ko-fi shop.
-> - genetics: heritable conditions (blindness, deafness, brachycephaly, spinal disorders, inbreeding effects, neurodevelopmental traits) rolled at birth or passed from parents; each has real mechanical consequences, not just flavor.
+> - survival: hunger and thirst drain through the day, not only at sunrise; eat fresh kills, or sip broth and non-wolf milk (bought, raided, or bartered) when a broken jaw stops you chewing; a meat-free stretch risks wasting sickness, and weaned wolves are lactose intolerant unless they carry the trait.
+> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, thirst, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf), old age at 120 moons; optional revive / reincarnation via ko-fi shop.
+> - herbs: 100+ plants with real preparation, side effects, and dependence; the wrong dose, an herb eaten instead of applied, or one pressed into an open wound backfires (toxicity, miscarriage risk, addiction), and sedatives like poppy build tolerance and withdrawal.
+> - genetics: heritable conditions (blindness, deafness, brachycephaly, spinal disorders, inbreeding effects, neurodevelopmental traits, lactase persistence) rolled at birth or passed from parents; each has real mechanical consequences, not just flavor.
+> - design: few hard blocks; most actions use diminishing returns and real penalties instead of cooldowns, so a wolf can always act (hunt again for less, not "come back tomorrow"). consequences, not walls.
 > - exploration and scouts: venture, rescout, survey, trail.
 > - legacy: prestige, retired wolves, hall of fame.
 >
@@ -127,7 +130,7 @@ present as a timeline graphic. all packs benefit equally.
 ### milestone a; launch + 30 days (funded immediately by the base goal)
 - [ ] migrate bot to 24/7 vps with auto-restart and basic monitoring
 - [ ] backer credits in `README.md` and `/patron`
-- [ ] kickstarter backer badge on active wolf's `/profile` footer (permanent cosmetic)
+- [ ] grant the kickstarter backer badge to every backer; the badge system already ships (`/patronadmin kickstarter grant`), so this is fulfillment, showing permanently on `/patron` and `/profile`
 
 ### milestone b; months 2 to 4: the gathering at the maw's throat
 a full cross-pack political gathering system. the maw's throat is a neutral volcanic caldera where all four great packs meet. alphas speak from the tongue-stone; the bone-draw decides speaking order; audiences react in real time.
@@ -152,10 +155,9 @@ new political levers around fourtrees (the cat+wolf neutral gathering) and cross
 targeted fixes for systems that currently have gaps or feel unfinished.
 
 - [ ] bleeding rules fix: staunch permanently clears active bleeding (not a 1-turn suppression); out-of-combat deep_gash escalates to infected_wound if left untreated past sunrise without a herb save
-- [ ] death save threshold enforced: 3 failed saves = wolf dies at next sunrise if no medic intervention; currently wolves can sit dying indefinitely
-- [ ] attack injury weighting: bite rolls weight toward deep_gash and broken_jaw; claw toward torn_claw and sprained_leg; charge toward fractured_rib and concussion — injuries now match how the wolf was actually hit
+- [ ] attack injury weighting: bite rolls weight toward deep_gash and broken_jaw; claw toward torn_claw and sprained_leg; charge toward fractured_rib and concussion; injuries now match how the wolf was actually hit
 - [ ] malunion re-surgery: `set_bone` extended to allow re-surgery on malunion long-term injuries (dc 22; success clears the malunion)
-- [ ] swim therapy cap: capped at one-third of total confinement days per bone injury so it cannot trivially wipe a 28-day spinal confinement
+- [ ] swim therapy diminishing returns: no hard cap; each swim in the same confinement shaves fewer days than the last, so it eases recovery without trivially wiping a 28-day spinal confinement
 - [ ] bugfix sprint from backer and discord feedback list
 
 ### milestone e; months 9 to 12: content drop
@@ -197,7 +199,7 @@ stretch goals will be announced when the base goal hits ~70%.
 **principles**
 - no pay-to-win: no exclusive hunt %, combat stats, or pack-treasury payouts.
 - digital fulfillment via backer survey (discord user id). same as ko-fi.
-- manual tiers: limited slots with clear delivery window (30-60 days post-campaign).
+- manual tiers: limited slots with clear delivery window (30 to 60 days post-campaign).
 - ko-fi shop still exists for ongoing tips; kickstarter tiers grant **concrete in-bot items** (bones, inventory, cosmetics). **no store credit, coupons, or vouchers** (kickstarter prohibited items).
 
 ### tier 0, follow / no reward
@@ -244,7 +246,7 @@ everything in tier 2, plus:
 
 everything in tier 3, plus:
 - legend-tier donor recognition on `/patron` for 12 months (same perks as ko-fi legend where applicable, personal only)
-- custom wolf blurb (2-3 sentences, howlbert tone) for your `/profile` or lore post. delivered within 30 days.
+- custom wolf blurb (2 to 3 sentences, howlbert tone) for your `/profile` or lore post. delivered within 30 days.
 
 ---
 
@@ -309,7 +311,7 @@ everything in tier 4 (legend tier), plus:
 4. tier 2 bonus item: lucky tooth / den charm / herb bundle?
 5. tier 3 choice: revive or reincarnation?
 6. tier 5+: proposed landmark / quest / blurb details (text fields)
-7. tier 7: great pack patron preference (1-4)
+7. tier 7: great pack patron preference (1 to 4)
 8. portrait tier: reference links / description
 9. ok to list wolf name in public credits? (y/n)
 
@@ -321,7 +323,7 @@ everything in tier 4 (legend tier), plus:
 
 > solo developer. howlbert is built and maintained primarily by one person. delays may happen if life or health intervenes; i commit to monthly updates and transparent rescheduling.
 >
-> small community. we have ~30 discord members today. this campaign also targets wolf-rp players outside our server (tabletop/wolf gaming discords, wolvden-adjacent communities, etc.). if funding succeeds but growth is slow, hosting and milestone a still deliver; content milestones b-e may shift by 1-2 months.
+> small community. we have ~30 discord members today. this campaign also targets wolf-rp players outside our server (tabletop/wolf gaming discords, wolvden-adjacent communities, etc.). if funding succeeds but growth is slow, hosting and milestone a still deliver; content milestones b-e may shift by 1 to 2 months.
 >
 > scope creep. the roadmap is fixed to milestones a-e. feature requests are welcome but funded work follows the published order unless stretch goals unlock extras.
 >
@@ -397,7 +399,7 @@ no mechanical advantage. tier 7 patron credits are flavor acknowledgments only.
 - day 14: mid-campaign video update
 - last 48h: "fund hosting or we stay pc-dependent" reminder
 
-**soft launch:** share with 5-10 trusted players for feedback before going public.
+**soft launch:** share with 5 to 10 trusted players for feedback before going public.
 
 ---
 

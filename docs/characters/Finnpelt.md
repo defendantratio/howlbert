@@ -16,7 +16,7 @@
 
 
 
-*On staff account; former Thistlehide Alpha — crown passed to River'Shroud.*
+*On staff account; former Thistlehide Alpha; crown passed to River'Shroud.*
 
 
 

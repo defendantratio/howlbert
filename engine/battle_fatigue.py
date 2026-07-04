@@ -56,7 +56,7 @@ def apply_battle_fatigue_on_rollover(conn: sqlite3.Connection, day: int) -> list
             notes.append({
                 "pack_id": pack_id,
                 "line": (
-                    f"**{pack['name']}**: war strain **{new_strain}/{WAR_STRAIN_MAX}** — "
+                    f"**{pack['name']}**: war strain **{new_strain}/{WAR_STRAIN_MAX}**; "
                     f"**−{drain} mood** across the den. rest a sunrise to let it ease."
                 ),
             })

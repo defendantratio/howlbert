@@ -22,7 +22,7 @@ def can_schism(user, pack) -> tuple[bool, str]:
     unity = int(pack["pack_unity"]) if "pack_unity" in pack.keys() else 100
     if unity > SCHISM_UNITY_THRESHOLD:
         return False, (
-            f"the den is too unified to fracture — pack unity **{unity}/100**. "
+            f"the den is too unified to fracture; pack unity **{unity}/100**. "
             f"a schism needs unity below **{SCHISM_UNITY_THRESHOLD}**."
         )
     with db.get_db() as conn:
@@ -31,7 +31,7 @@ def can_schism(user, pack) -> tuple[bool, str]:
             (pack["id"],),
         ).fetchone()["c"]
     if member_count < SCHISM_MIN_PACK_SIZE:
-        return False, f"the den is too small to split — need at least **{SCHISM_MIN_PACK_SIZE}** wolves."
+        return False, f"the den is too small to split; need at least **{SCHISM_MIN_PACK_SIZE}** wolves."
     return True, ""
 
 
@@ -114,7 +114,7 @@ def execute_schism(
     if follower_names:
         body += f"\n\nFollowers: **{', '.join(follower_names)}**."
     else:
-        body += "\n\n_No packmates bonded deeply enough to follow — you walk alone into this new den._"
+        body += "\n\n_No packmates bonded deeply enough to follow; you walk alone into this new den._"
     body += (
         f"\n\nTreasury split: **{split_treasury:,}** bones carried over. "
         f"Standing between **{pack['name']}** and **{new_pack_name}**: **{SCHISM_STARTING_STANDING}/10** (hostile). "

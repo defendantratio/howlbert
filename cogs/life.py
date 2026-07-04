@@ -32,7 +32,7 @@ def _resolve_own_wolf(discord_id: int, name: str):
 def _mentor_court_approval_note(courter, target) -> str | None:
     """
     If the courter has a mentor bond, the mentor's feelings about the target
-    affect the courtship — approval eases it, disapproval adds shadow.
+    affect the courtship; approval eases it, disapproval adds shadow.
     Returns a note prefixed with '+' (ease) or '-' (tension) or None.
     """
     import random
@@ -50,7 +50,7 @@ def _mentor_court_approval_note(courter, target) -> str | None:
         friendship = db.get_bond(mentor_id, target['id'], 'friendship')
         if rivalry and int(rivalry['strength']) >= 50:
             return (
-                f"-_**{mentor['wolf_name']}** knows **{target['wolf_name']}** — and not warmly. "
+                f"-_**{mentor['wolf_name']}** knows **{target['wolf_name']}**; and not warmly. "
                 f"their disapproval hangs in the air._"
             )
         if friendship and int(friendship['strength']) >= 50:
@@ -75,7 +75,7 @@ def _kin_protective_court_note(courter, target) -> str | None:
             if not kin_wolf:
                 continue
             phrases = (
-                f"_word is already reaching **{kin_wolf['wolf_name']}** — and they don't feel warmly about you._",
+                f"_word is already reaching **{kin_wolf['wolf_name']}**; and they don't feel warmly about you._",
                 f"_**{kin_wolf['wolf_name']}** has their eye on this. the history between you two runs cold._",
                 f"_**{kin_wolf['wolf_name']}** catches the scent of this. kin protect their own._",
             )
@@ -175,7 +175,7 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if patient and own_patient:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if own_patient:
                 target_row = _resolve_own_wolf(interaction.user.id, own_patient)
@@ -200,7 +200,7 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             if patient and own_patient:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if own_patient:
                 target_row = _resolve_own_wolf(interaction.user.id, own_patient)
@@ -219,7 +219,7 @@ class Life(commands.Cog):
                     await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Patient is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                     return
             if helper and own_helper:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if own_helper:
                 helper_row = _resolve_own_wolf(interaction.user.id, own_helper)
@@ -250,7 +250,7 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=howlbert_embed('Pick a Patient', 'Observe requires a **patient** or **own_patient**.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if patient and own_patient:
-                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `patient` or `own_patient`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return
             if own_patient:
                 target_row = _resolve_own_wolf(interaction.user.id, own_patient)
@@ -948,7 +948,7 @@ class Life(commands.Cog):
         embed.add_field(name='Mate', value=mate_name, inline=True)
         from engine.pregnancy import in_late_pregnancy, LATE_PREGNANCY_SUNRISES
         if subject['id'] == user['id'] and in_late_pregnancy(subject, day):
-            embed.add_field(name='Den rest', value=f'Final **{LATE_PREGNANCY_SUNRISES}** sunrises — strenuous work blocked (hunt, patrol, explore, combat, fishing, …).', inline=False)
+            embed.add_field(name='Den rest', value=f'Final **{LATE_PREGNANCY_SUNRISES}** sunrises; strenuous work blocked (hunt, patrol, explore, combat, fishing, …).', inline=False)
         if remaining == 0:
             who = 'she' if subject['id'] == user['id'] else subject['wolf_name']
             embed.set_footer(text=f'ready for `/pupcare action:birth names:…`; {who} can name the litter.')

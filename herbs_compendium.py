@@ -101,7 +101,7 @@ HERBS = {
         "bind broken bones and splint fractures; anti-inflammatory poultice for bruising and sprains; move at half speed without worsening. toxic in large doses; cardiac effects and weakness.",
         cures=("fractured_rib", "sprained_leg", "broken_jaw"),
         side_effects="contains toxic alkaloids; weakness, blurred vision, cardiac arrhythmias, nausea.",
-        preparation="1 tsp chopped flower shoots in water 3-4 times daily; traditional.",
+        preparation="1 tsp chopped flower shoots in water 3 to 4 times daily; traditional.",
     ),
     "burdock_root": _h(
         "Burdock Root",
@@ -252,7 +252,7 @@ HERBS = {
         "sedative rest for concussion recovery; anti-anxiety and anti-inflammatory. treats nervous conditions, seizure-like episodes, depression, grief. high doses cause confusion and irregular heartbeat.",
         cures=("concussion", "dementia", "feral_shift", "anxiety", "delirium", "obsession", "pack_madness", "insomnia", "grief_melancholy"),
         side_effects="generally well-tolerated; may cause confusion, stupor, vivid dreams, mild digestive disturbances.",
-        preparation="1-2g dried herb steeped in 1 cup water for 5 minutes.",
+        preparation="1 to 2g dried herb steeped in 1 cup water for 5 minutes.",
     ),
     "dock": _h(
         "Dock",
@@ -312,7 +312,7 @@ HERBS = {
         "common",
         "reduces inflammation and fever; advantage on disease saves for 1 day. treats swollen eyes and head pain. chewing fresh leaves causes mouth sores; use dried only.",
         cures=("influenza", "redscratch", "pox", "rot_lung", "milk_fever", "swollen_eye", "leafbare_cough"),
-        side_effects="5-15% develop mouth ulcers or gi irritation; may increase bleeding; abrupt stop may cause rebound headaches.",
+        side_effects="5 to 15% develop mouth ulcers or gi irritation; may increase bleeding; abrupt stop may cause rebound headaches.",
         preparation="dried leaf or extract taken orally.",
     ),
     "foxglove": _h(
@@ -395,7 +395,7 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("diarrhea", "fleas", "leafbare_cough", "urinary_infection", "worms"),
         side_effects="no serious side effects reported; may cause mild gi discomfort.",
-        preparation="1.5g taken 3-5 times daily; infusions for kidney and bladder conditions.",
+        preparation="1.5g taken 3 to 5 times daily; infusions for kidney and bladder conditions.",
         prep_methods=("chewed", "infusion"),
     ),
     "labrador_tea": _h(
@@ -487,7 +487,7 @@ HERBS = {
         packs=("silverrush",),
         cures=("sprained_leg", "diarrhea", "eating_distress", "influenza", "lyme", "arthritis"),
         side_effects="contains salicylates; increases bleeding risk; large amounts or long-term use possibly unsafe.",
-        preparation="tea, tincture; traditional adult dose: 2.5-3.5g flower or 4-5g herb daily.",
+        preparation="tea, tincture; traditional adult dose: 2.5 to 3.5g flower or 4 to 5g herb daily.",
     ),
     "mountain_ash": _h(
         "Mountain Ash (Rowan)",
@@ -680,7 +680,7 @@ HERBS = {
         "advantage vs snake venom saves; calms anxiety and promotes sleep. excessive use causes depression, nightmares, and severe diarrhea.",
         cures=("anxiety", "insomnia", "mild_poison"),
         side_effects="nasal congestion, sedation, gi upset, bradycardia; diarrhea, depression.",
-        preparation="powdered root: 50-300mg daily.",
+        preparation="powdered root: 50 to 300mg daily.",
     ),
     "sorrel": _h(
         "Sorrel",
@@ -785,7 +785,7 @@ HERBS = {
     "wild_cherry_bark": _h(
         "Wild Cherry Bark",
         "common",
-        "stops coughing for 2 hours, even blackcough; sedative and digestive tonic. calms anxiety. contains cyanogenic glycosides; short-term use only (10-14 days); large doses toxic.",
+        "stops coughing for 2 hours, even blackcough; sedative and digestive tonic. calms anxiety. contains cyanogenic glycosides; short-term use only (10 to 14 days); large doses toxic.",
         cures=("cough", "leafbare_cough", "diarrhea", "anxiety"),
         side_effects="generally safe in small amounts; excessive doses toxic due to cyanogenic glycosides; short-term use only.",
         preparation="bark tea or syrup; short-term use only.",

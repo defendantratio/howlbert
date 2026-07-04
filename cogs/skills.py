@@ -135,7 +135,7 @@ class Skills(commands.Cog):
             await interaction.response.send_message(embed=embed)
             return
         if helper and own_helper:
-            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper` — not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use `helper` or `own_helper`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         helper_row = None
         if own_helper:

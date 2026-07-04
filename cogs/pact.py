@@ -1,4 +1,4 @@
-"""Top-level `/pact` — cat clan and wolf pack treaties."""
+"""Top-level `/pact`; cat clan and wolf pack treaties."""
 from __future__ import annotations
 import discord
 from discord import app_commands

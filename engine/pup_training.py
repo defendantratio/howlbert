@@ -1,4 +1,4 @@
-"""Pup training; `/pupcare action:train` — a deliberate, capped attribute nudge.
+"""Pup training; `/pupcare action:train`; a deliberate, capped attribute nudge.
 
 Distinct from feed (hunger/thirst upkeep), save (stillborn rescue), and adopt
 (family placement): this is a real skill-check action with a permanent but

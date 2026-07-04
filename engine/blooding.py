@@ -1,4 +1,4 @@
-"""Juvenile blooding; earned on first successful hunt kill (6-24 moons)."""
+"""Juvenile blooding; earned on first successful hunt kill (6 to 24 moons)."""
 
 from __future__ import annotations
 

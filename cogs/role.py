@@ -111,10 +111,8 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if user['last_role_event_day'] >= day:
-            embed = howlbert_embed('Already Lived This Day', "Your role's story for this rollover has played out. Wait for the den to roll over.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import next_use_multiplier
+        _re_mult, _re_n = next_use_multiplier(user, 'role_event', day)
         role = user['wolf_role'] if 'wolf_role' in user.keys() else 'hunter'
         pack = user['great_pack'] if 'great_pack' in user.keys() else None
         event = pick_role_event(role, pack)
@@ -132,15 +130,21 @@ class RoleCog(commands.Cog):
             if event.get('prophecy'):
                 prophecy = pick_prophecy()
                 outcome += f'\n\n**Prophecy:** _{prophecy}_'
-            db.add_bones(interaction.user.id, event['bones'])
+            _re_bones = max(0, int(event['bones'] * _re_mult))
+            db.add_bones(interaction.user.id, _re_bones)
             if event.get('standing'):
-                kick = db.adjust_wolf_standing(interaction.user.id, event['standing'])
+                _re_st = event['standing']
+                if _re_st > 0:
+                    _re_st = max(1, int(_re_st * _re_mult))
+                kick = db.adjust_wolf_standing(interaction.user.id, _re_st)
                 outcome += _standing_note(kick, user)
-            if role == 'hunter':
+            if role == 'hunter' and _re_n == 1:
                 from engine.hunt_payout import grant_prey_carcass_canonical, prey_key_for_payout
-                prey_key = prey_key_for_payout(event['bones'], user=user, season=world['season'])
+                prey_key = prey_key_for_payout(_re_bones, user=user, season=world['season'])
                 carcass_name = grant_prey_carcass_canonical(user['id'], guild_id=interaction.guild.id, day=day, prey_key=prey_key)
                 outcome += f'\n\n{carcass_name} dragged to your hoard (`/food`).'
+            if _re_n > 1:
+                outcome += '\n\n_lived over again in one day, the day gives less._'
             color = SUCCESS_COLOR
         else:
             outcome = event['failure']
@@ -187,10 +191,8 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        if user['last_prophecy_day'] >= day:
-            embed = howlbert_embed('The Chewing Fades', 'The Belly-Rip is quiet for you today. Return after the den rolls over.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        from engine.diminishing import record_use as _rec_proph
+        _rec_proph(user, 'prophecy', day)
         from engine.lexicon import season_display
         line = pick_prophecy()
         season = season_display(db.row_val(world, 'season', 'autumn'))

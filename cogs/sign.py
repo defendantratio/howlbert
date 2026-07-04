@@ -6,7 +6,7 @@ import database as db
 from engine.signing import BASE_PHRASES, FIELD_PHRASES, MOTION_PHRASES, SIGNAL_CATALOG, execute_read, execute_sign
 from utils.embeds import choice_label
 
-_SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']} — {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items()] + [app_commands.Choice(name=choice_label('read den signals — answer a denmate'), value='read')]
+_SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']}; {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items()] + [app_commands.Choice(name=choice_label('read den signals; answer a denmate'), value='read')]
 _BASE_CHOICES = [app_commands.Choice(name=choice_label(name), value=key) for key, name in BASE_PHRASES.items()]
 _MOTION_CHOICES = [app_commands.Choice(name=choice_label(name), value=key) for key, name in MOTION_PHRASES.items()]
 _FIELD_CHOICES = [app_commands.Choice(name=choice_label(name), value=key) for key, name in FIELD_PHRASES.items()]

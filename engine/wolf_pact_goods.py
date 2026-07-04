@@ -50,7 +50,7 @@ def receive_loot_count(standing: int, pact_type: str) -> int:
 
 
 def barter_loot_count(duplicate_items: int, standing: int = 5) -> int:
-    """Pack relation standing (0-10) sweetens or sours the trade, same as cat-clan trust."""
+    """Pack relation standing (0 to 10) sweetens or sours the trade, same as cat-clan trust."""
     from config import CAT_PACT_BARTER_LOOT_MAX, CAT_PACT_BARTER_PER_DUPES
     from engine.pack_relations import FRIENDLY_STANDING_THRESHOLD, HOSTILE_STANDING_THRESHOLD
 

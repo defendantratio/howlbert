@@ -16,7 +16,7 @@ logger = logging.getLogger('howlbert')
 # Only signals with a real mechanical effect on a target are offered here;
 # pack-wide signals (alert/rally/freeze) and no-target "track" have no
 # equivalent for an npc, which has no den, mood, or standing of its own.
-_NPC_SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']} — {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items() if key in NPC_CAPABLE_SIGNALS]
+_NPC_SIGNAL_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']}; {info['summary']}"), value=key) for key, info in SIGNAL_CATALOG.items() if key in NPC_CAPABLE_SIGNALS]
 _member_wolf_autocomplete = make_member_wolf_autocomplete("member")
 
 async def _npc_name_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -48,7 +48,7 @@ class Npc(commands.Cog):
                 bio = str(row['bio'])
                 if len(bio) > 80:
                     bio = bio[:77] + '…'
-                bit += f' — {bio}'
+                bit += f'; {bio}'
             lines.append(bit)
         await interaction.response.send_message(embed=howlbert_embed('NPCs', '\n'.join(lines), color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 

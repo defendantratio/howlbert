@@ -1,4 +1,4 @@
-"""Top-level /crime — individual theft, wolf-pack den raids, and cat-clan camp raids."""
+"""Top-level /crime; individual theft, wolf-pack den raids, and cat-clan camp raids."""
 from __future__ import annotations
 
 import discord
@@ -84,7 +84,7 @@ class Crime(commands.Cog):
     ) -> None:
         if (target_wolf or own_wolf) and target:
             await interaction.response.send_message(
-                embed=howlbert_embed('Pick One', 'Use **target_wolf**/**own_wolf** for a pick-pocket or **target** for a den/camp raid — not both.', color=ERROR_COLOR),
+                embed=howlbert_embed('Pick One', 'Use **target_wolf**/**own_wolf** for a pick-pocket or **target** for a den/camp raid; not both.', color=ERROR_COLOR),
                 ephemeral=reply_ephemeral(),
             )
             return

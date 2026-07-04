@@ -23,7 +23,7 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
     """
     A subordinate contests their place in the pecking order against another
     packmate; winner climbs, loser drops. Affects den feed priority, not
-    leadership — that's the Rite of the Broken Canine's domain.
+    leadership; that's the Rite of the Broken Canine's domain.
     """
     if challenger["id"] == defender["id"]:
         return False, "contest your place against someone else; not yourself."
@@ -35,7 +35,7 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
         return False, f"**{defender['wolf_name']}** is outside the pecking order (alpha, advisor, or pup)."
     if int(defender["pack_rank"]) >= RANK_DISPUTE_MAX:
         return False, (
-            f"**{defender['wolf_name']}** holds the omega position — the bottom of the line. "
+            f"**{defender['wolf_name']}** holds the omega position; the bottom of the line. "
             f"the pack doesn't kick down; they've yielded all there is to yield. "
             f"challenge someone above you instead."
         )

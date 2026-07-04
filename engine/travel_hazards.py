@@ -357,7 +357,7 @@ def roll_wilderness_encounter(
         extra, enc_id = _apply_encounter_effect(
             user, label, day=day, guild_id=guild_id, channel_id=channel_id
         )
-        body = f"roll **{roll}**; **{label}** — {text}"
+        body = f"roll **{roll}**; **{label}**; {text}"
         if extra:
             body += "\n\n" + "\n".join(extra)
         return "encounter", body, enc_id
@@ -365,7 +365,7 @@ def roll_wilderness_encounter(
         return "quiet", f"roll **{roll}**; the border is quiet; only wind and distant twoleg birds.", None
     label, text = random.choice(WC_ENCOUNTER_FIND)
     extra = _apply_find_effect(user, label, day=day, guild_id=guild_id)
-    body = f"roll **{roll}**; you find **{label}** — {text}"
+    body = f"roll **{roll}**; you find **{label}**; {text}"
     if extra:
         body += "\n\n" + "\n".join(extra)
     return "find", body, None

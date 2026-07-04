@@ -99,7 +99,7 @@ def _medic_patient_items(user, pack_id: int) -> list[str]:
         name = _field(wolf, "wolf_name", "packmate")
 
         if cond == "dying":
-            lines.append(f"stabilize **{name}** — dying (`/medic action:stabilize`)")
+            lines.append(f"stabilize **{name}**; dying (`/medic action:stabilize`)")
             if len(lines) >= 8:
                 break
             continue
@@ -115,7 +115,7 @@ def _medic_patient_items(user, pack_id: int) -> list[str]:
         if not parts:
             continue
 
-        lines.append(f"treat **{name}** — {', '.join(parts)} (`/medic action:treat`)")
+        lines.append(f"treat **{name}**; {', '.join(parts)} (`/medic action:treat`)")
         if len(lines) >= 8:
             break
 
@@ -155,7 +155,7 @@ def _pending_daily_items(
 
         elapsed = max(0, day - int(_field(user, "pregnancy_start_day", 0) or 0))
         if elapsed >= GESTATION_DAYS:
-            items.append("give birth — gestation complete (`/pupcare action:birth`)")
+            items.append("give birth; gestation complete (`/pupcare action:birth`)")
 
     if stage == "pup":
         if not _used_today(user, day, "last_play_day"):
@@ -201,7 +201,7 @@ def _pending_daily_items(
 
     if disease_display(user):
         name, _effect = disease_display(user)
-        items.append(f"treat **{name}** — see a medic (`/medic action:treat`)")
+        items.append(f"treat **{name}**; see a medic (`/medic action:treat`)")
 
     if pack_id:
         if not _used_today(user, day, "last_howl_day"):
@@ -343,12 +343,12 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
         if maw_karma >= 5:
             severity = "**divine wrath stirs**" if maw_karma >= 10 else "divine attention accumulates"
             items.append(
-                f"the Great Maw's gaze rests upon you (karma {maw_karma}) — "
+                f"the Great Maw's gaze rests upon you (karma {maw_karma}); "
                 f"{severity}; sacred debts are long remembered."
             )
         for stillborn in db.list_pending_stillborn_for_discord(discord_id):
             items.append(
-                f"**{stillborn['pup_name']}** is dying — save them before the window closes "
+                f"**{stillborn['pup_name']}** is dying; save them before the window closes "
                 "(`/pupcare action:save`)."
             )
 
@@ -361,7 +361,7 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
     for row in db.list_pack_relations(guild_id, pack_id):
         if int(row["standing"]) <= HOSTILE_STANDING_THRESHOLD:
             line = (
-                f"border tension — hostile with **{row['other_pack_name']}** "
+                f"border tension; hostile with **{row['other_pack_name']}** "
                 f"({row['standing']}/10); sniff/survey risk up."
             )
             if wolf_id:
@@ -378,7 +378,7 @@ def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
         suspect = db.get_pack(int(alert["suspect_pack_id"]))
         sname = suspect["name"] if suspect else "a rival"
         items.append(
-            f"den raid alert (treasury, food, or herbs) — **`/pack audit`** or **`/pack accuse`** (suspect: {sname})."
+            f"den raid alert (treasury, food, or herbs); **`/pack audit`** or **`/pack accuse`** (suspect: {sname})."
         )
     return items
 

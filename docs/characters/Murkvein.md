@@ -35,7 +35,7 @@ Born to a previous Rotmother who died before naming an heir; the pack tore itsel
 
 **Paranoid about Mirewort (Wisdom -1):** Distrusts the healer's closeness to the Maw; refuses aid and questions every cure.
 
-## Statistics (Total: 31; Alpha range 30-35)
+## Statistics (Total: 31; Alpha range 30 to 35)
 
 Strength: 3 (-2)  
 Dexterity: 4 (-1)  

@@ -13,14 +13,14 @@ _PRAY_FLAVOR: dict[str, str] = {
     ),
     "orthodox_pragmatic": (
         "A quick dip of the head before the kill-ground. "
-        "No ceremony needed — the Maw knows efficiency when it sees it."
+        "No ceremony needed; the Maw knows efficiency when it sees it."
     ),
     "zealot": (
         "You invoke each tooth by name. The illness of hunger sharpens into purpose. "
         "Your paws already know where to go."
     ),
     "doubter": (
-        "You try it anyway. You feel something — maybe just the cold — "
+        "You try it anyway. You feel something; maybe just the cold; "
         "but you say the words and mean them for a moment."
     ),
     "agnostic": (
@@ -32,7 +32,7 @@ _PRAY_FLAVOR: dict[str, str] = {
         "listen to what the pines carry. It sharpens you."
     ),
     "heretic": (
-        "You speak quietly to the Maw as if it can hear every word — "
+        "You speak quietly to the Maw as if it can hear every word; "
         "because you believe it can, and that it enjoys the watching."
     ),
 }

@@ -70,7 +70,7 @@ VERY_OLD_PHYSICAL_PENALTY = -1
 def very_old_check_adjustment(age_moons: int, attr_keys: tuple[str, ...]) -> int:
     """
     A small, real physical cost to extreme old age (100+ moons, vs the 120
-    natural-death ceiling) on Strength/Dexterity/Constitution checks —
+    natural-death ceiling) on Strength/Dexterity/Constitution checks ; 
     balanced against the elder role's existing reroll bonus, not a straight
     nerf.
     """

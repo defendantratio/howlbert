@@ -21,7 +21,7 @@ The runt who grew up, smaller than most. A mostly short grey pelt that darkens t
 
 ## Backstory
 
-She was the third and final pup — a sickly, hairless thing barely a third of her siblings' size. Her parents viewed her as a genetic failure. They denied her milk, and her larger brothers used her as a living chew toy, pinning her into the wet mud until she choked. The pack named her "Silt," expecting the swamp to wash her away before the season turned.
+She was the third and final pup; a sickly, hairless thing barely a third of her siblings' size. Her parents viewed her as a genetic failure. They denied her milk, and her larger brothers used her as a living chew toy, pinning her into the wet mud until she choked. The pack named her "Silt," expecting the swamp to wash her away before the season turned.
 
 As a pup, tides rose near the dens. They intentionally left the weak, slow runt behind. To escape the rising blackwater and the jaws of starving alligators, she dragged herself into the rotting, hollow core of an ancient, dead cypress tree. She was trapped inside that cramped, wooden chimney for a week with no food and no way out.
 
@@ -31,7 +31,7 @@ Stacked inside the hollow trunk was a mountain of rancid deer carcasses, dragged
 
 Starving, dehydrated, and inhaling toxic methane gas, her mind shattered. To survive, she had to eat the maggots. As the fever took her, she stopped screaming and began to laugh. She came to believe the voice she heard whispering forbidden secrets into her ears was the Maw itself. She didn't just survive the rot; she merged with it.
 
-When the floodwaters finally receded, her birth pack returned to the area. They found the runt sitting in the mud beneath the dead tree — skeletal, covered in dried black sludge, eyes darting. Her kin reproached her reluctantly. She was confused about who they were calling her. *"There was never Silt… she has maggots for brains…"*
+When the floodwaters finally receded, her birth pack returned to the area. They found the runt sitting in the mud beneath the dead tree; skeletal, covered in dried black sludge, eyes darting. Her kin reproached her reluctantly. She was confused about who they were calling her. *"There was never Silt… she has maggots for brains…"*
 
 Her name was MaggotBrain. She severed her ties to her birth kin, who have all passed by this time. She serves the Maw, and its hunger.
 
@@ -62,7 +62,7 @@ Wisdom: 6 (+1)
 
 ## Maw-Belief
 
-**Zealot** — every illness is the Maw's question; every cure is the wolf's answer. She doesn't just believe; she claims to have merged with the rot itself, and the swamp's whispers are the Maw's own voice to her.
+**Zealot**; every illness is the Maw's question; every cure is the wolf's answer. She doesn't just believe; she claims to have merged with the rot itself, and the swamp's whispers are the Maw's own voice to her.
 
 ## RP Sample
 

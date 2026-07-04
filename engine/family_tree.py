@@ -67,7 +67,7 @@ def build_family_mermaid(wolf, *, viewer_discord_id: int | None = None) -> tuple
 
     # Biological parents (solid), adoptive parents (dashed). The sire is left
     # off the diagram entirely (not just unlabeled) when his identity is a
-    # secret the viewer isn't in on — a labeled "unknown" node would still
+    # secret the viewer isn't in on; a labeled "unknown" node would still
     # confirm a hidden-paternity pup exists, which defeats the point.
     for pkey in ("bio_parent_1_id", "bio_parent_2_id"):
         if pkey == "bio_parent_2_id" and hide_bio2:

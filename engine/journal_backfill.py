@@ -156,7 +156,7 @@ def backfill_wolf_journal(wolf_id: int) -> int:
             put("bonded", f"bonded with **{mate['wolf_name']}**.")
 
     if "blooded" not in existing and "has_blooding" in wolf.keys() and wolf["has_blooding"]:
-        put("blooded", f"earned **blooding** on first kill — **{wolf_name}** is blooded.")
+        put("blooded", f"earned **blooding** on first kill; **{wolf_name}** is blooded.")
 
     for bond in db.get_bonds_for_wolf(wolf_id):
         strength = int(bond["strength"]) if "strength" in bond.keys() else 0

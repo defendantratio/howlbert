@@ -155,7 +155,7 @@ INJURIES = {
             "Burnt skin and fur from fire or boiling liquid: +1 exhaustion each sunrise. "
             "Cannot be treated with herbs; only cobwebs and total rest (7 days)."
         ),
-        "treatment": "Cobwebs dressing · 7 days full rest — no herb cure",
+        "treatment": "Cobwebs dressing · 7 days full rest; no herb cure",
         "permanent": False,
         "heat_injury": True,
         "heal_days": 7,
@@ -167,7 +167,7 @@ INJURIES = {
             "Each breath is shallow and laboured: −1 STR and −1 WIS while active. "
             "Surgery only; cannot be cured with herbs."
         ),
-        "treatment": "Surgery (set_bone) — no herb cure",
+        "treatment": "Surgery (set_bone); no herb cure",
         "permanent": False,
         "heal_days": 14,
         "surgery_only": True,
@@ -190,14 +190,14 @@ INJURIES = {
             "Wolf ended a fight at ≤2 HP: severe haemorrhage reduces blood volume. "
             "−1 max HP until 3 full rests have passed. Clears automatically."
         ),
-        "treatment": "3 full rests — clears automatically",
+        "treatment": "3 full rests; clears automatically",
         "permanent": False,
         "blood_loss": True,
     },
     "snake_venom": {
         "name": "Snake Venom",
         "effect": (
-            "venom courses through the body — +1 pain exhaustion and -1 HP each sunrise. "
+            "venom courses through the body; +1 pain exhaustion and -1 HP each sunrise. "
             "dex -4; con save DC 14 each sunrise or +1 exhaustion. fades after ~5 days if survived."
         ),
         "treatment": "twinflower poultice may slow progression; feverfew reduces fever. no guaranteed cure.",
@@ -235,7 +235,7 @@ EXHAUSTION_EFFECTS = {
 }
 
 PACK_UNITY_EFFECTS = {
-    "low": "Unity 1-2: −10% hunt bones.",
+    "low": "Unity 1 to 2: −10% hunt bones.",
     "breaking": "Unity 0: −20% hunt bones; plain howls cannot raise unity.",
     "fracturing": "Unity −1 to −4: −25% hunt bones; need Alpha/Beta (Advisor) to rally.",
     "collapse": "Unity −5: pack dissolves; all members become loners.",

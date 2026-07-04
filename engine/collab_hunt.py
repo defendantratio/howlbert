@@ -329,7 +329,7 @@ def payout_collab_hunt(
     )
     if prey_name and leader:
         result_text += (
-            f"\n**{prey_name}** in the caller's hoard (`/food`) — "
+            f"\n**{prey_name}** in the caller's hoard (`/food`); "
             f"use `/preypile` to lay fresh-kill out for the den."
         )
 

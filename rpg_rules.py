@@ -92,7 +92,7 @@ ROLE_FEATURES = {
     "medic": "Green Tongue; Herblore substitutes for Medicine; never misidentify plants. No daily limit on treat/heal.",
     "medic_apprentice": "Apprentice Healer; learning poultices under a Medic; herb heals still capped until full rank.",
     "guard": "Defender's Resolve; impose disadvantage when adjacent packmate is attacked.",
-    "hunter": "Killer's Instinct - +1d6 damage vs surprised or prone targets. Three hunts per sunrise.",
+    "hunter": "Killer's Instinct; +1d6 damage vs surprised or prone targets. Three hunts per sunrise.",
     "hunter_apprentice": "Blooding Lessons; run with hunters; earn the full Hunter rank through `/role action:event` and role quests.",
     "scout": "Unseen Paw; hide while lightly obscured.",
     "scout_apprentice": "Ridge Pup; border drills and scent-maps; earn Scout when the pack trusts your eyes.",

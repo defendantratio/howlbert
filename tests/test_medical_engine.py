@@ -39,10 +39,20 @@ class Row:
 
 
 def test_injury_heal_halved_display():
-    user = Row(herb_buffs='{"injury_heal_halved": true}')
-    note = injury_heal_note("sprained_leg", {"sprained_leg": 1}, day=5, user=user)
-    assert "~2d" in note or "~1d" in note
-    assert injury_heal_multiplier(user) == 0.5
+    import re
+
+    def heal_days(note):
+        m = re.search(r"~(\d+)d with rest", note)
+        return int(m.group(1)) if m else None
+
+    healthy = Row(herb_buffs="{}")
+    halved = Row(herb_buffs='{"injury_heal_halved": true}')
+    base_days = heal_days(injury_heal_note("sprained_leg", {"sprained_leg": 1}, day=5, user=healthy))
+    halved_days = heal_days(injury_heal_note("sprained_leg", {"sprained_leg": 1}, day=5, user=halved))
+    # the buff visibly speeds recovery: fewer projected days than without it
+    assert base_days is not None and halved_days is not None
+    assert halved_days < base_days
+    assert injury_heal_multiplier(halved) == 0.5
 
 
 def test_bone_heal_days_reduction():

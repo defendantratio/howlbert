@@ -298,7 +298,7 @@ def schedule_milk_fever_risk(
     difficult_birth: bool = False,
     litter_size: int = 1,
 ) -> str | None:
-    """Schedule eclampsia risk 1-3 sunrises after whelping (peak lactation)."""
+    """Schedule eclampsia risk 1 to 3 sunrises after whelping (peak lactation)."""
     from engine.attraction import get_birth_sex
 
     if get_birth_sex(user) != "female":
@@ -312,7 +312,7 @@ def schedule_milk_fever_risk(
         )
     return (
         "**nursing watch**; peak lactation may bring **milk-fever** tremors "
-        "1–3 sunrises after birth."
+        "1 to 3 sunrises after birth."
     )
 
 

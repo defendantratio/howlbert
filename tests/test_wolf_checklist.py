@@ -55,7 +55,6 @@ def test_setup_complete_hides_done_items():
         "last_forage_day": 10,
         "last_explore_day": 10,
         "last_court_day": 10,
-        "last_raccoon_offer_day": 10,
         "herb_buffs": '{"manual_long_rest_day": 10}',
     }
     setup, today = collect_wolf_checklist(user, day=10)[:2]

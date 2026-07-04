@@ -48,7 +48,7 @@ def _rest_step(injury_key: str | None, disease_key: str | None) -> str:
             return "lifelong den care; no full recovery expected."
         return "short rest between treatments; avoid hunt and patrol."
     if disease_key == "cough":
-        return "quarantine (`/medic action:quarantine`); isolate **3-7** sunrises with herb doses."
+        return "quarantine (`/medic action:quarantine`); isolate **3 to 7** sunrises with herb doses."
     if disease_key == "rot_lung":
         return "strict rest; mullein or marsh-mallow course; no ranging in cold air."
     if disease_key == "shock_emotional":

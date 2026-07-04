@@ -56,14 +56,14 @@ LONG_TERM_TYPES = {
     },
     "scarred_hide": {
         "label": "Scarred Hide",
-        "effect": "Took three or more serious wounds in a single fight; hide toughened by damage — **+1 max HP** permanently, **+1 CHA** (battle-worn authority). Stacks with scarring.",
+        "effect": "Took three or more serious wounds in a single fight; hide toughened by damage; **+1 max HP** permanently, **+1 CHA** (battle-worn authority). Stacks with scarring.",
         "intimidate_bonus": 0,
         "max_hp_bonus": 1,
         "cha_bonus": 1,
     },
     "healer_instinct": {
         "label": "Healer's Instinct",
-        "effect": "Performed 20+ successful treatments; deepened knowledge of the body — **+1 WIS** permanently.",
+        "effect": "Performed 20+ successful treatments; deepened knowledge of the body; **+1 WIS** permanently.",
         "intimidate_bonus": 0,
         "wis_bonus": 1,
     },
@@ -129,7 +129,7 @@ def apply_winter_survivor_trait_on_rollover(conn) -> int:
     """
     Called once when winter ends (old_season == 'winter', new_season !=
     'winter'). Grants the permanent winter_survivor trait to every living,
-    non-pup wolf — operates on the rollover's own connection so it never
+    non-pup wolf; operates on the rollover's own connection so it never
     opens a second one (would deadlock against the rollover transaction).
     """
     from config import PUP_MAX_MOONS
@@ -240,7 +240,7 @@ COMBAT_SCAR_CHANCE = 0.20
 def roll_combat_scar(wolf_id: int | None) -> str | None:
     """
     Surviving a fight you lost (dropped to 0 HP) has a real chance of leaving
-    a permanent scar — a lasting consequence beyond the HP bar, and a genuine
+    a permanent scar; a lasting consequence beyond the HP bar, and a genuine
     +1 Intimidation bonus going forward (see LONG_TERM_TYPES["scarring"]).
     Returns a player-facing note, or None if no scar this time / already scarred.
     """
@@ -366,7 +366,7 @@ def record_combat_victory(wolf_id: int) -> str | None:
     if wins >= COMBAT_VICTORIES_FOR_BATTLE_HARDENED:
         add_long_term_injury(wolf_id, "battle_hardened")
         return (
-            f"**{wolf['wolf_name']}** has fought through {wins} serious battles — "
+            f"**{wolf['wolf_name']}** has fought through {wins} serious battles; "
             f"they are now **Battle-Hardened**; {LONG_TERM_TYPES['battle_hardened']['effect']}"
         )
     return None

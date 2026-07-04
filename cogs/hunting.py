@@ -183,7 +183,7 @@ class Hunting(commands.Cog):
                     clean_water = True
                 else:
                     await interaction.response.send_message(
-                        player_message(f'No active cat pact with **{clan_name}** — pick a territory or clan from the list.'),
+                        player_message(f'No active cat pact with **{clan_name}**; pick a territory or clan from the list.'),
                         ephemeral=reply_ephemeral(),
                     )
                     return
@@ -191,7 +191,7 @@ class Hunting(commands.Cog):
                 territory = db.get_territory_by_key(guild_id, source)
                 if not territory or not territory['owner_pack_id']:
                     await interaction.response.send_message(
-                        player_message('That territory has no owner — pick from the autocomplete list.'),
+                        player_message('That territory has no owner; pick from the autocomplete list.'),
                         ephemeral=reply_ephemeral(),
                     )
                     return
@@ -264,7 +264,7 @@ class Hunting(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Cannot Bury', body, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed('Buried', body, color=SUCCESS_COLOR)
-        embed.set_footer(text='burial is final — no bones or salvage from buried carcasses.')
+        embed.set_footer(text='burial is final; no bones or salvage from buried carcasses.')
         await interaction.response.send_message(embed=embed)
 
     async def _sniff(self, interaction: discord.Interaction):
@@ -286,7 +286,7 @@ class Hunting(commands.Cog):
 
     @app_commands.command(name='field', description='scavenge, track, fish, forage, verge-forage, mark territory, or sniff.')
     @app_commands.describe(action='scavenge, track, fishing, forage, verge, mark, or sniff', rarity='herb rarity (territory forage only)', verge_site='roadside or twoleg compound (verge forage only)', trail_age='trail age (track only)', territory='territory key (mark only; see /pack territory)')
-    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1-6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6-24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1-3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
+    @app_commands.choices(action=[app_commands.Choice(name='scavenge', value='scavenge'), app_commands.Choice(name='track', value='track'), app_commands.Choice(name='fishing', value='fishing'), app_commands.Choice(name='forage herbs (territory)', value='forage'), app_commands.Choice(name='forage verge (road / twoleg edge)', value='verge'), app_commands.Choice(name='mark territory scent', value='mark'), app_commands.Choice(name='sniff wind', value='sniff')], trail_age=[app_commands.Choice(name='fresh (<1 hour) dc 8', value='fresh'), app_commands.Choice(name='recent (1 to 6 hours) dc 12', value='recent'), app_commands.Choice(name='cold (6 to 24 hours) dc 15', value='cold'), app_commands.Choice(name='very cold (1 to 3 days) dc 18', value='very_cold'), app_commands.Choice(name='faint (3+ days) dc 25', value='faint')], rarity=[app_commands.Choice(name='common (dc 8)', value='common'), app_commands.Choice(name='uncommon (dc 12)', value='uncommon'), app_commands.Choice(name='rare (dc 15)', value='rare'), app_commands.Choice(name='very rare (dc 20)', value='very_rare')], verge_site=[app_commands.Choice(name='thunderpath shoulder', value='roadside'), app_commands.Choice(name='twoleg compound fence-line', value='compound')])
     @app_commands.autocomplete(territory=_territory_field_autocomplete)
     async def field(self, interaction: discord.Interaction, action: str, rarity: str='common', verge_site: str='roadside', trail_age: str='recent', territory: str | None=None):
         if action == 'scavenge':

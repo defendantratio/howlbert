@@ -45,10 +45,6 @@ def run_apprentice_shadow(apprentice, mentor, *, day: int) -> tuple[bool, str]:
         return False, f"that wolf isn't a full **{label}**; pick a packmate who's earned the rank."
     if apprentice["pack_id"] != mentor["pack_id"] or not apprentice["pack_id"]:
         return False, "shadow a mentor in your own den."
-    last = int(apprentice["last_shadow_day"]) if "last_shadow_day" in apprentice.keys() else 0
-    if last >= day:
-        return False, "you already shadowed a mentor this sunrise."
-
     focus = focus_skill_for_apprentice(role)
     from engine.herb_buffs import merge_buff_fields
 

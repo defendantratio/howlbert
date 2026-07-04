@@ -45,7 +45,7 @@ Since Sypha became a Fur-Giver, Brackenpelt has taken more southern patrols, tel
 
 **No Head for Herbs (Intelligence -2):** Cannot tell poison root from edible. Relies entirely on Cloverfern and Sypha for anything green.
 
-## Statistics (Total: 18, Hunter range 16-20)
+## Statistics (Total: 18, Hunter range 16 to 20)
 
 Strength: 6 (+1)  
 Dexterity: 5 (0)  

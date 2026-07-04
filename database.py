@@ -1437,14 +1437,6 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_socialize_day INTEGER NOT NULL DEFAULT 0"
         )
-    if "last_raccoon_day" not in user_cols_late:
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN last_raccoon_day INTEGER NOT NULL DEFAULT 0"
-        )
-    if "raccoon_sells_today" not in user_cols_late:
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN raccoon_sells_today INTEGER NOT NULL DEFAULT 0"
-        )
     if "mood" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN mood INTEGER NOT NULL DEFAULT 75"
@@ -1529,14 +1521,6 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_hunt_uses_day INTEGER NOT NULL DEFAULT 0"
         )
-    if "raccoon_buys_today" not in user_cols_late:
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN raccoon_buys_today INTEGER NOT NULL DEFAULT 0"
-        )
-    if "last_raccoon_offer_day" not in user_cols_late:
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN last_raccoon_offer_day INTEGER NOT NULL DEFAULT 0"
-        )
     if "bio_parent_1_id" not in user_cols_late:
         conn.execute("ALTER TABLE users ADD COLUMN bio_parent_1_id INTEGER")
     if "bio_parent_2_id" not in user_cols_late:
@@ -1620,6 +1604,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "last_meat_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_meat_day INTEGER NOT NULL DEFAULT 0"
+        )
+    if "daily_use_log" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN daily_use_log TEXT NOT NULL DEFAULT '{}'"
         )
 
     scene_cols = {row[1] for row in conn.execute("PRAGMA table_info(rp_scenes)")}
@@ -3200,7 +3188,7 @@ def _seed_quests(conn: sqlite3.Connection) -> None:
 def ensure_achievement_quests(discord_id: int, wolf_id: int) -> None:
     """Auto-enroll a wolf in every lifetime achievement; idempotent.
 
-    Achievements aren't accepted from a board — every wolf tracks all of
+    Achievements aren't accepted from a board; every wolf tracks all of
     them automatically from registration onward. Also called lazily from
     `increment_quest_progress` so wolves registered before this system
     existed get backfilled the first time any of their progress fires.
@@ -3853,7 +3841,7 @@ def _journal_sort_key(row: sqlite3.Row) -> tuple:
     """
     True chronological order: pre-game backstory lore first (it describes
     life before the den even has a day count for them), then every in-game
-    event by its actual day — including "born"/"adopted", which have a real
+    event by its actual day; including "born"/"adopted", which have a real
     day and were previously and incorrectly lumped in with pre-game lore.
     """
     key = str(row["event_key"])
@@ -4732,11 +4720,11 @@ def _standing_on_pack_switch(
     guild_id: int | None,
 ) -> int:
     """
-    Joining a new pack resets standing to 0 — you're unknown there.
+    Joining a new pack resets standing to 0; you're unknown there.
     Exception: if you had high standing (≥4) in your old pack AND the two
     packs have a neutral or better relation (pack_relations standing ≥5),
     reputation travels via inter-pack contact (+1; +2 if allied ≥8).
-    Hostile relations grant no benefit — being the enemy's champion is a liability.
+    Hostile relations grant no benefit; being the enemy's champion is a liability.
     """
     if not old_pack_id or not guild_id:
         return 0
@@ -5551,7 +5539,7 @@ def set_season_override(guild_id: int, season: str | None) -> None:
 
 
 # Weather is one shared roll across all four Great Packs (mountain, swamp,
-# forest, river), so this isn't per-pack weather — it's the global roll
+# forest, river), so this isn't per-pack weather; it's the global roll
 # weighted toward what that mix of terrains would actually produce more
 # often, instead of every weather type being equally likely regardless of
 # whether anyone's land is a swamp or a mountain.
@@ -5725,8 +5713,6 @@ def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
             SET mood = MAX(0, mood - ?),
                 hunger = MAX(0, hunger - ?),
                 thirst = MAX(0, thirst - ?),
-                raccoon_sells_today = 0,
-                raccoon_buys_today = 0,
                 drinks_today = 0
             WHERE dormant = 0 AND (disease IS NULL OR disease = '')
               AND ({last_seen_expr} >= ? OR ? <= 1)
@@ -5739,8 +5725,6 @@ def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
             SET mood = MAX(0, mood - ?),
                 hunger = MAX(0, hunger - ?),
                 thirst = MAX(0, thirst - ?),
-                raccoon_sells_today = 0,
-                raccoon_buys_today = 0,
                 drinks_today = 0
             WHERE dormant = 0 AND disease IS NOT NULL AND disease != ''
               AND ({last_seen_expr} >= ? OR ? <= 1)
@@ -10835,7 +10819,7 @@ def apply_bond_grief_for_strong_bonds(conn: sqlite3.Connection, dead_wolf_id: in
     """
     A formal bonded mate already gets grief above; this covers everyone
     else who was genuinely close to the dead wolf (best friend, kin, a
-    secret romance, a mentor) — scaled by how strong that bond actually
+    secret romance, a mentor); scaled by how strong that bond actually
     was, instead of only the one official relationship mattering.
     """
     from config import (
@@ -11506,8 +11490,8 @@ def decay_stalled_mentorships_on_rollover(conn, current_day: int) -> list[tuple[
 def calcify_old_rivalries_on_rollover(conn, current_day: int) -> int:
     """
     A rivalry bond that's stayed strong a long time without being resolved
-    (death, reconciliation) calcifies into permanent den legend — a one-time
-    journal entry for both wolves — instead of just quietly fading from
+    (death, reconciliation) calcifies into permanent den legend; a one-time
+    journal entry for both wolves; instead of just quietly fading from
     neglect like an ordinary bond would. Marked in the note so it only
     fires once per pair.
     """
@@ -11589,7 +11573,7 @@ def decay_idle_standing_on_rollover(conn, current_day: int) -> int:
 def graduate_mentor_bonds_on_rollover(conn, current_day: int, guild_id: int | None = None) -> int:
     """
     When neither wolf in a mentor bond is an apprentice anymore, the
-    teaching relationship is done — convert it to a friendship so the
+    teaching relationship is done; convert it to a friendship so the
     bond history isn't erased, and log it as a life event.
     """
     from engine.apprentice_roles import APPRENTICE_ROLES
@@ -11639,7 +11623,7 @@ def graduate_mentor_bonds_on_rollover(conn, current_day: int, guild_id: int | No
 def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
     """
     Friendships, rivalries, and romances that haven't been touched in a
-    while (no socialize/groom/sign/etc.) slowly fade — a bond is a living
+    while (no socialize/groom/sign/etc.) slowly fade; a bond is a living
     relationship, not a ratchet that only ever goes up. Kin and mentor
     bonds are exempt; family and "who taught you" don't erode from a quiet
     season. Operates on the rollover's own connection (no nested get_db()).
@@ -11657,7 +11641,7 @@ def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
     ).fetchall()
     decayed = 0
     for row in rows:
-        # Grudges fade faster than affection — a rivalry not fed by real conflict
+        # Grudges fade faster than affection; a rivalry not fed by real conflict
         # softens more quickly than a friendship left to drift on its own.
         amount = BOND_DECAY_AMOUNT * 2 if row["bond_type"] == "rivalry" else BOND_DECAY_AMOUNT
         old_strength = int(row["strength"])
@@ -11734,7 +11718,7 @@ def get_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> sqlite3.Row | No
         ).fetchone()
 
 
-# Friendship and rivalry pull against each other — a wolf's regard for another
+# Friendship and rivalry pull against each other; a wolf's regard for another
 # is finite. Growing one bleeds a fraction off the other instead of letting
 # both climb to 100 independently, while still allowing real "complicated"
 # relationships (old friends turned rivals, respected enemies) to coexist.
@@ -11907,7 +11891,7 @@ def get_family_members(family_id: int) -> list[sqlite3.Row]:
 def create_wolf_family(wolf_id: int, name: str, *, day: int = 0) -> tuple[sqlite3.Row | None, str | None]:
     name = name.strip()
     if len(name) < 2 or len(name) > 32:
-        return None, "Family name must be 2-32 characters."
+        return None, "Family name must be 2 to 32 characters."
     if get_wolf_family(wolf_id):
         return None, "Leave your current found family first (`/bonds action:Family leave:true`)."
     if get_family_by_name(name):
@@ -12566,7 +12550,7 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
                         "wolf_name": stack["wolf_name"],
                         "discord_id": stack["discord_id"],
                         "line": (
-                            f"**{meta['name']}** is **{terms['rotting']}** (`/food` — {tail})."
+                            f"**{meta['name']}** is **{terms['rotting']}** (`/food`; {tail})."
                         ),
                     }
                 )
@@ -12960,7 +12944,7 @@ def rot_pack_prey_stacks(guild_id: int, day: int) -> list[dict]:
                         "discord_id": None,
                         "line": (
                             f"Den reserve **{meta['name']}** is **rotting** "
-                            "(`/pack stash` — communal feed at gut-sickness risk)."
+                            "(`/pack stash`; communal feed at gut-sickness risk)."
                         ),
                     }
                 )

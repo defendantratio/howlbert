@@ -14,7 +14,7 @@ Permanent marks after healing; roleplay plus minor mechanics. Shown on `/vitals 
 | **Fear of [trigger]** | Wisdom DC 12 or frightened 1 round when faced |
 
 - Assigned on failed `/skills` **Set bone without comfrey** (crit fail → limp).
-- Cured with **wolfsbane** (spirit curse; 2-6 poison damage) or **swamp milkweed** via `/medic action:treat`.
+- Cured with **wolfsbane** (spirit curse; 2 to 6 poison damage) or **swamp milkweed** via `/medic action:treat`.
 - Otherwise months of rest at GM discretion.
 
 ## Fear of Fire
@@ -39,7 +39,7 @@ Wolves fear open flame (campfires, torches, wildfires).
 - **Vocal**: opposed Charisma + Intimidation; loser cannot approach female rest of day.
 - Female may give +2 to favored challenger. **Winner is not guaranteed mating.**
 
-## Rival Pack Standing (0-10)
+## Rival Pack Standing (0 to 10)
 
 `/pack relations` · `/pack relation pack_name:`
 
@@ -69,7 +69,7 @@ Wolves fear open flame (campfires, torches, wildfires).
 | Mountain | 18 | Frostbite −1 Dex |
 | Forest | 10 | Lose 1d4 hours |
 
-`/wilderness action:encounter`: d20: 1-5 encounter, 6-15 quiet, 16-20 find useful.
+`/wilderness action:encounter`: d20: 1 to 5 encounter, 6 to 15 quiet, 16 to 20 find useful.
 
 `/wilderness action:omen`: nat 1 bad omen (disadvantage first roll next sunrise); nat 20 advantage.
 

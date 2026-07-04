@@ -324,7 +324,7 @@ def break_wolf_pack_pact(
         names = ", ".join(f"**{h['wolf_name']}**" for h in hostages)
         hostage_note = (
             f"\n\n_{names} still live in {GREAT_PACKS.get(other['key'], {}).get('name', other['name'])}'s den as "
-            f"hostages — breaking faith with them standing there costs extra: standing "
+            f"hostages; breaking faith with them standing there costs extra: standing "
             f"**{HOSTAGE_BETRAYAL_STANDING_PENALTY}** more (now **{new_rel}/10**)._"
         )
 
@@ -407,7 +407,7 @@ def infiltrate_pack(user, pack, *, target_pack: str, spy, day: int) -> tuple[boo
     db.plant_spy(int(spy["id"]), host_pack_id=int(other["id"]), host_great_pack=other["key"], home_pack_id=int(pack["id"]))
     return True, (
         f"**{spy['wolf_name']}** slips into **{other_name}**'s den, posing as a defector. "
-        f"use `/pact action:report` (as {spy['wolf_name']}) to send word home — every report risks exposure."
+        f"use `/pact action:report` (as {spy['wolf_name']}) to send word home; every report risks exposure."
     )
 
 
@@ -458,7 +458,7 @@ def spy_report(spy, *, guild_id: int, day: int) -> tuple[bool, str]:
 def sanction_political_match(user, pack, *, guild_id: int, own_wolf, day: int) -> tuple[bool, str]:
     """
     Formally recognize an existing cross-pack bonded pair as a deliberate
-    political alliance — the active counterpart to the passive marriage
+    political alliance; the active counterpart to the passive marriage
     bonus baked into forge_wolf_pack_pact. Requires the two wolves already
     chose each other (no third-party-arranged consent flow); the alpha is
     just the one who makes it official den policy.
