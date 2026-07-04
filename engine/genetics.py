@@ -16,6 +16,20 @@ import random
 
 GENETIC_CONDITIONS: dict[str, dict] = {
 
+    "lactase_persistent": {
+
+        "name": "Lactase Persistence",
+
+        "effect": "Keeps the pup-gut ability to digest milk into adulthood; can drink milk via `/drink type:milk` without an upset stomach. Most wolves lose this after weaning.",
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 6,
+
+        "random_weight": 3,
+
+    },
+
     "blindness": {
 
         "name": "Blindness",
@@ -86,17 +100,123 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
         "name": "Brachycephaly",
 
-        "effect": "Flat skull; labored breathing; −35% hunt bones; often fatal in newborns.",
+        "effect": "flat skull and shortened airway; labored breathing; -2 scent perception; con disadvantage on respiratory saves; -4 hunger/sunrise (chewing pain); -10% hunt. often fatal in newborns.",
 
-        "hunt_mult": 0.65,
+        "hunt_mult": 0.90,
 
-        "physical_disadvantage": True,
+        "perception_penalty": 2,
+
+        "respiratory_con_disadvantage": True,
+
+        "hunger_drain": 4,
 
         "lethal_at_birth": True,
 
         "inherit_weight": 6,
 
         "random_weight": 2,
+
+    },
+
+    "lstv": {
+
+        "name": "LSTV (Lumbosacral Transitional Vertebrae)",
+
+        "effect": "malformed lower spine; rear leg weakness causes dex disadvantage; -15% hunt; +1 pain exhaustion each sunrise from chronic back pain.",
+
+        "hunt_mult": 0.85,
+
+        "dex_disadvantage": True,
+
+        "pain_exhaustion_gain": 1,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 6,
+
+        "random_weight": 2,
+
+    },
+
+    "spinal_arthritis": {
+
+        "name": "Spinal Arthritis",
+
+        "effect": "degenerative joint disease of the spine; str and dex disadvantage; -15% hunt; +1 pain exhaustion each sunrise.",
+
+        "hunt_mult": 0.85,
+
+        "str_dex_disadvantage": True,
+
+        "pain_exhaustion_gain": 1,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 4,
+
+        "random_weight": 2,
+
+    },
+
+    "inbreeding_depression": {
+
+        "name": "Inbreeding Depression",
+
+        "effect": "reduced genetic diversity; -1 to all con saves; -10% hunt efficiency; twice as likely to contract contagious diseases.",
+
+        "hunt_mult": 0.90,
+
+        "con_penalty": 1,
+
+        "inbreeding_flag": True,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 0,
+
+        "random_weight": 0,
+
+    },
+
+    "adhd_like": {
+
+        "name": "ADHD-like",
+
+        "effect": "hyperactive and impulsive; -15% hunt (breaks formation before the pack is ready); dex disadvantage on stealth; +2 to tracking and survival (catches every flicker of movement).",
+
+        "hunt_mult": 0.85,
+
+        "stealth_disadvantage": True,
+
+        "skill_bonus_skills": ["tracking", "survival"],
+
+        "skill_bonus_amount": 2,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 5,
+
+        "random_weight": 0,
+
+    },
+
+    "autism_like": {
+
+        "name": "Autism-like",
+
+        "effect": "sensory and social processing differences; -1 to cha checks (social unpredictability); +2 to herblore and medicine (hyperfocused pattern recognition).",
+
+        "cha_penalty": 1,
+
+        "skill_bonus_skills": ["herblore", "medicine"],
+
+        "skill_bonus_amount": 2,
+
+        "lethal_at_birth": False,
+
+        "inherit_weight": 5,
+
+        "random_weight": 0,
 
     },
 
@@ -258,6 +378,16 @@ REGISTERABLE_GENETIC = frozenset(
 
         "muteness",
 
+        "lstv",
+
+        "spinal_arthritis",
+
+        "inbreeding_depression",
+
+        "adhd_like",
+
+        "autism_like",
+
     }
 
 )
@@ -290,6 +420,16 @@ HERB_INCURABLE_GENETICS = frozenset(
         "conjoined",
 
         "muteness",
+
+        "lstv",
+
+        "spinal_arthritis",
+
+        "inbreeding_depression",
+
+        "adhd_like",
+
+        "autism_like",
 
     }
 
@@ -348,6 +488,36 @@ GENETIC_ALIASES: dict[str, str] = {
     "voiceless": "muteness",
 
     "no_voice": "muteness",
+
+    "lumbosacral": "lstv",
+
+    "lumbosacral_transitional": "lstv",
+
+    "transitional_vertebrae": "lstv",
+
+    "spine_malformation": "lstv",
+
+    "arthritis_spinal": "spinal_arthritis",
+
+    "degenerative_spine": "spinal_arthritis",
+
+    "spinal_degeneration": "spinal_arthritis",
+
+    "inbreeding": "inbreeding_depression",
+
+    "inbred": "inbreeding_depression",
+
+    "adhd": "adhd_like",
+
+    "hyperactive": "adhd_like",
+
+    "impulsive": "adhd_like",
+
+    "autism": "autism_like",
+
+    "autistic": "autism_like",
+
+    "sensory": "autism_like",
 
 }
 
@@ -497,6 +667,38 @@ def genetic_check_adjustments(
 
             disadvantage = True
 
+        if info.get("dex_disadvantage") and "attr_dex" in attrs:
+
+            disadvantage = True
+
+        if info.get("str_dex_disadvantage") and attrs & {"attr_str", "attr_dex"}:
+
+            disadvantage = True
+
+        if info.get("respiratory_con_disadvantage") and "attr_con" in attrs:
+
+            disadvantage = True
+
+        if info.get("con_penalty") and "attr_con" in attrs:
+
+            penalty -= int(info["con_penalty"])
+
+        if info.get("cha_penalty") and "attr_cha" in attrs:
+
+            penalty -= int(info["cha_penalty"])
+
+        # stealth_disadvantage: DEX disadvantage only on stealth skill checks.
+        if info.get("stealth_disadvantage") and skill_key == "stealth" and "attr_dex" in attrs:
+
+            disadvantage = True
+
+        # skill_bonus_skills: flat bonus when the active skill is in the list.
+        bonus_skills = info.get("skill_bonus_skills") or []
+
+        if bonus_skills and skill_key in bonus_skills:
+
+            penalty += int(info.get("skill_bonus_amount", 0))
+
         if not non_visual:
             penalty -= int(info.get("perception_penalty", 0)) if "attr_wis" in attrs else 0
 
@@ -591,6 +793,36 @@ def genetic_perception_penalty(user) -> int:
 
 
 
+
+
+def genetic_pain_exhaustion_gain(user) -> int:
+    """Total pain_exhaustion added per sunrise from chronic genetic conditions."""
+    keys = parse_genetic_conditions(
+        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
+    )
+    total = 0
+    for key in keys:
+        total += int(GENETIC_CONDITIONS[key].get("pain_exhaustion_gain", 0))
+    return total
+
+
+def genetic_hunger_drain(user) -> int:
+    """Total hunger drained per sunrise from genetic conditions (e.g. brachycephaly chewing pain)."""
+    keys = parse_genetic_conditions(
+        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
+    )
+    total = 0
+    for key in keys:
+        total += int(GENETIC_CONDITIONS[key].get("hunger_drain", 0))
+    return total
+
+
+def has_inbreeding_depression(user) -> bool:
+    """True when wolf carries inbreeding_depression genetic flag."""
+    keys = parse_genetic_conditions(
+        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
+    )
+    return any(GENETIC_CONDITIONS[k].get("inbreeding_flag") for k in keys)
 
 
 def genetic_keys_matching_cures(user, cures: tuple) -> list[str]:

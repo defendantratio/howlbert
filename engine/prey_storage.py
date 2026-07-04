@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 
 from engine.conditions import apply_meal_energy
-from engine.injury_effects import meal_blocked_by_injury
+from engine.injury_effects import meal_blocked_by_injury, meal_jaw_pain_note
 from engine.vitals import living_wolf_block
 from engine.hunger import meal_hunger_gain
 from engine.thirst import meal_thirst_gain
@@ -97,14 +97,12 @@ def fresh_kill_pile_block_message(wolf_id: int, day: int) -> str | None:
     )
 
 
-def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
+def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
     block = living_wolf_block(user)
     if block:
         return False, block
-    block = meal_blocked_by_injury(user)
-    if block:
-        return False, block
 
+    jaw_note = meal_jaw_pain_note(user)
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "you don't have that in your hoard."
@@ -112,11 +110,19 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
         return False, "that's already picked clean."
 
     meta = prey_meta(stack["prey_key"])
+    old_hunger = int(user["hunger"]) if "hunger" in user.keys() else 0
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(user, stack["bone_value"])
     hunger_gain = meal_hunger_gain(stack["prey_key"])
     new_hunger = db.adjust_hunger(user["id"], hunger_gain)
     thirst_gain = meal_thirst_gain(stack["prey_key"])
     new_thirst = db.adjust_thirst(user["id"], thirst_gain)
+    overfull_note = ""
+    if old_hunger >= 100:
+        from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX as _PE_MAX
+        old_pe = int(user["pain_exhaustion"]) if "pain_exhaustion" in user.keys() else 0
+        new_pe = min(_PE_MAX, old_pe + 1)
+        db.update_user(user["discord_id"], wolf_id=user["id"], pain_exhaustion=new_pe)
+        overfull_note = "\n_gut already full; forcing it down adds **+1 pain exhaustion**._"
     db.set_user_conditions(
         user["discord_id"],
         wolf_id=user["id"],
@@ -127,6 +133,11 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     from engine.prey_items import is_forage_food
 
     forage = is_forage_food(stack["prey_key"])
+
+    # meat resets the meatless-wasting clock; forage/liquids do not (carnivores
+    # need real prey; see meatless wasting at rollover)
+    if not forage and day:
+        db.update_user(user["discord_id"], wolf_id=user["id"], last_meat_day=day)
 
     disease_note = ""
     if stack["is_rotting"]:
@@ -168,7 +179,7 @@ def eat_prey_carcass(user, stack_id: int) -> tuple[bool, str]:
     msg += cannibalism_eat_consequences(user, stack["prey_key"])
     if new_exhaustion < old_exhaustion:
         msg += f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"
-    msg += f".\n{uses_note}{disease_note}"
+    msg += f".\n{uses_note}{disease_note}{overfull_note}{jaw_note}"
     return True, msg
 
 

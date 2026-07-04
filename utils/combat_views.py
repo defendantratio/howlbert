@@ -139,7 +139,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
         await execute_npc_attack(interaction, self.bot, self.enc_id, tid)
 
 
-class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):(?P<action>bite|claw|yield|submit|spare|finish)$"):
+class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+):(?P<action>bite|claw|yield|submit|spare|finish|staunch)$"):
     def __init__(self, enc_id: int, action: str, *, label_override: str | None = None):
         labels = {
             "bite": "bite",
@@ -148,6 +148,7 @@ class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
             "submit": "submit",
             "spare": "spare",
             "finish": "finish",
+            "staunch": "staunch bleed",
         }
         styles = {
             "bite": discord.ButtonStyle.danger,
@@ -156,6 +157,7 @@ class CombatActionButton(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>\d+
             "submit": discord.ButtonStyle.secondary,
             "spare": discord.ButtonStyle.success,
             "finish": discord.ButtonStyle.danger,
+            "staunch": discord.ButtonStyle.secondary,
         }
         label = label_override if label_override is not None else labels[action]
         super().__init__(
@@ -236,6 +238,7 @@ COMBAT_DYNAMIC_ITEMS = (
 
 
 def _make_player_turn_view(enc_id: int, bot: commands.Bot) -> discord.ui.View:
+    from engine.injury_effects import has_injury
     view = discord.ui.View(timeout=None)
     view.add_item(CombatTargetSelect(enc_id, bot))
     view.add_item(CombatActionButton(enc_id, "bite"))
@@ -243,6 +246,11 @@ def _make_player_turn_view(enc_id: int, bot: commands.Bot) -> discord.ui.View:
     view.add_item(CombatActionButton(enc_id, "yield"))
     view.add_item(CombatActionButton(enc_id, "submit"))
     view.add_item(CombatManeuverSelect(enc_id))
+    current = current_fighter_for_enc(enc_id)
+    if current and not is_npc_fighter(current) and current.get("discord_id"):
+        actor = db.get_user(int(current["discord_id"]))
+        if actor and has_injury(actor, "deep_gash"):
+            view.add_item(CombatActionButton(enc_id, "staunch"))
     submitted = db.get_submitted_fighter(enc_id)
     if submitted:
         sub_name = submitted["npc_name"] or "?"

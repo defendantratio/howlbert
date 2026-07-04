@@ -26,11 +26,11 @@ def _active_wolf(interaction: discord.Interaction):
 
 
 _FACTION_CHOICES = [
-    app_commands.Choice(name="Lowland Settlements", value="lowland_settlements"),
-    app_commands.Choice(name="Thorne Lumber", value="thorne_lumber"),
-    app_commands.Choice(name="River Mill", value="river_mill"),
-    app_commands.Choice(name="The Crows", value="the_crows"),
-    app_commands.Choice(name="University Expedition", value="university_expedition"),
+    app_commands.Choice(name="lowland settlements", value="lowland_settlements"),
+    app_commands.Choice(name="thorne lumber", value="thorne_lumber"),
+    app_commands.Choice(name="river mill", value="river_mill"),
+    app_commands.Choice(name="the crows", value="the_crows"),
+    app_commands.Choice(name="university expedition", value="university_expedition"),
 ]
 
 _SABOTAGE_FACTIONS = {"thorne_lumber", "river_mill"}
@@ -132,9 +132,11 @@ class Faction(commands.Cog):
         if not gp:
             await interaction.response.send_message(embed=howlbert_embed("No Pack", "Faction actions require a Great Pack affiliation.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        flavor, delta = try_faction_approach(user, faction, day=day)
+        flavor, delta, bonus_bones = try_faction_approach(user, faction, day=day)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
+        if bonus_bones > 0:
+            db.add_bones(interaction.user.id, bonus_bones, wolf_id=user["id"])
         color = SUCCESS_COLOR if delta > 0 else ERROR_COLOR
         embed = howlbert_embed(
             f"Approach — {faction_display_name(faction)}",
@@ -142,6 +144,8 @@ class Faction(commands.Cog):
             color=color,
         )
         embed.add_field(name="Standing", value=f"{new_standing:+} ({standing_label(new_standing)})", inline=True)
+        if bonus_bones > 0:
+            embed.add_field(name="Cache Found", value=f"+**{bonus_bones}** bones", inline=True)
         await interaction.response.send_message(embed=embed)
 
     @faction.command(name="trade", description="offer resources to build standing with a faction (costs 3 bones; pack-specific access).")
@@ -212,6 +216,15 @@ class Faction(commands.Cog):
             for f in FACTIONS:
                 if f != faction:
                     db.adjust_faction_standing(gp, f, -1)
+        # a successful settlement raid can carry off livestock milk
+        milk_note = ""
+        if not caught and faction == "lowland_settlements":
+            import random as _milk_rand
+            milk_item = db.get_item_by_key("liquid_milk")
+            if milk_item and _milk_rand.random() < 0.6:
+                got = _milk_rand.randint(1, 2)
+                db.grant_item(interaction.user.id, milk_item["id"], got)
+                milk_note = f"you knock over a pail in the barn and carry off **{got}× milk**."
         color = SUCCESS_COLOR if not caught else ERROR_COLOR
         embed = howlbert_embed(
             f"Raid — {faction_display_name(faction)}",
@@ -221,13 +234,15 @@ class Faction(commands.Cog):
         embed.add_field(name="Standing", value=f"{new_standing:+} ({standing_label(new_standing)})", inline=True)
         if caught:
             embed.add_field(name="Caught", value="All faction standings −1", inline=True)
+        if milk_note:
+            embed.add_field(name="Plunder", value=milk_note, inline=False)
         await interaction.response.send_message(embed=embed)
 
     @faction.command(name="sabotage", description="sabotage thorne_lumber or river_mill operations (Thistlehide/Silverrush; dc 15).")
     @app_commands.describe(faction="thorne_lumber or river_mill")
     @app_commands.choices(faction=[
-        app_commands.Choice(name="Thorne Lumber", value="thorne_lumber"),
-        app_commands.Choice(name="River Mill", value="river_mill"),
+        app_commands.Choice(name="thorne lumber", value="thorne_lumber"),
+        app_commands.Choice(name="river mill", value="river_mill"),
     ])
     async def sabotage(self, interaction: discord.Interaction, faction: str):
         if not interaction.guild:

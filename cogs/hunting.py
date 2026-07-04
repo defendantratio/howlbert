@@ -12,6 +12,21 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.views import make_hunt_followup_view
 
+async def _safe_defer(interaction: discord.Interaction) -> bool:
+    """Defer, tolerating an already expired or duplicated interaction.
+
+    Discord invalidates an interaction token after 3 seconds; if the gateway or
+    event loop lagged, defer raises 404 (10062). Swallow it so the command fails
+    quietly instead of crashing with a traceback; returns False when we can no
+    longer respond.
+    """
+    try:
+        await interaction.response.defer()
+        return True
+    except discord.HTTPException:
+        return False
+
+
 async def _prey_stack_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
@@ -102,13 +117,17 @@ class Hunting(commands.Cog):
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return
+        from engine.vitals_decay import apply_time_decay
+        if apply_time_decay(user)[0]:
+            user = db.get_user(interaction.user.id) or user
         try:
             stack_id = int(food)
         except ValueError:
             await interaction.response.send_message(player_message('Pick something from `/food` autocomplete.'), ephemeral=reply_ephemeral())
             return
         stack = db.get_prey_stack(stack_id)
-        ok, msg = eat_prey_carcass(user, stack_id)
+        _eat_day = db.get_world(interaction.guild.id)['day_number'] if interaction.guild else 0
+        ok, msg = eat_prey_carcass(user, stack_id, day=_eat_day)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Meal', msg, color=color)
         if ok and stack and interaction.guild:
@@ -121,13 +140,34 @@ class Hunting(commands.Cog):
             embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='drink', description='drink at the creek (−2 exhaustion, once per hour, no daily cap).')
-    @app_commands.describe(source='Mistmoor wolves: pick an owned or allied territory / cat clan for clean water (skips swamp disease).')
+    @app_commands.command(name='drink', description='drink water at the creek, or sip broth or milk (−exhaustion; feeds the injured).')
+    @app_commands.describe(
+        type='water (creek), broth, or milk',
+        source='water only; Mistmoor: owned/allied territory or cat clan for clean water (skips swamp disease).',
+    )
+    @app_commands.choices(type=[
+        app_commands.Choice(name='water (creek)', value='water'),
+        app_commands.Choice(name='broth', value='broth'),
+        app_commands.Choice(name='milk', value='milk'),
+    ])
     @app_commands.autocomplete(source=_drink_source_autocomplete)
-    async def drink_creek(self, interaction: discord.Interaction, source: str | None = None):
+    async def drink_creek(self, interaction: discord.Interaction, type: str = 'water', source: str | None = None):
         user = db.get_user(interaction.user.id)
         if not user:
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        from engine.vitals_decay import apply_time_decay
+        if apply_time_decay(user)[0]:
+            user = db.get_user(interaction.user.id) or user
+        # broth / milk: sip a stored liquid instead of creek water
+        if type in ('broth', 'milk'):
+            from engine.liquid_diet import drink_liquid, LIQUID_HUNGER_CAP
+            ok, msg = drink_liquid(user, type)
+            color = SUCCESS_COLOR if ok else ERROR_COLOR
+            embed = howlbert_embed('Liquid Diet', msg, color=color)
+            if ok:
+                embed.set_footer(text=f'liquids feed to {LIQUID_HUNGER_CAP} hunger at most; only meat fully satisfies')
+            await interaction.response.send_message(embed=embed)
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
@@ -235,7 +275,8 @@ class Hunting(commands.Cog):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed, combat_enc = try_sniff(interaction)
         if combat_enc:
             view = make_combat_view(combat_enc, self.bot)
@@ -280,14 +321,16 @@ class Hunting(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     async def _scavenge(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed = try_scavenge(interaction)
         if not embed:
             embed = howlbert_embed('Scavenge Failed', 'Something went wrong.', color=ERROR_COLOR)
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     async def _track(self, interaction: discord.Interaction, trail_age: str='recent'):
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed, show_prey = try_track(interaction, trail_age=trail_age)
         if not embed:
             embed = howlbert_embed('Track Failed', 'Something went wrong.', color=ERROR_COLOR)
@@ -299,7 +342,8 @@ class Hunting(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     async def _fishing(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed, show_prey = try_fishing(interaction)
         if not embed:
             embed = howlbert_embed('Fishing Failed', 'Something went wrong.', color=ERROR_COLOR)
@@ -311,14 +355,16 @@ class Hunting(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     async def _forage(self, interaction: discord.Interaction, rarity: str='common'):
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed = try_forage(interaction, rarity)
         if not embed:
             embed = howlbert_embed('Forage Failed', 'Something went wrong.', color=ERROR_COLOR)
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
     async def _verge_forage(self, interaction: discord.Interaction, verge_site: str='roadside'):
-        await interaction.response.defer()
+        if not await _safe_defer(interaction):
+            return
         embed, combat_enc = try_verge_forage(interaction, verge_site)
         if not embed:
             embed = howlbert_embed('Forage Failed', 'Something went wrong.', color=ERROR_COLOR)

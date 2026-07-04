@@ -43,7 +43,7 @@ def test_parse_and_flags() -> None:
     check("insomnia mental", is_mental_disease("insomnia"))
     check("shock mental", is_mental_disease("shock_emotional"))
     check("cough not mental", not is_mental_disease("cough"))
-    check("panic blocks social", blocks_social("anxiety", "panic_prone"))
+    check("panic no longer blocks social", not blocks_social("anxiety", "panic_prone"))
 
 
 def test_herb_cures() -> None:

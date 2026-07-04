@@ -72,26 +72,47 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ each great pack shares one treasury, tax, territory, and wars  
 ✦ **quests** progress from hunts, patrols, deposits, etc.; rewards grant automatically when finished (no manual turn-in)  
 ✦ **mood / hunger / thirst** decay each sunrise; low stats block hunts and add exhaustion  
-✦ **genetic conditions** (blindness, deafness, muteness, and more) are inherited or rolled at birth; some block howls, hunts, or perception  
+✦ **genetic conditions** (blindness, partial blindness, deafness, muteness, brachycephaly, lstv, spinal arthritis, inbreeding depression, adhd, autism, and more) are inherited or rolled at birth; each has real mechanical penalties; hunt multipliers, attribute disadvantage, pain exhaustion gain, skill bonuses/penalties, or increased disease susceptibility  
 ✦ **cat clans**: trade meat and forage, and form pacts via `/pack pact` (see `docs/CAT_CLANS.md`)  
 ✦ **forage food** (berries, windfall fruit, roots, greens) drops from `/field forage` and `scavenge`; it ripens then overripens, just like meat rots  
-✦ **The Rotting Mere** (Mistmoor location): set IC location to "The Rotting Mere" and `/field forage` yields marsh-mallow, belly-rip fungus, or death-cap mushroom; each forage has a chance of Maw-contact flavor, swamp disease exposure, and (Mistmoor wolves only) rare Drown-Sick transformation  
+✦ **the rotting mere** (mistmoor location): set ic location to "the rotting mere" and `/field forage` yields marsh-mallow, belly-rip fungus, or death-cap mushroom; each forage has a chance of maw-contact flavor, swamp disease exposure, and (mistmoor wolves only) rare drown-sick transformation  
 ✦ **passive scavenge**: unfed wolves forage a little each sunrise so neglect bites without instantly starving the den  
 ✦ **death log**: `/wolfadmin deaths` records cause of death each rollover  
-✦ **admin tooling**: `/wolfadmin assign` registers a wolf to a player (paste sheets directly in chat); `/wolfadmin arrival` posts the arrival/birth scene for an already-registered wolf so it grants its long-term trait properly; `/wolfadmin dormant` exempts admin-held NPC wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
-✦ **pack-specific plot quests**: each great pack has its own gated board quest tied to its lore (e.g. Silverrush's dam sabotage, Greyspire's mining-camp raid)  
+✦ **admin tooling**: `/wolfadmin assign` registers a wolf to a player (paste sheets directly in chat); `/wolfadmin arrival` posts the arrival/birth scene for an already-registered wolf so it grants its long-term trait properly; `/wolfadmin dormant` exempts admin-held npc wolves from vitals decay until claimed; `/wolfadmin execute` marks a wolf dead with a lore-flavored cause  
+✦ **pack-specific plot quests**: each great pack has its own gated board quest tied to its lore (e.g. silverrush's dam sabotage, greyspire's mining-camp raid)  
 ✦ **basil's rules** for attributes, skill checks, combat, herbs, disease, and pups; use `/help` in discord for the player guide
 
 ## realism mechanics
 
-howlbert leans toward measurable, granular wolf-ecology effects over flavor text — every system below changes a number, not just a description.
+howlbert leans toward measurable, granular wolf-ecology effects over flavor text; every system below changes a number, not just a description.
 
-✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter** — `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
+✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter**; `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
 ✦ **pregnancy costs food**: pregnant wolves burn extra hunger/thirst each sunrise, and hunt/fish/scavenge yield drops **−10%** in early pregnancy, **−20%** mid-to-late; the final third blocks strenuous activity outright. nursing mothers burn extra hunger/thirst per pup  
-✦ **injuries cost yield, not just combat**: non-blocking injuries (sprained leg, punctured paw, concussion, deep gash, infected wound, torn claw, broken tooth, torn ear) reduce hunt/fish/scavenge yield, stacking up to **−50%**. severe injuries (fractured rib, spinal injury, paralysis) still block field commands outright  
-✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first — but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
-✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day — wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
-✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances — a +1 skill bonus that follows a wolf for life
+✦ **pain exhaustion is a separate tracker (0 to 5)**: distinct from main exhaustion (0 to 10); accumulates from painful injuries and diseases (deep gash, fractured rib, scorched hide, snake venom, trichinosis, lyme, cancer, and more) each sunrise. herbs like willow bark and poppy target this pool specifically. at 5 stacks it overflows into main exhaustion  
+✦ **injuries cost yield, not just combat**: non-blocking injuries (sprained leg, punctured paw, concussion, deep gash, infected wound, snake venom, torn claw, broken tooth, torn ear) reduce hunt/fish/scavenge yield, stacking up to **−50%**. severe injuries (fractured rib, spinal injury, paralysis) still block field commands outright  
+✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first; but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
+✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day; wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
+✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances; a +1 skill bonus that follows a wolf for life
+
+**combat granularity:**  
+✦ **scarred hide**: taking 3+ wounds in a single fight permanently hardens the hide; **+1 max hp**, **−1 cha** (tracked via `long_term_injuries`)  
+✦ **throat grab**: str maneuver, 1d4 damage; on hit defender rolls con dc 13 or loses their next action (**suffocated**)  
+✦ **shoulder check**: str maneuver, 1d6 damage; on hit the defender is knocked **prone** and loses their next action (**repositioning**)  
+✦ **rear guard**: wis maneuver, no damage; covering packmates grants the next npc attacker **disadvantage** on their roll  
+✦ **wound pressure**: using the same maneuver twice in a row deals **+1 bonus damage**  
+✦ **rage state**: when a packmate is knocked out (0 hp), other player wolves roll wis dc 12 or enter rage; **+2 attack**, **−2 defense** for the remainder of the fight  
+✦ **burn injuries**: being caught on a faction raid against thorne_lumber or river_mill (15% chance) inflicts **scorched_hide** (+1 exhaustion/sunrise, 7-day heal; cobwebs only)  
+✦ **field dressing**: any wolf, survival dc 14; packs moss against a **deep gash** to suppress the sunrise bleed for one day (`/medic action:field_dressing`)  
+✦ **herb tolerance**: using the same herb on the same injury within 3 days raises the treatment dc by **+2**; varied treatment is encouraged by yarrow/plantain also curing torn_claw  
+✦ **bone-set failure**: bone injuries (fractured_rib, spinal_injury, sprained_leg, broken_jaw) left **untreated for 3+ sunrises** cause permanent **−1 attribute** malunion (`malunion_X` in long_term_injuries)  
+✦ **medic overextension**: healing **5 or more wolves in one sunrise** adds **+1 exhaustion** on rollover  
+✦ **spine slam**: str maneuver, 1d6 damage; only usable on **prone** targets; on hit defender rolls con dc 14 or gains **bruised lung** (surgery required; −1 str, −1 wis)  
+✦ **eye rake**: dex maneuver, 1d4 damage; on hit defender gains **swollen_eye_combat**; attack disadvantage for the rest of the fight  
+✦ **grab and throw**: str maneuver, 1d4 damage; breaks any active pin, leaves defender **repositioning** (loses next action)  
+✦ **wound wash**: medic action, dc 10 medicine; dock leaves or horsetail flush an **infected wound** clean (`/medic action:wound_wash`)  
+✦ **healer's instinct**: full medic earns **+1 wis** permanently after **20 successful treatments** (`healer_instinct` long-term trait)  
+✦ **brittle bone**: str maneuver hit on a defender with a malunion long-term injury triggers a con dc 11 save; failure **re-fractures** the old bone  
+✦ **recovery variance**: long rest hp gain is modified by active injury load (−1 per injury), hunger below 30 (−1), and winter season (+1)
 
 ## commands
 
@@ -119,12 +140,12 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/pupcare`   | `birth`, `feed`, `list`, `save`, `adopt`                                                                      |
 | `/wolfset`   | `birthsex`, `sexuality`, `mawbelief`, `size` (combat build)                                                    |
 | `/advance`   | `view`, `spend` (attribute, **skill trait**, role feature)                                  |
-| `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe`; full medic: sick packmates show in `/checklist` |
+| `/medic`     | `deathsaves`, `stabilize`, `surgery`, `treat`, `field_dressing`, `wound_wash`, `checkup`, `sacred`, `ritual`, `naming`, `lay_to_rest`, `swim`, `quarantine`, `observe`; full medic: sick packmates show in `/checklist` |
 | `/herbs`     | `bag`, `guide`, `prepare`, `dryall`, `store`, `turnin`                                                      |
-| `/faction`   | human faction relations: `status` (standings overview) · `observe` (flavor; once/sunrise) · `approach` (roll wis vs dc 12; ±standing) · `trade` (costs 3 bones; +2 standing; pack-specific) · `raid` (roll str vs dc 13; −faction standing; if caught −1 all factions) · `sabotage` (Thistlehide→thorne_lumber; Silverrush→river_mill; dc 15; Memory-Knot tracker) |
+| `/faction`   | human faction relations: `status` (standings overview) · `observe` (flavor; once/sunrise) · `approach` (roll wis vs dc 12; ±standing) · `trade` (costs 3 bones; +2 standing; pack-specific) · `raid` (roll str vs dc 13; −faction standing; if caught −1 all factions) · `sabotage` (thistlehide -> thorne_lumber; silverrush -> river_mill; dc 15; memory-knot tracker) |
 | `/rpg`       | `roll`, `setstats`, `delete`                                                                                  |
 | `/skills`    | catalogued checks (`category:` · `check:` · `group:` · `helper:` · `opponent:`)                         |
-| `/skilllist` | reference DCs by category                                                                                     |
+| `/skilllist` | reference dcs by category                                                                                     |
 | `/vitals`    | `condition`, `rest`                                                                                           |
 
 
@@ -137,14 +158,14 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/profile`                                             | wolf sheet (`sheet:true` for lore; paginates if large) |
 | `/character`                                           | set your wolf's pronouns, bio, birthday, avatar, ref image |
 | `/family`                                              | family tree / relationship web rendered as a diagram   |
-| `/scene`                                               | RP scenes in threads: `start`, `join`, `leave`, `here`, `poke`, `end` (pinned roster; auto-join on post) |
-| `/say` `/whisper`                                      | quick IC lines and styled IC DMs (no message content intent needed) |
+| `/scene`                                               | rp scenes in threads: `start`, `join`, `leave`, `here`, `poke`, `end` (pinned roster; auto-join on post) |
+| `/say` `/whisper`                                      | quick ic lines and styled ic dms (no message content intent needed) |
 | `/location`                                            | set, clear, or show your wolf's in-character whereabouts |
 | `/journal`                                             | read-only automatic life timeline (birth, pack, bonds, blooding, death, rites) |
 | `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning`, `trial` · mate rituals: `bone_gift` (costs 3 bones, +5 mood to target), `joining_howl` (one-time; +1 maw_favor each), `moon_witness` (full moon only; +2 maw_favor each, seals romance bond) |
-| `/npc`                                                 | server NPC registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
+| `/npc`                                                 | server npc registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
 | `/weep`                                                 | silverrush only, once per sunrise: release grief at the weep stone |
-| `/proxy`                                               | speak in-character as your wolves; import from Tupperbox |
+| `/proxy`                                               | speak in-character as your wolves; import from tupperbox |
 | `/wolves` `/switchwolf` `/rename` `/setfaction`        | multi-wolf and faction                                 |
 | `/prey` `/eat` `/drink` `/salvage` `/preypile` `/bury` | prey hoard and survival                                |
 | `/explore venture`                                     | dig, scent, investigate                                |
@@ -158,13 +179,13 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/trade`                                               | player item and bone trades                            |
 | `/patron` `/redeem`                                    | boosts, invites, supporter perks                       |
 | `/help topic:<category>`                               | full command guide                                     |
-| `/skills` `/skilllist`                                 | basil's skill checks and DC reference                    |
+| `/skills` `/skilllist`                                 | basil's skill checks and dc reference                    |
 | `/ping`                                                | bot health check                                       |
 
 
 ### collaborative pack activities
 
-call the den with `collaborate:true`; **2–4 wolves** join via buttons, then the caller sets out.
+call the den with `collaborate:true`; **2 to 4 wolves** join via buttons, then the caller sets out.
 
 
 | command                               | who                | what                                                        |
@@ -197,6 +218,15 @@ use `/patron` to check status. the bot needs **manage server** to track invites.
 ✦ `/redeem` for one-time gift codes when configured  
 ✦ players: `/patron` and `/help topic:patron` in discord
 
+### kickstarter
+
+a planned campaign funds keeping the den online, not pay-to-win.
+
+✦ **base goal: $1,500 usd**; deliberately lean, covering one year of 24/7 hosting plus fees and a small buffer. because kickstarter is all-or-nothing, a low honest floor is safer to hit and funds faster  
+✦ **stretch goals** fund the development roadmap in tranches (the gathering at the maw's throat, fourtrees diplomacy, combat and healing depth, a content drop); dev time is donated sweat equity at the base goal  
+✦ **bigger expansions** (a second exploration biome, a full web app) are planned as a **separate future campaign** rather than piled onto this one  
+✦ full plan and budget breakdown: `docs/KICKSTARTER.md`
+
 ## rpg system
 
 howlbert implements basil's tabletop rules across creation, rolls, combat, herbs, and conditions.
@@ -212,16 +242,16 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 | death saves          | `/medic action:deathsaves`, `action:stabilize` at 0 hp                         |
 | weather hazards      | `/hazard`                                                                      |
 | xp                   | `/advance action:view`, `action:spend`                                         |
-| mating and pups      | `/courtship` (court year-round; **conception only in winter**), `/pupcare`    |
+| mating and pups      | `/courtship`, `/pupcare`    |
 
 
-**hp** = 10 + str + survival (con score). **pack unity** (0–10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
+**hp** = 10 + str + survival (con score). **pack unity** (0 to 10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
 
 **herb compendium:** 90+ plants. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide.
 
-**herb gardens:** grow your own with `/garden` — buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
+**herb gardens:** grow your own with `/garden`; buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
-illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distemper, rot-lung (mistmoor), river rot (silverrush; sewage-tainted water, no known cure), milk-fever, shaking-sickness, chronic conditions, mental illness, and restricted poison herbs are all wired to real mechanics. see `/help topic:profile` in discord for the full list.
+illness blends wolvden / warriors fantasy with wolf-canid ecology. 30+ conditions; cough, weeping-scale (canine distemper), rot-lung (mistmoor), river rot (silverrush; no known cure), milk-fever, shaking-sickness, trichinosis, toxoplasmosis, lyme, tuberculosis, snake venom, chronic conditions, mental illness, and more; each with daily penalties to hunger, thirst, hp, hunt yield, and pain exhaustion. restricted poison herbs wired to real mechanics. see `/help topic:profile` in discord for the full list.
 
 ## territory wars
 
@@ -244,7 +274,7 @@ illness blends wolvden / warriors fantasy with wolf-canid ecology. cough, distem
 
 pick one at `/register`. loners have no treasury or pack trait; join a great pack anytime with `/setfaction`.
 
-## prestige (tiers 0–7)
+## prestige (tiers 0 to 7)
 
 legacy grows from **completing quests** and `/prestige action:retire`. bone bonus is permanent on hunts and daily.
 
@@ -259,43 +289,41 @@ legacy grows from **completing quests** and `/prestige action:retire`. bone bonu
 
 `/prestige action:require` shows exact thresholds.
 
-## roleplay & proxying
+## roleplay and proxying
 
-speak in-character as your wolves, tupperbox-style — plus slash tools that work without reading typed messages.
+speak in-character as your wolves, tupperbox-style, plus slash tools that work without reading typed messages.
 
 ✦ `/character` sets a wolf's **pronouns, bio, birthday, avatar, and ref image** (shown on `/profile`)  
 ✦ `/proxy set tag:H:text` registers a proxy tag; typing `H:hello` reposts as that wolf via webhook and deletes your message  
 ✦ `/proxy avatar`, `/proxy list`, `/proxy clear`, `/proxy autoproxy` manage proxies; autoproxy posts all untagged messages as one wolf (`\` escapes a single message)  
-✦ `/proxy import` migrates from **Tupperbox** (DM Tupperbox `tul!export`) or **PluralKit** exports, auto-linking to wolves by name  
-✦ proxy **OOC markers**: wrap `((out of character))` or start a line with `//`; IC text posts as the wolf, OOC shows in the footer  
-✦ `/say` and `/whisper` post one-line IC speech without the message content intent  
-✦ `/location set` · `clear` · `show` — IC whereabouts on `/profile` and proxy footers  
+✦ `/proxy import` migrates from **tupperbox** (dm tupperbox `tul!export`) or **pluralkit** exports, auto-linking to wolves by name  
+✦ proxy **ooc markers**: wrap `((out of character))` or start a line with `//`; ic text posts as the wolf, ooc shows in the footer  
+✦ `/say` and `/whisper` post one-line ic speech without the message content intent  
+✦ `/location set` · `clear` · `show`; ic whereabouts on `/profile` and proxy footers  
 ✦ `/journal` reads your wolf's **automatic** timeline (register, birth, pack moves, bonds, blooding, death, rites); no player editing  
 ✦ `/scene start` opens a roleplay **thread** with a **pinned living roster**; posting auto-joins you (`/scene poke` pings the scene)  
-✦ `/rite naming` · `blooding` · `mourning` · `trial` — pack ceremonies in-channel  
-✦ `/rite bone_gift` · `joining_howl` · `moon_witness` — mate rituals: bone-gift costs 3 bones and lifts mood; joining howl announces a bond publicly (+1 maw_favor each, once per pair); moon's witness seals true mateship under the full moon (+2 maw_favor each, romance bond sealed, once per pair)  
+✦ `/rite naming` · `blooding` · `mourning` · `trial`; pack ceremonies in-channel  
+✦ `/rite bone_gift` · `joining_howl` · `moon_witness`; mate rituals: bone-gift costs 3 bones and lifts mood; joining howl announces a bond publicly (+1 maw_favor each, once per pair); moon's witness seals true mateship under the full moon (+2 maw_favor each, romance bond sealed, once per pair)  
 ✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
-✦ `/family` — relationship web rendered as a diagram, with the focus wolf's proxy avatar  
-✦ `/sign` — body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  
-✦ `/weep` — silverrush only, once per sunrise: release grief alone at the weep stone (also eases the `grief_melancholy` condition)  
+✦ `/family`; relationship web rendered as a diagram, with the focus wolf's proxy avatar  
+✦ `/sign`; body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  
+✦ `/weep`; silverrush only, once per sunrise: release grief alone at the weep stone (also eases the `grief_melancholy` condition)  
 ✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)  
-✦ optional **RP ambience**: set `RP_AMBIENCE_CHANNEL_IDS` in `.env` for sunrise season/weather/moon posts on rollover
-
-**requirements:** typed proxy tags need the **Message Content Intent** in the Discord Developer Portal, plus **Manage Webhooks** + **Manage Messages** in RP channels. scenes need **Create Public Threads**.
+✦ optional **rp ambience**: set `RP_AMBIENCE_CHANNEL_IDS` in `.env` for sunrise season/weather/moon posts on rollover
 
 ## in discord
 
-✦ `/help topic:<category>` — full command guide  
-✦ `/credits` — inspiration sources  
-✦ `/terms` — wolf tongue glossary
+✦ `/help topic:<category>`; full command guide  
+✦ `/credits`; inspiration sources  
+✦ `/terms`; wolf tongue glossary
 
 ## credits
 
 howlbert is not affiliated with these projects; they inspired features and feel:
 
-✦ [wolvden](https://www.wolvden.com/) — wolf sim and pack life  
-✦ [warrior cats](https://warriors.fandom.com/wiki/Main_Page) — den life, herbs, cough lore  
-✦ [the whispering wild](https://www.roblox.com/games/1625049462/The-Whispering-Wild-Wolf-RPG) — wolf rpg on roblox  
-✦ [unbelievaboat](https://unbelievaboat.com/) — economy bot patterns  
+✦ [wolvden](https://www.wolvden.com/) ; wolf sim and pack life  
+✦ [warrior cats](https://warriors.fandom.com/wiki/Main_Page) ; den life, herbs, cough lore  
+✦ [the whispering wild](https://www.roblox.com/games/1625049462/The-Whispering-Wild-Wolf-RPG) ; wolf rpg on roblox  
+✦ [unbelievaboat](https://unbelievaboat.com/) ; economy bot patterns  
 
 rpg rules and herbs follow **basil's wolf ttrpg** homebrew.

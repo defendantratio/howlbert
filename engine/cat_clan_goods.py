@@ -7,7 +7,7 @@ from typing import Literal
 
 import database as db
 
-LootKind = Literal["prey", "herb", "amusement", "bones"]
+LootKind = Literal["prey", "herb", "amusement", "bones", "liquid"]
 
 # Warrior Cats medicine-cat names for herb loot display (maps to game herb keys).
 MEDICINE_HERB_LABELS: dict[str, str] = {
@@ -46,6 +46,7 @@ MEDICINE_CAT_TABLE: list[tuple[LootKind, str, int]] = [
     ("herb", "dock", 8),
     ("herb", "tansy", 8),
     ("herb", "juniper_berry", 6),
+    ("liquid", "milk", 6),  # queen's milk, shared from the nursery
 ]
 
 # (kind, key, weight) per canon Clan
@@ -237,5 +238,10 @@ def grant_clan_loot(
             amount = max(1, int(key))
             db.add_bones(user["discord_id"], amount, wolf_id=wolf_id)
             lines.append(f"**+{amount}** 🦴 (cat-scrap trade)")
+        elif kind == "liquid":
+            item = db.get_item_by_key(f"liquid_{key}")
+            if item:
+                db.grant_item(int(user["discord_id"]), item["id"])
+                lines.append(f"**{item['name']}** → `/drink type:{key}`")
 
     return lines

@@ -263,6 +263,19 @@ HUNGER_CRITICAL_THRESHOLD = 15
 HUNGER_HUNT_PENALTY_PCT = 20
 HUNGER_SICK_EXTRA_DECAY = 6
 
+# Intra-day (lazy, real-time) hunger and thirst decay, applied when a wolf
+# checks vitals / eats / drinks. Points per real hour. Keeps depletion feeling
+# continuous instead of only ticking at the sunrise rollover. A safety cap
+# limits how much intra-day decay can accrue between two rollovers.
+HUNGER_HOURLY_DECAY = 0.4
+THIRST_HOURLY_DECAY = 0.5
+VITALS_INTRADAY_DECAY_CAP = 40
+
+# Carnivore nutrition: wolves survive short-term on forage and liquids, but a
+# meat-free stretch this many sunrises long risks wasting sickness (malnutrition).
+MEATLESS_WASTING_DAYS = 8
+MEATLESS_WASTING_CHANCE = 0.25
+
 # Sunrise auto-feeding: each pack first feeds its members from the food reserve
 # (lore order: elders, pups, den-keepers, sick first). Wolves left with no
 # reserve then forage/scavenge for themselves. Wolves are opportunistic omnivores
@@ -371,7 +384,23 @@ HERB_FRESH_DRY_DAYS = 1
 HERB_DRIED_STORAGE_DAYS = 180
 # Poultice, tonic, and decoction spoil after this many sunrises (Basil: 4-5)
 HERB_PREPARED_STORAGE_DAYS = 5
-HERB_PREPARED_FORMS = ("poultice", "tonic", "decoction")
+# All valid preparation forms that can be applied to herbs.
+# These match the keys used in each herb's `preparations` dict.
+HERB_PREPARED_FORMS = (
+    "poultice",
+    "tonic",
+    "decoction",
+    "juice",
+    "chewed",
+    "tea",
+    "infusion",
+    "ointment",
+    "sap",
+    "rub",
+    "cooked",
+    "simmered_milk",
+    "dried",   # dried is also a preparation (storage)
+)
 # Failed winter forage may spoil a random herb stack in the bag
 WINTER_FORAGE_SPOIL_CHANCE = 0.35
 
@@ -379,7 +408,7 @@ WINTER_FORAGE_SPOIL_CHANCE = 0.35
 GARDEN_MAX_PLOTS = 6            # living plantings per pack garden at once
 LONG_REST_MOOD_GAIN = 6
 LONG_REST_HP_GAIN = 3
-LONG_REST_EXHAUSTION_RELIEF = 2
+LONG_REST_EXHAUSTION_RELIEF = 3
 SHORT_REST_EXHAUSTION_RELIEF = 1  # quick breather; always relieves some, comfrey adds hp on top
 GARDEN_SEED_BONE_COST = 12     # buy a seed packet from the den
 GARDEN_FORAGE_SEED_CHANCE = 0.40  # chance foraging also yields a seed
@@ -388,9 +417,11 @@ GARDEN_HARVEST_SEED_MAX = 2
 GARDEN_TEND_HEALTH_RESTORE = 15   # health regained per tending
 # Bone splint rest after successful set_bone surgery (sunrises)
 BONE_REST_DAYS = 7
+# Difficulty classes for each preparation method.
+# Used when a player attempts to prepare an herb from inventory.
 HERB_PREP_DC = {
     "poultice": 10,
-    "poultice_simple": 0,
+    "poultice_simple": 0,       # for medics with proper tools
     "tonic": 12,
     "decoction": 15,
     "dry": 8,
@@ -400,6 +431,16 @@ HERB_PREP_DC = {
     "antidote": 18,
     "sedative": 8,
     "incomplete_antidote": 20,
+    # new methods
+    "juice": 10,
+    "chewed": 8,
+    "tea": 10,
+    "infusion": 12,
+    "ointment": 12,
+    "sap": 10,
+    "rub": 8,
+    "cooked": 12,
+    "simmered_milk": 14,
 }
 VERGE_ROADSIDE_DC = 10
 VERGE_COMPOUND_DC = 13

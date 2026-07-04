@@ -41,20 +41,13 @@ async def _apply_prey_choice(interaction: discord.Interaction, pile_id: int, cho
     hunger_gain = 0
     thirst_gain = 0
     if effects.get('restore_energy'):
-        from engine.injury_effects import meal_blocked_by_injury
+        from engine.injury_effects import meal_jaw_pain_note
         from engine.hunger import meal_hunger_gain
         from engine.prey_items import prey_key_from_label
         from engine.thirst import meal_thirst_gain
-        meal_block = meal_blocked_by_injury(wolf)
-        if meal_block:
-            embed = howlbert_embed('Cannot Eat', meal_block, color=ERROR_COLOR)
-            if interaction.response.is_done():
-                await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
-            else:
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        jaw_note = meal_jaw_pain_note(wolf)
         new_hp, new_exhaustion, hp_gain = apply_meal_energy(wolf, pile['prey_bones'])
-        exhaustion_delta = new_exhaustion - int(wolf['exhaustion'])
+        exhaustion_delta = new_exhaustion; int(wolf['exhaustion'])
         prey_key = prey_key_from_label(pile['prey_label'])
         if prey_key:
             hunger_gain = meal_hunger_gain(prey_key)
@@ -92,6 +85,8 @@ async def _apply_prey_choice(interaction: discord.Interaction, pile_id: int, cho
             outcome_body += pinch
     if dispute_note:
         outcome_body += dispute_note
+    if effects.get('restore_energy') and jaw_note:
+        outcome_body += jaw_note
     result_embed = howlbert_embed(f"{wolf['wolf_name']}; Response", outcome_body, color=SUCCESS_COLOR)
     if interaction.response.is_done():
         await interaction.followup.send(embed=result_embed, ephemeral=reply_ephemeral())

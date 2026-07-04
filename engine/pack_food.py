@@ -8,7 +8,7 @@ import database as db
 from engine.conditions import apply_meal_energy
 from engine.hunger import meal_hunger_gain
 from engine.thirst import meal_thirst_gain
-from engine.injury_effects import meal_blocked_by_injury
+from engine.injury_effects import meal_blocked_by_injury, meal_jaw_pain_note
 from engine.prey_items import is_cannibal_prey, prey_meta
 
 
@@ -221,11 +221,11 @@ def _feed_priority(wolf) -> tuple[int, int]:
     return (tier, adjusted_hunger)
 
 
-def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
-    block = meal_blocked_by_injury(wolf)
-    if block:
-        return False, f"**{wolf['wolf_name']}**; {block}"
-
+def _feed_wolf_from_stack(wolf, stack, *, day: int = 0) -> tuple[bool, str]:
+    jaw_note = meal_jaw_pain_note(wolf)
+    from engine.prey_items import is_forage_food
+    if day and not is_forage_food(stack["prey_key"]):
+        db.update_user(wolf["discord_id"], wolf_id=wolf["id"], last_meat_day=day)
     meta = prey_meta(stack["prey_key"])
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(wolf, stack["bone_value"])
     hunger_gain = meal_hunger_gain(stack["prey_key"])
@@ -259,7 +259,7 @@ def _feed_wolf_from_stack(wolf, stack) -> tuple[bool, str]:
     msg += cannibalism_eat_consequences(wolf, stack["prey_key"])
     if new_exhaustion < old_exhaustion:
         msg += f", exhaustion **{new_exhaustion}**"
-    return True, msg + disease_note
+    return True, msg + disease_note + jaw_note
 
 
 def _passive_forage_chance(wolf, season: str | None) -> float:
@@ -378,10 +378,17 @@ def auto_feed_wolves_on_rollover(conn, day: int, season: str | None = None) -> l
             reserve[ri][1] -= 1
             new_hunger = min(HUNGER_MAX, hunger + meal_hunger_gain(stack["prey_key"]))
             new_thirst = min(THIRST_MAX, thirst + meal_thirst_gain(stack["prey_key"]))
-            conn.execute(
-                "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
-                (new_hunger, new_thirst, wolf["id"]),
-            )
+            from engine.prey_items import is_forage_food
+            if is_forage_food(stack["prey_key"]):
+                conn.execute(
+                    "UPDATE users SET hunger = ?, thirst = ? WHERE id = ?",
+                    (new_hunger, new_thirst, wolf["id"]),
+                )
+            else:
+                conn.execute(
+                    "UPDATE users SET hunger = ?, thirst = ?, last_meat_day = ? WHERE id = ?",
+                    (new_hunger, new_thirst, day, wolf["id"]),
+                )
             fed_from_reserve.add(int(wolf["id"]))
 
         for stack, left in reserve:
@@ -459,7 +466,7 @@ def run_feedall(
             break
         if is_cannibal_prey(stack["prey_key"]):
             served_wolf = True
-        ok, line = _feed_wolf_from_stack(wolf, stack)
+        ok, line = _feed_wolf_from_stack(wolf, stack, day=day)
         if ok:
             fed += 1
             lines.append(line)
