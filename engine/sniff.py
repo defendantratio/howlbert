@@ -152,7 +152,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         footer_bits.append(f"sniff bonus (+{SNIFF_HUNT_BONUS_PCT}% bones, −{track_cut} track dc)")
     elif kind == "water":
         new_thirst = db.adjust_thirst(user["id"], SNIFF_THIRST_RESTORE)
-        body += f"\n\n**+{SNIFF_THIRST_RESTORE} thirst** (now **{new_thirst}**); the damp air wets your tongue."
+        body += f"\n\n**+{SNIFF_THIRST_RESTORE} hydration** (now **{new_thirst}**); the damp air wets your tongue."
     elif kind == "alert":
         alert_bonus = SNIFF_ALERT_ENCOUNTER_BONUS
         body += "\n\nyour hackles rise; whoever left that is close. you stay sharp on the way back."

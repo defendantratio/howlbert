@@ -86,7 +86,7 @@ class Wolvden(commands.Cog):
         embed = howlbert_embed(f"{user['wolf_name']}; Hoard", format_hoard_summary(user, day=world['day_number']))
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
-        embed.add_field(name='Thirst', value=format_thirst_line(user), inline=True)
+        embed.add_field(name='Hydration', value=format_thirst_line(user), inline=True)
         embed.set_footer(text='/hoarding action:shred · /food · /playpen action:toys')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 

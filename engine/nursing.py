@@ -213,7 +213,7 @@ def execute_mother_nursing(
     lines = ", ".join(f"**{n}**" for n in fed)
     return True, (
         f"**{mother['wolf_name']}** nurses {lines}. "
-        f"milk restores **+{MILK_HUNGER_GAIN}** hunger and **+{MILK_THIRST_GAIN}** thirst per pup "
+        f"milk restores **+{MILK_HUNGER_GAIN}** hunger and **+{MILK_THIRST_GAIN}** hydration per pup "
         f"(**−{total_cost}** hunger for the mother)."
         + _honey_suffix(honey_used)
         + (lone_nursing_note(mother) if not mother["pack_id"] else "")
@@ -261,7 +261,7 @@ def execute_caretaker_feed(
     lines = ", ".join(f"**{n}**" for n in fed)
     return True, (
         f"**{caretaker['wolf_name']}** shares warm mash with {lines} "
-        f"(**+{CARETAKER_MASH_HUNGER_GAIN}** hunger, **+{CARETAKER_MASH_THIRST_GAIN}** thirst each)."
+        f"(**+{CARETAKER_MASH_HUNGER_GAIN}** hunger, **+{CARETAKER_MASH_THIRST_GAIN}** hydration each)."
         + _honey_suffix(honey_used)
     )
 
@@ -380,7 +380,7 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
         if hunger_loss:
             drain_parts.append(f"hunger **−{hunger_loss}**")
         if thirst_loss:
-            drain_parts.append(f"thirst **−{thirst_loss}**")
+            drain_parts.append(f"hydration **−{thirst_loss}**")
         if exhaustion_gain:
             drain_parts.append(f"exhaustion **+{exhaustion_gain}** (now {new_exhaustion})")
         notes.append(

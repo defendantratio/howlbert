@@ -71,7 +71,7 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 ✦ **four great packs** at `/register`: greyspire, mistmoor, thistlehide, silverrush; or **loner / rogue**  
 ✦ each great pack shares one treasury, tax, territory, and wars  
 ✦ **quests** progress from hunts, patrols, deposits, etc.; rewards grant automatically when finished (no manual turn-in)  
-✦ **mood / hunger / thirst** decay continuously through the day, not only at sunrise; low stats add exhaustion and cut hunt yield  
+✦ **mood / hunger / hydration** decay continuously through the day, not only at sunrise; low stats add exhaustion and cut hunt yield  
 ✦ **genetic conditions** (blindness, partial blindness, deafness, muteness, brachycephaly, lstv, spinal arthritis, inbreeding depression, adhd, autism, and more) are inherited or rolled at birth; each has real mechanical penalties; hunt multipliers, attribute disadvantage, pain exhaustion gain, skill bonuses/penalties, or increased disease susceptibility  
 ✦ **cat clans**: trade meat and forage, and form pacts via `/pack pact` (see `docs/CAT_CLANS.md`)  
 ✦ **forage food** (berries, windfall fruit, roots, greens) drops from `/field forage` and `scavenge`; it ripens then overripens, just like meat rots  
@@ -87,14 +87,14 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 howlbert leans toward measurable, granular wolf-ecology effects over flavor text; every system below changes a number, not just a description.
 
 ✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter**; `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
-✦ **pregnancy costs food**: pregnant wolves burn extra hunger/thirst each sunrise, and hunt/fish/scavenge yield drops **−10%** in early pregnancy, **−20%** mid-to-late; the final third blocks strenuous activity outright. nursing mothers burn extra hunger/thirst per pup  
+✦ **pregnancy costs food**: pregnant wolves burn extra hunger/hydration each sunrise, and hunt/fish/scavenge yield drops **−10%** in early pregnancy, **−20%** mid-to-late; the final third blocks strenuous activity outright. nursing mothers burn extra hunger/hydration per pup  
 ✦ **pain exhaustion is a separate tracker (0 to 5)**: distinct from main exhaustion (0 to 10); accumulates from painful injuries and diseases (deep gash, fractured rib, scorched hide, snake venom, trichinosis, lyme, cancer, and more) each sunrise. herbs like willow bark and poppy target this pool specifically. at 5 stacks it overflows into main exhaustion  
 ✦ **injuries cost yield, not just combat**: non-blocking injuries (sprained leg, punctured paw, concussion, deep gash, infected wound, snake venom, torn claw, broken tooth, torn ear) reduce hunt/fish/scavenge yield, stacking up to **−50%**. severe injuries (fractured rib, spinal injury, paralysis) still block field commands outright  
 ✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first; but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
 ✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day; wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
 ✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances; a +1 skill bonus that follows a wolf for life  
 ✦ **few hard blocks, mostly diminishing returns**: instead of "come back next sunrise" cooldowns, most actions (hunt, forage, scavenge, fish, work, weep, grooming, faction moves, and more) can be repeated but pay steadily less each time in a sunrise; only the long rest and the daily stipend stay once-per-sunrise. consequences and penalties, not walls  
-✦ **continuous hunger and thirst**: vitals drain in real time between sunrises (checked on `/vitals`, `/eat`, `/drink`), so neglect bites gradually rather than only at rollover  
+✦ **continuous hunger and hydration**: vitals drain in real time between sunrises (checked on `/vitals`, `/eat`, `/drink`), so neglect bites gradually rather than only at rollover  
 ✦ **liquid diet**: `/drink type:broth` or `type:milk` to sip when a broken jaw stops you chewing solid meat; liquids feed only partway (hunger caps at 60) and never fully satisfy a carnivore; broth is bought or den-brewed from bones, milk comes from cat clans or settlement raids  
 ✦ **carnivore nutrition**: a wolf survives short-term on forage and liquids, but a meat-free stretch of 8+ sunrises risks **wasting sickness**; weaned wolves are **lactose intolerant** (milk gives them an upset gut) unless they carry the **lactase persistence** trait  
 ✦ **herb side effects and addiction**: the compendium's warnings are mechanical, not flavor; eating an apply-only herb, pressing a skin-toxin into an open wound, or dosing a pregnant wolf backfires (hp loss, miscarriage risk, gut upset), and sedatives like poppy, valerian, and willow build **tolerance and withdrawal** with repeated use  
@@ -278,7 +278,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **herb gardens:** grow your own with `/garden`; buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
-illness blends wolvden / warriors fantasy with wolf-canid ecology. 30+ conditions; cough, weeping-scale (canine distemper), rot-lung (mistmoor), river rot (silverrush; no known cure), milk-fever, shaking-sickness, trichinosis, toxoplasmosis, lyme, tuberculosis, snake venom, chronic conditions, mental illness, and more; each with daily penalties to hunger, thirst, hp, hunt yield, and pain exhaustion. restricted poison herbs wired to real mechanics. see `/help topic:profile` in discord for the full list.
+illness blends wolvden / warriors fantasy with wolf-canid ecology. 30+ conditions; cough, weeping-scale (canine distemper), rot-lung (mistmoor), river rot (silverrush; no known cure), milk-fever, shaking-sickness, trichinosis, toxoplasmosis, lyme, tuberculosis, snake venom, chronic conditions, mental illness, and more; each with daily penalties to hunger, hydration, hp, hunt yield, and pain exhaustion. restricted poison herbs wired to real mechanics. see `/help topic:profile` in discord for the full list.
 
 ## territory wars
 

@@ -123,5 +123,5 @@ def drink_liquid(user, liquid_key: str) -> tuple[bool, str]:
 
     gained = capped_hunger - hunger
     hunger_bit = f"hunger **{new_hunger}** (+{gained})" if gained > 0 else f"hunger **{new_hunger}**"
-    msg = f"you lap up **{label}**; {hunger_bit}, thirst **{new_thirst}** (+{thirst_gain}).{cap_note}{upset_note}{standing_note}"
+    msg = f"you lap up **{label}**; {hunger_bit}, hydration **{new_thirst}** (+{thirst_gain}).{cap_note}{upset_note}{standing_note}"
     return True, msg

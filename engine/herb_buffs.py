@@ -82,6 +82,33 @@ def grant_disease_save_advantage(user, *, days: int = 0) -> dict:
     return fields
 
 
+def herb_tolerance_dc_penalty(user, herb_key: str, injury_key: str, *, day: int = 0) -> int:
+    """Same herb on the same injury within 3 sunrises raises the treatment dc by +2;
+    varied treatment is rewarded, hammering one herb is not."""
+    if not injury_key or not day:
+        return 0
+    tol = get_buffs(user).get("herb_tolerance", {})
+    last = tol.get(f"{herb_key}:{injury_key}")
+    if last is not None and 0 <= day - int(last) < 3:
+        return 2
+    return 0
+
+
+def record_herb_tolerance(user, herb_key: str, injury_key: str, *, day: int = 0) -> dict:
+    """Record that this herb was used on this injury today; returns db fields.
+    Stale entries (older than 3 sunrises) are pruned so the log stays small."""
+    if not injury_key or not day:
+        return {}
+    buffs = dict(get_buffs(user))
+    tol = {
+        k: v for k, v in dict(buffs.get("herb_tolerance", {})).items()
+        if 0 <= day - int(v) < 3
+    }
+    tol[f"{herb_key}:{injury_key}"] = day
+    buffs["herb_tolerance"] = tol
+    return {"herb_buffs": buffs_json(buffs)}
+
+
 def disease_save_uses_advantage(user) -> bool:
     days = int(user["disease_save_buff_days"]) if "disease_save_buff_days" in user.keys() else 0
     flag = int(user["disease_save_buff"]) if "disease_save_buff" in user.keys() else 0

@@ -214,7 +214,7 @@ class Hunting(commands.Cog):
         title = 'Drink' if ok else 'Creek Cooldown' if 'min' in msg else 'Cannot Drink'
         embed = howlbert_embed(title, msg, color=color)
         if ok:
-            embed.set_footer(text='thirst slips faster than hunger each sunrise; drink when you can.')
+            embed.set_footer(text='hydration slips faster than hunger each sunrise; drink when you can.')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='salvage', description='salvage a rotting carcass into bones.')

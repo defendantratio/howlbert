@@ -5,16 +5,16 @@ from __future__ import annotations
 from herbs import DISEASE_STAGES, HERBS, INJURIES
 
 SPECIAL_MECHANICS: dict[str, str] = {
-    "reduce_exhaustion": "Removes **1 exhaustion** when hunger/thirst are low; pup feed path via honey.",
+    "reduce_exhaustion": "Removes **1 exhaustion** when hunger/hydration are low; pup feed path via honey.",
     "march_shield": "Blocks the first **+1 exhaustion** from forced march this sunrise.",
     "hunger_shield": "Skip hunger-based exhaustion on the next sunrise.",
     "sorrel_restore": "Restores **+10 hunger** and eases bleeding exhaustion.",
     "jaw_meal_shield": "Broken jaw: eat and drink without pain until next sunrise.",
-    "purslane_thirst": "Chew for **+12 thirst** without visiting the creek.",
+    "purslane_thirst": "Chew for **+12 hydration** without visiting the creek.",
     "ragweed_need_three": "Needs **3** in inventory to remove **1 exhaustion**.",
     "feed_pup_honey": "Starving pup: **+10 hunger** via nursing/honey feed.",
-    "honey_needs_depletion": "Adult honey: **−1 exhaustion** when hunger/thirst are below **30**.",
-    "honey_pup_not_depleted": "Honey helps pups only when hunger/thirst are low.",
+    "honey_needs_depletion": "Adult honey: **−1 exhaustion** when hunger/hydration are below **30**.",
+    "honey_pup_not_depleted": "Honey helps pups only when hunger/hydration are low.",
 }
 
 STATIC_HINTS: dict[str, str] = {

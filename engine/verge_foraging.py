@@ -302,7 +302,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
         hazard = try_insect_sting_exposure(user, chance=0.07) or ""
 
     site_note = (
-        "_roadside herbs only grow on disturbed ground; never in deep territory._"
+        "_the verge turns up hardy plants of disturbed ground; some also grow deep in territory, many do not._"
         if site == "roadside"
         else "_Compound herbs need Twoleg nests, fences, and spilled seed; too risky for casual forage._"
     )

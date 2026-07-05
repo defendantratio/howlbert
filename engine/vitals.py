@@ -1,4 +1,4 @@
-"""Hunger, thirst, and starvation death saves."""
+"""Hunger, hydration, and starvation death saves."""
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ def vitals_activity_block(user) -> str | None:
 
 
 def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | None:
-    """Vitals (living, exhaustion 5, hunger/thirst crisis) plus critical mood."""
+    """Vitals (living, exhaustion 5, hunger/hydration crisis) plus critical mood."""
     from engine.injury_effects import bone_rest_activity_block, has_paralysis, hunt_blocked_by_injury
     from engine.mental_effects import field_activity_block, mental_activity_block
 
@@ -130,10 +130,10 @@ def _needs_cause(hunger: int, thirst: int) -> str:
     starved = int(hunger) <= 0
     parched = int(thirst) <= 0
     if starved and parched:
-        return "starvation and thirst"
+        return "starvation and dehydration"
     if starved:
         return "starvation"
-    return "thirst"
+    return "dehydration"
 
 
 def _stabilize_wolf_conn(conn: sqlite3.Connection, wolf_id: int) -> None:
@@ -210,7 +210,7 @@ def _apply_death_save_conn(
 
 def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
     """
-    after hunger/thirst decay: +1 exhaustion per sunrise for each vital below the low threshold.
+    after hunger/hydration decay: +1 exhaustion per sunrise for each vital below the low threshold.
     long rest (−1 exhaustion) runs before decay, so neglected wolves can still climb the track.
     """
     from config import (
@@ -244,7 +244,7 @@ def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
                 causes.append("hunger")
         if int(row["thirst"]) < THIRST_LOW_THRESHOLD:
             gain += NEEDS_EXHAUSTION_GAIN
-            causes.append("thirst")
+            causes.append("hydration")
         if gain:
             from engine.exhaustion_effects import consume_march_exhaustion_skip
 

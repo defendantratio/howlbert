@@ -375,7 +375,7 @@ class Life(commands.Cog):
         outcome = db.apply_death_save_result(interaction.user.id, result['success'], result.get('nat20', False))
         body = f"Round **{result['round']}**: 1d20 ({result['die']}) + {result['modifier']} = **{result['total']}** vs DC **{result['dc']}**"
         if outcome == 'stabilized':
-            body += '\n\n**Stabilized at 1 HP.** Depleted hunger/thirst restored to a survivable level.'
+            body += '\n\n**Stabilized at 1 HP.** Depleted hunger/hydration restored to a survivable level.'
             color = SUCCESS_COLOR
         elif outcome == 'died':
             body += '\n\n**The wolf dies.** `/bones action:use item:revive` or `/bones action:use item:reincarnation new_name:<name>` if you have one (Ko-fi shop), or `/rpg action:delete confirm:DELETE` / `/register` for a fresh wolf.'

@@ -82,7 +82,7 @@ revive is a one-time in-game item for howlbert, our discord wolf rp bot. purchas
 
 what you get
 • same wolf; same name, attributes, skills, standing, bones, pack, and inventory
-• returned at 1 hp with hunger and thirst restored
+• returned at 1 hp with hunger and hydration restored
 • if they died of old age (120 moons), they return at 60 moons
 
 how to use

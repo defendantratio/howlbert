@@ -159,7 +159,7 @@ class Rpg(commands.Cog):
 
     @app_commands.command(name='vitals', description='view conditions, rest, lick wounds, or escape quarantine.')
     @app_commands.describe(action='condition, rest, lick_wound, or escape_quarantine', rest_type='short or long rest (rest)', use_herb='use comfrey for short rest healing (rest)')
-    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (1 hp, once per sunrise)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6 to 8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10 to 30 min)', value='short')])
+    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (heal 1 hp; diminishing on repeat)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6 to 8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10 to 30 min)', value='short')])
     async def vitals(self, interaction: discord.Interaction, action: str, rest_type: str='long', use_herb: bool=False):
         if action == 'condition':
             await self._condition(interaction)
@@ -197,7 +197,7 @@ class Rpg(commands.Cog):
         embed.add_field(name='HP', value=f"{user['hp']}/{effective_max_hp(user)}\n{format_max_hp_breakdown(str_val, con_val, max_hp=int(user['max_hp']))}" + (f"\n_(exhaustion cap {effective_max_hp(user)}; base {user['max_hp']})_" if user_exhaustion(user) >= 6 else ''), inline=True)
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
-        embed.add_field(name='Thirst', value=format_thirst_line(user), inline=True)
+        embed.add_field(name='Hydration', value=format_thirst_line(user), inline=True)
         from engine.treatment_plan import build_treatment_checklist
         checklist = build_treatment_checklist(user, day=day)
         embed.add_field(name='Treatment plan', value=checklist, inline=False)
@@ -245,7 +245,7 @@ class Rpg(commands.Cog):
             mood_gain = rest['mood'] - int(user['mood'])
             hp_gain = rest['hp'] - int(user['hp'])
             ex_drop = int(user['exhaustion']) - rest['exhaustion']
-            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + '\n\n_Still need `/eat` and `/drink` for hunger and thirst._', color=SUCCESS_COLOR)
+            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
             return
         if herb_heal_limit_reached(user):

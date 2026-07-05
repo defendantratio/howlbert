@@ -701,7 +701,7 @@ class Economy(commands.Cog):
             db.consume_item(interaction.user.id, shop_item['id'])
             revived = db.get_user(interaction.user.id)
             from config import MAX_WOLF_AGE_MOONS
-            body = f'Mist thins around **{wolf_name}**; breath returns, paws find earth again.\n**1 HP** · hunger & thirst restored.'
+            body = f'Mist thins around **{wolf_name}**; breath returns, paws find earth again.\n**1 HP** · hunger & hydration restored.'
             if old_age >= MAX_WOLF_AGE_MOONS and revived['age_months'] < old_age:
                 body += f"\n\nAge reset to **{revived['age_months']} moons** (was **{old_age}**; too ancient to walk the wild unchanged)."
             embed = howlbert_embed('Revived', body, color=SUCCESS_COLOR)

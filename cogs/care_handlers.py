@@ -361,7 +361,7 @@ async def treat(
 
     elif special == 'hunger_shield':
         db.update_user(interaction.user.id, wolf_id=user['id'], hunger_exhaustion_skip=1)
-        msg = "**{item['name']}**: you won't gain hunger exhaustion on the next sunrise (thirst still applies)."
+        msg = "**{item['name']}**: you won't gain hunger exhaustion on the next sunrise (hydration still applies)."
 
     elif special == 'march_shield':
         db.update_user(interaction.user.id, wolf_id=user['id'], march_exhaustion_skip=1)
@@ -385,7 +385,7 @@ async def treat(
 
     elif special == 'purslane_thirst':
         thirst = db.adjust_thirst(user['id'], 12)
-        msg = f"**{item['name']}**: chewed leaves restore thirst **{thirst}** (+12)."
+        msg = f"**{item['name']}**: chewed leaves restore hydration **{thirst}** (+12)."
 
     elif special == 'cobnuts_energy':
         from config import HUNGER_MAX

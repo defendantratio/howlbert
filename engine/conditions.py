@@ -410,7 +410,7 @@ def progress_disease(user) -> dict:
     if result["hunger_loss"]:
         symptom_bits.append(f"−**{result['hunger_loss']}** hunger")
     if result["thirst_loss"]:
-        symptom_bits.append(f"−**{result['thirst_loss']}** thirst")
+        symptom_bits.append(f"−**{result['thirst_loss']}** hydration")
     if result["mood_loss"]:
         symptom_bits.append(f"−**{result['mood_loss']}** mood")
     if symptom_bits:

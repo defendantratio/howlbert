@@ -19,14 +19,14 @@ Advance phases when RP earns them; not on a fixed day counter.
 | 1 | Bitten Moon | All wolves −1 mood |
 | 2 | White Omen | Thistlehide scout survey +1 standing; quest `blink_border_patrol` |
 | 3 | Peak Bleeds | Mountain travel DC +2; Greyspire hunt +10% |
-| 4 | Warm Below | Silverrush −2 thirst; fishing debuff; fish rot accelerates |
+| 4 | Warm Below | Silverrush −2 hydration; fishing debuff; fish rot accelerates |
 | 5 | Belly Silence | Mistmoor rot-lung pressure; quest hooks |
 | 6 | Border Paranoia | Cat trust −3; sniff border fights +25%; rogue crime branch |
 | 7 | Iron Debt | Forest travel DC +2; cat pact forge DC +2; steal caught −2 extra standing |
 | 8 | Mill Tooth | Explore investigate → fossil tooth reward; `blink_mill_scout` |
 | 9 | Memory Bites | Howl −3 mood if pack unity < 5 |
 | 10 | Blame Spiral | All Great Pack unity −1; cat trust −2 |
-| 11 | Ash Naming | Howl +1 unity; creek drink +5 thirst; `blink_ash_naming` |
+| 11 | Ash Naming | Howl +1 unity; creek drink +5 hydration; `blink_ash_naming` |
 | 12 | Pact Remembered | Cat trust +5; warm-river debuffs end |
 
 ## Quest board keys
@@ -56,7 +56,7 @@ While **plot_phase > 0**, every wolf can take part in Book One:
 | **Plot witness** | Everyone | First plot-tagged action each sunrise: **+1 mood** + flavor (`/field action:sniff`, `/howl`, `/drink`, scout survey, `/explore`, `/medic action:treat`) |
 | **Sniff quests** | Everyone | `/field action:sniff` progresses **blink_healer_listen** (phases 1 to 5) and **blink_wind_witness** (phase 6+) |
 | **Healer quests** | Medics & apprentices | `/medic action:treat` or `action:observe` during phases **5 to 11** → **blink_healer_touch** (+1 standing or +1 mood once/day for non-canon healers) |
-| **Rollover pressure** | Everyone | Mood, thirst, disease, cat trust, unity; see phase table |
+| **Rollover pressure** | Everyone | Mood, hydration, disease, cat trust, unity; see phase table |
 | **Activity modifiers** | Pack-tinted | Fishing debuff, travel DC, mill tooth, rogue crime, howl costs; see phase table |
 
 Canon wolves (**Firepaw**, **Soot**, **Splinter**) keep **extra** rewards on top of the universal layer (see below).

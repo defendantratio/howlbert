@@ -172,7 +172,7 @@ DISEASES: dict[str, dict] = {
                 "name": "Hepatitis",
                 "dc": 14,
                 "next": None,
-                "effect": "Liver fever: −10 thirst each sunrise.",
+                "effect": "Liver fever: −10 hydration each sunrise.",
                 "thirst_loss": 10,
                 "cure_on_save": True,
             },
@@ -535,7 +535,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 13,
                 "next": "bloody_flux",
                 "effect": (
-                    "Sewage-tainted water churns the belly: −10 hunger and −6 thirst "
+                    "Sewage-tainted water churns the belly: −10 hunger and −6 hydration "
                     "each sunrise; con save shakes it off before it sets in."
                 ),
                 "hunger_loss": 10,
@@ -546,7 +546,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 17,
                 "next": "failing",
                 "effect": (
-                    "Bowels turn against the wolf: −1 hp, −14 hunger, −12 thirst each "
+                    "Bowels turn against the wolf: −1 hp, −14 hunger, −12 hydration each "
                     "sunrise. no known herb touches it."
                 ),
                 "hp_loss": 1,
