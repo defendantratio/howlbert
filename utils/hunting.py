@@ -119,7 +119,7 @@ def award_bones(
         from config import HUNT_SUMMER_THIRST_COST, HUNT_SUMMER_THIRST_WEATHER
         cost = HUNT_SUMMER_THIRST_COST + (1 if (weather in HUNT_SUMMER_THIRST_WEATHER if weather else False) else 0)
         new_thirst = db.adjust_thirst(user["id"], -cost)
-        thirst_drain_note = f"summer heat: −{cost} thirst (now **{new_thirst}**)"
+        thirst_drain_note = f"summer heat: −{cost} hydration (now **{new_thirst}**)"
         season_note = f"{season_note} · {thirst_drain_note}" if season_note else thirst_drain_note
     mood_note = ""
     hunger_note = ""

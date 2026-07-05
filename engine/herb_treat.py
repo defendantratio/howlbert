@@ -304,7 +304,7 @@ def treat_from_herb_stack(
             f"{ex_note}"
         )
     elif special == "honey_pup_not_depleted":
-        return False, "honey feeds starving pups; hunger or thirst must be low first."
+        return False, "honey feeds starving pups; hunger or hydration must be low first."
     elif outcome == "cured_disease":
         db.set_user_conditions(
             patient["discord_id"], wolf_id=patient["id"], clear_disease=True, condition="healthy"

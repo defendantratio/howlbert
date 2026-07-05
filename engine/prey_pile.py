@@ -9,7 +9,7 @@ PREY_CHOICES = {
     "eat": {
         "label": "Eat your fill",
         "emoji": "🍖",
-        "description": "Take a portion; restores hunger, thirst, +HP, and −1 exhaustion.",
+        "description": "Take a portion; restores hunger, hydration, +HP, and −1 exhaustion.",
     },
     "share": {
         "label": "Share fairly",

@@ -5679,7 +5679,7 @@ def set_wolf_age_moons(wolf_id: int, new_age: int) -> dict | None:
 
 
 def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
-    """Mood, hunger, and thirst slip each sunrise; dormant and inactive wolves are exempt."""
+    """Mood, hunger, and hydration slip each sunrise; dormant and inactive wolves are exempt."""
     from config import (
         AUTO_DORMANT_INACTIVE_DAYS,
         HUNGER_PASSIVE_MOOD_DRAIN,

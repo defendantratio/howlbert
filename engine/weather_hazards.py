@@ -256,7 +256,7 @@ def format_hazard_result(r: dict) -> str:
 
     if effects.get("thirst_loss"):
 
-        lines.append(f"**−{effects['thirst_loss']}** thirst; find shade and water.")
+        lines.append(f"**−{effects['thirst_loss']}** hydration; find shade and water.")
 
     if effects.get("mood_loss"):
 

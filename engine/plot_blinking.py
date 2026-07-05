@@ -36,7 +36,7 @@ PHASES: dict[int, dict[str, Any]] = {
         "act": "Act I",
         "title": "Warm Below",
         "news": "Silverrush water runs warm; fish belly-up in the shallows.",
-        "mechanics": "Silverrush thirst −2 extra at sunrise; fishing −25%; pack fish rot 1 day faster.",
+        "mechanics": "Silverrush hydration −2 extra at sunrise; fishing −25%; pack fish rot 1 day faster.",
     },
     5: {
         "act": "Act I",
@@ -78,7 +78,7 @@ PHASES: dict[int, dict[str, Any]] = {
         "act": "Act III",
         "title": "Ash Naming",
         "news": "Wolves gather at the river bend to put a name to what was buried.",
-        "mechanics": "Quest **blink_ash_naming** (howl); creek drink +5 thirst for all; howl +1 unity bonus.",
+        "mechanics": "Quest **blink_ash_naming** (howl); creek drink +5 hydration for all; howl +1 unity bonus.",
     },
     12: {
         "act": "Act III",
@@ -463,10 +463,10 @@ def apply_plot_rollover_effects(
               {pup_shield}
             """
         )
-        notes.append("Silverrush wolves feel the warm river; **−2 thirst**.")
+        notes.append("Silverrush wolves feel the warm river; **−2 hydration**.")
         if vulcan_watching:
             notes.append(
-                "**Vulcan Stonehide** keeps watch over the den's youngest; Silverrush pups are spared the thirst."
+                "**Vulcan Stonehide** keeps watch over the den's youngest; Silverrush pups are spared the hydration."
             )
         driftpup = conn.execute(
             """
@@ -633,9 +633,9 @@ def plot_activity_payout_mult(
 def plot_drink_thirst_bonus(guild_id: int, great_pack: str | None) -> tuple[int, str]:
     phase = plot_phase(guild_id)
     if phase == 11:
-        return 5, "ash naming; the creek answers (**+5** thirst restore)."
+        return 5, "ash naming; the creek answers (**+5** hydration restore)."
     if phase in WARM_RIVER_PHASES and great_pack == "silverrush":
-        return -3, "blinking; the creek runs unnaturally warm (**−3** thirst restore)."
+        return -3, "blinking; the creek runs unnaturally warm (**−3** hydration restore)."
     return 0, ""
 
 

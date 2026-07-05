@@ -59,7 +59,7 @@ def apply_thirst_bone_penalty(amount: int, thirst: int) -> tuple[int, str]:
     if amount <= 0 or thirst >= THIRST_LOW_THRESHOLD:
         return amount, ""
     reduced = max(0, int(amount * (100 - THIRST_HUNT_PENALTY_PCT) / 100))
-    note = f"low thirst ({thirst}); −{THIRST_HUNT_PENALTY_PCT}% bone payout."
+    note = f"low hydration ({thirst}); −{THIRST_HUNT_PENALTY_PCT}% bone payout."
     return reduced, note
 
 
@@ -99,9 +99,9 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
     if block:
         return False, block
 
-    wait = drink_cooldown_minutes(user)
-    if wait > 0:
-        return False, f"the creek is right there; give it **{wait}** min before you lap again."
+    from config import THIRST_MAX
+
+    already_full = (int(user["thirst"]) if "thirst" in user.keys() and user["thirst"] is not None else 0) >= THIRST_MAX
 
     db.update_user(
         user["discord_id"],
@@ -128,8 +128,18 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
     if new_exhaustion != old_exhaustion:
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_exhaustion)
 
+    # drink as often as you like; but forcing water down when already fully
+    # watered bloats the gut, adding pain exhaustion (overhydration)
+    overfull_note = ""
+    if already_full:
+        from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX
+        old_pe = int(user["pain_exhaustion"]) if "pain_exhaustion" in user.keys() else 0
+        new_pe = min(PAIN_EXHAUSTION_MAX, old_pe + 1)
+        db.update_user(user["discord_id"], wolf_id=user["id"], pain_exhaustion=new_pe)
+        overfull_note = "\n_already watered to the brim; forcing more down bloats the gut, **+1 pain exhaustion**._"
+
     msg = (
-        f"cold water from the **{season}** creek; thirst **{thirst}** (+{thirst_restore}), "
+        f"cold water from the **{season}** creek; hydration **{thirst}** (+{thirst_restore}), "
         f"hunger **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
     )
     if new_exhaustion != old_exhaustion:
@@ -151,7 +161,7 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
         msg += try_plot_witness(user, guild_id, day, action="drink")
     if hp_gain:
         msg += f", **+{hp_gain} hp**"
-    msg += f". _(next drink in {DRINK_COOLDOWN_MINUTES} min.)_"
+    msg += overfull_note
     return True, msg
 
 
@@ -162,7 +172,7 @@ def run_drinkall(
     caller=None,
     discord_admin: bool = False,
 ) -> tuple[bool, str, int]:
-    """Alpha leads the den to the creek; thirst restore for all packmates once per sunrise."""
+    """Alpha leads the den to the creek; hydration restore for all packmates once per sunrise."""
     import database as db
 
     from engine.pack_leadership import PACK_BULK_ALPHA_ONLY_MSG, can_run_pack_bulk_action
@@ -188,7 +198,7 @@ def run_drinkall(
             lines.append(f"**{wolf['wolf_name']}**; {block}")
             continue
         thirst = db.adjust_thirst(wolf["id"], DRINK_THIRST_RESTORE)
-        lines.append(f"**{wolf['wolf_name']}** → thirst **{thirst}** (+{DRINK_THIRST_RESTORE})")
+        lines.append(f"**{wolf['wolf_name']}** → hydration **{thirst}** (+{DRINK_THIRST_RESTORE})")
         drank += 1
 
     if drank == 0:

@@ -154,7 +154,7 @@ def attacker_roll_modifiers(
         thirst = int(attacker["thirst"]) if "thirst" in attacker.keys() else 100
         if hunger < HUNGER_LOW_THRESHOLD or thirst < THIRST_LOW_THRESHOLD:
             disadvantage = True
-            hunger_note = "running on empty; hunger/thirst cost you the edge (disadvantage)"
+            hunger_note = "running on empty; hunger/hydration cost you the edge (disadvantage)"
 
     _, bite_disadv = attack_roll_modifiers(attacker, attack_type)
     if bite_disadv:

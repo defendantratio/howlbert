@@ -89,7 +89,7 @@ def roll_herb_benefits(patient, herb_key: str, form: str, *, day: int) -> str:
         new_thirst = db.adjust_thirst(patient["id"], -5)
         flushed = _drop_pain_exhaustion(patient)
         flush_note = "; toxins flush, **-1 pain exhaustion**" if flushed else ""
-        notes.append(f"_diuretic; you pass more water (thirst **{new_thirst}**, -5){flush_note}._")
+        notes.append(f"_diuretic; you pass more water (hydration **{new_thirst}**, -5){flush_note}._")
 
     if internal and "nutritive" in tags:
         new_hunger = db.adjust_hunger(patient["id"], 4)

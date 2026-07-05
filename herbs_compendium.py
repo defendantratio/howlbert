@@ -608,7 +608,7 @@ HERBS = {
     "ragwort": _h(
         "Ragwort",
         "common",
-        "elder hunts at full speed for 1 day. eases joint and limb stiffness. toxic; contains pyrrolizidine alkaloids; causes liver damage with repeated use. lethal to grazing animals.",
+        "elder hunts at full speed for 1 day. eases joint and limb stiffness. toxic; contains pyrrolizidine alkaloids; causes liver damage with repeated use.",
         cures=("sprained_leg",),
         side_effects="toxic; contains pyrrolizidine alkaloids causing liver toxicity; fatal to grazing animals.",
         preparation="avoid; no safe preparation.",
@@ -853,7 +853,7 @@ HERBS = {
     "purslane": _h(
         "Purslane",
         "common",
-        "fleshy leaves hold ditch-water; chew for +12 thirst without visiting the creek. anti-inflammatory; eases eating distress and anxiety.",
+        "fleshy leaves hold ditch-water; chew for +12 hydration without visiting the creek. anti-inflammatory; eases eating distress and anxiety.",
         habitat=("roadside", "compound"),
         cures=("eating_distress", "anxiety"),
         side_effects="limited studies; no significant adverse effects; constipation reported; contains oxalates.",

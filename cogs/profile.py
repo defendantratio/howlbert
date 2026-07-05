@@ -629,7 +629,7 @@ class Profile(commands.Cog):
         from engine.hunger import format_hunger_line
         from engine.thirst import format_thirst_line
         mood_note = '; play and socialize to lift it.' if mood < MOOD_LOW_THRESHOLD else ''
-        embed.add_field(name='Vitals', value=f'**Mood** {mood}/100{mood_note}\n**Hunger** {format_hunger_line(user)}\n**Thirst** {format_thirst_line(user)}', inline=False)
+        embed.add_field(name='Vitals', value=f'**Mood** {mood}/100{mood_note}\n**Hunger** {format_hunger_line(user)}\n**Hydration** {format_thirst_line(user)}', inline=False)
         embed.add_field(name=CURRENCY_LABEL, value=format_bones(user['bones']), inline=True)
         account = db.get_account(target.id)
         tier = get_tier_info(account['prestige_tier'])

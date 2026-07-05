@@ -1,6 +1,6 @@
-"""Lazy intra-day hunger and thirst decay.
+"""Lazy intra-day hunger and hydration decay.
 
-Hunger and thirst previously fell only at the sunrise rollover. This applies a
+Hunger and hydration previously fell only at the sunrise rollover. This applies a
 gentle, continuous drain the rest of the day: whenever a wolf checks vitals,
 eats, or drinks, we look at how much real time has passed since the last decay
 tick and subtract the proportional amount.
@@ -78,5 +78,5 @@ def apply_time_decay(user) -> tuple[dict, str]:
     if applied.get("hunger"):
         parts.append(f"hunger -{applied['hunger']}")
     if applied.get("thirst"):
-        parts.append(f"thirst -{applied['thirst']}")
+        parts.append(f"hydration -{applied['thirst']}")
     return applied, "the day wears on; " + ", ".join(parts) + "."

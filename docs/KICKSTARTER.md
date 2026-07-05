@@ -32,7 +32,7 @@ voiceover (or caption): "somewhere, a wolf is dying. whether he sees the next su
 
 **8 to 20s; what it is**  
 visual: a rollover announcement turning the world over; a hunt; an injury appearing on a `/profile`  
-voiceover: "howlbert is a discord bot for realistic, sentient wolf roleplay. every sunrise the world turns; you hunt, you heal, you survive hunger, thirst, injury, and the seasons."
+voiceover: "howlbert is a discord bot for realistic, sentient wolf roleplay. every sunrise the world turns; you hunt, you heal, you survive hunger, hydration, injury, and the seasons."
 
 **20 to 35s; why it's deep (the differentiator)**  
 visual: `/vitals` conditions, a disease penalty, a pack gathering; text flashes: "30+ diseases · real injuries · four great packs"  
@@ -103,11 +103,11 @@ copy-paste block:
 
 > howlbert is a discord wolf rpg bot for realistic sentient wolf roleplay.
 >
-> - rollovers: admin `/rollover` advances the in-game day; hunger, thirst, mood, and age tick forward.
+> - rollovers: admin `/rollover` advances the in-game day; hunger, hydration, mood, and age tick forward.
 > - four great packs: greyspire (mountain), mistmoor (swamp), thistlehide (forest), silverrush (river), or lone wolf.
 > - economy: bones from hunt, work, quests, and daily stipend; trading post, prey hoard, toys.
-> - survival: hunger and thirst drain through the day, not only at sunrise; eat fresh kills, or sip broth and non-wolf milk (bought, raided, or bartered) when a broken jaw stops you chewing; a meat-free stretch risks wasting sickness, and weaned wolves are lactose intolerant unless they carry the trait.
-> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, thirst, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf), old age at 120 moons; optional revive / reincarnation via ko-fi shop.
+> - survival: hunger and hydration drain through the day, not only at sunrise; eat fresh kills, or sip broth and non-wolf milk (bought, raided, or bartered) when a broken jaw stops you chewing; a meat-free stretch risks wasting sickness, and weaned wolves are lactose intolerant unless they carry the trait.
+> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, hydration, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf), old age at 120 moons; optional revive / reincarnation via ko-fi shop.
 > - herbs: 100+ plants with real preparation, side effects, and dependence; the wrong dose, an herb eaten instead of applied, or one pressed into an open wound backfires (toxicity, miscarriage risk, addiction), and sedatives like poppy build tolerance and withdrawal.
 > - genetics: heritable conditions (blindness, deafness, brachycephaly, spinal disorders, inbreeding effects, neurodevelopmental traits, lactase persistence) rolled at birth or passed from parents; each has real mechanical consequences, not just flavor.
 > - design: few hard blocks; most actions use diminishing returns and real penalties instead of cooldowns, so a wolf can always act (hunt again for less, not "come back tomorrow"). consequences, not walls.
