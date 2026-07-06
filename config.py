@@ -254,6 +254,12 @@ COURT_SUCCESS_MOOD_GAIN = 6
 COURT_FAIL_MOOD_LOSS = 4
 COURT_HOSTILE_FAIL_MOOD_LOSS = 7
 MATE_MOOD_GAIN = 12
+# Inbreeding is not blocked (as in wolvden), but it is taboo. Any completed kin
+# mating (engine.mating.execute_mating) turns the den on the elder and scars the
+# younger; no hard block, only real penalties.
+KIN_MATING_STANDING_LOSS = 8        # older wolf; the den blames the elder for the pairing
+KIN_MATING_YOUNGER_MOOD_LOSS = 15   # younger wolf; shame and distress
+KIN_MATING_FEAR_DAYS = 7            # younger wolf; fear of mating (court/mate at disadvantage) for this many sunrises
 HUNGER_MIN = 0
 HUNGER_MAX = 100
 HUNGER_DEFAULT = 80
@@ -507,6 +513,17 @@ SIGN_CHALLENGE_LOSE_STANDING = -1
 SIGN_NUZZLE_MOOD = 3
 SIGN_NUZZLE_BOND_GAIN = 4
 SIGN_STRETCH_EXHAUSTION_RELIEF = 1
+# whimper: a plea for comfort; small own-mood lift, larger softening of the target.
+SIGN_WHIMPER_MOOD_SELF = 2
+SIGN_WHIMPER_MOOD_TARGET = 4
+# growl: a low warning, lighter than threaten (no distress flag, no standing);
+# knocks the target's mood, but can be called and backfire on you.
+SIGN_GROWL_MOOD_TARGET = -3
+SIGN_GROWL_BACKFIRE_CHANCE = 0.25
+SIGN_GROWL_BACKFIRE_MOOD = -2
+# lick: a grooming lick; mood for both and a small care bond.
+SIGN_LICK_MOOD = 3
+SIGN_LICK_BOND_GAIN = 3
 # ASL-style /sign composition (base/motion/field) isn't flavor-only: matching
 # the anatomically correct combo for the signal (engine.signing.CANONICAL_POSTURE)
 # grants a real bonus on top of the signal's normal effect; bond strength

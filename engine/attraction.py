@@ -154,22 +154,33 @@ def _parent_ids(wolf) -> set[int]:
     return ids
 
 
-def kinship_blocked(courter, target) -> str | None:
+def kinship_taboo(courter, target) -> str | None:
     """
-    Direct parent/offspring and full-or-adoptive siblings are off-limits to court
-    or mate, no matter how sentient and political this den's wolves are; this
-    checks blood (bio_parent_1_id/bio_parent_2_id) and adoptive
-    (adopt_parent_1_id/adopt_parent_2_id) parentage both ways.
-    Returns an error string if blocked, else None.
+    Detect a kin pairing without blocking it (as in wolvden, incest is allowed
+    but taboo). Returns a short taboo label ("parent/offspring" or "sibling")
+    when the two share close blood or adoptive kinship, else None. Checks blood
+    (bio_parent_1_id/bio_parent_2_id) and adoptive (adopt_parent_1_id/
+    adopt_parent_2_id) parentage both ways.
     """
     if courter["id"] == target["id"]:
-        return "you can't court yourself."
+        return None
     courter_parents = _parent_ids(courter)
     target_parents = _parent_ids(target)
     if target["id"] in courter_parents or courter["id"] in target_parents:
-        return "you share a parent/offspring bond with them. that line isn't crossed here."
+        return "parent/offspring"
     if courter_parents and target_parents and courter_parents & target_parents:
-        return "you're kin; raised by the same den parent. that line isn't crossed here."
+        return "sibling"
+    return None
+
+
+def kinship_blocked(courter, target) -> str | None:
+    """
+    The only hard block left here is courting yourself; kin pairings are allowed
+    but taboo (see kinship_taboo and the penalties in engine.mating). Returns an
+    error string if blocked, else None.
+    """
+    if courter["id"] == target["id"]:
+        return "you can't court yourself."
     return None
 
 

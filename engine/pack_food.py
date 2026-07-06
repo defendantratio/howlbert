@@ -441,8 +441,12 @@ def run_feedall(
 
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
-    if int(pack["last_feedall_day"]) >= day:
-        return False, "the den already shared a communal meal this sunrise.", 0
+
+    # unlimited; the den reserve it drains is the real cost, so no hard block.
+    # only the first communal meal of the sunrise lifts unity, so repeats can't
+    # farm den unity for free.
+    from engine.diminishing import record_use, use_count_today
+    feed_repeat = use_count_today(caller, "feedall", day) if caller else 0
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
@@ -477,11 +481,16 @@ def run_feedall(
         return False, "no packmate could eat from the reserve.", 0
 
     db.set_pack_feedall_day(pack_id, day)
-    db.adjust_pack_unity(pack_id, 1)
+    if caller:
+        record_use(caller, "feedall", day)
+    if feed_repeat == 0:
+        db.adjust_pack_unity(pack_id, 1)
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
         summary += f"\n_…and {len(lines) - 12} more._"
     msg = f"**communal feed**; **{fed}** wolf(s) ate from the reserve.\n{summary}"
+    if feed_repeat > 0:
+        msg += "\n_already fed the den this sunrise; the reserve still empties, but no extra unity from a repeat meal._"
     if served_wolf and caller:
         from engine.cannibalism import cannibalism_public_exposure
 

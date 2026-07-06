@@ -40,9 +40,6 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
     stage = stage_for_age(age)
     if stage not in ("pup", "juvenile"):
         return False, f"**{pup['wolf_name']}** is grown; training only helps pups and juveniles."
-    last = int(pup["last_train_day"]) if "last_train_day" in pup.keys() else 0
-    if last >= day:
-        return False, f"**{pup['wolf_name']}** already trained this sunrise."
     total = _trained_total(pup)
     if total >= PUP_TRAIN_MAX_LIFETIME_BONUS:
         return False, (
@@ -50,14 +47,23 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
             f"(+{PUP_TRAIN_MAX_LIFETIME_BONUS} lifetime cap reached)."
         )
 
+    # unlimited; the lifetime cap is the real ceiling. each repeat lesson the
+    # same sunrise tires the pup and raises the dc, instead of a hard block.
+    from engine.diminishing import record_use, use_count_today
+
+    repeat = use_count_today(trainer, f"trainpup:{pup['id']}", day)
+    effective_dc = PUP_TRAIN_SUCCESS_DC + 2 * repeat
+    record_use(trainer, f"trainpup:{pup['id']}", day)
+
     from engine.dice import roll_d20
 
     die = roll_d20()
     mod = attr_modifier(int(trainer["attr_cha"])) if "attr_cha" in trainer.keys() else 0
     total_roll = die + mod
     label = attribute.upper()
+    tired = f" _(repeat lesson today; dc +{2 * repeat})_" if repeat else ""
 
-    if total_roll >= PUP_TRAIN_SUCCESS_DC:
+    if total_roll >= effective_dc:
         new_val = int(pup[attr_col]) + 1
         new_total = total + 1
         db.update_user_by_id(
@@ -65,7 +71,7 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
         )
         msg = (
             f"**{trainer['wolf_name']}** drills **{pup['wolf_name']}** "
-            f"({die}+{mod}={total_roll} vs dc {PUP_TRAIN_SUCCESS_DC}).\n"
+            f"({die}+{mod}={total_roll} vs dc {effective_dc}){tired}.\n"
             f"**{label}** rises to **{new_val}** ({new_total}/{PUP_TRAIN_MAX_LIFETIME_BONUS} lifetime)."
         )
         if new_total >= PUP_TRAIN_MAX_LIFETIME_BONUS:
@@ -79,6 +85,6 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
     db.update_user_by_id(pup["id"], last_train_day=day)
     return False, (
         f"**{trainer['wolf_name']}** drills **{pup['wolf_name']}** "
-        f"({die}+{mod}={total_roll} vs dc {PUP_TRAIN_SUCCESS_DC}); the lesson doesn't land today, "
+        f"({die}+{mod}={total_roll} vs dc {effective_dc}){tired}; the lesson doesn't land today, "
         f"but **{pup['wolf_name']}** enjoyed the attention (mood **{new_mood}**)."
     )

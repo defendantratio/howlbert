@@ -165,13 +165,10 @@ def execute_mother_nursing(
     if mother["birth_sex"] != "female":
         return False, "only **female** wolves can nurse with milk."
 
-    last_day = int(mother["last_nurse_day"] if "last_nurse_day" in mother.keys() else 0)
-    if last_day >= day_number:
-        return False, (
-            f"**{mother['wolf_name']}** already nursed this sunrise. "
-            "try again after the next `/rollover`."
-        )
-
+    # no mother-level once-per-sunrise block: each pup can only take milk once a
+    # day (pup_needs_milk_today) and nursing costs the mother hunger per pup, so
+    # those two are the real limiters; a repeat nurse just feeds any pup that
+    # still needs it.
     pups = _filter_pups(db.get_nursing_pups_for_mother(mother["id"]), pup_name)
     pups = [p for p in pups if pup_needs_milk_today(p, day_number)]
     if not pups:
@@ -234,12 +231,8 @@ def execute_caretaker_feed(
     if not pack_id:
         return False, "join a pack to tend nursery pups."
 
-    last_day = int(caretaker["last_nurse_day"] if "last_nurse_day" in caretaker.keys() else 0)
-    if last_day >= day_number:
-        return False, (
-            f"**{caretaker['wolf_name']}** already fed nursery pups this sunrise."
-        )
-
+    # no caretaker-level block: each pup takes nursery mash only once a day
+    # (pup_needs_milk_today), so that per-pup gate is the real limiter.
     pups = _filter_pups(db.get_pack_pups_needing_feed(pack_id), pup_name)
     pups = [p for p in pups if pup_needs_milk_today(p, day_number)]
     if not pups:

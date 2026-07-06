@@ -203,10 +203,9 @@ def trade_duplicates_between_wolves(
     day: int,
     require_pack_trade: bool = False,
 ) -> tuple[bool, str]:
-    """Move all duplicate hoard items to another wolf (once per sunrise)."""
-    if int(sender["last_duplicate_trade_day"]) >= day:
-        return False, "you already traded duplicates this sunrise."
-
+    """Move all duplicate hoard items to another wolf. Unlimited (you need
+    duplicates on hand each time); only the first cross-pack trade of the sunrise
+    lifts pack standing, so repeats can't farm relation."""
     if sender["id"] == recipient["id"]:
         return False, "can't trade duplicates to yourself."
 
@@ -232,15 +231,21 @@ def trade_duplicates_between_wolves(
     if not ok:
         return False, detail
 
+    from engine.diminishing import record_use, use_count_today
+
+    trade_repeat = use_count_today(sender, "duptrade", day)
     db.update_user(sender["discord_id"], last_duplicate_trade_day=day, wolf_id=sender["id"])
+    record_use(sender, "duptrade", day)
 
     footer = ""
     if require_pack_trade and sender["pack_id"] and recipient["pack_id"]:
-
-        new_standing = db.adjust_pack_relation(
-            guild_id, sender["pack_id"], recipient["pack_id"], PACK_DUP_TRADE_RELATION_GAIN
-        )
-        footer = f"\n\npack standing **+{PACK_DUP_TRADE_RELATION_GAIN}** (now **{new_standing}/10**)."
+        if trade_repeat == 0:
+            new_standing = db.adjust_pack_relation(
+                guild_id, sender["pack_id"], recipient["pack_id"], PACK_DUP_TRADE_RELATION_GAIN
+            )
+            footer = f"\n\npack standing **+{PACK_DUP_TRADE_RELATION_GAIN}** (now **{new_standing}/10**)."
+        else:
+            footer = "\n\n_already traded across the border this sunrise; no extra pack standing from a repeat._"
 
     return True, (
         f"duplicates passed to **{recipient['wolf_name']}** "

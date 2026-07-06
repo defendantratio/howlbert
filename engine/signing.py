@@ -27,8 +27,15 @@ from config import (
     SIGN_GRIEVE_MOOD_SELF,
     SIGN_GRIEVE_MOOD_TARGET,
     SIGN_GRIEVE_UNITY,
+    SIGN_GROWL_BACKFIRE_CHANCE,
+    SIGN_GROWL_BACKFIRE_MOOD,
+    SIGN_GROWL_MOOD_TARGET,
+    SIGN_LICK_BOND_GAIN,
+    SIGN_LICK_MOOD,
     SIGN_NUZZLE_BOND_GAIN,
     SIGN_NUZZLE_MOOD,
+    SIGN_WHIMPER_MOOD_SELF,
+    SIGN_WHIMPER_MOOD_TARGET,
     SIGN_PLAY_MOOD,
     SIGN_PLAY_UNITY,
     SIGN_RALLY_STANDING,
@@ -178,6 +185,36 @@ SIGNAL_CATALOG: dict[str, dict] = {
             "a soft cheek-rub and a low, contented hum",
         ),
     },
+    "whimper": {
+        "name": "Whimper",
+        "scope": "either",
+        "summary": "A soft plea for comfort; eases you and softens a denmate.",
+        "posture": (
+            "ears flattened, a thin high whine, body curled small and low",
+            "a soft muzzle-push and a wobbling keen, eyes turned up and pleading",
+            "a low whimper caught in the throat, one paw lifted in appeal",
+        ),
+    },
+    "growl": {
+        "name": "Growl",
+        "scope": "target",
+        "summary": "A low warning; lighter than a threat, but it can be called.",
+        "posture": (
+            "a low rumble from the chest, lip barely lifted, gaze steady and hard",
+            "hackles just risen, a slow warning growl held under the breath",
+            "a rolling growl and a stiff half-step forward, daring a reply",
+        ),
+    },
+    "lick": {
+        "name": "Lick",
+        "scope": "target",
+        "summary": "A grooming lick; warms mood and builds a care bond.",
+        "posture": (
+            "a slow tongue over the ear and cheek, patient and careful",
+            "a gentle grooming lick along the jaw, tail loose and easy",
+            "a soft lick at the muzzle, cleaning away the day's dust",
+        ),
+    },
     "stretch": {
         "name": "Stretch",
         "scope": "either",
@@ -248,6 +285,9 @@ CANONICAL_POSTURE: dict[str, tuple[str, str, str]] = {
     "grieve": ("body", "held_still", "ground"),  # "a slow lie-down... breath gone shallow and even"
     "challenge": ("body", "repeated", "target"),  # "a stiff-legged circle" never breaking eye contact
     "nuzzle": ("muzzle", "slow_sweep", "target"),  # "a slow nose pressed along the cheek"
+    "whimper": ("ears", "repeated", "self"),  # "ears flattened, a thin high whine, body curled small"
+    "growl": ("hackles", "held_still", "target"),  # "hackles just risen, a slow warning growl held"
+    "lick": ("muzzle", "repeated", "target"),  # "a slow tongue over the ear and cheek"
     "stretch": ("body", "bouncing", "self"),  # "a full-body shake-off" / "a shiver that runs nose to tail"
 }
 
@@ -321,7 +361,7 @@ def _resolve_target(interaction, user, wolf, own_wolf) -> tuple[object | None, s
     return None, "__no_target__"
 
 
-NPC_CAPABLE_SIGNALS = {"submit", "soothe", "threaten", "greet", "grieve", "challenge", "nuzzle"}
+NPC_CAPABLE_SIGNALS = {"submit", "soothe", "threaten", "greet", "grieve", "challenge", "nuzzle", "whimper", "growl", "lick"}
 
 
 def apply_signal_to_target(signal_key: str, target, *, npc_id: int | None = None) -> str:
@@ -369,6 +409,21 @@ def apply_signal_to_target(signal_key: str, target, *, npc_id: int | None = None
     if signal_key == "nuzzle":
         mood = db.adjust_mood(target["id"], _scaled(SIGN_NUZZLE_MOOD))
         return f"**{target['wolf_name']}** leans into it (mood **{mood}**)."
+
+    if signal_key == "whimper":
+        db.update_user_by_id(target["id"], distressed=0)
+        mood = db.adjust_mood(target["id"], _scaled(SIGN_WHIMPER_MOOD_TARGET))
+        return f"**{target['wolf_name']}** softens at the plea (mood **{mood}**)."
+
+    if signal_key == "growl":
+        if random.random() < SIGN_GROWL_BACKFIRE_CHANCE:
+            return f"**{target['wolf_name']}** holds their ground; the growl doesn't land."
+        mood = db.adjust_mood(target["id"], _scaled(SIGN_GROWL_MOOD_TARGET))
+        return f"**{target['wolf_name']}** flattens at the warning (mood **{mood}**)."
+
+    if signal_key == "lick":
+        mood = db.adjust_mood(target["id"], _scaled(SIGN_LICK_MOOD))
+        return f"**{target['wolf_name']}** settles under the grooming (mood **{mood}**)."
 
     if signal_key == "grieve":
         db.update_user_by_id(target["id"], distressed=0)
@@ -671,6 +726,44 @@ async def execute_sign(
         bond_note = f"; friendship **{int(bond['strength'])}/100**" if bond else ""
         lines.append(
             f"**{target['wolf_name']}** leans into it "
+            f"(you: **{your_mood}** mood, them: **{their_mood}**{bond_note})."
+        )
+
+    elif signal_key == "whimper":
+        db.update_user_by_id(user["id"], distressed=0)
+        your_mood = db.adjust_mood(user["id"], _scaled(SIGN_WHIMPER_MOOD_SELF))
+        if target:
+            db.update_user_by_id(target["id"], distressed=0)
+            their_mood = db.adjust_mood(target["id"], _scaled(SIGN_WHIMPER_MOOD_TARGET))
+            lines.append(
+                f"**{target['wolf_name']}** softens and leans in "
+                f"(you: **{your_mood}** mood, them: **{their_mood}**)."
+            )
+        else:
+            lines.append(f"a soft plea to whoever's near; **+{SIGN_WHIMPER_MOOD_SELF} mood** (you: **{your_mood}**).")
+
+    elif signal_key == "growl":
+        if random.random() < SIGN_GROWL_BACKFIRE_CHANCE:
+            db.update_user_by_id(user["id"], distressed=1)
+            your_mood = db.adjust_mood(user["id"], _scaled(SIGN_GROWL_BACKFIRE_MOOD))
+            lines.append(
+                f"**{target['wolf_name']}** does **not** flinch; they meet the growl and hold it "
+                f"(your mood **{your_mood}**)."
+            )
+        else:
+            db.update_user_by_id(target["id"], distressed=1)
+            their_mood = db.adjust_mood(target["id"], _scaled(SIGN_GROWL_MOOD_TARGET))
+            lines.append(
+                f"**{target['wolf_name']}** flattens at the low warning (their mood **{their_mood}**)."
+            )
+
+    elif signal_key == "lick":
+        your_mood = db.adjust_mood(user["id"], _scaled(SIGN_LICK_MOOD))
+        their_mood = db.adjust_mood(target["id"], _scaled(SIGN_LICK_MOOD))
+        bond = db.adjust_bond_strength(user["id"], target["id"], "friendship", SIGN_LICK_BOND_GAIN, day=day)
+        bond_note = f"; friendship **{int(bond['strength'])}/100**" if bond else ""
+        lines.append(
+            f"**{target['wolf_name']}** settles under the grooming "
             f"(you: **{your_mood}** mood, them: **{their_mood}**{bond_note})."
         )
 

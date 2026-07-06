@@ -23,12 +23,13 @@ def run_playall(
     pack = db.get_pack(pack_id)
     if not can_run_pack_bulk_action(user, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG
-    if int(user["last_playall_day"]) >= day:
-        return (
-            False,
-            "you already rallied the den to play this sunrise.\n\n"
-            "_resets next sunrise · `/checklist`_",
-        )
+
+    # unlimited; each repeat romp the same sunrise gives less mood (the den tires
+    # of the same game), instead of a hard once-per-sunrise block.
+    from engine.diminishing import multiplier_for_use, record_use, use_count_today
+    play_repeat = use_count_today(user, "playall", day)
+    play_mult = multiplier_for_use(play_repeat + 1)
+    mood_gain = PLAYALL_MOOD_GAIN if play_mult >= 1.0 else max(1, int(PLAYALL_MOOD_GAIN * play_mult))
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
@@ -71,7 +72,7 @@ def run_playall(
     lines: list[str] = []
     filth_lines: list[str] = []
     for wolf in members:
-        mood = db.adjust_mood(wolf["id"], PLAYALL_MOOD_GAIN)
+        mood = db.adjust_mood(wolf["id"], mood_gain)
         lines.append(f"**{wolf['wolf_name']}** → **{mood}** mood")
         db.update_user_by_id(int(wolf["id"]), last_play_day=day)
         if random.random() < PLAYALL_FILTH_CHANCE:
@@ -80,13 +81,16 @@ def run_playall(
                 filth_lines.append(f"**{wolf['wolf_name']}** rolls in filth; {filth}")
 
     db.update_user(user["discord_id"], last_playall_day=day, wolf_id=user["id"])
+    record_use(user, "playall", day)
     summary = "\n".join(lines[:15])
     if len(lines) > 15:
         summary += f"\n_…and {len(lines) - 15} more._"
     msg = (
-        f"den romp! every packmate gains **+{PLAYALL_MOOD_GAIN} mood**.\n"
+        f"den romp! every packmate gains **+{mood_gain} mood**.\n"
         f"{summary}\n\n{toy_note}"
     )
+    if play_repeat > 0:
+        msg += f"\n_rallied {play_repeat + 1}x this sunrise; mood scaled to **{int(play_mult * 100)}%**._"
     if filth_lines:
         extra = "\n".join(filth_lines[:5])
         if len(filth_lines) > 5:

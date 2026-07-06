@@ -117,7 +117,7 @@ class Roleplay(commands.Cog):
             return
         await interaction.response.send_message(embed=howlbert_embed('Whisper Sent', f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
-    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (once per sunrise).')
+    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (unlimited; repeats soothe less).')
     async def weep(self, interaction: discord.Interaction):
         wolf = _active_wolf(interaction)
         if not wolf:
@@ -147,8 +147,10 @@ class Roleplay(commands.Cog):
         if key == 'grief_melancholy':
             db.set_user_conditions(interaction.user.id, wolf_id=wolf['id'], clear_disease=True)
             lines.append('_the grief breaks loose and washes downstream. you feel it; for now._')
+        if _weep_n > 1:
+            lines.append(f'_wept **{_weep_n}x** this sunrise; the stone soothes less each time (**{int(_weep_mult * 100)}%**)._')
         embed = howlbert_embed('weep stone', '\n'.join(lines), color=SUCCESS_COLOR)
-        embed.set_footer(text='it is forbidden to watch another wolf weep · once per sunrise')
+        embed.set_footer(text='it is forbidden to watch another wolf weep · unlimited, repeats soothe less')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @location.command(name='set', description="mark your wolf's current in-character location.")
