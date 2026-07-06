@@ -87,13 +87,15 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 howlbert leans toward measurable, granular wolf-ecology effects over flavor text; every system below changes a number, not just a description.
 
 ✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter**; `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
+✦ **inbreeding is taboo, not blocked** (as in wolvden): kin can mate, but any completed kin pairing turns the den on the elder (**−8 standing**, expulsion if it sinks them past the threshold) and scars the younger wolf (**−15 mood**, distressed, and a **fear of mating** for 7 sunrises that rolls their own courtship at disadvantage)  
 ✦ **pregnancy costs food**: pregnant wolves burn extra hunger/hydration each sunrise, and hunt/fish/scavenge yield drops **−10%** in early pregnancy, **−20%** mid-to-late; the final third blocks strenuous activity outright. nursing mothers burn extra hunger/hydration per pup  
 ✦ **pain exhaustion is a separate tracker (0 to 5)**: distinct from main exhaustion (0 to 10); accumulates from painful injuries and diseases (deep gash, fractured rib, scorched hide, snake venom, trichinosis, lyme, cancer, and more) each sunrise. herbs like willow bark and poppy target this pool specifically. at 5 stacks it overflows into main exhaustion  
 ✦ **injuries cost yield, not just combat**: non-blocking injuries (sprained leg, punctured paw, concussion, deep gash, infected wound, snake venom, torn claw, broken tooth, torn ear) reduce hunt/fish/scavenge yield, stacking up to **−50%**. severe injuries (fractured rib, spinal injury, paralysis) still block field commands outright  
 ✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first; but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
 ✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day; wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
 ✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances; a +1 skill bonus that follows a wolf for life  
-✦ **few hard blocks, mostly diminishing returns**: instead of "come back next sunrise" cooldowns, most actions (hunt, forage, scavenge, fish, work, weep, grooming, faction moves, and more) can be repeated but pay steadily less each time in a sunrise; only the long rest and the daily stipend stay once-per-sunrise. consequences and penalties, not walls  
+✦ **few hard blocks, mostly diminishing returns**: instead of "come back next sunrise" cooldowns, most actions (hunt, forage, scavenge, fish, work, weep, grooming, faction moves, courtship, adoption, pup training, and the alpha-led communal drink/feed/play, and more) can be repeated but pay steadily less each time in a sunrise (or, for adoption and pup training, get harder); only the long rest and the daily stipend stay once-per-sunrise. consequences and penalties, not walls  
+✦ **pup care is need-gated, not blocked**: each pup takes milk or nursery mash once a sunrise, so mothers and caretakers can feed as many pups as still need it (nursing costs the mother hunger), instead of one feed per feeder  
 ✦ **continuous hunger and hydration**: vitals drain in real time between sunrises (checked on `/vitals`, `/eat`, `/drink`), so neglect bites gradually rather than only at rollover  
 ✦ **liquid diet**: `/drink type:broth` or `type:milk` to sip when a broken jaw stops you chewing solid meat; liquids feed only partway (hunger caps at 60) and never fully satisfy a carnivore; broth is bought or den-brewed from bones, milk comes from cat clans or settlement raids  
 ✦ **carnivore nutrition**: a wolf survives short-term on forage and liquids, but a meat-free stretch of 8+ sunrises risks **wasting sickness**; weaned wolves are **lactose intolerant** (milk gives them an upset gut) unless they carry the **lactase persistence** trait  
@@ -134,7 +136,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/playpen`   | `toys`, `play`, `playall`, `toystore`, `socialize`, `groom`                                                   |
 | `/packlife`  | `feedall`, `drinkall`, `howl`                                                                                 |
 | `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
-| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `freeze`, `track`, `greet`, `grieve`, `challenge`, `read` (unlimited; repeat signs on the same partner pay out less mood, down to 20%) |
+| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `freeze`, `track`, `greet`, `grieve`, `challenge`, `whimper`, `growl`, `nuzzle`, `lick`, `read` (unlimited; repeat signs on the same partner pay out less mood, down to 20%) |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`, `plot`, `hazard`, `travel`, `encounter`, `omen`                   |
 | `/garden`    | `plots`, `seeds`, `plant`, `tend`, `harvest`, `clear`, `buy`, `guide` (grow your own herbs from seed)         |
 | `/role`      | `quests`, `event`, `prophecy`                                                                         |
@@ -166,7 +168,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/journal`                                             | read-only automatic life timeline (birth, pack, bonds, blooding, death, rites) |
 | `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning`, `trial` · mate rituals: `bone_gift` (costs 3 bones, +5 mood to target), `joining_howl` (one-time; +1 maw_favor each), `moon_witness` (full moon only; +2 maw_favor each, seals romance bond) |
 | `/npc`                                                 | server npc registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
-| `/weep`                                                 | silverrush only, once per sunrise: release grief at the weep stone |
+| `/weep`                                                 | silverrush only: release grief at the weep stone (unlimited; repeats soothe less) |
 | `/proxy`                                               | speak in-character as your wolves; import from tupperbox |
 | `/wolves` `/switchwolf` `/rename` `/setfaction`        | multi-wolf and faction                                 |
 | `/food` `/eat` `/drink` `/salvage` `/preypile` `/bury` | prey hoard and survival                                |
@@ -333,8 +335,8 @@ speak in-character as your wolves, tupperbox-style, plus slash tools that work w
 ✦ `/rite bone_gift` · `joining_howl` · `moon_witness`; mate rituals: bone-gift costs 3 bones and lifts mood; joining howl announces a bond publicly (+1 maw_favor each, once per pair); moon's witness seals true mateship under the full moon (+2 maw_favor each, romance bond sealed, once per pair)  
 ✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
 ✦ `/family`; relationship web rendered as a diagram, with the focus wolf's proxy avatar  
-✦ `/sign`; body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, etc.); unlimited, but repeat signs on the same partner pay out less mood  
-✦ `/weep`; silverrush only, once per sunrise: release grief alone at the weep stone (also eases the `grief_melancholy` condition)  
+✦ `/sign`; body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, whimper, growl, nuzzle, lick, etc.); unlimited, but repeat signs on the same partner pay out less mood  
+✦ `/weep`; silverrush only: release grief alone at the weep stone (unlimited; each repeat soothes less; also eases the `grief_melancholy` condition)  
 ✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)  
 ✦ optional **rp ambience**: set `RP_AMBIENCE_CHANNEL_IDS` in `.env` for sunrise season/weather/moon posts on rollover
 

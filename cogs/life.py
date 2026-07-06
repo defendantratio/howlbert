@@ -650,23 +650,23 @@ class Life(commands.Cog):
             embed = howlbert_embed('Approach Blocked', f"**{target_user['wolf_name']}** lost a vocal rival challenge and cannot be courted until the next sunrise.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        user_last = user['last_court_day'] if 'last_court_day' in user.keys() else 0
-        if user_last >= day:
-            embed = howlbert_embed('Already Courted', 'You may court **once per rollover**.\n\n_Resets next sunrise · `/checklist`_', color=ERROR_COLOR)
-            embed.set_footer(text='/courtship action:mate · /courtship action:pregnancy')
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if db.court_blocked_for_pair(user['id'], target_user['id'], day):
-            embed = howlbert_embed('Already Tried', f"You already courted **{target_user['wolf_name']}** this sunrise.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        # courting is unlimited; repeat courts the same sunrise pay diminishing
+        # mood and friendship (no hard once-per-rollover block).
+        from engine.diminishing import next_use_multiplier
+        court_mult, court_count = next_use_multiplier(user, 'court', day)
         guild_id = interaction.guild.id if interaction.guild else None
         effective, override_note = resolve_court_difficulty(user, target_user, guild_id, difficulty)
         mentor_note = _mentor_court_approval_note(user, target_user)
         if mentor_note and mentor_note.startswith('+'):
             effective = 'friendly' if effective in ('neutral', 'hostile') else effective
-        result = run_court_check(user, effective)
-        mood_line = apply_court_outcome(user, target_user, result, effective, guild_id=guild_id, day=day)
+        from engine.herb_buffs import mating_fear_active
+        fearful = mating_fear_active(user, day)
+        result = run_court_check(user, effective, fearful=fearful)
+        mood_line = apply_court_outcome(user, target_user, result, effective, guild_id=guild_id, day=day, reward_mult=court_mult)
+        if fearful:
+            mood_line += '\n_a lingering **fear of mating** grips you; this courtship was rolled at disadvantage._'
+        if court_count > 1:
+            mood_line += f'\n_courted **{court_count}x** this sunrise; rewards scaled to **{int(court_mult * 100)}%**._'
         if result['success']:
             db.update_user(target_user['discord_id'], wolf_id=target_user['id'], receptive_day=day + 7)
         db.update_user(interaction.user.id, wolf_id=user['id'], last_court_day=day)
@@ -1145,7 +1145,7 @@ class Life(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = 'Nursing' if ok else 'Cannot Feed'
         embed = howlbert_embed(title, msg, color=color)
-        embed.set_footer(text='/pupcare action:list · once per sunrise · /checklist')
+        embed.set_footer(text='/pupcare action:list · each pup needs milk once a sunrise · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _savepup(self, interaction: discord.Interaction, name: str):
@@ -1187,7 +1187,7 @@ class Life(commands.Cog):
         ok, msg = train_pup(trainer, pup, attribute=attribute, day=world['day_number'])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Train Pup', msg, color=color)
-        embed.set_footer(text='once per sunrise per pup · pups and juveniles only')
+        embed.set_footer(text='unlimited; each repeat lesson today raises the dc · pups and juveniles only')
         await interaction.response.send_message(embed=embed)
 
     async def _pups(self, interaction: discord.Interaction):
@@ -1249,12 +1249,10 @@ class Life(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        user_last = user['last_adopt_day'] if 'last_adopt_day' in user.keys() else 0
-        partner_last = partner_user['last_adopt_day'] if 'last_adopt_day' in partner_user.keys() else 0
-        if user_last >= day or partner_last >= day:
-            embed = howlbert_embed('Already Adopted', 'Each bonded pair may adopt **once per rollover**.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        # adoption is unlimited; each repeat the same sunrise makes the bonding
+        # check harder (rolled at disadvantage), not blocked outright.
+        from engine.diminishing import use_count_today, record_use
+        adopt_count = max(use_count_today(user, 'adopt', day), use_count_today(partner_user, 'adopt', day))
         adoptee, adoptee_err = _resolve_adoptee(user, interaction, youth=youth, own_youth=own_youth, youth_wolf=youth_wolf)
         if adoptee_err:
             if adoptee_err == '__not_registered__':
@@ -1268,9 +1266,12 @@ class Life(commands.Cog):
             embed = howlbert_embed('Cannot Adopt', adopt_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        check = courtship_check(user, 'friendly')
+        record_use(user, 'adopt', day)
+        record_use(partner_user, 'adopt', day)
+        check = courtship_check(user, 'friendly', fearful=adopt_count > 0)
         if not check['success']:
-            embed = howlbert_embed('Adoption Denied', f"Bonding check: **{check['total']}** vs DC **{check['dc']}**; the den is not ready.", color=ERROR_COLOR)
+            tired = ' _(repeat adoption today; bonding check at disadvantage)_' if adopt_count > 0 else ''
+            embed = howlbert_embed('Adoption Denied', f"Bonding check: **{check['total']}** vs DC **{check['dc']}**; the den is not ready.{tired}", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed)
             return
         needs_consent = adoptee['discord_id'] not in (interaction.user.id, partner_user['discord_id'])

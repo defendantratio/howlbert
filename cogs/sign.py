@@ -28,7 +28,7 @@ class Sign(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='sign', description='speak with body language; alert, rally, play, soothe, nuzzle, stretch, or read the den.')
+    @app_commands.command(name='sign', description='speak with body language; whimper, growl, nuzzle, lick, soothe, play, and more, or read the den.')
     @app_commands.describe(signal="the body-language signal to give (or read the den's signals)", wolf='target denmate (player) for a directed signal', own_wolf='target one of your own wolves for a directed signal', message='optional roleplay line', base='ASL-style: which body part leads (close/exact combo with motion+field = bond or standing)', motion='ASL-style: how it moves (close/exact combo with base+field = bond or standing)', field='ASL-style: where it is aimed (close/exact combo with base+motion = bond or standing)')
     @app_commands.choices(signal=_SIGNAL_CHOICES, base=_BASE_CHOICES, motion=_MOTION_CHOICES, field=_FIELD_CHOICES)
     @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)

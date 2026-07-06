@@ -393,7 +393,7 @@ class Economy(commands.Cog):
         msg = await interaction.original_response()
         db.set_pending_trade_message_id(trade_id, msg.id)
 
-    @trade.command(name='duplicates', description='instantly give all duplicate hoard items to another wolf (once per sunrise).')
+    @trade.command(name='duplicates', description='give all duplicate hoard items to another wolf (unlimited; cross-pack standing once a sunrise).')
     @app_commands.describe(wolf='wolf to receive extras (keeps one of each type for you)', wolf_name="specific wolf from that player's roster", own_wolf='your other wolf to receive extras')
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, wolf_name=_wolf_name_autocomplete)
     async def trade_duplicates(self, interaction: discord.Interaction, wolf: discord.Member | None = None, wolf_name: str | None = None, own_wolf: str | None = None):

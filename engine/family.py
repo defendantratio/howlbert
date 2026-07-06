@@ -17,11 +17,11 @@ COURTSHIP_DCS = {
 }
 
 
-def courtship_check(user, difficulty: str = "friendly") -> dict:
+def courtship_check(user, difficulty: str = "friendly", *, fearful: bool = False) -> dict:
     from engine.character_traits import trait_check_adjustments
 
     dc = COURTSHIP_DCS.get(difficulty, 15)
-    die = roll_d20()
+    die = min(roll_d20(), roll_d20()) if fearful else roll_d20()
     cha_mod = attr_modifier(user["attr_cha"])
     trait_mod, _ = trait_check_adjustments(
         user, ("attr_cha",), skill_key="persuasion", skill_label="Persuasion"

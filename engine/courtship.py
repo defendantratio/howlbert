@@ -50,13 +50,15 @@ def resolve_court_difficulty(courter, target, guild_id: int | None, chosen: str)
     return chosen, None
 
 
-def apply_court_bond(user, target_user, result: dict, difficulty: str, *, day: int) -> str | None:
+def apply_court_bond(user, target_user, result: dict, difficulty: str, *, day: int, reward_mult: float = 1.0) -> str | None:
     """Friendship bond strength from a successful court."""
     if not result["success"]:
         return None
     delta = 15 if result["outcome"] == "critical_success" else 10
     if difficulty == "friendly":
         delta += 5
+    if reward_mult < 1.0:
+        delta = max(1, int(round(delta * reward_mult)))
     row = db.adjust_bond_strength(user["id"], target_user["id"], "friendship", delta, day=day)
     if not row:
         return None
@@ -76,17 +78,19 @@ def apply_court_outcome(
     *,
     guild_id: int | None = None,
     day: int = 0,
+    reward_mult: float = 1.0,
 ) -> str:
     """Mood changes for court success or failure. Returns extra lines for the embed."""
     lines: list[str] = []
     if result["success"]:
-        your_mood = db.adjust_mood(user["id"], COURT_SUCCESS_MOOD_GAIN)
-        their_mood = db.adjust_mood(target_user["id"], COURT_SUCCESS_MOOD_GAIN)
+        gain = COURT_SUCCESS_MOOD_GAIN if reward_mult >= 1.0 else max(1, int(round(COURT_SUCCESS_MOOD_GAIN * reward_mult)))
+        your_mood = db.adjust_mood(user["id"], gain)
+        their_mood = db.adjust_mood(target_user["id"], gain)
         lines.append(
-            f"**+{COURT_SUCCESS_MOOD_GAIN} mood** each "
+            f"**+{gain} mood** each "
             f"(you: **{your_mood}**, them: **{their_mood}**)."
         )
-        bond_line = apply_court_bond(user, target_user, result, difficulty, day=day)
+        bond_line = apply_court_bond(user, target_user, result, difficulty, day=day, reward_mult=reward_mult)
         if bond_line:
             lines.append(bond_line)
         standing = cross_pack_relation(user, target_user, guild_id)
@@ -110,5 +114,5 @@ def apply_court_outcome(
     return "\n".join(lines)
 
 
-def run_court_check(user, difficulty: str) -> dict:
-    return courtship_check(user, difficulty)
+def run_court_check(user, difficulty: str, *, fearful: bool = False) -> dict:
+    return courtship_check(user, difficulty, fearful=fearful)

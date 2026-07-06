@@ -232,6 +232,18 @@ def grant_burial_scent_mask(user, *, day: int, duration: int = 3) -> dict:
     return merge_buff_fields(user, death_scent_masked_until_day=day + duration)
 
 
+def grant_mating_fear(user, *, day: int, duration: int) -> dict:
+    """the younger wolf of a kin mating carries a fear of mating; while active,
+    their own courtship and mating checks are rolled at disadvantage. not a
+    block; they can still try, but the fear makes it harder."""
+    return merge_buff_fields(user, mating_fear_until_day=day + duration)
+
+
+def mating_fear_active(user, day: int) -> bool:
+    until = get_buffs(user).get("mating_fear_until_day")
+    return bool(until and int(until) >= day)
+
+
 def courtship_blocked(user, day: int) -> bool:
     until = get_buffs(user).get("courtship_blocked_until_day")
     return bool(until and int(until) >= day)

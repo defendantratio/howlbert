@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import database as db
 from config import FIDELITY_BOND_LOSS, FIDELITY_BOND_MIN_TO_CARE, MATE_MOOD_GAIN
-from engine.attraction import conception_parents, mate_pairing
+from engine.attraction import conception_parents, kinship_taboo, mate_pairing
 from engine.family import GESTATION_DAYS, conception_check
 from engine.infractions import apply_mate_infractions
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR
@@ -32,6 +32,42 @@ def _fidelity_cost(cheater, mating_partner, *, day: int) -> str | None:
     return (
         f"_word of this reaches **{mate['wolf_name']}**; their mood drops to **{new_mood}**{bond_note}._"
     )
+
+
+def _wolf_age(wolf) -> int:
+    return int(wolf["age_months"]) if "age_months" in wolf.keys() and wolf["age_months"] is not None else 0
+
+
+def _kin_taboo_penalty(a, b, *, day: int) -> str:
+    """A kin mating is allowed but taboo: the den blames the older wolf (standing
+    loss) and the younger carries it as shame and a lingering fear of mating
+    (mood loss + a fear buff that rolls their future courtship at disadvantage).
+    Returns a player-facing note, or '' when the pair are not kin. Applies once."""
+    label = kinship_taboo(a, b)
+    if not label:
+        return ""
+    from config import (
+        KIN_MATING_FEAR_DAYS,
+        KIN_MATING_STANDING_LOSS,
+        KIN_MATING_YOUNGER_MOOD_LOSS,
+    )
+    from engine.herb_buffs import grant_mating_fear
+
+    older, younger = (a, b) if _wolf_age(a) >= _wolf_age(b) else (b, a)
+    standing_kick = db.adjust_wolf_standing_by_id(older["id"], -KIN_MATING_STANDING_LOSS, triggered_day=day)
+    younger_mood = db.adjust_mood(younger["id"], -KIN_MATING_YOUNGER_MOOD_LOSS)
+    db.update_user_by_id(younger["id"], distressed=1)
+    fear_fields = grant_mating_fear(younger, day=day, duration=KIN_MATING_FEAR_DAYS)
+    db.update_user(int(younger["discord_id"]), wolf_id=younger["id"], **fear_fields)
+    note = (
+        f"_the den scents the **{label}** blood between them and turns cold; "
+        f"**{older['wolf_name']}** carries the blame (**−{KIN_MATING_STANDING_LOSS} standing**), "
+        f"and **{younger['wolf_name']}** is left shaken "
+        f"(mood **{younger_mood}**, **fear of mating** for **{KIN_MATING_FEAR_DAYS}** sunrises)._"
+    )
+    if standing_kick in ("kicked", "broken_rite"):
+        note += f"\n_**{older['wolf_name']}** is **cast out** over the taboo._"
+    return note
 
 
 def mating_embed_title(body: str, *, hard_fail: bool) -> str:
@@ -114,6 +150,9 @@ def execute_mating(
             body += "\n\n" + "\n".join(spread_notes)
         if fidelity_notes:
             body += "\n\n" + "\n".join(fidelity_notes)
+        taboo_note = _kin_taboo_penalty(user, partner_user, day=day_number)
+        if taboo_note:
+            body += "\n\n" + taboo_note
         if caught_lines:
             body += caught_suffix()
         return True, body, SUCCESS_COLOR, False
@@ -146,6 +185,11 @@ def execute_mating(
     if female["is_pregnant"]:
         return False, "already pregnant.", ERROR_COLOR, True
 
+    # the mating happens now (season, pairing, and receptivity gates passed); a
+    # kin pairing takes its taboo penalty here, applied once, whether or not it
+    # results in conception.
+    taboo_note = _kin_taboo_penalty(user, partner_user, day=day_number)
+
     f_key, f_stage = parse_disease(female["disease"] if "disease" in female.keys() else None)
     m_key, m_stage = parse_disease(male["disease"] if "disease" in male.keys() else None)
     if blocks_conception(f_key, f_stage) or blocks_conception(m_key, m_stage):
@@ -163,6 +207,8 @@ def execute_mating(
             body += "\n\n" + "\n".join(spread_notes)
         if fidelity_notes:
             body += "\n\n" + "\n".join(fidelity_notes)
+        if taboo_note:
+            body += "\n\n" + taboo_note
         if caught_lines:
             body += caught_suffix()
         return True, body, ERROR_COLOR, False
@@ -186,6 +232,8 @@ def execute_mating(
         msg += "\n\n" + "\n".join(spread_notes)
     if fidelity_notes:
         msg += "\n\n" + "\n".join(fidelity_notes)
+    if taboo_note:
+        msg += "\n\n" + taboo_note
     if caught_lines:
         msg += caught_suffix()
     color = SUCCESS_COLOR if result["success"] else ERROR_COLOR

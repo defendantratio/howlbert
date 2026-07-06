@@ -183,8 +183,13 @@ def run_drinkall(
         return False, "pack not found.", 0
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
-    if int(pack["last_drinkall_day"]) >= day:
-        return False, "the den already drank together at the creek this sunrise.", 0
+
+    # unlimited; each repeat communal drink the same sunrise restores less (a
+    # led creek trip loses its novelty), instead of a hard once-per-sunrise block.
+    from engine.diminishing import multiplier_for_use, record_use, use_count_today
+    repeat = use_count_today(caller, "drinkall", day) if caller else 0
+    mult = multiplier_for_use(repeat + 1)
+    restore = DRINK_THIRST_RESTORE if mult >= 1.0 else max(1, int(DRINK_THIRST_RESTORE * mult))
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
@@ -197,18 +202,22 @@ def run_drinkall(
         if block:
             lines.append(f"**{wolf['wolf_name']}**; {block}")
             continue
-        thirst = db.adjust_thirst(wolf["id"], DRINK_THIRST_RESTORE)
-        lines.append(f"**{wolf['wolf_name']}** → hydration **{thirst}** (+{DRINK_THIRST_RESTORE})")
+        thirst = db.adjust_thirst(wolf["id"], restore)
+        lines.append(f"**{wolf['wolf_name']}** → hydration **{thirst}** (+{restore})")
         drank += 1
 
     if drank == 0:
         return False, "no packmate could drink at the creek.", 0
 
     db.set_pack_drinkall_day(pack_id, day)
+    if caller:
+        record_use(caller, "drinkall", day)
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
         summary += f"\n_…and {len(lines) - 12} more._"
     msg = (
         f"**communal drink** at the creek; **{drank}** wolf(s) lapped up.\n{summary}"
     )
+    if repeat > 0:
+        msg += f"\n_led {repeat + 1}x this sunrise; restore scaled to **{int(mult * 100)}%** (+{restore})._"
     return True, msg, drank

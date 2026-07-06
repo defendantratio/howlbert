@@ -370,6 +370,50 @@ your first post is the one every new visitor checks before deciding to follow, s
 - pin the post to your blog.
 - if the themes get dark (death, illness, culling), add a content warning tag; tumblr expects it.
 
+#### tumblr launch sequence: the first five posts
+
+tumblr is a slow burn; one post is not a launch. queue these over the first two weeks (one every 2 to 3 days) so a new follower who lands on your blog scrolls a real world, not a single ad. lead with lore, let mechanics and the invite ride underneath. reblog your own best post once a week at a different time; tumblr has no feed decay, so old posts keep finding people for months.
+
+**post 1; the pinned introduction (day 1).** the lore-forward intro above. pin it. this is the post every other one sends people back to.
+
+**post 2; a piece of pure world (day 3).** no invite, no pitch; just atmosphere, to prove the blog is worth following.
+> the packs share one god: the maw. it is not good and it is not evil. it is wounded, and it is hungry, and it chews. illness is the maw eating. injury is the maw eating. the only thing a wolf can choose is how they meet the teeth.
+>
+> every howl over the caldera comes back three times. the first echo is yours. the second is your pack's. the third belongs to the maw. a howl that returns only twice is an omen; and in the wrong season, the omens start coming true.
+
+tags: #wolf rp #warriors #worldbuilding #lore #creature
+
+**post 3; the mechanic that hooks (day 6).** one brutal system, told as a story, with a screenshot if you have one.
+> in most rp bots your character is safe. in howlbert your wolf can catch **river rot** from the poisoned river, and there is no cure. not a hard one. none. your healer can ease the pain, buy days, sit with them. that is all anyone can do.
+>
+> injuries cut your hunt yield. a broken jaw changes what you can eat. three failed death saves is permanent. it is a discord bot; it plays like a hard little rpg about surviving a shrinking wild.
+>
+> [screenshot of /vitals showing a sick wolf]
+>
+> join the pack: [discord invite]
+
+tags: #wolf rp #ttrpg #discord #indie games #wolf roleplay
+
+**post 4; a character or the packs (day 9).** let people pick a side; faction posts get reblogged as "i'm a ___ wolf."
+> four great packs, four ways to survive the same dying wild.
+>
+> **greyspire** rules the mountain by strength; blood is law. **mistmoor** breathes the swamp and reads the maw's dreams. **thistlehide** remembers the names of its dead in the forest. **silverrush** carries its grief like river-water, and drinks the poison the twolegs pour upstream.
+>
+> which den would keep you alive? which one would you die for? [discord invite]
+
+tags: #wolf rp #warrior cats #warriors rp #which one are you #wolf roleplay
+
+**post 5; the human threat / the stakes (day 12).** the theme that makes it more than a wolf sim.
+> the villain of howlbert is not a rival alpha. it is us.
+>
+> wolves call humans **twolegs**, and the twoleg world presses in from every edge: sewage rotting the river, the thunderpath's black machines, traps baited with fish, a mill at the forest's edge coughing up old bones. the wild is shrinking and the teeth are closing. the packs cannot just spread out and live.
+>
+> that is the game: hold a den together against weather, sickness, and a human world that is winning slowly. [discord invite]
+
+tags: #wolf rp #worldbuilding #ttrpg #dark #wolf roleplay
+
+**after the first five:** settle into a rhythm of one lore or mechanic post every 2 to 3 days, reblog community art and screenshots (with permission and credit), and answer asks in-character when it fits. tumblr rewards the blog that keeps showing up.
+
 ### instagram
 
 **goal:** a visual-first anchor. instagram is a portfolio, so the first post is a strong image (or a 3 to 5 image carousel) with the hook in the caption and the link in the bio.
@@ -442,15 +486,69 @@ social profiles are rented land; you want one url you own and control that point
 
 ### the lore site (phase 2, after the runway)
 
-**neocities** (neocities.org) is a free static-site host beloved in the indie, web-revival, and rp scene, which overlaps heavily with your audience. it is more effort than a carrd (you write html and css), so it is a phase-2 project, not a launch task. use it as the **world bible**: the deep, evergreen content that does not fit a social post and keeps working as a searchable reference.
+**neocities** (neocities.org) is a free static-site host beloved in the indie, web-revival, and rp scene, which overlaps heavily with your audience. it is more effort than a carrd (you write html and css), so it is a phase-2 project, not a launch task. use it as the **world bible**: the deep, evergreen content that does not fit a social post and keeps working as a searchable reference. most of the writing already exists in `docs/LORE.md`; the site is that document, given a body.
 
-**pages worth building:**
-- the world: the maw's throat, the maw faith, the twilight rules.
-- the four great packs: greyspire, mistmoor, thistlehide, silverrush, each with terrain, path, and lore.
-- an herb compendium page and a disease list (you can generate these from the bot's own data so they stay accurate).
-- how to play: register, pick a pack, survive your first sunrise.
+#### the aesthetic
 
-**why it is worth it:** it delights the exact niche (wolf rp and warriors players love a lovingly made lore site), it hosts content too deep for feeds, it is discoverable in search, and it gives your "read the lore" button a real destination. build it when you want a home with more room than a one-pager.
+lean into the web-revival look neocities loves: a dark, atmospheric, almost old-web page that feels like a field journal for a dying wild. no cookie banners, no infinite scroll, no js framework. just a moody static site that rewards reading.
+
+#### colour palette (dark, caldera-toned)
+
+use css variables so the whole site recolours from one place. a warm-dark base with cold accents and a single blood note:
+
+```css
+:root {
+  --ink:        #0e0f0d;  /* near-black background; the caldera at night */
+  --ink-soft:   #1a1c18;  /* raised panels, cards, code blocks */
+  --bone:       #e7e2d4;  /* primary body text; aged bone, not pure white */
+  --bone-dim:   #a9a596;  /* secondary text, captions, meta */
+  --moss:       #6f8f5c;  /* links and thistlehide accent; forest */
+  --river:      #6a97a6;  /* hover and silverrush accent; cold water */
+  --rot:        #8a9a4a;  /* mistmoor accent; sickly swamp green */
+  --stone:      #8b8f96;  /* greyspire accent; mountain grey */
+  --maw:        #a3323a;  /* the one red; used sparingly, for the maw and for death */
+  --line:       #33362e;  /* hairline borders and dividers */
+}
+```
+
+**usage rules:** background `--ink`, body text `--bone`, links `--moss` going `--river` on hover, headings in `--bone` with a `--maw` underline or drop-cap only where you want weight. the red (`--maw`) is a spice, not a base; if it is everywhere it stops meaning death. give each pack page its own accent (moss, rot, stone, river) so the four dens feel distinct while sharing the frame.
+
+#### typography
+
+- **headings**: a characterful serif or blackletter-adjacent display face (e.g. a google font like *im fell*, *uncial antiqua*, or *cinzel*) for a carved, ancient feel. keep it to headings only.
+- **body**: a clean, readable serif (*eb garamond*, *lora*) at 18 to 20px with generous line-height (1.6) and a max content width around 65ch so long lore is comfortable to read.
+- **accents**: a mono face for stat blocks, herb data, and `/command` references, so game text reads as game text.
+- keep it to two, at most three, families total. self-host or use google fonts.
+
+#### sitemap and pages
+
+a flat, hand-linkable structure. every page reachable from a persistent top nav.
+
+1. **home / the caldera** (`index.html`): the hook line, one atmospheric paragraph, a hand-drawn or ai map of the four territories meeting at the tongue-stone, and the primary buttons (join the discord, ko-fi, kickstarter). the map can be an image-map so clicking a territory jumps to that pack's page.
+2. **the world** (`world.html`): the caldera, the tongue-stone, the twilight zone, the echo, and the moon-howl. the "what is this place" page.
+3. **the maw** (`maw.html`): the faith, the belly-rip, and the seven beliefs as a styled table. atmospheric; this is the page that sells the tone.
+4. **the four packs** (`packs.html` plus one page each: `greyspire.html`, `mistmoor.html`, `thistlehide.html`, `silverrush.html`): a hub page with four cards, then a full page per pack in that pack's accent colour, covering terrain, path, motto, trait, culture, and leadership. these are the most reblogged/linkable pages; make them beautiful.
+5. **the human world** (`twolegs.html`): the river rot, the thunderpath, the fishermen, the mill, traps and fences. the stakes page.
+6. **bestiary of illness** (`illness.html`): the diseases and the green tongue. generate the herb and disease tables from the bot's own data (export to json, render with a tiny build script) so they never drift from the game.
+7. **the wolves** (`characters.html`): the canon anchors by pack, each with a portrait, a one-line essence, and their role. link out to per-character deep pages later if you want.
+8. **book one: the blinking** (`bookone.html`): the current arc as an in-world account (the twelve phases as an escalating story, not the staff mechanics table). update it as the arc advances; it doubles as a "what's happening now" page.
+9. **how to play** (`play.html`): register, pick a pack, survive your first sunrise; the on-ramp for people arriving cold from search or a directory.
+10. **credits / links** (`credits.html`): artists, fonts, the tools you used, and every social link. web-revival etiquette rewards a generous credits page.
+
+#### layout and touches
+
+- a persistent left or top nav listing all pages; a small pack-accented sidebar on pack pages.
+- pull-quotes in the display serif with a `--maw` rule for the heaviest lore lines (the maw's, the mottos).
+- a subtle paper or fog texture at low opacity over `--ink`, and hairline `--line` dividers; avoid pure-black flatness.
+- an "88x31" style button for people to link back to you, and a webring or "wolves of neocities" link section if you find one; the neocities crowd loves this and it drives real cross-traffic.
+- fully responsive and light on assets: compress images, no heavy scripts. it should open fast on a phone.
+
+#### build and upload
+
+- write plain html and css; one shared `style.css` with the variables above, one html file per page. no framework needed. 
+- drag the files into neocities (free tier) or push with their cli. set the custom domain later if you buy one.
+
+**why it is worth it:** it delights the exact niche (wolf rp and warriors players love a lovingly made lore site), it hosts content too deep for feeds, it is discoverable in search, it gives your "read the lore" button a real destination, and the web-revival community around neocities itself becomes a small discovery channel. build it when you want a home with more room than a one-pager; the writing is already done in `docs/LORE.md`.
 
 ---
 
