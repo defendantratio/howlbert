@@ -20,7 +20,7 @@ LONG_TERM_TYPES = {
         "deception_bonus": 1,
     },
     "chronic_pain": {
-        "label": "Chronic Pain",
+        "label": "Bone-Ache",
         "effect": "On cold or rainy days, disadvantage on the first Strength or Dexterity check.",
         "intimidate_bonus": 0,
     },
@@ -68,7 +68,7 @@ LONG_TERM_TYPES = {
         "wis_bonus": 1,
     },
     "arthritis": {
-        "label": "Arthritis",
+        "label": "Joint-Rot",
         "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
         "intimidate_bonus": 0,
     },

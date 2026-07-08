@@ -38,12 +38,12 @@ DISEASES: dict[str, dict] = {
         "stages": COUGH_STAGES,
     },
     "diarrhea": {
-        "label": "Diarrhea",
+        "label": "Gut-Run",
         "contagious": 0.0,
         "mating_contagious": 0.12,
         "stages": {
             "active": {
-                "name": "Diarrhea",
+                "name": "Gut-Run",
                 "dc": 11,
                 "next": None,
                 "effect": "Gut sickness: −8 hunger each sunrise; CON save to recover.",
@@ -53,13 +53,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "distemper": {
-        "label": "Distemper",
+        "label": "Weeping-Scale",
         "contagious": 0.18,
         "respiratory": True,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Distemper",
+                "name": "Weeping-Scale",
                 "dc": 16,
                 "next": None,
                 "effect": "Hardened pads: 1 HP loss each sunrise; −25% hunt until treated.",
@@ -70,13 +70,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "influenza": {
-        "label": "Influenza",
+        "label": "Shiver-Fever",
         "contagious": 0.50,
         "respiratory": True,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Influenza",
+                "name": "Shiver-Fever",
                 "dc": 13,
                 "next": None,
                 "effect": "Fever and lethargy: +1 exhaustion each sunrise.",
@@ -86,12 +86,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "fleas": {
-        "label": "Fleas",
+        "label": "The Itch",
         "contagious": 0.36,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Fleas",
+                "name": "The Itch",
                 "dc": 12,
                 "next": None,
                 "effect": "Itching misery: −8 mood each sunrise.",
@@ -101,12 +101,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "mild_poison": {
-        "label": "Sting / Mild Venom",
+        "label": "Sting-Swell / Snake Venom",
         "contagious": 0.0,
         "spread_stage": "stung",
         "stages": {
             "stung": {
-                "name": "Insect Sting",
+                "name": "Sting-Swell",
                 "dc": 11,
                 "next": None,
                 "effect": (
@@ -131,12 +131,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "poison_ivy": {
-        "label": "Poison Ivy",
+        "label": "Leaf-Burn",
         "contagious": 0.0,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Poison Ivy Rash",
+                "name": "Leaf-Burn (Rash)",
                 "dc": 12,
                 "next": None,
                 "effect": (
@@ -149,12 +149,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "mange": {
-        "label": "Mange",
+        "label": "Scratch-Bare",
         "contagious": 0.18,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Mange",
+                "name": "Scratch-Bare",
                 "dc": 14,
                 "next": None,
                 "effect": "Patchy fur and raw skin: −25% hunt bones.",
@@ -164,12 +164,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "hepatitis": {
-        "label": "Hepatitis",
+        "label": "Yellow-Eye",
         "contagious": 0.18,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Hepatitis",
+                "name": "Yellow-Eye",
                 "dc": 14,
                 "next": None,
                 "effect": "Liver fever: −10 hydration each sunrise.",
@@ -179,12 +179,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "pox": {
-        "label": "Pox",
+        "label": "The Spotting",
         "contagious": 0.18,
         "spread_stage": "active",
         "stages": {
             "active": {
-                "name": "Pox",
+                "name": "The Spotting",
                 "dc": 15,
                 "next": None,
                 "effect": "Sores and fever; pups lose extra HP; adults −1 HP/sunrise.",
@@ -404,12 +404,12 @@ DISEASES: dict[str, dict] = {
         },
     },
     "shock_emotional": {
-        "label": "Shock (Emotional)",
+        "label": "Heart-Shock",
         "contagious": 0.0,
         "mental": True,
         "stages": {
             "active": {
-                "name": "Shock (Emotional)",
+                "name": "Heart-Shock",
                 "dc": 12,
                 "next": None,
                 "effect": (
@@ -422,11 +422,11 @@ DISEASES: dict[str, dict] = {
         },
     },
     "shock_physical": {
-        "label": "Shock (Physical)",
+        "label": "Blood-Shock",
         "contagious": 0.0,
         "stages": {
             "active": {
-                "name": "Shock (Physical)",
+                "name": "Blood-Shock",
                 "dc": 14,
                 "next": None,
                 "effect": (
@@ -601,14 +601,14 @@ DISEASES: dict[str, dict] = {
         },
     },
     "dementia": {
-        "label": "Dementia",
+        "label": "The Long-Forgetting",
         "contagious": 0.0,
         "chronic": True,
         "mental": True,
         "spread_stage": "forgetful",
         "stages": {
             "forgetful": {
-                "name": "Dementia (Forgetful)",
+                "name": "The Long-Forgetting (Forgetful)",
                 "dc": 14,
                 "next": "confused",
                 "effect": (
@@ -617,7 +617,7 @@ DISEASES: dict[str, dict] = {
                 ),
             },
             "confused": {
-                "name": "Dementia (Confused)",
+                "name": "The Long-Forgetting (Confused)",
                 "dc": 16,
                 "next": "lost",
                 "effect": (
@@ -626,7 +626,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 8,
             },
             "lost": {
-                "name": "Dementia (Lost)",
+                "name": "The Long-Forgetting (Lost)",
                 "dc": 18,
                 "next": None,
                 "effect": (
@@ -681,13 +681,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "insomnia": {
-        "label": "Insomnia",
+        "label": "The Sleepless",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "restless",
         "stages": {
             "restless": {
-                "name": "Insomnia (Restless)",
+                "name": "The Sleepless (Restless)",
                 "dc": 11,
                 "next": "sleepless",
                 "effect": (
@@ -698,7 +698,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "sleepless": {
-                "name": "Insomnia (Sleepless)",
+                "name": "The Sleepless (Deep)",
                 "dc": 13,
                 "next": "exhaustion_cascade",
                 "effect": (
@@ -709,7 +709,7 @@ DISEASES: dict[str, dict] = {
                 "exhaustion_gain": 1,
             },
             "exhaustion_cascade": {
-                "name": "Insomnia (Exhaustion Cascade)",
+                "name": "The Sleepless (Exhaustion Cascade)",
                 "dc": 15,
                 "next": None,
                 "effect": (
@@ -723,13 +723,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "anxiety": {
-        "label": "Anxiety",
+        "label": "The Skitters",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "uneasy",
         "stages": {
             "uneasy": {
-                "name": "Anxiety (Uneasy)",
+                "name": "The Skitters (Uneasy)",
                 "dc": 11,
                 "next": "anxious",
                 "effect": (
@@ -740,7 +740,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "anxious": {
-                "name": "Anxiety (Anxious)",
+                "name": "The Skitters (Anxious)",
                 "dc": 13,
                 "next": "panic_prone",
                 "effect": (
@@ -750,7 +750,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 6,
             },
             "panic_prone": {
-                "name": "Anxiety (Panic-Prone)",
+                "name": "The Skitters (Panic-Prone)",
                 "dc": 15,
                 "next": None,
                 "effect": (
@@ -764,13 +764,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "grief_melancholy": {
-        "label": "Grief / Melancholy",
+        "label": "The Hollowing",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "mourning",
         "stages": {
             "mourning": {
-                "name": "Grief (Mourning)",
+                "name": "The Hollowing (Mourning)",
                 "dc": 12,
                 "next": "melancholy",
                 "effect": (
@@ -781,7 +781,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "melancholy": {
-                "name": "Melancholy",
+                "name": "The Hollow",
                 "dc": 14,
                 "next": "hollow",
                 "effect": (
@@ -792,7 +792,7 @@ DISEASES: dict[str, dict] = {
                 "hunger_loss": 10,
             },
             "hollow": {
-                "name": "Grief (Hollow)",
+                "name": "The Husk",
                 "dc": 16,
                 "next": None,
                 "effect": (
@@ -805,13 +805,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "delirium": {
-        "label": "Delirium",
+        "label": "Fever-Wander",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "feverish",
         "stages": {
             "feverish": {
-                "name": "Delirium (Feverish)",
+                "name": "Fever-Wander (Feverish)",
                 "dc": 12,
                 "next": "wandering",
                 "effect": (
@@ -822,7 +822,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "wandering": {
-                "name": "Delirium (Wandering)",
+                "name": "Fever-Wander (Wandering)",
                 "dc": 14,
                 "next": "incoherent",
                 "effect": (
@@ -832,7 +832,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 6,
             },
             "incoherent": {
-                "name": "Delirium (Incoherent)",
+                "name": "Fever-Wander (Incoherent)",
                 "dc": 16,
                 "next": None,
                 "effect": (
@@ -845,13 +845,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "pack_madness": {
-        "label": "Pack Madness",
+        "label": "Den-Madness",
         "contagious": 0.08,
         "mental": True,
         "spread_stage": "wary",
         "stages": {
             "wary": {
-                "name": "Paranoia (Wary)",
+                "name": "Den-Madness (Wary)",
                 "dc": 12,
                 "next": "paranoid",
                 "effect": (
@@ -862,7 +862,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "paranoid": {
-                "name": "Paranoia (Pack-Mad)",
+                "name": "Den-Madness (Paranoid)",
                 "dc": 14,
                 "next": "break",
                 "effect": (
@@ -872,7 +872,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 8,
             },
             "break": {
-                "name": "Pack Madness (Break)",
+                "name": "Den-Madness (Break)",
                 "dc": 16,
                 "next": None,
                 "effect": (
@@ -885,13 +885,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "obsession": {
-        "label": "Obsession",
+        "label": "The Fixing",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "fixated",
         "stages": {
             "fixated": {
-                "name": "Obsession (Fixated)",
+                "name": "The Fixing (Fixated)",
                 "dc": 12,
                 "next": "compulsive",
                 "effect": (
@@ -902,7 +902,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "compulsive": {
-                "name": "Obsession (Compulsive)",
+                "name": "The Fixing (Compulsive)",
                 "dc": 14,
                 "next": "tunnel_vision",
                 "effect": (
@@ -913,7 +913,7 @@ DISEASES: dict[str, dict] = {
                 "hunt_mult": 0.85,
             },
             "tunnel_vision": {
-                "name": "Obsession (Tunnel Vision)",
+                "name": "The Fixing (Tunnel Vision)",
                 "dc": 16,
                 "next": None,
                 "effect": (
@@ -926,13 +926,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "night_terrors": {
-        "label": "Night Terrors",
+        "label": "The Screaming-Sleep",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "restless_nights",
         "stages": {
             "restless_nights": {
-                "name": "Night Terrors (Restless)",
+                "name": "The Screaming-Sleep (Restless)",
                 "dc": 11,
                 "next": "screaming_dreams",
                 "effect": (
@@ -943,7 +943,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "screaming_dreams": {
-                "name": "Night Terrors (Screaming Dreams)",
+                "name": "The Screaming-Sleep (Screaming Dreams)",
                 "dc": 13,
                 "next": "sleep_panic",
                 "effect": (
@@ -954,7 +954,7 @@ DISEASES: dict[str, dict] = {
                 "exhaustion_gain": 1,
             },
             "sleep_panic": {
-                "name": "Night Terrors (Sleep Panic)",
+                "name": "The Screaming-Sleep (Sleep Panic)",
                 "dc": 15,
                 "next": None,
                 "effect": (
@@ -967,13 +967,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "chronic_stress": {
-        "label": "Chronic Stress",
+        "label": "The Fraying",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "tense",
         "stages": {
             "tense": {
-                "name": "Chronic Stress (Tense)",
+                "name": "The Fraying (Tense)",
                 "dc": 11,
                 "next": "strained",
                 "effect": (
@@ -984,7 +984,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "strained": {
-                "name": "Chronic Stress (Strained)",
+                "name": "The Fraying (Strained)",
                 "dc": 13,
                 "next": "frayed",
                 "effect": (
@@ -994,7 +994,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 6,
             },
             "frayed": {
-                "name": "Chronic Stress (Frayed)",
+                "name": "The Fraying (Frayed)",
                 "dc": 15,
                 "next": None,
                 "effect": (
@@ -1008,13 +1008,13 @@ DISEASES: dict[str, dict] = {
         },
     },
     "eating_distress": {
-        "label": "Eating Distress",
+        "label": "The Refusing",
         "contagious": 0.0,
         "mental": True,
         "spread_stage": "picky",
         "stages": {
             "picky": {
-                "name": "Eating Distress (Picky)",
+                "name": "The Refusing (Picky)",
                 "dc": 11,
                 "next": "refusing",
                 "effect": (
@@ -1026,7 +1026,7 @@ DISEASES: dict[str, dict] = {
                 "cure_on_save": True,
             },
             "refusing": {
-                "name": "Eating Distress (Refusing)",
+                "name": "The Refusing (Deep)",
                 "dc": 13,
                 "next": "wasting",
                 "effect": (
@@ -1037,7 +1037,7 @@ DISEASES: dict[str, dict] = {
                 "mood_loss": 6,
             },
             "wasting": {
-                "name": "Eating Distress (Wasting)",
+                "name": "The Refusing (Wasting)",
                 "dc": 15,
                 "next": None,
                 "effect": (

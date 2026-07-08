@@ -89,6 +89,42 @@ def _derive_prep_methods(herb_key: str, meta: dict) -> list[str]:
     return methods
 
 
+# wolf-world names for condition cure-keys that carry no in-game display name of
+# their own (they would otherwise render as clinical title-case in the guide).
+_CONDITION_WOLF_NAMES: dict[str, str] = {
+    "anxiety": "the skitters",
+    "arthritis": "joint-rot",
+    "chronic_pain": "bone-ache",
+    "asthma": "chestbind",
+    "cancer": "growth-sickness",
+    "chronic_stress": "the fraying",
+    "constipation": "gut-stone",
+    "delirium": "fever-wander",
+    "dementia": "the long-forgetting",
+    "depression": "the low-spirit",
+    "diarrhea": "gut-run",
+    "eating_distress": "the refusing",
+    "feral_shift": "feral-shift",
+    "fleas": "the itch",
+    "grief_melancholy": "the hollowing",
+    "hepatitis": "yellow-eye",
+    "influenza": "shiver-fever",
+    "insomnia": "the sleepless",
+    "lyme": "burrfever",
+    "mange": "scratch-bare",
+    "night_terrors": "the screaming-sleep",
+    "obsession": "the fixing",
+    "pack_madness": "den-madness",
+    "poison_ivy": "leaf-burn",
+    "pox": "the spotting",
+    "shock_emotional": "heart-shock",
+    "spirit_curse": "the spirit-eaten",
+    "tooth_infection": "root-rot",
+    "urinary_infection": "water-scorch",
+    "worms": "belly-worm",
+}
+
+
 def _cure_labels(cures: tuple) -> str:
     if not cures:
         return ""
@@ -96,7 +132,9 @@ def _cure_labels(cures: tuple) -> str:
 
     labels: list[str] = []
     for key in cures[:10]:
-        if key in INJURIES:
+        if key in _CONDITION_WOLF_NAMES:
+            labels.append(_CONDITION_WOLF_NAMES[key])
+        elif key in INJURIES:
             labels.append(INJURIES[key]["name"])
         elif key in GENETIC_CONDITIONS:
             if key in HERB_CURABLE_GENETICS:
