@@ -12356,7 +12356,48 @@ def get_open_prey_piles() -> list[sqlite3.Row]:
 
 
 def close_prey_piles_for_guild(guild_id: int) -> None:
+    """Close open piles at rollover. Any carcass portions no wolf ate are not
+    wasted: the leftovers roll into the hunter's pack prey stash."""
+    from engine.prey_items import prey_key_from_label, prey_meta
+
     with get_db() as conn:
+        open_piles = conn.execute(
+            "SELECT * FROM prey_piles WHERE guild_id = ? AND status = 'open'",
+            (guild_id,),
+        ).fetchall()
+        for pile in open_piles:
+            hunter = conn.execute(
+                "SELECT pack_id FROM users WHERE id = ?", (pile["hunter_wolf_id"],)
+            ).fetchone()
+            pack_id = int(hunter["pack_id"]) if hunter and hunter["pack_id"] else 0
+            prey_key = prey_key_from_label(pile["prey_label"])
+            if not pack_id or not prey_key:
+                continue
+            base_uses = int(prey_meta(prey_key).get("uses", 1) or 1)
+            eaters = conn.execute(
+                "SELECT COUNT(*) FROM prey_pile_responses WHERE pile_id = ? AND choice = 'eat'",
+                (pile["id"],),
+            ).fetchone()[0]
+            leftover = base_uses - int(eaters)
+            if leftover <= 0:
+                continue
+            conn.execute(
+                """
+                INSERT INTO pack_prey_stacks
+                (pack_id, guild_id, prey_key, uses_left, bone_value, acquired_day,
+                 is_rotting, deposited_by)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+                """,
+                (
+                    pack_id,
+                    guild_id,
+                    prey_key,
+                    leftover,
+                    int(pile["prey_bones"]),
+                    int(pile["day_number"]),
+                    pile["hunter_wolf_id"],
+                ),
+            )
         conn.execute(
             "UPDATE prey_piles SET status = 'closed' WHERE guild_id = ? AND status = 'open'",
             (guild_id,),

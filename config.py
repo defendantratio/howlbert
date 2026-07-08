@@ -359,8 +359,10 @@ HUNTER_HUNTS_PER_SUNRISE = 10
 # Repeated field work: 2nd+ same activity tires wolves; untrained skills tire faster.
 ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD = 4
 
-# Auto-dormant: wolves inactive this many days skip vitals decay on rollover.
-AUTO_DORMANT_INACTIVE_DAYS = 7
+# Auto-dormant: wolves inactive this many days are treated as "away" and skip
+# vitals decay, needs-collapse, and exhaustion death on rollover. Set to 1 so a
+# wolf nobody plays for a sunrise stops decaying (and can't slowly die).
+AUTO_DORMANT_INACTIVE_DAYS = 1
 # Low mood streak: consecutive sunrises below threshold give a hunt penalty.
 LOW_MOOD_STREAK_THRESHOLD = 30
 LOW_MOOD_STREAK_HUNT_PENALTY_PCT = 10
