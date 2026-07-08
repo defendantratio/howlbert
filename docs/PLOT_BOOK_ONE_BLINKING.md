@@ -121,7 +121,7 @@ Cat pacts, `/field action:sniff` border fights, season stash failures, territory
 
 ## Canon anchors (affiliations)
 
-- **Thistlehide:** River'Shroud (Alpha), Finnpelt, Mossgaze, Kanami, Pale'Step, Skye, Thyme, Firepaw, Eltanin
+- **Thistlehide:** River'Shroud (Alpha), Finnpelt, Mossgaze, Kanami, Pale'Step, Skye, Thyme, Firepaw
 - **Silverrush:** Saltmuzzle, Rift, Rivenmaw, Ripple, Aromis
 - **Mistmoor:** Murkvein, Mirewort, Gasp, Soot
 - **Greyspire:** Grim, Talus; **Splinter** exiled rogue

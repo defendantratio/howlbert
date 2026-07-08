@@ -222,11 +222,4 @@ CANONICAL_BONDS: list[dict] = [
         "strength": 55,
         "note": "Greyspire veteran; one of few who has seen him vulnerable.",
     },
-    {
-        "a": "Eltanin",
-        "b": "Lucid",
-        "type": "friendship",
-        "strength": 48,
-        "note": "Quiet border hunters; mutual respect in silence.",
-    },
 ]

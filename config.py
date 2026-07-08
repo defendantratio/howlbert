@@ -1202,8 +1202,6 @@ MURKVEIN_PLOT_TREAT_HEAL_BONUS = 1
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
 LUCID_PLOT_TRACK_MULT = 1.10
-# Eltanin hunting plot (Book One; Thistlehide border)
-ELTANIN_PLOT_HUNT_MULT = 1.10
 # Cloverfern scavenge plot (Book One; Thistlehide den)
 CLOVERFERN_PLOT_SCAVENGE_MULT = 1.10
 # Kanami and Skye border-sense plot (Book One; Thistlehide paranoia)

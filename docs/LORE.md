@@ -276,7 +276,7 @@ the current arc. a wrongness spreads through the caldera in twelve phases, advan
 
 ## 13. the characters
 
-the caldera holds sixty-four canon wolves. below are the anchors of book one, grouped by pack; the full roster (pups, elders, hunters, and rogues) lives in the bot's own lore and the per-character files in `docs/characters/`.
+the caldera holds sixty-three canon wolves. below are the anchors of book one, grouped by pack; the full roster (pups, elders, hunters, and rogues) lives in the bot's own lore and the per-character files in `docs/characters/`.
 
 ### thistlehide (forest)
 - **river'shroud** (alpha): impossibly calm, severely shy, a silent guardian with ruined vocal cords; speaks in stares and chest rumbles. took the seat after the rite of broken canine.
@@ -285,9 +285,7 @@ the caldera holds sixty-four canon wolves. below are the anchors of book one, gr
 - **firepaw** (medic apprentice): blind and fiercely proud; snaps at anyone who calls it weakness, but goes calm and gentle over the injured.
 - **mossgaze**: watchful, brittle, self-effacing; reads a room's mood before entering and tracks every exit.
 - **kanami**: hyper-vigilant and omen-burdened; moves like a ghost through the brush, secretly fearless.
-- **skye**: dark-humored and fiercely protective of pups and the weak; loves the quiet hours when she is the only wolf awake.
-- **eltanin**: loyal, bold, and quiet; takes real risks on the hunt to feed the den.
-- **brackenpelt**: steady and plain-spoken; holds the southern border and brings fresh-kill on schedule, softening only for his mate.
+- **skye**: dark-humored and fiercely protective of pups and the weak; loves the quiet hours when she is the only wolf awake.- **brackenpelt**: steady and plain-spoken; holds the southern border and brings fresh-kill on schedule, softening only for his mate.
 - **cloverfern**: warm, practical, quietly brave; remembers which pup likes which root and which yarrow blooms first after rain.
 
 

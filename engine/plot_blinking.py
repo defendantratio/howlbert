@@ -113,7 +113,6 @@ SYPHA_NAME = "Sypha"
 MURKVEIN_NAME = "Murkvein"
 AROMIS_NAME = "Aromis"
 LUCID_NAME = "Lucid"
-ELTANIN_NAME = "Eltanin"
 CLOVERFERN_NAME = "Cloverfern"
 KANAMI_NAME = "Kanami"
 SKYE_NAME = "Skye"
@@ -615,10 +614,6 @@ def plot_activity_payout_mult(
         return 0.85, "blinking; river sickness (**−15%** fish)."
     if activity in ("hunt", "scavenge", "track") and phase == 3 and gp == "greyspire":
         return 1.10, "blinking; iron-scented ridge (**+10%** hunt)."
-    if activity == "hunt" and phase in PARANOIA_PHASES and gp == "thistlehide":
-        if user and _is_plot_wolf(user, ELTANIN_NAME):
-            from config import ELTANIN_PLOT_HUNT_MULT
-            return ELTANIN_PLOT_HUNT_MULT, "blinking; Eltanin is already moving (**+10%** hunt)."
     if activity == "track" and phase in PARANOIA_PHASES and gp == "thistlehide":
         if user and _is_plot_wolf(user, LUCID_NAME):
             from config import LUCID_PLOT_TRACK_MULT

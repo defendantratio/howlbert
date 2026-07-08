@@ -56,7 +56,6 @@ OPEN **ROLES**     `🐺`
 
 -# **Hunter**
 -# **TAKEN**; Aromis (Silverrush)
--# **TAKEN**; Eltanin (Thistlehide)
 -# **TAKEN**; Lucid (Thistlehide)
 -# **TAKEN**; River'Shroud (Thistlehide)
 -# Remaining slots; **OPEN**
