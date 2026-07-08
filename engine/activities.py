@@ -1198,6 +1198,9 @@ def try_work(
 
     mult, use_n = next_use_multiplier(user, "work", day)
     gross = int(roll_range(WORK_BONES) * mult)
+    from engine.plot_blinking import plot_work_mult
+
+    gross = int(gross * plot_work_mult(user, guild_id))
     net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)

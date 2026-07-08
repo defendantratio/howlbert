@@ -1205,6 +1205,10 @@ GRIM_PLOT_OMEN_CHANCE = 0.20
 GRIM_PLOT_OMEN_STANDING = 2
 # Stonepiercer greyspire-scout survey bonus (while plot active)
 STONEPIERCER_PLOT_SURVEY_STANDING = 1
+# Moth greyspire-lowbelly work payout multiplier (while plot active)
+MOTH_PLOT_WORK_MULT = 2.0
+# Sleet greyspire-diplomat: extra standing when approaching thorne lumber
+SLEET_PLOT_FACTION_STANDING = 1
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)

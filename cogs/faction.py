@@ -130,6 +130,8 @@ class Faction(commands.Cog):
         if delta > 0:
             delta = max(1, int(delta * _fmult))
             bonus_bones = int(bonus_bones * _fmult)
+            from engine.plot_blinking import plot_faction_approach_bonus
+            delta += plot_faction_approach_bonus(user, faction, interaction.guild.id)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
         if _fn > 1:
