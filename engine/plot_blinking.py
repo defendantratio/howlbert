@@ -133,6 +133,10 @@ GRIM_NAME = "Grim"
 STONEPIERCER_NAME = "Stonepiercer"
 MOTH_NAME = "Moth"
 SLEET_NAME = "Sleet"
+PEBBLE_NAME = "Pebble"
+REEDWHISPER_NAME = "Reedwhisper"
+ASHBARK_NAME = "Ashbark"
+CINDER_NAME = "Cinder"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -752,6 +756,10 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, MOSSGAZE_NAME):
             from config import MOSSGAZE_PLOT_SCAVENGE_MULT
             return MOSSGAZE_PLOT_SCAVENGE_MULT, "blinking; Mossgaze knows the forest's quiet larders (**+10%** scavenge)."
+    if activity == "scavenge" and phase > 0 and gp == "silverrush":
+        if user and _is_plot_wolf(user, CINDER_NAME):
+            from config import CINDER_PLOT_SCAVENGE_MULT
+            return CINDER_PLOT_SCAVENGE_MULT, "blinking; Cinder, driftwood-born, scavenges the banks well (**+10%**)."
     return 1.0, ""
 
 
@@ -909,6 +917,9 @@ def plot_thistlehide_patrol_standing_bonus(
             bonus += FINNPELT_PLOT_PATROL_STANDING
         elif _is_plot_wolf(user, BRACKENPELT_NAME):
             bonus += BRACKENPELT_PLOT_PATROL_STANDING
+        elif _is_plot_wolf(user, ASHBARK_NAME):
+            from config import ASHBARK_PLOT_PATROL_STANDING
+            bonus += ASHBARK_PLOT_PATROL_STANDING
     if user and great_pack == "greyspire" and plot_phase(guild_id) in PARANOIA_PHASES:
         if _is_plot_wolf(user, ICEFANG_NAME):
             from config import ICEFANG_PLOT_PATROL_STANDING
@@ -1232,18 +1243,26 @@ def plot_work_mult(user, guild_id: int | None) -> float:
 
 
 def plot_faction_approach_bonus(user, faction: str, guild_id: int | None) -> int:
-    """Sleet (greyspire diplomat) wins extra ground with Thorne Lumber."""
+    """Book One diplomats win extra ground on a successful faction approach.
+    (name -> (pack, faction or None for any, extra standing))"""
     if not guild_id or plot_phase(guild_id) <= 0:
         return 0
-    if not _is_plot_wolf(user, SLEET_NAME):
-        return 0
-    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
-        return 0
-    if faction != "thorne_lumber":
-        return 0
-    from config import SLEET_PLOT_FACTION_STANDING
+    from config import (
+        PEBBLE_PLOT_FACTION_STANDING,
+        REEDWHISPER_PLOT_FACTION_STANDING,
+        SLEET_PLOT_FACTION_STANDING,
+    )
 
-    return SLEET_PLOT_FACTION_STANDING
+    table = {
+        SLEET_NAME: ("greyspire", "thorne_lumber", SLEET_PLOT_FACTION_STANDING),
+        PEBBLE_NAME: ("silverrush", None, PEBBLE_PLOT_FACTION_STANDING),
+        REEDWHISPER_NAME: ("mistmoor", None, REEDWHISPER_PLOT_FACTION_STANDING),
+    }
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    for name, (pack, fac, bonus) in table.items():
+        if _is_plot_wolf(user, name) and gp == pack and (fac is None or faction == fac):
+            return bonus
+    return 0
 
 
 def plot_survey_standing_bonus(user, guild_id: int | None) -> int:
