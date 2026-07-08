@@ -405,15 +405,16 @@ def run_surgery(
     if flag_err:
         return False, flag_err
 
-    from engine.diminishing import record_use, use_count_today
+    from engine.diminishing import record_use
 
-    surgery_repeat = use_count_today(surgeon, "surgery", day)
+    # repeat surgeries are throttled by the surgeon's energy (see engine.energy),
+    # not a climbing dc.
     record_use(surgeon, "surgery", day)
 
     assist_note = ""
     advantage = False
-    dc = surgery_dc_for_surgeon(surgeon, spec.dc) + 2 * surgery_repeat
-    tired_note = f" _(repeat surgery today; dc +{2 * surgery_repeat})_" if surgery_repeat else ""
+    dc = surgery_dc_for_surgeon(surgeon, spec.dc)
+    tired_note = ""
     if helper:
         if helper["id"] == surgeon["id"]:
             return False, "pick another **medic** as **helper**, not yourself."

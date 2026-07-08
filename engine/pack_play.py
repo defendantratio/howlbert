@@ -24,11 +24,11 @@ def run_playall(
     if not can_run_pack_bulk_action(user, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG
 
-    # unlimited; each repeat romp the same sunrise gives less mood (the den tires
-    # of the same game), instead of a hard once-per-sunrise block.
+    # unlimited; throttled by the caller's energy (see engine.energy) rather than
+    # a shrinking mood payout, so a full den romp always lands full mood.
     from engine.diminishing import multiplier_for_use, record_use, use_count_today
     play_repeat = use_count_today(user, "playall", day)
-    play_mult = multiplier_for_use(play_repeat + 1)
+    play_mult = multiplier_for_use(play_repeat + 1, "playall")
     mood_gain = PLAYALL_MOOD_GAIN if play_mult >= 1.0 else max(1, int(PLAYALL_MOOD_GAIN * play_mult))
 
     members = db.get_pack_den_wolves(pack_id)

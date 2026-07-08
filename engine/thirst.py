@@ -184,11 +184,11 @@ def run_drinkall(
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
 
-    # unlimited; each repeat communal drink the same sunrise restores less (a
-    # led creek trip loses its novelty), instead of a hard once-per-sunrise block.
+    # unlimited; throttled by the caller's energy (see engine.energy) rather than
+    # a shrinking restore, so a led creek trip always tops the den off.
     from engine.diminishing import multiplier_for_use, record_use, use_count_today
     repeat = use_count_today(caller, "drinkall", day) if caller else 0
-    mult = multiplier_for_use(repeat + 1)
+    mult = multiplier_for_use(repeat + 1, "drinkall")
     restore = DRINK_THIRST_RESTORE if mult >= 1.0 else max(1, int(DRINK_THIRST_RESTORE * mult))
 
     members = db.get_pack_den_wolves(pack_id)

@@ -1187,7 +1187,7 @@ class Life(commands.Cog):
         ok, msg = train_pup(trainer, pup, attribute=attribute, day=world['day_number'])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Train Pup', msg, color=color)
-        embed.set_footer(text='unlimited; each repeat lesson today raises the dc · pups and juveniles only')
+        embed.set_footer(text='unlimited; each lesson spends energy · pups and juveniles only')
         await interaction.response.send_message(embed=embed)
 
     async def _pups(self, interaction: discord.Interaction):
