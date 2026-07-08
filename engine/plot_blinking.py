@@ -142,6 +142,14 @@ RIVENMAW_NAME = "Rivenmaw"
 DUSK_NAME = "Dusk"
 SCAB_NAME = "Scab"
 TALUS_NAME = "Talus"
+RAVEN_NAME = "Raven"
+EBB_NAME = "Ebb"
+YARROW_NAME = "Yarrow"
+MOSSHEART_NAME = "Mossheart"
+FERNSPOT_NAME = "Fernspot"
+BARKHOLLOW_NAME = "Barkhollow"
+MUDNOSE_NAME = "Mudnose"
+THYME_NAME = "Thyme"
 # named Book One pups; each grows a little steadier for living through the blinking
 PLOT_PUP_NAMES = ("Cinderpup", "Harepup", "Ripplepup", "Mosspup", "Mudpup")
 
@@ -817,6 +825,9 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, MOSSGAZE_NAME):
             from config import MOSSGAZE_PLOT_SCAVENGE_MULT
             return MOSSGAZE_PLOT_SCAVENGE_MULT, "blinking; Mossgaze knows the forest's quiet larders (**+10%** scavenge)."
+        if user and (_is_plot_wolf(user, FERNSPOT_NAME) or _is_plot_wolf(user, BARKHOLLOW_NAME)):
+            from config import FORAGER_PLOT_SCAVENGE_MULT
+            return FORAGER_PLOT_SCAVENGE_MULT, "blinking; the forest's foragers still find what it will give (**+10%** scavenge)."
     if activity == "scavenge" and phase > 0 and gp == "silverrush":
         if user and _is_plot_wolf(user, CINDER_NAME):
             from config import CINDER_PLOT_SCAVENGE_MULT
@@ -825,6 +836,10 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, SCAB_NAME):
             from config import SCAB_PLOT_SCAVENGE_MULT
             return SCAB_PLOT_SCAVENGE_MULT, "blinking; Scab knows which scraps go unwatched (**+15%** scavenge)."
+    if activity == "scavenge" and phase > 0 and gp == "mistmoor":
+        if user and _is_plot_wolf(user, MUDNOSE_NAME):
+            from config import FORAGER_PLOT_SCAVENGE_MULT
+            return FORAGER_PLOT_SCAVENGE_MULT, "blinking; Mudnose roots up the bog's hidden food (**+10%** scavenge)."
     return 1.0, ""
 
 
@@ -1323,6 +1338,7 @@ def plot_faction_approach_bonus(user, faction: str, guild_id: int | None) -> int
         SLEET_NAME: ("greyspire", "thorne_lumber", SLEET_PLOT_FACTION_STANDING),
         PEBBLE_NAME: ("silverrush", None, PEBBLE_PLOT_FACTION_STANDING),
         REEDWHISPER_NAME: ("mistmoor", None, REEDWHISPER_PLOT_FACTION_STANDING),
+        THYME_NAME: ("thistlehide", None, 1),
     }
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     for name, (pack, fac, bonus) in table.items():
@@ -1331,18 +1347,27 @@ def plot_faction_approach_bonus(user, faction: str, guild_id: int | None) -> int
     return 0
 
 
+_SURVEY_SCOUTS = {
+    STONEPIERCER_NAME: "greyspire",
+    RAVEN_NAME: "greyspire",
+    EBB_NAME: "silverrush",
+    YARROW_NAME: "mistmoor",
+    MOSSHEART_NAME: "thistlehide",
+}
+
+
 def plot_survey_standing_bonus(user, guild_id: int | None) -> int:
-    """Stonepiercer (greyspire scout) earns extra standing on a successful survey
-    while the blinking is active."""
+    """Book One scouts earn extra standing on a successful survey while the
+    blinking is active."""
     if not guild_id or plot_phase(guild_id) <= 0:
         return 0
-    if not _is_plot_wolf(user, STONEPIERCER_NAME):
-        return 0
-    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
-        return 0
-    from config import STONEPIERCER_PLOT_SURVEY_STANDING
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    for name, pack in _SURVEY_SCOUTS.items():
+        if _is_plot_wolf(user, name) and gp == pack:
+            from config import PLOT_SURVEY_STANDING
 
-    return STONEPIERCER_PLOT_SURVEY_STANDING
+            return PLOT_SURVEY_STANDING
+    return 0
 
 
 def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
