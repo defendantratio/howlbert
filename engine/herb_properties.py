@@ -14,8 +14,7 @@ class HerbFormRule:
     must_dry_before_use: bool = False
     external_only: bool = False
     requires_poultice: bool = False
-    requires_tonic: bool = False
-    requires_decoction: bool = False
+    requires_tea: bool = False
     fresh_only_bonus: bool = False
     dried_only: bool = False
     notes: str = ""
@@ -48,7 +47,7 @@ HERB_FORM_RULES: dict[str, HerbFormRule] = {
     "oleander": HerbFormRule(toxic_if_fresh=True, toxic_dc=18, toxic_damage=(4, 6)),
     "water_hemlock": HerbFormRule(toxic_if_fresh=True, toxic_dc=20, toxic_damage=(6, 6)),
     "deathberries": HerbFormRule(toxic_if_fresh=True, toxic_dc=18, notes="mercy-killing herb only."),
-    "feverfew": HerbFormRule(requires_tonic=True, fresh_only_bonus=True, notes="tonic tea works best fresh."),
+    "feverfew": HerbFormRule(requires_tea=True, fresh_only_bonus=True, notes="tea works best fresh."),
     "yarrow": HerbFormRule(fresh_only_bonus=True, notes="fresh yarrow staunches faster (+2 stabilize)."),
     "comfrey": HerbFormRule(
         requires_poultice=True,
@@ -56,8 +55,8 @@ HERB_FORM_RULES: dict[str, HerbFormRule] = {
     ),
     "goldenrod": HerbFormRule(requires_poultice=True),
     "dried_skullcap": HerbFormRule(dried_only=True),
-    "meadowsweet": HerbFormRule(requires_tonic=True),
-    "labrador_tea": HerbFormRule(requires_decoction=True),
+    "meadowsweet": HerbFormRule(requires_tea=True),
+    "labrador_tea": HerbFormRule(requires_tea=True),
     "arnica": HerbFormRule(external_only=True, requires_poultice=True),
     # add new rules if needed
 }
@@ -81,12 +80,8 @@ def form_label(form: str) -> str:
         "fresh": "fresh",
         "dried": "dried",
         "poultice": "poultice",
-        "tonic": "tonic",
-        "decoction": "decoction",
         "juice": "juice",
-        "chewed": "chewed",
         "tea": "tea",
-        "infusion": "infusion",
         "ointment": "ointment",
         "sap": "sap",
         "rub": "rub",
@@ -100,14 +95,11 @@ def can_use_form(rule: HerbFormRule, form: str, *, complex_wound: bool) -> tuple
         return False, "must **dry** this herb before use."
     if rule.dried_only and form != "dried":
         return False, "only the **dried** form is safe to use."
-    if rule.external_only and form in ("tonic", "fresh") and form != "poultice":
+    if rule.external_only and form != "poultice":
         if form == "fresh":
             return False, "external poultice only; do not swallow fresh."
-    if rule.requires_decoction and form not in ("decoction", "dried"):
-        return False, "needs a **decoction** (boiled or hot-spring steeped)."
-    if rule.requires_tonic and form not in ("tonic", "decoction", "fresh") and not complex_wound:
-        if form == "dried":
-            return True, ""  # dried can be a fallback but less effective
+    if rule.requires_tea and form not in ("tea", "dried"):
+        return False, "needs a **tea** (steeped)."
     if rule.requires_poultice and form == "fresh" and complex_wound:
         return False, "complex wound needs a proper **poultice** (dc 10) or heals less."
     return True, ""

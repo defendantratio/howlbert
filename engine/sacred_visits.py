@@ -117,27 +117,29 @@ def format_sacred_visit_reminder(user, day: int) -> str | None:
 
 def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     """
-    rewards for walking the sacred path once per sunrise.
+    rewards for walking the sacred path; repeats the same sunrise pay less.
     returns (reward lines, whether blessings were applied).
     """
-    last = int(user["last_sacred_day"] if "last_sacred_day" in user.keys() else 0)
-    if last >= day:
-        return [], False
-
     import database as db
+    from engine.diminishing import diminishing_note, next_use_multiplier
     from engine.herb_buffs import merge_buff_fields
 
-    lines: list[str] = []
-    db.adjust_wolf_standing_by_id(user["id"], SACRED_STANDING_GAIN, triggered_day=day)
-    lines.append(f"**+{SACRED_STANDING_GAIN} standing**")
+    sacred_mult, sacred_n = next_use_multiplier(user, "sacred_visit", day)
 
-    mood = db.adjust_mood(user["id"], SACRED_MOOD_GAIN)
-    lines.append(f"**+{SACRED_MOOD_GAIN} mood** (now **{mood}**)")
+    lines: list[str] = []
+    standing_gain = max(1, int(SACRED_STANDING_GAIN * sacred_mult))
+    db.adjust_wolf_standing_by_id(user["id"], standing_gain, triggered_day=day)
+    lines.append(f"**+{standing_gain} standing**")
+
+    mood_gain = max(1, int(SACRED_MOOD_GAIN * sacred_mult))
+    mood = db.adjust_mood(user["id"], mood_gain)
+    lines.append(f"**+{mood_gain} mood** (now **{mood}**)")
 
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
     if pack_id:
-        db.adjust_pack_unity(int(pack_id), SACRED_PACK_UNITY_GAIN)
-        lines.append(f"**+{SACRED_PACK_UNITY_GAIN} pack unity**")
+        unity_gain = max(1, int(SACRED_PACK_UNITY_GAIN * sacred_mult))
+        db.adjust_pack_unity(int(pack_id), unity_gain)
+        lines.append(f"**+{unity_gain} pack unity**")
 
     buff_fields = merge_buff_fields(user, medicine_bonus_next=SACRED_MEDICINE_BONUS)
     if int(user["distressed"] if "distressed" in user.keys() else 0):
@@ -149,6 +151,9 @@ def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     lines.append(
         f"next **medicine/herblore** check **+{SACRED_MEDICINE_BONUS}**"
     )
+    dim = diminishing_note(sacred_n)
+    if dim:
+        lines.append(f"_{dim}_")
     return lines, True
 
 
@@ -204,9 +209,7 @@ def apply_sacred_visit_reminders(conn: sqlite3.connection, day: int) -> list[dic
 def record_sacred_visit(user, *, day: int) -> tuple[bool, str]:
     if not is_full_medic(user):
         return False, "only full **medics** must keep the half-moon sacred visits."
-    blessings, ok = apply_sacred_visit_blessings(user, day=day)
-    if not ok:
-        return False, "you already walked the sacred path this sunrise."
+    blessings, _ok = apply_sacred_visit_blessings(user, day=day)
     ancestor = pick_sacred_ancestor_word(user)
     reward = " · ".join(blessings)
     return True, (

@@ -1,3 +1,4 @@
+# herb_treat.py
 """treat from prepared herb inventory."""
 
 from __future__ import annotations
@@ -17,7 +18,6 @@ from engine.conditions import (
 from engine.dice import format_roll_result, resolve_check
 from engine.exhaustion_effects import effective_max_hp
 from engine.herb_buffs import (
-    POISON_MISUSE_HERBS,
     apply_cough_dose,
     apply_supplemental_herb,
     grant_disease_save_advantage,
@@ -80,11 +80,11 @@ def check_fresh_toxicity(user, herb_key: str, form: str, *, day: int) -> tuple[b
 
 def heal_amount_for_form(form: str, *, complex_wound: bool) -> tuple[int, int]:
     """return (min_heal, max_heal) based on preparation form."""
-    if form in ("poultice", "decoction", "ointment"):
+    if form in ("poultice", "ointment", "sap"):
         return (1, 4)
-    if form == "tonic":
+    if form in ("juice",):
         return (1, 3)
-    if form == "tea" or form == "infusion":
+    if form in ("tea", "raw", "cooked", "simmered_milk", "sweetened", "gargle", "rub"):
         return (1, 2)
     if complex_wound:
         return (1, 2)
@@ -239,7 +239,7 @@ def treat_from_herb_stack(
         if required_method is None:
             required_method = DEFAULT_METHOD_REQS.get(disease_key)
 
-        if required_method and required_method in ("poultice", "tea", "decoction", "tonic", "ointment"):
+        if required_method and required_method in ("poultice", "tea", "ointment"):
             # check if the herb is in the correct form
             if form != required_method:
                 return False, (
@@ -327,8 +327,8 @@ def treat_from_herb_stack(
             active_injuries=json.dumps(injuries),
             condition="healthy" if not injuries else patient["condition"],
         )
-        decoct = " decoction burned the wound clean." if form == "decoction" else ""
-        msg = f"**{name}**{form_tag}{target_note} treated the injury.{decoct}"
+        tea_wash = " hot tea wash burns the wound clean." if form == "tea" else ""
+        msg = f"**{name}**{form_tag}{target_note} treated the injury.{tea_wash}"
     elif outcome == "cured_genetic":
         from engine.genetics import genetic_keys_matching_cures, remove_genetic_keys
 

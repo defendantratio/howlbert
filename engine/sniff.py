@@ -17,7 +17,7 @@ from config import (
 )
 from engine.cat_pacts import pact_border_chance_multiplier
 from engine.prey_items import SNIFF_FLAVORS
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.embeds import SUCCESS_COLOR, howlbert_embed
 
 
 SNIFF_ENCOUNTER_PACKMATE = (
@@ -126,10 +126,10 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
 
     world = db.get_world(interaction.guild.id)
     day = world["day_number"]
-    if int(user["last_sniff_day"]) >= day:
-        embed = howlbert_embed("already sniffed", "you've read the wind this sunrise.", color=ERROR_COLOR)
-        embed.set_footer(text="resets at next `/rollover` · `/checklist`")
-        return embed, None
+
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    sniff_mult, sniff_n = next_use_multiplier(user, "sniff", day)
 
     db.update_user(interaction.user.id, last_sniff_day=day)
     flavor = random.choice(SNIFF_FLAVORS)
@@ -151,8 +151,9 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
         )
         footer_bits.append(f"sniff bonus (+{SNIFF_HUNT_BONUS_PCT}% bones, −{track_cut} track dc)")
     elif kind == "water":
-        new_thirst = db.adjust_thirst(user["id"], SNIFF_THIRST_RESTORE)
-        body += f"\n\n**+{SNIFF_THIRST_RESTORE} hydration** (now **{new_thirst}**); the damp air wets your tongue."
+        restore = max(1, int(SNIFF_THIRST_RESTORE * sniff_mult))
+        new_thirst = db.adjust_thirst(user["id"], restore)
+        body += f"\n\n**+{restore} hydration** (now **{new_thirst}**); the damp air wets your tongue."
     elif kind == "alert":
         alert_bonus = SNIFF_ALERT_ENCOUNTER_BONUS
         body += "\n\nyour hackles rise; whoever left that is close. you stay sharp on the way back."
@@ -259,8 +260,9 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             if rival_bond and int(rival_bond["strength"]) >= 50:
                 db.adjust_wolf_standing(user["discord_id"], 1)
                 body += "\n_your rival is out here too. the standing you carry sharpens._"
-            new_mood = db.adjust_mood(user["id"], SNIFF_WOLF_ENCOUNTER_MOOD)
-            body += f"\n\n**+{SNIFF_WOLF_ENCOUNTER_MOOD} mood** (now **{new_mood}**)."
+            mood_gain = max(1, int(SNIFF_WOLF_ENCOUNTER_MOOD * sniff_mult))
+            new_mood = db.adjust_mood(user["id"], mood_gain)
+            body += f"\n\n**+{mood_gain} mood** (now **{new_mood}**)."
             if user["pack_id"] and user["pack_id"] == encounter["pack_id"]:
                 body += (
                     "\npackmate on the trail; try **`/playpen action:socialize`** "
@@ -360,6 +362,10 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
     if whisper:
         body += f"\n\n{whisper}"
         footer_bits.append("spirit whisper")
+
+    dim_note = diminishing_note(sniff_n)
+    if dim_note:
+        body += f"\n\n_{dim_note}_"
 
     embed = howlbert_embed("on the wind", body, color=SUCCESS_COLOR)
     embed.set_footer(text=" · ".join(footer_bits))

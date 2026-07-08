@@ -35,7 +35,7 @@ HERBS = {
         packs=("mistmoor",),
         cures=("tooth_infection", "infected_wound", "diarrhea"),
         side_effects="fresh bark causes severe vomiting; prolonged use may cause low potassium, heart problems.",
-        preparation="bark chewed directly or applied as poultice; decoction used as mouthwash.",
+        preparation="bark chewed directly or applied as poultice; tea used as mouthwash.",
     ),
     "arnica": _h(
         "Arnica",
@@ -44,7 +44,7 @@ HERBS = {
         packs=("greyspire",),
         cures=("sprained_leg", "punctured_paw", "arthritis"),
         side_effects="highly toxic if ingested; nausea, vomiting, irregular heartbeat, coma; topical may cause itching or rash.",
-        preparation="external use only as gel, cream, or ointment; homeopathic dilutions are safer.",
+        preparation="external use only as poultice, gel, cream, or ointment; homeopathic dilutions are safer.",
     ),
     "beech_leaves": _h(
         "Beech Leaves",
@@ -57,7 +57,7 @@ HERBS = {
     "bindweed": _h(
         "Bindweed Vines",
         "common",
-        "relieves gut complaints and urinary problems; immune-stimulating tonic for fever. tough vines lash splints to broken bones, speeding supported breaks (bone healing minus 7 days). strong laxative in large amounts; use sparingly.",
+        "relieves gut complaints and urinary problems; immune-stimulating tea for fever. tough vines lash splints to broken bones, speeding supported breaks (bone healing minus 7 days). strong laxative in large amounts; use sparingly.",
         cures=("eating_distress", "urinary_infection", "influenza", "constipation"),
         side_effects="strong laxative; large amounts cause stomach pain; toxic to livestock.",
         preparation="leaves may be cooked to reduce oxalic acid; seeds used as purgative.",
@@ -101,7 +101,7 @@ HERBS = {
         "bind broken bones and splint fractures; anti-inflammatory poultice for bruising and sprains; move at half speed without worsening. toxic in large doses; cardiac effects and weakness.",
         cures=("fractured_rib", "sprained_leg", "broken_jaw"),
         side_effects="contains toxic alkaloids; weakness, blurred vision, cardiac arrhythmias, nausea.",
-        preparation="1 tsp chopped flower shoots in water 3 to 4 times daily; traditional.",
+        preparation="chopped flower shoots bound as a poultice for splinting, or 1 tsp steeped in water 3 to 4 times daily; traditional.",
     ),
     "burdock_root": _h(
         "Burdock Root",
@@ -117,7 +117,7 @@ HERBS = {
         "leaf applied to cuts staunches bleeding; settles gut sickness and deep wounds. 1 leaf per day ignores first exhaustion from a forced march.",
         cures=("sprained_leg", "diarrhea", "deep_gash"),
         side_effects="limited documented side effects.",
-        preparation="applied as poultice; root used as astringent and tonic.",
+        preparation="applied as poultice; root used as astringent tea.",
     ),
     "catchweed": _h(
         "Catchweed Burrs",
@@ -168,7 +168,7 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("cough", "leafbare_cough", "infected_wound"),
         side_effects="high doses may cause vertigo, weakness, headache, difficulty breathing.",
-        preparation="used as tea or topical application.",
+        preparation="used as tea or poultice application.",
     ),
     "cobnuts": _h(
         "Cobnuts",
@@ -257,10 +257,10 @@ HERBS = {
     "dock": _h(
         "Dock",
         "common",
-        "restores cracked paw pads after 1 day rest; leaf chewed and applied soothes scratches and infected wounds. root decoction treats liver complaints, gut sickness, and leaf-bare cough.",
+        "restores cracked paw pads after 1 day rest; leaf chewed and applied soothes scratches and infected wounds. root tea treats liver complaints, gut sickness, and leaf-bare cough.",
         cures=("leafbare_cough", "hepatitis", "diarrhea", "punctured_paw", "infected_wound"),
         side_effects="oxalate content may cause gi symptoms or kidney damage; avoid mature or uncooked leaves.",
-        preparation="leaf chewed and applied to scratches.",
+        preparation="leaf chewed and applied to scratches; root dug and steeped into a tea for liver and gut complaints.",
     ),
     "douglas_sagewort": _h(
         "Douglas' Sagewort",
@@ -287,7 +287,7 @@ HERBS = {
         cures=("sprained_leg",),
         poison=True,
         side_effects="poisoning: vomiting, diarrhea, weakness, coma; unripe berries and other parts toxic.",
-        preparation="requires careful preparation; unripe or uncooked parts are toxic.",
+        preparation="bark and leaf prepared as a poultice; requires careful preparation, unripe or uncooked parts are toxic.",
     ),
     "elderberry": _h(
         "Elderberry",
@@ -337,7 +337,7 @@ HERBS = {
         "sweetens bitter herb mixtures. tea is anti-inflammatory and antiseptic; eases gut upsets, mild cough, and nervy tension.",
         cures=("diarrhea", "leafbare_cough", "anxiety"),
         side_effects="possibly safe; no side effects reported; safety in pregnancy not established.",
-        preparation="tender tops and flowers made into decoction; roots in milk for diarrhea.",
+        preparation="tender tops and flowers made into tea; roots in milk for diarrhea.",
     ),
     "holly_berries": _h(
         "Holly Berries",
@@ -395,8 +395,8 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("diarrhea", "fleas", "leafbare_cough", "urinary_infection", "worms"),
         side_effects="no serious side effects reported; may cause mild gi discomfort.",
-        preparation="1.5g taken 3 to 5 times daily; infusions for kidney and bladder conditions.",
-        prep_methods=("chewed", "infusion"),
+        preparation="1.5g taken 3 to 5 times daily; tea for kidney and bladder conditions.",
+        prep_methods=("poultice", "tea"),
     ),
     "labrador_tea": _h(
         "Labrador Tea",
@@ -478,7 +478,7 @@ HERBS = {
         packs=("mistmoor",),
         cures=("influenza", "urinary_infection"),
         side_effects="contains saponins; poisonous when ingested; causes irritation, nausea, vomiting.",
-        preparation="dried roots ground into powder; tea or infusion.",
+        preparation="dried roots ground into powder; tea.",
     ),
     "meadowsweet": _h(
         "Meadowsweet",
@@ -616,7 +616,7 @@ HERBS = {
     "raspberry_leaves": _h(
         "Raspberry Leaves",
         "common",
-        "advantage on birth hemorrhage saves; rich in vitamins and minerals. strongly astringent; eases mild diarrhea and chest cough. detoxifying tonic.",
+        "advantage on birth hemorrhage saves; rich in vitamins and minerals. strongly astringent; eases mild diarrhea and chest cough. detoxifying tea.",
         cures=("diarrhea", "leafbare_cough"),
         side_effects="generally safe; may cause diarrhea, hypoglycemia, acute liver injury; may cause premature labor.",
         preparation="tea.",
@@ -785,7 +785,7 @@ HERBS = {
     "wild_cherry_bark": _h(
         "Wild Cherry Bark",
         "common",
-        "stops coughing for 2 hours, even blackcough; sedative and digestive tonic. calms anxiety. contains cyanogenic glycosides; short-term use only (10 to 14 days); large doses toxic.",
+        "stops coughing for 2 hours, even blackcough; sedative and digestive tea. calms anxiety. contains cyanogenic glycosides; short-term use only (10 to 14 days); large doses toxic.",
         cures=("cough", "leafbare_cough", "diarrhea", "anxiety"),
         side_effects="generally safe in small amounts; excessive doses toxic due to cyanogenic glycosides; short-term use only.",
         preparation="bark tea or syrup; short-term use only.",
@@ -875,7 +875,7 @@ HERBS = {
         habitat=("roadside",),
         cures=("fleas", "diarrhea", "eating_distress"),
         side_effects="contains thujone; harmful in large amounts; may cause miscarriage; respiratory allergic responses.",
-        preparation="tea, topical; use with caution.",
+        preparation="tea, rubbed through the pelt; use with caution.",
     ),
     "garden_mint": _h(
         "Garden Mint",
@@ -893,7 +893,7 @@ HERBS = {
         habitat=("compound",),
         cures=("influenza", "eating_distress"),
         side_effects="contains oxalic acid; high doses toxic; overdose causes diarrhea, nausea, kidney damage.",
-        preparation="small amounts as tonic; poultice.",
+        preparation="small amounts as tea; poultice.",
     ),
     "oxeye_daisy": _h(
         "Oxeye Daisy",
@@ -911,7 +911,7 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("punctured_paw", "leafbare_cough", "eating_distress", "scorched_hide", "asthma"),
         side_effects="none known; may lower blood sugar; livestock poisoning reported; muscular tremors.",
-        preparation="tea, topical, bath.",
+        preparation="tea, poultice, bath.",
     ),
     "shepherds_purse": _h(
         "Shepherd's Purse",
@@ -929,6 +929,6 @@ HERBS = {
         habitat=("roadside",),
         cures=("leafbare_cough", "infected_wound", "mild_poison", "lyme"),
         side_effects="safe in moderate amounts; large quantities may cause digestive discomfort; contains goitrogens.",
-        preparation="young leaves eaten; poultice.",
+        preparation="young leaves eaten; poultice; rubbed through the pelt for fleas.",
     ),
 }

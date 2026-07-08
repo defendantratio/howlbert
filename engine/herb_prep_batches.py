@@ -26,8 +26,8 @@ HERB_PREP_KEYS = frozenset(
 
 RARE_RARITIES = frozenset({"rare", "very_rare"})
 POULTICE_HERBS = frozenset({"plantain", "common_mallow", "catchweed", "arnica", "dock", "alder_bark"})
-TONIC_HERBS = frozenset({"heather", "boneset", "feverfew", "sweet_sedge", "lizards_tail"})
-DECOCT_HERBS = frozenset({"valerian", "chamomile", "pine_bark", "marsh_mallow", "elderberry"})
+TEA_MIX_HERBS = frozenset({"heather", "boneset", "feverfew", "sweet_sedge", "lizards_tail"})
+TEA_STEEP_HERBS = frozenset({"valerian", "chamomile", "pine_bark", "marsh_mallow", "elderberry"})
 SEDATIVE_HERBS = frozenset({"poppy_seeds", "valerian", "dried_skullcap", "passionflower"})
 
 
@@ -201,7 +201,7 @@ def apply_herb_prep_outcome(
             stacks = [
                 s
                 for s in db.get_herb_stacks(user["id"])
-                if s["form"] in ("decoction", "tonic", "poultice")
+                if s["form"] in ("tea", "poultice")
             ]
             if stacks:
                 stack = random.choice(stacks)
@@ -209,7 +209,7 @@ def apply_herb_prep_outcome(
                 lines.append(f"**{_herb_name(stack['herb_key'])}** batch boiled over and ruined.")
             else:
                 db.adjust_mood(user["id"], -3)
-                lines.append("_decoction ruined; **−3 mood**._")
+                lines.append("_tea ruined; **−3 mood**._")
         return user_fields, cond_fields, lines
 
     if not success:
@@ -288,8 +288,8 @@ def apply_herb_prep_outcome(
 
     elif scenario_key == "prep_mix_tonic":
         user_fields.update(grant_disease_save_advantage(user, days=1))
-        lines.append("_clean tonic brewed; **advantage** on disease saves **1 sunrise**._")
-        batch = _promote_fresh(user, "tonic", day=day, guild_id=guild_id, prefer=TONIC_HERBS)
+        lines.append("_clean tea brewed; **advantage** on disease saves **1 sunrise**._")
+        batch = _promote_fresh(user, "tea", day=day, guild_id=guild_id, prefer=TEA_MIX_HERBS)
         _append_batch_line(lines, batch)
 
     elif scenario_key == "prep_dry_storage":
@@ -312,10 +312,10 @@ def apply_herb_prep_outcome(
         user_fields.update(grant_disease_save_advantage(user, days=days))
         potency = 120 if outcome == "critical_success" else 110
         batch = _promote_fresh(
-            user, "decoction", day=day, guild_id=guild_id, potency=potency, prefer=DECOCT_HERBS
+            user, "tea", day=day, guild_id=guild_id, potency=potency, prefer=TEA_STEEP_HERBS
         )
         lines.append(
-            f"_decoction at **{potency}%** potency; disease-save advantage **{days} sunrise(s)**._"
+            f"_tea at **{potency}%** potency; disease-save advantage **{days} sunrise(s)**._"
         )
         _append_batch_line(
             lines, batch, extra=" Cure timers **halved** when used." if batch else ""
@@ -329,7 +329,7 @@ def apply_herb_prep_outcome(
         lines.extend(poison_lines)
         batch = _promote_fresh(
             user,
-            "tonic",
+            "tea",
             day=day,
             guild_id=guild_id,
             potency=100,
@@ -356,7 +356,7 @@ def apply_herb_prep_outcome(
             )
             lines.append("_sedative draught ready: **calm** and sleep aid until next sunrise._")
         batch = _promote_fresh(
-            user, "tonic", day=day, guild_id=guild_id, prefer=SEDATIVE_HERBS
+            user, "tea", day=day, guild_id=guild_id, prefer=SEDATIVE_HERBS
         )
         _append_batch_line(lines, batch)
 
@@ -368,7 +368,7 @@ def apply_herb_prep_outcome(
         lines.extend(poison_lines)
         batch = _promote_fresh(
             user,
-            "tonic",
+            "tea",
             day=day,
             guild_id=guild_id,
             potency=85,
