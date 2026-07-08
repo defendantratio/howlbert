@@ -102,6 +102,8 @@ MAGGOTBRAIN_NAME = "MaggotBrain"
 VULCAN_NAME = "Vulcan Stonehide"
 RIME_NAME = "Rime"
 ROOT_NAME = "Root"
+FROSTBURN_NAME = "Frostburn"
+HOLLOWSTEM_NAME = "Hollowstem"
 MIREWORT_NAME = "mirewort"
 DRIFTPUP_NAME = "Driftpup"
 PALESTEP_NAME = "Pale'Step"
@@ -410,8 +412,15 @@ def apply_plot_rollover_effects(
     notes: list[str] = []
 
     if phase == 1:
-        shielded_packs = []
-        for name, pack in ((RIME_NAME, "greyspire"), (ROOT_NAME, "thistlehide")):
+        # a pup guardian in the den spares that pack's pups the moon's weight.
+        guardians: dict[str, str] = {}
+        for name, pack in (
+            (RIME_NAME, "greyspire"),
+            (FROSTBURN_NAME, "greyspire"),
+            (ROOT_NAME, "thistlehide"),
+        ):
+            if pack in guardians:
+                continue
             watching = conn.execute(
                 """
                 SELECT 1 FROM users
@@ -423,7 +432,8 @@ def apply_plot_rollover_effects(
                 (name, pack),
             ).fetchone()
             if watching:
-                shielded_packs.append(pack)
+                guardians[pack] = name
+        shielded_packs = list(guardians.keys())
         if shielded_packs:
             placeholders = ", ".join("?" for _ in shielded_packs)
             conn.execute(
@@ -444,10 +454,31 @@ def apply_plot_rollover_effects(
                 """
             )
         notes.append("The bitten moon weighs on every wolf; **−1 mood**.")
-        if "greyspire" in shielded_packs:
-            notes.append("**Rime** keeps the Greyspire pups close; they are spared the moon's weight.")
-        if "thistlehide" in shielded_packs:
-            notes.append("**Root** wraps her tail around the Thistlehide pups; they are spared the moon's weight.")
+        for pack, name in guardians.items():
+            notes.append(f"**{name}** keeps the {pack.capitalize()} pups close; they are spared the moon's weight.")
+
+    # Hollowstem gathers the Mistmoor pups close through the blinking (any phase).
+    hollowstem = conn.execute(
+        """
+        SELECT 1 FROM users
+        WHERE LOWER(wolf_name) = LOWER(?)
+          AND great_pack = 'mistmoor'
+          AND condition NOT IN ('dead', 'dying')
+        LIMIT 1
+        """,
+        (HOLLOWSTEM_NAME,),
+    ).fetchone()
+    if hollowstem:
+        conn.execute(
+            """
+            UPDATE users
+            SET mood = MIN(100, mood + 2)
+            WHERE great_pack = 'mistmoor'
+              AND wolf_role = 'pup'
+              AND condition NOT IN ('dead', 'dying')
+            """
+        )
+        notes.append("**Hollowstem** gathers the Mistmoor pups close; the youngest feel safe, **+2 mood**.")
 
     if phase in WARM_RIVER_PHASES:
         vulcan_watching = conn.execute(
