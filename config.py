@@ -1203,8 +1203,11 @@ HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha":
 # Grim greyspire-alpha sniff omen (paranoia): chance for pack-wide standing
 GRIM_PLOT_OMEN_CHANCE = 0.20
 GRIM_PLOT_OMEN_STANDING = 2
-# Stonepiercer greyspire-scout survey bonus (while plot active)
+# scout survey standing bonus (while plot active) — Stonepiercer, Raven, Ebb, Yarrow, Mossheart
 STONEPIERCER_PLOT_SURVEY_STANDING = 1
+PLOT_SURVEY_STANDING = 1
+# thistlehide/mistmoor plot foragers scavenge mult
+FORAGER_PLOT_SCAVENGE_MULT = 1.10
 # Moth greyspire-lowbelly work payout multiplier (while plot active)
 MOTH_PLOT_WORK_MULT = 2.0
 # Sleet greyspire-diplomat: extra standing when approaching thorne lumber
