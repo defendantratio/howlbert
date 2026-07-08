@@ -1199,7 +1199,7 @@ MIREWORT_PLOT_TREAT_HEAL_BONUS = 2  # mistmoor medic (bookone's mistmoor treat l
 RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS = 1
 MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS = 2
 # observe strain relief per healer (phases 5 to 11)
-HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha": 3}
+HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha": 3, "Rotteddust": 1}
 # Grim greyspire-alpha sniff omen (paranoia): chance for pack-wide standing
 GRIM_PLOT_OMEN_CHANCE = 0.20
 GRIM_PLOT_OMEN_STANDING = 2
@@ -1222,6 +1222,10 @@ REEDWHISPER_PLOT_FACTION_STANDING = 2
 ASHBARK_PLOT_PATROL_STANDING = 1
 # Cinder (silverrush driftwood) scavenge multiplier while plot active
 CINDER_PLOT_SCAVENGE_MULT = 1.10
+# Rotteddust (mistmoor healer apprentice) treat heal bonus (phases 5-11)
+ROTTEDDUST_PLOT_TREAT_HEAL_BONUS = 1
+# Rivenmaw (thistlehide hunter) hunt multiplier during paranoia
+RIVENMAW_PLOT_HUNT_MULT = 1.10
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
