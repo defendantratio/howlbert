@@ -1190,14 +1190,16 @@ FISHING_BONES = (10, 22)
 BRACKENPELT_PLOT_PATROL_STANDING = 1
 # Icefang Stoneguard plot (Book One; Greyspire border)
 ICEFANG_PLOT_PATROL_STANDING = 1
-# Hemlock healer plot (Book One; Greyspire den)
-HEMLOCK_PLOT_TREAT_HEAL_BONUS = 1
-# Ripple healer plot (Book One; Silverrush den)
-RIPPLE_PLOT_TREAT_HEAL_BONUS = 1
-# Sypha healer plot (Book One; Thistlehide den)
-SYPHA_PLOT_TREAT_HEAL_BONUS = 1
-# Murkvein healer plot (Book One; Mistmoor den)
-MURKVEIN_PLOT_TREAT_HEAL_BONUS = 1
+# Book One healer treat-heal bonuses (phases 5 to 11)
+HEMLOCK_PLOT_TREAT_HEAL_BONUS = 2   # greyspire medic
+RIPPLE_PLOT_TREAT_HEAL_BONUS = 1    # silverrush healer
+SYPHA_PLOT_TREAT_HEAL_BONUS = 2     # thistlehide healer
+MIREWORT_PLOT_TREAT_HEAL_BONUS = 2  # mistmoor medic (bookone's mistmoor treat lane)
+# extra heal when treating rot-lung specifically (rot-lung specialists)
+RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS = 1
+MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS = 2
+# observe strain relief per healer (phases 5 to 11)
+HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha": 3}
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)

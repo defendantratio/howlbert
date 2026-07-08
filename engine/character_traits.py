@@ -3612,6 +3612,27 @@ def decay_skill_strain_on_rollover() -> None:
                 )
 
 
+def reduce_skill_strain(wolf_id: int, skill_key: str, amount: int) -> int:
+    """Lower a skill's practice strain by ``amount`` (floored at 0). Returns the
+    strain actually removed."""
+    import database as db
+
+    user = db.get_user_by_id(wolf_id)
+    if not user:
+        return 0
+    state = parse_skill_strain_state(_user_field(user, "trait_failure_days", "{}"))
+    entry = state.get(skill_key)
+    if not entry:
+        return 0
+    old = int(entry.get("strain", 0))
+    if old <= 0:
+        return 0
+    entry["strain"] = max(0, old - int(amount))
+    state[skill_key] = entry
+    db.update_user_by_id(wolf_id, trait_failure_days=encode_skill_strain_state(state))
+    return old - entry["strain"]
+
+
 def maybe_apply_failure_setback(
     user,
     *,
