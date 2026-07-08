@@ -1200,6 +1200,11 @@ RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS = 1
 MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS = 2
 # observe strain relief per healer (phases 5 to 11)
 HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha": 3}
+# Grim greyspire-alpha sniff omen (paranoia): chance for pack-wide standing
+GRIM_PLOT_OMEN_CHANCE = 0.20
+GRIM_PLOT_OMEN_STANDING = 2
+# Stonepiercer greyspire-scout survey bonus (while plot active)
+STONEPIERCER_PLOT_SURVEY_STANDING = 1
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
