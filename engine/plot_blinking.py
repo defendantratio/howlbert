@@ -139,6 +139,11 @@ ASHBARK_NAME = "Ashbark"
 CINDER_NAME = "Cinder"
 ROTTEDDUST_NAME = "Rotteddust"
 RIVENMAW_NAME = "Rivenmaw"
+DUSK_NAME = "Dusk"
+SCAB_NAME = "Scab"
+TALUS_NAME = "Talus"
+# named Book One pups; each grows a little steadier for living through the blinking
+PLOT_PUP_NAMES = ("Cinderpup", "Harepup", "Ripplepup", "Mosspup", "Mudpup")
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -504,27 +509,47 @@ def apply_plot_rollover_effects(
         )
         notes.append("**Hollowstem** gathers the Mistmoor pups close; the youngest feel safe, **+2 mood**.")
 
-    # named mistmoor wolves who steady themselves through the blinking.
-    #   (name, pack, mood, only_phase)  only_phase None = any active phase
-    for name, pack, amt, only_phase, flavor in (
+    # named wolves who steady themselves through the blinking.
+    #   (name, pack or None for any, mood, only_phase or None, flavor)
+    from config import PLOT_PUP_MOOD
+
+    mood_lanes = [
         (PUDDLEBANE_NAME, "mistmoor", 2, None, "**Puddlebane** works the bog with quiet purpose; **+2 mood**."),
         (GASP_NAME, "mistmoor", 3, 5, "**Gasp** feels the belly-rip go quiet and grows calm as the others fret; **+3 mood**."),
-    ):
+    ]
+    # named plot pups grow a little steadier for living through the blinking.
+    for pup in PLOT_PUP_NAMES:
+        mood_lanes.append((pup, None, PLOT_PUP_MOOD, None, f"**{pup}** weathers another sunrise of the blinking; **+{PLOT_PUP_MOOD} mood**."))
+    for name, pack, amt, only_phase, flavor in mood_lanes:
         if only_phase is not None and phase != only_phase:
             continue
-        row = conn.execute(
-            """
-            SELECT id FROM users
-            WHERE LOWER(wolf_name) = LOWER(?)
-              AND great_pack = ?
-              AND condition NOT IN ('dead', 'dying')
-            LIMIT 1
-            """,
-            (name, pack),
-        ).fetchone()
+        if pack:
+            row = conn.execute(
+                "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) AND great_pack = ? "
+                "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+                (name, pack),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) "
+                "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+                (name,),
+            ).fetchone()
         if row:
             conn.execute("UPDATE users SET mood = MIN(100, mood + ?) WHERE id = ?", (amt, row["id"]))
             notes.append(flavor)
+
+    # Dusk (mistmoor beta) turns up a hidden cache some sunrises.
+    dusk = conn.execute(
+        "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) AND great_pack = 'mistmoor' "
+        "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+        (DUSK_NAME,),
+    ).fetchone()
+    if dusk:
+        from config import DUSK_PLOT_CACHE_BONES, DUSK_PLOT_CACHE_CHANCE
+        if random.random() < DUSK_PLOT_CACHE_CHANCE:
+            conn.execute("UPDATE users SET bones = bones + ? WHERE id = ?", (DUSK_PLOT_CACHE_BONES, int(dusk["id"])))
+            notes.append(f"**Dusk** noses out a hidden cache in the reeds; **+{DUSK_PLOT_CACHE_BONES} bones**.")
 
     if phase in WARM_RIVER_PHASES:
         vulcan_watching = conn.execute(
@@ -773,6 +798,9 @@ def plot_activity_payout_mult(
     if activity == "hunt" and gp == "mistmoor" and user and _is_plot_wolf(user, SLUDGE_NAME):
         from config import SLUDGE_PLOT_HUNT_MULT
         return SLUDGE_PLOT_HUNT_MULT, "blinking; Sludge takes the swamp's water-prey (**+20%** hunt)."
+    if activity == "hunt" and gp == "greyspire" and user and _is_plot_wolf(user, TALUS_NAME):
+        from config import TALUS_PLOT_HUNT_MULT
+        return TALUS_PLOT_HUNT_MULT, "blinking; Talus keeps the ridge fed (**+10%** hunt)."
     if activity == "hunt" and gp == "thistlehide" and phase in PARANOIA_PHASES and user and _is_plot_wolf(user, RIVENMAW_NAME):
         from config import RIVENMAW_PLOT_HUNT_MULT
         return RIVENMAW_PLOT_HUNT_MULT, "blinking; Rivenmaw hunts the tense border hard (**+10%**)."
@@ -793,6 +821,10 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, CINDER_NAME):
             from config import CINDER_PLOT_SCAVENGE_MULT
             return CINDER_PLOT_SCAVENGE_MULT, "blinking; Cinder, driftwood-born, scavenges the banks well (**+10%**)."
+    if activity == "scavenge" and phase > 0 and gp == "greyspire":
+        if user and _is_plot_wolf(user, SCAB_NAME):
+            from config import SCAB_PLOT_SCAVENGE_MULT
+            return SCAB_PLOT_SCAVENGE_MULT, "blinking; Scab knows which scraps go unwatched (**+15%** scavenge)."
     return 1.0, ""
 
 

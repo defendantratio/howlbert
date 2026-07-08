@@ -1226,6 +1226,14 @@ CINDER_PLOT_SCAVENGE_MULT = 1.10
 ROTTEDDUST_PLOT_TREAT_HEAL_BONUS = 1
 # Rivenmaw (thistlehide hunter) hunt multiplier during paranoia
 RIVENMAW_PLOT_HUNT_MULT = 1.10
+# Scab (greyspire lowbelly) scavenge mult; Talus (greyspire hunter) hunt mult
+SCAB_PLOT_SCAVENGE_MULT = 1.15
+TALUS_PLOT_HUNT_MULT = 1.10
+# Dusk (mistmoor beta) sunrise cache-find: chance and bones
+DUSK_PLOT_CACHE_CHANCE = 0.20
+DUSK_PLOT_CACHE_BONES = 3
+# each named plot pup steadies a little each sunrise during the blinking
+PLOT_PUP_MOOD = 1
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
