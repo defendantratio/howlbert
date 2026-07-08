@@ -59,6 +59,13 @@ PREY_CATALOG: dict[str, dict] = {
         "bones": 7,
         "rot_days": 4,
     },
+    "water_rat": {
+        "name": "Water Rat Carcass",
+        "label": "a water rat",
+        "uses": 1,
+        "bones": 5,
+        "rot_days": 3,
+    },
     "groundhog": {
         "name": "Groundhog Carcass",
         "label": "a groundhog",
@@ -106,6 +113,13 @@ PREY_CATALOG: dict[str, dict] = {
         "label": "a beaver",
         "uses": 6,
         "bones": 28,
+        "rot_days": 6,
+    },
+    "goat": {
+        "name": "Mountain Goat Carcass",
+        "label": "a mountain goat",
+        "uses": 6,
+        "bones": 34,
         "rot_days": 6,
     },
     "deer": {
@@ -360,6 +374,7 @@ PREY_FLAVOR_TIER_CAP: dict[str, str] = {
     "grouse": "solid",
     "agouti": "solid",
     "beaver": "big",
+    "goat": "big",
     "deer": "big",
     "elk": "legendary",
     "carrion": "small",
@@ -369,6 +384,7 @@ PREY_FLAVOR_TIER_CAP: dict[str, str] = {
     "raccoon": "small",
     "opossum": "small",
     "muskrat": "small",
+    "water_rat": "small",
     "groundhog": "small",
 }
 
@@ -434,6 +450,8 @@ def prey_key_from_hunt_amount(
         return "vole"
     season = season or "spring"
     if amount <= 8:
+        if great_pack == "silverrush" and random.random() < 0.30:
+            return random.choice(["water_rat", "frog", "vole"])
         if great_pack in ("mistmoor", "silverrush") and random.random() < 0.35:
             return random.choice(["frog", "vole"])
         if great_pack == "thistlehide" and random.random() < 0.22:
@@ -444,6 +462,8 @@ def prey_key_from_hunt_amount(
             return random.choice(["mouse", "chipmunk"])
         return "vole"
     if amount <= 15:
+        if great_pack == "silverrush" and random.random() < 0.22:
+            return random.choice(["water_rat", "muskrat"])
         if great_pack in ("mistmoor", "silverrush") and random.random() < 0.28:
             return "frog"
         if season == "summer" and random.random() < 0.35:
@@ -454,14 +474,20 @@ def prey_key_from_hunt_amount(
             return random.choice(["squirrel", "raccoon", "opossum", "muskrat", "groundhog"])
         return random.choice(["hare", "rabbit"])
     if amount <= 22:
+        if great_pack == "greyspire" and random.random() < 0.30:
+            return "goat"
         if season == "winter" and random.random() < 0.4:
             return random.choice(["hare", "rabbit"])
         return random.choice(["grouse", "agouti"])
     if amount <= 28:
+        if great_pack == "greyspire" and random.random() < 0.35:
+            return "goat"
         if season == "autumn" and random.random() < 0.35:
             return "deer"
         return random.choice(["rabbit", "grouse"])
     if amount <= 35:
+        if great_pack == "greyspire" and random.random() < 0.30:
+            return "goat"
         if season == "winter" and random.random() < 0.45:
             return "beaver"
         return "beaver"

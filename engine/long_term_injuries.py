@@ -72,6 +72,24 @@ LONG_TERM_TYPES = {
         "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
         "intimidate_bonus": 0,
     },
+    # cumulative organ damage from prolonged internal herb overuse (see
+    # engine.herb_side_effects). permanent; the price of leaning on one draught.
+    "low_potassium": {
+        "label": "Weak-Heart",
+        "effect": "potassium wasted by overused diuretic herbs; **-1** on Strength and Constitution checks; the heart tires easily.",
+    },
+    "kidney_damage": {
+        "label": "Rot-Kidney",
+        "effect": "kidneys scarred by overused herbs; **-1** on Constitution checks; thirst bites harder.",
+    },
+    "liver_damage": {
+        "label": "Bile-Rot",
+        "effect": "liver scarred by repeated toxins; **-1** on Constitution checks and on saves against disease and poison.",
+    },
+    "thiamine_deficiency": {
+        "label": "The Trembles",
+        "effect": "nerve damage from herbs that leach thiamine; **-1** on Dexterity and Wisdom checks.",
+    },
 }
 
 CURE_HERBS = frozenset({"wolfsbane", "swamp_milkweed"})
@@ -465,6 +483,20 @@ def check_adjustments(
         mod += sc_mod
         if sc_note:
             notes.append(sc_note)
+
+    # cumulative organ damage from herb overuse
+    if "low_potassium" in entries and ("attr_str" in attr_keys or "attr_con" in attr_keys):
+        mod -= 1
+        notes.append("Weak-Heart (−1)")
+    if "kidney_damage" in entries and "attr_con" in attr_keys:
+        mod -= 1
+        notes.append("Rot-Kidney (−1 Con)")
+    if "liver_damage" in entries and "attr_con" in attr_keys:
+        mod -= 1
+        notes.append("Bile-Rot (−1 Con)")
+    if "thiamine_deficiency" in entries and ("attr_dex" in attr_keys or "attr_wis" in attr_keys):
+        mod -= 1
+        notes.append("The Trembles (−1)")
 
     return mod, disadvantage, " · ".join(notes)
 
