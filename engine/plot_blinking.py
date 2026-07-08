@@ -116,6 +116,12 @@ LUCID_NAME = "Lucid"
 CLOVERFERN_NAME = "Cloverfern"
 KANAMI_NAME = "Kanami"
 SKYE_NAME = "Skye"
+IRONJAW_NAME = "Ironjaw"
+SLATE_NAME = "Slate"
+SLUDGE_NAME = "Sludge"
+CROAKER_NAME = "Croaker"
+CURLGRIP_NAME = "Curlgrip"
+MOSSGAZE_NAME = "Mossgaze"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -610,8 +616,26 @@ def plot_activity_payout_mult(
             if user and _is_plot_wolf(user, AROMIS_NAME):
                 from config import AROMIS_PLOT_FISHING_MULT
                 return AROMIS_PLOT_FISHING_MULT, "blinking; Aromis refuses to let the warm water win (**+15%** fish)."
+            if user and _is_plot_wolf(user, CROAKER_NAME) and phase in (4, 8):
+                from config import CROAKER_PLOT_FISHING_MULT
+                return CROAKER_PLOT_FISHING_MULT, "blinking; Croaker knows exactly where the fish hide (**+30%** fish)."
+            if user and _is_plot_wolf(user, CURLGRIP_NAME) and phase in (4, 8):
+                from config import CURLGRIP_PLOT_FISHING_MULT
+                return CURLGRIP_PLOT_FISHING_MULT, "blinking; Curlgrip works the warm shallows (**+20%** fish)."
             return 0.70, "blinking; warm silverrush water (**−30%** fish)."
         return 0.85, "blinking; river sickness (**−15%** fish)."
+    # named greyspire hunters stack their bonus on top of the phase-3 pack bonus
+    if activity in ("hunt", "scavenge") and gp == "greyspire" and user and _is_plot_wolf(user, IRONJAW_NAME) and phase in (3, 9):
+        from config import IRONJAW_PLOT_HUNT_MULT
+        mult = round(IRONJAW_PLOT_HUNT_MULT * (1.10 if phase == 3 else 1.0), 3)
+        return mult, "blinking; Ironjaw hunts the ridge like no other (**+15%**)."
+    if activity == "hunt" and gp == "greyspire" and user and _is_plot_wolf(user, SLATE_NAME) and phase in (3, 7):
+        from config import SLATE_PLOT_HUNT_MULT
+        mult = round(SLATE_PLOT_HUNT_MULT * (1.10 if phase == 3 else 1.0), 3)
+        return mult, "blinking; Slate presses the hunt (**+10%**)."
+    if activity == "hunt" and gp == "mistmoor" and user and _is_plot_wolf(user, SLUDGE_NAME):
+        from config import SLUDGE_PLOT_HUNT_MULT
+        return SLUDGE_PLOT_HUNT_MULT, "blinking; Sludge takes the swamp's water-prey (**+20%** hunt)."
     if activity in ("hunt", "scavenge", "track") and phase == 3 and gp == "greyspire":
         return 1.10, "blinking; iron-scented ridge (**+10%** hunt)."
     if activity == "track" and phase in PARANOIA_PHASES and gp == "thistlehide":
@@ -622,6 +646,9 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, CLOVERFERN_NAME):
             from config import CLOVERFERN_PLOT_SCAVENGE_MULT
             return CLOVERFERN_PLOT_SCAVENGE_MULT, "blinking; Cloverfern finds what the forest is still willing to give (**+10%** scavenge)."
+        if user and _is_plot_wolf(user, MOSSGAZE_NAME):
+            from config import MOSSGAZE_PLOT_SCAVENGE_MULT
+            return MOSSGAZE_PLOT_SCAVENGE_MULT, "blinking; Mossgaze knows the forest's quiet larders (**+10%** scavenge)."
     return 1.0, ""
 
 
