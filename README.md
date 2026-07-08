@@ -276,7 +276,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **hp** = 10 + str + survival (con score). **pack unity** (0 to 10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
 
-**herb compendium:** 100+ plants, each with real preparation, side effects, and (for sedatives) addiction. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide.
+**herb compendium:** 100+ plants, each with real preparation, side effects, and (for sedatives) addiction. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide. **preparation** chains: dry a fresh herb, then turn the dried herb into a **tea, rub, juice, poultice, gargle, ointment, sap, simmered milk**, or eat it **raw/cooked**; a **tea** or **gargle** can be **sweetened**. some herbs (labrador tea, valerian, poppy, skullcap, snakeroot) have a **daily dose cap**; exceeding it is a soft overdose (you get sick), not a hard block.
 
 **herb gardens:** grow your own with `/garden`; buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
