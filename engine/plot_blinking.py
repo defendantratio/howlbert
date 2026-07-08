@@ -104,6 +104,8 @@ RIME_NAME = "Rime"
 ROOT_NAME = "Root"
 FROSTBURN_NAME = "Frostburn"
 HOLLOWSTEM_NAME = "Hollowstem"
+PUDDLEBANE_NAME = "Puddlebane"
+GASP_NAME = "Gasp"
 MIREWORT_NAME = "mirewort"
 DRIFTPUP_NAME = "Driftpup"
 PALESTEP_NAME = "Pale'Step"
@@ -483,6 +485,28 @@ def apply_plot_rollover_effects(
             """
         )
         notes.append("**Hollowstem** gathers the Mistmoor pups close; the youngest feel safe, **+2 mood**.")
+
+    # named mistmoor wolves who steady themselves through the blinking.
+    #   (name, pack, mood, only_phase)  only_phase None = any active phase
+    for name, pack, amt, only_phase, flavor in (
+        (PUDDLEBANE_NAME, "mistmoor", 2, None, "**Puddlebane** works the bog with quiet purpose; **+2 mood**."),
+        (GASP_NAME, "mistmoor", 3, 5, "**Gasp** feels the belly-rip go quiet and grows calm as the others fret; **+3 mood**."),
+    ):
+        if only_phase is not None and phase != only_phase:
+            continue
+        row = conn.execute(
+            """
+            SELECT id FROM users
+            WHERE LOWER(wolf_name) = LOWER(?)
+              AND great_pack = ?
+              AND condition NOT IN ('dead', 'dying')
+            LIMIT 1
+            """,
+            (name, pack),
+        ).fetchone()
+        if row:
+            conn.execute("UPDATE users SET mood = MIN(100, mood + ?) WHERE id = ?", (amt, row["id"]))
+            notes.append(flavor)
 
     if phase in WARM_RIVER_PHASES:
         vulcan_watching = conn.execute(
