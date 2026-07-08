@@ -710,7 +710,7 @@ def plot_combat_bonus(attacker, attacker_f, attack_type: str) -> tuple[int, int,
         if _living_ally_present(fighters, attacker_f):
             return 2, 0, "blinking; Thorn fights harder with a packmate beside him (**+2 atk**)."
         return 0, 0, ""
-    if _is_plot_wolf(attacker, RIFT_NAME) and gp == "mistmoor":
+    if _is_plot_wolf(attacker, RIFT_NAME) and gp == "silverrush":
         if _named_ally_present(fighters, attacker_f, SALTMUZZLE_NAME):
             return 2, 0, "blinking; Rift throws himself between Saltmuzzle and the teeth (**+2 atk**)."
         return 0, 0, ""
@@ -907,14 +907,53 @@ def _pack_healer_plot_bonus(healer, guild_id: int | None, canon_name: str, pack:
     return getattr(_cfg, config_key, 0)
 
 
+def _pack_healer_rot_lung_bonus(healer, patient, guild_id, canon_name, pack, config_key) -> int:
+    """Extra heal a rot-lung specialist adds when the patient has rot-lung."""
+    if not guild_id or plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return 0
+    if not _is_plot_wolf(healer, canon_name):
+        return 0
+    if (healer["great_pack"] if "great_pack" in healer.keys() else None) != pack:
+        return 0
+    from engine.diseases import parse_disease
+    key, _ = parse_disease(patient["disease"] if "disease" in patient.keys() else None)
+    if key != "rot_lung":
+        return 0
+    import config as _cfg
+    return getattr(_cfg, config_key, 0)
+
+
 def plot_healer_heal_bonus(healer, patient, guild_id: int | None) -> int:
     """stacked book one heal bonuses for canon healer wolves."""
     bonus = plot_firepaw_heal_bonus(healer, guild_id) + plot_soot_heal_bonus(healer, patient, guild_id)
     bonus += _pack_healer_plot_bonus(healer, guild_id, HEMLOCK_NAME, "greyspire", "HEMLOCK_PLOT_TREAT_HEAL_BONUS")
     bonus += _pack_healer_plot_bonus(healer, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_TREAT_HEAL_BONUS")
     bonus += _pack_healer_plot_bonus(healer, guild_id, SYPHA_NAME, "thistlehide", "SYPHA_PLOT_TREAT_HEAL_BONUS")
-    bonus += _pack_healer_plot_bonus(healer, guild_id, MURKVEIN_NAME, "mistmoor", "MURKVEIN_PLOT_TREAT_HEAL_BONUS")
+    # mistmoor's treat lane belongs to Mirewort the medic, not Murkvein the alpha.
+    bonus += _pack_healer_plot_bonus(healer, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_TREAT_HEAL_BONUS")
+    # rot-lung specialists heal it harder
+    bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS")
+    bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS")
     return bonus
+
+
+def plot_healer_observe_strain_relief(medic, guild_id: int | None) -> str:
+    """Named Book One healers ease their own medicine strain when they observe."""
+    if not guild_id or plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return ""
+    from config import HEALER_PLOT_OBSERVE_STRAIN
+
+    name = ((medic["wolf_name"] if "wolf_name" in medic.keys() else "") or "").strip().casefold()
+    relief = {k.casefold(): v for k, v in HEALER_PLOT_OBSERVE_STRAIN.items()}
+    amount = relief.get(name)
+    if not amount:
+        return ""
+    from engine.character_traits import reduce_skill_strain
+
+    removed = reduce_skill_strain(medic["id"], "medicine", amount)
+    if removed:
+        return f"\n\n_the blinking sharpens {name}'s eye; **−{removed} medicine strain**._"
+    return ""
 
 
 def _firepaw_daily_available(user, day: int) -> bool:
