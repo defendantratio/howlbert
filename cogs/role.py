@@ -198,7 +198,13 @@ class RoleCog(commands.Cog):
         season = season_display(db.row_val(world, 'season', 'autumn'))
         weather = db.row_val(world, 'weather', 'fog')
         db.update_user(interaction.user.id, wolf_id=user['id'], last_prophecy_day=day)
-        embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather})', color=SUCCESS_COLOR)
+        from engine.plot_blinking import plot_prophecy_standing
+        prophecy_note = ''
+        gasp_standing = plot_prophecy_standing(user, interaction.guild.id)
+        if gasp_standing:
+            db.adjust_wolf_standing(interaction.user.id, gasp_standing)
+            prophecy_note = f'\n\n_the den heeds the oracle through the blinking; **+{gasp_standing} standing**._'
+        embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather}){prophecy_note}', color=SUCCESS_COLOR)
         embed.set_footer(text='it will make sense when it happens; or after it does.')
         await interaction.response.send_message(embed=embed)
 
@@ -261,7 +267,7 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         from engine.rank_dispute import run_rank_dispute
-        ok, msg = run_rank_dispute(user, target_row, day=world['day_number'])
+        ok, msg = run_rank_dispute(user, target_row, day=world['day_number'], guild_id=interaction.guild.id if interaction.guild else None)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Rank Dispute', msg, color=color)
         if ok:

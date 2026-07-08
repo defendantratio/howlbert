@@ -636,7 +636,48 @@ def _adjust_all_cat_trust(conn: sqlite3.Connection, guild_id: int, delta: int) -
         (guild_id,),
     ).fetchall()
     for row in rows:
-        db.adjust_cat_pact_trust(int(row["pack_id"]), row["clan_name"], delta)
+        pack_id = int(row["pack_id"])
+        pack_delta = delta
+        # Sleet (greyspire diplomat) softens the paranoia trust loss for her den.
+        if delta < 0:
+            has_sleet = conn.execute(
+                """
+                SELECT 1 FROM users
+                WHERE pack_id = ? AND LOWER(wolf_name) = LOWER(?)
+                  AND great_pack = 'greyspire' AND condition NOT IN ('dead', 'dying')
+                LIMIT 1
+                """,
+                (pack_id, SLEET_NAME),
+            ).fetchone()
+            if has_sleet:
+                from config import SLEET_PLOT_CAT_TRUST_RELIEF
+
+                pack_delta = min(0, delta + SLEET_PLOT_CAT_TRUST_RELIEF)
+        db.adjust_cat_pact_trust(pack_id, row["clan_name"], pack_delta)
+
+
+def plot_rank_dispute_standing(winner, guild_id: int | None) -> int:
+    """Moth (greyspire lowbelly) climbs on a rank-dispute win during the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(winner, MOTH_NAME):
+        return 0
+    if (winner["great_pack"] if "great_pack" in winner.keys() else None) != "greyspire":
+        return 0
+    from config import MOTH_PLOT_RANK_STANDING
+
+    return MOTH_PLOT_RANK_STANDING
+
+
+def plot_prophecy_standing(user, guild_id: int | None) -> int:
+    """Gasp earns standing when the den heeds her prophecy during the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(user, GASP_NAME):
+        return 0
+    from config import GASP_PLOT_PROPHECY_STANDING
+
+    return GASP_PLOT_PROPHECY_STANDING
 
 
 def _accelerate_pack_fish_rot(conn: sqlite3.Connection, guild_id: int, day: int) -> int:

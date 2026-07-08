@@ -19,7 +19,7 @@ def is_eligible_for_rank_dispute(user) -> bool:
     return role not in ("alpha", "advisor", "pup")
 
 
-def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
+def run_rank_dispute(challenger, defender, *, day: int, guild_id: int | None = None) -> tuple[bool, str]:
     """
     A subordinate contests their place in the pecking order against another
     packmate; winner climbs, loser drops. Affects den feed priority, not
@@ -79,12 +79,20 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
     db.update_user_by_id(winner["id"], pack_rank=new_winner_rank)
     db.update_user_by_id(loser["id"], pack_rank=new_loser_rank)
 
+    from engine.plot_blinking import plot_rank_dispute_standing
+
+    plot_standing = plot_rank_dispute_standing(winner, guild_id)
+    plot_note = ""
+    if plot_standing:
+        db.adjust_wolf_standing_by_id(winner["id"], plot_standing)
+        plot_note = f"\n_Moth seizes the blinking to climb; **+{plot_standing} standing**._"
+
     rivalry_note = f" _(+{rivalry_mod} grudge)_" if rivalry_mod else ""
     dim = diminishing_note(dispute_n)
     dim_note = f"\n_{dim}_" if dim else ""
     line = (
         f"**{challenger['wolf_name']}** {c_total}{rivalry_note} vs **{defender['wolf_name']}** {d_total}{note}\n"
         f"**{winner['wolf_name']}** holds the better ground; **{loser['wolf_name']}** yields a step.\n"
-        f"den feed priority shifts accordingly.{dim_note}"
+        f"den feed priority shifts accordingly.{dim_note}{plot_note}"
     )
     return True, line
