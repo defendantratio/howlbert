@@ -137,6 +137,8 @@ PEBBLE_NAME = "Pebble"
 REEDWHISPER_NAME = "Reedwhisper"
 ASHBARK_NAME = "Ashbark"
 CINDER_NAME = "Cinder"
+ROTTEDDUST_NAME = "Rotteddust"
+RIVENMAW_NAME = "Rivenmaw"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -578,14 +580,30 @@ def apply_plot_rollover_effects(
 
     if phase == 10:
         _adjust_all_cat_trust(conn, guild_id, -2)
+        # a steady alpha holds their den together through the blame spiral.
+        unity_mitigators = {"silverrush": SALTMUZZLE_NAME, "mistmoor": MURKVEIN_NAME}
         for key in GREAT_PACKS:
             pack = db.get_pack_by_key(key)
-            if pack:
-                outcome = db.adjust_pack_unity(pack["id"], -1)
-                if outcome == "dissolved":
-                    notes.append(f"**{pack['name']}** fractures under blame (**unity −5**).")
-                else:
-                    notes.append(f"**{pack['name']}** unity slips amid accusations (**−1**).")
+            if not pack:
+                continue
+            mitigator = unity_mitigators.get(key)
+            if mitigator:
+                held = conn.execute(
+                    """
+                    SELECT 1 FROM users
+                    WHERE great_pack = ? AND LOWER(wolf_name) = LOWER(?)
+                      AND condition NOT IN ('dead', 'dying') LIMIT 1
+                    """,
+                    (key, mitigator),
+                ).fetchone()
+                if held:
+                    notes.append(f"**{mitigator}** holds **{pack['name']}** together through the blame; unity steady.")
+                    continue
+            outcome = db.adjust_pack_unity(pack["id"], -1)
+            if outcome == "dissolved":
+                notes.append(f"**{pack['name']}** fractures under blame (**unity −5**).")
+            else:
+                notes.append(f"**{pack['name']}** unity slips amid accusations (**−1**).")
 
     if phase == 12:
         _adjust_all_cat_trust(conn, guild_id, 5)
@@ -755,6 +773,9 @@ def plot_activity_payout_mult(
     if activity == "hunt" and gp == "mistmoor" and user and _is_plot_wolf(user, SLUDGE_NAME):
         from config import SLUDGE_PLOT_HUNT_MULT
         return SLUDGE_PLOT_HUNT_MULT, "blinking; Sludge takes the swamp's water-prey (**+20%** hunt)."
+    if activity == "hunt" and gp == "thistlehide" and phase in PARANOIA_PHASES and user and _is_plot_wolf(user, RIVENMAW_NAME):
+        from config import RIVENMAW_PLOT_HUNT_MULT
+        return RIVENMAW_PLOT_HUNT_MULT, "blinking; Rivenmaw hunts the tense border hard (**+10%**)."
     if activity in ("hunt", "scavenge", "track") and phase == 3 and gp == "greyspire":
         return 1.10, "blinking; iron-scented ridge (**+10%** hunt)."
     if activity == "track" and phase in PARANOIA_PHASES and gp == "thistlehide":
@@ -1054,6 +1075,7 @@ def plot_healer_heal_bonus(healer, patient, guild_id: int | None) -> int:
     bonus += _pack_healer_plot_bonus(healer, guild_id, SYPHA_NAME, "thistlehide", "SYPHA_PLOT_TREAT_HEAL_BONUS")
     # mistmoor's treat lane belongs to Mirewort the medic, not Murkvein the alpha.
     bonus += _pack_healer_plot_bonus(healer, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_TREAT_HEAL_BONUS")
+    bonus += _pack_healer_plot_bonus(healer, guild_id, ROTTEDDUST_NAME, "mistmoor", "ROTTEDDUST_PLOT_TREAT_HEAL_BONUS")
     # rot-lung specialists heal it harder
     bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS")
     bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS")
