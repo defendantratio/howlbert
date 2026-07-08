@@ -18,7 +18,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "lactase_persistent": {
 
-        "name": "Lactase Persistence",
+        "name": "Milk-Luck",
 
         "effect": "Keeps the pup-gut ability to digest milk into adulthood; can drink milk via `/drink type:milk` without an upset stomach. Most wolves lose this after weaning.",
 
@@ -98,7 +98,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "brachycephaly": {
 
-        "name": "Brachycephaly",
+        "name": "Flat-Skull",
 
         "effect": "flat skull and shortened airway; labored breathing; -2 scent perception; con disadvantage on respiratory saves; -4 hunger/sunrise (chewing pain); -10% hunt. often fatal in newborns.",
 
@@ -120,7 +120,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "lstv": {
 
-        "name": "LSTV (Lumbosacral Transitional Vertebrae)",
+        "name": "Spine-Twist",
 
         "effect": "malformed lower spine; rear leg weakness causes dex disadvantage; -15% hunt; +1 pain exhaustion each sunrise from chronic back pain.",
 
@@ -140,7 +140,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "spinal_arthritis": {
 
-        "name": "Spinal Arthritis",
+        "name": "Back-Rot",
 
         "effect": "degenerative joint disease of the spine; str and dex disadvantage; -15% hunt; +1 pain exhaustion each sunrise.",
 
@@ -160,7 +160,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "inbreeding_depression": {
 
-        "name": "Inbreeding Depression",
+        "name": "Thin-Blood",
 
         "effect": "reduced genetic diversity; -1 to all con saves; -10% hunt efficiency; twice as likely to contract contagious diseases.",
 
@@ -180,7 +180,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "adhd_like": {
 
-        "name": "ADHD-like",
+        "name": "Racing-Mind",
 
         "effect": "hyperactive and impulsive; -15% hunt (breaks formation before the pack is ready); dex disadvantage on stealth; +2 to tracking and survival (catches every flicker of movement).",
 
@@ -202,7 +202,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "autism_like": {
 
-        "name": "Autism-like",
+        "name": "Still-Mind",
 
         "effect": "sensory and social processing differences; -1 to cha checks (social unpredictability); +2 to herblore and medicine (hyperfocused pattern recognition).",
 
@@ -222,7 +222,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "albinism": {
 
-        "name": "Albinism",
+        "name": "Pale-Hide",
 
         "effect": "Pale coat and pink eyes; easier to spot (−1 Stealth on hunts).",
 
@@ -240,7 +240,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
     "melanism": {
 
-        "name": "Melanism",
+        "name": "Shadow-Hide",
 
         "effect": "Darkened coat: +1 Stealth when stalking prey at night.",
 
