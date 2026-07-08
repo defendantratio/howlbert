@@ -122,6 +122,9 @@ SLUDGE_NAME = "Sludge"
 CROAKER_NAME = "Croaker"
 CURLGRIP_NAME = "Curlgrip"
 MOSSGAZE_NAME = "Mossgaze"
+THORN_NAME = "Thorn"
+RIFT_NAME = "Rift"
+SALTMUZZLE_NAME = "Saltmuzzle"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -650,6 +653,68 @@ def plot_activity_payout_mult(
             from config import MOSSGAZE_PLOT_SCAVENGE_MULT
             return MOSSGAZE_PLOT_SCAVENGE_MULT, "blinking; Mossgaze knows the forest's quiet larders (**+10%** scavenge)."
     return 1.0, ""
+
+
+_COMBAT_PLOT_NAMES = {n.casefold() for n in (ICEFANG_NAME, THORN_NAME, RIFT_NAME)}
+
+
+def _living_ally_present(fighters, attacker_f) -> bool:
+    """A living non-npc packmate stands in the fight beside the attacker."""
+    for f in fighters:
+        if f["id"] == attacker_f["id"] or f["npc_name"]:
+            continue
+        if int(f["hp"]) > 0:
+            return True
+    return False
+
+
+def _named_ally_present(fighters, attacker_f, canon_name: str) -> bool:
+    """A specific named wolf is a living fighter beside the attacker."""
+    for f in fighters:
+        if f["id"] == attacker_f["id"] or f["npc_name"] or int(f["hp"]) <= 0:
+            continue
+        wid = f["wolf_id"] if "wolf_id" in f.keys() else None
+        if not wid:
+            continue
+        w = db.get_user_by_id(wid)
+        if w and (w["wolf_name"] or "").strip().casefold() == canon_name.casefold():
+            return True
+    return False
+
+
+def plot_combat_bonus(attacker, attacker_f, attack_type: str) -> tuple[int, int, str]:
+    """Book One combat lanes: returns (attack_bonus, damage_bonus, note).
+
+    Icefang bites harder in border fights; Thorn fights harder with a packmate
+    beside him; Rift throws himself in when Saltmuzzle is in the fight. All only
+    during border paranoia (phases 6 to 10)."""
+    if not attacker_f:
+        return 0, 0, ""
+    name = ((db.row_val(attacker, "wolf_name", "") or "").strip().casefold())
+    if name not in _COMBAT_PLOT_NAMES:
+        return 0, 0, ""
+    enc = db.get_encounter(attacker_f["encounter_id"])
+    if not enc:
+        return 0, 0, ""
+    guild_id = enc["guild_id"] if "guild_id" in enc.keys() else None
+    if not guild_id or plot_phase(guild_id) not in PARANOIA_PHASES:
+        return 0, 0, ""
+    gp = db.row_val(attacker, "great_pack", "") or ""
+    if _is_plot_wolf(attacker, ICEFANG_NAME) and gp == "greyspire":
+        is_border = bool(enc["is_border_fight"]) if "is_border_fight" in enc.keys() else False
+        if attack_type == "bite" and is_border:
+            return 0, 2, "blinking; Icefang bites like the mountain's will (**+2 dmg**)."
+        return 0, 0, ""
+    fighters = db.get_combat_fighters(attacker_f["encounter_id"])
+    if _is_plot_wolf(attacker, THORN_NAME) and gp == "greyspire":
+        if _living_ally_present(fighters, attacker_f):
+            return 2, 0, "blinking; Thorn fights harder with a packmate beside him (**+2 atk**)."
+        return 0, 0, ""
+    if _is_plot_wolf(attacker, RIFT_NAME) and gp == "mistmoor":
+        if _named_ally_present(fighters, attacker_f, SALTMUZZLE_NAME):
+            return 2, 0, "blinking; Rift throws himself between Saltmuzzle and the teeth (**+2 atk**)."
+        return 0, 0, ""
+    return 0, 0, ""
 
 
 def plot_drink_thirst_bonus(guild_id: int, great_pack: str | None) -> tuple[int, str]:
