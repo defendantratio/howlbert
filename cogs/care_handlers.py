@@ -514,16 +514,19 @@ async def treat(
     if treat_patient and treat_patient['id'] != user['id']:
         msg = f"**{user['wolf_name']}** treats **{treat_subject['wolf_name']}**:\n{msg}"
 
-    # overdose check for herbs with daily dose limits
-    from engine.herb_buffs import check_herb_overdose, record_herb_dose
-    _od, _od_cond, _od_msg = check_herb_overdose(treat_subject, herb_key, treat_day)
+    # daily dose limits: record this dose first, then check whether it tipped the
+    # wolf over the cap (a soft overdose that makes them sick, not a hard block).
+    from engine.herb_dose_tracking import check_herb_overdose, record_herb_dose
     _dose_fields = record_herb_dose(treat_subject, herb_key, treat_day)
     if _dose_fields:
         db.update_user(subject_did, wolf_id=subject_id, **_dose_fields)
+        treat_subject = db.get_user_by_id(subject_id) or treat_subject
+    _od, _od_cond, _od_msg = check_herb_overdose(treat_subject, herb_key, treat_day)
     if _od:
         from engine.disease_contract import try_contract_disease as _tcd
         _od_fresh = db.get_user_by_id(subject_id) or treat_subject
-        _tcd(_od_fresh, _od_cond, chance=1.0)
+        if _od_cond:
+            _tcd(_od_fresh, _od_cond, chance=1.0)
         msg += f"\n\n**warning**: {_od_msg}"
 
     # record herb tolerance and bone_treated after a successful injury cure

@@ -285,17 +285,37 @@ def apply_needs_crisis_on_rollover(
     deaths: list[dict] = []
     stabilized: list[dict] = []
 
+    # dormant (admin-held) and inactive wolves are "away", not starving: they are
+    # exempt from collapsing into dying and from auto death-saves, matching the
+    # vitals-decay exemption so a wolf nobody is playing can't slowly die.
+    from config import AUTO_DORMANT_INACTIVE_DAYS
+
+    _act_cols = (
+        "last_hunt_day", "last_work_day", "last_socialize_day", "last_explore_day",
+        "last_forage_day", "last_groom_day", "last_sniff_day", "last_fishing_day",
+        "last_howl_day", "last_sign_day",
+    )
+    _last_seen = "MAX(" + ", ".join(f"COALESCE({c}, 0)" for c in _act_cols) + ")"
+    if day is not None:
+        _active_since = max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
+        away_clause = f"AND dormant = 0 AND ({_last_seen} >= {_active_since} OR {int(day)} <= 1)"
+    else:
+        away_clause = "AND dormant = 0"
+
     already_dying = {
         row["id"]
-        for row in conn.execute("SELECT id FROM users WHERE condition = 'dying'").fetchall()
+        for row in conn.execute(
+            f"SELECT id FROM users WHERE condition = 'dying' {away_clause}"
+        ).fetchall()
     }
 
     new_rows = conn.execute(
-        """
+        f"""
         SELECT id, discord_id, wolf_name, hunger, thirst
         FROM users
         WHERE condition NOT IN ('dead', 'dying')
           AND (hunger <= 0 OR thirst <= 0)
+          {away_clause}
         """
     ).fetchall()
 

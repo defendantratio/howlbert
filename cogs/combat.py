@@ -50,7 +50,7 @@ def _yield_embed_parts(user, name: str, hp_line: str, outcome: str) -> tuple[str
         body += f'\n\n{expulsion}'
     return (title, body, color)
 
-async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot, enc_id: int, body: str, hit: bool, defender_f, new_hp: int, *, title: str='Attack') -> None:
+async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot, enc_id: int, body: str, hit: bool, defender_f, new_hp: int, *, title: str='Attack', attacker_is_npc: bool=False) -> None:
     db.advance_combat_turn(enc_id)
     db.clear_combat_target(interaction.user.id, enc_id)
     enc = db.get_encounter(enc_id)
@@ -60,7 +60,10 @@ async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot
     if new_hp == 0 and (not _is_npc(defender_f)):
         footer += ' · `/medic action:deathsaves`'
     embed.set_footer(text=footer)
-    if hit and not _is_npc(defender_f) and db.row_val(defender_f, 'wolf_id'):
+    # healer's neutrality only applies when a *wolf* strikes the medic (a packmate
+    # or rival breaking the taboo); a wild animal or other npc mauling the healer
+    # in a hunt/defence is not a den crime.
+    if hit and not attacker_is_npc and not _is_npc(defender_f) and db.row_val(defender_f, 'wolf_id'):
         from engine.role_features import is_full_medic
         defender_wolf = db.get_user_by_id(db.row_val(defender_f, 'wolf_id'))
         if defender_wolf and is_full_medic(defender_wolf):
@@ -153,7 +156,7 @@ async def execute_npc_attack(interaction: discord.Interaction, bot: commands.Bot
     except ValueError:
         await _combat_reply(interaction, embed=howlbert_embed('Invalid Target', "That attack couldn't land on this target.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
         return True
-    await finish_attack_turn(interaction, bot, enc_id, body, hit, defender_f, new_hp, title='Maneuver' if maneuver_key else 'Attack')
+    await finish_attack_turn(interaction, bot, enc_id, body, hit, defender_f, new_hp, title='Maneuver' if maneuver_key else 'Attack', attacker_is_npc=True)
     return True
 
 def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str, *, maneuver_key: str | None=None, attacker_f=None, allow_free_counter: bool=True) -> tuple[str, int, bool]:
