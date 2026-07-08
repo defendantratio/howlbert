@@ -7,7 +7,11 @@ import sqlite3
 import database as db
 from config import ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD
 from engine.character import is_skill_proficient
-from engine.exhaustion_effects import EXHAUSTION_MAX, consume_march_exhaustion_skip
+from engine.exhaustion_effects import (
+    EXHAUSTION_ACTIVITY_CAP,
+    EXHAUSTION_MAX,
+    consume_march_exhaustion_skip,
+)
 from engine.herb_buffs import buffs_json, get_buffs
 
 ACTIVITY_SKILL: dict[str, str] = {
@@ -90,7 +94,7 @@ def _exhaustion_gain(activity_count: int, total_count: int, proficient: bool, cu
         gain = 1
     elif total_count > ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD:
         gain += 1
-    room = max(0, EXHAUSTION_MAX - current_ex)
+    room = max(0, EXHAUSTION_ACTIVITY_CAP - current_ex)
     return min(gain, room)
 
 
