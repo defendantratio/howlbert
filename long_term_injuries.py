@@ -15,12 +15,11 @@ LONG_TERM_TYPES = {
     },
     "scarring": {
         "label": "Scarring",
-        "effect": "Visible scars; **+1** Intimidation and **+1** Deception in confrontational contexts.",
+        "effect": "Visible scars; **+1** on Intimidation when the scar is seen.",
         "intimidate_bonus": 1,
-        "deception_bonus": 1,
     },
     "chronic_pain": {
-        "label": "Bone-Ache",
+        "label": "Chronic Pain",
         "effect": "On cold or rainy days, disadvantage on the first Strength or Dexterity check.",
         "intimidate_bonus": 0,
     },
@@ -43,69 +42,6 @@ LONG_TERM_TYPES = {
         "label": "Winter Survivor",
         "effect": "Lived through a full winter; **+1** on Survival or Constitution checks in cold/wet weather, and immune to chronic-pain weather flares.",
         "intimidate_bonus": 0,
-    },
-    "runt": {
-        "label": "Runt of the Litter",
-        "effect": "Smallest of a large litter; one attribute permanently weaker.",
-        "intimidate_bonus": 0,
-    },
-    "battle_hardened": {
-        "label": "Battle-Hardened",
-        "effect": "Survived five or more serious fights; **+1** on attack rolls. Immune to winded state and round-count fatigue penalties in combat.",
-        "intimidate_bonus": 1,
-    },
-    "scarred_hide": {
-        "label": "Scarred Hide",
-        "effect": "Took three or more serious wounds in a single fight; hide toughened by damage; **+1 max HP** permanently, **+1 CHA** (battle-worn authority). Stacks with scarring.",
-        "intimidate_bonus": 0,
-        "max_hp_bonus": 1,
-        "cha_bonus": 1,
-    },
-    "healer_instinct": {
-        "label": "Healer's Instinct",
-        "effect": "Performed 20+ successful treatments; deepened knowledge of the body; **+1 WIS** permanently.",
-        "intimidate_bonus": 0,
-        "wis_bonus": 1,
-    },
-    "arthritis": {
-        "label": "Joint-Rot",
-        "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
-        "intimidate_bonus": 0,
-    },
-    # cumulative organ damage from prolonged internal herb overuse (see
-    # engine.herb_side_effects). permanent; the price of leaning on one draught.
-    "low_potassium": {
-<<<<<<< Updated upstream
-        "label": "The Sapping",
-        "effect": "strength and wind drain away and the heart flutters (potassium wasted by overused diuretic herbs); **-1** on Strength and Constitution checks.",
-    },
-    "kidney_damage": {
-        "label": "Bitter-Water",
-        "effect": "a thirst nothing slakes; water runs straight through (kidneys scarred by overused herbs); **-1** on Constitution checks; thirst bites harder.",
-    },
-    "liver_damage": {
-        "label": "Yellow-Wither",
-        "effect": "eyes and gums yellow, the body wastes (liver scarred by repeated toxins); **-1** on Constitution checks and on saves against disease and poison.",
-    },
-    "thiamine_deficiency": {
-        "label": "The Trembles",
-        "effect": "shaking limbs and a stumbling gait (nerves leached by overused herbs); **-1** on Dexterity and Wisdom checks.",
-=======
-        "label": "Weak-Heart",
-        "effect": "potassium wasted by overused diuretic herbs; **-1** on Strength and Constitution checks; the heart tires easily.",
-    },
-    "kidney_damage": {
-        "label": "Rot-Kidney",
-        "effect": "kidneys scarred by overused herbs; **-1** on Constitution checks; thirst bites harder.",
-    },
-    "liver_damage": {
-        "label": "Bile-Rot",
-        "effect": "liver scarred by repeated toxins; **-1** on Constitution checks and on saves against disease and poison.",
-    },
-    "thiamine_deficiency": {
-        "label": "The Trembles",
-        "effect": "nerve damage from herbs that leach thiamine; **-1** on Dexterity and Wisdom checks.",
->>>>>>> Stashed changes
     },
 }
 
@@ -164,7 +100,7 @@ def apply_winter_survivor_trait_on_rollover(conn) -> int:
     """
     Called once when winter ends (old_season == 'winter', new_season !=
     'winter'). Grants the permanent winter_survivor trait to every living,
-    non-pup wolf; operates on the rollover's own connection so it never
+    non-pup wolf — operates on the rollover's own connection so it never
     opens a second one (would deadlock against the rollover transaction).
     """
     from config import PUP_MAX_MOONS
@@ -198,7 +134,6 @@ CHRONIC_CONVERSION_TARGET = {
     "fractured_rib": "chronic_pain",
     "concussion": "chronic_pain",
     "torn_claw": "scarring",
-    "festering_wound": "chronic_pain",
 }
 
 
@@ -275,7 +210,7 @@ COMBAT_SCAR_CHANCE = 0.20
 def roll_combat_scar(wolf_id: int | None) -> str | None:
     """
     Surviving a fight you lost (dropped to 0 HP) has a real chance of leaving
-    a permanent scar; a lasting consequence beyond the HP bar, and a genuine
+    a permanent scar — a lasting consequence beyond the HP bar, and a genuine
     +1 Intimidation bonus going forward (see LONG_TERM_TYPES["scarring"]).
     Returns a player-facing note, or None if no scar this time / already scarred.
     """
@@ -376,37 +311,6 @@ def try_cure_long_term(herb_key: str, user) -> tuple[bool, str]:
     return True, "marsh milk breaks the old curse; long-term injuries ease."
 
 
-COMBAT_VICTORIES_FOR_BATTLE_HARDENED = 5
-
-
-def record_combat_victory(wolf_id: int) -> str | None:
-    """
-    Increment a wolf's combat-victory counter. Grants battle_hardened at 5 wins.
-    Returns a player-facing note when the trait is earned, or None.
-    """
-    wolf = db.get_user_by_id(wolf_id)
-    if not wolf:
-        return None
-    current_lt = parse_long_term_injuries(
-        wolf["long_term_injuries"] if "long_term_injuries" in wolf.keys() else None
-    )
-    if "battle_hardened" in current_lt:
-        return None
-    from engine.herb_buffs import buffs_json, get_buffs
-
-    buffs = get_buffs(wolf)
-    wins = int(buffs.get("combat_victories", 0)) + 1
-    buffs["combat_victories"] = wins
-    db.update_user_by_id(wolf_id, herb_buffs=buffs_json(buffs))
-    if wins >= COMBAT_VICTORIES_FOR_BATTLE_HARDENED:
-        add_long_term_injury(wolf_id, "battle_hardened")
-        return (
-            f"**{wolf['wolf_name']}** has fought through {wins} serious battles; "
-            f"they are now **Battle-Hardened**; {LONG_TERM_TYPES['battle_hardened']['effect']}"
-        )
-    return None
-
-
 def check_adjustments(
     user,
     *,
@@ -436,12 +340,6 @@ def check_adjustments(
     if "scarring" in entries and skill_key == "intimidation":
         mod += 1
         notes.append("Scars (+1 Intimidation)")
-    if "scarring" in entries and skill_key == "deception":
-        mod += 1
-        notes.append("Scars (+1 Deception; unsettling presence)")
-    if "battle_hardened" in entries and skill_key == "intimidation":
-        mod += 1
-        notes.append("Battle-Hardened (+1 Intimidation)")
     if "bold_arrival" in entries and skill_key == "intimidation":
         mod += 1
         notes.append("Bold arrival (+1 Intimidation)")
@@ -464,22 +362,6 @@ def check_adjustments(
     if shedding and cold_weather and "attr_con" in attr_keys:
         mod -= 1
         notes.append("Mid-shed; coat isn't fully grown in yet (cold hits harder)")
-    if shedding and skill_key == "stealth":
-        mod -= 1
-        notes.append("Mid-shed; loose fur clings to everything (−1 Stealth)")
-    if "arthritis" in entries and "attr_dex" in attr_keys:
-        from engine.herb_buffs import pain_relief_active
-
-        day = day_number
-        if pain_relief_active(user, day):
-            notes.append("pain relief (arthritis ease active)")
-        else:
-            mod -= 1
-            notes.append("Arthritis (-1 Dex)")
-            if weather in ("rain", "sleet", "snow", "hail", "storm", "thunderstorm", "wind"):
-                disadvantage = True
-                notes.append("joints seize in cold and wet (disadvantage)")
-
     if "chronic_pain" in entries and first_physical_today:
         from engine.herb_buffs import pain_relief_active
 
@@ -501,52 +383,4 @@ def check_adjustments(
         if sc_note:
             notes.append(sc_note)
 
-    # cumulative organ damage from herb overuse
-    if "low_potassium" in entries and ("attr_str" in attr_keys or "attr_con" in attr_keys):
-        mod -= 1
-        notes.append("Weak-Heart (−1)")
-    if "kidney_damage" in entries and "attr_con" in attr_keys:
-        mod -= 1
-        notes.append("Rot-Kidney (−1 Con)")
-    if "liver_damage" in entries and "attr_con" in attr_keys:
-        mod -= 1
-        notes.append("Bile-Rot (−1 Con)")
-    if "thiamine_deficiency" in entries and ("attr_dex" in attr_keys or "attr_wis" in attr_keys):
-        mod -= 1
-        notes.append("The Trembles (−1)")
-
     return mod, disadvantage, " · ".join(notes)
-
-
-SEVERE_INJURIES = frozenset({"fractured_rib", "spinal_injury", "paralysis"})
-
-
-def apply_winter_cold_injury_on_rollover(conn, season: str) -> list[dict]:
-    """Winter cold worsens severe injuries: −1 HP per sunrise for fractured ribs,
-    spinal injuries, and paralysis. Doesn't kill outright (floor 1 HP) so medics
-    still have a window to intervene."""
-    if season != "winter":
-        return []
-    from engine.conditions import parse_injuries
-
-    rows = conn.execute(
-        "SELECT * FROM users WHERE condition NOT IN ('dead', 'dying') AND active_injuries IS NOT NULL AND active_injuries != ''"
-    ).fetchall()
-    notes: list[dict] = []
-    for wolf in rows:
-        injuries = set(parse_injuries(wolf["active_injuries"]))
-        severe = injuries & SEVERE_INJURIES
-        if not severe:
-            continue
-        hp = int(wolf["hp"])
-        if hp <= 1:
-            continue
-        new_hp = max(1, hp - 1)
-        conn.execute("UPDATE users SET hp = ? WHERE id = ?", (new_hp, wolf["id"]))
-        label = ", ".join(k.replace("_", " ") for k in sorted(severe))
-        notes.append({
-            "wolf_name": wolf["wolf_name"],
-            "discord_id": int(wolf["discord_id"]),
-            "line": f"winter cold deepens **{label}** (−1 hp → **{new_hp}**); see a medic.",
-        })
-    return notes
