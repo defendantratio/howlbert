@@ -1273,3 +1273,66 @@ async def quarantine_command(
         color=SUCCESS_COLOR
     )
     await interaction.response.send_message(embed=embed)
+
+
+async def dissect_cadaver(
+    interaction: discord.Interaction,
+    deceased: discord.Member | None,
+    own_deceased: str | None = None,
+    deceased_wolf: str | None = None,
+):
+    """Medic-apprentice cadaver dissection: study a fallen packmate to train anatomy."""
+    apprentice = db.get_user(interaction.user.id)
+    if not apprentice:
+        await interaction.response.send_message(player_message('use `/register` first.'), ephemeral=reply_ephemeral())
+        return
+
+    from engine.medic_cadaver import perform_dissection, is_apprentice_medic
+
+    if not is_apprentice_medic(apprentice):
+        await interaction.response.send_message(
+            embed=howlbert_embed('not an apprentice', 'only **medic apprentices** may dissect cadavers to learn anatomy.', color=ERROR_COLOR),
+            ephemeral=reply_ephemeral(),
+        )
+        return
+
+    if deceased and own_deceased:
+        await interaction.response.send_message(embed=howlbert_embed('pick one', 'use `deceased` or `own_deceased`; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+        return
+    if not deceased and not own_deceased:
+        await interaction.response.send_message(
+            player_message('pick the cadaver: **deceased** (another player) with optional **deceased_wolf**, or your own **own_deceased**.'),
+            ephemeral=reply_ephemeral(),
+        )
+        return
+
+    if own_deceased:
+        rows = db.list_user_wolves(interaction.user.id)
+        cadaver = next((w for w in rows if w['wolf_name'].lower() == own_deceased.strip().lower()), None)
+        if not cadaver:
+            await interaction.response.send_message(embed=howlbert_embed('unknown wolf', f'no wolf named **{own_deceased}** on your account.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+    elif deceased_wolf:
+        cadaver = db.find_user_wolf(deceased.id, deceased_wolf)
+        if not cadaver:
+            await interaction.response.send_message(embed=howlbert_embed('unknown wolf', db.explain_wolf_not_found(deceased.id, deceased_wolf, player_label=deceased.display_name), color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+    else:
+        cadaver = db.get_user(deceased.id)
+        if not cadaver:
+            await interaction.response.send_message(player_message('that wolf is not on Howlbert.'), ephemeral=reply_ephemeral())
+            return
+
+    if cadaver['condition'] != 'dead':
+        await interaction.response.send_message(
+            embed=howlbert_embed('not dead', f"**{cadaver['wolf_name']}** is not dead; only the dead can be studied.", color=ERROR_COLOR),
+            ephemeral=reply_ephemeral(),
+        )
+        return
+
+    day = db.get_world(interaction.guild.id)['day_number'] if interaction.guild else 0
+    success, msg = perform_dissection(apprentice, cadaver, day=day)
+    color = SUCCESS_COLOR if success else ERROR_COLOR
+    header = f"**{apprentice['wolf_name']}** studies **{cadaver['wolf_name']}**."
+    embed = howlbert_embed('cadaver dissection', f"{header}\n\n{msg}", color=color)
+    await interaction.response.send_message(embed=embed)
