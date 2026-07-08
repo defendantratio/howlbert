@@ -6240,7 +6240,7 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
             "SELECT * FROM users WHERE disease IS NOT NULL AND disease != ''"
         ).fetchall()
         for user in rows:
-            outcome = progress_disease(user)
+            outcome = progress_disease(user, day=day)
             if outcome.get("changed"):
                 new_hp = user["hp"]
                 exhaustion = user["exhaustion"]
