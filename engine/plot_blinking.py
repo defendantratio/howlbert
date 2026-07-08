@@ -129,6 +129,8 @@ RIFT_NAME = "Rift"
 SALTMUZZLE_NAME = "Saltmuzzle"
 GRIM_NAME = "Grim"
 STONEPIERCER_NAME = "Stonepiercer"
+MOTH_NAME = "Moth"
+SLEET_NAME = "Sleet"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -1149,6 +1151,34 @@ def apply_plot_grim_sniff(user, guild_id: int, day: int) -> str:
         f"\n\n_Grim reads a greyspire omen in the border scent; the whole pack stands "
         f"taller (**+{GRIM_PLOT_OMEN_STANDING} standing** to all of greyspire)._"
     )
+
+
+def plot_work_mult(user, guild_id: int | None) -> float:
+    """Moth (greyspire lowbelly) works twice as hard through the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 1.0
+    if not _is_plot_wolf(user, MOTH_NAME):
+        return 1.0
+    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
+        return 1.0
+    from config import MOTH_PLOT_WORK_MULT
+
+    return MOTH_PLOT_WORK_MULT
+
+
+def plot_faction_approach_bonus(user, faction: str, guild_id: int | None) -> int:
+    """Sleet (greyspire diplomat) wins extra ground with Thorne Lumber."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(user, SLEET_NAME):
+        return 0
+    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
+        return 0
+    if faction != "thorne_lumber":
+        return 0
+    from config import SLEET_PLOT_FACTION_STANDING
+
+    return SLEET_PLOT_FACTION_STANDING
 
 
 def plot_survey_standing_bonus(user, guild_id: int | None) -> int:
