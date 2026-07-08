@@ -66,9 +66,10 @@ def resolve_check(
         game_day=game_day,
     )
     fire_disadv = is_frightened_of_fire(user) and skill_key not in ("tracking", "survival")
-    from engine.aging import very_old_check_adjustment
+    from engine.aging import very_old_check_adjustment, young_check_adjustment
 
-    age_mod = very_old_check_adjustment(int(user["age_months"]) if "age_months" in user.keys() else 0, attr_keys)
+    _age_moons = int(user["age_months"]) if "age_months" in user.keys() else 0
+    age_mod = very_old_check_adjustment(_age_moons, attr_keys) + young_check_adjustment(_age_moons, attr_keys)
     omen_adv = False
     omen_disadv = False
     omen_buff = user["omen_buff"] if "omen_buff" in user.keys() else ""

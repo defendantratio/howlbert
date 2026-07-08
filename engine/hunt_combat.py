@@ -28,8 +28,15 @@ LARGE_PREY_LABELS = (
 )
 
 
-def roll_large_prey_encounter() -> bool:
-    return random.randint(1, 100) <= LARGE_PREY_ENCOUNTER_CHANCE
+def roll_large_prey_encounter(*, solo: bool = False) -> bool:
+    """Whether this hunt meets large prey. Lone wolves meet it far less often;
+    only a cornered/sick/desperate large animal is takeable without the pack."""
+    chance = LARGE_PREY_ENCOUNTER_CHANCE
+    if solo:
+        from config import SOLO_LARGE_PREY_ENCOUNTER_PCT
+
+        chance = max(1, LARGE_PREY_ENCOUNTER_CHANCE * SOLO_LARGE_PREY_ENCOUNTER_PCT // 100)
+    return random.randint(1, 100) <= chance
 
 
 PREY_NPC_NAMES = (

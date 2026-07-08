@@ -879,99 +879,111 @@ def _parent_genetic_keys(parent) -> list[str]:
 
 
 
-def roll_pup_genetic_conditions(
+def _parent_carrier_keys(parent) -> list[str]:
+    """Recessive alleles a parent carries silently (does not express)."""
+    if not parent or "genetic_carriers" not in parent.keys():
+        return []
+    return parse_genetic_conditions(parent["genetic_carriers"])
 
-    mother,
 
-    father,
+# Recessive conditions need two affected alleles to show; a single allele makes a
+# silent carrier that still passes the trait down the bloodline.
+RECESSIVE_CONDITIONS = frozenset({"blindness", "partial_blindness", "deafness", "albinism"})
 
-    *,
 
-    birth_outcome: str = "success",
+def _recessive_allele(parent, key: str, *, kin: bool) -> int:
+    """1 if this parent passes an affected allele for ``key`` to a pup, else 0."""
+    if not parent:
+        return 0
+    if key in _parent_genetic_keys(parent):
+        return 1  # homozygous affected: always passes an affected allele
+    if key in _parent_carrier_keys(parent):
+        return 1 if random.random() < (0.7 if kin else 0.5) else 0
+    # a clear, unrelated parent never passes it; a kin mate may secretly share the
+    # family's hidden allele (shared ancestry), surfacing recessives on inbreeding.
+    if kin and random.random() < 0.25:
+        return 1
+    return 0
 
-) -> tuple[list[str], bool]:
 
+def roll_pup_genetic_conditions(mother, father, *, birth_outcome="success", kin=False):
     """
+    Roll birth genetics for one pup.
 
-    Roll birth mutations for one pup.
-
-    Returns (conditions, lethal_stillborn); lethal stillborns are not registered.
-
+    Returns (conditions, carriers, lethal_stillborn); lethal stillborns are not
+    registered. ``kin`` (parents share close blood) raises recessive expression,
+    mutation load, inbreeding depression, and stillbirth risk.
     """
-
     conditions: list[str] = []
+    carriers: list[str] = []
 
-    inherit_pool: list[str] = []
-
+    # --- recessive loci (Mendelian carrier model) ---
+    loci: set[str] = set()
     for parent in (mother, father):
+        for k in _parent_genetic_keys(parent):
+            if k in RECESSIVE_CONDITIONS:
+                loci.add(k)
+        for k in _parent_carrier_keys(parent):
+            if k in RECESSIVE_CONDITIONS:
+                loci.add(k)
+    for key in loci:
+        a = _recessive_allele(mother, key, kin=kin)
+        b = _recessive_allele(father, key, kin=kin)
+        if a and b:
+            conditions.append(key)
+        elif a or b:
+            carriers.append(key)
 
+    # --- dominant / non-recessive inheritance (weight model) ---
+    inherit_pool: list[str] = []
+    for parent in (mother, father):
         if not parent:
-
             continue
-
         for key in _parent_genetic_keys(parent):
-
+            if key in RECESSIVE_CONDITIONS:
+                continue  # handled by the carrier model above
             weight = GENETIC_CONDITIONS[key].get("inherit_weight", 5)
-
             inherit_pool.extend([key] * weight)
-
-
-
-    if inherit_pool and random.random() < 0.22:
-
+    if inherit_pool and random.random() < (0.30 if kin else 0.22):
         pick = random.choice(inherit_pool)
-
         if pick not in conditions:
-
             conditions.append(pick)
 
-
-
+    # --- random mutation load ---
     base_chance = 0.04
-
     if birth_outcome in ("failure", "critical_failure"):
-
         base_chance += 0.06
-
     if birth_outcome == "critical_failure":
-
         base_chance += 0.04
-
-
-
+    if kin:
+        base_chance += 0.06  # inbreeding raises the mutation load
     if random.random() < base_chance:
-
         random_pool: list[str] = []
-
         for key, info in GENETIC_CONDITIONS.items():
-
             w = int(info.get("random_weight", 0))
-
             if w > 0:
-
                 random_pool.extend([key] * w)
-
         if random_pool:
-
             pick = random.choice(random_pool)
-
             if pick not in conditions:
-
                 conditions.append(pick)
 
+    # --- inbreeding depression: a kin litter tends to carry the diffuse fitness
+    # cost even without a single dramatic defect ---
+    if kin and "inbreeding_depression" not in conditions and random.random() < 0.35:
+        conditions.append("inbreeding_depression")
 
+    # carriers never double as expressed conditions
+    carriers = [k for k in carriers if k not in conditions]
 
+    # --- lethality / stillbirth ---
     lethal = False
-
     for key in conditions:
+        if GENETIC_CONDITIONS[key].get("lethal_at_birth") and random.random() < 0.75:
+            lethal = True
+            break
+    if not lethal and kin and random.random() < 0.10:
+        lethal = True  # inbreeding-depression stillbirth
 
-        if GENETIC_CONDITIONS[key].get("lethal_at_birth"):
-
-            if random.random() < 0.75:
-
-                lethal = True
-
-                break
-
-    return conditions, lethal
+    return conditions, carriers, lethal
 

@@ -1449,6 +1449,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_energy_at TEXT NOT NULL DEFAULT ''"
         )
+    if "genetic_carriers" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN genetic_carriers TEXT NOT NULL DEFAULT '[]'"
+        )
     if "last_rescout_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_rescout_day INTEGER NOT NULL DEFAULT 0"
@@ -5884,7 +5888,7 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
             from config import ENERGY_MAX as _ENERGY_MAX
 
             _cur_energy = int(user["energy"]) if "energy" in user.keys() and user["energy"] is not None else _ENERGY_MAX
-            _new_energy = min(_ENERGY_MAX, _cur_energy + _sunrise_energy(user))
+            _new_energy = min(_ENERGY_MAX, _cur_energy + _sunrise_energy(user, season=season))
             conn.execute(
                 """
                 UPDATE users

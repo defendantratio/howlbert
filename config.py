@@ -76,6 +76,10 @@ HUNT_OUTCOMES = [
 # Chance (percent) that `/bones action:hunt` triggers a cornered deer/elk fight instead of a normal roll
 LARGE_PREY_ENCOUNTER_CHANCE = 15
 LARGE_PREY_BONES = (30, 55)
+# A lone wolf rarely commits to elk/moose-sized prey; only a cornered, sick, or
+# desperate large animal is takeable solo. Solo hunts meet large prey at this
+# fraction of the base chance (pack hunts keep the full rate).
+SOLO_LARGE_PREY_ENCOUNTER_PCT = 40
 
 # World / rollover; one rollover = one in-game day
 SEASONS = ("spring", "summer", "autumn", "winter")

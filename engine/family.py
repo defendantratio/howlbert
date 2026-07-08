@@ -127,6 +127,15 @@ def birth_check(mother) -> dict:
     litter = random.randint(1, 4) + 1
     if not success:
         litter = max(1, litter - 1)
+    # a well-fed dam carries a fuller litter; an underfed one reabsorbs or loses
+    # pups. real litter size tracks the mother's body condition and prey supply.
+    mother_hunger = int(mother["hunger"]) if "hunger" in mother.keys() and mother["hunger"] is not None else 100
+    if mother_hunger < 15:
+        litter = max(1, litter - 2)
+    elif mother_hunger < 35:
+        litter = max(1, litter - 1)
+    elif mother_hunger >= 85 and success and random.random() < 0.30:
+        litter += 1  # thriving dam, generous litter
     from engine.herb_buffs import extra_pup_milk
 
     if success and extra_pup_milk(mother):
@@ -140,6 +149,7 @@ def birth_check(mother) -> dict:
         "litter_size": litter,
         "used_birth_advantage": used_birth_advantage,
         "extra_pup_from_borage": success and extra_pup_milk(mother),
+        "mother_hunger": mother_hunger,
     }
 
 
