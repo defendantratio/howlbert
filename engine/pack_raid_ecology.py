@@ -213,13 +213,6 @@ def try_raid_accuse(
             "no treasury theft to investigate.",
             color=ERROR_COLOR,
         )
-    if int(alert["accuse_day"]) >= day:
-        return howlbert_embed(
-            "already accused",
-            "your den already named a suspect this sunrise.",
-            color=ERROR_COLOR,
-        )
-
     accused = db.get_pack_by_key(target_pack_key)
     if not accused:
         return howlbert_embed("pack not found", "that den isn't registered here.", color=ERROR_COLOR)
@@ -231,12 +224,13 @@ def try_raid_accuse(
     lines: list[str] = [f"**{victim_name}** names **{accused_name}** for the treasury raid."]
 
     if int(accused["id"]) == suspect_id:
-        remaining = int(alert["stolen_amount"]) - int(alert["recovered_amount"])
-        claw = max(1, int(remaining * RAID_ACCUSE_RECOVER_PCT))
-        got = db.clawback_raid_from_pack_treasury(suspect_id, claw, pack["id"], int(alert["id"]))
+        remaining = max(0, int(alert["stolen_amount"]) - int(alert["recovered_amount"]))
+        claw = int(remaining * RAID_ACCUSE_RECOVER_PCT) if remaining > 0 else 0
+        got = db.clawback_raid_from_pack_treasury(suspect_id, claw, pack["id"], int(alert["id"])) if claw > 0 else 0
         new_rel = db.adjust_pack_relation(guild_id, pack["id"], suspect_id, -2)
+        claw_note = f"clawed back **{format_bones(got)}**" if got > 0 else "nothing left to claw back"
         lines.append(
-            f"**correct.** clawed back **{format_bones(got)}** from **{accused_name}** treasury."
+            f"**correct.** {claw_note} from **{accused_name}** treasury."
         )
         lines.append(f"pack standing with **{accused_name}** **−2** (now **{new_rel}/10**).")
         color = SUCCESS_COLOR

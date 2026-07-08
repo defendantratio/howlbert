@@ -13,10 +13,6 @@ def test_split_raw_herb():
     assert _split_herb_form("herb_yarrow") == ("yarrow", None)
 
 
-def test_split_infusion():
-    assert _split_herb_form("herb_knotgrass_infusion") == ("knotgrass", "infusion")
-
-
 def test_split_poultice():
     assert _split_herb_form("herb_arnica_poultice") == ("arnica", "poultice")
 
@@ -28,10 +24,6 @@ def test_split_simmered_milk():
 
 def test_split_multiword_herb_poultice():
     assert _split_herb_form("herb_belly_rip_fungus_poultice") == ("belly_rip_fungus", "poultice")
-
-
-def test_split_decoction():
-    assert _split_herb_form("herb_labrador_tea_decoction") == ("labrador_tea", "decoction")
 
 
 def test_split_dried():
@@ -55,8 +47,8 @@ def test_knotgrass_has_explicit_prep_methods():
     from herbs import HERBS
     from engine.herb_guide import _derive_prep_methods
     methods = _derive_prep_methods("knotgrass", HERBS["knotgrass"])
-    assert "infusion" in methods
-    assert "chewed" in methods
+    assert "poultice" in methods
+    assert "tea" in methods
 
 
 def test_arnica_is_poultice_only():
@@ -150,11 +142,9 @@ def test_row_safe_missing_column_defaults():
 
 _TESTS = [
     test_split_raw_herb,
-    test_split_infusion,
     test_split_poultice,
     test_split_simmered_milk,
     test_split_multiword_herb_poultice,
-    test_split_decoction,
     test_split_dried,
     test_split_non_herb_key,
     test_split_tea_suffix_not_shadowed_by_labrador_tea,

@@ -372,10 +372,6 @@ def run_surgery(
     if err or not spec:
         return False, err or "invalid procedure."
 
-    last = int(surgeon["last_surgery_day"] if "last_surgery_day" in surgeon.keys() else 0)
-    if last >= day:
-        return False, "you already operated this sunrise."
-
     missing = missing_surgery_herbs(surgeon, patient, spec)
     if missing:
         labels = ", ".join(_herb_label(h) for h in missing)
@@ -409,9 +405,15 @@ def run_surgery(
     if flag_err:
         return False, flag_err
 
+    from engine.diminishing import record_use, use_count_today
+
+    surgery_repeat = use_count_today(surgeon, "surgery", day)
+    record_use(surgeon, "surgery", day)
+
     assist_note = ""
     advantage = False
-    dc = surgery_dc_for_surgeon(surgeon, spec.dc)
+    dc = surgery_dc_for_surgeon(surgeon, spec.dc) + 2 * surgery_repeat
+    tired_note = f" _(repeat surgery today; dc +{2 * surgery_repeat})_" if surgery_repeat else ""
     if helper:
         if helper["id"] == surgeon["id"]:
             return False, "pick another **medic** as **helper**, not yourself."
@@ -471,7 +473,7 @@ def run_surgery(
     roll["attr_label"] = "WIS"
 
     lines = [
-        f"**{spec.label}** on **{patient['wolf_name']}**",
+        f"**{spec.label}** on **{patient['wolf_name']}**{tired_note}",
     ]
     if assist_note:
         lines.append(assist_note)

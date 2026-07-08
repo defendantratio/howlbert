@@ -77,7 +77,7 @@ cures: mange, hepatitis, infected wound, festering wound
 ---
 
 **burnet** · `herb_burnet` · common · wild
-leaf pressed onto cuts staunchces bleeding; astringent tonic for internal and external wounds; 1 leaf/day ignores first march exhaustion.
+leaf pressed onto cuts staunchces bleeding; astringent tea for internal and external wounds; 1 leaf/day ignores first march exhaustion.
 cures: sprained leg, deep gash
 
 ---
@@ -292,7 +292,7 @@ cures: diarrhea, fleas, mild illness
 ---
 
 **labrador tea** · `herb_labrador_tea` · common · wild (bogs / wetlands)
-ends wheezing for 4 hours; source of vitamin C; tonic and digestive.
+ends wheezing for 4 hours; source of vitamin C; tea and digestive.
 cures: mild illness, severe illness
 ⚠ maximum one dose per day — large amounts cause vomiting, paralysis, and death
 
@@ -340,7 +340,7 @@ cures: sprained leg, fractured rib, chronic stress, eating distress, obsession
 ---
 
 **mountain ash (rowan)** · `herb_mountain_ash` · common · wild
-bitter bark eases fever and hard-pad distemper; improves liver function; general tonic.
+bitter bark eases fever and hard-pad distemper; improves liver function; general tea.
 cures: distemper, influenza
 ⚠ berries in large amounts cause stomach damage and kidney failure
 
@@ -596,7 +596,7 @@ cures: diarrhea
 ---
 
 **wild cherry bark** · `herb_wild_cherry_bark` · common · wild
-stops coughing for 2 hours, even blackcough; sedative and digestive tonic.
+stops coughing for 2 hours, even blackcough; sedative and digestive tea.
 cures: severe illness, mild illness
 ⚠ contains cyanogenic glycosides — short-term use only (10–14 days); large doses toxic
 
@@ -658,7 +658,7 @@ cures: punctured paw, mild illness, diarrhea
 ---
 
 **chicory** · `herb_chicory` · common · roadside
-bitter root settles gut upsets; liver and digestive tonic; diuretic and appetite stimulant.
+bitter root settles gut upsets; liver and digestive tea; diuretic and appetite stimulant.
 cures: diarrhea
 ⚠ high fiber may cause gas, bloating, and diarrhea in sensitive wolves
 

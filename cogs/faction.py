@@ -78,7 +78,7 @@ class Faction(commands.Cog):
         embed.set_footer(text="actions: /faction observe · approach · trade · raid · sabotage")
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @faction.command(name="observe", description="watch a faction from a distance (flavor only; once per sunrise).")
+    @faction.command(name="observe", description="watch a faction from a distance (flavor only; costs nothing).")
     @app_commands.describe(faction="which faction to observe")
     @app_commands.choices(faction=_FACTION_CHOICES)
     async def observe(self, interaction: discord.Interaction, faction: str):

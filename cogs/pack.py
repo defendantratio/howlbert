@@ -577,7 +577,7 @@ class Pack(commands.Cog):
         embed = try_treasury_audit(interaction, user, pack, world['day_number'])
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @pack.command(name='accuse', description='alpha/beta name a rival den for a treasury raid (once per sunrise).')
+    @pack.command(name='accuse', description='alpha/beta name a rival den for a treasury raid.')
     @app_commands.describe(target_pack='which great pack you accuse')
     @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
     async def pack_accuse(self, interaction: discord.Interaction, target_pack: str):
@@ -613,7 +613,7 @@ class Pack(commands.Cog):
                 embed.set_footer(text=relation_effect_text(rel))
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @pack.command(name='share', description='share hunting territory with a rival pack (+1 standing, once per sunrise per pair).')
+    @pack.command(name='share', description='share hunting territory with a rival pack (+1 standing; repeats pay less).')
     @app_commands.describe(target_pack='greyspire, mistmoor, thistlehide, or silverrush')
     @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
     async def pack_share(self, interaction: discord.Interaction, target_pack: str):

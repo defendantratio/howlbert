@@ -649,7 +649,7 @@ class Economy(commands.Cog):
             pack = db.get_pack(user['pack_id'])
             unity = pack['pack_unity'] if pack else 5
             embed = howlbert_embed('Den Charm Hung', f"You hang the charm at **{(pack['name'] if pack else 'your den')}** entrance. Pack unity rises to **{unity}/10**.", color=SUCCESS_COLOR)
-            embed.set_footer(text='/pack · once per sunrise')
+            embed.set_footer(text='/pack · buy another charm to hang again')
             await interaction.response.send_message(embed=embed)
             return
         if key == 'rabbit_pelt':

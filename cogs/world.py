@@ -291,13 +291,11 @@ class World(commands.Cog):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        from engine.starclan_omens import mark_rest_omen, rest_omen_available, roll_rest_omen
+        from engine.diminishing import diminishing_note, next_use_multiplier
+        from engine.starclan_omens import mark_rest_omen, roll_rest_omen
         world = db.get_world(interaction.guild.id)
         day = int(world['day_number'])
-        if not rest_omen_available(user, day):
-            embed = howlbert_embed('Already Read', "You already sought **StarClan**'s counsel this sunrise.", color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+        omen_mult, omen_n = next_use_multiplier(user, 'omen', day)
         kind, body = roll_rest_omen()
         mark_rest_omen(user, day)
         if kind == 'good':
@@ -307,10 +305,12 @@ class World(commands.Cog):
             db.update_user_by_id(user['id'], omen_buff='bad')
             body += '\n_Disadvantage on your first roll next sunrise._'
         elif kind == 'vision':
-            new_mood = db.adjust_mood(user['id'], 4)
-            body += f'\n**+4 mood** (now **{new_mood}**).'
+            mood_gain = max(1, int(4 * omen_mult))
+            new_mood = db.adjust_mood(user['id'], mood_gain)
+            body += f'\n**+{mood_gain} mood** (now **{new_mood}**).'
         embed = howlbert_embed('StarClan Omen', body)
-        embed.set_footer(text='once per sunrise · /checklist')
+        dim = diminishing_note(omen_n)
+        embed.set_footer(text=f'{dim} · /checklist' if dim else '/checklist')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='hazard', description='face a weather hazard; opposed roll vs the environment.')

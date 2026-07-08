@@ -1,19 +1,45 @@
-"""Herb preparation; dry, poultice, tonic, decoction."""
+# herb_preparation.py
+"""Herb preparation; dry, poultice, tea, and more."""
 
 from __future__ import annotations
 
-import random
 
 import database as db
 from config import HERB_PREP_DC
 from engine.character import parse_proficiencies
 from engine.dice import format_roll_result, resolve_check
-from engine.herb_properties import herb_form_rule
 from engine.role_features import is_full_medic
 from herbs import HERBS
 
 
-PREP_FORMS = ("dry", "poultice", "tonic", "decoction")
+# preparation methods a wolf can choose. each maps to the stored `form`, its
+# herblore dc, which source forms it can be made from (the chaining), and a
+# player-facing effect line. you can dry a fresh herb, then turn the dried herb
+# into a tea, rub, juice, poultice, and so on; a tea or gargle can be sweetened.
+PREP_METHODS: dict[str, dict] = {
+    "dry":      {"form": "dried",         "dc": 8,  "from": ("fresh",),          "bonus": " Stores for months in your herb bag."},
+    "poultice": {"form": "poultice",      "dc": 10, "from": ("fresh", "dried"),  "bonus": " Heals **1d4** on complex wounds (vs 1d2 raw)."},
+    "juice":    {"form": "juice",         "dc": 11, "from": ("fresh", "dried"),  "bonus": " Pressed juice; fast into eyes and open wounds."},
+    "raw":      {"form": "raw",           "dc": 6,  "from": ("fresh", "dried"),  "bonus": " Eaten raw; swallowed whole."},
+    "tea":      {"form": "tea",           "dc": 10, "from": ("fresh", "dried"),  "bonus": " Steeped tea; a gentle internal draught."},
+    "gargle":   {"form": "gargle",        "dc": 10, "from": ("fresh", "dried"),  "bonus": " A gargle for sore throat and mouth."},
+    "sweeten":  {"form": "sweetened",     "dc": 8,  "from": ("tea", "gargle"),   "bonus": " Sweetened with honey; palatable to pups and the reluctant."},
+    "ointment": {"form": "ointment",      "dc": 12, "from": ("fresh", "dried"),  "bonus": " A lasting salve; heals **1d4** on complex wounds."},
+    "sap":      {"form": "sap",           "dc": 9,  "from": ("fresh",),          "bonus": " Pressed sap for stings and leaf-burn."},
+    "rub":      {"form": "rub",           "dc": 9,  "from": ("fresh", "dried"),  "bonus": " A pelt rub; wards pests and soothes skin."},
+    "cook":     {"form": "cooked",        "dc": 10, "from": ("fresh",),          "bonus": " Eaten cooked; cooking tames the raw bite."},
+    "milk":     {"form": "simmered_milk", "dc": 12, "from": ("fresh", "dried"),  "bonus": " Simmered in milk; soothing for pups and sore eyes."},
+}
+
+PREP_FORMS = tuple(PREP_METHODS)
+
+METHOD_LABELS = {
+    "dry": "dry", "poultice": "poultice", "juice": "juice", "raw": "eaten raw",
+    "tea": "tea", "gargle": "gargle", "sweeten": "sweeten", "ointment": "ointment",
+    "sap": "sap", "rub": "rub", "cook": "eaten cooked", "milk": "simmered milk",
+}
+
+_METHOD_LIST_MSG = "use one of: **dry, poultice, juice, eaten raw, tea, gargle, sweeten, ointment, sap, rub, eaten cooked, simmered milk**."
 
 
 def _herblore_proficient(user) -> bool:
@@ -24,22 +50,31 @@ def _herblore_proficient(user) -> bool:
 def _prep_dc(method: str, user, herb_key: str) -> int:
     if method == "poultice" and is_full_medic(user):
         return HERB_PREP_DC["poultice_simple"]
-    if method == "dry":
-        return HERB_PREP_DC["dry"]
-    if method == "tonic":
-        return HERB_PREP_DC["tonic"]
-    if method == "decoction":
-        return HERB_PREP_DC["decoction"]
-    return HERB_PREP_DC.get(method, 10)
+    spec = PREP_METHODS.get(method)
+    return spec["dc"] if spec else 10
 
 
 def _target_form(method: str) -> str:
-    return {
-        "dry": "dried",
-        "poultice": "poultice",
-        "tonic": "tonic",
-        "decoction": "decoction",
-    }[method]
+    return PREP_METHODS[method]["form"]
+
+
+def _prep_transition(method: str, current_form: str) -> tuple[bool, str]:
+    """Validate a prep on a stack in ``current_form``. Returns (ok, target_form)
+    on success, or (False, error_message)."""
+    from engine.herb_properties import form_label
+
+    spec = PREP_METHODS.get(method)
+    if not spec:
+        return False, _METHOD_LIST_MSG
+    if current_form == spec["form"]:
+        return False, f"already prepared as **{form_label(spec['form'])}**."
+    if current_form not in spec["from"]:
+        allowed = " or ".join(form_label(f) for f in spec["from"])
+        return False, (
+            f"**{METHOD_LABELS.get(method, method)}** needs a **{allowed}** herb; "
+            f"this one is **{form_label(current_form)}**."
+        )
+    return True, spec["form"]
 
 
 def prepare_herb_stack(
@@ -50,20 +85,16 @@ def prepare_herb_stack(
     day: int,
     at_den: bool = False,
 ) -> tuple[bool, str]:
-    if method not in PREP_FORMS:
-        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
+    if method not in PREP_METHODS:
+        return False, _METHOD_LIST_MSG
     stack = db.get_herb_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "that herb isn't in your forage bag."
     herb_key = stack["herb_key"]
     meta = HERBS.get(herb_key, {})
-    rule = herb_form_rule(herb_key)
-    if method == "decoction" and not at_den:
-        pass  # wolves heat stones / den fire anywhere for decoction
-    if stack["form"] != "fresh" and method == "dry":
-        return False, "only **fresh** herbs can be dried."
-    if stack["form"] not in ("fresh", "dried") and method != "dry":
-        return False, f"already prepared as **{stack['form']}**."
+    ok, target = _prep_transition(method, stack["form"])
+    if not ok:
+        return False, target
 
     dc = _prep_dc(method, user, herb_key)
     result = resolve_check(
@@ -75,8 +106,6 @@ def prepare_herb_stack(
         skill_key="herblore",
         game_day=day,
     )
-    target = _target_form(method)
-
     if result["outcome"] == "critical_failure":
         db.remove_herb_stack(stack_id)
         return (
@@ -85,16 +114,6 @@ def prepare_herb_stack(
             + f"\n\n**{meta.get('name', herb_key)}** ruined; batch spoiled.",
         )
     if not result["success"]:
-        if method == "tonic":
-            db.remove_herb_stack(stack_id)
-            return (
-                False,
-                format_roll_result(result)
-                + "\n\ncontaminated tonic; patient would vomit; herb wasted.",
-            )
-        if method == "decoction":
-            db.remove_herb_stack(stack_id)
-            return False, format_roll_result(result) + "\n\ndecoction boiled over; batch ruined."
         if method == "dry":
             db.update_herb_stack(stack_id, potency=max(40, int(stack["potency"]) - 30))
             return (
@@ -102,34 +121,22 @@ def prepare_herb_stack(
                 format_roll_result(result)
                 + "\n\npoor drying; **reduced potency** (still usable).",
             )
-        return False, format_roll_result(result) + "\n\npreparation failed; try again."
+        return False, format_roll_result(result) + "\n\npreparation failed; the herb keeps its form; try again."
 
-    potency = 100
-    if method == "dry" and result["outcome"] != "critical_success":
-        potency = 90
-    if result["outcome"] == "critical_success":
-        potency = 100
-    if method == "decoction":
-        potency = 120
+    potency = 90 if (method == "dry" and result["outcome"] != "critical_success") else 100
     db.update_herb_stack(
         stack_id,
         form=target,
         acquired_day=day,
         potency=min(120, potency),
     )
-    bonus = ""
-    if method == "decoction":
-        bonus = " Cure timers **halved** when used."
-    elif method == "poultice":
-        bonus = " Heals **1d4** on complex wounds (vs 1d2 raw)."
-    elif method == "tonic":
-        bonus = " Full tonic effect when administered."
-    elif method == "dry":
-        bonus = " Stores for months in your herb bag."
+    from engine.herb_properties import form_label
+
+    bonus = PREP_METHODS[method]["bonus"]
     return (
         True,
         format_roll_result(result)
-        + f"\n\n**{meta.get('name', herb_key)}** → **{target}**.{bonus}",
+        + f"\n\n**{meta.get('name', herb_key)}** → **{form_label(target)}**.{bonus}",
     )
 
 
@@ -142,17 +149,16 @@ def prepare_pack_herb_stack(
     pack_id: int,
 ) -> tuple[bool, str]:
     """Dry (or prepare) one healers' den store stack; dryall uses this for fresh rows."""
-    if method not in PREP_FORMS:
-        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
+    if method not in PREP_METHODS:
+        return False, _METHOD_LIST_MSG
     stack = db.get_pack_herb_stack(store_id)
     if not stack or int(stack["pack_id"]) != pack_id:
         return False, "that stack isn't in your pack's herb store."
     herb_key = stack["herb_key"]
     meta = HERBS.get(herb_key, {})
-    if stack["form"] != "fresh" and method == "dry":
-        return False, "only **fresh** herbs can be dried."
-    if stack["form"] not in ("fresh", "dried") and method != "dry":
-        return False, f"already prepared as **{stack['form']}**."
+    ok, target = _prep_transition(method, stack["form"])
+    if not ok:
+        return False, target
 
     dc = _prep_dc(method, user, herb_key)
     result = resolve_check(
@@ -164,7 +170,6 @@ def prepare_pack_herb_stack(
         skill_key="herblore",
         game_day=day,
     )
-    target = _target_form(method)
     name = meta.get("name", herb_key)
     qty = int(stack["quantity"])
     store_note = f" (den store ×**{qty}**)" if qty > 1 else " (den store)"
@@ -186,24 +191,20 @@ def prepare_pack_herb_stack(
             )
         return False, format_roll_result(result) + "\n\npreparation failed; try again."
 
-    potency = 100
-    if method == "dry" and result["outcome"] != "critical_success":
-        potency = 90
-    if result["outcome"] == "critical_success":
-        potency = 100
-    if method == "decoction":
-        potency = 120
+    potency = 90 if (method == "dry" and result["outcome"] != "critical_success") else 100
     db.update_pack_herb_stack(
         store_id,
         form=target,
         acquired_day=day,
         potency=min(120, potency),
     )
-    bonus = " Stores for months in the healers' den." if method == "dry" else ""
+    from engine.herb_properties import form_label
+
+    bonus = " Stores for months in the healers' den." if method == "dry" else PREP_METHODS[method]["bonus"]
     return (
         True,
         format_roll_result(result)
-        + f"\n\n**{name}**{store_note} → **{target}**.{bonus}",
+        + f"\n\n**{name}**{store_note} → **{form_label(target)}**.{bonus}",
     )
 
 
@@ -233,9 +234,15 @@ def prepare_herb_from_inventory(
         return False, "could not use herb from `/bones action:inventory`."
 
     meta = HERBS.get(herb_key, {})
-    if method not in PREP_FORMS:
+    if method not in PREP_METHODS:
         db.grant_item(user["discord_id"], item["id"], quantity=1)
-        return False, "use **dry**, **poultice**, **tonic**, or **decoction**."
+        return False, _METHOD_LIST_MSG
+    # inventory herbs are fresh; a method that must be built from a tea/gargle
+    # (like sweeten) can't be run on a raw inventory herb.
+    if "fresh" not in PREP_METHODS[method]["from"]:
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        allowed = " or ".join(PREP_METHODS[method]["from"])
+        return False, f"**{METHOD_LABELS.get(method, method)}** needs a **{allowed}** herb; prepare that first from your forage bag."
 
     dc = _prep_dc(method, user, herb_key)
     result = resolve_check(
@@ -256,33 +263,25 @@ def prepare_herb_from_inventory(
             format_roll_result(result) + f"\n\n**{name}** ruined; batch spoiled.",
         )
     if not result["success"]:
-        if method in ("tonic", "decoction"):
-            return (
-                False,
-                format_roll_result(result) + f"\n\n**{name}** preparation failed; herb wasted.",
-            )
+        db.grant_item(user["discord_id"], item["id"], quantity=1)
         if method == "dry":
-            db.grant_item(user["discord_id"], item["id"], quantity=1)
             return (
                 False,
                 format_roll_result(result)
                 + "\n\npoor drying; herb kept but **reduced potency** (still usable).",
             )
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
         return False, format_roll_result(result) + "\n\npreparation failed; herb returned."
 
-    potency = 100
-    if method == "dry" and result["outcome"] != "critical_success":
-        potency = 90
-    if method == "decoction":
-        potency = 120
+    from engine.herb_properties import form_label
+
+    potency = 90 if (method == "dry" and result["outcome"] != "critical_success") else 100
 
     if method == "dry":
         db.grant_item(user["discord_id"], item["id"], quantity=1)
         bonus = " Stores for months in `/bones action:inventory`."
         return (
             True,
-            format_roll_result(result) + f"\n\n**{name}** → **{target}**.{bonus}",
+            format_roll_result(result) + f"\n\n**{name}** → **{form_label(target)}**.{bonus}",
         )
 
     pack_id = int(user["pack_id"]) if user and user["pack_id"] else 0
@@ -290,7 +289,7 @@ def prepare_herb_from_inventory(
         db.grant_item(user["discord_id"], item["id"], quantity=1)
         return (
             False,
-            "join a pack to prepare **poultice/tonic/decoction** into the healers' den store.",
+            "join a pack to prepare non-dried forms into the healers' den store (or prepare from your `/food`/forage bag).",
         )
     db.add_pack_herb_stack(
         pack_id,
@@ -302,15 +301,11 @@ def prepare_herb_from_inventory(
         guild_id=guild_id,
         deposited_by=user["id"],
     )
-    bonus = {
-        "decoction": " Cure timers **halved** when used from the den store.",
-        "poultice": " Heals **1d4** on complex wounds when used from the den store.",
-        "tonic": " Full tonic effect when administered from the den store.",
-    }.get(method, "")
+    bonus = PREP_METHODS[method]["bonus"]
     return (
         True,
         format_roll_result(result)
-        + f"\n\n**{name}** → **{target}** in the healers' store (`/herbs action:store mode:list`).{bonus}",
+        + f"\n\n**{name}** → **{form_label(target)}** in the healers' store (`/herbs action:store mode:list`).{bonus}",
     )
 
 

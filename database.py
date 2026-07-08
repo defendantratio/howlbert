@@ -1441,6 +1441,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN mood INTEGER NOT NULL DEFAULT 75"
         )
+    if "energy" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN energy INTEGER NOT NULL DEFAULT 100"
+        )
     if "last_rescout_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_rescout_day INTEGER NOT NULL DEFAULT 0"
@@ -8883,25 +8887,6 @@ def get_scent_marks_for_pack(guild_id: int, pack_key: str, *, since_day: int = 0
         ).fetchall()
 
 
-def pack_diplomacy_done_today(
-    guild_id: int,
-    pack_a: int,
-    pack_b: int,
-    action: str,
-    day: int,
-) -> bool:
-    a, b = _normalize_pack_pair(pack_a, pack_b)
-    with get_db() as conn:
-        row = conn.execute(
-            """
-            SELECT 1 FROM pack_diplomacy_log
-            WHERE guild_id = ? AND pack_a_id = ? AND pack_b_id = ? AND action = ? AND action_day = ?
-            """,
-            (guild_id, a, b, action, day),
-        ).fetchone()
-        return row is not None
-
-
 def record_pack_diplomacy(
     guild_id: int,
     pack_a: int,
@@ -13080,6 +13065,18 @@ def adjust_mood(wolf_id: int, delta: int) -> int:
         mood = max(MOOD_MIN, min(MOOD_MAX, int(row["mood"]) + delta))
         conn.execute("UPDATE users SET mood = ? WHERE id = ?", (mood, wolf_id))
         return mood
+
+
+def adjust_energy(wolf_id: int, delta: int) -> int:
+    from config import ENERGY_MAX, ENERGY_MIN
+
+    with get_db() as conn:
+        row = conn.execute("SELECT energy FROM users WHERE id = ?", (wolf_id,)).fetchone()
+        if not row:
+            return 0
+        energy = max(ENERGY_MIN, min(ENERGY_MAX, int(row["energy"]) + delta))
+        conn.execute("UPDATE users SET energy = ? WHERE id = ?", (energy, wolf_id))
+        return energy
 
 
 def adjust_hunger(wolf_id: int, delta: int) -> int:

@@ -1079,7 +1079,7 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             fields["exhaustion"] = ex
             return {
                 "kind": "minor_relief",
-                "message": "fever tonic: **−1 exhaustion**; advantage on the next disease save.",
+                "message": "fever tea: **−1 exhaustion**; advantage on the next disease save.",
                 "fields": fields,
             }
         return {
@@ -1181,7 +1181,7 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
     if herb_key == "heather":
         fields.update(grant_disease_save_advantage(user))
         fields["mood"] = min(100, mood + 3)
-        msg = "Bitter mixture sweetened: tonic stays down; advantage on the next disease save."
+        msg = "Bitter tea sweetened: it stays down; advantage on the next disease save."
         if disease_key in ("mild_poison", "diarrhea", "influenza"):
             msg = (
                 "Heather honeying steadies a queasy gut; advantage on the next disease save."

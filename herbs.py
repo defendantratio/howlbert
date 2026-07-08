@@ -141,9 +141,9 @@ INJURIES = {
         "name": "Festering Wound",
         "effect": (
             "Deep infection: −1 HP and +1 exhaustion each sunrise without a save. "
-            "DC 15 to cure (yarrow or goldenrod decoction)."
+            "DC 15 to cure (yarrow or goldenrod tea)."
         ),
-        "treatment": "Yarrow decoction · goldenrod decoction · urgent Medic care",
+        "treatment": "Yarrow tea · goldenrod tea · urgent Medic care",
         "permanent": False,
         "infection": True,
         "festering": True,

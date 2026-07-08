@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from engine.role_privileges import (
-    can_forage_again,
     forage_check_params,
     forage_sunrise_footer,
     is_full_forager,
@@ -27,27 +26,6 @@ def _user(**kwargs):
     base = {"wolf_role": "hunter", "last_forage_day": 5}
     base.update(kwargs)
     return base
-
-
-def test_can_forage_again() -> None:
-    print("\n=== can_forage_again ===")
-    day = 10
-    check(
-        "full forager unlimited same day",
-        can_forage_again(_user(wolf_role="forager", last_forage_day=day), day),
-    )
-    check(
-        "apprentice blocked same day",
-        not can_forage_again(_user(wolf_role="forager_apprentice", last_forage_day=day), day),
-    )
-    check(
-        "hunter blocked same day",
-        not can_forage_again(_user(wolf_role="hunter", last_forage_day=day), day),
-    )
-    check(
-        "hunter ready new day",
-        can_forage_again(_user(wolf_role="hunter", last_forage_day=day - 1), day),
-    )
 
 
 def test_forage_check_params() -> None:
@@ -93,7 +71,6 @@ def test_forage_sunrise_footer() -> None:
 
 def main() -> None:
     global _pass, _fail
-    test_can_forage_again()
     test_forage_check_params()
     test_forage_sunrise_footer()
     print(f"\n=== {_pass} passed, {_fail} failed ===")

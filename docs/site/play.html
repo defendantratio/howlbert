@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="how to play howlbert, the discord wolf rp bot." />
+    <title>howlbert; how to play</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 20px 0 8px 0;
+        }
+        .content-section h4 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--bone);
+            margin: 14px 0 6px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+        .content-section .cmd {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            color: var(--maw);
+        }
+        .content-section .example {
+            background: var(--glass-bg);
+            border-left: 3px solid var(--maw);
+            padding: 8px 14px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+            color: var(--bone-dim);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html" class="current">⟡ how to play</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>how to play</h1>
+                <p class="hook">
+                    become a wolf in the <span class="maw-word">wolf-world</span>.<br />
+                    hunt, heal, fight, and lead your pack through the blinking.
+                </p>
+                <p class="description">
+                    howlbert is a discord roleplaying bot that simulates the lives of sentient wolves
+                    in a harsh, realistic world. every choice matters: your hunger, your mood,
+                    your pack's unity, and the maw's hunger all press on you. this guide walks you
+                    through the basics of survival and glory.
+                </p>
+            </header>
+
+            <section class="glass content-section">
+                <h2>getting started</h2>
+                <p>join the discord server and use the slash commands to create your wolf. the first step is registration.</p>
+                <ul>
+                    <li><span class="cmd">/register</span> – choose a name, a great pack (greyspire, mistmoor, thistlehide, silverrush) or choose to be a loner or rogue. each pack has its own culture, starting herbs, and territory.</li>
+                    <li><span class="cmd">/character</span> – set your wolf's pronouns, biography, birthday, avatar image, ref image, birth sex, sexuality, maw belief, combat size, and age. this personalises your profile.</li>
+                    <li><span class="cmd">/profile</span> – view your wolf's sheet, including stats, skills, inventory, bonds, and condition.</li>
+                </ul>
+                <p>once registered, you are part of the wolf-world. the caldera at the centre of the territories is a neutral meeting ground, but the world stretches far beyond it: forests, mountains, swamps, rivers, and the edges of twoleg lands. you will explore, hunt, and interact with other wolves and the many dangers of the wild.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>core survival</h2>
+                <p>your wolf has four primary vitals: hunger, thirst, mood, and health. these decay over time and are affected by actions and the environment. keep them in balance or face exhaustion, illness, or worse.</p>
+                <ul>
+                    <li><span class="cmd">/eat</span> – consume fresh‑kill or foraged food from your inventory or the pack stash.</li>
+                    <li><span class="cmd">/drink</span> – drink from a water source or use stored water. you can also drink broth or milk if you have it.</li>
+                    <li><span class="cmd">/vitals</span> – check your current condition, including any injuries or diseases.</li>
+                    <li><span class="cmd">/rest</span> – take a long rest to recover health and reduce exhaustion.</li>
+                </ul>
+                <p>hunting and foraging are essential for food. use <span class="cmd">/bones action:hunt</span> to pursue prey, or <span class="cmd">/field action:forage</span> to gather plants, roots, and berries. fishing is available near water.</p>
+                <p>the maw faith influences your wolf's worldview; choose a belief at registration (orthodox, zealot, doubter, etc.) and your character's actions can reflect that.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>skills and combat</h2>
+                <p>howlbert uses a tabletop‑inspired skill system. each wolf has attributes (strength, dexterity, survival, intelligence, charisma, wisdom) that determine success in various checks.</p>
+                <ul>
+                    <li><span class="cmd">/skills</span> – view all available skill checks and their difficulty classes.</li>
+                    <li><span class="cmd">/skilllist</span> – see a summary of skill categories and typical dcs.</li>
+                    <li><span class="cmd">/rpg action:roll</span> – make a skill check with a chosen attribute and optional helper.</li>
+                </ul>
+                <p><strong>combat</strong> is tactical and lethal. use <span class="cmd">/combat start</span> to initiate a fight, then join and take turns. you can bite, claw, or use maneuvers like throat grab, shoulder check, and rear guard. injury and exhaustion are real; a wolf at 0 hp is dying and must make death saves.</p>
+                <ul>
+                    <li><span class="cmd">/combat attack</span> – choose a target and an attack type.</li>
+                    <li><span class="cmd">/combat maneuver</span> – use a special move (e.g. throat grab, eye rake).</li>
+                    <li><span class="cmd">/medic action:stabilize</span> – try to save a dying wolf.</li>
+                </ul>
+                <p>defeated wolves can be spared, finished, or left to the maw. death is permanent; but you can always create a new wolf.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>herbs and healing</h2>
+                <p>the green tongue is the knowledge of herbs. healers and foragers gather plants to treat wounds, diseases, and mental ailments. the herb compendium lists over 100 plants with real effects.</p>
+                <ul>
+                    <li><span class="cmd">/field action:forage</span> – collect herbs in your current location.</li>
+                    <li><span class="cmd">/herbs action:guide</span> – browse the herb compendium.</li>
+                    <li><span class="cmd">/medic action:treat</span> – apply a herb or poultice to a patient.</li>
+                    <li><span class="cmd">/medic action:surgery</span> – perform invasive procedures (requires high medicine skill).</li>
+                </ul>
+                <p>diseases range from green‑cough to rot‑lung and river rot. some have no cure; others require careful treatment. medics also manage quarantine and observe symptoms.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>pack life and territory</h2>
+                <p>joining a great pack means sharing a treasury, a territory, and a unity score. pack members can contribute to the pack's strength and defend its borders.</p>
+                <ul>
+                    <li><span class="cmd">/pack</span> – view pack info, treasury, and unity.</li>
+                    <li><span class="cmd">/pack patrol</span> – patrol the borders to deter rivals.</li>
+                    <li><span class="cmd">/pack scout</span> – gather intelligence on enemy movements.</li>
+                    <li><span class="cmd">/pack challenge</span> – (alpha only) declare a war to claim territory.</li>
+                </ul>
+                <p>packs can also form pacts with the four cat clans (thunderclan, shadowclan, windclan, riverclan) using <span class="cmd">/pack pact</span>. cat trust is a resource that can be raised or lowered by border incidents.</p>
+                <p>loners and rogues do not have a pack treasury or territory; they survive by foraging, hunting, and sometimes stealing. rogues can use <span class="cmd">/bones action:crime</span> to take risks for extra bones.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>bones economy</h2>
+                <p>bones are the currency of the wolf‑world. earned by hunting, working, praying, crime, and completing quests, they can be spent at the shop for herbs, tools, and other items.</p>
+                <ul>
+                    <li><span class="cmd">/bones action:daily</span> – collect your daily stipend (if you are in a great pack).</li>
+                    <li><span class="cmd">/bones action:shop</span> – browse and buy items.</li>
+                    <li><span class="cmd">/bones action:give</span> – trade bones to another wolf.</li>
+                </ul>
+                <p>prestige tiers (from "the named" to "the sunderer") grant permanent bone bonuses based on completed quests and retired wolves.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>roleplay and scenes</h2>
+                <p>howlbert is built for immersive roleplay. use in‑character commands to speak, gesture, and interact with the world.</p>
+                <ul>
+                    <li><span class="cmd">/say</span> – speak aloud in character.</li>
+                    <li><span class="cmd">/whisper</span> – send a private, styled message to another wolf.</li>
+                    <li><span class="cmd">/sign</span> – use body language (alert, submit, growl, nuzzle, etc.) – unlimited but diminishing returns.</li>
+                    <li><span class="cmd">/scene start</span> – create a roleplay scene thread with a pinned living roster.</li>
+                    <li><span class="cmd">/proxy</span> – set up proxy tags so that typing a tag (e.g. "H:hello") posts as your wolf.</li>
+                </ul>
+                <p>the <span class="cmd">/journal</span> command shows your wolf's automatic life timeline: birth, pack moves, bonds, blooding, rites, and death.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>quests and the blinking</h2>
+                <p>the world is alive with events. the current plot arc is <strong>book one: the blinking</strong>, a twelve‑phase story that affects every wolf. phases advance through roleplay, not a day counter.</p>
+                <ul>
+                    <li><span class="cmd">/world action:plot</span> – view the current phase and active mechanics.</li>
+                    <li><span class="cmd">/role action:quests</span> – see available quests and your progress.</li>
+                    <li><span class="cmd">/plotadvance</span> – (staff only) advance the phase.</li>
+                </ul>
+                <p>each wolf can participate in the plot by using sniff, howl, treat, or other actions. canon wolves (firepaw, soot, rivershroud, etc.) have special lanes with extra rewards and consequences.</p>
+                <p>quests like <strong>blink_border_patrol</strong>, <strong>blink_healer_touch</strong>, and <strong>blink_mill_scout</strong> offer standing and bone rewards.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>advanced systems</h2>
+                <h3>courtship and pups</h3>
+                <p>wolves can form bonds (friends, rivals, kin, mentor, romance, mates). courtship is year‑round, but conception only occurs in winter. use <span class="cmd">/courtship court</span> to initiate, and <span class="cmd">/courtship mate</span> to formalise a bond. pups are born via <span class="cmd">/pupcare birth</span>, and must be fed and protected.</p>
+
+                <h3>prestige</h3>
+                <p>earn prestige by completing quests and retiring wolves. each tier grants a permanent bone bonus on hunts and daily stipends. use <span class="cmd">/prestige</span> to track progress.</p>
+
+                <h3>human factions</h3>
+                <p>the twoleg world presses on the wolf‑world. interact with factions like the lowland settlements, thorne lumber, the river mill, the crows, and the university expedition. use <span class="cmd">/faction</span> to observe, approach, trade, raid, or sabotage. standing with each faction unlocks rewards and dangers.</p>
+
+                <h3>gardening</h3>
+                <p>grow your own herbs with <span class="cmd">/garden</span>. buy seeds, plant, tend daily, and harvest when mature. each plant has specific light and water needs.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>staff and admins</h2>
+                <p>administrators can manage the world: roll over the sunrise, set seasons, assign wolves, run npcs, and control plot phases. see the staff reference for details.</p>
+                <ul>
+                    <li><span class="cmd">/rollover</span> – advance one in‑game day.</li>
+                    <li><span class="cmd">/wolfadmin</span> – assign, transfer, make dormant, or execute wolves.</li>
+                    <li><span class="cmd">/npc</span> – create and control npc wolves for scenes.</li>
+                    <li><span class="cmd">/setplotphase</span> – set the current blinking phase.</li>
+                </ul>
+            </section>
+
+            <section class="glass content-section">
+                <h2>help and community</h2>
+                <p>use <span class="cmd">/help topic:overview</span> for a full command reference. the community is friendly; ask questions in the designated channels. join the discord server and start your story.</p>
+                <p>the wolf‑world is vast, but every pawstep matters. the maw watches. the packs remember. your legend begins now.</p>
+            </section>
+
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://discord.gg/BAj5Kq8run" class="cta-btn primary">join the discord</a>
+                    <a href="https://ko-fi.com/your-kofi-link" class="cta-btn secondary">support on ko‑fi</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the wolf‑world is full of stories. which wolf will you become?
+                </p>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                    'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>
