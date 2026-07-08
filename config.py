@@ -1207,6 +1207,13 @@ CLOVERFERN_PLOT_SCAVENGE_MULT = 1.10
 # Kanami and Skye border-sense plot (Book One; Thistlehide paranoia)
 KANAMI_PLOT_BORDER_MULT = 0.75
 SKYE_PLOT_BORDER_MULT = 0.75
+# Book One payout lanes (batch): hunters, fishers, forager
+IRONJAW_PLOT_HUNT_MULT = 1.15    # greyspire hunter; phases 3 & 9 (stacks with phase-3 pack bonus)
+SLATE_PLOT_HUNT_MULT = 1.10      # greyspire hunter; phases 3 & 7
+SLUDGE_PLOT_HUNT_MULT = 1.20     # mistmoor hunter; water hunts while plot active
+CROAKER_PLOT_FISHING_MULT = 1.30  # silverrush fisher; phases 4 & 8
+CURLGRIP_PLOT_FISHING_MULT = 1.20  # silverrush fisher; phases 4 & 8
+MOSSGAZE_PLOT_SCAVENGE_MULT = 1.10  # thistlehide forager; while plot active
 
 # Pack warfare
 WAR_DURATION_DAYS = 2
