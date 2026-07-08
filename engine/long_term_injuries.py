@@ -75,7 +75,6 @@ LONG_TERM_TYPES = {
     # cumulative organ damage from prolonged internal herb overuse (see
     # engine.herb_side_effects). permanent; the price of leaning on one draught.
     "low_potassium": {
-<<<<<<< Updated upstream
         "label": "The Sapping",
         "effect": "strength and wind drain away and the heart flutters (potassium wasted by overused diuretic herbs); **-1** on Strength and Constitution checks.",
     },
@@ -90,22 +89,6 @@ LONG_TERM_TYPES = {
     "thiamine_deficiency": {
         "label": "The Trembles",
         "effect": "shaking limbs and a stumbling gait (nerves leached by overused herbs); **-1** on Dexterity and Wisdom checks.",
-=======
-        "label": "Weak-Heart",
-        "effect": "potassium wasted by overused diuretic herbs; **-1** on Strength and Constitution checks; the heart tires easily.",
-    },
-    "kidney_damage": {
-        "label": "Rot-Kidney",
-        "effect": "kidneys scarred by overused herbs; **-1** on Constitution checks; thirst bites harder.",
-    },
-    "liver_damage": {
-        "label": "Bile-Rot",
-        "effect": "liver scarred by repeated toxins; **-1** on Constitution checks and on saves against disease and poison.",
-    },
-    "thiamine_deficiency": {
-        "label": "The Trembles",
-        "effect": "nerve damage from herbs that leach thiamine; **-1** on Dexterity and Wisdom checks.",
->>>>>>> Stashed changes
     },
 }
 
