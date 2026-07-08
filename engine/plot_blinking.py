@@ -127,6 +127,8 @@ MOSSGAZE_NAME = "Mossgaze"
 THORN_NAME = "Thorn"
 RIFT_NAME = "Rift"
 SALTMUZZLE_NAME = "Saltmuzzle"
+GRIM_NAME = "Grim"
+STONEPIERCER_NAME = "Stonepiercer"
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -1125,6 +1127,44 @@ def apply_plot_finnpelt_sniff(user, guild_id: int, day: int) -> str:
     return "\n\n_" + " ".join(lines) + "_"
 
 
+def apply_plot_grim_sniff(user, guild_id: int, day: int) -> str:
+    """Grim (greyspire highfang) reads a pack-wide omen on the border during
+    paranoia; a chance to lift the whole pack's standing for the sunrise."""
+    if not _is_plot_wolf(user, GRIM_NAME):
+        return ""
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    if gp != "greyspire" or plot_phase(guild_id) not in PARANOIA_PHASES:
+        return ""
+    from config import GRIM_PLOT_OMEN_CHANCE, GRIM_PLOT_OMEN_STANDING
+
+    if random.random() >= GRIM_PLOT_OMEN_CHANCE:
+        return ""
+    with db.get_db() as conn:
+        conn.execute(
+            "UPDATE users SET standing = standing + ? "
+            "WHERE great_pack = 'greyspire' AND condition NOT IN ('dead', 'dying')",
+            (GRIM_PLOT_OMEN_STANDING,),
+        )
+    return (
+        f"\n\n_Grim reads a greyspire omen in the border scent; the whole pack stands "
+        f"taller (**+{GRIM_PLOT_OMEN_STANDING} standing** to all of greyspire)._"
+    )
+
+
+def plot_survey_standing_bonus(user, guild_id: int | None) -> int:
+    """Stonepiercer (greyspire scout) earns extra standing on a successful survey
+    while the blinking is active."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(user, STONEPIERCER_NAME):
+        return 0
+    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
+        return 0
+    from config import STONEPIERCER_PLOT_SURVEY_STANDING
+
+    return STONEPIERCER_PLOT_SURVEY_STANDING
+
+
 def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
     """Rot-reading rewards for MaggotBrain on /sniff during Belly Silence through Blame Spiral."""
     if not maggotbrain_plot_active(user, guild_id):
@@ -1436,7 +1476,8 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
         rivershroud_block = apply_plot_rivershroud_sniff(user, guild_id, day)
         finnpelt_block = apply_plot_finnpelt_sniff(user, guild_id, day)
         maggotbrain_block = apply_plot_maggotbrain_sniff(user, guild_id, day)
-        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block, maggotbrain_block):
+        grim_block = apply_plot_grim_sniff(user, guild_id, day)
+        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block, maggotbrain_block, grim_block):
             if block:
                 healer_blocks.append(block.strip().strip("_"))
     else:
