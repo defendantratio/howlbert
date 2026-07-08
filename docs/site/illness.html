@@ -1,0 +1,2594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="howlbert, a discord wolf rp bot. illness, herbs, and the green tongue." />
+    <title>howlbert · illness &amp; herbs</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 20px 0 8px 0;
+        }
+        .content-section h4 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--bone);
+            margin: 14px 0 6px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section .pull-quote {
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--bone);
+            border-left: 3px solid var(--maw);
+            padding-left: 18px;
+            margin: 16px 0 16px 6px;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+        .content-section .pull-quote .source {
+            display: block;
+            font-style: normal;
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            margin-top: 4px;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+
+        .disease-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .disease-grid .disease-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .disease-grid .disease-desc {
+            color: var(--bone-dim);
+        }
+        .disease-grid .disease-note {
+            color: var(--maw);
+            font-size: 0.8rem;
+            display: block;
+            grid-column: 2;
+            margin-top: -2px;
+            margin-bottom: 2px;
+        }
+
+        .herb-entry {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2px 16px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 0.85rem;
+        }
+        .herb-entry .herb-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .herb-entry .herb-desc {
+            color: var(--bone-dim);
+        }
+        .herb-entry .herb-meta {
+            font-size: 0.75rem;
+            color: var(--bone-dim);
+            font-style: italic;
+        }
+        .herb-entry .herb-rarity {
+            font-size: 0.7rem;
+            color: var(--bone-dim);
+            font-style: italic;
+            display: inline-block;
+            margin-left: 4px;
+        }
+        .herb-entry .herb-cures {
+            font-size: 0.75rem;
+            color: var(--moss);
+        }
+        .herb-entry .herb-side {
+            font-size: 0.75rem;
+            color: var(--maw);
+        }
+        .herb-entry .herb-prep {
+            font-size: 0.75rem;
+            color: var(--bone-dim);
+        }
+
+        .herb-entry .poison-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            background: var(--maw);
+            color: var(--ink);
+            padding: 1px 8px;
+            border-radius: 12px;
+            margin-left: 4px;
+        }
+        .herb-entry .restricted-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            background: var(--stone);
+            color: var(--ink);
+            padding: 1px 8px;
+            border-radius: 12px;
+            margin-left: 4px;
+        }
+        .herb-entry .pack-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            background: var(--glass-bg);
+            color: var(--bone-dim);
+            padding: 1px 8px;
+            border-radius: 12px;
+            margin-left: 4px;
+            border: 1px solid var(--line);
+        }
+
+        .herb-category {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin: 12px 0 18px 0;
+            background: var(--glass-bg);
+        }
+        .herb-category h4 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 4px;
+        }
+        .herb-category .herb-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            margin: 6px 0 0 0;
+        }
+        .herb-category .herb-list span {
+            background: var(--glass-bg);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+        }
+
+        .pack-starters {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .pack-starters .pack-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .pack-starters .pack-herbs {
+            color: var(--bone-dim);
+        }
+
+        .healing-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .healing-grid .heal-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .healing-grid .heal-desc {
+            color: var(--bone-dim);
+        }
+
+        .genetic-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.85rem;
+        }
+        .genetic-grid .genetic-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .genetic-grid .genetic-desc {
+            color: var(--bone-dim);
+        }
+        .genetic-grid .genetic-note {
+            color: var(--maw);
+            font-size: 0.75rem;
+            display: block;
+            grid-column: 2;
+            margin-top: -2px;
+            margin-bottom: 2px;
+        }
+
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .cta-btn.tertiary {
+            border-color: var(--river);
+        }
+        .cta-btn.tertiary:hover {
+            background: var(--river);
+            color: var(--ink);
+            border-color: var(--river);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .disease-grid,
+            .herb-entry,
+            .pack-starters,
+            .healing-grid,
+            .genetic-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2px 0 !important;
+            }
+            .disease-grid .disease-note,
+            .genetic-grid .genetic-note {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+            .herb-entry {
+                font-size: 0.8rem;
+                padding: 4px 0;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html" class="current">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>illness &amp; herbs</h1>
+                <p class="hook">
+                    the maw chews. <span class="maw-word">illness, injury, birth, and death</span> are all the maw eating.
+                </p>
+                <p class="description">
+                    illness in howlbert blends real canid ecology with the maw faith. over thirty diseases,
+                    injuries, and genetic conditions, each with daily penalties to hunger, hydration, hp,
+                    hunt yield, or pain exhaustion. every sickness has a wolf-world name; the packs do not
+                    know human words for the things that eat them.
+                </p>
+            </header>
+
+            <!-- diseases of the body -->
+            <section class="glass content-section">
+                <h2>diseases of the body</h2>
+                <p>
+                    the body is the maw's first meal. these are the sicknesses that stalk the packs,
+                    each with its own name and its own hunger. each disease has multiple stages;
+                    without treatment, they worsen.
+                </p>
+
+                <div class="disease-grid">
+                    <span class="disease-name">green-cough → blackcough → redcough</span>
+                    <span class="disease-desc">a worsening chest sickness caused by mold spores from rotten meat that irritate the lungs. the human name for this is a respiratory infection.</span>
+                    <span class="disease-note">dc 12/15/18; deadly if it reaches redcough; −1 hp/sunrise at redcough. treat with catmint, coltsfoot, chickweed, pine needles.</span>
+
+                    <span class="disease-name">yellowcough</span>
+                    <span class="disease-desc">a phlegm-heavy lung cough that is contagious on the breath.</span>
+                    <span class="disease-note">dc 14; −2 hunger/sunrise; fatal without mullein or lungwort.</span>
+
+                    <span class="disease-name">pupcough → weak lungs</span>
+                    <span class="disease-desc">the first-winter cough of the very young; can settle into weak lungs for life.</span>
+                    <span class="disease-note">dc 10/12; −1 hp/sunrise at weak lungs; treat with catmint or honey.</span>
+
+                    <span class="disease-name">leaf-bare cough → hacking → congestion</span>
+                    <span class="disease-desc">the chill-season cough caused by cold air; the human name is a cold or chill.</span>
+                    <span class="disease-note">dc 11/13/15; catmint, mullein, or lungwort cures it; deadly at congestion (−2 hp/sunrise).</span>
+
+                    <span class="disease-name">rot-lung → wheeze → necrosis</span>
+                    <span class="disease-desc">mistmoor's swamp fever in the lungs; a wet, feverish sickness that spreads in the mist.</span>
+                    <span class="disease-note">dc 13/15/17; belly-rip fungus is the only cure for necrosis; treat earlier stages with mullein, lungwort, feverfew.</span>
+
+                    <span class="disease-name">weeping-scale</span>
+                    <span class="disease-desc">the crusting, weeping plague that brings fever, scabbing, and hard pads. the human name is canine distemper.</span>
+                    <span class="disease-note">dc 16; +1 exhaustion/sunrise; treat with elderberry, mountain ash, or coneflower to ease symptoms (no cure).</span>
+
+                    <span class="disease-name">shiver-fever</span>
+                    <span class="disease-desc">the shaking body-fever; a wolf is too weak to hunt, with aches and chills. the human name is influenza.</span>
+                    <span class="disease-note">dc 13; +1 exhaustion/sunrise; treat with boneset, borage, feverfew, willow bark.</span>
+
+                    <span class="disease-name">river rot → bloody flux → failing</span>
+                    <span class="disease-desc">the fouled-gut sickness of poisoned water from twoleg sewage.</span>
+                    <span class="disease-note">dc 13/17/20; no known cure; −10 hunger/sunrise at failing; treat symptoms with watermint, bindweed, oak bark.</span>
+
+                    <span class="disease-name">gut-run</span>
+                    <span class="disease-desc">violent watery bowels that dehydrate the body. the human name is diarrhea.</span>
+                    <span class="disease-note">dc 11; −8 hunger/sunrise; treat with blackberry, knotgrass, meadowsweet, watermint, yarrow.</span>
+
+                    <span class="disease-name">yellow-eye</span>
+                    <span class="disease-desc">the liver-sickness that yellows the gaze; slow and wasting. the human name is hepatitis.</span>
+                    <span class="disease-note">dc 14; −10 hydration/sunrise; treat with celandine, dandelion, dock, jewelweed, watermint.</span>
+
+                    <span class="disease-name">the spotting</span>
+                    <span class="disease-desc">a blistering skin-and-fever pox that runs through a crowded den. the human name is pox.</span>
+                    <span class="disease-note">dc 15; −2 hp/sunrise; swamp milkweed is the only cure; treat fever with feverfew.</span>
+
+                    <span class="disease-name">scratch-bare</span>
+                    <span class="disease-desc">the fur-falling itch; patches of bald, scabbed skin. the human name is mange.</span>
+                    <span class="disease-note">dc 12; −1 charisma; −10% hunt; treat with burdock root (slow cure).</span>
+
+                    <span class="disease-name">the itch</span>
+                    <span class="disease-desc">biting parasites in the coat. the human name is fleas.</span>
+                    <span class="disease-note">dc 10; −8 mood/sunrise; vector for other diseases; treat with knotgrass, tansy, mugwort, garlic mustard.</span>
+
+                    <span class="disease-name">leaf-burn</span>
+                    <span class="disease-desc">a rash from a poison plant, with swelling and torment. the human name is poison ivy.</span>
+                    <span class="disease-note">dc 12; −1d4 charisma, disadvantage stealth 3 days; treat with jewelweed, douglas' sagewort, witch hazel.</span>
+
+                    <span class="disease-name">sting-swell</span>
+                    <span class="disease-desc">a venomous insect sting that causes a hot, swelling bite. the human name is an insect sting or mild poison.</span>
+                    <span class="disease-note">dc 10; −2 dexterity for 1 day; treat with adder's tongue, blackberry, dandelion, jewelweed, juniper berry.</span>
+
+                    <span class="disease-name">milk-fever</span>
+                    <span class="disease-desc">the nursing-mother's fever that strikes she-wolves with a litter. the human name is eclampsia.</span>
+                    <span class="disease-note">dc 14; −2 strength and constitution, +1 exhaustion/sunrise; treat with feverfew, parsley, saffron.</span>
+
+                    <span class="disease-name">shaking-sickness → hemorrhage</span>
+                    <span class="disease-desc">uncontrollable tremors and fits; the body betraying itself. the human name is a seizure disorder.</span>
+                    <span class="disease-note">dc 12/15; treat with adder's tongue, yarrow, cobwebs (for bleeding).</span>
+
+                    <span class="disease-name">wasting-sickness → emaciated → cachectic</span>
+                    <span class="disease-desc">the slow shrinking-away; a wolf eating and eating and still fading. the human name is chronic wasting.</span>
+                    <span class="disease-note">dc 14/16/18; −4 hunger/sunrise each stage; treat early with chervil, parsley, slippery elm.</span>
+
+                    <span class="disease-name">growth-sickness → spreading → terminal</span>
+                    <span class="disease-desc">a hidden lump that grows and kills; the maw's quietest eating. the human name is cancer.</span>
+                    <span class="disease-note">dc 16/17/19; treat early with burdock root, mullein, lungwort (slow progression, no cure).</span>
+
+                    <span class="disease-name">blood-shock</span>
+                    <span class="disease-desc">collapse from blood loss; stabilize now or lose them. the human name is physical shock.</span>
+                    <span class="disease-note">immediate treatment required; use yarrow, horsetail, or cobwebs to stabilize; dc 15 medicine check.</span>
+
+                    <span class="disease-name">cloudmouth → prodrome → frenzy → terminal</span>
+                    <span class="disease-desc">the froth-and-madness death. the human name is rabies.</span>
+                    <span class="disease-note">always fatal, no cure; dc 14/16/18/20; sedate the wolf far from the pack and wait.</span>
+
+                    <span class="disease-name">chestbind → wheeze → attack</span>
+                    <span class="disease-desc">tight → wheeze → attack; a chronic respiratory condition. the human name is asthma.</span>
+                    <span class="disease-note">dc 12/14/16; many herbs ease it (coltsfoot, ivy, mullein, etc.); blocks field at attack stage.</span>
+
+                    <span class="disease-name">shudderfit → convulsion → crisis</span>
+                    <span class="disease-desc">tremor → convulsion → crisis; a chronic neurological condition. the human name is epilepsy.</span>
+                    <span class="disease-note">dc 11/13/15; dried skullcap and valerian ease it; blocks field at convulsion stage.</span>
+
+                    <span class="disease-name">gutknot → torsion → failure</span>
+                    <span class="disease-desc">swelling → torsion → failure; a sudden, life-threatening stomach condition. the human name is bloat or gastric dilatation-volvulus.</span>
+                    <span class="disease-note">dc 12/15/18; torsion blocks field; requires immediate treatment with fennel, watermint, sweet sedge.</span>
+
+                    <span class="disease-name">burrfever → joint_seize → nerve_rot</span>
+                    <span class="disease-desc">fever → joint_seize → nerve_rot; a tick-borne bacterial infection. the human name is lyme disease.</span>
+                    <span class="disease-note">dc 11/14/17; −20% hunt at joint_seize stage; 0.15 contagious; treat with goldenrod, meadowsweet, stinging nettle.</span>
+
+                    <span class="disease-name">foulwater rot → kidney_pain → organ_rot</span>
+                    <span class="disease-desc">fever → kidney_pain → organ_rot; a water-borne bacterial infection found near contaminated water. the human name is leptospirosis.</span>
+                    <span class="disease-note">dc 12/15/18; 0.06 contagious through urine; treat with dandelion, watermint, wild garlic.</span>
+
+                    <span class="disease-name">brood-rot → chronic → wasting</span>
+                    <span class="disease-desc">fever → chronic → wasting; a reproductive system infection. the human name is brucellosis.</span>
+                    <span class="disease-note">dc 11/14/17; chervil or feverfew treat early fever; 0.65 contagious through mating; blocks conception.</span>
+
+                    <span class="disease-name">water-scorch</span>
+                    <span class="disease-desc">burning pain when passing water; frequent, urgent need; cloudy, bloody urine. the human name is a urinary infection.</span>
+                    <span class="disease-note">dc 13; treat with bindweed, goldenrod, horsetail, juniper berry, or watermint.</span>
+
+                    <span class="disease-name">belly-grind</span>
+                    <span class="disease-desc">hard stones forming in the gut, causing sharp pain after eating and vomiting. the human name is gallstones.</span>
+                    <span class="disease-note">dc 14; treat with celandine.</span>
+
+                    <span class="disease-name">root-rot</span>
+                    <span class="disease-desc">infection deep in the tooth root; swelling, foul breath, refusal to eat. the human name is a tooth infection.</span>
+                    <span class="disease-note">dc 13; treat with alder bark or prickly ash.</span>
+
+                    <span class="disease-name">gut-stone</span>
+                    <span class="disease-desc">hard, dry stool that will not pass; straining, loss of appetite. the human name is constipation.</span>
+                    <span class="disease-note">dc 11; treat with bindweed.</span>
+
+                    <span class="disease-name">belly-worm</span>
+                    <span class="disease-desc">internal parasites in the gut; bloating, hunger that never fills, vomiting. the human name is worms.</span>
+                    <span class="disease-note">dc 12; treat with knotgrass or tansy.</span>
+
+                    <span class="disease-name">redscratch</span>
+                    <span class="disease-desc">itching sores from mating contact; soreness, chills, and lethargy.</span>
+                    <span class="disease-note">dc 12; blocks conception until treated; treat with chervil or feverfew.</span>
+
+                    <span class="disease-name">joint-rot</span>
+                    <span class="disease-desc">aching, stiff joints that worsen with age and cold; a slow wearing-down of the bones. the human name is arthritis.</span>
+                    <span class="disease-note">dc 14; −10% hunt, +1 pain exhaustion/sunrise; treat with willow bark, meadowsweet, or daisy.</span>
+
+                    <span class="disease-name">bone-ache</span>
+                    <span class="disease-desc">deep, constant pain in the bones and joints that never fully leaves; a burden carried through life. the human name is chronic pain.</span>
+                    <span class="disease-note">dc 15; −10% hunt, +1 pain exhaustion/sunrise; treat with willow bark and meadowsweet.</span>
+                </div>
+            </section>
+
+            <!-- sicknesses of the mind -->
+            <section class="glass content-section">
+                <h2>sicknesses of the mind</h2>
+                <p>
+                    the packs count a wounded mind as real as a wounded leg. each of these is a tracked condition
+                    with its own penalties and its own calming herbs.
+                </p>
+
+                <div class="disease-grid">
+                    <span class="disease-name">heart-shock</span>
+                    <span class="disease-desc">the frozen stillness after trauma; the human name is emotional shock.</span>
+                    <span class="disease-note">+1 exhaustion, −2 to all checks until treated; treat with poppy seeds or valerian; lasts 1d4 days if untreated.</span>
+
+                    <span class="disease-name">the hollowing → hollow → the husk</span>
+                    <span class="disease-desc">grief that empties a wolf out, stage by stage: first the hollowing, then the hollow, and finally the husk — a wolf so emptied they barely eat, speak, or move. the human name is grief or melancholic collapse.</span>
+                    <span class="disease-note">dc 12/14/16; each stage: −1 charisma, −4 hunger/sunrise; chamomile, rosemary, or valerian may ease the descent; husk stage also blocks all social actions.</span>
+
+                    <span class="disease-name">the sleepless → sleepless → exhaustion cascade</span>
+                    <span class="disease-desc">nights that will not release into sleep; the human name is insomnia.</span>
+                    <span class="disease-note">dc 11/13/15; +1 exhaustion/sunrise at sleepless, +2 at cascade; treat with chamomile, valerian, lavender.</span>
+
+                    <span class="disease-name">the skitters → anxious → panic-prone</span>
+                    <span class="disease-desc">a body wired to bolt at nothing; the human name is anxiety.</span>
+                    <span class="disease-note">dc 11/13/15; −2 to social checks, disadvantage on stealth; treat with borage, chamomile, lavender, valerian.</span>
+
+                    <span class="disease-name">fever-wander → wandering → incoherent</span>
+                    <span class="disease-desc">mind adrift in fever-dreams; the human name is delirium.</span>
+                    <span class="disease-note">dc 12/14/16; −4 to all intelligence-based checks; treat with chamomile, dried skullcap.</span>
+
+                    <span class="disease-name">the long-forgetting → confused → lost</span>
+                    <span class="disease-desc">memory unraveling with age; the human name is dementia.</span>
+                    <span class="disease-note">dc 14/16/18; −2 to survival and navigation per stage; treat with dried skullcap, rosemary (slows progression).</span>
+
+                    <span class="disease-name">den-madness → paranoid → break</span>
+                    <span class="disease-desc">contagious mistrust that turns a pack on itself; the human name is paranoia or pack madness.</span>
+                    <span class="disease-note">dc 12/14/16; −1 to charisma, disadvantage on cooperation checks; treat with dried skullcap, valerian.</span>
+
+                    <span class="disease-name">feral-shift → feral → unsentient</span>
+                    <span class="disease-desc">the pull back toward the wild, mindless wolf.</span>
+                    <span class="disease-note">dc 13/15/17; at feral, −4 intelligence, cannot speak; treat with dried skullcap, passionflower, valerian.</span>
+
+                    <span class="disease-name">the fixing → compulsive → tunnel vision</span>
+                    <span class="disease-desc">a mind locked on one thing; the human name is obsession.</span>
+                    <span class="disease-note">dc 12/14/16; −2 to perception when distracted; treat with dried skullcap, rosemary.</span>
+
+                    <span class="disease-name">the screaming-sleep → screaming dreams → sleep panic</span>
+                    <span class="disease-desc">dreams that wake the whole den; the human name is night terrors.</span>
+                    <span class="disease-note">dc 11/13/15; +1 exhaustion/sunrise; treat with lavender, valerian.</span>
+
+                    <span class="disease-name">the fraying → strained → frayed</span>
+                    <span class="disease-desc">a wolf worn thin by unending strain; the human name is chronic stress.</span>
+                    <span class="disease-note">dc 11/13/15; +1 exhaustion/sunrise; treat with rosemary, chamomile.</span>
+
+                    <span class="disease-name">the refusing → refusing → wasting</span>
+                    <span class="disease-desc">a belly that will not take food; the human name is eating distress.</span>
+                    <span class="disease-note">dc 11/13/15; −6 hunger/sunrise; treat with bindweed, chamomile, chervil, fennel, sage.</span>
+
+                    <span class="disease-name">the low-spirit</span>
+                    <span class="disease-desc">a darkness that settles over the heart; no joy, no hunger, no hope. the human name is depression.</span>
+                    <span class="disease-note">dc 14; −2 hunger/sunrise, +1 exhaustion/sunrise; treat with borage, chamomile, or rosemary.</span>
+
+                    <span class="disease-name">the spirit-eaten → spirit-wasting → devoured</span>
+                    <span class="disease-desc">a curse-sickness the maw is said to lay on a wolf who has broken a deep taboo. first the spirit-eaten — a hollow wrongness. then spirit-wasting — the wolf visibly fades, eating without strength. finally devoured — barely alive, the soul nearly consumed. the human name for this is a psychosomatic or curse-belief illness.</span>
+                    <span class="disease-note">dc 16/18/20; each stage: −1 to all stats, −4 hunger and hydration; only wolfsbane can lift it, at real risk to the patient (dc 20 medicine check, 2d6 poison damage).</span>
+                </div>
+            </section>
+
+            <!-- genetic conditions -->
+            <section class="glass content-section">
+                <h2>genetic conditions</h2>
+                <p>
+                    wolvden-style birth mutations and register-time rp traits. some are lethal at birth;
+                    others stay with the wolf for life. herbs cannot cure most genetic conditions,
+                    though some may ease symptoms. these conditions are drawn from real-world studies
+                    of inbred wolf populations, including those on isle royale and in scandinavia.
+                </p>
+
+                <div class="genetic-grid">
+                    <span class="genetic-name">milk-luck</span>
+                    <span class="genetic-desc">keeps the pup-gut ability to digest milk into adulthood; can drink milk without an upset stomach. the human name is lactase persistence.</span>
+                    <span class="genetic-note">no penalties; +2 hydration from milk.</span>
+
+                    <span class="genetic-name">blindness</span>
+                    <span class="genetic-desc">milky eyes; cannot see; disadvantage on perception and ranged awareness. compensates with scent and hearing: no penalty, plus +2, on tracking.</span>
+
+                    <span class="genetic-name">partial blindness</span>
+                    <span class="genetic-desc">clouded vision from hereditary cataracts: −2 perception; disadvantage on wisdom (perception) checks. compensates with scent and hearing: no penalty, plus +1, on tracking.</span>
+
+                    <span class="genetic-name">night-fade</span>
+                    <span class="genetic-desc">progressive retinal atrophy; night vision fails first, then day vision; −2 perception in low light; worsens with age. the human name is progressive retinal atrophy.</span>
+                    <span class="genetic-note">perception −1 per 12 moons after onset.</span>
+
+                    <span class="genetic-name">deafness</span>
+                    <span class="genetic-desc">cannot hear pack calls; disadvantage on wisdom checks involving listening.</span>
+
+                    <span class="genetic-name">flat-skull</span>
+                    <span class="genetic-desc">a flat skull and shortened airway (the human name is brachycephaly); labored breathing; −2 scent perception; con disadvantage on respiratory saves; −4 hunger/sunrise (chewing pain); −10% hunt. often fatal in newborns.</span>
+
+                    <span class="genetic-name">spine-twist</span>
+                    <span class="genetic-desc">a malformed lower spine (the human name is lumbosacral transitional vertebrae); rear leg weakness causes dex disadvantage; −15% hunt; +1 pain exhaustion each sunrise from chronic back pain.</span>
+
+                    <span class="genetic-name">crooked-spine</span>
+                    <span class="genetic-desc">gnarled, crooked vertebrae from inbreeding (the human name is vertebral malformation); chronic pain and reduced mobility; −1 dex; −10% hunt; +1 pain exhaustion each sunrise.</span>
+
+                    <span class="genetic-name">wedge-spine</span>
+                    <span class="genetic-desc">misshapen vertebrae that compress the spinal cord (the human name is hemivertebra); may cause partial paralysis, incontinence, or difficulty walking; −1 dex; disadvantage on dex saves.</span>
+
+                    <span class="genetic-name">back-rot</span>
+                    <span class="genetic-desc">degenerative joint disease of the spine (the human name is spinal arthritis); str and dex disadvantage; −15% hunt; +1 pain exhaustion each sunrise.</span>
+
+                    <span class="genetic-name">thin-blood</span>
+                    <span class="genetic-desc">reduced genetic diversity from too-close breeding (the human name is inbreeding depression); −1 to all con saves; −10% hunt efficiency; twice as likely to contract contagious diseases.</span>
+
+                    <span class="genetic-name">thin-blood (immune)</span>
+                    <span class="genetic-desc">immunoglobulin a deficiency (the human name is iga deficiency); more prone to infections; disadvantage on saves against disease; +1 exhaustion when sick.</span>
+
+                    <span class="genetic-name">racing-mind</span>
+                    <span class="genetic-desc">hyperactive and impulsive (the human name is adhd); −15% hunt (breaks formation); dex disadvantage on stealth; +2 to tracking and survival.</span>
+
+                    <span class="genetic-name">still-mind</span>
+                    <span class="genetic-desc">a brain wired for deep focus and pattern recognition, but sensitive to change and social nuance. (the human name is autism).</span>
+                    <span class="genetic-note">+2 to herblore, medicine, and tracking (hyperfocus). −2 to charisma (persuasion/deception) with unfamiliar wolves. Disadvantage on checks when routine is broken or in chaotic environments. Advantage on checks that involve sustained attention (tracking, foraging, identifying herbs). May become overwhelmed in crowded dens (extra exhaustion).</span>
+
+                    <span class="genetic-name">crooked-teeth</span>
+                    <span class="genetic-desc">misaligned or missing teeth (the human name is dental anomaly); −10% hunt (difficulty gripping prey); disadvantage on bite attacks.</span>
+
+                    <span class="genetic-name">crooked-jaw</span>
+                    <span class="genetic-desc">malocclusion (the human name is overbite or underbite); cannot properly grip or tear meat; −15% hunt; −2 hunger each sunrise from inefficient eating.</span>
+
+                    <span class="genetic-name">failing-kidney</span>
+                    <span class="genetic-desc">hereditary kidney defect; −10 hydration each sunrise; +1 exhaustion on failed con save each sunrise.</span>
+
+                    <span class="genetic-name">weak-heart</span>
+                    <span class="genetic-desc">congenital heart defect; −1 con; cannot sustain long chases (−20% hunt); may collapse if pushed too hard.</span>
+
+                    <span class="genetic-name">hidden-stones</span>
+                    <span class="genetic-desc">undescended testicles (the human name is cryptorchidism); reduces fertility (cannot sire pups).</span>
+
+                    <span class="genetic-name">pale-hide</span>
+                    <span class="genetic-desc">a coat of pure white with pink eyes (the human name is albinism); easier to spot (−1 stealth on hunts); sunburn in strong light.</span>
+
+                    <span class="genetic-name">shadow-hide</span>
+                    <span class="genetic-desc">a coat of deep black (the human name is melanism); +1 stealth when stalking prey at night.</span>
+
+                    <span class="genetic-name">washed-hide</span>
+                    <span class="genetic-desc">diluted coat color (the human name is coat color dilution); no mechanical penalty, but the pelt is paler and less distinct.</span>
+
+                    <span class="genetic-name">conjoined</span>
+                    <span class="genetic-desc">fused twin; body cannot survive long outside the womb.</span>
+                    <span class="genetic-note">lethal at birth.</span>
+
+                    <span class="genetic-name">missing foreleg</span>
+                    <span class="genetic-desc">three-legged: −50% hunt bones; disadvantage on strength and dexterity checks.</span>
+
+                    <span class="genetic-name">missing hindleg</span>
+                    <span class="genetic-desc">three-legged: −50% hunt bones; disadvantage on strength and dexterity checks.</span>
+
+                    <span class="genetic-name">missing tail</span>
+                    <span class="genetic-desc">no tail; poor balance; disadvantage on dexterity checks.</span>
+
+                    <span class="genetic-name">twisted-leg</span>
+                    <span class="genetic-desc">one or more legs are malformed and twisted; −1 dex; −15% hunt; cannot run at full speed.</span>
+
+                    <span class="genetic-name">hip-rot</span>
+                    <span class="genetic-desc">malformed hip joint (the human name is hip dysplasia); chronic pain and lameness; −1 dex; −10% hunt; +1 pain exhaustion each sunrise after strenuous activity.</span>
+
+                    <span class="genetic-name">thin-litter</span>
+                    <span class="genetic-desc">genetic tendency toward smaller litters; −1 to litter size when breeding (minimum 1).</span>
+
+                    <span class="genetic-name">barren</span>
+                    <span class="genetic-desc">cannot produce offspring; no other mechanical penalty.</span>
+
+                    <span class="genetic-name">muteness</span>
+                    <span class="genetic-desc">no voice; cannot howl, call for help, or rally the pack; relies on others to relay messages. use the sign command to communicate through body language.</span>
+                </div>
+            </section>
+
+            <!-- injuries -->
+            <section class="glass content-section">
+                <h2>injuries</h2>
+                <p>
+                    the body breaks. these are the wounds that wolves carry, each with its own healing time,
+                    yield penalties, and risk of infection. real wolves in the wild heal slowly, and injuries
+                    often become chronic if not treated properly.
+                </p>
+
+                <div class="disease-grid">
+                    <span class="disease-name">deep gash</span>
+                    <span class="disease-desc">a severe cut or laceration; bleeds heavily; requires stitching or cobwebs.</span>
+                    <span class="disease-note">−20% hunt yield; risk of infection; treat with yarrow, horsetail, cobwebs.</span>
+
+                    <span class="disease-name">fractured rib</span>
+                    <span class="disease-desc">cracked or broken rib; painful breathing; restricts movement.</span>
+                    <span class="disease-note">−30% hunt yield; blocks field until healed; treat with comfrey, broom, rush stalks.</span>
+
+                    <span class="disease-name">sprained leg</span>
+                    <span class="disease-desc">torn ligaments or strained muscle; limping; reduced mobility.</span>
+                    <span class="disease-note">−15% hunt yield; treat with comfrey, willow bark, arnica, daisy, meadowsweet.</span>
+
+                    <span class="disease-name">broken jaw</span>
+                    <span class="disease-desc">fractured mandible; cannot eat solid food; requires liquid diet.</span>
+                    <span class="disease-note">−50% hunt yield; requires splinting; treat with comfrey, rush stalks, slippery elm.</span>
+
+                    <span class="disease-name">punctured paw</span>
+                    <span class="disease-desc">a deep wound in the paw pad; painful to walk; risk of infection.</span>
+                    <span class="disease-note">−10% hunt yield; treat with dock or plantain.</span>
+
+                    <span class="disease-name">infected wound</span>
+                    <span class="disease-desc">a wound that has become infected; swelling, heat, and pus.</span>
+                    <span class="disease-note">−25% hunt yield; requires wound wash; treat with alder bark, burdock root, coneflower, goldenrod.</span>
+
+                    <span class="disease-name">torn claw</span>
+                    <span class="disease-desc">a claw ripped or broken; painful; affects grip and hunting.</span>
+                    <span class="disease-note">−10% hunt yield; treat with yarrow or plantain.</span>
+
+                    <span class="disease-name">scorched hide</span>
+                    <span class="disease-desc">burn damage from fire or caustic substances; painful and prone to infection.</span>
+                    <span class="disease-note">+1 exhaustion/sunrise; 7-day heal; cobwebs only.</span>
+
+                    <span class="disease-name">concussion</span>
+                    <span class="disease-desc">head trauma from a blow; disoriented and confused.</span>
+                    <span class="disease-note">−15% hunt yield; requires rest and skullcap.</span>
+
+                    <span class="disease-name">swollen eye</span>
+                    <span class="disease-desc">eye injury or infection; vision impaired in one eye.</span>
+                    <span class="disease-note">−10% perception; treat with celandine or adder's tongue.</span>
+
+                    <span class="disease-name">internal bleeding</span>
+                    <span class="disease-desc">bleeding inside the body from trauma; life-threatening.</span>
+                    <span class="disease-note">−1 hp/sunrise; treat with shepherd's purse or yarrow (dc 15).</span>
+
+                    <span class="disease-name">shattered bone</span>
+                    <span class="disease-desc">open fracture; bone protrudes through the skin; severe pain; risk of infection and blood loss.</span>
+                    <span class="disease-note">−50% hunt yield; requires surgery; treat with comfrey and bindweed; 4‑6 weeks rest.</span>
+
+                    <span class="disease-name">wrenched joint</span>
+                    <span class="disease-desc">dislocated shoulder; arm useless; extreme pain on movement.</span>
+                    <span class="disease-note">−20% hunt yield; requires medicine dc 15 to pop back in; rest 1‑2 weeks.</span>
+
+                    <span class="disease-name">snapped sinew</span>
+                    <span class="disease-desc">ruptured tendon; cannot put weight on leg; severe mobility loss.</span>
+                    <span class="disease-note">−30% hunt yield; surgery only; 6 weeks healing.</span>
+
+                    <span class="disease-name">mangled paw</span>
+                    <span class="disease-desc">crushed paw with multiple fractures; cannot walk; high infection risk.</span>
+                    <span class="disease-note">−50% hunt yield; treat with comfrey and dock; 3 weeks rest.</span>
+
+                    <span class="disease-name">gouged eye</span>
+                    <span class="disease-desc">eye scratch or laceration; vision impaired; risk of infection.</span>
+                    <span class="disease-note">−2 perception; treat with celandine or feverfew; 5 days heal.</span>
+
+                    <span class="disease-name">foul-bite</span>
+                    <span class="disease-desc">infected bite from a dirty mouth; deep puncture; fever and swelling.</span>
+                    <span class="disease-note">+1 exhaustion; −1 hp/sunrise; treat with yarrow or goldenrod.</span>
+
+                    <span class="disease-name">pus-pocket</span>
+                    <span class="disease-desc">abscess; swollen painful lump; bursts after 3 days if untreated.</span>
+                    <span class="disease-note">−4 mood; −1 hp/sunrise; treat with burdock root and hot compress.</span>
+
+                    <span class="disease-name">pulled sinew</span>
+                    <span class="disease-desc">muscle strain; reduced speed and strength.</span>
+                    <span class="disease-note">−10% hunt yield; rest 3 days; comfrey reduces to 1 day.</span>
+
+                    <span class="disease-name">torn gristle</span>
+                    <span class="disease-desc">ligament tear; joint unstable; pain on movement.</span>
+                    <span class="disease-note">−15% hunt yield; surgery needed; 4 weeks recovery.</span>
+
+                    <span class="disease-name">thorn-stuck</span>
+                    <span class="disease-desc">splinter or foreign body stuck in the paw; local pain; risk of infection.</span>
+                    <span class="disease-note">−1 dex in that paw; remove with stick (dc 10); then dock leaf.</span>
+
+                    <span class="disease-name">frozen-paw</span>
+                    <span class="disease-desc">frostbite; numbness and tissue damage; risk of losing toes.</span>
+                    <span class="disease-note">−1 dex; +1 pain exhaustion; treat with prickly ash.</span>
+
+                    <span class="disease-name">sun-sick</span>
+                    <span class="disease-desc">heatstroke; exhaustion and confusion; can be fatal.</span>
+                    <span class="disease-note">+1 exhaustion; −4 mood; treat with feverfew and cool water.</span>
+
+                    <span class="disease-name">chill-bite</span>
+                    <span class="disease-desc">hypothermia; shivering and weakness; risk of death in cold.</span>
+                    <span class="disease-note">+1 exhaustion; −2 dex; treat with warmth and honey.</span>
+
+                    <span class="disease-name">smoke-lung</span>
+                    <span class="disease-desc">smoke inhalation; coughing and breathing difficulty; risk of pneumonia.</span>
+                    <span class="disease-note">−1 con; −10% hunt; treat with mullein or lungwort.</span>
+
+                    <span class="disease-name">caved-chest</span>
+                    <span class="disease-desc">flail chest; multiple ribs broken; breathing laboured; risk of lung puncture.</span>
+                    <span class="disease-note">−1 con; −20% hunt; surgery required; 6 weeks rest.</span>
+
+                    <span class="disease-name">dead-limb</span>
+                    <span class="disease-desc">nerve damage; limb partially paralysed; cannot use that limb fully.</span>
+                    <span class="disease-note">−2 dex; permanent; no cure.</span>
+                </div>
+            </section>
+
+            <!-- the green tongue -->
+            <section class="glass content-section">
+                <h2>the green tongue</h2>
+                <p>
+                    over a hundred herbs with real properties, gathered by foragers, kept in the healers' den store,
+                    and worked by medics into poultices, teas, salves, and surgeries. some herbs heal; some are poison
+                    held one leaf from mercy. wolves cannot perform miracles; they set what bones they can,
+                    stitch what they can reach, and lose the rest to the maw.
+                </p>
+
+                <div class="pull-quote">
+                    the healer's code: medics are not blocked from courtship, mating, or pups,
+                    but the den punishes discovery hard. a caught court costs standing and exiles existing pups.
+                    a discovered birth or adoption is always public and exiles the litter and the healer.
+                    medics keep a neutral scent so they can treat any wolf; crossing that line is treason.
+                    <span class="source">— the green tongue's oldest law</span>
+                </div>
+
+                <h3>herb categories</h3>
+
+                <h4>the menders</h4>
+                <p>wounds, bones, infection.</p>
+                <div class="herb-category">
+                    <div class="herb-list">
+                        <span>comfrey</span>
+                        <span>marsh-mallow root</span>
+                        <span>goldenrod</span>
+                        <span>horsetail</span>
+                        <span>yarrow</span>
+                        <span>cobwebs</span>
+                        <span>coneflower</span>
+                        <span>burdock root</span>
+                        <span>oak bark</span>
+                        <span>alder bark</span>
+                        <span>bindweed vines</span>
+                        <span>straight sticks</span>
+                    </div>
+                </div>
+
+                <h4>the pain-and-sleep herbs</h4>
+                <p>used carefully; they build tolerance and withdrawal.</p>
+                <div class="herb-category">
+                    <div class="herb-list">
+                        <span>willow bark</span>
+                        <span>meadowsweet</span>
+                        <span>poppy seeds <span class="restricted-tag">addictive</span></span>
+                        <span>valerian</span>
+                        <span>chamomile</span>
+                        <span>lavender</span>
+                        <span>passionflower</span>
+                        <span>dried skullcap</span>
+                    </div>
+                </div>
+
+                <h4>the gut, breath, and fever herbs</h4>
+                <div class="herb-category">
+                    <div class="herb-list">
+                        <span>mullein</span>
+                        <span>lungwort</span>
+                        <span>coltsfoot</span>
+                        <span>pine needles</span>
+                        <span>watermint</span>
+                        <span>chamomile</span>
+                        <span>blackberry</span>
+                        <span>feverfew</span>
+                        <span>borage</span>
+                        <span>honey</span>
+                    </div>
+                </div>
+
+                <h4>fur, skin, and pests</h4>
+                <div class="herb-category">
+                    <div class="herb-list">
+                        <span>jewelweed</span>
+                        <span>mugwort</span>
+                        <span>garlic mustard</span>
+                        <span>knotgrass</span>
+                        <span>lamb's ear</span>
+                        <span>dock</span>
+                    </div>
+                </div>
+
+                <h4>the poisons and mercy-herbs</h4>
+                <p>restricted; misuse maims or kills. the healer's darkest knowledge.</p>
+                <div class="herb-category" style="border-left-color: var(--maw);">
+                    <div class="herb-list">
+                        <span>deathberries (yew) <span class="poison-tag">lethal</span></span>
+                        <span>deadly nightshade <span class="poison-tag">lethal</span></span>
+                        <span>water hemlock <span class="poison-tag">lethal</span></span>
+                        <span>foxglove <span class="poison-tag">lethal</span></span>
+                        <span>oleander <span class="poison-tag">lethal</span></span>
+                        <span>wolfsbane <span class="poison-tag">lethal</span></span>
+                        <span>bloodroot <span class="poison-tag">toxic</span></span>
+                        <span>holly berries <span class="poison-tag">toxic</span></span>
+                        <span>wintergreen <span class="poison-tag">toxic</span></span>
+                        <span>death-cap mushroom <span class="poison-tag">lethal</span></span>
+                    </div>
+                </div>
+
+                <h4>special cures</h4>
+                <p>herbs that do not fit the usual categories.</p>
+                <div class="herb-category" style="border-left-color: var(--moss);">
+                    <div class="herb-list">
+                        <span>belly-rip fungus <span class="restricted-tag">experimental</span></span>
+                    </div>
+                    <p style="font-size:0.85rem;color:var(--bone-dim);margin-top:6px;">glow-fungus from the belly-rip sinkhole; the only cure for rot-lung necrosis. not a poison; it is the maw's strange mercy.</p>
+                </div>
+            </section>
+
+            <!-- full herb compendium -->
+            <section class="glass content-section">
+                <h2>full herb compendium</h2>
+                <p>
+                    all known herbs, their effects, what they cure, their side effects, and how to prepare them.
+                    this is the complete reference for the green tongue. wolf-world names are used; real names
+                    are given in brackets where helpful. preparation methods: dried, poultice, juice, eaten raw,
+                    tea, gargle, sweetened, ointment, sap, rub, eaten cooked, simmered milk.
+                </p>
+
+                <!-- adder's tongue -->
+                <div class="herb-entry">
+                    <span class="herb-name">adder's tongue <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">reroll failed poison save with advantage if within 1 minute of sting; juice treats swollen eyes and cleans deep gashes.</span>
+                        <br /><span class="herb-cures">cures: sting-swell (mild poison), swollen eye, deep gash, shaking-sickness (seizure disorder)</span>
+                        <br /><span class="herb-side">side effects: can cause swelling, blistering, itching; toxic in large amounts; nausea, vomiting, diarrhea.</span>
+                        <br /><span class="herb-prep">preparation: fresh roots or leaves simmered in milk; juice extracted from leaves.</span>
+                    </span>
+                </div>
+
+                <!-- alder bark -->
+                <div class="herb-entry">
+                    <span class="herb-name">alder bark <span class="herb-rarity">uncommon</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">prevents infection and reduces swelling.</span>
+                        <br /><span class="herb-cures">cures: root-rot (tooth infection), infected wound, gut-run (diarrhea)</span>
+                        <br /><span class="herb-side">side effects: fresh bark causes severe vomiting; prolonged use may cause low potassium, heart problems.</span>
+                        <br /><span class="herb-prep">preparation: bark applied as poultice; tea used as mouthwash.</span>
+                    </span>
+                </div>
+
+                <!-- arnica -->
+                <div class="herb-entry">
+                    <span class="herb-name">arnica <span class="herb-rarity">rare</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">halves bruise and sprain recovery (external only); anti-inflammatory poultice for joint pain. never eat; internal use is lethal.</span>
+                        <br /><span class="herb-cures">cures: sprained leg, punctured paw, joint-rot (arthritis)</span>
+                        <br /><span class="herb-side">side effects: highly toxic if ingested; nausea, vomiting, irregular heartbeat, coma; topical may cause itching or rash.</span>
+                        <br /><span class="herb-prep">preparation: external use only as poultice or ointment.</span>
+                    </span>
+                </div>
+
+                <!-- beech leaves -->
+                <div class="herb-entry">
+                    <span class="herb-name">beech leaves <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">carry herbs; nut oil prevents infection and clears minor surface wounds. leaf tea is mildly antiseptic and eases leaf-bare cough (cold/chill).</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), infected wound</span>
+                        <br /><span class="herb-side">side effects: excessive intake may be toxic; unripe nuts cause vomiting, diarrhea, abdominal pain.</span>
+                        <br /><span class="herb-prep">preparation: leaves used in tea; ointments for burns, sores, and ulcers.</span>
+                    </span>
+                </div>
+
+                <!-- bindweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">bindweed vines <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">relieves gut complaints and urinary problems; immune-stimulating tonic for fever. tough vines lash splints to broken bones, speeding supported breaks (bone healing minus 7 days). strong laxative in large amounts; use sparingly.</span>
+                        <br /><span class="herb-cures">cures: the refusing (eating distress), water-scorch (urinary infection), shiver-fever (influenza), gut-stone (constipation)</span>
+                        <br /><span class="herb-side">side effects: strong laxative; large amounts cause stomach pain; toxic to livestock.</span>
+                        <br /><span class="herb-prep">preparation: leaves may be eaten cooked to reduce oxalic acid; seeds used as purgative.</span>
+                    </span>
+                </div>
+
+                <!-- blackberry -->
+                <div class="herb-entry">
+                    <span class="herb-name">blackberry (bramble) <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">soothes insect stings and ends non-magical venom; root bark is strongly astringent; settles diarrhea and gut upsets.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), the refusing (eating distress), infected wound, sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: prolonged or high-dose use may cause digestive upset or constipation from tannins.</span>
+                        <br /><span class="herb-prep">preparation: leaves chewed into pulp and applied to stings; root bark eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- bloodroot -->
+                <div class="herb-entry">
+                    <span class="herb-name">bloodroot <span class="herb-rarity">restricted</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">3d6 poison damage (dc 16 half). prolonged contact causes tissue damage and scarring.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: nausea, vomiting, drowsiness, vertigo, contact dermatitis; topical use can cause tissue damage.</span>
+                        <br /><span class="herb-prep">preparation: external use only as ointment; extreme caution.</span>
+                    </span>
+                </div>
+
+                <!-- boneset -->
+                <div class="herb-entry">
+                    <span class="herb-name">boneset <span class="herb-rarity">common</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">reroll failed disease save with advantage; take the better result. slows early cloudmouth (rabies) (one sunrise, no cure). eases deep respiratory congestion and fever pain. fresh plant is toxic; always dried.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: large amounts cause severe diarrhea; contains hepatotoxic pyrrolizidine alkaloids; liver damage.</span>
+                        <br /><span class="herb-prep">preparation: dried leaves and flowers as tea.</span>
+                    </span>
+                </div>
+
+                <!-- borage -->
+                <div class="herb-entry">
+                    <span class="herb-name">borage <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">extra milk for nursing mother; one additional pup. reduces fever, eases cough, and calms anxiety and low spirits. must be used fresh; drying destroys properties.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), leaf-bare cough (cold/chill), the skitters (anxiety), the low-spirit (depression)</span>
+                        <br /><span class="herb-side">side effects: upset stomach, headache, nausea; possible liver damage with prolonged use.</span>
+                        <br /><span class="herb-prep">preparation: must be used fresh, never dried; leaves and roots eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- broom -->
+                <div class="herb-entry">
+                    <span class="herb-name">broom <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">bind broken bones and splint fractures; anti-inflammatory poultice for bruising and sprains; move at half speed without worsening. toxic in large doses; cardiac effects and weakness.</span>
+                        <br /><span class="herb-cures">cures: fractured rib, sprained leg, broken jaw</span>
+                        <br /><span class="herb-side">side effects: contains toxic alkaloids; weakness, blurred vision, cardiac arrhythmias, nausea.</span>
+                        <br /><span class="herb-prep">preparation: chewed and applied as poultice.</span>
+                    </span>
+                </div>
+
+                <!-- burdock root -->
+                <div class="herb-entry">
+                    <span class="herb-name">burdock root <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">poultice draws infection from bites and open wounds after 24h rest. eases skin disease and early growth-sickness (cancer). diuretic; avoid when dehydrated.</span>
+                        <br /><span class="herb-cures">cures: infected wound, deep gash, scratch-bare (mange), growth-sickness (cancer)</span>
+                        <br /><span class="herb-side">side effects: generally safe; may cause allergic reactions; high doses may cause liver injury.</span>
+                        <br /><span class="herb-prep">preparation: root dug up, washed, chewed into pulp, applied to bites and wounds.</span>
+                    </span>
+                </div>
+
+                <!-- burnet -->
+                <div class="herb-entry">
+                    <span class="herb-name">burnet <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">leaf applied to cuts staunches bleeding; settles gut sickness and deep wounds. 1 leaf per day ignores first exhaustion from a forced march.</span>
+                        <br /><span class="herb-cures">cures: sprained leg, gut-run (diarrhea), deep gash</span>
+                        <br /><span class="herb-side">side effects: limited documented side effects.</span>
+                        <br /><span class="herb-prep">preparation: applied as poultice; root eaten raw as astringent.</span>
+                    </span>
+                </div>
+
+                <!-- catchweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">catchweed burrs <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">burrs hold poultices in place; extends duration 4 hours without harming the pelt. clears urinary complaints.</span>
+                        <br /><span class="herb-cures">cures: water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: limited documented side effects.</span>
+                        <br /><span class="herb-prep">preparation: burrs attached to pelt over poultices.</span>
+                    </span>
+                </div>
+
+                <!-- cattail -->
+                <div class="herb-entry">
+                    <span class="herb-name">cattail <span class="herb-rarity">common</span> <span class="pack-tag">silverrush</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">pollen is hemostatic; stops bleeding like yarrow; analgesic; mildly antiseptic.</span>
+                        <br /><span class="herb-cures">cures: deep gash, sprained leg, infected wound</span>
+                        <br /><span class="herb-side">side effects: generally safe short-term; may cause mild gi discomfort; avoid in pregnancy.</span>
+                        <br /><span class="herb-prep">preparation: pollen eaten raw; young shoots and rhizomes eaten cooked.</span>
+                    </span>
+                </div>
+
+                <!-- celandine -->
+                <div class="herb-entry">
+                    <span class="herb-name">celandine <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">removes eye swelling and restores eyesight within 1 hour; treats liver complaints and belly-grind (gallstones); eases leaf-bare cough (cold/chill). large doses cause vomiting; use sparingly.</span>
+                        <br /><span class="herb-cures">cures: swollen eye, yellow-eye (hepatitis), leaf-bare cough (cold/chill), belly-grind (gallstones)</span>
+                        <br /><span class="herb-side">side effects: large quantities cause vomiting and purging; fresh juice is local irritant; may cause dry mouth.</span>
+                        <br /><span class="herb-prep">preparation: juice trickled into the eye.</span>
+                    </span>
+                </div>
+
+                <!-- chamomile -->
+                <div class="herb-entry">
+                    <span class="herb-name">chamomile <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">advantage on wisdom saves vs fear for 1 hour. reduces fever, calms nerves, soothes eating troubles, and eases grief. mildly sedative; aids sleep and recovery.</span>
+                        <br /><span class="herb-cures">cures: the skitters (anxiety), the sleepless (insomnia), the refusing (eating distress), shiver-fever (influenza), the hollowing (grief), fever-wander (delirium), the low-spirit (depression)</span>
+                        <br /><span class="herb-side">side effects: generally safe; allergic reactions possible, especially in ragweed-sensitive wolves.</span>
+                        <br /><span class="herb-prep">preparation: leaves and flowers eaten raw; tea made from flowers.</span>
+                    </span>
+                </div>
+
+                <!-- chervil -->
+                <div class="herb-entry">
+                    <span class="herb-name">chervil <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">removes nausea; eases redscratch itch; leaf juice clears infected wounds. stimulates appetite and eases gut troubles in wasting wolves.</span>
+                        <br /><span class="herb-cures">cures: infected wound, gut-run (diarrhea), redscratch, the refusing (eating distress), wasting-sickness (chronic wasting), brood-rot (brucellosis, early fever)</span>
+                        <br /><span class="herb-side">side effects: generally safe; potential for mild gi discomfort or allergic reactions.</span>
+                        <br /><span class="herb-prep">preparation: juice extracted from leaves or root for infected wounds and bellyache.</span>
+                    </span>
+                </div>
+
+                <!-- chickweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">chickweed <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">ends green-cough (3 doses per 24 hours); poultice soothes skin conditions and reduces mild swelling. anti-bacterial; promotes wound healing.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), infected wound</span>
+                        <br /><span class="herb-side">side effects: high doses may cause vertigo, weakness, headache, difficulty breathing.</span>
+                        <br /><span class="herb-prep">preparation: used as tea or poultice.</span>
+                    </span>
+                </div>
+
+                <!-- cobnuts -->
+                <div class="herb-entry">
+                    <span class="herb-name">cobnuts <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">+1 stealth when approaching prey; rich in protein and fiber; restores +8 hunger on patrol.</span>
+                        <br /><span class="herb-cures">cures: none</span>
+                        <br /><span class="herb-side">side effects: may trigger allergic reactions in tree-nut-sensitive individuals.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw or cooked.</span>
+                    </span>
+                </div>
+
+                <!-- cobwebs -->
+                <div class="herb-entry">
+                    <span class="herb-name">cobwebs <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">auto-stabilize dying wolf; bandages deep gashes and burns. required for field dressing. can increase infection risk if wound is already dirty; clean wound first.</span>
+                        <br /><span class="herb-cures">cures: dying, deep gash, shaking-sickness (seizure disorder), scorched hide</span>
+                        <br /><span class="herb-side">side effects: can increase risk of infection if wound is dirty.</span>
+                        <br /><span class="herb-prep">preparation: gathered in a swath and applied to bleeding wound; wrapped around injury.</span>
+                    </span>
+                </div>
+
+                <!-- coltsfoot -->
+                <div class="herb-entry">
+                    <span class="herb-name">coltsfoot <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">ends green-cough after 1 dose; leaf pulp soothes cracked and sore paw pads. toxic long-term; contains alkaloids that damage the liver; use short-term only.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), punctured paw, chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: likely unsafe; contains hepatotoxic pyrrolizidine alkaloids that damage liver and lungs.</span>
+                        <br /><span class="herb-prep">preparation: leaves chewed to pulp and eaten for shortness of breath.</span>
+                    </span>
+                </div>
+
+                <!-- comfrey -->
+                <div class="herb-entry">
+                    <span class="herb-name">comfrey <span class="herb-rarity">uncommon</span> <span class="pack-tag">thistlehide</span></span>
+                    <span>
+                        <span class="herb-desc">poultice heals 1d4 hp on deep wounds; stimulates tissue regeneration and prevents scar tissue.</span>
+                        <br /><span class="herb-cures">cures: fractured rib, broken jaw, sprained leg, deep gash</span>
+                        <br /><span class="herb-side">side effects: do not take internally; contains pyrrolizidine alkaloids causing fatal liver damage; may cause abortion.</span>
+                        <br /><span class="herb-prep">preparation: roots chewed into poultice and applied externally.</span>
+                    </span>
+                </div>
+
+                <!-- coneflower -->
+                <div class="herb-entry">
+                    <span class="herb-name">coneflower (echinacea) <span class="herb-rarity">common</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">advantage on infection saves within 1h of injury; boosts immune system. shortens cough and fever duration. allergic reactions possible; watch for hives.</span>
+                        <br /><span class="herb-cures">cures: infected wound, shiver-fever (influenza), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: common: nausea, upset stomach; allergic reactions possible including anaphylaxis.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- daisy -->
+                <div class="herb-entry">
+                    <span class="herb-name">daisy <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">ignore joint-rot (arthritis) and joint pain penalties for 8 hours; leaf promotes wound healing and skin repair. tea eases sleeplessness and mild low spirits.</span>
+                        <br /><span class="herb-cures">cures: deep gash, leaf-bare cough (cold/chill), infected wound, the sleepless (insomnia), sprained leg, joint-rot (arthritis)</span>
+                        <br /><span class="herb-side">side effects: mildly toxic to humans and pets.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice.</span>
+                    </span>
+                </div>
+
+                <!-- dandelion -->
+                <div class="herb-entry">
+                    <span class="herb-name">dandelion <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">soothes stings and flushes fever; supports liver health; eases eating distress and foulwater rot (leptospirosis). diuretic.</span>
+                        <br /><span class="herb-cures">cures: the refusing (eating distress), yellow-eye (hepatitis), shiver-fever (influenza), foulwater rot (leptospirosis), sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: generally safe; rare upset stomach or diarrhea; allergic reactions possible.</span>
+                        <br /><span class="herb-prep">preparation: leaves and stems eaten raw; root eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- deadly nightshade -->
+                <div class="herb-entry">
+                    <span class="herb-name">deadly nightshade <span class="herb-rarity">restricted</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">confusion then paralysis (wis dc 15). as few as 5 berries kill an adult. touch may be toxic.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: extremely toxic; all parts poisonous; symptoms: blurred vision, seizures, death.</span>
+                        <br /><span class="herb-prep">preparation: no safe preparation for lay use.</span>
+                    </span>
+                </div>
+
+                <!-- deathberries -->
+                <div class="herb-entry">
+                    <span class="herb-name">deathberries (yew) <span class="herb-rarity">restricted</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">mercy killing; medic knowledge only. seeds kill within minutes; yarrow used as antidote to induce vomiting.</span>
+                        <br /><span class="herb-cures">cures: none (mercy)</span>
+                        <br /><span class="herb-side">side effects: seeds can kill within minutes; poisonous to most animals.</span>
+                        <br /><span class="herb-prep">preparation: seeds consumed for euthanasia; yarrow used as antidote to induce vomiting.</span>
+                    </span>
+                </div>
+
+                <!-- dried skullcap -->
+                <div class="herb-entry">
+                    <span class="herb-name">dried skullcap <span class="herb-rarity">uncommon</span></span>
+                    <span>
+                        <span class="herb-desc">sedative rest for concussion recovery; anti-anxiety and anti-inflammatory. treats nervous conditions, seizure-like episodes, depression, grief. high doses cause confusion and irregular heartbeat.</span>
+                        <br /><span class="herb-cures">cures: concussion, the long-forgetting (dementia), feral-shift, the skitters (anxiety), fever-wander (delirium), the fixing (obsession), den-madness (paranoia), the sleepless (insomnia), the hollowing (grief), shudderfit (epilepsy)</span>
+                        <br /><span class="herb-side">side effects: generally well-tolerated; may cause confusion, stupor, vivid dreams, mild digestive disturbances.</span>
+                        <br /><span class="herb-prep">preparation: dried herb steeped in water for tea.</span>
+                    </span>
+                </div>
+
+                <!-- dock -->
+                <div class="herb-entry">
+                    <span class="herb-name">dock <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">restores cracked paw pads after 1 day rest; leaf chewed and applied soothes scratches and infected wounds. root tea treats liver complaints, gut sickness, and leaf-bare cough (cold/chill).</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), yellow-eye (hepatitis), gut-run (diarrhea), punctured paw, infected wound</span>
+                        <br /><span class="herb-side">side effects: oxalate content may cause gi symptoms or kidney damage; avoid mature or uncooked leaves.</span>
+                        <br /><span class="herb-prep">preparation: leaf chewed and applied to scratches; root as tea.</span>
+                    </span>
+                </div>
+
+                <!-- douglas sagewort -->
+                <div class="herb-entry">
+                    <span class="herb-name">douglas' sagewort <span class="herb-rarity">common</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">prevents infection 24h; soothes leaf-burn (poison ivy) and insect stings; neutralizes mild poison. internal use may have mutagenic effects; use topically.</span>
+                        <br /><span class="herb-cures">cures: leaf-burn (poison ivy), infected wound, sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: contains thujone with mild psychoactive properties; internal use may have mutagenic effects.</span>
+                        <br /><span class="herb-prep">preparation: leaves and stems dried, used as rub or tea.</span>
+                    </span>
+                </div>
+
+                <!-- edelweiss -->
+                <div class="herb-entry">
+                    <span class="herb-name">edelweiss <span class="herb-rarity">very rare</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">ends bellyache and eating troubles; suppresses leaf-bare cough (cold/chill) for 4 hours.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), the refusing (eating distress), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: generally safe; coumarins may damage liver and kidneys in large amounts.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- elder -->
+                <div class="herb-entry">
+                    <span class="herb-name">elder (external) <span class="herb-rarity">common</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">treats sprains; toxic if eaten (dc 14 or 2d4 poison). bark and leaf poultice reduce swelling. unripe berries and all internal parts cause severe vomiting.</span>
+                        <br /><span class="herb-cures">cures: sprained leg</span>
+                        <br /><span class="herb-side">side effects: poisoning: vomiting, diarrhea, weakness, coma; unripe berries and other parts toxic.</span>
+                        <br /><span class="herb-prep">preparation: bark and leaf poultice only; unripe or uncooked parts are toxic.</span>
+                    </span>
+                </div>
+
+                <!-- elderberry -->
+                <div class="herb-entry">
+                    <span class="herb-name">elderberry <span class="herb-rarity">rare</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">advantage on disease saves for 3 sunrises; rich in antioxidants. reduces weeping-scale (distemper), shiver-fever (influenza), and leaf-bare cough (cold/chill). raw or unripe berries cause violent vomiting; must be fully ripe.</span>
+                        <br /><span class="herb-cures">cures: weeping-scale (distemper), shiver-fever (influenza), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: raw or unripe berries, leaves, stems are toxic; can cause nausea, vomiting, severe diarrhea; cooked berries are safe.</span>
+                        <br /><span class="herb-prep">preparation: must be cooked; raw or unripe berries are toxic.</span>
+                    </span>
+                </div>
+
+                <!-- fennel -->
+                <div class="herb-entry">
+                    <span class="herb-name">fennel <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">extra day without food before exhaustion sets in; eases chest tightness and leaf-bare cough (cold/chill); settles digestive cramps, eating troubles, and gutknot (bloat). antifungal and antibacterial.</span>
+                        <br /><span class="herb-cures">cures: the refusing (eating distress), leaf-bare cough (cold/chill), gutknot (bloat), infected wound</span>
+                        <br /><span class="herb-side">side effects: generally safe; rare: stomach upset, seizures.</span>
+                        <br /><span class="herb-prep">preparation: seeds eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- feverfew -->
+                <div class="herb-entry">
+                    <span class="herb-name">feverfew <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">reduces inflammation and fever; advantage on disease saves for 1 day. treats swollen eyes and head pain. chewing fresh leaves causes mouth sores; use dried only.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), redscratch, rot-lung (swamp fever), milk-fever (eclampsia), swollen eye, leaf-bare cough (cold/chill), brood-rot (brucellosis, early fever)</span>
+                        <br /><span class="herb-side">side effects: 5 to 15% develop mouth ulcers or gi irritation; may increase bleeding; abrupt stop may cause rebound headaches.</span>
+                        <br /><span class="herb-prep">preparation: dried leaf eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- foxglove -->
+                <div class="herb-entry">
+                    <span class="herb-name">foxglove <span class="herb-rarity">restricted</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">deadly heart poison (dc 18 or die in 1d4 min). narrow margin between medicine and death. all parts poisonous.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: extremely toxic; all parts poisonous; narrow therapeutic index; toxicity: vomiting, cardiac arrhythmias, death.</span>
+                        <br /><span class="herb-prep">preparation: no safe preparation for lay use.</span>
+                    </span>
+                </div>
+
+                <!-- goldenrod -->
+                <div class="herb-entry">
+                    <span class="herb-name">goldenrod <span class="herb-rarity">rare</span></span>
+                    <span>
+                        <span class="herb-desc">+2 hp per 8h rest. slows early cloudmouth (rabies) (+2 next save, no cure). anti-inflammatory and diuretic; clears water-scorch (urinary infection) and infected wound.</span>
+                        <br /><span class="herb-cures">cures: infected wound, deep gash, water-scorch (urinary infection), burrfever (lyme)</span>
+                        <br /><span class="herb-side">side effects: generally well-tolerated; may cause heartburn; allergic reactions possible.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- heather -->
+                <div class="herb-entry">
+                    <span class="herb-name">heather <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">sweetens bitter herb mixtures. tea is anti-inflammatory and antiseptic; eases gut upsets, mild cough, and nervy tension.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), leaf-bare cough (cold/chill), the skitters (anxiety)</span>
+                        <br /><span class="herb-side">side effects: possibly safe; no side effects reported; safety in pregnancy not established.</span>
+                        <br /><span class="herb-prep">preparation: tender tops and flowers made into tea; roots in milk for diarrhea.</span>
+                    </span>
+                </div>
+
+                <!-- holly berries -->
+                <div class="herb-entry">
+                    <span class="herb-name">holly berries <span class="herb-rarity">restricted</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">2d4 poison (dc 12 half). leaves cause diarrhea and vomiting; leaf spines can puncture the digestive tract.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: berries poisonous; leaves cause diarrhea, nausea, vomiting; leaf spines may tear mouth.</span>
+                        <br /><span class="herb-prep">preparation: avoid ingestion; external use only with caution.</span>
+                    </span>
+                </div>
+
+                <!-- honey -->
+                <div class="herb-entry">
+                    <span class="herb-name">honey <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">feeds starving pups (+10 hunger, -1 exhaustion); sweetens pup feeding. adults: -1 starvation exhaustion when depleted. soothes smoke-damaged throat and cough; antibacterial wound dressing.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), deep gash</span>
+                        <br /><span class="herb-side">side effects: generally safe; may cause blood sugar spikes; allergic reactions possible.</span>
+                        <br /><span class="herb-prep">preparation: used directly or mixed with other herbs.</span>
+                    </span>
+                </div>
+
+                <!-- horsetail -->
+                <div class="herb-entry">
+                    <span class="herb-name">horsetail <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">+3 medicine to stabilize dying; hemostatic poultice closes wounds and stops bleeding. antimicrobial; treats torn claws, paw wounds, and water-scorch (urinary infection). long-term use may cause thiamine deficiency.</span>
+                        <br /><span class="herb-cures">cures: deep gash, torn claw, punctured paw, water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: contains thiaminase; long-term use may cause thiamine deficiency; high doses may cause liver injury.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice.</span>
+                    </span>
+                </div>
+
+                <!-- ivy vines -->
+                <div class="herb-entry">
+                    <span class="herb-name">ivy vines <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">leaf extract thins chest mucus and opens airways; eases fever, leaf-bare cough (cold/chill), and chestbind (asthma). can also be applied as a poultice for minor skin irritations. do not confuse with leaf-burn (poison ivy); ensure it is english ivy.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), shiver-fever (influenza), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: may cause mild nausea or vomiting in large doses; fresh herb can cause contact dermatitis in sensitive wolves.</span>
+                        <br /><span class="herb-prep">preparation: leaves steeped as tea (often sweetened with honey), or crushed and applied as poultice.</span>
+                    </span>
+                </div>
+
+                <!-- jewelweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">jewelweed <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">wild</span></span>
+                    <span>
+                        <span class="herb-desc">sap neutralizes leaf-burn (poison ivy); cools bee and nettle stings. anti-fungal; soothes liver complaints and eases gut sickness.</span>
+                        <br /><span class="herb-cures">cures: leaf-burn (poison ivy), sting-swell (mild poison), yellow-eye (hepatitis), gut-run (diarrhea)</span>
+                        <br /><span class="herb-side">side effects: possibly safe; may cause digestive upset if consumed in high amounts.</span>
+                        <br /><span class="herb-prep">preparation: sap applied directly to skin; tea used internally.</span>
+                    </span>
+                </div>
+
+                <!-- juniper berry -->
+                <div class="herb-entry">
+                    <span class="herb-name">juniper berries <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">neutralizes sting-swell (mild poison); antiseptic berries slow infection in wounds; clears water-scorch (urinary infection) and gut-run (diarrhea). excessive use damages kidneys over time.</span>
+                        <br /><span class="herb-cures">cures: sting-swell (mild poison), gut-run (diarrhea), water-scorch (urinary infection), infected wound</span>
+                        <br /><span class="herb-side">side effects: allergic reactions possible; excessive use may cause kidney damage; large doses cause convulsions.</span>
+                        <br /><span class="herb-prep">preparation: berries eaten raw; leaves used for respiratory issues.</span>
+                    </span>
+                </div>
+
+                <!-- knotgrass -->
+                <div class="herb-entry">
+                    <span class="herb-name">knotgrass <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">cures gut-run (diarrhea); kills belly-worm (worms) in 1 day; drives off the itch (fleas). eases water-scorch (urinary infection) and leaf-bare cough (cold/chill). no serious side effects reported.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), the itch (fleas), leaf-bare cough (cold/chill), water-scorch (urinary infection), belly-worm (worms)</span>
+                        <br /><span class="herb-side">side effects: no serious side effects reported; may cause mild gi discomfort.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw; infusions for kidney and bladder conditions.</span>
+                    </span>
+                </div>
+
+                <!-- labrador tea -->
+                <div class="herb-entry">
+                    <span class="herb-name">labrador tea <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">ends wheezing for 4 hours; settles gut sickness; source of vitamin c. toxic in large amounts; causes vomiting, diarrhea, paralysis, and death. maximum one dose per day.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), gut-run (diarrhea), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: contains ledol and grayanotoxin; toxic; large amounts cause vomiting, gastroenteritis, diarrhea, delirium, spasms, death.</span>
+                        <br /><span class="herb-prep">preparation: dried leaves brewed as tea; maximum one dose per day.</span>
+                    </span>
+                </div>
+
+                <!-- lamb's ear -->
+                <div class="herb-entry">
+                    <span class="herb-name">lamb's ear <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">fuzzy leaves pressed on wounds stop bleeding and soothe insect stings. advantage on disease saves until next sunrise. antiseptic; no known toxicity.</span>
+                        <br /><span class="herb-cures">cures: infected wound, sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: not known to be toxic; possible allergic reactions.</span>
+                        <br /><span class="herb-prep">preparation: fuzzy leaves applied directly to skin as compress.</span>
+                    </span>
+                </div>
+
+                <!-- lavender -->
+                <div class="herb-entry">
+                    <span class="herb-name">lavender <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">cures fever and chills; hides death-scent at burial. calming; advantage vs fear when inhaled; eases grief and nightmares. large oral doses cause nausea.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), the skitters (anxiety), the sleepless (insomnia), the hollowing (grief), the screaming-sleep (night terrors)</span>
+                        <br /><span class="herb-side">side effects: generally well-tolerated; allergic skin reactions possible; large oral doses may cause nausea.</span>
+                        <br /><span class="herb-prep">preparation: leaves or flowers eaten raw; used as rub or tea.</span>
+                    </span>
+                </div>
+
+                <!-- mullein -->
+                <div class="herb-entry">
+                    <span class="herb-name">mullein <span class="herb-rarity">rare</span> <span class="pack-tag">greyspire</span> <span class="pack-tag">mistmoor</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">heals yellowcough and rot-lung (swamp fever) lung damage; medics use it for full recovery. expectorant and antiviral; shortens cough duration.</span>
+                        <br /><span class="herb-cures">cures: yellowcough, rot-lung (swamp fever), growth-sickness (cancer), chestbind (asthma), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: no common or severe side effects; tiny hairs may cause skin irritation; seeds contain rotenone.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- lungwort -->
+                <div class="herb-entry">
+                    <span class="herb-name">lungwort <span class="herb-rarity">rare</span> <span class="pack-tag">greyspire</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">also heals yellowcough and rot-lung (swamp fever) when mullein is scarce. soothes respiratory irritation; expectorant and wound healing. use in moderation; may contain liver-affecting substances.</span>
+                        <br /><span class="herb-cures">cures: yellowcough, rot-lung (swamp fever), growth-sickness (cancer), chestbind (asthma), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: generally safe in moderation; large doses may cause stomach discomfort; may contain liver-toxic substances.</span>
+                        <br /><span class="herb-prep">preparation: tea or poultice.</span>
+                    </span>
+                </div>
+
+                <!-- marsh mallow -->
+                <div class="herb-entry">
+                    <span class="herb-name">marsh-mallow root <span class="herb-rarity">uncommon</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">soothes rot-lung (swamp fever) fever and wheeze; mucilaginous root coats sore throat and eases leaf-bare cough (cold/chill). demulcent for bruises, swellings, and sprains. may lower blood sugar.</span>
+                        <br /><span class="herb-cures">cures: rot-lung (swamp fever), leaf-bare cough (cold/chill), sprained leg, chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: generally recognized as safe; rare: bloating, gas, fullness; may lower blood sugar.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice, bath additive.</span>
+                    </span>
+                </div>
+
+                <!-- belly-rip fungus -->
+                <div class="herb-entry">
+                    <span class="herb-name">belly-rip fungus <span class="herb-rarity">rare</span> <span class="pack-tag">mistmoor</span> <span class="restricted-tag">experimental</span></span>
+                    <span>
+                        <span class="herb-desc">glow-fungus from the belly-rip sinkhole; the only known cure for rot-lung necrosis. requires careful application by an experienced healer.</span>
+                        <br /><span class="herb-cures">cures: rot-lung (swamp fever)</span>
+                        <br /><span class="herb-side">side effects: unknown; use with extreme caution.</span>
+                        <br /><span class="herb-prep">preparation: applied directly to necrotic tissue; healer's discretion.</span>
+                    </span>
+                </div>
+
+                <!-- death cap -->
+                <div class="herb-entry">
+                    <span class="herb-name">death-cap mushroom <span class="herb-rarity">rare</span> <span class="pack-tag">mistmoor</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">pale mushroom found only in the rotting mere. intensely toxic; 3d6 poison (dc 18 half). causes organ failure and seizures. healers may use trace amounts experimentally.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: extremely toxic; one of the most lethal mushrooms; causes organ failure, seizures, nausea; fatal if ingested.</span>
+                        <br /><span class="herb-prep">preparation: no safe preparation; experimental use only by experienced healers.</span>
+                    </span>
+                </div>
+
+                <!-- lizard's tail -->
+                <div class="herb-entry">
+                    <span class="herb-name">lizard's tail <span class="herb-rarity">common</span> <span class="pack-tag">mistmoor</span></span>
+                    <span>
+                        <span class="herb-desc">removes 1 fever exhaustion; anti-inflammatory and diuretic. sedative rhizome eases fever, body aches, and water-scorch (urinary infection). contains saponins; causes nausea if too much is eaten.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: contains saponins; poisonous when ingested; causes irritation, nausea, vomiting.</span>
+                        <br /><span class="herb-prep">preparation: dried roots ground into powder; tea.</span>
+                    </span>
+                </div>
+
+                <!-- meadowsweet -->
+                <div class="herb-entry">
+                    <span class="herb-name">meadowsweet <span class="herb-rarity">uncommon</span> <span class="pack-tag">silverrush</span></span>
+                    <span>
+                        <span class="herb-desc">ignore 1 pain exhaustion for 4 hours; pain relief for 1 sunrise; ignores joint-rot (arthritis) and bone-ache (chronic pain) penalties. contains salicylates; eases gut upset, gut-run (diarrhea), and fever. increases bleeding risk if used with wounds.</span>
+                        <br /><span class="herb-cures">cures: sprained leg, gut-run (diarrhea), the refusing (eating distress), shiver-fever (influenza), burrfever (lyme), joint-rot (arthritis), bone-ache (chronic pain)</span>
+                        <br /><span class="herb-side">side effects: contains salicylates; increases bleeding risk; large amounts or long-term use possibly unsafe.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- mountain ash -->
+                <div class="herb-entry">
+                    <span class="herb-name">mountain ash (rowan) <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">bitter bark eases fever and weeping-scale (distemper), soothes liver complaints; choleretic. berries require caution; large amounts cause stomach damage.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), weeping-scale (distemper), yellow-eye (hepatitis)</span>
+                        <br /><span class="herb-side">side effects: fresh berries possibly unsafe; large amounts cause stomach irritation, vomiting, kidney damage.</span>
+                        <br /><span class="herb-prep">preparation: bark as tea; berries require caution.</span>
+                    </span>
+                </div>
+
+                <!-- oak bark -->
+                <div class="herb-entry">
+                    <span class="herb-name">oak bark <span class="herb-rarity">common</span> <span class="pack-tag">thistlehide</span></span>
+                    <span>
+                        <span class="herb-desc">stops bleeding; +2 stabilize. astringent and antiviral; treats acute gut-run (diarrhea), reduces inflammation, and prevents infection in cuts and scrapes. prolonged use damages liver.</span>
+                        <br /><span class="herb-cures">cures: deep gash, infected wound, gut-run (diarrhea)</span>
+                        <br /><span class="herb-side">side effects: oral use may cause stomach upset; topical may irritate skin; prolonged use may cause kidney or liver damage.</span>
+                        <br /><span class="herb-prep">preparation: tea for diarrhea; chewed as poultice for wounds.</span>
+                    </span>
+                </div>
+
+                <!-- oleander -->
+                <div class="herb-entry">
+                    <span class="herb-name">oleander <span class="herb-rarity">restricted</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">4d6 poison, no antidote (dc 18 half). one of the most poisonous plants known; all parts lethal. sap causes severe eye inflammation.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: one of the most poisonous plants; all parts toxic; small amounts lethal.</span>
+                        <br /><span class="herb-prep">preparation: no safe preparation for lay use.</span>
+                    </span>
+                </div>
+
+                <!-- parsley -->
+                <div class="herb-entry">
+                    <span class="herb-name">parsley <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">ends lactation within 6 hours; eases milk-fever (eclampsia) and eating troubles. analgesic, antibacterial, and digestive aid. use leaves only. note: because it ends lactation, medics use it on nursing mothers only when the eclampsia is severe enough that continued nursing risks the mother's life; the litter must then be fostered or hand-fed.</span>
+                        <br /><span class="herb-cures">cures: milk-fever (eclampsia), wasting-sickness (chronic wasting), the refusing (eating distress), water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: large amounts may cause kidney damage; avoid in pregnancy.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- passionflower -->
+                <div class="herb-entry">
+                    <span class="herb-name">passionflower <span class="herb-rarity">uncommon</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">eases racing thoughts and the sleepless (insomnia); reduces the skitters (anxiety) and feral-shift.</span>
+                        <br /><span class="herb-cures">cures: the skitters (anxiety), the sleepless (insomnia), feral-shift</span>
+                        <br /><span class="herb-side">side effects: common: dizziness, drowsiness, confusion; not for use by pregnant wolves.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- pine needle -->
+                <div class="herb-entry">
+                    <span class="herb-name">pine needles <span class="herb-rarity">common</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">tea ends coughing after 1 dose; expectorant for chest congestion. supports water-scorch (urinary infection) and immune system. avoid in pregnancy; may cause uterine contractions.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), water-scorch (urinary infection), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: may cause uterine contractions; avoid pregnancy; large quantities may cause stomach upset.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- pine bark -->
+                <div class="herb-entry">
+                    <span class="herb-name">pine bark <span class="herb-rarity">common</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">inner bark eases leaf-bare cough (cold/chill) and frost-nipped paws; reduces inflammation and eases breathing and chestbind (asthma).</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), punctured paw, chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: minor: stomach upset, headaches, dizziness; may increase bleeding risk.</span>
+                        <br /><span class="herb-prep">preparation: inner bark eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- plantain -->
+                <div class="herb-entry">
+                    <span class="herb-name">plantain <span class="herb-rarity">uncommon</span> <span class="pack-tag">thistlehide</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">gentle wound remedy; cleanses torn claws and deep gashes. expectorant; opens airways and eases chest illness. astringent and hemostatic. anaphylaxis possible in rare cases.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), deep gash, punctured paw, torn claw, chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: anaphylaxis possible; mild: nausea, vomiting, bloating; high doses may cause serious allergic reactions.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice, eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- poison ivy -->
+                <div class="herb-entry">
+                    <span class="herb-name">leaf-burn (poison ivy) <span class="herb-rarity">restricted</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">contact: -1d4 cha, disadvantage stealth 3 days. contains urushiol; causes severe skin rash and mouth or throat irritation if eaten.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: highly toxic; contains urushiol; causes severe skin irritation; ingestion causes severe mouth and throat irritation.</span>
+                        <br /><span class="herb-prep">preparation: avoid; no safe preparation for medicinal use.</span>
+                    </span>
+                </div>
+
+                <!-- poppy seeds -->
+                <div class="herb-entry">
+                    <span class="herb-name">poppy seeds <span class="herb-rarity">common</span> <span class="pack-tag">compound</span> <span class="restricted-tag">addictive</span></span>
+                    <span>
+                        <span class="herb-desc">sedative and pain relief; unconscious rest 1 sunrise. calms shock and emotional distress. mild hypnotic; aids sleep and reduces the skitters (anxiety). excessive intake is toxic.</span>
+                        <br /><span class="herb-cures">cures: the sleepless (insomnia), the skitters (anxiety), heart-shock (emotional shock), the hollowing (grief)</span>
+                        <br /><span class="herb-side">side effects: generally safe; excessive intake may cause digestive discomfort; may cause positive drug test.</span>
+                        <br /><span class="herb-prep">preparation: seeds eaten raw; petals and leaves chewed for sleep.</span>
+                    </span>
+                </div>
+
+                <!-- prickly ash -->
+                <div class="herb-entry">
+                    <span class="herb-name">prickly ash <span class="herb-rarity">rare</span> <span class="pack-tag">greyspire</span></span>
+                    <span>
+                        <span class="herb-desc">ends frozen-paw numbness; numbs root-rot (tooth infection) pain for 1 hour. improves circulation to cold extremities; analgesic and anti-inflammatory. may increase bleeding risk.</span>
+                        <br /><span class="herb-cures">cures: root-rot (tooth infection), punctured paw, joint-rot (arthritis)</span>
+                        <br /><span class="herb-side">side effects: no known major side effects; may cause allergic reactions; may increase bleeding risk.</span>
+                        <br /><span class="herb-prep">preparation: bark and berries chewed or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- purple loosestrife -->
+                <div class="herb-entry">
+                    <span class="herb-name">purple loosestrife <span class="herb-rarity">common</span> <span class="pack-tag">silverrush</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">staunches bleeding on stitched wounds; reduces bleed timer; cures gut-run (diarrhea). antibiotic and astringent; treats bacterial infections. sedative in large amounts.</span>
+                        <br /><span class="herb-cures">cures: deep gash, gut-run (diarrhea), infected wound</span>
+                        <br /><span class="herb-side">side effects: astringent properties may cause gi distress in large quantities.</span>
+                        <br /><span class="herb-prep">preparation: tea; flowering tops dried and eaten.</span>
+                    </span>
+                </div>
+
+                <!-- ragweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">ragweed <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">3 leaves removes 1 exhaustion. astringent properties ease mild respiratory inflammation and liver complaints. highly allergenic; avoid in wolves with known pollen sensitivity.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), yellow-eye (hepatitis)</span>
+                        <br /><span class="herb-side">side effects: highly allergenic; causes hay fever, contact dermatitis, respiratory distress.</span>
+                        <br /><span class="herb-prep">preparation: tea; caution, highly allergenic.</span>
+                    </span>
+                </div>
+
+                <!-- ragwort -->
+                <div class="herb-entry">
+                    <span class="herb-name">ragwort <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">elder hunts at full speed for 1 day. eases joint and limb stiffness.</span>
+                        <br /><span class="herb-cures">cures: sprained leg</span>
+                        <br /><span class="herb-side">side effects: toxic; contains pyrrolizidine alkaloids causing liver toxicity with repeated use.</span>
+                        <br /><span class="herb-prep">preparation: avoid; no safe preparation.</span>
+                    </span>
+                </div>
+
+                <!-- raspberry leaves -->
+                <div class="herb-entry">
+                    <span class="herb-name">raspberry leaves <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">advantage on birth hemorrhage saves; rich in vitamins and minerals. strongly astringent; eases mild gut-run (diarrhea) and chest cough. detoxifying tonic.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), leaf-bare cough (cold/chill)</span>
+                        <br /><span class="herb-side">side effects: generally safe; may cause diarrhea, hypoglycemia, acute liver injury; may cause premature labor.</span>
+                        <br /><span class="herb-prep">preparation: tea.</span>
+                    </span>
+                </div>
+
+                <!-- rosemary -->
+                <div class="herb-entry">
+                    <span class="herb-name">rosemary <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">hides death-scent at burial; anti-inflammatory and digestive aid.</span>
+                        <br /><span class="herb-cures">cures: the hollowing (grief), the long-forgetting (dementia), the fraying (chronic stress), the skitters (anxiety), the fixing (obsession), the low-spirit (depression)</span>
+                        <br /><span class="herb-side">side effects: large amounts cause vomiting, sun sensitivity, kidney damage; undiluted oil toxic.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw as culinary herb; tea.</span>
+                    </span>
+                </div>
+
+                <!-- rush stalks -->
+                <div class="herb-entry">
+                    <span class="herb-name">rush stalks <span class="herb-rarity">common</span> <span class="pack-tag">mistmoor</span> <span class="pack-tag">silverrush</span></span>
+                    <span>
+                        <span class="herb-desc">hard stalks bind broken bones; lash splints with sticks (+2 medicine to set fractures). antispasmodic and expectorant. </span>
+                        <br /><span class="herb-cures">cures: fractured rib, broken jaw, sprained leg</span>
+                        <br /><span class="herb-side">side effects: contains thiaminase; long-term use may cause thiamine deficiency.</span>
+                        <br /><span class="herb-prep">preparation: stalks boiled for diuretic; used as splint material.</span>
+                    </span>
+                </div>
+
+                <!-- saffron -->
+                <div class="herb-entry">
+                    <span class="herb-name">saffron <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">auto-stabilize postpartum hemorrhage; ends milk-fever (eclampsia). sedative and expectorant; eases cough, the skitters (anxiety), and the hollowing (grief). large doses cause vomiting and bloody urine.</span>
+                        <br /><span class="herb-cures">cures: dying, milk-fever (eclampsia), leaf-bare cough (cold/chill), the skitters (anxiety), the hollowing (grief)</span>
+                        <br /><span class="herb-side">side effects: generally safe up to small amounts; large doses cause vomiting, dizziness, bloody urine; may cause miscarriage.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw; tea.</span>
+                    </span>
+                </div>
+
+                <!-- sage -->
+                <div class="herb-entry">
+                    <span class="herb-name">sage <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">soothes sore throat; elders eat hard food longer. antimicrobial wash for infected wounds. extended use or large amounts cause seizures.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), the refusing (eating distress), gut-run (diarrhea), infected wound</span>
+                        <br /><span class="herb-side">side effects: extended use or large amounts: restlessness, vomiting, vertigo, rapid heart rate, seizures, kidney damage.</span>
+                        <br /><span class="herb-prep">preparation: tea, gargle, eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- skunk cabbage -->
+                <div class="herb-entry">
+                    <span class="herb-name">skunk cabbage (dried) <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">treats severe cough and blackcough; antispasmodic for the chest. toxic fresh (dc 12); contains oxalates; causes mouth pain. overconsumption causes kidney failure.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: possibly safe in small amounts; large amounts cause nausea, vomiting, dizziness; contains oxalates.</span>
+                        <br /><span class="herb-prep">preparation: dried form only, used as ointment or tea.</span>
+                    </span>
+                </div>
+
+                <!-- slippery elm -->
+                <div class="herb-entry">
+                    <span class="herb-name">slippery elm <span class="herb-rarity">uncommon</span> <span class="pack-tag">thistlehide</span></span>
+                    <span>
+                        <span class="herb-desc">eat or drink without pain for 8 hours. powdered bark soothes gut lining </span>
+                        <br /><span class="herb-cures">cures: broken jaw, gut-run (diarrhea), the refusing (eating distress), the skitters (anxiety), water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: topical may cause contact dermatitis; whole bark may be abortifacient.</span>
+                        <br /><span class="herb-prep">preparation: dried bark as tea or eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- snakeroot -->
+                <div class="herb-entry">
+                    <span class="herb-name">snakeroot <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">advantage vs snake venom saves.</span>
+                        <br /><span class="herb-cures">cures: the skitters (anxiety), the sleepless (insomnia), sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: nasal congestion, sedation, gi upset, bradycardia; diarrhea, the low-spirit (depression).</span>
+                        <br /><span class="herb-prep">preparation: dried root eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- sorrel -->
+                <div class="herb-entry">
+                    <span class="herb-name">sorrel <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">stops heavy bleeding from deep wounds; restores appetite; analgesic for sprains; diuretic; large amounts cause kidney damage; toxic in excess.</span>
+                        <br /><span class="herb-cures">cures: deep gash, leaf-bare cough (cold/chill), sprained leg, water-scorch (urinary infection), the refusing (eating distress)</span>
+                        <br /><span class="herb-side">side effects: large amounts possibly unsafe; may increase kidney stone risk; contains oxalic acid.</span>
+                        <br /><span class="herb-prep">preparation: leaves eaten raw or cooked.</span>
+                    </span>
+                </div>
+
+                <!-- stick -->
+                <div class="herb-entry">
+                    <span class="herb-name">straight stick <span class="herb-rarity">common</span> <span class="pack-tag">wild</span></span>
+                    <span>
+                        <span class="herb-desc">thin twig for wolves in pain to bite during deep treatment; also used to lash splints.</span>
+                        <br /><span class="herb-cures">cures: none</span>
+                        <br /><span class="herb-side">side effects: none; splinters possible if not smoothed.</span>
+                        <br /><span class="herb-prep">preparation: gathered from any woody area.</span>
+                    </span>
+                </div>
+
+                <!-- sticklewort -->
+                <div class="herb-entry">
+                    <span class="herb-name">sticklewort <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">neutralizes snake venom; astringent; treats gut-run (diarrhea), leaf-bare cough (cold/chill), and infected wounds. hepatoprotective.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), leaf-bare cough (cold/chill), infected wound, sting-swell (mild poison), yellow-eye (hepatitis)</span>
+                        <br /><span class="herb-side">side effects: allergic reactions possible; caution for blood clotting issues.</span>
+                        <br /><span class="herb-prep">preparation: tea, gargle, poultice.</span>
+                    </span>
+                </div>
+
+                <!-- stinging nettle -->
+                <div class="herb-entry">
+                    <span class="herb-name">stinging nettle <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">with comfrey -1 broken bone healing day. dried leaves drive off the itch (fleas). cook or dry before use; raw stings.</span>
+                        <br /><span class="herb-cures">cures: fractured rib, sprained leg, the itch (fleas), water-scorch (urinary infection), burrfever (lyme), joint-rot (arthritis)</span>
+                        <br /><span class="herb-side">side effects: generally safe in moderate amounts; common: constipation, diarrhea, upset stomach; touching raw plant causes irritation.</span>
+                        <br /><span class="herb-prep">preparation: dried or cooked; tea.</span>
+                    </span>
+                </div>
+
+                <!-- swamp milkweed -->
+                <div class="herb-entry">
+                    <span class="herb-name">swamp milkweed <span class="herb-rarity">very rare</span> <span class="pack-tag">mistmoor</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">only herb known to cure the spotting (pox) in its late stage.</span>
+                        <br /><span class="herb-cures">cures: the spotting (pox), leaf-bare cough (cold/chill), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: toxic; contains cardiac glycosides; causes dangerous heart issues; lethal in large doses.</span>
+                        <br /><span class="herb-prep">preparation: dried roots eaten</span>
+                    </span>
+                </div>
+
+                <!-- sweet sedge -->
+                <div class="herb-entry">
+                    <span class="herb-name">sweet sedge <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">ends mild gut infection in 1 day</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), the refusing (eating distress), gutknot (bloat)</span>
+                        <br /><span class="herb-side">side effects: likely unsafe; contains cancer-causing beta-isoasarone; causes kidney damage, shaking, seizures.</span>
+                        <br /><span class="herb-prep">preparation: avoid; no safe preparation.</span>
+                    </span>
+                </div>
+
+                <!-- tansy -->
+                <div class="herb-entry">
+                    <span class="herb-name">tansy <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">halves sprain recovery time; lethal in pregnancy; causes miscarriage.</span>
+                        <br /><span class="herb-cures">cures: sprained leg, the itch (fleas), leaf-bare cough (cold/chill), belly-worm (worms)</span>
+                        <br /><span class="herb-side">side effects: toxic; contains thujone; causes vomiting, severe diarrhea, tremors, kidney and liver damage, seizures; not for pregnant wolves.</span>
+                        <br /><span class="herb-prep">preparation: leaves, flowers, stems eaten together; extreme caution.</span>
+                    </span>
+                </div>
+
+                <!-- thyme -->
+                <div class="herb-entry">
+                    <span class="herb-name">thyme <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">ends minor pain for 2 hours. mucolytic expectorant for chest congestion. antifungal and antibacterial.</span>
+                        <br /><span class="herb-cures">cures: the skitters (anxiety), the sleepless (insomnia), leaf-bare cough (cold/chill), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: possibly safe short-term; allergic reactions, dizziness, stomach upset; rare hypersensitivity.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw; tea.</span>
+                    </span>
+                </div>
+
+                <!-- tormentil -->
+                <div class="herb-entry">
+                    <span class="herb-name">tormentil <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">+2 medicine for any injury. more tannin than oak bark; strongly astringent</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), leaf-bare cough (cold/chill), infected wound</span>
+                        <br /><span class="herb-side">side effects: generally well-tolerated; mild stomach pain or heartburn possible.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice.</span>
+                    </span>
+                </div>
+
+                <!-- valerian -->
+                <div class="herb-entry">
+                    <span class="herb-name">valerian <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">unconscious 1d4 hours. addiction and withdrawal symptoms after long-term use; wean slowly.</span>
+                        <br /><span class="herb-cures">cures: the skitters (anxiety), the sleepless (insomnia), feral-shift, the refusing (eating distress), the hollowing (grief), heart-shock (emotional shock), shudderfit (epilepsy)</span>
+                        <br /><span class="herb-side">side effects: generally well-tolerated; common: dizziness, headache, daytime drowsiness; withdrawal symptoms if discontinued.</span>
+                        <br /><span class="herb-prep">preparation: tea or eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- watermint -->
+                <div class="herb-entry">
+                    <span class="herb-name">watermint <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">removes nausea in 10 minutes. analgesic, antiseptic, and antispasmodic; treats cough, wounds, gut sickness, and liver complaints. not for pregnant wolves; may cause premature birth.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), infected wound, gut-run (diarrhea), the refusing (eating distress), yellow-eye (hepatitis), gutknot (bloat), foulwater rot (leptospirosis), water-scorch (urinary infection), gut-stone (constipation)</span>
+                        <br /><span class="herb-side">side effects: not for pregnant mothers; may cause premature birth or miscarriage; toxic to sheep.</span>
+                        <br /><span class="herb-prep">preparation: poultice; tea from fresh or dried leaves.</span>
+                    </span>
+                </div>
+
+                <!-- water hemlock -->
+                <div class="herb-entry">
+                    <span class="herb-name">water hemlock <span class="herb-rarity">restricted</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">lethal poison (dc 20 half, still 6d6). one of the most poisonous plants; cicutoxin causes death within 15 minutes. all parts are poisonous; even small amounts cause convulsions.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: one of the most poisonous plants; contains cicutoxin; even small amounts cause muscle spasms, respiratory failure, death within an hour.</span>
+                        <br /><span class="herb-prep">preparation: extremely dangerous; no safe preparation.</span>
+                    </span>
+                </div>
+
+                <!-- wild cherry bark -->
+                <div class="herb-entry">
+                    <span class="herb-name">wild cherry bark <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">stops coughing for 2 hours, even blackcough; sedative and digestive tonic. calms the skitters (anxiety). contains cyanogenic glycosides; short-term use only (10 to 14 days); large doses toxic.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), gut-run (diarrhea), the skitters (anxiety)</span>
+                        <br /><span class="herb-side">side effects: generally safe in small amounts; excessive doses toxic due to cyanogenic glycosides; short-term use only.</span>
+                        <br /><span class="herb-prep">preparation: bark tea or eaten raw; short-term use only.</span>
+                    </span>
+                </div>
+
+                <!-- wild garlic -->
+                <div class="herb-entry">
+                    <span class="herb-name">wild garlic <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">advantage vs vermin disease 24h; cleans and slows infection in fresh wounds. treats leaf-bare cough (cold/chill) and liver complaints; drives off the itch (fleas). excessive intake causes vomiting.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), the itch (fleas), infected wound, yellow-eye (hepatitis), foulwater rot (leptospirosis)</span>
+                        <br /><span class="herb-side">side effects: generally safe; excessive intake may cause nausea, vomiting, diarrhea.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw or cooked; tea.</span>
+                    </span>
+                </div>
+
+                <!-- willow bark -->
+                <div class="herb-entry">
+                    <span class="herb-name">willow bark <span class="herb-rarity">common</span> <span class="pack-tag">mistmoor</span> <span class="pack-tag">silverrush</span></span>
+                    <span>
+                        <span class="herb-desc">pain relief 1 sunrise; cools fever. ignores bone-ache (chronic pain) and joint-rot (arthritis) penalties for 1 sunrise. contains salicin; natural anti-inflammatory for joints and fractures. stomach bleeding possible with long-term use.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), sprained leg, fractured rib, burrfever (lyme), joint-rot (arthritis), bone-ache (chronic pain)</span>
+                        <br /><span class="herb-side">side effects: common: nausea, vomiting, diarrhea, heartburn, rash; may affect blood clotting; similar to aspirin.</span>
+                        <br /><span class="herb-prep">preparation: bark chewed in small amounts for pain; tea.</span>
+                    </span>
+                </div>
+
+                <!-- wintergreen -->
+                <div class="herb-entry">
+                    <span class="herb-name">wintergreen <span class="herb-rarity">restricted</span> <span class="poison-tag">toxic</span></span>
+                    <span>
+                        <span class="herb-desc">often misidentified; 1d4 poison (dc 10). oil is unsafe to eat. external redness and irritation; large amounts cause tinnitus, confusion, and death.</span>
+                        <br /><span class="herb-cures">cures: none (poison)</span>
+                        <br /><span class="herb-side">side effects: oil is unsafe to take orally; topical: redness, irritation; large amounts cause ringing in ears, nausea, confusion.</span>
+                        <br /><span class="herb-prep">preparation: external use only; tea with caution.</span>
+                    </span>
+                </div>
+
+                <!-- witch hazel -->
+                <div class="herb-entry">
+                    <span class="herb-name">witch hazel <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">astringent and hemostatic; reduces eye swelling; soothes leaf-burn (poison ivy) and insect stings; eases chest cough. internal use in large doses may cause liver problems.</span>
+                        <br /><span class="herb-cures">cures: swollen eye, infected wound, leaf-burn (poison ivy), leaf-bare cough (cold/chill), sting-swell (mild poison)</span>
+                        <br /><span class="herb-side">side effects: most common: dry skin; high doses may cause liver or kidney problems; contains trace safrole.</span>
+                        <br /><span class="herb-prep">preparation: topical application; internal use with caution as tea.</span>
+                    </span>
+                </div>
+
+                <!-- wolfsbane -->
+                <div class="herb-entry">
+                    <span class="herb-name">wolfsbane <span class="herb-rarity">very rare</span> <span class="pack-tag">greyspire</span> <span class="poison-tag">lethal</span></span>
+                    <span>
+                        <span class="herb-desc">removes the spirit-eaten curse (dc 20 medicine check); deals 2d6 poison damage to patient. extremely toxic; all parts poisonous; historically used to poison wolves. can be absorbed through skin.</span>
+                        <br /><span class="herb-cures">cures: the spirit-eaten (curse-belief illness)</span>
+                        <br /><span class="herb-side">side effects: extremely toxic; all parts poisonous; contains aconitine; ingestion causes numbness, nausea, respiratory failure; can be absorbed through skin.</span>
+                        <br /><span class="herb-prep">preparation: no safe preparation for lay herbalists.</span>
+                    </span>
+                </div>
+
+                <!-- yarrow -->
+                <div class="herb-entry">
+                    <span class="herb-name">yarrow <span class="herb-rarity">common</span></span>
+                    <span>
+                        <span class="herb-desc">+2 medicine to stabilize; stops bleeding; cleanses torn claws. anti-inflammatory; lowers blood pressure. also settles gut sickness. allergic reactions possible.</span>
+                        <br /><span class="herb-cures">cures: deep gash, infected wound, shaking-sickness (seizure disorder), torn claw, gut-run (diarrhea), internal bleeding</span>
+                        <br /><span class="herb-side">side effects: generally considered safe; may interact with lithium; allergic reactions possible.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice, eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- catmint -->
+                <div class="herb-entry">
+                    <span class="herb-name">catmint tea <span class="herb-rarity">uncommon</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">cures severe blackcough (2 doses per 24 hours); eases the skitters (anxiety), the sleepless (insomnia), and the refusing (eating distress). large doses cause vomiting. not for pregnant wolves.</span>
+                        <br /><span class="herb-cures">cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), the skitters (anxiety), the sleepless (insomnia), the refusing (eating distress), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: high doses possibly unsafe; headaches, vomiting; emmenagogue and abortifacient; avoid in pregnancy.</span>
+                        <br /><span class="herb-prep">preparation: leaves and flowers for congestion and coughs; tea.</span>
+                    </span>
+                </div>
+
+                <!-- purslane -->
+                <div class="herb-entry">
+                    <span class="herb-name">purslane <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">fleshy leaves hold ditch-water; chew for +12 hydration without visiting the creek. anti-inflammatory; eases the refusing (eating distress) and the skitters (anxiety).</span>
+                        <br /><span class="herb-cures">cures: the refusing (eating distress), the skitters (anxiety)</span>
+                        <br /><span class="herb-side">side effects: limited studies; no significant adverse effects; constipation reported; contains oxalates.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw as vegetable.</span>
+                    </span>
+                </div>
+
+                <!-- chicory -->
+                <div class="herb-entry">
+                    <span class="herb-name">chicory <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">settles gut upset, gut-run (diarrhea), and the refusing (eating distress); supports liver health and yellow-eye (hepatitis) recovery. high fiber may cause gas and bloating.</span>
+                        <br /><span class="herb-cures">cures: gut-run (diarrhea), the refusing (eating distress), yellow-eye (hepatitis)</span>
+                        <br /><span class="herb-side">side effects: fresh plant may cause allergic skin reactions; high fiber may cause gas, bloating, diarrhea.</span>
+                        <br /><span class="herb-prep">preparation: root eaten raw or as tea.</span>
+                    </span>
+                </div>
+
+                <!-- mugwort -->
+                <div class="herb-entry">
+                    <span class="herb-name">mugwort <span class="herb-rarity">uncommon</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">rub through pelt to drive off the itch (fleas); settles gut upsets and the refusing (eating distress). toxic in pregnancy; causes miscarriage.</span>
+                        <br /><span class="herb-cures">cures: the itch (fleas), gut-run (diarrhea), the refusing (eating distress)</span>
+                        <br /><span class="herb-side">side effects: contains thujone; harmful in large amounts; may cause miscarriage; respiratory allergic responses.</span>
+                        <br /><span class="herb-prep">preparation: used as rub; tea with caution.</span>
+                    </span>
+                </div>
+
+                <!-- garden mint -->
+                <div class="herb-entry">
+                    <span class="herb-name">garden mint <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">ends nausea in minutes; eases stomach cramps, the refusing (eating distress), gut-run (diarrhea), and gutknot (bloat). antimicrobial.</span>
+                        <br /><span class="herb-cures">cures: the refusing (eating distress), gut-run (diarrhea), gutknot (bloat), infected wound</span>
+                        <br /><span class="herb-side">side effects: may cause sleepiness; concentrated oils toxic to dogs and cats in large quantities.</span>
+                        <br /><span class="herb-prep">preparation: eaten raw as culinary herb; tea.</span>
+                    </span>
+                </div>
+
+                <!-- wood sorrel -->
+                <div class="herb-entry">
+                    <span class="herb-name">wood sorrel <span class="herb-rarity">common</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">steadies a queasy stomach; treats the refusing (eating distress) and shiver-fever (influenza). contains oxalic acid; high doses are toxic; causes kidney damage.</span>
+                        <br /><span class="herb-cures">cures: shiver-fever (influenza), the refusing (eating distress)</span>
+                        <br /><span class="herb-side">side effects: contains oxalic acid; high doses toxic; overdose causes diarrhea, nausea, kidney damage.</span>
+                        <br /><span class="herb-prep">preparation: small amounts eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- oxeye daisy -->
+                <div class="herb-entry">
+                    <span class="herb-name">oxeye daisy <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">eases joint ache and sprains; suppresses leaf-bare cough (cold/chill); aids liver complaints and shiver-fever (influenza). antispasmodic; diuretic; clears water-scorch (urinary infection). allergic reactions in sensitive wolves.</span>
+                        <br /><span class="herb-cures">cures: sprained leg, leaf-bare cough (cold/chill), shiver-fever (influenza), yellow-eye (hepatitis), water-scorch (urinary infection)</span>
+                        <br /><span class="herb-side">side effects: may cause allergic reactions in those sensitive to asteraceae; may cause contact and inhalant allergy.</span>
+                        <br /><span class="herb-prep">preparation: young leaves eaten raw; tea.</span>
+                    </span>
+                </div>
+
+                <!-- common mallow -->
+                <div class="herb-entry">
+                    <span class="herb-name">common mallow <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span> <span class="pack-tag">compound</span></span>
+                    <span>
+                        <span class="herb-desc">poultice for scraped and scorched pads; soothes dry cough and the refusing (eating distress).</span>
+                        <br /><span class="herb-cures">cures: punctured paw, leaf-bare cough (cold/chill), the refusing (eating distress), chestbind (asthma)</span>
+                        <br /><span class="herb-side">side effects: none known; may lower blood sugar; livestock poisoning reported; muscular tremors.</span>
+                        <br /><span class="herb-prep">preparation: tea, poultice.</span>
+                    </span>
+                </div>
+
+                <!-- shepherd's purse -->
+                <div class="herb-entry">
+                    <span class="herb-name">shepherd's purse <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">hemostatic; stops internal and external bleeding; treats deep gash and internal bleeding. toxic in pregnancy; causes uterine contractions.</span>
+                        <br /><span class="herb-cures">cures: deep gash, internal bleeding</span>
+                        <br /><span class="herb-side">side effects: possibly safe in small amounts short-term; large amounts cause heart palpitations; causes uterine contractions; avoid pregnancy.</span>
+                        <br /><span class="herb-prep">preparation: tea or eaten raw.</span>
+                    </span>
+                </div>
+
+                <!-- garlic mustard -->
+                <div class="herb-entry">
+                    <span class="herb-name">garlic mustard <span class="herb-rarity">common</span> <span class="pack-tag">roadside</span></span>
+                    <span>
+                        <span class="herb-desc">rub through pelt to drive off the itch (fleas); antiseptic poultice for infected bites and wounds; neutralizes sting-swell (mild poison); eases leaf-bare cough (cold/chill) and burrfever (lyme); kills belly-worm (worms) in the gut over several days.</span>
+                        <br /><span class="herb-cures">cures: leaf-bare cough (cold/chill), infected wound, sting-swell (mild poison), burrfever (lyme), belly-worm (worms)</span>
+                        <br /><span class="herb-side">side effects: safe in moderate amounts; large quantities may cause digestive discomfort; contains goitrogens.</span>
+                        <br /><span class="herb-prep">preparation: young leaves eaten raw; poultice.</span>
+                    </span>
+                </div>
+
+            </section>
+
+            <!-- healing system -->
+            <section class="glass content-section">
+                <h2>the healing system</h2>
+                <p>
+                    howlbert implements a detailed healing system that blends realism with the maw faith.
+                    healing is not magic; it is careful, dangerous work.
+                </p>
+
+                <h3>hp and recovery</h3>
+                <p>
+                    <strong>hp = 10 + strength + survival (con score).</strong> recovery is slow and depends on
+                    the wolf's condition, injury load, and access to herbs.
+                </p>
+                <ul>
+                    <li><strong>long rest</strong> – once per sunrise, restores hp. recovery is modified by: active injury load (−1 per injury), hunger below 30 (−1), and winter season (+1).</li>
+                    <li><strong>pain exhaustion</strong> – a separate tracker (0 to 5) distinct from main exhaustion. accumulates from painful injuries and diseases. herbs like willow bark and poppy target this pool specifically. at 5 stacks, it overflows into main exhaustion.</li>
+                    <li><strong>death saves</strong> – at 0 hp, a wolf must make death saves unless stabilized. medics can stabilize with a medicine check, often using yarrow or horsetail for a bonus.</li>
+                </ul>
+
+                <h3>herbs and healing</h3>
+
+                <ul>
+                    <li><strong>rarity</strong> – common, uncommon, rare, very rare, or restricted.</li>
+                    <li><strong>effect</strong> – what the herb does mechanically.</li>
+                    <li><strong>cures</strong> – which conditions it treats.</li>
+                    <li><strong>side effects</strong> – mechanical penalties for misuse.</li>
+                    <li><strong>preparation</strong> – how to use it (poultice, tea, eaten raw, etc.).</li>
+                    <li><strong>pack-specific</strong> – some herbs are only found in certain territories.</li>
+                    <li><strong>poison/restricted</strong> – dangerous herbs that only medics may handle.</li>
+                </ul>
+
+                <div class="healing-grid">
+                    <span class="heal-name">forage</span>
+                    <span class="heal-desc">use /field action:forage to forage in your territory or :verge to forage at the thunderpath edge or twoleg compound. roll to find herbs.</span>
+
+                    <span class="heal-name">prepare</span>
+                    <span class="heal-desc">use /herbs action:prepare to turn raw herbs into usable poultices, teas, or preparations.</span>
+
+                    <span class="heal-name">treat</span>
+                    <span class="heal-desc">use /medic action:treat to apply a prepared herb to a wound or condition. requires the correct herb and a medicine check.</span>
+
+                    <span class="heal-name">field dressing</span>
+                    <span class="heal-desc">any wolf can use /medic action:field_dressing (survival dc 14) to pack cobwebs against a deep gash, suppressing the sunrise bleed for one day.</span>
+
+                    <span class="heal-name">wound wash</span>
+                    <span class="heal-desc">medic action, dc 10 medicine. dock leaves or horsetail flush an infected wound clean (/medic action:wound_wash).</span>
+
+                    <span class="heal-name">stabilize</span>
+                    <span class="heal-desc">use /medic action:stabilize on a dying wolf. yarrow and horsetail give bonuses.</span>
+                </div>
+
+                <h3>herb side effects and addiction</h3>
+                <p>
+                    the compendium's warnings are mechanical, not flavor. eating an apply-only herb, pressing a
+                    skin-toxin into an open wound, or dosing a pregnant wolf backfires (hp loss, miscarriage risk,
+                    gut upset). sedatives like poppy, valerian, and willow build <strong>tolerance and withdrawal</strong>
+                    with repeated use.
+                </p>
+
+                <h3>herb tolerance</h3>
+                <p>
+                    using the same herb on the same injury within 3 days raises the treatment dc by <strong>+2</strong>.
+                    varied treatment is encouraged by yarrow and plantain also curing torn claw.
+                </p>
+
+                <h3>bone-set failure</h3>
+                <p>
+                    bone injuries (fractured rib, spinal injury, sprained leg, broken jaw) left untreated for
+                    3+ sunrises cause permanent <strong>−1 attribute</strong> malunion (malunion_X in
+                    long-term injuries).
+                </p>
+
+                <h3>medic overextension</h3>
+                <p>
+                    healing <strong>5 or more wolves in one sunrise</strong> adds <strong>+1 exhaustion</strong> on rollover.
+                </p>
+
+                <h3>healer's instinct</h3>
+                <p>
+                    a full medic earns <strong>+1 wisdom</strong> permanently after <strong>20 successful treatments</strong>
+                    (healer_instinct long-term trait).
+                </p>
+
+                <div class="pull-quote">
+                    the maw chews. illness, injury, birth, and death are all the maw eating.
+                    the medic's task is not to stop the maw, but to make the chewing merciful.
+                    <span class="source">— the healer's creed</span>
+                </div>
+            </section>
+
+            <!-- pack starters -->
+            <section class="glass content-section">
+                <h2>pack starter herbs</h2>
+                <p>
+                    what each den learns first. these are the herbs every wolf in the pack knows,
+                    the ones that keep the pack alive through the first winter.
+                </p>
+
+                <div class="pack-starters">
+                    <span class="pack-name">greyspire</span>
+                    <span class="pack-herbs">arnica, coneflower, prickly ash, edelweiss</span>
+
+                    <span class="pack-name">mistmoor</span>
+                    <span class="pack-herbs">elderberry, lizard's tail, boneset, swamp milkweed</span>
+
+                    <span class="pack-name">thistlehide</span>
+                    <span class="pack-herbs">comfrey, plantain, oak bark, slippery elm</span>
+
+                    <span class="pack-name">silverrush</span>
+                    <span class="pack-herbs">meadowsweet, alder bark, cattail, purple loosestrife</span>
+                </div>
+            </section>
+
+            <!-- herb rarity -->
+            <section class="glass content-section">
+                <h2>herb rarity</h2>
+                <p>
+                    herbs run from common to very rare, with a separate restricted tier for the poisons
+                    a medic is trusted to keep.
+                </p>
+                <ul>
+                    <li><strong>common</strong> – found on most forages. the backbone of the green tongue.</li>
+                    <li><strong>uncommon</strong> – requires knowledge of where to look. often pack-specific.</li>
+                    <li><strong>rare</strong> – hard to find, even in the right territory. prized by medics.</li>
+                    <li><strong>very rare</strong> – almost legendary. found only in one place, if at all.</li>
+                    <li><strong>restricted</strong> – poisons and mercy-herbs. only the medic may handle them. misuse maims or kills.</li>
+                </ul>
+                <p>
+                    the green tongue's knowledge is political power. a medic who withholds a cure can blackmail the alpha.
+                    a forager who lies about a rare herb's location can send a rival pack into a death trap.
+                </p>
+            </section>
+
+            <!-- the healer's code -->
+            <section class="glass content-section">
+                <h2>the healer's code</h2>
+                <p>
+                    the green tongue has its own laws, older than any pack.
+                </p>
+                <ul>
+                    <li><strong>the neutral scent:</strong> medics are forbidden to court, mate, or raise pups, but not blocked from doing so in game; their scent must stay neutral to the pack's hierarchy so they can treat any wolf without triggering dominance aggression. discovery costs them dearly: a caught court costs standing and exiles any existing pups, and a discovered birth or adoption is always made public and exiles both the litter and the healer.</li>
+                    <li><strong>the oath of mercy:</strong> a medic cannot refuse to treat a wolf in need, regardless of pack or crime. to let a wolf die without trying is to break the oath.</li>
+                    <li><strong>the keeper's burden:</strong> medics carry the darkest knowledge. they know which herbs induce miscarriage, which poisons kill without trace, which plants can end a suffering wolf's life with a single leaf. this knowledge is a burden, not a privilege.</li>
+                </ul>
+
+
+            </section>
+
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://discord.gg/BAj5Kq8run" class="cta-btn primary">join the discord</a>
+                    <a href="https://ko-fi.com/your-kofi-link" class="cta-btn secondary">ko-fi</a>
+                    <a href="https://kickstarter.com/projects/your-project" class="cta-btn tertiary">kickstarter</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the maw is always hungry. will you heal, or will you watch?
+                </p>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>

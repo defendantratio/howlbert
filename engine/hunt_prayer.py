@@ -44,20 +44,11 @@ HUNT_PRAYER_BONE_BONUS = 2
 
 def try_hunt_prayer(discord_id: int, user, day: int) -> discord.Embed:
     """
-    Attempt to pray before the hunt. Grants +1 maw_favor and a hunt bonus for the day.
-    Returns an embed. Idempotent guard: once per world day.
+    Attempt to pray before the hunt. Grants maw_favor and a hunt bonus for the day.
+    Returns an embed. Repeats the same sunrise pay less maw_favor.
     """
     def _get(key, default=None):
         return user[key] if hasattr(user, "keys") and key in user.keys() else default
-
-    if _get("hunt_prayer_day", 0) == day:
-        embed = howlbert_embed(
-            "Already Prayed",
-            "You have already offered this sunrise's prayer. The Maw heard you the first time.",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="hunt prayer resets each sunrise")
-        return embed
 
     if _get("condition") in ("dead", "dying"):
         embed = howlbert_embed(
@@ -67,15 +58,22 @@ def try_hunt_prayer(discord_id: int, user, day: int) -> discord.Embed:
         )
         return embed
 
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    mult, n = next_use_multiplier(user, "hunt_prayer", day)
+
     belief = (_get("maw_belief") or "agnostic").lower()
     flavor = _PRAY_FLAVOR.get(belief, _DEFAULT_FLAVOR)
 
-    new_favor = db.adjust_maw_favor(discord_id, 1)
+    favor_gain = max(1, int(1 * mult))
+    new_favor = db.adjust_maw_favor(discord_id, favor_gain)
     db.set_hunt_prayer_day(discord_id, day)
 
     embed = howlbert_embed("Hunt Prayer", flavor, color=SUCCESS_COLOR)
-    embed.add_field(name="Maw Favor", value=f"+1 → {new_favor}", inline=True)
-    embed.set_footer(
-        text=f"blessed for today's hunts · +{HUNT_PRAYER_BONE_BONUS} bone roll active · resets at sunrise"
-    )
+    embed.add_field(name="Maw Favor", value=f"+{favor_gain} → {new_favor}", inline=True)
+    dim = diminishing_note(n)
+    footer = f"blessed for today's hunts · +{HUNT_PRAYER_BONE_BONUS} bone roll active · resets at sunrise"
+    if dim:
+        footer += f" · {dim}"
+    embed.set_footer(text=footer)
     return embed

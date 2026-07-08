@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="howlbert, a discord wolf rp bot. four territories, one throat, and a wounded god that keeps count." />
+    <title>howlbert; the world</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & base ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ── theme toggle ── */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        /* ── layout ── */
+        .site-wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── glass boxes ── */
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        /* ── top bar ── */
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        /* ── hero ── */
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        /* ── content ── */
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 18px 0 8px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section .pull-quote {
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--bone);
+            border-left: 3px solid var(--maw);
+            padding-left: 18px;
+            margin: 16px 0 16px 6px;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+        .content-section .pull-quote .source {
+            display: block;
+            font-style: normal;
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            margin-top: 4px;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+        .content-section .belief-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .content-section .belief-grid .belief-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .content-section .belief-grid .belief-desc {
+            color: var(--bone-dim);
+        }
+        .content-section .prophecy {
+            font-style: italic;
+            color: var(--bone);
+            background: var(--glass-bg);
+            border: 1px solid var(--maw);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            max-width: 50ch;
+            line-height: 1.8;
+            text-align: center;
+        }
+        .content-section .prophecy .prophecy-line {
+            display: block;
+        }
+
+        /* ── glossary ── */
+        .glossary-group {
+            margin: 10px 0 16px 0;
+        }
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            font-size: 0.9rem;
+        }
+        .glossary-grid .term-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .glossary-grid .term-desc {
+            color: var(--bone-dim);
+        }
+
+        /* ── cta ── */
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .cta-btn.tertiary {
+            border-color: var(--river);
+        }
+        .cta-btn.tertiary:hover {
+            background: var(--river);
+            color: var(--ink);
+            border-color: var(--river);
+        }
+
+        /* ── footer ── */
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        /* ── audio ── */
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ── neko override ── */
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .belief-grid,
+            .glossary-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2px 0 !important;
+            }
+            .content-section .prophecy {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <!-- ── theme toggle ── -->
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <!-- ── hidden audio ── -->
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <!-- ── neko ── -->
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+    <!-- ── site ── -->
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <!-- top bar: directory -->
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html" class="current">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- hero -->
+            <header class="glass hero">
+                <h1>the world</h1>
+                <p class="hook">
+                    four territories, one throat, and a <span class="maw-word">wounded god</span> that keeps count.
+                </p>
+                <p class="description">
+                    the world is a living ancestor, wounded and hungry. mountains are teeth. forests are fur.
+                    swamps are belly. rivers are tears. the moon is the maw's single eye, always watching.
+                    the sun is the maw's breath: warm when it exhales, cold when it inhales.
+                </p>
+            </header>
+
+            <!-- setting & time -->
+            <section class="glass content-section">
+                <h2>the setting</h2>
+                <p>
+                    howlbert plays out in a victorian industrial era,
+                    where steam, mills, and logging crews press against the wild. the world is set in the warrior cats universe, with the four cat clans (thunderclan,
+                    shadowclan, windclan, riverclan) holding their own territories.
+                    wolves and cats share the same shrinking wild, and their borders often clash.
+                </p>
+                <p>
+                    this is a world of smoke and fur, of iron and claw. the old ways persist, but the
+                    twoleg world grinds ever closer, and something ancient is stirring in the caldera.
+                    the maw's eye, the moon, has been growing larger, and the drown-sick mutter in their sleep.
+                </p>
+            </section>
+
+            <!-- content: the world -->
+            <section class="glass content-section">
+                <h2>the caldera</h2>
+                <p>
+                    four territories meet at a single scar in the earth: a collapsed caldera where mountain,
+                    forest, swamp, and river all touch. at the center sits the <strong>tongue-stone</strong>,
+                    a flat black slab that stays warm even in winter. this is the only ground no one owns
+                    and every pack fears. the caldera is the maw's throat, the place where the world's hunger
+                    is most keenly felt.
+                </p>
+
+                <h3>the tongue-stone</h3>
+                <p>
+                    the tongue-stone is the heart of the caldera, a warm slab of black rock that never cools.
+                    it is sacred ground, belonging to no pack. here, wolves gather under the full moon for the
+                    moon-howl, bringing offerings and drawing bones from the pile. blood spilled here is a wound
+                    against every pack at once.
+                </p>
+
+                <h3>the twilight zone</h3>
+                <p>
+                    the ring of neutral ground around the tongue-stone, lit strange at dawn and dusk. no territory
+                    claim holds here. it is where the packs meet, trade, grieve, and occasionally kill under a
+                    truce older than any living wolf.
+                </p>
+
+                <h3>the echo</h3>
+                <p>
+                    every howl over the caldera returns three times. wolves say the first echo is yours, the
+                    second is the pack's, and the third belongs to the maw. a howl that returns only twice is
+                    an omen. the echo is the maw listening, the world remembering.
+                </p>
+
+                <h3>the moon-howl</h3>
+                <p>
+                    a wolf-only gathering at the tongue-stone under the full moon. wolves bring an offering,
+                    draw a bone from the pile, and give a five-breath report of the season. it is sacred,
+                    unarmed ground. blood spilled at the moon-howl is a wound against every pack at once.
+                    the moon is the maw's eye, and it watches closely.
+                </p>
+            </section>
+
+            <!-- content: the maw's body -->
+            <section class="glass content-section">
+                <h2>the maw's body</h2>
+                <p>
+                    all four packs agree on the bones of their faith, though each emphasizes different parts.
+                    the world is a living ancestor, wounded and hungry.
+                </p>
+                <ul>
+                    <li><strong>mountains</strong> are teeth, biting at the sky.</li>
+                    <li><strong>forests</strong> are fur, the maw's pelt covering the land.</li>
+                    <li><strong>swamps</strong> are belly, churning and digesting.</li>
+                    <li><strong>rivers</strong> are tears, the maw's grief flowing through the world.</li>
+                    <li><strong>the moon</strong> is the maw's single eye, always watching.</li>
+                    <li><strong>the sun</strong> is the maw's breath: warm when it exhales, cold when it inhales.</li>
+                </ul>
+                <p>
+                    the world is realistic and merciless. wolves are sentient and political, but they are still
+                    animals in a shrinking wild, hemmed in by weather, disease, prey scarcity, and the slow
+                    pressure of the human world at the borders.
+                </p>
+
+                <div class="pull-quote">
+                    the maw chews. illness, injury, birth, and death are all the maw eating.
+                    and it watches how a wolf meets the teeth.
+                    <span class="source">— the orthodox teaching</span>
+                </div>
+            </section>
+
+            <!-- content: faith and belief -->
+            <section class="glass content-section">
+                <h2>beliefs of the packs</h2>
+                <p>
+                    wolves choose a belief at registration; it colors how they read every hardship.
+                    each belief is a different way of understanding the maw's hunger and the world's suffering.
+                </p>
+
+                <div class="belief-grid">
+                    <span class="belief-name">orthodox</span>
+                    <span class="belief-desc">the maw is what is; wounded, hungry, neither good nor evil.</span>
+
+                    <span class="belief-name">orthodox (pragmatic)</span>
+                    <span class="belief-desc">the maw's hunger justifies the strong eating the weak; truth, not cruelty.</span>
+
+                    <span class="belief-name">zealot</span>
+                    <span class="belief-desc">every illness is the maw's question; every cure is the wolf's answer.</span>
+
+                    <span class="belief-name">doubter</span>
+                    <span class="belief-desc">wants to believe in justice; has not seen much of it.</span>
+
+                    <span class="belief-name">agnostic</span>
+                    <span class="belief-desc">too much suffering seen to claim certainty either way.</span>
+
+                    <span class="belief-name">atheist</span>
+                    <span class="belief-desc">no god would let wolves suffer as they do.</span>
+
+                    <span class="belief-name">heretic</span>
+                    <span class="belief-desc">whispers that the maw chooses to hunger, and enjoys the watching.</span>
+                </div>
+
+                <h3>the heresy of the maw's hunger</h3>
+                <p>
+                    some wolves whisper that the maw is not passive, that it chooses to hunger, that it enjoys
+                    watching wolves fight and die. the orthodox teaching is that the maw is simply what is,
+                    neither good nor evil. but the drown-sick of mistmoor and the tear-drinkers of silverrush
+                    have started comparing notes. something is changing in the land. the maw's eye, the moon,
+                    has seemed closer lately. larger. more focused.
+                </p>
+            </section>
+
+            <!-- content: no afterlife -->
+            <section class="glass content-section">
+                <h2>no afterlife</h2>
+                <p>
+                    when a wolf dies, their matter returns to the maw: flesh to earth, breath to air,
+                    memory to water. they do not go to a happy hunting ground. they become the land.
+                    to be remembered by the living is the only immortality. a wolf whose name is never
+                    howled again dissolves into nothing: not even soil. this is the true death.
+                </p>
+                <p>
+                    this is why the packs mourn so openly, why thistlehide carves names into bark,
+                    why silverrush sends its mourners to the weep stone, why the moon-howl's bone-draw
+                    is a ritual of remembrance. to be forgotten is worse than death.
+                </p>
+            </section>
+
+            <!-- content: the prophecy -->
+            <section class="glass content-section">
+                <h2>the prophecy of the sundering's end</h2>
+                <p>
+                    an old story, carved into a stone in neutral territory no pack dares enter.
+                </p>
+                <div class="prophecy">
+                    <span class="prophecy-line">when the teeth drink the tears,</span>
+                    <span class="prophecy-line">when the fur chokes the belly,</span>
+                    <span class="prophecy-line">when the maw closes its eye,</span>
+                    <span class="prophecy-line">the pack that was one will remember why it split.</span>
+                    <span class="prophecy-line">and the hunger will end, or begin again.</span>
+                </div>
+                <p>
+                    no one agrees on what this means. but the moon grows larger every night.
+                    the drown-sick mutter in their sleep. the tear-drinkers watch the river's surface
+                    and see things that should not be there. something is coming. or something is waking.
+                </p>
+            </section>
+
+            <!-- content: seasons and omens -->
+            <section class="glass content-section">
+                <h2>seasons and omens</h2>
+                <p>
+                    the world turns through four seasons, each with real mechanical weight on the packs.
+                </p>
+                <ul>
+                    <li><strong>spring</strong>: herbs are easier to forage; rivers run high and hard to cross.</li>
+                    <li><strong>summer</strong>: heat hazards and wildfire smoke; small prey is easier to catch.</li>
+                    <li><strong>autumn</strong>: the best hunting; a good kill caches food against the winter.</li>
+                    <li><strong>winter</strong>: foraging and hunting both turn brutal, hunger falls faster, and the caches from autumn are what keep a den alive.</li>
+                </ul>
+                <p>
+                    omens ride on the dice. a natural 1 on an omen reading sours the next sunrise; a natural 20 blesses it.
+                    a howl that returns the wrong number of echoes, a peak that "bleeds" at dawn, a silence in the belly
+                    of the swamp. the packs read all of it, and in book one the omens start coming true.
+                </p>
+            </section>
+
+            <!-- content: time and the turning world -->
+            <section class="glass content-section">
+                <h2>time and the turning world</h2>
+                <p>
+                    wolves mark the passage of time by the moon and the turn of the seasons. every word carries the weight of a world that has always measured its days by the maw's eye and the sun's breath.
+                </p>
+
+                <h3>seasons</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">newgrowth</span>
+                        <span class="term-desc">the season of spring, when plants begin to sprout and prey returns.</span>
+                        <span class="term-name">highsun</span>
+                        <span class="term-desc">the season of summer, when days are long and prey is plentiful.</span>
+                        <span class="term-name">leaf-drop</span>
+                        <span class="term-desc">the season of autumn, when leaves fall and temperatures cool.</span>
+                        <span class="term-name">leaf-bare</span>
+                        <span class="term-desc">the season of winter, when snow covers the ground and prey is scarce.</span>
+                        <span class="term-name">season</span>
+                        <span class="term-desc">one quarter of a year. four seasons make one full cycle of the year.</span>
+                    </div>
+                </div>
+
+                <h3>moon and sun</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">moon</span>
+                        <span class="term-desc">the time between one full moon and the next, about thirty days.</span>
+                        <span class="term-name">moonhigh</span>
+                        <span class="term-desc">when the moon is highest in the sky, around midnight.</span>
+                        <span class="term-name">moonrise</span>
+                        <span class="term-desc">when the moon rises above the horizon.</span>
+                        <span class="term-name">half-moon</span>
+                        <span class="term-desc">two weeks, half a month.</span>
+                        <span class="term-name">quarter-moon</span>
+                        <span class="term-desc">one week.</span>
+                        <span class="term-name">sunhigh</span>
+                        <span class="term-desc">noon, when the sun is at its peak.</span>
+                        <span class="term-name">sunrise</span>
+                        <span class="term-desc">one day in wolf time (e.g., "two sunrises ago"). also the daily rollover when needs decay and cooldowns reset.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- content: measurements -->
+            <section class="glass content-section">
+                <h2>measurements</h2>
+                <p>
+                    wolves measure the world with their own bodies: the span of a claw, the length of a leap, the stretch of a tail. these are the distances that matter when the hunt is on and the maw is watching.
+                </p>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">wolf-claw length</span>
+                        <span class="term-desc">about the length of a wolf's claw; roughly one and a half inches (about four centimeters).</span>
+                        <span class="term-name">deer-length</span>
+                        <span class="term-desc">about the length of a deer from nose to tail; roughly six to eight feet (about one point eight to two point four meters).</span>
+                        <span class="term-name">frog-length</span>
+                        <span class="term-desc">about the length of a frog; roughly two to four inches (about five to ten centimeters).</span>
+                        <span class="term-name">pupstep</span>
+                        <span class="term-desc">about the length of a wolf pup's step; roughly two to three inches (about five to seven and a half centimeters).</span>
+                        <span class="term-name">hare-hop</span>
+                        <span class="term-desc">about the distance of a hare's jump; roughly eighteen to twenty-four inches (about forty-five to sixty centimeters).</span>
+                        <span class="term-name">reed-length</span>
+                        <span class="term-desc">about the length of a tall reed; up to five feet (about one point five meters).</span>
+                        <span class="term-name">vole-length</span>
+                        <span class="term-desc">about the length of a vole; roughly three to five inches (about seven and a half to twelve and a half centimeters).</span>
+                        <span class="term-name">snout-length</span>
+                        <span class="term-desc">about the length of a wolf's muzzle; roughly four to six inches (about ten to fifteen centimeters).</span>
+                        <span class="term-name">pawstep</span>
+                        <span class="term-desc">about the length of a grown wolf's step; roughly twelve to eighteen inches (about thirty to forty-five centimeters).</span>
+                        <span class="term-name">tail-length</span>
+                        <span class="term-desc">about the length of a wolf's tail; roughly fifteen to twenty inches (about thirty-eight to fifty centimeters).</span>
+                        <span class="term-name">tree-length</span>
+                        <span class="term-desc">about the length of a mature tree; roughly forty to sixty feet (about twelve to eighteen meters).</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- content: glossary of terms -->
+            <section class="glass content-section">
+                <h2>the tongue of the packs</h2>
+                <p>
+                    the words wolves use for their world, and the barbs they trade across the fresh-kill pile.
+                    disease and herb names live on the <a href="illness.html">illness &amp; herbs</a> page.
+                </p>
+
+                <h3>the world and the faith</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">the caldera</span>
+                        <span class="term-desc">the collapsed crater where all four territories meet.</span>
+                        <span class="term-name">the tongue-stone</span>
+                        <span class="term-desc">the warm black slab at the caldera's center; sacred, unowned ground.</span>
+                        <span class="term-name">the twilight zone</span>
+                        <span class="term-desc">the ring of neutral ground around the tongue-stone, where packs meet under truce.</span>
+                        <span class="term-name">the echo</span>
+                        <span class="term-desc">how a howl returns three times over the caldera; the third echo belongs to the maw.</span>
+                        <span class="term-name">the moon-howl</span>
+                        <span class="term-desc">the wolf-only full-moon gathering: offering, bone-draw, five-breath report.</span>
+                        <span class="term-name">the maw</span>
+                        <span class="term-desc">the packs' god; a wounded, hungry thing that chews. neither good nor evil, but it keeps count.</span>
+                        <span class="term-name">maw favor</span>
+                        <span class="term-desc">standing earned with the maw through prayer, rites, and offerings.</span>
+                        <span class="term-name">karma</span>
+                        <span class="term-desc">the maw's tally of cruelty and sin; enough of it draws divine attention, then wrath.</span>
+                        <span class="term-name">the belly-rip</span>
+                        <span class="term-desc">the sucking sinkhole in mistmoor's swamp; the maw's mouth in the world.</span>
+                        <span class="term-name">drown-sick</span>
+                        <span class="term-desc">a wolf remade prophetic and riddling after surviving a fall into the belly-rip.</span>
+                        <span class="term-name">tear-drinker</span>
+                        <span class="term-desc">a silverrush mystic who reads the maw's hunger at the water's edge.</span>
+                        <span class="term-name">marking scat</span>
+                        <span class="term-desc">defecating, especially to scent-mark territory boundaries.</span>
+                        <span class="term-name">carrion</span>
+                        <span class="term-desc">a dead carcass that has begun to rot. also used as an insult for a wolf with no strength or honor.</span>
+                        <span class="term-name">scat</span>
+                        <span class="term-desc">feces.</span>
+                    </div>
+                </div>
+
+                <h3>the packs and their ranks</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">great pack</span>
+                        <span class="term-desc">one of the four major packs: greyspire, mistmoor, thistlehide, silverrush.</span>
+                        <span class="term-name">path</span>
+                        <span class="term-desc">a pack's guiding way: the teeth, the belly, the fur, the tears.</span>
+                        <span class="term-name">highfang</span>
+                        <span class="term-desc">greyspire's alpha; rule by strength.</span>
+                        <span class="term-name">stoneguard</span>
+                        <span class="term-desc">greyspire's warrior-and-guard caste.</span>
+                        <span class="term-name">lowbelly</span>
+                        <span class="term-desc">greyspire's lowest rank; the bottom of the pile.</span>
+                        <span class="term-name">rotmother</span>
+                        <span class="term-desc">mistmoor's alpha; rule by patience and dreams.</span>
+                        <span class="term-name">the current</span>
+                        <span class="term-desc">silverrush's alpha; the seat that turns like the river.</span>
+                        <span class="term-name">fur-giver</span>
+                        <span class="term-desc">a thistlehide healer.</span>
+                        <span class="term-name">driftwood</span>
+                        <span class="term-desc">a silverrush outsider on probation, carrying stones to prove their worth.</span>
+                        <span class="term-name">bog-born</span>
+                        <span class="term-desc">a low-ranking, swamp-born mistmoor wolf.</span>
+                        <span class="term-name">the seat / the crown</span>
+                        <span class="term-desc">any pack's alpha position.</span>
+                        <span class="term-name">den</span>
+                        <span class="term-desc">a pack's home ground, and the pack itself.</span>
+                        <span class="term-name">rend</span>
+                        <span class="term-desc">a violent fight between wolves, often over a kill or boundary dispute.</span>
+                    </div>
+                </div>
+
+                <h3>living, dying, and belonging</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">sunrise</span>
+                        <span class="term-desc">one in-game day; the daily rollover when needs decay and cooldowns reset.</span>
+                        <span class="term-name">fresh-kill</span>
+                        <span class="term-desc">freshly killed prey; the fresh-kill pile is the den's shared food.</span>
+                        <span class="term-name">bones</span>
+                        <span class="term-desc">the pack world's currency, earned by hunting, working, praying, and rites.</span>
+                        <span class="term-name">the blooding</span>
+                        <span class="term-desc">a juvenile's solo kill to earn an adult role.</span>
+                        <span class="term-name">rite of broken canine</span>
+                        <span class="term-desc">the only challenge that can unseat a sitting alpha.</span>
+                        <span class="term-name">wind that never howled</span>
+                        <span class="term-desc">a pup who died before being named; unremembered, the true death.</span>
+                        <span class="term-name">the weep stone</span>
+                        <span class="term-desc">silverrush's site of solitary grief.</span>
+                        <span class="term-name">the whisper tree</span>
+                        <span class="term-desc">thistlehide's ancestor-tree that answers questions about the forest.</span>
+                        <span class="term-name">bark-burial</span>
+                        <span class="term-desc">a thistlehide burial (and, in dark rumor, a living one) among the roots.</span>
+                        <span class="term-name">found family</span>
+                        <span class="term-desc">a den of choice, binding unrelated wolves.</span>
+                        <span class="term-name">loner / rogue</span>
+                        <span class="term-desc">a packless wolf; rogues survive by theft from the edges.</span>
+                        <span class="term-name">the green tongue</span>
+                        <span class="term-desc">the whole body of herb-lore and the healers who carry it.</span>
+                        <span class="term-name">sharing tongues</span>
+                        <span class="term-desc">wolves grooming each other while sharing the latest gossip. a wolf lies on the ground, talking, while the other grooms their fur and listens.</span>
+                    </div>
+                </div>
+
+                <h3>the world outside</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">twoleg</span>
+                        <span class="term-desc">a human being.</span>
+                        <span class="term-name">twoleg pup</span>
+                        <span class="term-desc">a human child.</span>
+                        <span class="term-name">twoleg den</span>
+                        <span class="term-desc">a human house.</span>
+                        <span class="term-name">twolegplace</span>
+                        <span class="term-desc">a town, city, or village where twolegs live.</span>
+                        <span class="term-name">thunderpath</span>
+                        <span class="term-desc">a paved road with an extremely acrid smell that monsters (cars) often go across.</span>
+                        <span class="term-name">thunderstick</span>
+                        <span class="term-desc">a gun.</span>
+                        <span class="term-name">monster</span>
+                        <span class="term-desc">a car or another similar vehicle. often described when wolves are near twolegs or the thunderpath.</span>
+                        <span class="term-name">tree-gulper</span>
+                        <span class="term-desc">a bulldozer, a roaring monster that devours trees and tears up the earth.</span>
+                        <span class="term-name">hearth-hound</span>
+                        <span class="term-desc">a twoleg's dog (feral, guard, hunting, or fighting). often viewed as soft, foolish, and overly dependent by wild wolves.</span>
+                        <span class="term-name">the crows</span>
+                        <span class="term-desc">greyspire's human allies (people, not birds); trappers, exiles, and outlaws named after silas crow.</span>
+                        <span class="term-name">silas crow</span>
+                        <span class="term-desc">the twoleg who first allied with greyspire, buried in the tooth split.</span>
+                        <span class="term-name">sun-sink-place</span>
+                        <span class="term-desc">an ocean to the west of the packs' territories, where the sun appears to sink into the water.</span>
+                        <span class="term-name">the clans</span>
+                        <span class="term-desc">the four warrior-cat clans at the forest borders (thunderclan, shadowclan, windclan, riverclan).</span>
+                        <span class="term-name">fourtrees</span>
+                        <span class="term-desc">the hollow where the cat clans gather under truce.</span>
+                        <span class="term-name">cat pact / cat trust</span>
+                        <span class="term-desc">a pack's treaty and standing with the clans.</span>
+                    </div>
+                </div>
+
+                <h3>the barbs they trade</h3>
+                <div class="glossary-group">
+                    <div class="glossary-grid">
+                        <span class="term-name">vole-snout</span>
+                        <span class="term-desc">a mild, teasing insult meaning "one who has the muzzle of a weak little rodent"; a familiar, exasperated jab at a wolf who is foolish, clumsy, weak, or dramatic. between wolves who know each other it lands closer to "you silly, hopeless thing" than a true curse.</span>
+                        <span class="term-name">scat-licker</span>
+                        <span class="term-desc">a disgusting, lowly wolf with no pride or cleanliness.</span>
+                        <span class="term-name">frog-gut</span>
+                        <span class="term-desc">a weak, pathetic wolf with no stamina. frogs are small, slimy prey barely worth a wolf's time.</span>
+                        <span class="term-name">oak-head</span>
+                        <span class="term-desc">a stupid, dense wolf who does not learn from experience.</span>
+                        <span class="term-name">maw-cursed</span>
+                        <span class="term-desc">the serious insult: a wolf marked by the maw's ill favor; not thrown lightly.</span>
+                        <span class="term-name">deerheart</span>
+                        <span class="term-desc">a cowardly wolf, one who flees like a startled deer instead of standing with the pack.</span>
+                        <span class="term-name">carrion-breath</span>
+                        <span class="term-desc">a wolf whose breath stinks of rotten meat; implies laziness or eating spoiled kills.</span>
+                        <span class="term-name">pup-brain</span>
+                        <span class="term-desc">a foolish, naive wolf who acts like a helpless pup instead of an adult.</span>
+                        <span class="term-name">coyote</span>
+                        <span class="term-desc">a traitorous or untrustworthy wolf. coyotes are rivals and scavengers, despised by wolves.</span>
+                        <span class="term-name">mud-paw</span>
+                        <span class="term-desc">a clumsy wolf who cannot hunt silently or keep a clean pelt.</span>
+                        <span class="term-name">hollow-fang</span>
+                        <span class="term-desc">a wolf who talks big but cannot back it up in a hunt or fight.</span>
+                        <span class="term-name">snake</span>
+                        <span class="term-desc">a sneaky, deceitful wolf who twists words and avoids direct confrontation.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- cta -->
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://discord.gg/BAj5Kq8run" class="cta-btn primary">join the discord</a>
+                    <a href="https://ko-fi.com/your-kofi-link" class="cta-btn secondary">ko-fi</a>
+                    <a href="https://kickstarter.com/projects/your-project" class="cta-btn tertiary">kickstarter</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the world is hungry. will you feed it?
+                </p>
+            </section>
+
+            <!-- footer -->
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <!-- ── theme toggle script ── -->
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>

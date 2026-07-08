@@ -117,13 +117,6 @@ def can_hunt_again(user, day: int) -> bool:
     return int(user["last_hunt_day"]) < day
 
 
-def can_forage_again(user, day: int) -> bool:
-    """full foragers ignore the once-per-sunrise forage limit; apprentices once per sunrise."""
-    if is_full_forager(user):
-        return True
-    return int(user["last_forage_day"]) < day
-
-
 def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
     """Territory forage roll: trained gatherers use Herblore; others use Survival."""
     prof_set = set(profs) if profs is not None else set()
@@ -150,28 +143,16 @@ def forage_sunrise_footer(user, *, success_hint: bool = False) -> str:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if is_forager(user):
-        return "forager apprentice · once per sunrise · try again after the next sunrise"
+        base = "forager apprentice · forage again this sunrise; dc climbs each repeat"
+        if success_hint:
+            return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
+        return base
     if success_hint:
         return (
             "in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · "
-            "today's forage spent"
+            "forage again this sunrise; dc climbs each repeat"
         )
-    return "today's forage is spent; try again after the next sunrise."
-
-
-def can_verge_forage_again(user, day: int) -> bool:
-    """Full Foragers may edge-forage without the once-per-sunrise verge limit."""
-    if is_full_forager(user):
-        return True
-    last = int(user["last_verge_forage_day"]) if "last_verge_forage_day" in user.keys() else 0
-    return last < day
-
-
-def can_explore_again(user, day: int) -> bool:
-    """scouts ignore the once-per-sunrise explore limit."""
-    if is_scout(user):
-        return True
-    return int(user["last_explore_day"]) < day
+    return "forage again this sunrise; dc climbs each repeat."
 
 
 def herb_heal_limit_reached(user) -> bool:

@@ -153,16 +153,22 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         append_fatigue_to_footer(embed, survey_fatigue)
         return embed
 
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    survey_mult, survey_n = next_use_multiplier(user, "survey", day)
+
     bones = random.randint(*SCOUT_SURVEY_BONES)
     if result["outcome"] == "critical_success":
         bones += 8
     bones += survey_victim_bone_bonus(user, interaction.guild.id, day)
+    bones = max(1, int(bones * survey_mult))
     db.add_bones(interaction.user.id, bones, wolf_id=user["id"])
     standing = 2 if result["outcome"] == "critical_success" else 1
     from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
 
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     standing += plot_thistlehide_patrol_standing_bonus(interaction.guild.id, gp, user=user)
+    standing = max(1, int(standing * survey_mult))
     db.adjust_wolf_standing(interaction.user.id, standing)
     db.increment_quest_progress(interaction.user.id, "survey", guild_id=interaction.guild.id)
     db.increment_quest_progress(interaction.user.id, "patrol", guild_id=interaction.guild.id)
@@ -183,12 +189,14 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         extra += f"\n_{shift_note}_"
     if witness:
         extra += witness
+    dim = diminishing_note(survey_n)
+    dim_extra = f"\n_{dim}_" if dim else ""
     embed = howlbert_embed(
         "🗺️ survey",
         format_roll_result(result)
         + "\n\n"
         + random.choice(SURVEY_FLAVOR)
-        + f"\n\n{crit} intel for the alpha; **+{bones}** bones, standing **+{standing}**.{intel}{hide_note}{extra}",
+        + f"\n\n{crit} intel for the alpha; **+{bones}** bones, standing **+{standing}**.{intel}{hide_note}{extra}{dim_extra}",
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text="scouts · unlimited · counts toward survey & patrol quests")
@@ -214,6 +222,11 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     vitals_block = full_activity_block(user, day, action="trail")
     if vitals_block:
         return howlbert_embed("cannot trail", vitals_block, color=ERROR_COLOR)
+
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    trail_mult, trail_n = next_use_multiplier(user, "trail", day)
+
     profs = parse_proficiencies(user["skill_proficiencies"])
     result = resolve_check(
         user,
@@ -239,7 +252,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
             + "\n\nThe spoor vanishes in bog-water; **−2 mood**.",
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="trail spent · `/scout survey` · /checklist")
+        embed.set_footer(text="`/scout survey` · /checklist")
         append_fatigue_to_footer(embed, trail_fatigue)
         return embed
 
@@ -266,6 +279,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     bones = random.randint(*SCOUT_TRAIL_BONES)
     if result["outcome"] == "critical_success":
         bones += 10
+    bones = max(1, int(bones * trail_mult))
     db.add_bones(interaction.user.id, bones, wolf_id=user["id"])
     db.increment_quest_progress(interaction.user.id, "trail")
 
@@ -274,7 +288,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         keys, weights = zip(*TRAIL_PREY)
         loot = random.choices(keys, weights=weights, k=1)[0]
         if loot == "bones":
-            extra = random.randint(4, 10)
+            extra = max(1, int(random.randint(4, 10) * trail_mult))
             db.add_bones(interaction.user.id, extra, wolf_id=user["id"])
             prey_line = f"\n**sign cache**; +{extra} bones tucked under stone."
         else:
@@ -292,12 +306,14 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     intel = ""
     if random.random() < (0.45 if result["outcome"] == "critical_success" else 0.25):
         intel = f"\n_{random.choice(TRAIL_INTEL)}_"
+    dim = diminishing_note(trail_n)
+    dim_extra = f"\n_{dim}_" if dim else ""
     embed = howlbert_embed(
         "👣 trail",
         format_roll_result(result)
         + "\n\n"
         + random.choice(TRAIL_FLAVOR)
-        + f"\n\n{crit} **+{bones}** bones.{prey_line}{intel}",
+        + f"\n\n{crit} **+{bones}** bones.{prey_line}{intel}{dim_extra}",
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text="scouts · unlimited · counts toward trail quests")

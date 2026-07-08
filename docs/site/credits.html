@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="credits and links for howlbert, the discord wolf rp bot." />
+    <title>howlbert; credits and links</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 20px 0 8px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+        .content-section .pull-quote {
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--bone);
+            border-left: 3px solid var(--maw);
+            padding-left: 18px;
+            margin: 16px 0 16px 6px;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+        .content-section .pull-quote .source {
+            display: block;
+            font-style: normal;
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            margin-top: 4px;
+        }
+
+        .credit-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin: 10px 0 16px 0;
+            background: var(--glass-bg);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 20px;
+            transition: border-color 0.3s;
+        }
+        .credit-card:hover {
+            border-color: var(--maw);
+        }
+        .credit-card .credit-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+            width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+            color: var(--bone-dim);
+        }
+        .credit-card .credit-body {
+            flex: 1;
+            min-width: 180px;
+        }
+        .credit-card .credit-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--bone);
+        }
+        .credit-card .credit-desc {
+            font-size: 0.9rem;
+            color: var(--bone-dim);
+        }
+        .credit-card .credit-link {
+            font-size: 0.85rem;
+            color: var(--moss);
+            flex-shrink: 0;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .link-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .link-card:hover {
+            border-color: var(--maw);
+            transform: translateY(-2px);
+        }
+        .link-card .link-label {
+            font-weight: 600;
+            color: var(--bone);
+            font-size: 1.0rem;
+        }
+        .link-card .link-url {
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            display: block;
+            margin-top: 2px;
+            word-break: break-all;
+        }
+        .link-card a {
+            display: block;
+            color: var(--bone);
+        }
+        .link-card a:hover {
+            color: var(--maw);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .credit-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .credit-card .credit-icon {
+                width: auto;
+            }
+            .link-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .link-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="credits.html" class="current">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>credits and links</h1>
+                <p class="hook">
+                    built with <span class="maw-word">bark and bone</span>,<br />
+                    inspired by the wild and the stories we tell.
+                </p>
+                <p class="description">
+                    howlbert stands on the shoulders of wolves who came before.
+                    these are the projects, communities, and creators who shaped this world.
+                </p>
+            </header>
+
+            <section class="glass content-section">
+                <h2>inspirations</h2>
+                <p>howlbert is not affiliated with these projects, but their spirit runs in its veins. each one left a mark on the mechanics, the lore, or the feel of the wolf-world.</p>
+
+                <div class="credit-card">
+                    <div class="credit-icon">🐺</div>
+                    <div class="credit-body">
+                        <div class="credit-name">wolvden</div>
+                        <div class="credit-desc">wolf sim and pack life. the economy, the territory system, the weight of hunger and lineage all draw from its deep simulation of wild canid existence.</div>
+                    </div>
+                    <div class="credit-link"><a href="https://www.wolvden.com/" target="_blank">wolvden.com →</a></div>
+                </div>
+
+                <div class="credit-card">
+                    <div class="credit-icon">🌿</div>
+                    <div class="credit-body">
+                        <div class="credit-name">warrior cats</div>
+                        <div class="credit-desc">den life, herb lore, cough names, and the weight of clan and code. the rhythm of patrols, the healers' green tongue, and the cats at the borders all carry its scent.</div>
+                    </div>
+                    <div class="credit-link"><a href="https://warriors.fandom.com/wiki/Main_Page" target="_blank">warriors wiki →</a></div>
+                </div>
+
+                <div class="credit-card">
+                    <div class="credit-icon">🌲</div>
+                    <div class="credit-body">
+                        <div class="credit-name">the whispering wild</div>
+                        <div class="credit-desc">wolf rpg on roblox. the immersive, atmospheric feel of moving through a living, dangerous world as a wolf shaped the tone of howlbert's wilderness and exploration.</div>
+                    </div>
+                    <div class="credit-link"><a href="https://www.roblox.com/games/1625049462/The-Whispering-Wild-Wolf-RPG" target="_blank">roblox game →</a></div>
+                </div>
+
+                <div class="credit-card">
+                    <div class="credit-icon">🪙</div>
+                    <div class="credit-body">
+                        <div class="credit-name">unbelievaboat</div>
+                        <div class="credit-desc">economy bot patterns. the bones system, the shop, and the rhythm of daily commands owe their clarity to the work done by this discord economy standard.</div>
+                    </div>
+                    <div class="credit-link"><a href="https://unbelievaboat.com/" target="_blank">unbelievaboat.com →</a></div>
+                </div>
+
+                <div class="credit-card">
+                    <div class="credit-icon">📜</div>
+                    <div class="credit-body">
+                        <div class="credit-name">basil's wolf ttrpg</div>
+                        <div class="credit-desc">the rpg rules, skill checks, combat, herbs, and conditions follow the homebrew system created by basil. it is the mechanical spine of howlbert.</div>
+                    </div>
+                    <div class="credit-link"><span style="color:var(--bone-dim);">homebrew · used with respect</span></div>
+                </div>
+
+                <p>these worlds are not our own, but they taught us how to build one. the maw chews, the pack remembers, and the howl carries on.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>the howlbert team</h2>
+                <p>howlbert is built and maintained by a small, dedicated den of wolves who believe in the power of story and the weight of survival.</p>
+                <ul>
+                    <li><strong>development</strong> – the code, the database, the slash commands, the endless debugging of edge cases. the bones of the bot.</li>
+                    <li><strong>lore and worldbuilding</strong> – the caldera, the four packs, the maw, the cats, the twoleg factions, the herbs, the diseases, the blinking. the fur on the bones.</li>
+                    <li><strong>community and moderation</strong> – the wolves who keep the den warm, the scenes alive, and the stories flowing.</li>
+                    <li><strong>art and design</strong> – the icons, the web pages, the visual soul of the wolf-world.</li>
+                </ul>
+                <p>if you would like to contribute, join the discord and raise your voice. the pack grows stronger with every new wolf.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>links and places</h2>
+                <p>follow the scent trail to these places. they are the borders of our world, the paths to the wider den.</p>
+
+                <div class="link-grid">
+                    <div class="link-card">
+                        <a href="https://discord.gg/BAj5Kq8run" target="_blank">
+                            <span class="link-label">discord server</span>
+                            <span class="link-url">discord.gg/BAj5Kq8run</span>
+                        </a>
+                    </div>
+                    <div class="link-card">
+                        <a href="https://ko-fi.com/your-kofi-link" target="_blank">
+                            <span class="link-label">ko-fi</span>
+                            <span class="link-url">support the den</span>
+                        </a>
+                    </div>
+                    <div class="link-card">
+                        <a href="https://kickstarter.com/projects/your-project" target="_blank">
+                            <span class="link-label">kickstarter</span>
+                            <span class="link-url">fund the future</span>
+                        </a>
+                    </div>
+                    <div class="link-card">
+                        <a href="https://neocities.org/site/howlbert" target="_blank">
+                            <span class="link-label">neocities</span>
+                            <span class="link-url">howlbert.neocities.org</span>
+                        </a>
+                    </div>
+                    <div class="link-card">
+                        <a href="https://github.com/defendantratio/howlbert" target="_blank">
+                            <span class="link-label">github</span>
+                            <span class="link-url">source code</span>
+                        </a>
+                    </div>
+                    <div class="link-card">
+                        <a href="https://www.wolvden.com/" target="_blank">
+                            <span class="link-label">wolvden</span>
+                            <span class="link-url">wolvden.com</span>
+                        </a>
+                    </div>
+                </div>
+
+                <p style="margin-top:14px;">if you have a question, a suggestion, or a story to tell, the den is open. the maw listens. the pack remembers.</p>
+            </section>
+
+            <section class="glass content-section">
+                <h2>the spirit of the world</h2>
+                <div class="pull-quote">
+                    the wolf-world is not a game to be won. it is a story to be lived. every hunt, every howl, every wound, every grief is a verse in a song that has been sung since the first wolf opened its eyes under a cold moon.
+                    <span class="source">— from the thistlehide oral tradition</span>
+                </div>
+                <p>howlbert is a place for wolves to be wolves: to struggle, to love, to fail, to rise. the maw is hungry, but so is hope. the packs are fractured, but they can be mended. the world is shrinking, but there is still room for a howl to carry.</p>
+                <p>thank you for being part of it. thank you for carrying the story forward.</p>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                    'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>

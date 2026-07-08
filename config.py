@@ -243,6 +243,29 @@ REVIVE_MOOD_FLOOR = 40
 REINCARNATION_START_AGE_MOONS = 12
 REINCARNATION_MOOD = 50
 
+# Energy; wolvden-style activity stamina. Every repeatable field/social/den
+# action spends energy instead of being hard-capped or paying out on a
+# diminishing curve. Energy never blocks an action outright: acting at 0
+# energy still works, it just costs extra exhaustion and mood instead.
+# Refills with a passive drip each sunrise (inactivity) and a bigger chunk
+# from a long rest (manual `/vitals action:rest` or automatic sunrise sleep).
+ENERGY_MIN = 0
+ENERGY_MAX = 100
+ENERGY_DEFAULT = 100
+ENERGY_SUNRISE_REGEN = 25
+ENERGY_LONG_REST_GAIN = 35
+ENERGY_SHORT_REST_GAIN = 15
+ENERGY_EMPTY_EXHAUSTION_GAIN = 1
+ENERGY_EMPTY_MOOD_LOSS = 4
+
+# Per-activity energy costs. Role-privileged specialists (full forager,
+# scout, medic, ...) pay a discounted cost on their signature actions
+# instead of being unlimited outright; everyone else pays the base cost.
+ENERGY_COST_LOW = 8
+ENERGY_COST_MED = 12
+ENERGY_COST_HIGH = 18
+ENERGY_COST_DISCOUNTED = 4
+
 # Mood; Wolvden-style pack morale (amusement & socialize restore it)
 MOOD_MIN = 0
 MOOD_MAX = 100
@@ -388,18 +411,14 @@ CANNIBALISM_EAT_MOOD_PENALTY = 2
 # Fresh foraged herbs must be dried within this many sunrises or they rot
 HERB_FRESH_DRY_DAYS = 1
 HERB_DRIED_STORAGE_DAYS = 180
-# Poultice, tonic, and decoction spoil after this many sunrises (Basil: 4-5)
+# Poultice and tea spoil after this many sunrises (Basil: 4-5)
 HERB_PREPARED_STORAGE_DAYS = 5
 # All valid preparation forms that can be applied to herbs.
 # These match the keys used in each herb's `preparations` dict.
 HERB_PREPARED_FORMS = (
     "poultice",
-    "tonic",
-    "decoction",
     "juice",
-    "chewed",
     "tea",
-    "infusion",
     "ointment",
     "sap",
     "rub",
@@ -428,8 +447,6 @@ BONE_REST_DAYS = 7
 HERB_PREP_DC = {
     "poultice": 10,
     "poultice_simple": 0,       # for medics with proper tools
-    "tonic": 12,
-    "decoction": 15,
     "dry": 8,
     "dry_storage": 10,
     "chew_poultice": 8,
@@ -439,9 +456,7 @@ HERB_PREP_DC = {
     "incomplete_antidote": 20,
     # new methods
     "juice": 10,
-    "chewed": 8,
     "tea": 10,
-    "infusion": 12,
     "ointment": 12,
     "sap": 10,
     "rub": 8,

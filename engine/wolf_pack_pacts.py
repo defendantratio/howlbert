@@ -415,10 +415,6 @@ def spy_report(spy, *, guild_id: int, day: int) -> tuple[bool, str]:
     home_pack_id = spy["spy_for_pack_id"] if "spy_for_pack_id" in spy.keys() else None
     if not home_pack_id:
         return False, "you aren't embedded in a rival den."
-    last = int(spy["last_spy_report_day"]) if "last_spy_report_day" in spy.keys() else 0
-    if last >= day:
-        return False, "already sent word home this sunrise."
-
     host_pack_id = int(spy["pack_id"])
     host = db.get_pack(host_pack_id)
     home = db.get_pack(int(home_pack_id))
@@ -519,9 +515,6 @@ def gift_wolf_pack_pact(
         other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
         return False, f"no active treaty with **{other_name}**."
 
-    if db.cat_pact_gift_used_today(pack["id"], day):
-        return False, "your den already sent pact tribute this sunrise."
-
     spend = CAT_PACT_GIFT_TRIBUTE if amount is None else max(0, int(amount))
     if spend > 0 and not db.deduct_pack_treasury(pack["id"], spend):
         return False, f"treasury doesn't have **{spend}** bones to spare."
@@ -557,9 +550,6 @@ def trade_duplicates_wolf_pack_pact(
         other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
         return False, f"no active treaty with **{other_name}**."
 
-    if int(user["last_duplicate_trade_day"]) >= day:
-        return False, "you already traded duplicates this sunrise."
-
     from engine.duplicate_trade import (
         collect_duplicates,
         format_duplicate_summary,
@@ -575,15 +565,18 @@ def trade_duplicates_wolf_pack_pact(
         return False, detail
 
     from config import WOLF_PACT_DUP_STANDING_MAX
+    from engine.diminishing import diminishing_note, next_use_multiplier
 
+    trade_mult, trade_n = next_use_multiplier(user, "duplicate_trade", day)
     standing_gain = min(WOLF_PACT_DUP_STANDING_MAX, max(1, bundle.total_items // 4))
+    standing_gain = max(1, int(standing_gain * trade_mult))
     standing = db.adjust_pack_relation(guild_id, pack["id"], other["id"], standing_gain)
     db.update_user(user["discord_id"], last_duplicate_trade_day=day, wolf_id=user["id"])
 
     from engine.wolf_pact_goods import barter_loot_count, grant_wolf_pact_loot, roll_wolf_pact_loot
 
     treaty = _active_wolf_treaty(pack["id"], other["id"])
-    loot_count = barter_loot_count(bundle.total_items, standing=standing)
+    loot_count = max(0, int(barter_loot_count(bundle.total_items, standing=standing) * trade_mult))
     loot_lines: list[str] = []
     if loot_count > 0 and treaty:
         entries = roll_wolf_pact_loot(
@@ -592,11 +585,12 @@ def trade_duplicates_wolf_pack_pact(
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_no goods this time._"
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
+    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
     return True, (
         f"**{other_name}** scouts take your duplicate hoard at the neutral stone.\n"
         f"standing **+{standing_gain}** (now **{standing}/10**).\n\n"
         f"**you gave up:**\n{detail}\n\n"
-        f"**from the pack:**\n{loot_block}"
+        f"**from the pack:**\n{loot_block}{dim}"
     )
 
 
@@ -618,16 +612,16 @@ def trade_food_wolf_pack_pact(
         other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
         return False, f"no active treaty with **{other_name}**."
 
-    last_food_trade = int(user["last_cat_food_trade_day"]) if "last_cat_food_trade_day" in user.keys() else 0
-    if last_food_trade >= day:
-        return False, "you already traded food at a border this sunrise."
-
     stack = db.get_prey_stack(stack_id)
     if not stack or stack["wolf_id"] != user["id"]:
         return False, "you don't carry that stack (`/food` for ids)."
     uses_left = int(stack["uses_left"])
     if uses_left <= 0:
         return False, "there's nothing left of that to trade."
+
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    trade_mult, trade_n = next_use_multiplier(user, "wolf_pact_food_trade", day)
 
     meta = prey_meta(stack["prey_key"])
     if is_forage_food(stack["prey_key"]):
@@ -646,6 +640,9 @@ def trade_food_wolf_pack_pact(
         loot_count = max(1, min(3, bone_value // 15))
         flavor = f"fresh-kill shared with **{GREAT_PACKS.get(other['key'], {}).get('name', other['name'])}**."
 
+    standing_gain = max(1, int(standing_gain * trade_mult))
+    loot_count = int(loot_count * trade_mult)
+
     db.remove_prey_stack(stack_id)
     standing = db.adjust_pack_relation(guild_id, pack["id"], other["id"], standing_gain)
     db.update_user(user["discord_id"], last_cat_food_trade_day=day, wolf_id=user["id"])
@@ -657,10 +654,11 @@ def trade_food_wolf_pack_pact(
         entries = roll_wolf_pact_loot(other["key"], pact_type=treaty["pact_type"], count=loot_count)
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_they send nothing back this time._"
+    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
     return True, (
         f"{flavor}\nstanding **+{standing_gain}** (now **{standing}/10**).\n\n"
         f"**you gave up:** {meta['name']} ({uses_left} use(s))\n\n"
-        f"**from the pack:**\n{loot_block}"
+        f"**from the pack:**\n{loot_block}{dim}"
     )
 
 
@@ -684,12 +682,11 @@ def receive_wolf_pack_goods(
             f"(need **{WOLF_PACT_RECEIVE_MIN_STANDING}**). gift, barter, or share territory first."
         )
 
-    if int(user["last_wolf_receive_day"]) >= day:
-        return False, "you already collected wolf-pack goods this sunrise."
-
+    from engine.diminishing import diminishing_note, next_use_multiplier
     from engine.wolf_pact_goods import grant_wolf_pact_loot, receive_loot_count, roll_wolf_pact_loot
 
-    count = receive_loot_count(standing, treaty["pact_type"])
+    receive_mult, receive_n = next_use_multiplier(user, "wolf_receive", day)
+    count = int(receive_loot_count(standing, treaty["pact_type"]) * receive_mult)
     if count <= 0:
         return False, "standing is too low for border gifts."
 
@@ -698,9 +695,10 @@ def receive_wolf_pack_goods(
     db.update_user(user["discord_id"], last_wolf_receive_day=day, wolf_id=user["id"])
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
     body = "\n".join(f"• {line}" for line in lines)
+    dim = f"\n\n_{diminishing_note(receive_n)}_" if receive_n > 1 else ""
     return True, (
         f"**{other_name}** left goods at the neutral stone (standing **{standing}**).\n\n"
-        f"{body}\n\n_one collection per wolf per sunrise · barter duplicates with `action:trade`_"
+        f"{body}{dim}\n\n_barter duplicates with `action:trade`_"
     )
 
 

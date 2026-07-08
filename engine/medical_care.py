@@ -33,13 +33,6 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
             "only full **medics** may walk den checkups. "
             "apprentices observe cases with `/medic action:observe`.",
         )
-    last = int(medic["last_medic_rounds_day"] if "last_medic_rounds_day" in medic.keys() else 0)
-    if day > 0 and last >= day:
-        return (
-            False,
-            "you already walked den checkups this sunrise. "
-            "wait for the next `/rollover` (or ask an admin to call one).",
-        )
     pack_id = medic["pack_id"] if "pack_id" in medic.keys() else None
     if not pack_id:
         return False, "join a pack to walk the sick den."
@@ -149,9 +142,6 @@ def run_observe_apprentice(
         )
         if not ok_cross:
             return False, cross_msg
-    last = int(medic["last_observe_day"] if "last_observe_day" in medic.keys() else 0)
-    if last >= day:
-        return False, "you already observed a case this sunrise."
     injuries = parse_injuries(patient["active_injuries"] if "active_injuries" in patient.keys() else None)
     ill = disease_display(patient)
     focus = ill[0] if ill else (_injury_label(injuries) if injuries else "general wellness")
@@ -293,9 +283,6 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
     """River territory swim; recovery bonus for sprain / bone rest."""
     if season == "winter":
         return False, "the river is ice-bound in **leaf-bare**; no swim therapy."
-    last = int(user["last_swim_day"] if "last_swim_day" in user.keys() else 0)
-    if last >= day:
-        return False, "you already swam the healing pool this sunrise."
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
     rest_until = int(user["bone_rest_until"] if "bone_rest_until" in user.keys() else 0)
     eligible = bool(injuries & {"sprained_leg", "fractured_rib", "punctured_paw"}) or rest_until > day
@@ -304,9 +291,13 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
             "swim therapy helps **sprains**, **fractured ribs**, or wolves in **splint confinement** "
             "after bone-setting."
         )
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    swim_mult, swim_n = next_use_multiplier(user, "swim", day)
     bonus = SWIM_REST_BONUS_HP
     if rest_until > day:
         bonus += 1
+    bonus = max(1, int(bonus * swim_mult))
     new_hp = min(int(user["max_hp"]), int(user["hp"]) + bonus)
     db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=new_hp)
     db.update_user_by_id(user["id"], last_swim_day=day)
@@ -315,9 +306,11 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
         shorten = "\n_Cold water eases the splint; **1** sunrise less confinement._"
     else:
         shorten = ""
+    dim = diminishing_note(swim_n)
+    dim_note = f"\n_{dim}_" if dim else ""
     return True, (
         f"**{user['wolf_name']}** swims the pack river shallows; muscles loosen, pain fades "
-        f"(**+{bonus} hp**, now **{new_hp}/{user['max_hp']}**).{shorten}"
+        f"(**+{bonus} hp**, now **{new_hp}/{user['max_hp']}**).{shorten}{dim_note}"
     )
 
 

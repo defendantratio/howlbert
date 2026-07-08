@@ -76,8 +76,6 @@ def _war_patrol_block_reason(user, day: int, *, guild_id: int, pack_id: int) -> 
     war = db.get_active_war_for_pack(guild_id, pack_id)
     if not war:
         return "your pack isn't fighting for territory; no collab war patrol."
-    if int(user["last_patrol_day"]) >= day:
-        return "you've already war-patrolled this sunrise."
     if db.wolf_in_open_collab_patrol(user["id"]):
         return "this wolf is already on an open pack patrol or trail."
     return None
@@ -93,11 +91,6 @@ def _scout_block_reason(user, day: int, *, kind: str = "survey") -> str | None:
     vitals = full_activity_block(user, day, action=kind if kind in ("survey", "trail") else "patrol")
     if vitals:
         return vitals
-    if kind == "trail":
-        if int(user["last_trail_day"]) >= day:
-            return "you've already trailed this sunrise."
-    elif int(user["last_survey_day"]) >= day:
-        return "you've already surveyed this sunrise."
     if db.wolf_in_open_collab_patrol(user["id"]):
         return "this wolf is already on an open pack patrol or trail."
     return None
@@ -316,11 +309,14 @@ def payout_collab_survey(
     remainder = base - share * len(users)
 
     lines: list[str] = []
+    from engine.diminishing import diminishing_note, next_use_multiplier
     from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
 
     for user in users:
         bones = share + (remainder if user["id"] == patrol["leader_wolf_id"] else 0)
+        survey_mult, survey_n = next_use_multiplier(user, "survey", day)
         if bones > 0:
+            bones = max(0, int(bones * survey_mult))
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
         standing_gain = standing_delta
         if standing_delta:
@@ -332,10 +328,11 @@ def payout_collab_survey(
             standing_gain += injury_patrol_standing_bonus(user)
             db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
+        dim = f" _{diminishing_note(survey_n)}_" if survey_n > 1 else ""
         if standing_delta:
-            lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_gain}**")
+            lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_gain}**{dim}")
         else:
-            lines.append(f"**{user['wolf_name']}** +{bones} bones")
+            lines.append(f"**{user['wolf_name']}** +{bones} bones{dim}")
 
     _mark_survey_done(users, day, guild_id=patrol["guild_id"])
     db.adjust_pack_unity(patrol["pack_id"], 1)
@@ -393,12 +390,17 @@ def payout_collab_trail(
     remainder = base - share * len(users)
 
     lines: list[str] = []
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
     for user in users:
         bones = share + (remainder if user["id"] == patrol["leader_wolf_id"] else 0)
+        trail_mult, trail_n = next_use_multiplier(user, "trail", day)
         if bones > 0:
+            bones = max(0, int(bones * trail_mult))
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        lines.append(f"**{user['wolf_name']}** +{bones} bones")
+        dim = f" _{diminishing_note(trail_n)}_" if trail_n > 1 else ""
+        lines.append(f"**{user['wolf_name']}** +{bones} bones{dim}")
 
     _mark_trail_done(users, day)
     db.adjust_pack_unity(patrol["pack_id"], 1)
@@ -625,12 +627,17 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
     if not war:
         return None, "the war ended before your patrol set out."
 
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
     lines: list[str] = []
     raw_points = 0
     for user in users:
         pts = random.randint(2, 5) + max(0, attr_modifier(get_attr(user, "con")))
+        patrol_mult, patrol_n = next_use_multiplier(user, "war_patrol", day)
+        pts = max(1, int(pts * patrol_mult))
         raw_points += pts
-        lines.append(f"**{user['wolf_name']}** +{pts} pts")
+        dim = f" _{diminishing_note(patrol_n)}_" if patrol_n > 1 else ""
+        lines.append(f"**{user['wolf_name']}** +{pts} pts{dim}")
 
     bonus_pct = (len(users) - 1) * COLLAB_PATROL_BONUS_PCT_PER_SCOUT if users else 0
     total = raw_points
