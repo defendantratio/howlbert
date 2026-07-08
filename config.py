@@ -1209,6 +1209,12 @@ STONEPIERCER_PLOT_SURVEY_STANDING = 1
 MOTH_PLOT_WORK_MULT = 2.0
 # Sleet greyspire-diplomat: extra standing when approaching thorne lumber
 SLEET_PLOT_FACTION_STANDING = 1
+# Sleet softens her pack's paranoia cat-trust loss by this much (toward 0)
+SLEET_PLOT_CAT_TRUST_RELIEF = 2
+# Moth: extra standing on a rank-dispute win while the plot is active
+MOTH_PLOT_RANK_STANDING = 3
+# Gasp: extra standing when drawing a prophecy while the plot is active
+GASP_PLOT_PROPHECY_STANDING = 1
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
