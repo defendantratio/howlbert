@@ -24,6 +24,7 @@ from engine.role_features import has_any_role, is_full_medic
 CADAVER_DISSECTION_DC = 14
 MAX_DISSECTION_REWARDS = 3  # a body can only teach so much; lifetime cap per apprentice
 CADAVER_DISSECTION_MOOD_COST = 5  # opening a packmate's body is solemn, heavy work
+CADAVER_DISSECTION_MOOD_COST_RIVAL = 2  # a rival/loner's body weighs less on you
 
 
 def is_apprentice_medic(user) -> bool:
@@ -47,6 +48,18 @@ def has_dissection_sanction(apprentice) -> bool:
         if _rv(member, "condition", "") == "dead":
             continue
         if has_any_role(member, "alpha") or is_full_medic(member):
+            return True
+    return False
+
+
+def pack_has_living_alpha(pack_id) -> bool:
+    """A living alpha leads the given pack (to sanction releasing their dead)."""
+    if not pack_id:
+        return False
+    for member in db.get_pack_members(pack_id):
+        if _rv(member, "condition", "") == "dead":
+            continue
+        if has_any_role(member, "alpha"):
             return True
     return False
 
@@ -75,7 +88,12 @@ def can_dissect(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
     if cadaver["condition"] != "dead":
         return False, "that wolf is not dead; only the dead can be studied."
     if not has_dissection_sanction(apprentice):
-        return False, "you need an **alpha** or a **full medic** (your mentor) in the den to sanction the study."
+        return False, "you need an **alpha** or a **full medic** (your mentor) in your den to sanction the study."
+    # a body from another pack also needs that pack's alpha to release it.
+    cad_pack = _rv(cadaver, "pack_id", None)
+    ap_pack = _rv(apprentice, "pack_id", None)
+    if cad_pack and cad_pack != ap_pack and not pack_has_living_alpha(cad_pack):
+        return False, "the dead wolf's pack has no living **alpha** to sanction releasing the body."
     buffs = get_buffs(apprentice)
     if int(buffs.get("last_dissect_day", 0)) >= day:
         return False, "you have already studied a cadaver this sunrise."
@@ -113,11 +131,17 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, bool, st
         f"(roll {die} {mod:+} + prof {prof_bonus} + mentor {mentor_bonus}"
         f" + herbs {herb_mod} = **{total}** vs dc {CADAVER_DISSECTION_DC})"
     )
-    # cutting into a fallen wolf is solemn work; it weighs on the apprentice.
-    db.adjust_mood(apprentice["id"], -CADAVER_DISSECTION_MOOD_COST)
+    # cutting into a fallen wolf is solemn work; a packmate's body weighs more
+    # than a rival's or a loner's.
+    ap_pack = _rv(apprentice, "pack_id", None)
+    cad_pack = _rv(cadaver, "pack_id", None)
+    same_pack = bool(ap_pack) and ap_pack == cad_pack
+    mood_cost = CADAVER_DISSECTION_MOOD_COST if same_pack else CADAVER_DISSECTION_MOOD_COST_RIVAL
+    db.adjust_mood(apprentice["id"], -mood_cost)
+    whose = "a packmate's" if same_pack else "a fallen wolf's"
     solemn = (
-        f"\n_studying a fallen wolf's body is solemn work; it weighs on you "
-        f"(**-{CADAVER_DISSECTION_MOOD_COST} mood**)._"
+        f"\n_studying {whose} body is solemn work; it weighs on you "
+        f"(**-{mood_cost} mood**)._"
     )
 
     # natural 1: a slip of the paw, a nicked rib; infection and fatigue.
