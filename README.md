@@ -280,7 +280,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **herb gardens:** grow your own with `/garden`; buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
-illness blends wolvden / warriors fantasy with wolf-canid ecology. 30+ conditions; cough, weeping-scale (canine distemper), rot-lung (mistmoor), river rot (silverrush; no known cure), milk-fever, shaking-sickness, trichinosis, toxoplasmosis, lyme, tuberculosis, snake venom, chronic conditions, mental illness, and more; each with daily penalties to hunger, hydration, hp, hunt yield, and pain exhaustion. restricted poison herbs wired to real mechanics. see `/help topic:profile` in discord for the full list.
+illness blends wolvden / warriors fantasy with wolf-canid ecology. 30+ conditions; cough, weeping-scale (canine distemper), rot-lung (mistmoor), river rot (silverrush; no known cure), milk-fever, shaking-sickness, trichinosis, toxoplasmosis, lyme, tuberculosis, snake venom, chronic conditions, mental illness, and more; each with daily penalties to hunger, hydration, hp, hunt yield, and pain exhaustion. restricted poison herbs wired to real mechanics. **chronic diseases** (wasting sickness, cancer, rabies, river rot, dementia, feral shift) can't always be cured, but the right herbs give **supportive care** (ease exhaustion and pain) and can **hold progression** at bay for a few sunrises. see `/help topic:profile` in discord for the full list.
 
 ## territory wars
 

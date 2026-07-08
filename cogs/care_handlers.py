@@ -529,6 +529,21 @@ async def treat(
             _tcd(_od_fresh, _od_cond, chance=1.0)
         msg += f"\n\n**warning**: {_od_msg}"
 
+    # chronic-disease care: if the herb didn't cure it, it may still ease the wolf
+    # (support) and hold the sickness from worsening for a few sunrises (halt).
+    if outcome != 'cured_disease':
+        from engine.chronic_care import apply_chronic_herb_support, grant_chronic_halt
+        _supp_fields, _supp_note = apply_chronic_herb_support(treat_subject, herb_key)
+        if _supp_fields:
+            db.update_user(subject_did, wolf_id=subject_id, **_supp_fields)
+            treat_subject = db.get_user_by_id(subject_id) or treat_subject
+        _halt_fields, _halt_note = grant_chronic_halt(treat_subject, herb_key, day=treat_day)
+        if _halt_fields:
+            db.update_user(subject_did, wolf_id=subject_id, **_halt_fields)
+        _chronic_note = ' '.join(n for n in (_supp_note, _halt_note) if n)
+        if _chronic_note:
+            msg += f"\n\n_{_chronic_note}_"
+
     # record herb tolerance and bone_treated after a successful injury cure
     if outcome == 'cured_injury' and _tol_inj_key:
         from engine.herb_buffs import record_herb_tolerance as _rht
