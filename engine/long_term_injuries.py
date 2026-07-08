@@ -487,13 +487,13 @@ def check_adjustments(
     # cumulative organ damage from herb overuse
     if "low_potassium" in entries and ("attr_str" in attr_keys or "attr_con" in attr_keys):
         mod -= 1
-        notes.append("Weak-Heart (−1)")
+        notes.append("The Sapping (−1)")
     if "kidney_damage" in entries and "attr_con" in attr_keys:
         mod -= 1
-        notes.append("Rot-Kidney (−1 Con)")
+        notes.append("Bitter-Water (−1 Con)")
     if "liver_damage" in entries and "attr_con" in attr_keys:
         mod -= 1
-        notes.append("Bile-Rot (−1 Con)")
+        notes.append("Yellow-Wither (−1 Con)")
     if "thiamine_deficiency" in entries and ("attr_dex" in attr_keys or "attr_wis" in attr_keys):
         mod -= 1
         notes.append("The Trembles (−1)")

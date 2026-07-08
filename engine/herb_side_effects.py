@@ -96,6 +96,10 @@ HERB_SIDE_EFFECTS: dict[str, tuple[str, ...]] = {
     "meadowsweet": ("bleeding_risk",),
     "pine_bark": ("bleeding_risk",),
     "prickly_ash": ("bleeding_risk",),
+    "feverfew": ("bleeding_risk",),  # inhibits platelets; raises bleed risk
+
+    # cardiac-glycoside toxin: dangerous eaten, even though it cures pox/curse
+    "swamp_milkweed": ("toxic_ingest",),
 }
 
 # herbs the compendium warns cause "nausea, vomiting" when eaten: an internal
@@ -120,6 +124,9 @@ ORGAN_TOXIC_HERBS: dict[str, tuple[str, int]] = {
     "horsetail": ("thiamine_deficiency", 8),
     "rush_stalks": ("thiamine_deficiency", 8),
     "stinging_nettle": ("thiamine_deficiency", 10),
+    "dock": ("kidney_damage", 10),        # oxalates strain the kidneys
+    "witch_hazel": ("liver_damage", 10),   # high oral doses harm liver/kidney
+    "burdock_root": ("liver_damage", 10),  # high doses may harm the liver
 }
 
 
