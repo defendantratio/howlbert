@@ -81,6 +81,28 @@ def very_old_check_adjustment(age_moons: int, attr_keys: tuple[str, ...]) -> int
     return VERY_OLD_PHYSICAL_PENALTY
 
 
+# The mirror of very old age: pups and young juveniles are still growing into
+# their strength, so physical checks are penalised and the penalty fades to 0
+# by adulthood. Mental/social checks are unaffected.
+YOUNG_STRONG_PENALTY_MOONS = 12   # under this (pups + young juveniles): -2
+YOUNG_PHYSICAL_PENALTY_PUP = -2
+YOUNG_PHYSICAL_PENALTY_JUVENILE = -1
+
+
+def young_check_adjustment(age_moons: int, attr_keys: tuple[str, ...]) -> int:
+    """Physical (STR/DEX/CON) penalty for pups and juveniles, fading to 0 at
+    adulthood (JUVENILE_MAX_MOONS). Symmetric to very_old_check_adjustment."""
+    from config import JUVENILE_MAX_MOONS
+
+    if age_moons >= JUVENILE_MAX_MOONS:
+        return 0
+    if not (set(attr_keys) & {"attr_str", "attr_dex", "attr_con"}):
+        return 0
+    if age_moons < YOUNG_STRONG_PENALTY_MOONS:
+        return YOUNG_PHYSICAL_PENALTY_PUP
+    return YOUNG_PHYSICAL_PENALTY_JUVENILE
+
+
 def stage_label(stage: str) -> str:
     return {
         "pup": "pup",

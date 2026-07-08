@@ -263,7 +263,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     from engine.energy import spend_energy as _spend_energy
 
     _, _hunt_had_energy, _hunt_energy_note = _spend_energy(user, "hunt")
-    if roll_large_prey_encounter():
+    if roll_large_prey_encounter(solo=True):
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
             user,

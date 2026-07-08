@@ -1030,10 +1030,14 @@ class Life(commands.Cog):
         father_id = father['id'] if father else None
         from engine.genetics import GENETIC_CONDITIONS, encode_genetic_conditions, roll_pup_genetic_conditions
         from engine.stillborn import format_stillborn_save_hint, save_pending_stillborn
+        from engine.attraction import kinship_taboo
+        # parents who share close blood raise recessive expression, mutation load,
+        # inbreeding depression, and stillbirth risk for every pup in the litter.
+        is_kin = bool(father) and kinship_taboo(user, father) is not None
         world = db.get_world(interaction.guild.id)
         born_day = world['day_number']
         for pup_name in parsed_names:
-            conditions, lethal = roll_pup_genetic_conditions(user, father, birth_outcome=result['outcome'])
+            conditions, carriers, lethal = roll_pup_genetic_conditions(user, father, birth_outcome=result['outcome'], kin=is_kin)
             if lethal:
                 stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
                 save_pending_stillborn(discord_id=user['discord_id'], mother_wolf_id=user['id'], pup_name=pup_name, genetic_conditions=conditions, stats=stats, father_wolf_id=father_id, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), born_day=born_day)
@@ -1041,11 +1045,16 @@ class Life(commands.Cog):
                 continue
             stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
             pup_id = db.register_born_wolf(discord_id=user['discord_id'], wolf_name=pup_name, mother_wolf_id=user['id'], father_wolf_id=father_id, stats=stats, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), genetic_conditions=encode_genetic_conditions(conditions), father_hidden=hide_father)
+            if carriers:
+                db.update_user(user['discord_id'], wolf_id=pup_id, genetic_carriers=encode_genetic_conditions(carriers))
             born_pup_ids.append(pup_id)
             born_names.append(pup_name)
             if conditions:
                 muts = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in conditions))
                 mutation_lines.append(f'**{pup_name}**: {muts}')
+            if carriers:
+                carrier_names = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in carriers))
+                inheritance_lines.append(f'**{pup_name}** silently carries {carrier_names} (unexpressed; can pass to pups).')
             from engine.family import inherit_parent_skill_trait
 
             inherit_note = inherit_parent_skill_trait(pup_id, user, father)

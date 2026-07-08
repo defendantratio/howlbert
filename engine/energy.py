@@ -100,9 +100,32 @@ def hunger_factor(user) -> float:
     return max(ENERGY_HUNGER_FLOOR, min(1.0, hunger / float(ENERGY_HUNGER_FULL)))
 
 
-def sunrise_regen_amount(user) -> int:
-    """Hunger-coupled energy restored by the overnight sleep at each sunrise."""
-    return int(round((ENERGY_SUNRISE_REGEN + ENERGY_LONG_REST_GAIN) * hunger_factor(user)))
+def metabolic_factor(user, *, season: str | None = None) -> float:
+    """<1.0 when a wolf is burning extra calories and so recovers energy slower:
+    pregnancy, nursing, active illness/fever, and winter cold. Stacks
+    multiplicatively with hunger_factor."""
+    factor = 1.0
+    if int(db.row_val(user, "is_pregnant", 0) or 0):
+        factor *= 0.75
+    try:
+        from engine.nursing import is_nursing_mother
+
+        if is_nursing_mother(user):
+            factor *= 0.8
+    except Exception:
+        pass
+    if (db.row_val(user, "disease", "") or ""):
+        factor *= 0.85  # fighting illness burns reserves
+    if season == "winter":
+        factor *= 0.8  # cold nights cost energy to stay warm
+    return factor
+
+
+def sunrise_regen_amount(user, *, season: str | None = None) -> int:
+    """Energy restored by the overnight sleep at each sunrise, scaled by hunger
+    and by metabolically expensive states (pregnancy, nursing, illness, winter)."""
+    scale = hunger_factor(user) * metabolic_factor(user, season=season)
+    return int(round((ENERGY_SUNRISE_REGEN + ENERGY_LONG_REST_GAIN) * scale))
 
 
 def sync_energy(user) -> int:
@@ -123,7 +146,7 @@ def sync_energy(user) -> int:
     mins = minutes_since_iso(last)
     if not mins or mins <= 0:
         return cur
-    regen = int((mins / 60.0) * ENERGY_REALTIME_REGEN_PER_HOUR * hunger_factor(user))
+    regen = int((mins / 60.0) * ENERGY_REALTIME_REGEN_PER_HOUR * hunger_factor(user) * metabolic_factor(user))
     if regen <= 0:
         return cur
     new_energy = min(ENERGY_MAX, cur + regen)
