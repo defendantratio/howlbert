@@ -98,6 +98,30 @@ HERB_SIDE_EFFECTS: dict[str, tuple[str, ...]] = {
     "prickly_ash": ("bleeding_risk",),
 }
 
+# herbs the compendium warns cause "nausea, vomiting" when eaten: an internal
+# dose can bring the meal (and fluids) back up.
+EMESIS_HERBS = frozenset({
+    "adders_tongue", "alder_bark", "beech_leaves", "celandine", "mountain_ash",
+    "sage", "rosemary", "saffron", "wood_sorrel", "sorrel", "elderberry",
+    "edelweiss", "coltsfoot", "skunk_cabbage", "juniper_berry",
+})
+
+# prolonged internal overuse damages an organ. herb_key -> (long-term type,
+# cumulative internal doses before the damage becomes permanent). Tracked in the
+# ``herb_organ_log`` JSON column; unlike addiction, this tally does not decay.
+ORGAN_TOXIC_HERBS: dict[str, tuple[str, int]] = {
+    "alder_bark": ("low_potassium", 8),
+    "juniper_berry": ("kidney_damage", 8),
+    "sorrel": ("kidney_damage", 8),
+    "wood_sorrel": ("kidney_damage", 8),
+    "oak_bark": ("liver_damage", 8),
+    "ragwort": ("liver_damage", 6),
+    "comfrey": ("liver_damage", 8),
+    "horsetail": ("thiamine_deficiency", 8),
+    "rush_stalks": ("thiamine_deficiency", 8),
+    "stinging_nettle": ("thiamine_deficiency", 10),
+}
+
 
 def _is_internal(form: str) -> bool:
     return form not in EXTERNAL_FORMS
@@ -186,4 +210,61 @@ def roll_herb_side_effects(patient, herb_key: str, form: str, *, day: int) -> st
             db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)
             notes.append(f"_the salicylates thin the blood; the open wound weeps afresh, **-{dmg} hp**._")
 
+    # vomiting: an internal dose of a nauseating herb brings the meal back up,
+    # costing hunger and fluids. skilled preparers pick a gentler dose.
+    if herb_key in EMESIS_HERBS and internal:
+        chance = 0.10 if skilled else 0.22
+        if random.random() < chance and not _con_save(patient, 11):
+            note = _apply_vomiting(patient)
+            if note:
+                notes.append(note)
+
+    # cumulative organ toxicity from prolonged internal overuse.
+    if herb_key in ORGAN_TOXIC_HERBS and internal:
+        note = _tally_organ_toxicity(patient, herb_key, day=day)
+        if note:
+            notes.append(note)
+
     return ("\n" + "\n".join(notes)) if notes else ""
+
+
+def _apply_vomiting(patient) -> str:
+    """The wolf throws up the dose and its meal: lose hunger, fluids, and mood."""
+    from config import HUNGER_MIN, THIRST_MIN
+    hunger = int(patient["hunger"]) if "hunger" in patient.keys() and patient["hunger"] is not None else 100
+    thirst = int(patient["thirst"]) if "thirst" in patient.keys() and patient["thirst"] is not None else 100
+    new_hunger = max(HUNGER_MIN, hunger - 8)
+    new_thirst = max(THIRST_MIN, thirst - 6)
+    db.update_user(patient["discord_id"], wolf_id=patient["id"], hunger=new_hunger, thirst=new_thirst)
+    db.adjust_mood(patient["id"], -3)
+    return "_the herb turns the stomach; you retch it back up. **-8 hunger, -6 hydration, -3 mood**._"
+
+
+def _tally_organ_toxicity(patient, herb_key: str, *, day: int) -> str:
+    """Count lifetime internal doses of an organ-toxic herb; once the tally
+    crosses the herb's threshold, the damage becomes a permanent long-term
+    condition. Returns a note when the damage lands (or a near-warning)."""
+    import json
+    organ, threshold = ORGAN_TOXIC_HERBS[herb_key]
+    raw = patient["herb_organ_log"] if "herb_organ_log" in patient.keys() else None
+    try:
+        log = json.loads(raw) if raw else {}
+        if not isinstance(log, dict):
+            log = {}
+    except (json.JSONDecodeError, TypeError):
+        log = {}
+    # already damaged this organ? stop tallying this herb.
+    from engine.long_term_injuries import parse_long_term_injuries, add_long_term_injury, LONG_TERM_TYPES
+    existing = parse_long_term_injuries(patient["long_term_injuries"] if "long_term_injuries" in patient.keys() else None)
+    if organ in existing:
+        return ""
+    count = int(log.get(herb_key, 0)) + 1
+    log[herb_key] = count
+    db.update_user(patient["discord_id"], wolf_id=patient["id"], herb_organ_log=json.dumps(log))
+    if count >= threshold:
+        add_long_term_injury(patient["id"], organ)
+        label = LONG_TERM_TYPES[organ]["label"]
+        return f"_years of leaning on {herb_key.replace('_', ' ')} have taken their toll; **{label}** has set in for good._"
+    if count == threshold - 1:
+        return f"_{herb_key.replace('_', ' ')} is straining the body; one more heavy dose may leave a permanent mark._"
+    return ""

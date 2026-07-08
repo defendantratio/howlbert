@@ -1453,6 +1453,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN genetic_carriers TEXT NOT NULL DEFAULT '[]'"
         )
+    if "herb_organ_log" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN herb_organ_log TEXT NOT NULL DEFAULT '{}'"
+        )
     if "last_rescout_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_rescout_day INTEGER NOT NULL DEFAULT 0"
