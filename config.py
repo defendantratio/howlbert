@@ -257,6 +257,13 @@ ENERGY_LONG_REST_GAIN = 35
 ENERGY_SHORT_REST_GAIN = 15
 ENERGY_EMPTY_EXHAUSTION_GAIN = 1
 ENERGY_EMPTY_MOOD_LOSS = 4
+# Real-time daytime drip; energy trickles back while a wolf is idle (not acting)
+# during the day, on top of the sunrise sleep. Coupled to hunger: a starving
+# wolf has no calories to spare, so regen (drip and sunrise) scales with hunger
+# down to a floor. hunger at/above ENERGY_HUNGER_FULL restores at full rate.
+ENERGY_REALTIME_REGEN_PER_HOUR = 6
+ENERGY_HUNGER_FULL = 80
+ENERGY_HUNGER_FLOOR = 0.2
 
 # Per-activity energy costs. Role-privileged specialists (full forager,
 # scout, medic, ...) pay a discounted cost on their signature actions

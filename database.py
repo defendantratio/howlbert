@@ -1445,6 +1445,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN energy INTEGER NOT NULL DEFAULT 100"
         )
+    if "last_energy_at" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_energy_at TEXT NOT NULL DEFAULT ''"
+        )
     if "last_rescout_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_rescout_day INTEGER NOT NULL DEFAULT 0"
@@ -5876,6 +5880,11 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                         (_jbl.dumps(_injs), user["id"]),
                     )
                     from engine.conditions import clear_injury_since as _cisbl
+            from engine.energy import sunrise_regen_amount as _sunrise_energy
+            from config import ENERGY_MAX as _ENERGY_MAX
+
+            _cur_energy = int(user["energy"]) if "energy" in user.keys() and user["energy"] is not None else _ENERGY_MAX
+            _new_energy = min(_ENERGY_MAX, _cur_energy + _sunrise_energy(user))
             conn.execute(
                 """
                 UPDATE users
@@ -5884,7 +5893,8 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                     last_rest_day = ?,
                     jaw_meal_shield = 0, smoke_debuff = 0, cough_suppressed = 0,
                     hunger_exhaustion_skip = 0, march_exhaustion_skip = 0,
-                    disease_save_buff = ?, disease_save_buff_days = ?, herb_buffs = ?
+                    disease_save_buff = ?, disease_save_buff_days = ?, herb_buffs = ?,
+                    energy = ?, last_energy_at = ?
                 WHERE id = ?
                 """,
                 (
@@ -5901,6 +5911,8 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                         int(user["disease_save_buff_days"]) if "disease_save_buff_days" in user.keys() else 0,
                     ),
                     tick_fields.get("herb_buffs", user["herb_buffs"] if "herb_buffs" in user.keys() else "{}"),
+                    _new_energy,
+                    utcnow(),
                     user["id"],
                 ),
             )

@@ -198,6 +198,8 @@ class Rpg(commands.Cog):
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
         embed.add_field(name='Hydration', value=format_thirst_line(user), inline=True)
+        from engine.energy import energy_line
+        embed.add_field(name='Energy', value=energy_line(user), inline=True)
         from engine.treatment_plan import build_treatment_checklist
         checklist = build_treatment_checklist(user, day=day)
         embed.add_field(name='Treatment plan', value=checklist, inline=False)
@@ -242,10 +244,17 @@ class Rpg(commands.Cog):
             mark_manual_long_rest(user, day)
             db.set_user_conditions(interaction.user.id, hp=rest['hp'], exhaustion=rest['exhaustion'], last_rest_day=day, herb_heals_today=0)
             db.update_user(interaction.user.id, wolf_id=user['id'], mood=rest['mood'])
+            from engine.energy import hunger_factor as _hf
+            from config import ENERGY_LONG_REST_GAIN
+            old_energy = int(user['energy']) if 'energy' in user.keys() and user['energy'] is not None else 100
+            energy_gain = int(round(ENERGY_LONG_REST_GAIN * _hf(user)))
+            new_energy = db.adjust_energy(user['id'], energy_gain)
+            db.update_user(interaction.user.id, wolf_id=user['id'], last_energy_at=db.utcnow())
+            energy_line = f"\nEnergy **+{new_energy - old_energy}** (now {new_energy}/100)." if new_energy != old_energy else ''
             mood_gain = rest['mood'] - int(user['mood'])
             hp_gain = rest['hp'] - int(user['hp'])
             ex_drop = int(user['exhaustion']) - rest['exhaustion']
-            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
+            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + energy_line + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
             return
         if herb_heal_limit_reached(user):
@@ -272,7 +281,13 @@ class Rpg(commands.Cog):
         if new_exhaustion != old_exhaustion:
             ex_note = f" Exhaustion **−{old_exhaustion - new_exhaustion}** (now {new_exhaustion})."
         db.set_user_conditions(interaction.user.id, **fields)
-        msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.') + ex_note
+        from engine.energy import hunger_factor as _hf
+        from config import ENERGY_SHORT_REST_GAIN
+        old_energy = int(user['energy']) if 'energy' in user.keys() and user['energy'] is not None else 100
+        new_energy = db.adjust_energy(user['id'], int(round(ENERGY_SHORT_REST_GAIN * _hf(user))))
+        db.update_user(interaction.user.id, wolf_id=user['id'], last_energy_at=db.utcnow())
+        energy_note = f" Energy **+{new_energy - old_energy}** (now {new_energy}/100)." if new_energy != old_energy else ''
+        msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.') + ex_note + energy_note
         if old_exhaustion == 0:
             msg += f' _(No exhaustion to clear. Clears activity strain; HP recovery needs comfrey.)_'
         else:

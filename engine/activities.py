@@ -258,7 +258,11 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     if blocked:
         return blocked, False, None
     # no hunt cap: hunt as often as you like, but each hunt past your daily
-    # allotment yields steadily less (diminishing returns, not a block).
+    # allotment yields steadily less (diminishing returns, not a block) and
+    # every hunt spends energy (see engine.energy) on top of that.
+    from engine.energy import spend_energy as _spend_energy
+
+    _, _hunt_had_energy, _hunt_energy_note = _spend_energy(user, "hunt")
     if roll_large_prey_encounter():
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
@@ -396,6 +400,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         if is_nursing_mother(updated):
             footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
         notes = [n for n in (loner_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        if _hunt_energy_note:
+            notes.append(_hunt_energy_note)
         if hunt_shift:
             notes.append(hunt_shift.strip("_"))
         from utils.hunting import weather_hunt_modifier_label
