@@ -152,22 +152,6 @@ def test_murkvein_no_tail_penalties():
     assert trait_check_disadvantage(user, ("attr_dex",), skill_key="survival")
 
 
-def test_eltanin_canonical_traits():
-    traits = canonical_traits_for_name("Eltanin")
-    assert traits is not None
-    mod, names = trait_check_adjustments(
-        _row(
-            great_pack="thistlehide",
-            character_traits=encode_character_traits(traits),
-            skill_proficiencies='["hunting", "tracking"]',
-        ),
-        ("attr_str",),
-        skill_key="hunting",
-    )
-    assert mod == 3
-    assert "Bold Hunter" in names
-
-
 def test_gasp_frail_hunt_penalty():
     user = _row(
         great_pack="mistmoor",

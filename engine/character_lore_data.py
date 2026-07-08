@@ -1982,39 +1982,6 @@ CHARACTER_LORE_BY_NAME: dict[str, str] = {
             "Leadership challenged; final prophecy revealed; rivalry with Mirewort over the Maw's favor."
         ),
     ),
-    "Eltanin": _sheet(
-        appearance=(
-            "Rich earthy brown coat with creamy face and crown; deep chocolate back and shoulders "
-            "fading to cream behind the shoulders and under the chest. Strong muscular huntress build. "
-            "Stern calculating green eyes. Old gash above the left eye from an elk hunt; healed clean, "
-            "no sight penalty. Often carries burrs and pine sap from border runs."
-        ),
-        personality=(
-            "Loyal, observant, bold, quiet. Deeply loyal to Thistlehide and fiercely protective of wolves "
-            "she holds dear. Bold on the hunt; takes risks to feed the den, not from recklessness. "
-            "Reserved; rarely drops her walls. Values dedication and loyalty; little patience for laziness "
-            "or liars."
-        ),
-        backstory=(
-            "Born in Thistlehide during a storm; only pup in her litter to survive. Littermates culled "
-            "for deformity. Mother died of birth trauma. Raised by the den; spent puphood watching and "
-            "stalking small prey instead of playing. Still distant as an adult but socializes when duty "
-            "calls. Raised around Maw belief but is agnostic; not hostile, unconvinced, keeps doubt private. "
-            "Avoids Twolegs and thunder-sticks; refuses to range near logging scars when shots carry on the wind."
-        ),
-        family_ties="Mother (hunter, died at her birth). No surviving littermates. Father not in her life.",
-        rp_sample=(
-            "The nursery hush was wrong. Eltanin had been washing blood from her paws at the creek when "
-            "fear-scent hit her: a pup missing from the moss nest. A caretaker burst out, voice cracking. "
-            "Eltanin cut her off: \"Left paw. Small. Heading toward the elder-stones.\" She was already "
-            "moving into the bracken without waiting for permission. Boldness was doing first what the den "
-            "could not afford to do second."
-        ),
-        open_plots=(
-            "Twoleg activity on eastern patrol; private Maw doubt if rot-season worsens; mistaken for cold "
-            "because of silence; quietly watches over a caretaker or pup she will not admit to guarding."
-        ),
-    ),
     "Firepaw": _sheet(
         appearance=(
             "Thick fiery-orange fur streaked with deep brown and rusty red, warm as late leaf-fall. "

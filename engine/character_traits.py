@@ -3119,57 +3119,6 @@ ASHBARK_CHARACTER_TRAITS = {
 }
 
 
-ELTANIN_CHARACTER_TRAITS = {
-    "bonuses": [
-        {
-            "name": "Observant Tracker",
-            "modifier": 3,
-            "skills": ["tracking"],
-            "attrs": ["attr_int", "attr_wis"],
-            "blurb": "Quiet border runs; reads scent and sign before others notice.",
-        },
-        {
-            "name": "Bold Hunter",
-            "modifier": 3,
-            "skills": ["hunting"],
-            "attrs": ["attr_str", "attr_dex"],
-            "blurb": "Takes calculated risks to feed the den, not reckless bravado.",
-        },
-        {
-            "name": "Protective Vigilance",
-            "modifier": 2,
-            "skills": ["survival"],
-            "attrs": ["attr_wis"],
-            "blurb": "Stalks trouble before pups or caretakers know they are missing.",
-        },
-    ],
-    "weaknesses": [
-        {
-            "name": "Emotionally Reserved",
-            "modifier": -2,
-            "skills": ["persuasion"],
-            "attrs": ["attr_cha"],
-            "blurb": "Walls up; wolves mistake silence for coldness.",
-        },
-        {
-            "name": "Twoleg Avoidance",
-            "modifier": -2,
-            "skills": ["survival", "tracking"],
-            "attrs": ["attr_wis"],
-            "blurb": "Refuses logging scars and thunder-stick range; border hunts suffer.",
-        },
-        {
-            "name": "Impatient with Liars",
-            "modifier": -2,
-            "skills": ["persuasion", "intimidation"],
-            "attrs": ["attr_cha"],
-            "exclude_skills": ["hunting", "tracking"],
-            "blurb": "Little patience for laziness or deceit; snaps when trust breaks.",
-        },
-    ],
-}
-
-
 PALESTEP_CHARACTER_TRAITS = {
     "bonuses": [
         {
@@ -3968,14 +3917,12 @@ CHARACTER_TRAITS_BY_NAME: dict[str, dict] = {
     "Lucid": LUCID_CHARACTER_TRAITS,
     "Ashbark": ASHBARK_CHARACTER_TRAITS,
     "Pale'Step": PALESTEP_CHARACTER_TRAITS,
-    "Eltanin": ELTANIN_CHARACTER_TRAITS,
     "Firepaw": FIREPAW_CHARACTER_TRAITS,
 }
 
 # Canonical register backstory hooks (role, belief, build) applied with lore/traits.
 CHARACTER_REGISTER_DEFAULTS: dict[str, dict[str, str]] = {
     "Gasp": {"wolf_role": "drown_sick"},
-    "Eltanin": {"maw_belief": "agnostic"},
     "Kanami": {"size_class": "small"},
     "Pale'Step": {"size_class": "small"},
     "Croaker": {"size_class": "small"},

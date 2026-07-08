@@ -22,6 +22,7 @@ from engine.role_features import has_any_role
 
 CADAVER_DISSECTION_DC = 14
 MAX_DISSECTION_REWARDS = 3  # a body can only teach so much; lifetime cap per apprentice
+CADAVER_DISSECTION_MOOD_COST = 5  # opening a packmate's body is grim, taboo work
 
 
 def is_apprentice_medic(user) -> bool:
@@ -92,6 +93,9 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
         f"(roll {die} {mod:+} + prof {prof_bonus} + mentor {mentor_bonus}"
         f" + herbs {herb_mod} = **{total}** vs dc {CADAVER_DISSECTION_DC})"
     )
+    # opening a packmate's body weighs on the apprentice no matter the outcome.
+    db.adjust_mood(apprentice["id"], -CADAVER_DISSECTION_MOOD_COST)
+    grim = f"\n_cutting into a packmate's body is grim, taboo work; it weighs on you (**-{CADAVER_DISSECTION_MOOD_COST} mood**)._"
 
     # natural 1: a slip of the paw, a nicked rib; infection and fatigue.
     if die == 1:
@@ -102,7 +106,7 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
         db.update_user_by_id(apprentice["id"], **fields)
         return False, (
             f"**dissection gone wrong:** you nick yourself on a sharp rib and the wound sours. "
-            f"{roll_line} → **+1 exhaustion, +1 pain exhaustion**."
+            f"{roll_line} → **+1 exhaustion, +1 pain exhaustion**.{grim}"
         )
 
     success = total >= CADAVER_DISSECTION_DC
@@ -110,7 +114,7 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
 
     if not success:
         db.adjust_mood(apprentice["id"], -2)
-        return False, f"{roll_line}\n_the body keeps its secrets today; you sit back frustrated (**-2 mood**)._"
+        return False, f"{roll_line}\n_the body keeps its secrets today; you sit back frustrated (**-2 mood**)._{grim}"
 
     # success: deepen medicine skill.
     _, xp_msg = adjust_skill_trait_experience(apprentice["id"], "medicine", 1)
@@ -135,6 +139,7 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
         loot.append(f"{bones} bones")
     if loot:
         lines.append(f"(from the gut: **{', '.join(loot)}**)")
+    lines.append(grim.strip("\n"))
 
     return True, "\n".join(lines)
 
