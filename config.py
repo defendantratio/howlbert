@@ -1215,6 +1215,13 @@ SLEET_PLOT_CAT_TRUST_RELIEF = 2
 MOTH_PLOT_RANK_STANDING = 3
 # Gasp: extra standing when drawing a prophecy while the plot is active
 GASP_PLOT_PROPHECY_STANDING = 1
+# Pebble (silverrush) and Reedwhisper (mistmoor) diplomat faction-approach bonuses
+PEBBLE_PLOT_FACTION_STANDING = 1
+REEDWHISPER_PLOT_FACTION_STANDING = 2
+# Ashbark (thistlehide hunter) patrol standing during paranoia
+ASHBARK_PLOT_PATROL_STANDING = 1
+# Cinder (silverrush driftwood) scavenge multiplier while plot active
+CINDER_PLOT_SCAVENGE_MULT = 1.10
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
