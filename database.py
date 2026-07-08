@@ -1269,6 +1269,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN plot_phase INTEGER NOT NULL DEFAULT 0"
         )
+    if world_cols and "plot_prompt_index" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN plot_prompt_index INTEGER NOT NULL DEFAULT 0"
+        )
     if world_cols and "last_den_news_dm_day" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN last_den_news_dm_day INTEGER NOT NULL DEFAULT 0"
@@ -5472,11 +5476,25 @@ def set_plot_phase(guild_id: int, phase: int) -> sqlite3.Row:
     get_world(guild_id)
     phase = max(0, min(PLOT_MAX_PHASE, int(phase)))
     with get_db() as conn:
+        # entering a new phase restarts its rp-prompt sequence at the first prompt.
         conn.execute(
-            "UPDATE world_state SET plot_phase = ? WHERE guild_id = ?",
+            "UPDATE world_state SET plot_phase = ?, plot_prompt_index = 0 WHERE guild_id = ?",
             (phase, guild_id),
         )
     return get_world(guild_id)
+
+
+def next_plot_prompt_index(guild_id: int) -> int:
+    """Return the current book-one rp-prompt index for the guild, then advance it
+    so successive sunrises walk the phase's prompts in order."""
+    world = get_world(guild_id)
+    idx = int(world["plot_prompt_index"]) if "plot_prompt_index" in world.keys() and world["plot_prompt_index"] is not None else 0
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET plot_prompt_index = ? WHERE guild_id = ?",
+            (idx + 1, guild_id),
+        )
+    return idx
 
 
 def advance_plot_phase(guild_id: int) -> tuple[int, sqlite3.Row]:
@@ -6133,7 +6151,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         else:
             needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
     if plot_phase > 0:
-        from engine.plot_blinking import apply_plot_rollover_effects, plot_den_news_line
+        from engine.plot_blinking import apply_plot_rollover_effects, next_blinking_prompt_line, plot_den_news_line
 
         with get_db() as conn:
             plot_notes = apply_plot_rollover_effects(conn, guild_id, new_day, plot_phase)
@@ -6143,6 +6161,11 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         if plot_news:
             needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
                 plot_news
+            )
+        prompt_line = next_blinking_prompt_line(guild_id, plot_phase)
+        if prompt_line:
+            needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
+                prompt_line
             )
     from engine.healer_refusal import healer_refusal_reminder, rot_lung_outbreak_news
 
