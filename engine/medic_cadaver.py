@@ -2,12 +2,13 @@
 """Medic-apprentice cadaver dissection: learn anatomy by studying the dead.
 
 A sanctioned part of an apprentice's training under the green tongue: with a
-superior's leave, the apprentice opens a fallen packmate to learn how the body
-is built. It is medical study, not desecration, but cutting into a packmate is
-solemn work and weighs on the apprentice. Requires an **alpha** or a **full
-medic** (the mentor) in the den to sanction it. Once per sunrise, capped at a
-handful of lessons per apprentice. Success deepens medicine skill; a slip risks
-infection. All ``users`` row access is sqlite3.Row-safe (no ``.get``).
+superior's leave, the apprentice opens a fallen wolf (their own pack's dead, or
+a rival's or loner's) to learn how the body is built. It is medical study, not
+desecration, but cutting into a body is solemn work and weighs on the
+apprentice. Requires an **alpha** or a **full medic** (the mentor) in the den to
+sanction it. Once per sunrise, capped at a handful of lessons per apprentice.
+Success deepens medicine skill; a slip risks infection. All ``users`` row access
+is sqlite3.Row-safe (no ``.get``).
 """
 
 from __future__ import annotations
@@ -73,9 +74,6 @@ def can_dissect(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
         return False, "you cannot dissect yourself."
     if cadaver["condition"] != "dead":
         return False, "that wolf is not dead; only the dead can be studied."
-    ap_pack = _rv(apprentice, "pack_id", None)
-    if not ap_pack or ap_pack != _rv(cadaver, "pack_id", None):
-        return False, "you can only study a cadaver from your own pack."
     if not has_dissection_sanction(apprentice):
         return False, "you need an **alpha** or a **full medic** (your mentor) in the den to sanction the study."
     buffs = get_buffs(apprentice)
@@ -115,10 +113,10 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, bool, st
         f"(roll {die} {mod:+} + prof {prof_bonus} + mentor {mentor_bonus}"
         f" + herbs {herb_mod} = **{total}** vs dc {CADAVER_DISSECTION_DC})"
     )
-    # cutting into a packmate is solemn work; it weighs on the apprentice.
+    # cutting into a fallen wolf is solemn work; it weighs on the apprentice.
     db.adjust_mood(apprentice["id"], -CADAVER_DISSECTION_MOOD_COST)
     solemn = (
-        f"\n_studying a fallen packmate's body is solemn work; it weighs on you "
+        f"\n_studying a fallen wolf's body is solemn work; it weighs on you "
         f"(**-{CADAVER_DISSECTION_MOOD_COST} mood**)._"
     )
 
