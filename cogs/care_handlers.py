@@ -1331,8 +1331,25 @@ async def dissect_cadaver(
         return
 
     day = db.get_world(interaction.guild.id)['day_number'] if interaction.guild else 0
-    success, msg = perform_dissection(apprentice, cadaver, day=day)
+    dissected, success, msg = perform_dissection(apprentice, cadaver, day=day)
     color = SUCCESS_COLOR if success else ERROR_COLOR
     header = f"**{apprentice['wolf_name']}** studies **{cadaver['wolf_name']}**."
     embed = howlbert_embed('cadaver dissection', f"{header}\n\n{msg}", color=color)
     await interaction.response.send_message(embed=embed)
+
+    # notify the cadaver's owner that their fallen wolf was studied (skip self).
+    if dissected:
+        owner_id = cadaver['discord_id'] if 'discord_id' in cadaver.keys() else None
+        if owner_id and owner_id != interaction.user.id:
+            from utils.notifications import try_dm_user
+            pack_label = apprentice['great_pack'] if 'great_pack' in apprentice.keys() and apprentice['great_pack'] else 'the pack'
+            await try_dm_user(
+                interaction.client,
+                owner_id,
+                embed=howlbert_embed(
+                    'a fallen wolf was studied',
+                    f"**{apprentice['wolf_name']}** ({pack_label}) studied your fallen wolf "
+                    f"**{cadaver['wolf_name']}** in the healers' den, to learn anatomy for the pack's medicine.",
+                    color=SUCCESS_COLOR,
+                ),
+            )

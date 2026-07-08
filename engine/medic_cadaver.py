@@ -1,16 +1,16 @@
 # engine/medic_cadaver.py
 """Medic-apprentice cadaver dissection: learn anatomy by studying the dead.
 
-A sanctioned part of an apprentice's training under the green tongue: with the
-den's leave, the apprentice opens a fallen packmate to learn how the body is
-built. Once per sunrise, capped at a handful of lessons per apprentice (there is
-only so much a body can teach). Success deepens medicine skill; a slip risks
-infection. All access to the ``users`` row is sqlite3.Row-safe (no ``.get``).
+A sanctioned part of an apprentice's training under the green tongue: with a
+superior's leave, the apprentice opens a fallen packmate to learn how the body
+is built. It is medical study, not desecration, but cutting into a packmate is
+solemn work and weighs on the apprentice. Requires an **alpha** or a **full
+medic** (the mentor) in the den to sanction it. Once per sunrise, capped at a
+handful of lessons per apprentice. Success deepens medicine skill; a slip risks
+infection. All ``users`` row access is sqlite3.Row-safe (no ``.get``).
 """
 
 from __future__ import annotations
-
-import random
 
 import database as db
 from engine.character import attr_modifier, parse_proficiencies
@@ -18,11 +18,11 @@ from engine.character_traits import adjust_skill_trait_experience
 from engine.dice import roll_d20
 from engine.exhaustion_effects import EXHAUSTION_MAX, PAIN_EXHAUSTION_MAX
 from engine.herb_buffs import get_buffs, herb_check_adjustments, merge_buff_fields
-from engine.role_features import has_any_role
+from engine.role_features import has_any_role, is_full_medic
 
 CADAVER_DISSECTION_DC = 14
 MAX_DISSECTION_REWARDS = 3  # a body can only teach so much; lifetime cap per apprentice
-CADAVER_DISSECTION_MOOD_COST = 5  # opening a packmate's body is grim, taboo work
+CADAVER_DISSECTION_MOOD_COST = 5  # opening a packmate's body is solemn, heavy work
 
 
 def is_apprentice_medic(user) -> bool:
@@ -32,6 +32,22 @@ def is_apprentice_medic(user) -> bool:
 def _rv(row, key, default=0):
     """Row-safe read with an int-friendly default."""
     return db.row_val(row, key, default)
+
+
+def has_dissection_sanction(apprentice) -> bool:
+    """A superior in the den authorizes the training: a living **alpha** or
+    **full medic** (the apprentice's mentor) in the same pack."""
+    pack_id = _rv(apprentice, "pack_id", None)
+    if not pack_id:
+        return False
+    for member in db.get_pack_members(pack_id):
+        if member["id"] == apprentice["id"]:
+            continue
+        if _rv(member, "condition", "") == "dead":
+            continue
+        if has_any_role(member, "alpha") or is_full_medic(member):
+            return True
+    return False
 
 
 def get_dead_packmates(pack_id: int) -> list:
@@ -60,6 +76,8 @@ def can_dissect(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
     ap_pack = _rv(apprentice, "pack_id", None)
     if not ap_pack or ap_pack != _rv(cadaver, "pack_id", None):
         return False, "you can only study a cadaver from your own pack."
+    if not has_dissection_sanction(apprentice):
+        return False, "you need an **alpha** or a **full medic** (your mentor) in the den to sanction the study."
     buffs = get_buffs(apprentice)
     if int(buffs.get("last_dissect_day", 0)) >= day:
         return False, "you have already studied a cadaver this sunrise."
@@ -68,11 +86,15 @@ def can_dissect(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
     return True, ""
 
 
-def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
-    """Run the dissection check, update the apprentice, and return (success, message)."""
+def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, bool, str]:
+    """Run the dissection. Returns (dissected, success, message).
+
+    ``dissected`` is False when the attempt was blocked (not an apprentice, no
+    sanction, cooldown, cap, wrong pack) and no body was opened; True when the
+    study actually happened (whether or not the medicine check passed)."""
     ok, msg = can_dissect(apprentice, cadaver, day=day)
     if not ok:
-        return False, msg
+        return False, False, msg
 
     buffs = get_buffs(apprentice)
     wis = int(_rv(apprentice, "attr_wis", 3))
@@ -86,16 +108,19 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
     herb_mod, _ = herb_check_adjustments(apprentice, ("attr_wis",), skill_key="medicine")
     total = die + mod + prof_bonus + mentor_bonus + herb_mod
 
-    # record the cooldown + lesson tally on every attempt (success or not).
+    # record the cooldown + lesson tally on every study (success or not).
     buffs["last_dissect_day"] = day
     buffs["dissection_count"] = int(buffs.get("dissection_count", 0)) + 1
     roll_line = (
         f"(roll {die} {mod:+} + prof {prof_bonus} + mentor {mentor_bonus}"
         f" + herbs {herb_mod} = **{total}** vs dc {CADAVER_DISSECTION_DC})"
     )
-    # opening a packmate's body weighs on the apprentice no matter the outcome.
+    # cutting into a packmate is solemn work; it weighs on the apprentice.
     db.adjust_mood(apprentice["id"], -CADAVER_DISSECTION_MOOD_COST)
-    grim = f"\n_cutting into a packmate's body is grim, taboo work; it weighs on you (**-{CADAVER_DISSECTION_MOOD_COST} mood**)._"
+    solemn = (
+        f"\n_studying a fallen packmate's body is solemn work; it weighs on you "
+        f"(**-{CADAVER_DISSECTION_MOOD_COST} mood**)._"
+    )
 
     # natural 1: a slip of the paw, a nicked rib; infection and fatigue.
     if die == 1:
@@ -104,9 +129,9 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
         fields = {"exhaustion": new_ex, "pain_exhaustion": new_pe}
         fields.update(merge_buff_fields(apprentice, **buffs))
         db.update_user_by_id(apprentice["id"], **fields)
-        return False, (
+        return True, False, (
             f"**dissection gone wrong:** you nick yourself on a sharp rib and the wound sours. "
-            f"{roll_line} → **+1 exhaustion, +1 pain exhaustion**.{grim}"
+            f"{roll_line} → **+1 exhaustion, +1 pain exhaustion**.{solemn}"
         )
 
     success = total >= CADAVER_DISSECTION_DC
@@ -114,34 +139,15 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
 
     if not success:
         db.adjust_mood(apprentice["id"], -2)
-        return False, f"{roll_line}\n_the body keeps its secrets today; you sit back frustrated (**-2 mood**)._{grim}"
+        return True, False, f"{roll_line}\n_the body keeps its secrets today; you sit back frustrated (**-2 mood**)._{solemn}"
 
     # success: deepen medicine skill.
     _, xp_msg = adjust_skill_trait_experience(apprentice["id"], "medicine", 1)
     lines = [f"{roll_line}\n_you learn from the dead; the shape of the body settles into your understanding._"]
     if xp_msg:
         lines.append(f"_{xp_msg.strip('_')}_")
-
-    # the gut sometimes holds what the wolf last ate: a common herb or a few bones.
-    loot: list[str] = []
-    if random.random() < 0.30:
-        from herbs import HERBS
-
-        common = [k for k, v in HERBS.items() if v.get("rarity") == "common" and not v.get("poison")]
-        if common:
-            item = db.get_item_by_key(f"herb_{random.choice(common)}")
-            if item:
-                db.grant_item(apprentice["discord_id"], item["id"], quantity=1)
-                loot.append(item["name"])
-    if random.random() < 0.20:
-        bones = random.randint(3, 8)
-        db.add_bones(apprentice["discord_id"], bones, wolf_id=apprentice["id"])
-        loot.append(f"{bones} bones")
-    if loot:
-        lines.append(f"(from the gut: **{', '.join(loot)}**)")
-    lines.append(grim.strip("\n"))
-
-    return True, "\n".join(lines)
+    lines.append(solemn.strip("\n"))
+    return True, True, "\n".join(lines)
 
 
 def get_last_dissect_day(apprentice) -> int:
