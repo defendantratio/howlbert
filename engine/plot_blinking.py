@@ -335,6 +335,18 @@ def plot_den_news_line(phase: int, day: int) -> str:
     return f"**the blinking** (phase {phase}, sunrise {day}); _{meta['news']}_"
 
 
+def next_blinking_prompt_line(guild_id: int, phase: int) -> str:
+    """The phase's rp scene prompt for this sunrise, walked in order (one per
+    rollover, restarting at the first prompt when the phase advances)."""
+    from engine.rp_prompts import BLINKING_PROMPTS
+
+    prompts = BLINKING_PROMPTS.get(phase)
+    if not prompts:
+        return ""
+    idx = db.next_plot_prompt_index(guild_id)
+    return f"**the blinking; scene prompt**: _{prompts[idx % len(prompts)]}_"
+
+
 def plot_status_fields(world) -> list[tuple[str, str, bool]]:
     phase = int(world["plot_phase"]) if "plot_phase" in world.keys() else 0
     if phase <= 0:
