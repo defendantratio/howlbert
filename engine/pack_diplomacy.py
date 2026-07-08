@@ -121,17 +121,17 @@ def share_territory(
     if not ok_rel:
         return False, rel_err
 
-    if db.pack_diplomacy_done_today(guild_id, pack["id"], target["id"], "share", day):
-        return False, (
-            f"you already shared territory with **{target['name']}** this sunrise; "
-            "try again after the next rollover."
-        )
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    share_mult, share_n = next_use_multiplier(user, "share_territory", day)
 
     terr_name = _shared_territory_name(guild_id, pack["id"], target["id"])
     db.record_pack_diplomacy(guild_id, pack["id"], target["id"], "share", day)
-    new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], 1)
+    standing_gain = max(1, int(1 * share_mult))
+    new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(SHARE_FLAVORS).format(territory=terr_name, pack=target["name"])
-    return True, f"{flavor}\n\nstanding **+1** with **{target['name']}** (now **{new_standing}/10**)."
+    dim = f" _{diminishing_note(share_n)}_" if share_n > 1 else ""
+    return True, f"{flavor}\n\nstanding **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"
 
 
 def aid_rival_pack(
@@ -156,16 +156,17 @@ def aid_rival_pack(
     if not war:
         return False, f"**{target['name']}** isn't fighting an active territory war right now."
 
-    if db.pack_diplomacy_done_today(guild_id, pack["id"], target["id"], "aid", day):
-        return False, (
-            f"you already sent aid to **{target['name']}** this sunrise."
-        )
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    aid_mult, aid_n = next_use_multiplier(user, "aid_rival_pack", day)
 
     db.record_pack_diplomacy(guild_id, pack["id"], target["id"], "aid", day)
-    new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], 2)
+    standing_gain = max(1, int(2 * aid_mult))
+    new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(AID_FLAVORS).format(pack=target["name"])
     war_note = f"_they contest **{war['territory_name']}**._"
+    dim = f" _{diminishing_note(aid_n)}_" if aid_n > 1 else ""
     return True, (
         f"{flavor}\n{war_note}\n\n"
-        f"standing **+2** with **{target['name']}** (now **{new_standing}/10**)."
+        f"standing **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"
     )

@@ -167,7 +167,7 @@ def _verge_risk_note(
 
 def try_verge_forage(interaction, site: str = "roadside"):
     from engine.herb_habitat import herbs_for_verge
-    from engine.role_privileges import can_verge_forage_again
+    from engine.role_privileges import is_full_forager
 
     user = db.get_user(interaction.user.id)
     if not user:
@@ -185,12 +185,12 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     world = db.get_world(guild_id)
     day = world["day_number"]
-    if not can_verge_forage_again(user, day):
-        return howlbert_embed(
-            "already edged",
-            "you've foraged the **verge** this sunrise; territory forage is separate (`/field action:forage`).",
-            color=ERROR_COLOR,
-        ), None
+
+    from engine.diminishing import use_count_today, record_use
+    # full foragers ignore the climb; everyone else faces a rising dc on
+    # repeat verge-forages in one sunrise, instead of a hard block.
+    verge_repeat = 0 if is_full_forager(user) else use_count_today(user, "verge_forage", day)
+    record_use(user, "verge_forage", day)
 
     from engine.forager_perk import grant_forager_auto_herb
 
@@ -210,10 +210,11 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     season_mod = season_forage_dc_mod(world["season"])
-    dc = spec["dc"] + season_mod
+    dc = spec["dc"] + season_mod + 3 * verge_repeat
+    repeat_note = f"; repeat edge-forage today (dc +{3 * verge_repeat})" if verge_repeat else ""
     season_suffix = (
-        f"\n_{season_forage_modifier_label(world['season'])} · effective dc **{dc}**._"
-        if season_mod
+        f"\n_{season_forage_modifier_label(world['season'])} · effective dc **{dc}**{repeat_note}._"
+        if season_mod or verge_repeat
         else f"\n_effective dc **{dc}**._"
     )
     proficient = spec["skill_key"] in profs or "herblore" in profs

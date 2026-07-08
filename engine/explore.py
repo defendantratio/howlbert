@@ -229,21 +229,12 @@ def try_explore(
     spec = EXPLORE_ACTIONS.get(action)
     if not spec:
         return howlbert_embed("unknown action", "pick dig, follow, or investigate.", color=ERROR_COLOR), None
-    from engine.role_privileges import can_explore_again, is_scout
+    from engine.role_privileges import is_scout
 
-    if not can_explore_again(user, day):
-        hint = (
-            "Scouts may **`/explore`** or **`/scout rescout`** again this sunrise."
-            if is_scout(user)
-            else "Resets next sunrise · check **`/checklist`**"
-        )
-        embed = howlbert_embed(
-            "already explored",
-            f"you've ranged out this sunrise.\n\n_{hint}_",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="/checklist · scouts: unlimited explore & rescout")
-        return embed, None
+    from engine.diminishing import use_count_today
+    # scouts range unlimited; everyone else faces a climbing dc on repeat
+    # explores in one sunrise, instead of a hard once-per-sunrise block.
+    explore_repeat = 0 if is_scout(user) else use_count_today(user, "explore", day)
 
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
 
@@ -263,11 +254,15 @@ def try_explore(
         )
         return embed, enc_id
 
+    from engine.diminishing import record_use
+
+    record_use(user, "explore", day)
+
     profs = parse_proficiencies(user["skill_proficiencies"])
     skill_key = spec["skill"].lower()
     from config import SCOUT_EXPLORE_DC_BONUS
 
-    explore_dc = max(5, spec["dc"] - (SCOUT_EXPLORE_DC_BONUS if is_scout(user) else 0))
+    explore_dc = max(5, spec["dc"] - (SCOUT_EXPLORE_DC_BONUS if is_scout(user) else 0) + 3 * explore_repeat)
     result = resolve_check(
         user,
         attr_keys=spec["attrs"],
@@ -306,7 +301,7 @@ def try_explore(
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="today's explore is spent · `/playpen` · `/food`")
+        embed.set_footer(text="repeats today cost a higher dc · `/playpen` · `/food`")
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
@@ -322,7 +317,7 @@ def try_explore(
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text="today's explore is spent · hazards still find you in the brush")
+        embed.set_footer(text="repeats today cost a higher dc · hazards still find you in the brush")
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 

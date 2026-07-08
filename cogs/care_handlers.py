@@ -226,7 +226,7 @@ async def treat(
         if required_method is None:
             required_method = DEFAULT_METHOD_REQS.get(disease_key)
 
-        if required_method and required_method in ('poultice', 'tea', 'decoction', 'tonic', 'ointment'):
+        if required_method and required_method in ('poultice', 'tea', 'ointment'):
             # check if the user already has a prepared version in the den store or personal stacks
             has_prepared = False
             pack_id = int(user['pack_id']) if ('pack_id' in user.keys() and user['pack_id']) else None

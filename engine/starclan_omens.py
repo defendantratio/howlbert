@@ -38,14 +38,6 @@ STARCLAN_RECEIVE_OMENS = (
 )
 
 
-def rest_omen_available(user, day: int) -> bool:
-    """Once per sunrise for `/world action:omen`."""
-    if not user or not day:
-        return True
-    last = int(user["last_rest_omen_day"]) if "last_rest_omen_day" in user.keys() else 0
-    return last < day
-
-
 def mark_rest_omen(user, day: int) -> None:
     import database as db
 

@@ -883,16 +883,6 @@ async def execute_read(interaction: discord.Interaction) -> None:
     world = db.get_world(interaction.guild.id)
     day = int(world["day_number"])
 
-    if int(user["last_sign_read_day"]) >= day:
-        embed = howlbert_embed(
-            "already answered",
-            "you've already read and answered the den's signs this sunrise.",
-            color=ERROR_COLOR,
-        )
-        embed.set_footer(text="resets next sunrise · /checklist")
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-        return
-
     signal = db.get_readable_pack_signal(interaction.guild.id, pack_id, day, user["id"])
     if not signal:
         await interaction.response.send_message(
@@ -905,23 +895,30 @@ async def execute_read(interaction: discord.Interaction) -> None:
         )
         return
 
+    from engine.diminishing import diminishing_note, next_use_multiplier
+
+    read_mult, read_n = next_use_multiplier(user, "sign_read", day)
+
     info = SIGNAL_CATALOG.get(signal["signal_key"], {"name": signal["signal_key"]})
     signaler = db.get_user_by_id(int(signal["signaler_id"]))
     signaler_name = signaler["wolf_name"] if signaler else "a denmate"
 
-    your_mood = db.adjust_mood(user["id"], SIGN_READ_MOOD)
+    mood_gain = max(1, int(SIGN_READ_MOOD * read_mult))
+    your_mood = db.adjust_mood(user["id"], mood_gain)
     lines = [
         f"**{user['wolf_name']}** reads **{signaler_name}**'s **{info['name']}** and answers in kind.",
-        f"**+{SIGN_READ_MOOD} mood** → **{your_mood}**.",
+        f"**+{mood_gain} mood** → **{your_mood}**.",
     ]
-    fields: list[tuple[str, str]] = [("Mood", f"+{SIGN_READ_MOOD}")]
+    fields: list[tuple[str, str]] = [("Mood", f"+{mood_gain}")]
 
     if signal["signal_key"] == "rally":
-        db.adjust_pack_unity(pack_id, SIGN_READ_RALLY_UNITY)
-        kick = db.adjust_wolf_standing(interaction.user.id, SIGN_READ_STANDING)
-        lines.append(f"you join the rally; den unity **+{SIGN_READ_RALLY_UNITY}**.")
-        fields.append(("den unity", f"+{SIGN_READ_RALLY_UNITY}"))
-        fields.append(("standing", _standing_field(kick, SIGN_READ_STANDING)))
+        unity_gain = max(1, int(SIGN_READ_RALLY_UNITY * read_mult))
+        standing_gain = max(1, int(SIGN_READ_STANDING * read_mult))
+        db.adjust_pack_unity(pack_id, unity_gain)
+        kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
+        lines.append(f"you join the rally; den unity **+{unity_gain}**.")
+        fields.append(("den unity", f"+{unity_gain}"))
+        fields.append(("standing", _standing_field(kick, standing_gain)))
 
     db.mark_signal_responded(int(signal["id"]), user["id"])
     db.update_user(interaction.user.id, last_sign_read_day=day)
@@ -929,5 +926,6 @@ async def execute_read(interaction: discord.Interaction) -> None:
     embed = howlbert_embed("sign · read", "\n".join(lines), color=SUCCESS_COLOR)
     for name, value in fields:
         embed.add_field(name=name, value=value, inline=True)
-    embed.set_footer(text="once per sunrise · /checklist")
+    dim = diminishing_note(read_n)
+    embed.set_footer(text=f"{dim} · /checklist" if dim else "/checklist")
     await interaction.response.send_message(embed=embed)

@@ -10,13 +10,9 @@ import database as db
 # order longest-first so substrings don't shadow longer suffixes (simmered_milk before milk)
 _FORM_SUFFIXES = (
     "_simmered_milk",
-    "_decoction",
     "_poultice",
-    "_infusion",
     "_ointment",
     "_cooked",
-    "_chewed",
-    "_tonic",
     "_juice",
     "_dried",
     "_tea",

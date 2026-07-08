@@ -53,7 +53,7 @@ class Explore(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (scouts: unlimited · others once per sunrise).')
+    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (scouts: unlimited · others: dc climbs).')
     @app_commands.describe(action='what you try in the wild')
     @app_commands.choices(action=[app_commands.Choice(name='🕳️ dig', value='dig'), app_commands.Choice(name='👃 follow scent', value='follow'), app_commands.Choice(name='🔍 investigate', value='investigate')])
     async def explore(self, interaction: discord.Interaction, action: str):
@@ -172,9 +172,7 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play', msg, color=color)
         if ok:
-            embed.set_footer(text='/playpen action:toys · once per sunrise · /checklist')
-        elif day is not None and 'already played' in msg.lower():
-            embed.set_footer(text='/playpen action:socialize · /checklist')
+            embed.set_footer(text='/playpen action:toys · play again while uses last · /checklist')
         await interaction.response.send_message(embed=embed)
 
     async def _socialize(self, interaction: discord.Interaction, wolf: discord.Member | None=None, own_wolf: str | None=None, *, wolf_name: str | None=None):
@@ -248,9 +246,9 @@ class Explore(commands.Cog):
         result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day, cross_pack=cross_pack, season = world["season"] if "season" in world.keys() else None)
         color = SUCCESS_COLOR if result['success'] else ERROR_COLOR
         embed = howlbert_embed('Socialize', result['body'], color=color)
-        footer = '/bonds · once per sunrise · /checklist'
+        footer = '/bonds · repeats pay less this sunrise · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · once per sunrise'
+            footer = '/bonds · cross-pack; no den unity change · repeats pay less this sunrise'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -304,20 +302,16 @@ class Explore(commands.Cog):
             if sg_flea_key == 'fleas' and _sg_rand.random() < 0.30:
                 db.set_user_conditions(user['discord_id'], clear_disease=True, wolf_id=user['id'])
                 flea_note = '\n_careful grooming cleared the fleas._'
-            # no cooldown: the first self-groom each sunrise lifts mood; grooming
-            # again still clears fleas but the coat is already clean, so there is
-            # nothing left to soothe (diminishing returns, not a block).
-            already_groomed = int(user['last_groom_day']) >= sg_day
-            if already_groomed:
-                mood_bit = 'your coat is already clean; there is little left to soothe.'
-                sg_embed = howlbert_embed('Self-Groom', f"you work through your coat again. {mood_bit}{flea_note}", color=SUCCESS_COLOR)
-                sg_embed.set_footer(text='mood lifts once per sunrise; fleas can always be worked out')
-                await interaction.response.send_message(embed=sg_embed)
-                return
+            # no cooldown: repeats the same sunrise pay less mood, not a block;
+            # fleas can always be worked out regardless of repeat.
+            from engine.diminishing import diminishing_note, next_use_multiplier
+            sg_mult, sg_n = next_use_multiplier(user, 'self_groom', sg_day)
             db.update_user(interaction.user.id, last_groom_day=sg_day)
-            sg_mood_gain = 3
+            sg_mood_gain = max(1, int(3 * sg_mult))
             sg_new_mood = db.adjust_mood(user['id'], sg_mood_gain)
-            sg_embed = howlbert_embed('Self-Groom', f"you work through your own coat, pulling burrs and mites. mood **+{sg_mood_gain}** (now {sg_new_mood}).{flea_note}", color=SUCCESS_COLOR)
+            sg_dim = diminishing_note(sg_n)
+            sg_dim_note = f'\n_{sg_dim}_' if sg_dim else ''
+            sg_embed = howlbert_embed('Self-Groom', f"you work through your own coat, pulling burrs and mites. mood **+{sg_mood_gain}** (now {sg_new_mood}).{flea_note}{sg_dim_note}", color=SUCCESS_COLOR)
             sg_embed.set_footer(text='/checklist · groom a packmate: /playpen groom @player')
             await interaction.response.send_message(embed=sg_embed)
             return
@@ -387,9 +381,9 @@ class Explore(commands.Cog):
         hoard_caught = try_catch_hoarder_on_groom(user, partner)
         hoard_line = f'\n\n{hoard_caught}' if hoard_caught else ''
         embed = howlbert_embed('Groom', f"You work burrs from **{partner['wolf_name']}**'s coat; **+{mood_gain} mood** each.\nYour mood: **{your_mood}** · Theirs: **{their_mood}**" + (f'\nThey gain **+{heal} HP** from the care.' if heal else '') + unity_line + spread_line + soothe_line + bond_line + hoard_line, color=SUCCESS_COLOR)
-        footer = '/bonds · once per sunrise · /checklist'
+        footer = '/bonds · repeats pay less this sunrise · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · once per sunrise'
+            footer = '/bonds · cross-pack; no den unity change · repeats pay less this sunrise'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -409,7 +403,7 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play All', msg, color=color)
         if ok:
-            embed.set_footer(text='alpha · once per sunrise · /checklist')
+            embed.set_footer(text='alpha · repeats pay less this sunrise · /checklist')
         elif not ok:
             embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
@@ -466,7 +460,7 @@ class Explore(commands.Cog):
         embed.set_footer(text='disguise lasts one sunrise · failing costs standing · /sniff')
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='gossip', description='plant a damaging rumor about another wolf. once per sunrise. backfires if traced.')
+    @app_commands.command(name='gossip', description='plant a damaging rumor about another wolf. riskier each repeat this sunrise. backfires if traced.')
     @app_commands.describe(target='the wolf whose reputation you want to undermine', own_wolf='your other wolf to whisper against', target_wolf_name="specific wolf from target's roster")
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf_name=_target_wolf_name_autocomplete)
     async def gossip(self, interaction: discord.Interaction, target: discord.Member | None = None, own_wolf: str | None = None, target_wolf_name: str | None = None):
@@ -478,7 +472,8 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        from engine.diminishing import record_use as _rec_whisper
+        from engine.diminishing import use_count_today as _whisper_count_today, record_use as _rec_whisper
+        gossip_repeat = _whisper_count_today(user, 'whisper', day)
         _rec_whisper(user, 'whisper', day)
         if target and own_wolf:
             await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **target** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -510,7 +505,7 @@ class Explore(commands.Cog):
         db.update_user(interaction.user.id, last_whisper_day=day)
         attacker_roll = roll_d20() + attr_modifier(int(user.get('attr_cha') or 1))
         victim_standing = int(victim.get('standing') or 0)
-        dc = 10 + max(0, victim_standing // 3)
+        dc = 10 + max(0, victim_standing // 3) + 2 * gossip_repeat
         success = attacker_roll >= dc
         import random
         if success:
@@ -536,7 +531,7 @@ class Explore(commands.Cog):
             body += f"\n\nYour standing **−1**; caught in the act. rolled **{attacker_roll}** vs dc **{dc}**."
             color = ERROR_COLOR
         embed = howlbert_embed('Whisper Campaign', body, color=color)
-        embed.set_footer(text='once per sunrise · /gossip · standing game · /rivals')
+        embed.set_footer(text='riskier each repeat this sunrise · /gossip · standing game · /rivals')
         await interaction.response.send_message(embed=embed)
 
 async def setup(bot: commands.Bot):
