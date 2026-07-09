@@ -6228,11 +6228,11 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
                 needs_crisis.setdefault("season_notes", []).append(
                     f"the den has weathered another winter; **{survivors}** wolves carry that resilience forward."
                 )
-        if new_season == "spring":
-            with get_db() as conn:
-                courtship_notes = apply_courtship_pressure_on_season_change(conn)
-            for _pack_id, note in courtship_notes:
-                needs_crisis.setdefault("season_notes", []).append(note)
+        # courtship pressure applies on every season change (breeding is year-round).
+        with get_db() as conn:
+            courtship_notes = apply_courtship_pressure_on_season_change(conn)
+        for _pack_id, note in courtship_notes:
+            needs_crisis.setdefault("season_notes", []).append(note)
     with get_db() as conn:
         calcify_old_rivalries_on_rollover(conn, new_day)
         decay_idle_bonds_on_rollover(conn, new_day)
@@ -11407,10 +11407,9 @@ _LEGEND_MARKER = "[legend]"
 
 def apply_courtship_pressure_on_season_change(conn) -> list[tuple[int, str]]:
     """
-    Called when a new season begins and that season is spring; a den with
-    fewer than COURTSHIP_PRESSURE_MIN_PAIRS breeding-age mated pairs feels
-    real anxiety about its future as the only season pups can realistically
-    arrive in (63-day gestation) opens up, and loses a touch of unity.
+    Called on every season change; a den with fewer than
+    COURTSHIP_PRESSURE_MIN_PAIRS breeding-age mated pairs feels real anxiety
+    about its future (breeding is year-round) and loses a touch of unity.
     Operates on the rollover's own connection to avoid a nested-connection
     deadlock. Returns a list of (pack_id, note) for each pack hit.
     """
@@ -11461,7 +11460,7 @@ def apply_courtship_pressure_on_season_change(conn) -> list[tuple[int, str]]:
         )
         notes.append((
             pack["id"],
-            f"spring nears and **{pack['name']}** has only **{pair_count}** breeding-age "
+            f"the season turns and **{pack['name']}** has only **{pair_count}** breeding-age "
             f"pair{'s' if pair_count != 1 else ''}; the den murmurs about its future. "
             f"unity **-{COURTSHIP_PRESSURE_UNITY_PENALTY}**.",
         ))

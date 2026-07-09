@@ -621,9 +621,8 @@ STRANGER_SCENT_MOOD_PENALTY = 3
 # A temporary injury left untreated long past its normal heal time doesn't
 # just sit there forever; it ages into a permanent long-term injury instead.
 CHRONIC_CONVERSION_MULTIPLIER = 3
-# As spring (the only season pups can realistically be born by, given the
-# 63-day gestation) nears, a den with too few breeding-age mated pairs feels
-# real anxiety about its future and loses a touch of unity.
+# On each season change, a den with too few breeding-age mated pairs feels
+# real anxiety about its future (breeding is year-round) and loses a touch of unity.
 COURTSHIP_PRESSURE_MIN_PAIRS = 2
 COURTSHIP_PRESSURE_UNITY_PENALTY = 2
 # The smallest pup in a large litter starts at a real disadvantage, but
