@@ -44,16 +44,15 @@ def hunts_remaining_today(user, day: int) -> int:
 
 
 def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
-    """Footer fragment for the hunt allotment. Hunting is never hard-capped; past
-    the allotment it just yields less, so the wording never implies a block."""
-    left = hunts_remaining_today(user, day)
-    if left <= 0:
-        core = "past your daily hunts; more still work but yield less"
-    else:
-        noun = "hunt" if left == 1 else "hunts"
-        core = f"{left} full-yield {noun} left this sunrise (more still work, at less)"
+    """Footer fragment: hunting is throttled by energy, not a cap. Shows the
+    wolf's energy and notes that hunters tire slower on the hunt."""
+    from engine.energy import current_energy
+    from config import ENERGY_MAX
+
+    energy = current_energy(user)
+    core = f"energy **{energy}/{ENERGY_MAX}**; each hunt tires you"
     if role_prefix and is_hunter(user):
-        return f"hunter: {core}"
+        return f"hunter: {core}, but you tire slower on the hunt"
     return core
 
 
