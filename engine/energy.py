@@ -156,14 +156,18 @@ def sync_energy(user) -> int:
     return new_energy
 
 
-def spend_energy(user, activity: str, *, discounted: bool = False) -> tuple[int, bool, str]:
+def spend_energy(user, activity: str, *, discounted: bool = False, cost: int | None = None) -> tuple[int, bool, str]:
     """
     Spend energy for ``activity``; always lets the action proceed. Credits the
     idle drip first, then spends. If there wasn't enough energy banked, applies
     an exhaustion+mood penalty instead of refusing the command, and restarts the
     idle clock. Returns (new_energy, had_enough, penalty_note).
+
+    ``cost`` overrides the per-activity cost (used for role-scaled costs like the
+    hunter's cheaper hunt); otherwise the ACTIVITY_COSTS/discounted rate is used.
     """
-    cost = energy_cost(activity, discounted=discounted)
+    if cost is None:
+        cost = energy_cost(activity, discounted=discounted)
     banked = sync_energy(user)
     had_enough = banked >= cost
     new_energy = db.adjust_energy(user["id"], -cost)

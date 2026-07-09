@@ -257,12 +257,14 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     blocked = _activity_block_embed(user, title="cannot hunt", day=day, action="hunt")
     if blocked:
         return blocked, False, None
-    # no hunt cap: hunt as often as you like, but each hunt past your daily
-    # allotment yields steadily less (diminishing returns, not a block) and
-    # every hunt spends energy (see engine.energy) on top of that.
+    # hunting is throttled by energy, not a cap: hunt as often as you like, each
+    # hunt spends energy (hunters spend less), and acting past empty costs
+    # exhaustion and mood. no diminishing-returns payout on hunt.
     from engine.energy import spend_energy as _spend_energy
+    from config import HUNT_ENERGY_COST, HUNT_ENERGY_COST_HUNTER
 
-    _, _hunt_had_energy, _hunt_energy_note = _spend_energy(user, "hunt")
+    _hunt_cost = HUNT_ENERGY_COST_HUNTER if is_hunter(user) else HUNT_ENERGY_COST
+    _, _hunt_had_energy, _hunt_energy_note = _spend_energy(user, "hunt", cost=_hunt_cost)
     if roll_large_prey_encounter(solo=True):
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
@@ -320,13 +322,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     amount = roll_hunt_amount()
     if amount > 0:
         amount += dex_bonus
-    # diminishing returns past the wolf's daily hunt allotment
-    from config import HUNTER_HUNTS_PER_SUNRISE
-    from engine.diminishing import multiplier_for_use as _hunt_dim
-    _free_hunts = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
-    _hunt_over = hunts_used_today(user, day) - _free_hunts + 1
-    if _hunt_over > 0 and amount > 0:
-        amount = max(1, int(amount * _hunt_dim(_hunt_over + 1)))
+    # no diminishing-returns payout on hunt; energy is the throttle now.
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
 
     # prayer bonus (set by /bones action:pray same day)

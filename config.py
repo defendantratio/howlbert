@@ -261,6 +261,11 @@ ENERGY_LONG_REST_GAIN = 35
 ENERGY_SHORT_REST_GAIN = 15
 ENERGY_EMPTY_EXHAUSTION_GAIN = 1
 ENERGY_EMPTY_MOOD_LOSS = 4
+# Hunting is throttled by energy, not a hard daily cap. Everyone can hunt until
+# they tire; hunters, the specialists, spend far less energy per hunt, so they
+# get many more hunts before running low (roughly ~11 vs ~5 on a full bar).
+HUNT_ENERGY_COST = 18
+HUNT_ENERGY_COST_HUNTER = 9
 # Real-time daytime drip; energy trickles back while a wolf is idle (not acting)
 # during the day, on top of the sunrise sleep. Coupled to hunger: a starving
 # wolf has no calories to spare, so regen (drip and sunrise) scales with hunger
