@@ -635,3 +635,81 @@ drop this on tumblr as a dev update. it reads like a changelog but leans on the 
 >
 > #warrior cats #wolf rp #warriors rp #wolf roleplay #ttrpg #discord bot #worldbuilding #devlog
 
+---
+
+## 21. traction troubleshooting + kickstarter readiness (researched, july 2026)
+
+this section answers three real questions: why the accounts are not gaining traction, how much traction to aim for before the kickstarter, and the current best practices per platform. it is grounded in 2025 to 2026 crowdfunding and indie-marketing data (sources at the end of the section).
+
+### 21a. why it is not gaining traction (and the fixes)
+
+almost every early account stalls for the same handful of reasons. diagnose against this list honestly.
+
+**1. you are broadcasting, not participating.** the single most repeated finding in the research: engagement has to come first. commenting, reblogging, and joining conversations in the wolf-rp and warriors community *before and alongside* posting is what gets a brand-new account seen. an account that only posts its own stuff is invisible; the algorithm and the community both reward the account that shows up in other people's replies and reblogs. **fix:** spend more time replying than posting. every day, reblog or comment on 5 to 10 wolf-rp / warriors / ttrpg posts as howlbert, adding something real, not "check out my bot."
+
+**2. you are spread too thin.** trying to keep five platforms alive at once burns you out and means none of them get the volume they need to catch. **fix:** pick one primary and one secondary, and go hard on those. for this audience the primary is tumblr (wolf-rp and warriors live there and posts get reblogged for months) and the secondary is tiktok (short clips are the cheapest reach). let the others idle or cross-post.
+
+**3. your posts read as announcements.** static "here is a feature" posts underperform badly. the research puts hard numbers on it: posts with interactive elements get ~150% more engagement than static announcements, and behind-the-scenes content gets ~58% more than standard promo. **fix:** lead with the brutal specific hooks and make posts *do* something. polls ("your wolf finds a rival pup alone at the border; what do they do?"), "reblog with your wolf's name and cause of death," screenshots of a real brutal moment, dev-log peeks. the pinned mechanic hooks (no cure for river rot; three failed death saves and they are gone) are your best cold-open every time.
+
+**4. you are not using each platform's discovery engine.** organic reach is throttled everywhere; you have to feed the discovery mechanic. on tumblr that is the first five tags (only those are searchable). on tiktok it is trending sounds and hooking the first two seconds. on bluesky it is starter packs and feeds. posting without these is posting into the void. **fix:** every post uses the platform's discovery levers, not generic hashtags.
+
+**5. you are measuring the wrong thing.** follower count is a vanity metric; the research is blunt that social followers convert to backers at only ~2%, while email signups convert at ~5% and *kickstarter page pre-launch follows* at 15% to 30%. an account with 200 highly-engaged followers who reblog and join the discord is worth more than 2,000 passive ones. **fix:** measure discord joins, wolves registered, email/"notify me" signups, and kickstarter follows, not raw followers.
+
+**6. patience.** marketing is a marathon; early posts reach a handful of people, and that is normal. what matters is whether they reach *the right* handful (rebloggers, tastemakers, active rp-ers). keep volume up, keep experimenting, and give it months, not weeks.
+
+### 21b. how much traction to aim for before the kickstarter
+
+**stop chasing the "10,000 followers" rule.** it is quoted everywhere but it is a raw-social vanity target. the number that actually predicts funding is **kickstarter pre-launch page followers** (the "notify me on launch" follow button on your campaign page), because those people opted in specifically for *this* project and convert at 15% to 30%.
+
+grounded tabletop / small-project benchmarks:
+
+- **~1,000 quality kickstarter pre-launch followers** is the number associated with funding a ~$100k campaign and hitting the goal inside the first 24 hours. ~2,000 tracks to ~$175k.
+- for a **modest first campaign** (a few hundred backers, a realistic goal for a solo discord-bot project), aim for **500 to 1,000 kickstarter pre-launch followers plus a "notify me" email list in the low hundreds.** at a 15% to 30% conversion that is your funded core on day one, and day-one momentum is what pulls in the other ~70% of backers who were never pre-launch followers.
+- the first 100 followers are the most loyal and convert best; do not discount a small, hot list.
+
+so the real readiness checklist is not a follower number, it is:
+
+1. a **kickstarter pre-launch page is live** and you are driving every bit of reach to its follow button (do this early; it is the metric that matters).
+2. **500 to 1,000 pre-launch follows** and/or a few hundred email/notify signups.
+3. the **discord grows on its own** (people join and register wolves without you dragging them in) which proves the funnel converts.
+4. **at least one platform where posts reliably get real engagement** (reblogs / comments / shares), not just impressions.
+5. an **8 to 10 week dedicated pre-launch push** before you hit go, inside a ~6 month total runway.
+
+if those are true, launch. if you are sitting at near-zero engagement, the fix is section 21a, not "post more announcements."
+
+### 21c. best practices per platform (2025 to 2026)
+
+**tumblr (primary for this audience).**
+- warriors and wolf-rp culture lives here and posts get reblogged for months, so a single good lore post has a very long tail.
+- first five tags only are searchable; use the exact community tags (#warrior cats, #wolf rp, #warriors rp, #wolf roleplay, #ttrpg).
+- reblog and reply inside the community daily; tumblr rewards being a participant, not a billboard.
+- long-form works: a 500 to 1000 word lore essay or a mechanic explainer reblogs well. gifsets and rp screenshots travel.
+- use the native queue to stay consistent without daily scrambling.
+
+**tiktok (secondary; cheapest reach).**
+- the algorithm favors authentic, creative, low-polish content over ads; short gameplay/dev clips and behind-the-scenes perform best.
+- hook in the first two seconds, ride a trending sound, keep it under ~30 seconds to start.
+- do not launch it until you have a week of clips queued; consistency matters more than production value.
+
+**bluesky (good for narrative / adult rp overlap).**
+- get onto and build starter packs and custom feeds; that is the discovery mechanic.
+- more narrative and text-friendly than twitter; lore snippets and dev threads do well.
+- overlaps heavily with the tumblr crowd, so cross-post lore there.
+
+**instagram / reels (only when you have video).**
+- visual-first; pull the same clips you cut for tiktok. reels are the reach engine, the feed is the portfolio.
+- link-in-bio to the carrd/link hub since ig kills in-post links.
+
+**twitter / x (optional, declining for this niche).**
+- fine for ttrpg and discord-bot discovery and quick clips, but do not prioritize it over tumblr/tiktok for a wolf-rp audience.
+
+**the highest-intent funnel (do not skip; this is where backers actually come from).**
+- list the server on **disboard** and **discadia**, and the bot on **top.gg**; these reach people who are *searching* for a wolf-rp discord right now, which converts far better than a cold scroll.
+- a **carrd/strawpage link hub** as the one bio link everywhere, pointing to discord + the kickstarter pre-launch page.
+
+### 21d. the one-line summary
+
+engagement before broadcasting; concentrate on tumblr + tiktok; measure discord joins / registrations / kickstarter follows instead of raw followers; and aim for **500 to 1,000 kickstarter pre-launch followers** (plus a small notify list and a self-growing discord) before you launch, not a five-figure follower count.
+
+**sources:** launchboom crowdfunding guide; pledgebox follower-to-backer; the city of games "how many followers to fund a kickstarter"; prelaunch.marketing conversion-rate data; enworld pre-launch-followers-vs-funded threads; 5wpr and questgamedev / indiegamebusiness indie-marketing guides (2025 to 2026).
+
