@@ -581,7 +581,7 @@ class Life(commands.Cog):
 
     @app_commands.command(name='courtship', description='court, mate, or check pregnancy status.')
     @app_commands.describe(action='court, mate, pregnancy, or rival', target='defender wolf (another player)', target_wolf="specific wolf from that player's roster (rival)", partner='challenger wolf (another player; default: you)', partner_wolf="specific wolf from that player's roster (court/mate)", rival_mode='physical pin or vocal howl (rival)', favor_challenger='receptive female favors challenger (+2)', own_wolf='one of your other wolves (court/mate)', difficulty='social difficulty (court)', respond='accept or decline pending request (mate)')
-    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (winter)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
+    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (mating access)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf=_target_wolf_autocomplete, partner_wolf=_partner_wolf_autocomplete)
     async def courtship(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', respond: str | None=None, rival_mode: str='physical', favor_challenger: bool=False, target_wolf: str | None=None, partner_wolf: str | None=None):
         if action == 'court':
@@ -809,10 +809,6 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
-            if world['season'] != 'spring':
-                embed = howlbert_embed('Wrong Season', 'Mating season ended before you could respond.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
             if partner_user['receptive_day'] < world['day_number']:
                 embed = howlbert_embed('Not Receptive', 'You are no longer receptive; they must `/courtship action:court` you again.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

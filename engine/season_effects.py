@@ -64,7 +64,6 @@ def season_activity_blurb(season: str) -> str:
     forage = season_forage_modifier_label(season)
     extras = {
         "spring": (
-            "Mating season; rival challenges common (`/courtship action:rival`). "
             "River crossings **+2 DC** (melt floods). Herbs plentiful (**−2** forage DC)."
         ),
         "summer": (

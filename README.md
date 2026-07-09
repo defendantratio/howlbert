@@ -88,7 +88,7 @@ after slash-command or cog changes, restart so discord picks up updates. `/ping`
 
 howlbert leans toward measurable, granular wolf-ecology effects over flavor text; every system below changes a number, not just a description.
 
-✦ **breeding season**: courtship and bonding work year-round, but conception only succeeds in **winter**; `/courtship action:mate` outside winter forms a bond with no pregnancy roll. rival challenges for mating access are also winter-only  
+✦ **breeding is year-round**: courtship, bonding, mating, and conception can happen in **any season**; `/courtship action:rival` contests mating access at any time  
 ✦ **inbreeding is taboo, not blocked** (as in wolvden): kin can mate, but any completed kin pairing turns the den on the elder (**−8 standing**, expulsion if it sinks them past the threshold) and scars the younger wolf (**−15 mood**, distressed, and a **fear of mating** for 7 sunrises that rolls their own courtship at disadvantage)  
 ✦ **inbreeding has a biological cost too**: a kin litter surfaces the family's hidden recessives far more often, carries a heavier mutation load, is far likelier to be born with **inbreeding depression**, and runs a real stillbirth risk; the closer the blood, the worse the odds  
 ✦ **pups and juveniles are still growing**: physical (str/dex/con) checks take a fading penalty (**−2** under 12 moons, **−1** through juvenile, **0** at adulthood), the mirror of the very-old elder drift; mental and social checks are unaffected  

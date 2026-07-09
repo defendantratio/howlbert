@@ -1,4 +1,4 @@
-"""Spring mating-season rival challenges for receptive females."""
+"""Mating-access rival challenges for receptive females."""
 
 from __future__ import annotations
 
