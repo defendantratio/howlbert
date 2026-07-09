@@ -328,7 +328,7 @@ def payout_collab_survey(
             standing_gain += injury_patrol_standing_bonus(user)
             db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        dim = f" _{diminishing_note(survey_n)}_" if survey_n > 1 else ""
+        dim = ""  # payouts no longer diminish; energy is the throttle
         if standing_delta:
             lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_gain}**{dim}")
         else:
@@ -399,7 +399,7 @@ def payout_collab_trail(
             bones = max(0, int(bones * trail_mult))
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        dim = f" _{diminishing_note(trail_n)}_" if trail_n > 1 else ""
+        dim = ""  # payouts no longer diminish; energy is the throttle
         lines.append(f"**{user['wolf_name']}** +{bones} bones{dim}")
 
     _mark_trail_done(users, day)
@@ -636,7 +636,7 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
         patrol_mult, patrol_n = next_use_multiplier(user, "war_patrol", day)
         pts = max(1, int(pts * patrol_mult))
         raw_points += pts
-        dim = f" _{diminishing_note(patrol_n)}_" if patrol_n > 1 else ""
+        dim = ""  # payouts no longer diminish; energy is the throttle
         lines.append(f"**{user['wolf_name']}** +{pts} pts{dim}")
 
     bonus_pct = (len(users) - 1) * COLLAB_PATROL_BONUS_PCT_PER_SCOUT if users else 0

@@ -53,7 +53,7 @@ class Explore(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (scouts: unlimited · others: dc climbs).')
+    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (spends energy; scouts tire slower).')
     @app_commands.describe(action='what you try in the wild')
     @app_commands.choices(action=[app_commands.Choice(name='🕳️ dig', value='dig'), app_commands.Choice(name='👃 follow scent', value='follow'), app_commands.Choice(name='🔍 investigate', value='investigate')])
     async def explore(self, interaction: discord.Interaction, action: str):
@@ -246,9 +246,9 @@ class Explore(commands.Cog):
         result = run_socialize(user, partner, pack_id=int(user['pack_id']), day=day, cross_pack=cross_pack, season = world["season"] if "season" in world.keys() else None)
         color = SUCCESS_COLOR if result['success'] else ERROR_COLOR
         embed = howlbert_embed('Socialize', result['body'], color=color)
-        footer = '/bonds · repeats pay less this sunrise · /checklist'
+        footer = '/bonds · spends energy · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · repeats pay less this sunrise'
+            footer = '/bonds · cross-pack; no den unity change · spends energy'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -381,9 +381,9 @@ class Explore(commands.Cog):
         hoard_caught = try_catch_hoarder_on_groom(user, partner)
         hoard_line = f'\n\n{hoard_caught}' if hoard_caught else ''
         embed = howlbert_embed('Groom', f"You work burrs from **{partner['wolf_name']}**'s coat; **+{mood_gain} mood** each.\nYour mood: **{your_mood}** · Theirs: **{their_mood}**" + (f'\nThey gain **+{heal} HP** from the care.' if heal else '') + unity_line + spread_line + soothe_line + bond_line + hoard_line, color=SUCCESS_COLOR)
-        footer = '/bonds · repeats pay less this sunrise · /checklist'
+        footer = '/bonds · spends energy · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · repeats pay less this sunrise'
+            footer = '/bonds · cross-pack; no den unity change · spends energy'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -403,7 +403,7 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play All', msg, color=color)
         if ok:
-            embed.set_footer(text='alpha · repeats pay less this sunrise · /checklist')
+            embed.set_footer(text='alpha · spends energy · /checklist')
         elif not ok:
             embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
@@ -472,8 +472,8 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        from engine.diminishing import use_count_today as _whisper_count_today, record_use as _rec_whisper
-        gossip_repeat = _whisper_count_today(user, 'whisper', day)
+        from engine.diminishing import record_use as _rec_whisper
+        # no climbing dc on repeat gossip; spreading rumors just spends energy.
         _rec_whisper(user, 'whisper', day)
         if target and own_wolf:
             await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **target** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
@@ -505,7 +505,7 @@ class Explore(commands.Cog):
         db.update_user(interaction.user.id, last_whisper_day=day)
         attacker_roll = roll_d20() + attr_modifier(int(user.get('attr_cha') or 1))
         victim_standing = int(victim.get('standing') or 0)
-        dc = 10 + max(0, victim_standing // 3) + 2 * gossip_repeat
+        dc = 10 + max(0, victim_standing // 3)
         success = attacker_roll >= dc
         import random
         if success:

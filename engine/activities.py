@@ -789,11 +789,9 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     blocked = _activity_block_embed(user, title="cannot forage")
     if blocked:
         return blocked
-    from engine.diminishing import use_count_today, record_use
-    from engine.role_privileges import is_full_forager
-    # full foragers are the gathering specialists; foraging never gets harder for
-    # them. everyone else faces a climbing dc on repeat forages in one sunrise.
-    _forage_repeat = 0 if is_full_forager(user) else use_count_today(user, "forage", day)
+    from engine.diminishing import record_use
+    # foraging has no per-sunrise cap or climbing dc; each forage just spends
+    # energy (foragers tire slower at it). energy is the sole throttle now.
     record_use(user, "forage", day)
     from engine.forager_perk import grant_forager_auto_herb
 
@@ -801,7 +799,7 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     forager_note = (
         f"\n\n_forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
     )
-    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"]) + 3 * _forage_repeat
+    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"])
     season_note = season_forage_modifier_label(world["season"])
     season_suffix = f"\n_{season_note}_" if season_forage_dc_mod(world["season"]) else ""
     profs = parse_proficiencies(user["skill_proficiencies"])

@@ -125,17 +125,13 @@ class Faction(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed("No Pack", "Faction actions require a Great Pack affiliation.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         flavor, delta, bonus_bones = try_faction_approach(user, faction, day=day)
-        from engine.diminishing import next_use_multiplier
-        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
+        from engine.diminishing import record_use
+        record_use(user, "faction_action", day)  # spends energy; no payout diminishing
         if delta > 0:
-            delta = max(1, int(delta * _fmult))
-            bonus_bones = int(bonus_bones * _fmult)
             from engine.plot_blinking import plot_faction_approach_bonus
             delta += plot_faction_approach_bonus(user, faction, interaction.guild.id)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
-        if _fn > 1:
-            flavor += "\n_the same overture, repeated in a day, wins less ground._"
         if bonus_bones > 0:
             db.add_bones(interaction.user.id, bonus_bones, wolf_id=user["id"])
         color = SUCCESS_COLOR if delta > 0 else ERROR_COLOR
@@ -175,14 +171,11 @@ class Faction(commands.Cog):
         if delta == 0:
             await interaction.response.send_message(embed=howlbert_embed("Trade Failed", flavor, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
-        from engine.diminishing import next_use_multiplier
-        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
-        if delta > 0:
-            delta = max(1, int(delta * _fmult))
+        from engine.diminishing import record_use
+        # tribute no longer diminishes on repeat; the throttle is energy.
+        record_use(user, "faction_action", day)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
-        if _fn > 1:
-            flavor += "\n_repeated tribute in one day is worth less._"
         embed = howlbert_embed(
             f"Trade; {faction_display_name(faction)}",
             flavor,
@@ -209,21 +202,20 @@ class Faction(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
         flavor, delta, caught = try_faction_raid(user, faction)
-        from engine.diminishing import next_use_multiplier
-        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
+        from engine.diminishing import record_use
+        record_use(user, "faction_action", day)  # spends energy; no payout diminishing
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
         if caught:
             for f in FACTIONS:
                 if f != faction:
                     db.adjust_faction_standing(gp, f, -1)
-        # a successful settlement raid can carry off livestock milk; a barn
-        # picked over again the same day has far less left to take
+        # a successful settlement raid can carry off livestock milk
         milk_note = ""
         if not caught and faction == "lowland_settlements":
             import random as _milk_rand
             milk_item = db.get_item_by_key("liquid_milk")
-            if milk_item and _milk_rand.random() < 0.6 * _fmult:
+            if milk_item and _milk_rand.random() < 0.6:
                 got = _milk_rand.randint(1, 2)
                 db.grant_item(interaction.user.id, milk_item["id"], got)
                 milk_note = f"you knock over a pail in the barn and carry off **{got}× milk**."
@@ -267,14 +259,10 @@ class Faction(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world["day_number"] if world else 1
         flavor, delta = try_faction_sabotage(user, faction, guild_id=interaction.guild.id, day=day)
-        from engine.diminishing import next_use_multiplier
-        _fmult, _fn = next_use_multiplier(user, "faction_action", day)
-        if delta < 0:
-            delta = min(-1, int(delta * _fmult))
+        from engine.diminishing import record_use
+        record_use(user, "faction_action", day)  # spends energy; no payout diminishing
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
-        if _fn > 1:
-            flavor += "\n_a second strike the same day lands softer; they are watching now._"
         color = SUCCESS_COLOR if delta <= -3 else ERROR_COLOR
         embed = howlbert_embed(
             f"Sabotage; {faction_display_name(faction)}",

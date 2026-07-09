@@ -75,7 +75,7 @@ class RoleCog(commands.Cog):
         rows = db.get_role_quests(interaction.user.id)
         if not rows:
             embed = howlbert_embed(f'Role Quests: {label}', 'No role quests available right now. You may have finished them all, or none are posted for your path yet.')
-            embed.set_footer(text='/role action:event · repeats pay less this sunrise')
+            embed.set_footer(text='/role action:event · spends energy')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed(f'Role Quests: {label}', 'Quests only your role can take; accepted automatically.')
@@ -173,7 +173,7 @@ class RoleCog(commands.Cog):
                 footer = footer[:253] + '…'
             embed.set_footer(text=footer)
         else:
-            embed.set_footer(text='/checklist · repeats pay less this sunrise')
+            embed.set_footer(text='/checklist · spends energy')
         await interaction.response.send_message(embed=embed)
 
     async def _prophecy(self, interaction: discord.Interaction):
@@ -271,7 +271,7 @@ class RoleCog(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Rank Dispute', msg, color=color)
         if ok:
-            embed.set_footer(text='shifts den feed priority · repeats pay less this sunrise')
+            embed.set_footer(text='shifts den feed priority · spends energy')
         await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
 
 def _skill_attrs(skill: str) -> tuple[str, ...]:

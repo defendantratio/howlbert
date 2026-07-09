@@ -26,7 +26,7 @@ from engine.hunt_combat import (
 )
 from engine.hunt_payout import grant_prey_carcass_canonical, hunt_flavor_for_payout, prey_key_for_payout
 from engine.injury_effects import hunt_blocked_by_injury
-from engine.role_privileges import can_hunt_again, hunts_left_footer, is_hunter, record_hunt_use
+from engine.role_privileges import hunts_left_footer, is_hunter, record_hunt_use
 from engine.role_restrictions import young_wolf_block
 from engine.sniff import apply_sniff_bone_bonus
 from engine.vitals import full_activity_block
@@ -69,8 +69,7 @@ def _hunt_block_reason(user, day: int) -> str | None:
     vitals = full_activity_block(user, day, action="hunt")
     if vitals:
         return vitals
-    if not can_hunt_again(user, day):
-        return "you've used your hunt(s) this sunrise."
+    # no hard hunt cap; pack hunts spend energy like solo hunts (hunters tire slower).
     if db.wolf_in_open_collab_hunt(user["id"]):
         return "this wolf is already in an open pack hunt."
     return None
@@ -215,8 +214,14 @@ def _compute_collab_base(users: list, *, fixed_base: int | None = None) -> tuple
 
 
 def _record_all_hunt_uses(users: list, day: int) -> None:
+    from engine.energy import spend_energy
+    from config import HUNT_ENERGY_COST, HUNT_ENERGY_COST_HUNTER
+
     for user in users:
         record_hunt_use(user["discord_id"], wolf_id=user["id"], day=day)
+        # a pack hunt tires each participant; hunters tire slower (energy, not a cap).
+        cost = HUNT_ENERGY_COST_HUNTER if is_hunter(user) else HUNT_ENERGY_COST
+        spend_energy(user, "hunt", cost=cost)
 
 
 def payout_collab_hunt(

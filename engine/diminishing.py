@@ -1,16 +1,15 @@
-"""Diminishing returns for repeatable actions.
+"""Per-sunrise use counters and the energy piggyback for repeatable actions.
 
-Replaces hard "already did this this sunrise" blocks with soft diminishing
-returns: a wolf may repeat an action as often as it likes, but each repeat in
-the same sunrise pays less. Respects player agency while keeping spam from being
-free. The only actions still hard-capped are the long rest (deliberate) and the
-definitionally-daily bones stipend.
+Historically this module also applied *diminishing returns*: each repeat of an
+action in the same sunrise paid less (or climbed a dc). That soft throttle has
+been fully retired in favour of a single, uniform throttle: **energy** (see
+engine.energy). Every recorded use still spends energy, and specialists tire
+slower at their signature craft, but payouts no longer shrink and there is no
+per-sunrise cap beyond the deliberate long rest and the daily bones stipend.
 
-Usage per site:
-    from engine.diminishing import next_use_multiplier
-    mult, count = next_use_multiplier(user, "forage", day)   # records the use
-    reward = max(1, int(base_reward * mult))                 # scale the payout
-    note = diminishing_note(count)                            # optional flavor
+The payout helpers below are kept as no-ops (returning full value) so existing
+call sites keep working unchanged; ``record_use`` / ``use_count_today`` remain
+live because they drive the energy spend and a couple of counters.
 
 Counts live in the ``daily_use_log`` JSON column: {activity: [day, count]}.
 """
@@ -20,19 +19,6 @@ from __future__ import annotations
 import json
 
 import database as db
-
-# multiplier for the Nth use of an action in one sunrise (1st, 2nd, 3rd, ...)
-# geometric-ish decay, floored so a repeat is never worthless (agency), never full
-_MULTIPLIERS = (1.0, 0.6, 0.4, 0.25, 0.15)
-_FLOOR = 0.1
-
-# Payout-diminishing is kept only for prey/forage gathering (an over-worked
-# stretch of land yields less). Every other repeatable action is throttled by
-# the energy system instead (see engine.energy), so its payout stays full and
-# the "tired repeat" note is suppressed.
-_YIELD_DIMINISHING = frozenset(
-    {"hunt", "forage", "verge_forage", "scavenge", "fishing", "track"}
-)
 
 
 def _load(user) -> dict:
@@ -55,21 +41,14 @@ def use_count_today(user, activity: str, day: int) -> int:
 
 
 def multiplier_for_use(n: int, activity: str | None = None) -> float:
-    """Payout multiplier for the (1-indexed) n-th use in a sunrise. Only
-    prey/forage activities diminish; everything else stays at full payout
-    (throttled by energy instead)."""
-    if activity is not None and activity not in _YIELD_DIMINISHING:
-        return 1.0
-    if n <= 0:
-        return 1.0
-    if n <= len(_MULTIPLIERS):
-        return _MULTIPLIERS[n - 1]
-    return _FLOOR
+    """Deprecated no-op: payouts no longer diminish (energy is the throttle).
+    Always returns full value; kept so old call sites need no change."""
+    return 1.0
 
 
 def _spend_activity_energy(user, activity: str) -> None:
-    """Every recorded action also spends energy (the game-wide throttle that
-    replaced diminishing returns on non-gathering actions)."""
+    """Every recorded action also spends energy; energy is the game-wide throttle
+    that replaced the old diminishing-returns/per-sunrise caps."""
     try:
         from engine.energy import spend_energy
 
@@ -93,17 +72,12 @@ def record_use(user, activity: str, day: int, *, spend_energy: bool = True) -> i
 
 
 def next_use_multiplier(user, activity: str, day: int) -> tuple[float, int]:
-    """Record this use and return (payout_multiplier, use_count). Non-gathering
-    actions report count 1 so the diminishing note stays hidden; their throttle
-    is energy, not a shrinking payout."""
+    """Record this use (spending energy) and return (1.0, use_count). The payout
+    multiplier is always full now; energy is the sole throttle."""
     count = record_use(user, activity, day)
-    if activity not in _YIELD_DIMINISHING:
-        return 1.0, 1
-    return multiplier_for_use(count, activity), count
+    return 1.0, count
 
 
 def diminishing_note(count: int) -> str:
-    """Player-facing note when a repeat pays less; empty for the first use."""
-    if count <= 1:
-        return ""
-    return "you have already done this today; the tired repeat yields less."
+    """Deprecated no-op: repeats no longer pay less, so there is no note."""
+    return ""
