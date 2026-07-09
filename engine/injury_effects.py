@@ -26,15 +26,16 @@ def has_paralysis(user) -> bool:
 
 
 def hunt_blocked_by_injury(user) -> str | None:
-    """Fractured ribs or paralysis rule out running, fighting prey, and long treks."""
+    """Only full paralysis (a severed spine) hard-blocks field work; a wolf that
+    physically cannot walk cannot hunt, patrol, or range.
+
+    A lesser **spinal injury** no longer blocks: the wolf may still go out but
+    drags a hurt back; its str/dex checks roll at disadvantage (see
+    ``injury_check_adjustments``), so pushing through it simply goes badly rather
+    than being forbidden."""
     if has_injury(user, "paralyzed"):
         return (
             "**paralyzed**: the spine is severed. you cannot leave the den for field commands."
-        )
-    if has_injury(user, "spinal_injury"):
-        return (
-            "**spinal injury**: hindquarters won't obey. rest and splint before hunting, "
-            "patrol, or ranging out."
         )
     return None
 
