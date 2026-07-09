@@ -44,10 +44,14 @@ def hunts_remaining_today(user, day: int) -> int:
 
 
 def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
-    """Footer fragment: N hunt(s) left this sunrise."""
+    """Footer fragment for the hunt allotment. Hunting is never hard-capped; past
+    the allotment it just yields less, so the wording never implies a block."""
     left = hunts_remaining_today(user, day)
-    noun = "hunt" if left == 1 else "hunts"
-    core = f"{left} {noun} left this sunrise"
+    if left <= 0:
+        core = "past your daily hunts; more still work but yield less"
+    else:
+        noun = "hunt" if left == 1 else "hunts"
+        core = f"{left} full-yield {noun} left this sunrise (more still work, at less)"
     if role_prefix and is_hunter(user):
         return f"hunter: {core}"
     return core
