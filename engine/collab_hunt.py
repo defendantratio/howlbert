@@ -284,12 +284,9 @@ def payout_collab_hunt(
         if lucky_bonus:
             parts.append(f"lucky +{lucky_bonus}")
         fresh = db.get_user(user["discord_id"])
-        from engine.activity_exhaustion import apply_activity_fatigue
-        from engine.role_privileges import hunts_used_today
+        from engine.strenuous_strain import apply_strenuous_strain
 
-        fatigue = apply_activity_fatigue(
-            fresh, "hunt", "hunting", day, activity_count=hunts_used_today(fresh, day)
-        )
+        fatigue = apply_strenuous_strain(fresh, day, "hunt")
         if fatigue:
             parts.append(fatigue.replace("**", ""))
         lines.append(" · ".join(parts))

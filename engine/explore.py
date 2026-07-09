@@ -272,11 +272,10 @@ def try_explore(
     )
 
     db.update_user(interaction.user.id, last_explore_day=day)
-    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+    from engine.activity_exhaustion import append_fatigue_to_footer
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    explore_fatigue = apply_activity_fatigue(
-        db.get_user(interaction.user.id), "explore", skill_key, day
-    )
+    explore_fatigue = apply_strenuous_strain(db.get_user(interaction.user.id), day, "explore")
 
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
@@ -456,16 +455,11 @@ def try_rescout(interaction) -> discord.Embed | None:
         game_day=day,
     )
     _record_rescout_use(interaction.user.id, day)
-    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
-    from engine.role_privileges import rescout_uses_today
+    from engine.activity_exhaustion import append_fatigue_to_footer
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    rescout_fatigue = apply_activity_fatigue(
-        db.get_user(interaction.user.id),
-        "rescout",
-        "survival",
-        day,
-        activity_count=rescout_uses_today(db.get_user(interaction.user.id), day),
-    )
+    # rescouting ranges the border like exploring; same strenuous strain applies.
+    rescout_fatigue = apply_strenuous_strain(db.get_user(interaction.user.id), day, "explore")
 
     pack_key = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else "loner"
     biome = BIOME_FLAVOR.get(pack_key, BIOME_FLAVOR["loner"])
