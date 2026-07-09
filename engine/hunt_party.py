@@ -50,8 +50,8 @@ def hunt_role_synergy(members: list) -> tuple[int, str]:
 
 
 def breeding_pair_hunt_bonus(users: list, *, season: str | None) -> tuple[int, str]:
-    """spring mating season: bonded male hunting beside pregnant mate sharpens the drive."""
-    if season != "spring" or len(users) < 2:
+    """a bonded male hunting beside his pregnant mate sharpens the drive (any season)."""
+    if len(users) < 2:
         return 0, ""
     party_ids = {u["id"] for u in users}
     for wolf in users:
@@ -62,7 +62,7 @@ def breeding_pair_hunt_bonus(users: list, *, season: str | None) -> tuple[int, s
         if not mate or not int(mate["is_pregnant"] if "is_pregnant" in mate.keys() else 0):
             continue
         if mate["id"] in party_ids:
-            return 4, "_breeding pair on the line; spring drive sharpens the hunt._"
+            return 4, "_breeding pair on the line; the drive to provide sharpens the hunt._"
     return 0, ""
 
 
