@@ -585,7 +585,7 @@ def trade_duplicates_wolf_pack_pact(
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_no goods this time._"
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
-    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
+    dim = ""  # payouts no longer diminish; energy is the throttle
     return True, (
         f"**{other_name}** scouts take your duplicate hoard at the neutral stone.\n"
         f"standing **+{standing_gain}** (now **{standing}/10**).\n\n"
@@ -654,7 +654,7 @@ def trade_food_wolf_pack_pact(
         entries = roll_wolf_pact_loot(other["key"], pact_type=treaty["pact_type"], count=loot_count)
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_they send nothing back this time._"
-    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
+    dim = ""  # payouts no longer diminish; energy is the throttle
     return True, (
         f"{flavor}\nstanding **+{standing_gain}** (now **{standing}/10**).\n\n"
         f"**you gave up:** {meta['name']} ({uses_left} use(s))\n\n"
@@ -695,7 +695,7 @@ def receive_wolf_pack_goods(
     db.update_user(user["discord_id"], last_wolf_receive_day=day, wolf_id=user["id"])
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
     body = "\n".join(f"• {line}" for line in lines)
-    dim = f"\n\n_{diminishing_note(receive_n)}_" if receive_n > 1 else ""
+    dim = ""  # payouts no longer diminish; energy is the throttle
     return True, (
         f"**{other_name}** left goods at the neutral stone (standing **{standing}**).\n\n"
         f"{body}{dim}\n\n_barter duplicates with `action:trade`_"

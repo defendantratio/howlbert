@@ -141,21 +141,21 @@ def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
 def forage_sunrise_footer(user, *, success_hint: bool = False) -> str:
     """Footer after a territory forage attempt (full foragers may go again)."""
     if is_full_forager(user):
-        base = "Forager · forage again this sunrise · fatigue still applies"
+        base = "forager · forage again this sunrise · you tire slower at it"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if is_forager(user):
-        base = "forager apprentice · forage again this sunrise; dc climbs each repeat"
+        base = "forager apprentice · forage again this sunrise; each forage spends energy"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if success_hint:
         return (
             "in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · "
-            "forage again this sunrise; dc climbs each repeat"
+            "forage again this sunrise; each forage spends energy"
         )
-    return "forage again this sunrise; dc climbs each repeat."
+    return "forage again this sunrise; each forage spends energy."
 
 
 def herb_heal_limit_reached(user) -> bool:
@@ -175,15 +175,11 @@ def treat_limit_reached(user) -> bool:
 def activity_cooldown_label(user, activity: str, *, ready: bool, day: int = 0) -> str:
     """Human label for /cooldowns; hunters and foragers show role perks."""
     if activity == "hunt":
-        left = hunts_remaining_today(user, day)
-        if left > 0:
-            cap = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
-            return f"ready ({left}/{cap} left)"
-        return "used"
-    if activity == "forage" and is_full_forager(user):
-        return "unlimited (forager)"
-    if activity == "explore" and is_scout(user):
-        return "unlimited (scout)"
+        return "ready (hunter: tires slower)" if is_hunter(user) else "ready (energy)"
+    if activity == "forage":
+        return "ready (forager: tires slower)" if is_full_forager(user) else "ready (energy)"
+    if activity == "explore":
+        return "ready (scout: tires slower)" if is_scout(user) else "ready (energy)"
     if activity == "rescout" and is_scout(user):
         return "unlimited (scout)"
     if activity == "treat" and is_medic(user):

@@ -111,7 +111,7 @@ aim for this weekly mix. it keeps the account from becoming all-promo or all-lor
 explain one system clearly and dramatically. these are your best top-of-funnel hooks.
 - "pain exhaustion is a separate pool from normal exhaustion in howlbert. a snake bite fills it. herbs like willow bark and poppy drain only that pool. your wolf can be too tired to move and too hurt to rest at the same time."
 - "injuries cut your hunt yield, not just your combat. a sprained leg hunts at a penalty; add a deep gash and it stacks, down to half. hurt wolves come home with less."
-- "there are almost no cooldowns in howlbert. hunt as many times as you want; each hunt in a sunrise just pays less. it respects your time and punishes greed instead of blocking you."
+- "there are almost no cooldowns in howlbert. hunt, forage, explore as many times as you want; every action just spends energy, and your wolf tires. it respects your time and models real stamina instead of blocking you with a 'come back tomorrow' wall."
 - "a broken jaw stops your wolf eating solid meat. you sip broth or milk to survive, but liquids never fully satisfy a carnivore, and a meat-free stretch risks wasting away."
 
 ### lore and world-building

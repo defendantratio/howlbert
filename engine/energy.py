@@ -82,6 +82,47 @@ def energy_cost(activity: str, *, discounted: bool = False) -> int:
     return ACTIVITY_COSTS.get(activity, ENERGY_COST_MED)
 
 
+# signature activities per role: a specialist tires slower at their own craft,
+# the way a hunter tires slower on the hunt. This is the discount that replaces
+# every old per-sunrise cap / diminishing-returns throttle (see engine.diminishing).
+_SIGNATURE_ACTIVITIES: dict[str, str] = {
+    "hunt": "hunter",
+    "forage": "forager",
+    "verge_forage": "forager",
+    "explore": "scout",
+    "survey": "scout",
+    "trail": "scout",
+    "track": "scout",
+    "sniff": "scout",
+}
+
+
+def _is_signature_specialist(user, activity: str) -> bool:
+    role = _SIGNATURE_ACTIVITIES.get(activity)
+    if not role:
+        return False
+    try:
+        from engine.role_privileges import is_hunter, is_forager, is_scout
+
+        return {"hunter": is_hunter, "forager": is_forager, "scout": is_scout}[role](user)
+    except Exception:
+        return False
+
+
+def activity_energy_cost(user, activity: str) -> int:
+    """Energy ``activity`` costs *this* wolf: the flat discounted rate on their
+    signature action (they tire slower at their own craft), else the base cost.
+    Hunting keeps its own dedicated hunter rate."""
+    if activity == "hunt":
+        from config import HUNT_ENERGY_COST, HUNT_ENERGY_COST_HUNTER
+        from engine.role_privileges import is_hunter
+
+        return HUNT_ENERGY_COST_HUNTER if is_hunter(user) else HUNT_ENERGY_COST
+    if _is_signature_specialist(user, activity):
+        return ENERGY_COST_DISCOUNTED
+    return ACTIVITY_COSTS.get(activity, ENERGY_COST_MED)
+
+
 def current_energy(user) -> int:
     """Raw stored energy (no idle-drip credit applied)."""
     if not user or "energy" not in user.keys() or user["energy"] is None:
@@ -167,7 +208,7 @@ def spend_energy(user, activity: str, *, discounted: bool = False, cost: int | N
     hunter's cheaper hunt); otherwise the ACTIVITY_COSTS/discounted rate is used.
     """
     if cost is None:
-        cost = energy_cost(activity, discounted=discounted)
+        cost = ENERGY_COST_DISCOUNTED if discounted else activity_energy_cost(user, activity)
     banked = sync_energy(user)
     had_enough = banked >= cost
     new_energy = db.adjust_energy(user["id"], -cost)

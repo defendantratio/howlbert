@@ -613,7 +613,7 @@ class Pack(commands.Cog):
                 embed.set_footer(text=relation_effect_text(rel))
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @pack.command(name='share', description='share hunting territory with a rival pack (+1 standing; repeats pay less).')
+    @pack.command(name='share', description='share hunting territory with a rival pack (+1 standing; spends energy).')
     @app_commands.describe(target_pack='greyspire, mistmoor, thistlehide, or silverrush')
     @app_commands.autocomplete(target_pack=_great_pack_autocomplete)
     async def pack_share(self, interaction: discord.Interaction, target_pack: str):

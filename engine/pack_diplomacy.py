@@ -130,7 +130,7 @@ def share_territory(
     standing_gain = max(1, int(1 * share_mult))
     new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(SHARE_FLAVORS).format(territory=terr_name, pack=target["name"])
-    dim = f" _{diminishing_note(share_n)}_" if share_n > 1 else ""
+    dim = ""  # payouts no longer diminish; energy is the throttle
     return True, f"{flavor}\n\nstanding **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"
 
 
@@ -165,7 +165,7 @@ def aid_rival_pack(
     new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(AID_FLAVORS).format(pack=target["name"])
     war_note = f"_they contest **{war['territory_name']}**._"
-    dim = f" _{diminishing_note(aid_n)}_" if aid_n > 1 else ""
+    dim = ""  # payouts no longer diminish; energy is the throttle
     return True, (
         f"{flavor}\n{war_note}\n\n"
         f"standing **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"
