@@ -1,17 +1,23 @@
-"""Repeated field activity fatigue; untrained wolves tire faster."""
+"""Strenuous field-activity bookkeeping.
+
+Historically this module applied a *second* throttle on top of energy: repeating
+a field action in one sunrise directly piled on exhaustion. That double-counted
+what the energy system already does, so the activity-driven exhaustion has been
+retired. Energy is now the single activity throttle (see engine.energy):
+
+  * each action spends energy (specialists tire slower at their craft), and
+  * acting once energy is empty is what adds exhaustion + mood.
+
+Exhaustion still comes from its real sources: running on empty, low
+hunger/hydration/mood at rollover, forced marches, and injuries; just not from a
+parallel per-activity counter. The lightweight counters below are kept because a
+short/long rest still clears them and a couple of call sites read them.
+"""
 
 from __future__ import annotations
 
-import sqlite3
-
 import database as db
-from config import ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD
 from engine.character import is_skill_proficient
-from engine.exhaustion_effects import (
-    EXHAUSTION_ACTIVITY_CAP,
-    EXHAUSTION_MAX,
-    consume_march_exhaustion_skip,
-)
 from engine.herb_buffs import buffs_json, get_buffs
 
 ACTIVITY_SKILL: dict[str, str] = {
@@ -65,39 +71,6 @@ def _fatigue_state(user, day: int) -> tuple[dict, dict, int]:
     return buffs, by_key, total
 
 
-def _db_activity_count(user, activity_key: str, day: int) -> int | None:
-    from engine.role_privileges import hunts_used_today, rescout_uses_today
-
-    if activity_key == "hunt":
-        return hunts_used_today(user, day)
-    if activity_key == "rescout":
-        return rescout_uses_today(user, day)
-    return None
-
-
-def _exhaustion_gain(activity_count: int, total_count: int, proficient: bool, current_ex: int) -> int:
-    gain = 0
-    if activity_count >= 2:
-        if proficient:
-            if activity_count == 3:
-                gain = 1
-            elif activity_count >= 4:
-                gain = 1 + (activity_count - 3) // 2
-        else:
-            if activity_count == 2:
-                gain = 1
-            elif activity_count == 3:
-                gain = 2
-            else:
-                gain = 2 + (activity_count - 3)
-    if total_count >= ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD and gain == 0:
-        gain = 1
-    elif total_count > ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD:
-        gain += 1
-    room = max(0, EXHAUSTION_ACTIVITY_CAP - current_ex)
-    return min(gain, room)
-
-
 def clear_activity_fatigue(user, day: int) -> None:
     """reset strenuous-activity counters after a rest break (short or long)."""
     if not user:
@@ -137,53 +110,10 @@ def apply_activity_fatigue(
     *,
     activity_count: int | None = None,
 ) -> str | None:
-    """Increment counters and apply exhaustion. Returns player-facing note or None."""
-    if not user:
-        return None
-    if activity_count is None:
-        db_count = _db_activity_count(user, activity_key, day)
-        if db_count is not None:
-            activity_count = db_count
-    activity_count, total_count = record_strenuous_activity(
-        user, activity_key, day, activity_count=activity_count
-    )
-    if activity_count < 2 and total_count < ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD:
-        return None
-
-    skill = skill_key or skill_for_activity(activity_key, user)
-    proficient = is_skill_proficient(user, skill)
-    current_ex = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
-    gain = _exhaustion_gain(activity_count, total_count, proficient, current_ex)
-    if gain <= 0:
-        return None
-
-    with db.get_db() as conn:
-        fresh = conn.execute(
-            "SELECT * FROM users WHERE id = ?",
-            (user["id"],),
-        ).fetchone()
-        if not fresh:
-            return None
-        gain, skipped = consume_march_exhaustion_skip(conn, fresh, gain)
-        if gain <= 0:
-            if skipped:
-                return "_burnet eases the worst of the strain; no exhaustion this time._"
-            return None
-        new_ex = min(EXHAUSTION_MAX, int(fresh["exhaustion"]) + gain)
-        db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_ex)
-
-    label = ACTIVITY_LABEL.get(activity_key, activity_key)
-    if activity_count >= 2:
-        if proficient:
-            reason = f"repeated {label} ({activity_count}×) without rest"
-        else:
-            reason = f"repeated {label} ({activity_count}×); you're not trained for this"
-    else:
-        reason = f"a full sunrise of fieldwork ({total_count} strenuous actions) catches up with you"
-    note = f"**+{gain} exhaustion**; {reason}"
-    if skipped:
-        note += " _(burnet softened the worst of it)_"
-    return note
+    """Retired: repeated field activity no longer adds exhaustion on top of the
+    energy it already spent (energy is the single throttle now). Always returns
+    None so the many call sites need no change and show no fatigue footer."""
+    return None
 
 
 def append_fatigue_to_footer(embed, note: str | None) -> None:

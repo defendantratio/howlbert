@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import database as db
 from engine.activity_exhaustion import (
-    _exhaustion_gain,
     apply_activity_fatigue,
     clear_activity_fatigue,
     record_strenuous_activity,
@@ -25,18 +24,8 @@ def check(name: str, cond: bool, detail: str = "") -> None:
         print(f" FAIL {name}" + (f" - {detail}" if detail else ""))
 
 
-def test_gain_formula() -> None:
-    print("\n=== exhaustion gain formula ===")
-    check("proficient 2nd hunt no gain", _exhaustion_gain(2, 2, True, 0) == 0)
-    check("untrained 2nd hunt +1", _exhaustion_gain(2, 2, False, 0) == 1)
-    check("proficient 3rd hunt +1", _exhaustion_gain(3, 3, True, 0) == 1)
-    check("untrained 4th hunt +3", _exhaustion_gain(4, 4, False, 0) == 3)
-    check("cross-activity pile at 4 total", _exhaustion_gain(1, 4, True, 0) == 1)
-    check("caps at exhaustion room", _exhaustion_gain(5, 5, False, 5) == 1)
-
-
-def test_hunt_repeat_applies_exhaustion() -> None:
-    print("\n=== hunt repeat applies exhaustion ===")
+def test_activity_fatigue_no_longer_stacks_on_energy() -> None:
+    print("\n=== repeated activity adds no exhaustion (energy is the throttle) ===")
     db.init_db()
     did = 999300001000000099
     with db.get_db() as conn:
@@ -52,14 +41,14 @@ def test_hunt_repeat_applies_exhaustion() -> None:
         )
     user = db.get_user(did)
     day = 42
-    record_hunt_use(did, wolf_id=user["id"], day=day)
-    note1 = apply_activity_fatigue(db.get_user(did), "hunt", "hunting", day, activity_count=1)
-    check("first hunt no fatigue note", note1 is None)
-    record_hunt_use(did, wolf_id=user["id"], day=day)
-    note2 = apply_activity_fatigue(db.get_user(did), "hunt", "hunting", day, activity_count=2)
-    check("second hunt untrained gains note", note2 is not None and "+1 exhaustion" in note2)
+    # even an untrained pup hunting repeatedly gains no activity-driven exhaustion;
+    # the only exhaustion source from acting is running the energy bar empty.
+    for n in (1, 2, 3, 4):
+        record_hunt_use(did, wolf_id=user["id"], day=day)
+        note = apply_activity_fatigue(db.get_user(did), "hunt", "hunting", day, activity_count=n)
+        check(f"hunt #{n} shows no fatigue note", note is None)
     updated = db.get_user(did)
-    check("exhaustion increased", int(updated["exhaustion"]) == 1, f"got {updated['exhaustion']}")
+    check("exhaustion unchanged by repeated hunts", int(updated["exhaustion"]) == 0, f"got {updated['exhaustion']}")
 
 
 def test_manual_long_rest_after_sunrise() -> None:
@@ -135,8 +124,7 @@ def test_record_strenuous_resets_on_new_day() -> None:
 
 
 def main() -> None:
-    test_gain_formula()
-    test_hunt_repeat_applies_exhaustion()
+    test_activity_fatigue_no_longer_stacks_on_energy()
     test_manual_long_rest_after_sunrise()
     test_short_rest_clears_activity_fatigue()
     test_record_strenuous_resets_on_new_day()
