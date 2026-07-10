@@ -905,7 +905,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "size_class" not in user_cols_needs:
         conn.execute("ALTER TABLE users ADD COLUMN size_class TEXT NOT NULL DEFAULT ''")
     conn.execute("UPDATE users SET disease = 'redscratch' WHERE disease = 'den_fever'")
-    conn.execute("UPDATE users SET disease = REPLACE(disease, 'distemper', 'hard_paw') WHERE disease LIKE '%distemper%'")
+    # 'hard_paw' was a stray alternate name for distemper (Weeping-Scale) that
+    # never matched the live DISEASES key; undo any wolves caught by the old
+    # (backwards) migration that used to rename distemper -> hard_paw here.
+    conn.execute("UPDATE users SET disease = REPLACE(disease, 'hard_paw', 'distemper') WHERE disease LIKE '%hard_paw%'")
 
     conn.execute(
         """
@@ -6109,6 +6112,18 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             mental_notes = apply_mental_illness_rollover(conn, new_day)
         if mental_notes:
             needs_crisis["mental_notes"] = mental_notes
+        with get_db() as conn:
+            from engine.chronic_conditions import apply_elder_chronic_on_rollover
+
+            elder_chronic_notes = apply_elder_chronic_on_rollover(conn)
+        if elder_chronic_notes:
+            needs_crisis["elder_chronic_notes"] = elder_chronic_notes
+        with get_db() as conn:
+            from engine.disease_contract import apply_physical_illness_rollover
+
+            physical_notes = apply_physical_illness_rollover(conn, new_day)
+        if physical_notes:
+            condition_notes.extend(physical_notes)
         from engine.exhaustion_effects import (
             apply_exhaustion_death_on_rollover,
             apply_mood_exhaustion_on_rollover,

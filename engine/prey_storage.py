@@ -123,6 +123,11 @@ def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
         new_pe = min(_PE_MAX, old_pe + 1)
         db.update_user(user["discord_id"], wolf_id=user["id"], pain_exhaustion=new_pe)
         overfull_note = "\n_gut already full; forcing it down adds **+1 pain exhaustion**._"
+        from engine.disease_contract import try_contract_disease
+
+        bloat_note = try_contract_disease(user, "bloat", "distension", chance=0.05)
+        if bloat_note:
+            overfull_note += f"\n{bloat_note}"
     db.set_user_conditions(
         user["discord_id"],
         wolf_id=user["id"],
@@ -158,6 +163,13 @@ def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
                 note = try_rotting_meat_exposure(user)
                 if note:
                     disease_note += f"\n{note}"
+    elif not forage:
+        from engine.disease_contract import try_contract_disease
+
+        if random.random() < 0.03:
+            note = try_contract_disease(user, "worms", "mild_burden", chance=1.0)
+            if note:
+                disease_note += f"\n{note}"
 
     uses_left = stack["uses_left"] - 1
     if uses_left <= 0:
