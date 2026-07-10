@@ -1696,6 +1696,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_lick_day INTEGER NOT NULL DEFAULT 0"
         )
+    if "lick_count_today" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN lick_count_today INTEGER NOT NULL DEFAULT 0"
+        )
     if "herb_use_log" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN herb_use_log TEXT NOT NULL DEFAULT '{}'"

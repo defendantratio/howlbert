@@ -159,7 +159,7 @@ class Rpg(commands.Cog):
 
     @app_commands.command(name='vitals', description='view conditions, rest, lick wounds, or escape quarantine.')
     @app_commands.describe(action='condition, rest, lick_wound, or escape_quarantine', rest_type='short or long rest (rest)', use_herb='use comfrey for short rest healing (rest)')
-    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (heal 1 hp; diminishing on repeat)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6 to 8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10 to 30 min)', value='short')])
+    @app_commands.choices(action=[app_commands.Choice(name='view conditions', value='condition'), app_commands.Choice(name='rest', value='rest'), app_commands.Choice(name='lick wound (heal 1 hp)', value='lick_wound'), app_commands.Choice(name='escape quarantine (dex roll, standing risk)', value='escape_quarantine')], rest_type=[app_commands.Choice(name='long rest (6 to 8 hours sleep)', value='long'), app_commands.Choice(name='short rest (10 to 30 min)', value='short')])
     async def vitals(self, interaction: discord.Interaction, action: str, rest_type: str='long', use_herb: bool=False):
         if action == 'condition':
             await self._condition(interaction)
@@ -348,36 +348,44 @@ class Rpg(commands.Cog):
         if not injuries:
             await interaction.response.send_message(embed=howlbert_embed('No Wounds', 'you have no active injuries to tend to.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
+        max_hp = int(user['max_hp']) if 'max_hp' in user.keys() else 10
+        current_hp = int(user['hp']) if 'hp' in user.keys() else max_hp
+
         import random
         world = db.get_world(interaction.guild_id)
         day = world['day_number'] if world else 1
         last_lick = int(user['last_lick_day']) if 'last_lick_day' in user.keys() else 0
-        max_hp = int(user['max_hp']) if 'max_hp' in user.keys() else 10
-        current_hp = int(user['hp']) if 'hp' in user.keys() else max_hp
-        # no cooldown: the first tending each sunrise heals; licking again only
-        # irritates the raw skin (diminishing returns), and over-licking can
-        # fester into a sore, so spamming it backfires instead of being blocked.
-        already_tended = last_lick >= day
-        if already_tended:
-            msg = 'you lick at the wounds again, but they are already tended; more licking only worries the raw skin.'
-            color = ERROR_COLOR
-            if 'infected_wound' not in injuries and random.random() < 0.15:
-                import json
-                from engine.conditions import add_injury
+        lick_count = int(user['lick_count_today']) if 'lick_count_today' in user.keys() else 0
+        lick_count = lick_count + 1 if last_lick == day else 1
+        db.update_user(interaction.user.id, wolf_id=user['id'], last_lick_day=day, lick_count_today=lick_count)
+
+        # wolf saliva has real antibacterial properties (lysozyme, opiorphin),
+        # so a lick or two is a genuine, harmless first-response instinct; but
+        # obsessive re-licking past that point starts introducing mouth
+        # bacteria and irritating the skin instead of helping it.
+        excess_note = ''
+        if lick_count > 2:
+            import json
+            from engine.conditions import add_injury
+
+            if 'infected_wound' not in injuries and random.random() < 0.20:
                 injuries = add_injury(injuries, 'infected_wound')
                 db.set_user_conditions(interaction.user.id, wolf_id=user['id'], active_injuries=json.dumps(injuries))
-                msg += ' licked raw, it festers; **infected wound**.'
-            embed = howlbert_embed('Lick Wound', msg, color=color)
-            embed.set_footer(text='/vitals action:condition · /medic action:treat')
-            await interaction.response.send_message(embed=embed)
-            return
-        db.update_user(interaction.user.id, wolf_id=user['id'], last_lick_day=day)
+                excess_note = '\n\n_licked raw and re-licked too many times; mouth bacteria work their way in. **infected wound**._'
+            else:
+                from engine.long_term_injuries import add_long_term_injury, parse_long_term_injuries
+
+                lt_entries = parse_long_term_injuries(user['long_term_injuries'] if 'long_term_injuries' in user.keys() else None)
+                if 'lick_granuloma' not in lt_entries and random.random() < 0.08:
+                    add_long_term_injury(user['id'], 'lick_granuloma')
+                    excess_note = '\n\n_obsessive licking wears the same spot raw over and over; it scars into **Raw-Lick**, a patch that won\'t fully close._'
+
         if current_hp >= max_hp:
-            await interaction.response.send_message(embed=howlbert_embed('Lick Wound', 'you work your tongue along each wound carefully. your hp is already full; the licking soothes but heals nothing new.', color=SUCCESS_COLOR))
+            await interaction.response.send_message(embed=howlbert_embed('Lick Wound', f'you work your tongue along each wound carefully. your hp is already full; the licking soothes but heals nothing new.{excess_note}', color=SUCCESS_COLOR))
             return
         new_hp = min(max_hp, current_hp + 1)
         db.set_user_conditions(interaction.user.id, wolf_id=user['id'], hp=new_hp)
-        embed = howlbert_embed('Lick Wound', f'you work your tongue carefully across each wound, cleaning dirt and slowing the bleed. **+1 hp** (now {new_hp}/{max_hp}).\n\n_tend again and the raw skin only worsens; pairs with medic treatment_', color=SUCCESS_COLOR)
+        embed = howlbert_embed('Lick Wound', f'you work your tongue carefully across each wound, cleaning dirt and slowing the bleed. **+1 hp** (now {new_hp}/{max_hp}).\n\n_pairs well with medic treatment for a full recovery._{excess_note}', color=SUCCESS_COLOR)
         embed.set_footer(text='/vitals action:condition · /medic action:treat')
         await interaction.response.send_message(embed=embed)
 
