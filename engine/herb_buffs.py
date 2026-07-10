@@ -513,47 +513,40 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key == "wild_cherry_bark":
-        # mild sedative: calms anxiety and helps mental-illness saves like the
-        # strong sedatives (valerian, poppy, dried_skullcap), but never sets
-        # sedated_until_day, so it does not block strenuous field work.
-        fields.update(
-            merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1)
-        )
+    if herb_key in ("wild_cherry_bark", "labrador_tea", "edelweiss", "sage", "thyme"):
+        # wild cherry bark is also a mild sedative + calmative (compendium:
+        # "sedative and digestive tea. calms anxiety"): it steadies the mind and
+        # aids sleep without the full knockout / rest-block of valerian or poppy.
+        # calm_until_day grants advantage on mind/social checks;
+        # sleep_aid_until_day grants advantage on mental-illness saves.
+        mild_sedative = herb_key == "wild_cherry_bark"
         if disease_key in ("cough", "yellowcough"):
             fields["cough_suppressed"] = 1
+            # one merge_buff_fields call per path: a second call re-reads the
+            # stored buffs and would clobber the keys set here.
+            if mild_sedative:
+                fields.update(merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1))
+                fields["mood"] = min(100, mood + 3)
+            msg = "throat eases: coughing suppressed until next sunrise."
+            if mild_sedative:
+                msg += " a mild sedative calm settles over you (easier sleep, steadier mind)."
             return {
                 "kind": "symptom_relief",
-                "message": (
-                    "throat eases: coughing suppressed until next sunrise. "
-                    "mild sedative: calmer, advantage on your next mental illness save."
-                ),
+                "message": msg,
                 "fields": fields,
             }
-        if disease_key in ("anxiety", "insomnia", "grief_melancholy", "shock_emotional"):
-            return {
-                "kind": "minor_relief",
-                "message": "mild sedative: calm settles in; advantage on your next mental illness save.",
-                "fields": fields,
-            }
+        if mild_sedative:
+            fields.update(
+                merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1, pain_relief_until_day=day)
+            )
+            fields["mood"] = min(100, mood + 3)
+            msg = "a mild sedative calm settles over you: easier sleep, steadier mind, and minor pain relief."
+        else:
+            fields.update(merge_buff_fields(user, pain_relief_until_day=day))
+            msg = "minor pain and throat irritation fade for the sunrise."
         return {
             "kind": "minor_relief",
-            "message": "minor pain and throat irritation fade for the sunrise; a mild calm lingers.",
-            "fields": fields,
-        }
-
-    if herb_key in ("labrador_tea", "edelweiss", "sage", "thyme"):
-        if disease_key in ("cough", "yellowcough"):
-            fields["cough_suppressed"] = 1
-            return {
-                "kind": "symptom_relief",
-                "message": "throat eases: coughing suppressed until next sunrise.",
-                "fields": fields,
-            }
-        fields.update(merge_buff_fields(user, pain_relief_until_day=day))
-        return {
-            "kind": "minor_relief",
-            "message": "minor pain and throat irritation fade for the sunrise.",
+            "message": msg,
             "fields": fields,
         }
 
@@ -1240,6 +1233,30 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
                 "Heather honeying steadies a queasy gut; advantage on the next disease save."
             )
         return {"kind": "minor_relief", "message": msg, "fields": fields}
+
+    # cattail: compendium says "analgesic"; its hemostatic/stabilize side is
+    # already handled via the stabilize-bonus path, so add the pain relief here
+    # (eases chronic-pain and arthritis penalties for the sunrise).
+    # (ragweed, sorrel, and slippery_elm each already carry their own mechanic via
+    # herb_special_effect, so they are deliberately not repeated here.)
+    if herb_key == "cattail":
+        fields.update(merge_buff_fields(user, pain_relief_until_day=day))
+        return {
+            "kind": "minor_relief",
+            "message": "pollen analgesic: pain relief for the sunrise (move without the ache).",
+            "fields": fields,
+        }
+
+    # purple loosestrife: "sedative in large amounts." mild sedative (calm + sleep
+    # aid) without the full knockout/rest-block of valerian or poppy.
+    if herb_key == "purple_loosestrife":
+        fields.update(merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1))
+        fields["mood"] = min(100, mood + 2)
+        return {
+            "kind": "minor_relief",
+            "message": "a mild sedative calm settles in: easier sleep and a steadier mind.",
+            "fields": fields,
+        }
 
     if outcome in ("cured_disease", "cured_injury", "cured_genetic", "healed", "stabilized", "rabies_ease"):
         return None
