@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from engine.diseases import DISEASES, get_stage_info, parse_disease
+from engine.diseases import DISEASES, get_stage_info, parse_disease, spread_stage_for
 
 PHYSICAL_ATTRS = frozenset({"attr_str", "attr_dex", "attr_con"})
 
@@ -88,11 +88,28 @@ def disease_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bo
             "chronic_stress",
             "eating_distress",
             "shock_emotional",
+            "depression",
         )
     ):
         from engine.mental_effects import mental_check_adjustments
 
         return mental_check_adjustments(user, attr_keys)
+    if key == "asthma":
+        return 0, bool(attrs & {"attr_con", "attr_dex"})
+    if key == "bloat" and stage == "torsion":
+        return 0, bool(attrs & PHYSICAL_ATTRS)
+    if key == "bronchitis":
+        return 0, bool(attrs & {"attr_con", "attr_dex"})
+    if key == "lyme" and stage in ("joint_ache", "chronic_lyme"):
+        return 0, "attr_dex" in attrs
+    if key == "leptospirosis":
+        return 0, "attr_con" in attrs
+    if key == "gallstones" and stage == "blocking":
+        return 0, "attr_con" in attrs
+    if key == "tooth_infection":
+        return 0, "attr_str" in attrs
+    if key == "worms" and stage == "heavy_burden":
+        return 0, bool(attrs & {"attr_str", "attr_con"})
     return 0, False
 
 
@@ -122,6 +139,17 @@ def disease_hunt_multiplier(user) -> tuple[float, str]:
             pct = int((1 - mult) * 100)
             label = DISEASES.get(key, {}).get("label", key.replace("_", " ").title())
             return mult, f"{label}; −{pct}% hunt bones."
+        return 1.0, ""
+    # generic fallback: any other disease whose current stage carries a
+    # hunt_mult reads it directly, so new diseases don't need a bespoke
+    # branch here just to have their stage data respected.
+    info = get_stage_info(key, stage or spread_stage_for(key))
+    if info and "hunt_mult" in info:
+        mult = float(info["hunt_mult"])
+        if mult < 1.0:
+            pct = int((1 - mult) * 100)
+            label = DISEASES.get(key, {}).get("label", key.replace("_", " ").title())
+            return mult, f"{label}; −{pct}% hunt bones."
     return 1.0, ""
 
 
@@ -137,6 +165,16 @@ def disease_attack_disadvantage(user, attack_type: str) -> bool:
         if stage == "mild":
             return attack_type == "bite"
     if key in ("influenza", "distemper", "pox", "yellowcough", "rot_lung", "shaking_sickness", "rabies"):
+        return True
+    if key == "asthma" and stage == "crisis":
+        return True
+    if key == "bloat" and stage == "torsion":
+        return True
+    if key == "leptospirosis" and stage == "organ_failure":
+        return True
+    if key == "gallstones" and stage == "blocking":
+        return True
+    if key == "tooth_infection" and stage == "sepsis_risk":
         return True
     return False
 

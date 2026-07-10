@@ -104,12 +104,17 @@ def _explore_field_hazard(user, action: str, *, scale: float = 1.0) -> str:
         try_insect_sting_exposure,
         try_poison_ivy_exposure,
         try_snake_venom_exposure,
+        try_tick_exposure,
     )
 
     if action == "dig":
         return try_insect_sting_exposure(user, chance=0.10 * scale) or ""
     if action == "follow":
-        return try_snake_venom_exposure(user, chance=0.07 * scale) or ""
+        return (
+            try_snake_venom_exposure(user, chance=0.07 * scale)
+            or try_tick_exposure(user, chance=0.06 * scale)
+            or ""
+        )
     if action == "investigate":
         return try_poison_ivy_exposure(user, chance=0.08 * scale) or ""
     return ""

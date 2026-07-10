@@ -513,7 +513,36 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key in ("wild_cherry_bark", "labrador_tea", "edelweiss", "sage", "thyme"):
+    if herb_key == "wild_cherry_bark":
+        # mild sedative: calms anxiety and helps mental-illness saves like the
+        # strong sedatives (valerian, poppy, dried_skullcap), but never sets
+        # sedated_until_day, so it does not block strenuous field work.
+        fields.update(
+            merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1)
+        )
+        if disease_key in ("cough", "yellowcough"):
+            fields["cough_suppressed"] = 1
+            return {
+                "kind": "symptom_relief",
+                "message": (
+                    "throat eases: coughing suppressed until next sunrise. "
+                    "mild sedative: calmer, advantage on your next mental illness save."
+                ),
+                "fields": fields,
+            }
+        if disease_key in ("anxiety", "insomnia", "grief_melancholy", "shock_emotional"):
+            return {
+                "kind": "minor_relief",
+                "message": "mild sedative: calm settles in; advantage on your next mental illness save.",
+                "fields": fields,
+            }
+        return {
+            "kind": "minor_relief",
+            "message": "minor pain and throat irritation fade for the sunrise; a mild calm lingers.",
+            "fields": fields,
+        }
+
+    if herb_key in ("labrador_tea", "edelweiss", "sage", "thyme"):
         if disease_key in ("cough", "yellowcough"):
             fields["cough_suppressed"] = 1
             return {

@@ -223,6 +223,14 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
             inline=False,
         )
 
+    elder_chronic_notes = crisis.get("elder_chronic_notes", [])
+    if elder_chronic_notes:
+        embed.add_field(
+            name="age-worn",
+            value=_format_crisis_lines(elder_chronic_notes, limit=8),
+            inline=False,
+        )
+
     passive_scavenge = crisis.get("passive_scavenge", [])
     if passive_scavenge:
         embed.add_field(
