@@ -1,3 +1,4 @@
+# herb_guide.py
 """Paginated herb compendium for /herbs action:guide."""
 
 from __future__ import annotations
@@ -35,33 +36,73 @@ OVERVIEW_BODY = (
 )
 
 
+# keyword in an herb's `preparation` text -> the prep method it implies.
+_PREP_TEXT_METHODS: tuple[tuple[str, str], ...] = (
+    ("poultice", "poultice"),
+    ("juice", "juice"),
+    ("gargle", "gargle"),
+    ("ointment", "ointment"),
+    ("salve", "ointment"),
+    ("sap", "sap"),
+    ("rub", "rub"),
+    ("simmered in milk", "simmered milk"),
+    ("in milk", "simmered milk"),
+    ("cooked", "eaten cooked"),
+    ("tea", "tea"),
+    ("infusion", "tea"),
+    ("decoction", "tea"),
+    ("gruel", "eaten cooked"),
+    ("eaten raw", "eaten raw"),
+    ("raw", "eaten raw"),
+    ("chewed", "poultice"),
+    ("dried", "dried"),
+)
+
+
 def _derive_prep_methods(herb_key: str, meta: dict) -> list[str]:
-    """Valid preparation methods for an herb; explicit prep_methods win, else
-    derived from its HerbFormRule."""
+    """Preparation methods that make sense for an herb, read from its own
+    `preparation` text (dry first, then tea/rub/juice/poultice/etc, and a tea or
+    gargle can be sweetened). Explicit prep_methods still win when present."""
     explicit = meta.get("prep_methods") or ()
     if explicit:
         return list(explicit)
-    from engine.herb_properties import herb_form_rule
+    text = (meta.get("preparation") or "").lower()
+    methods: list[str] = []
+    for needle, method in _PREP_TEXT_METHODS:
+        if needle in text and method not in methods:
+            methods.append(method)
+    # every gathered herb can at least be dried for storage.
+    if "dried" not in methods:
+        methods.insert(0, "dried")
+    if len(methods) == 1:  # only "dried" derived; default to a usable form
+        methods.append("eaten raw")
+    return methods
 
-    rule = herb_form_rule(herb_key)
-    if rule.requires_decoction:
-        return ["decoction"]
-    if rule.requires_tonic:
-        return ["tonic"]
-    if rule.dried_only:
-        return ["dried"]
-    if rule.external_only and rule.requires_poultice:
-        return ["poultice"]
-    if rule.requires_poultice:
-        return ["poultice", "chewed"]
-    if rule.external_only:
-        return ["poultice"]
-    return ["chewed", "tea"]
+
+# wolf-world names for cure-target conditions that have no full disease/injury/
+# genetic entry of their own (they exist only as herb cure keys). the packs do
+# not use human words for the things that eat them.
+_CONDITION_WOLF_NAMES = {
+    "asthma": "Chestbind",
+    "bloat": "Gutknot",
+    "lyme": "Burrfever",
+    "leptospirosis": "Foulwater Rot",
+    "urinary_infection": "Water-Scorch",
+    "gallstones": "Belly-Grind",
+    "tooth_infection": "Root-Rot",
+    "constipation": "Gut-Stone",
+    "worms": "Belly-Worm",
+    "depression": "The Low-Spirit",
+    "spirit_curse": "The Spirit-Eaten",
+    "arthritis": "Joint-Rot",
+    "chronic_pain": "Bone-Ache",
+}
 
 
 def _cure_labels(cures: tuple) -> str:
     if not cures:
         return ""
+    from engine.diseases import DISEASES
     from engine.genetics import GENETIC_CONDITIONS, HERB_CURABLE_GENETICS
 
     labels: list[str] = []
@@ -73,6 +114,11 @@ def _cure_labels(cures: tuple) -> str:
                 labels.append(GENETIC_CONDITIONS[key]["name"])
         elif key in DISEASE_STAGES:
             labels.append(DISEASE_STAGES[key]["name"])
+        elif key in DISEASES:
+            # canonical wolf-world disease label (engine.diseases)
+            labels.append(DISEASES[key]["label"])
+        elif key in _CONDITION_WOLF_NAMES:
+            labels.append(_CONDITION_WOLF_NAMES[key])
         else:
             labels.append(key.replace("_", " ").title())
     suffix = "…" if len(cures) > 10 else ""

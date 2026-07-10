@@ -282,9 +282,9 @@ def apply_socialize_bonds(user, partner, outcome: str, *, day: int = 0) -> str |
 
 
 _GRIEF_GROOM_LINES = (
-    f"_there's a weight in their fur today. you groom carefully, saying nothing._",
-    f"_they lean into it more than usual. sometimes this is all there is._",
-    f"_something is missing from their scent; or maybe from yours. you stay close anyway._",
+    "_there's a weight in their fur today. you groom carefully, saying nothing._",
+    "_they lean into it more than usual. sometimes this is all there is._",
+    "_something is missing from their scent; or maybe from yours. you stay close anyway._",
 )
 
 

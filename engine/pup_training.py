@@ -47,13 +47,12 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
             f"(+{PUP_TRAIN_MAX_LIFETIME_BONUS} lifetime cap reached)."
         )
 
-    # unlimited; the lifetime cap is the real ceiling. each repeat lesson the
-    # same sunrise tires the pup and raises the dc, instead of a hard block.
-    from engine.diminishing import record_use, use_count_today
+    # unlimited; the lifetime cap is the real ceiling. energy spent per lesson
+    # instead of a hard block or a climbing dc.
+    from engine.energy import spend_energy
 
-    repeat = use_count_today(trainer, f"trainpup:{pup['id']}", day)
-    effective_dc = PUP_TRAIN_SUCCESS_DC + 2 * repeat
-    record_use(trainer, f"trainpup:{pup['id']}", day)
+    _new_energy, _had_energy, train_penalty = spend_energy(trainer, "pup_training")
+    effective_dc = PUP_TRAIN_SUCCESS_DC
 
     from engine.dice import roll_d20
 
@@ -61,7 +60,7 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
     mod = attr_modifier(int(trainer["attr_cha"])) if "attr_cha" in trainer.keys() else 0
     total_roll = die + mod
     label = attribute.upper()
-    tired = f" _(repeat lesson today; dc +{2 * repeat})_" if repeat else ""
+    tired = f" _({train_penalty})_" if train_penalty else ""
 
     if total_roll >= effective_dc:
         new_val = int(pup[attr_col]) + 1

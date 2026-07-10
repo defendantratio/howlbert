@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import discord
 
-import database as db
 from engine.activities import (
     preypile_error,
     purchase_item,

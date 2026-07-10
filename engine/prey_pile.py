@@ -7,29 +7,29 @@ PREY_LABEL_FISH = "a fish"
 
 PREY_CHOICES = {
     "eat": {
-        "label": "Eat your fill",
+        "label": "eat your fill",
         "emoji": "🍖",
-        "description": "Take a portion; restores hunger, hydration, +HP, and −1 exhaustion.",
+        "description": "take a portion; restores hunger, hydration, +hp, and −1 exhaustion.",
     },
     "share": {
-        "label": "Share fairly",
+        "label": "share fairly",
         "emoji": "🤝",
-        "description": "Split the kill with packmates.",
+        "description": "split the kill with packmates.",
     },
     "den": {
-        "label": "Leave for the den",
+        "label": "leave for the den",
         "emoji": "🏠",
-        "description": "Donate your share to pack treasury.",
+        "description": "donate your share to pack treasury.",
     },
     "guard": {
-        "label": "Guard the pile",
+        "label": "guard the pile",
         "emoji": "🛡️",
-        "description": "Watch for scavengers and rivals.",
+        "description": "watch for scavengers and rivals.",
     },
     "pass": {
-        "label": "Walk away",
+        "label": "walk away",
         "emoji": "👃",
-        "description": "Leave the feast to others.",
+        "description": "leave the feast to others.",
     },
 }
 

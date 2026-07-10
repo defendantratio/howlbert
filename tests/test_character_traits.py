@@ -1,6 +1,5 @@
 """Tests for per-wolf character trait modifiers."""
 
-import database as db
 from engine.character_traits import (
     DUSK_CHARACTER_TRAITS,
     FINNPELT_CHARACTER_TRAITS,

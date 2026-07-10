@@ -1,7 +1,7 @@
 import random
 from datetime import datetime
 
-from config import ROLLOVER_TIMEZONE, SEASONS, TIMES_OF_DAY, WEATHER_TYPES
+from config import ROLLOVER_TIMEZONE, WEATHER_TYPES
 from engine.lexicon import season_description, season_display, time_description, time_display
 
 

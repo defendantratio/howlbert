@@ -111,12 +111,12 @@ class AvatarCropView(ui.View):
         self.state.zoom = min(MAX_ZOOM, round(self.state.zoom + ZOOM_STEP, 2))
         await self._refresh(interaction)
 
-    @ui.button(label="↺ Reset", style=discord.ButtonStyle.secondary, row=1)
+    @ui.button(label="↺ reset", style=discord.ButtonStyle.secondary, row=1)
     async def reset_crop(self, interaction: discord.Interaction, button: ui.Button):
         self.state.reset()
         await self._refresh(interaction)
 
-    @ui.button(label="Save", style=discord.ButtonStyle.success, row=2)
+    @ui.button(label="save", style=discord.ButtonStyle.success, row=2)
     async def save_crop(self, interaction: discord.Interaction, button: ui.Button):
         await interaction.response.defer(ephemeral=False)
         final_png = render_cropped_png(self.source_bytes, self.state, preview=False)
@@ -154,7 +154,7 @@ class AvatarCropView(ui.View):
         )
         self.stop()
 
-    @ui.button(label="Cancel", style=discord.ButtonStyle.danger, row=2)
+    @ui.button(label="cancel", style=discord.ButtonStyle.danger, row=2)
     async def cancel_crop(self, interaction: discord.Interaction, button: ui.Button):
         for child in self.children:
             child.disabled = True

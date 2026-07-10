@@ -36,10 +36,10 @@ _OBSERVE_FLAVOR: dict[str, list[str]] = {
         "A fish turns belly-up in the current below the mill. First of the day. Unlikely to be the last.",
     ],
     "the_crows": [
-        "Three crows settle in a line on the old fence post. They tilt their heads at you. One of them has something shiny in its beak.",
-        "The Crows' camp is quiet today, but the smoke still rises. Someone is home.",
-        "You catch a whiff of something rancid. The Crows have made a meal of another pack's loss. Business as usual.",
-        "One of them watches you from the road sign, not moving. You get the feeling they know exactly who you are.",
+        "A Crow trapper crouches over his snare-line in the foothills, resetting iron jaws. He signs a slow greeting; the crude paw-and-finger speech Silas Crow first taught the mountain.",
+        "The Crows' foothill camp is quiet today, but the smoke still rises. Some trapper or exile is home, oiling a knife.",
+        "Two of them, ragged twolegs with iron on their belts, drag a deer carcass between the pines. They deal only with Greyspire; every other pack would tear them apart.",
+        "One watches you from the ridge, unafraid, and taps two fingers to his palm; a Crow's sign. He knows exactly whose wolf you are.",
     ],
     "university_expedition": [
         "They have set up a camera trap near the east border. The light blinks red in the dark.",
@@ -61,8 +61,8 @@ _APPROACH_SUCCESS: dict[str, list[str]] = {
         "You appear on the mill bank, visible in broad daylight, then vanish. The workers talk about it. It unsettles something in them.",
     ],
     "the_crows": [
-        "The crow on the fence drops the bottle-cap at your feet and waits. You sit. It ruffles its feathers and regards you with something like respect.",
-        "They leave a small cache of bones and metal scraps near the usual crossing. The message is clear enough.",
+        "The old trapper sets a knife-handle on the stone between you and waits. You do not flinch. He signs 'kin of the mountain,' and something eases in his weathered face.",
+        "They leave a small cache of iron points and arrowheads near the usual crossing, Silas Crow's old trade. The message is clear enough.",
     ],
     "university_expedition": [
         "The researcher with the red jacket sets down her clipboard, holds perfectly still, and watches you for six minutes. You don't run. She smiles.",
@@ -82,7 +82,7 @@ _APPROACH_FAIL: dict[str, list[str]] = {
         "The workers run an engine at you. The sound is wrong in your skull and you bolt before you mean to.",
     ],
     "the_crows": [
-        "Three of them mob you until you clear the territory. Tomorrow, maybe. Not today.",
+        "The trappers close ranks, knives out, and drive you off their foothill line. Not one of them a friend to a wolf that isn't Greyspire. Tomorrow, maybe. Not today.",
     ],
     "university_expedition": [
         "You get too close. The researcher startles, drops her camera, and shouts. You're gone before she recovers, but she saw you up close.",
@@ -91,8 +91,8 @@ _APPROACH_FAIL: dict[str, list[str]] = {
 
 _TRADE_LINES: dict[str, list[str]] = {
     "the_crows": [
-        "The crow's cache contains a tangle of wire, half a glove, and three shining stones. Useful in ways you can't quite name yet.",
-        "They leave behind a coil of something useful. You leave bones. The exchange is silent, dignified, and entirely strange.",
+        "The trapper's cache holds iron points, a worn knife, and a coil of snare-wire, human tools the mountain learned to use. Useful in ways your ancestors never knew.",
+        "They leave iron and arrowheads; you leave fresh-kill. The exchange is silent, signed, and older than any wolf living; the Crow's bargain kept.",
     ],
     "lowland_settlements": [
         "You leave the deer haunch near the barn. By morning it's gone. A bucket of clean water sits in its place. You drink.",
@@ -122,7 +122,7 @@ _RAID_SUCCESS: dict[str, list[str]] = {
         "The chickens scatter and the humans spend the afternoon rounding them up. You cost them a day's work.",
     ],
     "the_crows": [
-        "You drive them from the old fence post. They regroup two fields over. Their operation shifts.",
+        "You scatter a Crow trapping party from their foothill line. They fall back toward Greyspire's border for protection. Their snares go cold for a while.",
     ],
     "university_expedition": [
         "You harass their camp enough that two researchers pack up and leave early. The data they gathered is incomplete.",
@@ -141,7 +141,7 @@ _RAID_FAIL: dict[str, list[str]] = {
         "The rifle comes out faster than you expected. No blood, but your nerves are in pieces.",
     ],
     "the_crows": [
-        "The murder assembles faster than you can count. You retreat with more dignity than you feel.",
+        "The trappers form a knife-line faster than you can count, and a Greyspire patrol answers their signal. You retreat with more dignity than you feel.",
     ],
     "university_expedition": [
         "They had a horn. The sound carried your retreat further than you'd like.",
@@ -210,12 +210,11 @@ def try_faction_observe(user, faction: str) -> tuple[str, int]:
     return line + extra, 0
 
 
-_CROWS_CACHE_LINE = "They leave a small cache of bones and metal scraps near the usual crossing. The message is clear enough."
+_CROWS_CACHE_LINE = "They leave a small cache of iron points and arrowheads near the usual crossing, Silas Crow's old trade. The message is clear enough."
 
 
 def try_faction_approach(user, faction: str, *, day: int) -> tuple[str, int, int]:
     """Roll approach. Returns (flavor, standing_delta, bonus_bones)."""
-    gp = user["great_pack"] if "great_pack" in user.keys() else None
     die = roll_d20()
     attr_wis = int(user["attr_wis"]) if "attr_wis" in user.keys() else 0
     from engine.character import attr_modifier

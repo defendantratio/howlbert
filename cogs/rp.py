@@ -117,7 +117,7 @@ class Roleplay(commands.Cog):
             return
         await interaction.response.send_message(embed=howlbert_embed('Whisper Sent', f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
-    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (unlimited; repeats soothe less).')
+    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (costs energy).')
     async def weep(self, interaction: discord.Interaction):
         wolf = _active_wolf(interaction)
         if not wolf:
@@ -136,10 +136,10 @@ class Roleplay(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        from engine.diminishing import next_use_multiplier
-        _weep_mult, _weep_n = next_use_multiplier(wolf, 'weep', day)
+        from engine.energy import spend_energy
+        _new_energy, _had_energy, weep_penalty = spend_energy(wolf, 'weep')
         db.update_user(interaction.user.id, last_weep_day=day, wolf_id=wolf['id'])
-        _weep_gain = max(1, int(10 * _weep_mult))
+        _weep_gain = 10
         mood = db.adjust_mood(wolf['id'], _weep_gain)
         lines = [f"**{wolf['wolf_name']}** goes alone to the weep stone; no one watches. the river takes the rest.", f"mood **{mood}** (+{_weep_gain})."]
         from engine.diseases import parse_disease
@@ -147,10 +147,10 @@ class Roleplay(commands.Cog):
         if key == 'grief_melancholy':
             db.set_user_conditions(interaction.user.id, wolf_id=wolf['id'], clear_disease=True)
             lines.append('_the grief breaks loose and washes downstream. you feel it; for now._')
-        if _weep_n > 1:
-            lines.append(f'_wept **{_weep_n}x** this sunrise; the stone soothes less each time (**{int(_weep_mult * 100)}%**)._')
+        if weep_penalty:
+            lines.append(f'_{weep_penalty}_')
         embed = howlbert_embed('weep stone', '\n'.join(lines), color=SUCCESS_COLOR)
-        embed.set_footer(text='it is forbidden to watch another wolf weep · unlimited, repeats soothe less')
+        embed.set_footer(text='it is forbidden to watch another wolf weep · costs energy')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @location.command(name='set', description="mark your wolf's current in-character location.")

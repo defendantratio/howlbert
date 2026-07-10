@@ -1,6 +1,5 @@
-import random
 
-from engine.character import attr_modifier, parse_proficiencies
+from engine.character import attr_modifier
 from engine.dice import roll_d20
 DEATH_SAVE_DCS = (10, 12, 15)
 

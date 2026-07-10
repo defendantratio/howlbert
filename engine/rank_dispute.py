@@ -39,9 +39,9 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
             f"the pack doesn't kick down; they've yielded all there is to yield. "
             f"challenge someone above you instead."
         )
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    dispute_mult, dispute_n = next_use_multiplier(challenger, "rank_dispute", day)
+    _new_energy, _had_energy, dispute_penalty = spend_energy(challenger, "rank_dispute")
 
     db.update_user(challenger["discord_id"], wolf_id=challenger["id"], last_rank_dispute_day=day)
 
@@ -73,15 +73,13 @@ def run_rank_dispute(challenger, defender, *, day: int) -> tuple[bool, str]:
     else:
         winner, loser = defender, challenger
 
-    shift = max(1, int(RANK_DISPUTE_SHIFT * dispute_mult))
-    new_winner_rank = max(RANK_DISPUTE_MIN, int(winner["pack_rank"]) - shift)
-    new_loser_rank = min(RANK_DISPUTE_MAX, int(loser["pack_rank"]) + shift)
+    new_winner_rank = max(RANK_DISPUTE_MIN, int(winner["pack_rank"]) - RANK_DISPUTE_SHIFT)
+    new_loser_rank = min(RANK_DISPUTE_MAX, int(loser["pack_rank"]) + RANK_DISPUTE_SHIFT)
     db.update_user_by_id(winner["id"], pack_rank=new_winner_rank)
     db.update_user_by_id(loser["id"], pack_rank=new_loser_rank)
 
     rivalry_note = f" _(+{rivalry_mod} grudge)_" if rivalry_mod else ""
-    dim = diminishing_note(dispute_n)
-    dim_note = f"\n_{dim}_" if dim else ""
+    dim_note = f"\n_{dispute_penalty}_" if dispute_penalty else ""
     line = (
         f"**{challenger['wolf_name']}** {c_total}{rivalry_note} vs **{defender['wolf_name']}** {d_total}{note}\n"
         f"**{winner['wolf_name']}** holds the better ground; **{loser['wolf_name']}** yields a step.\n"

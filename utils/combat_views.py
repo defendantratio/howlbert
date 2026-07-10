@@ -34,7 +34,7 @@ def _attack_target_options(enc_id: int, bot: commands.Bot) -> list[discord.Selec
             discord.SelectOption(
                 label=name[:100],
                 value=str(fighter["id"]),
-                description=f"{fighter['hp']}/{fighter['max_hp']} HP",
+                description=f"{fighter['hp']}/{fighter['max_hp']} hp",
             )
         )
     return options[:25]
@@ -50,7 +50,7 @@ def _player_target_options(enc_id: int, bot: commands.Bot) -> list[discord.Selec
             discord.SelectOption(
                 label=name[:100],
                 value=str(fighter["id"]),
-                description=f"{fighter['hp']}/{fighter['max_hp']} HP",
+                description=f"{fighter['hp']}/{fighter['max_hp']} hp",
             )
         )
     return options[:25]
@@ -124,7 +124,7 @@ class CombatNpcAttackSelect(ui.DynamicItem, template=r"^fable_combat:(?P<enc_id>
     async def from_custom_id(cls, interaction: discord.Interaction, item: ui.Item, match, /):
         enc_id = int(match["enc_id"])
         current = current_fighter_for_enc(enc_id)
-        npc_name = current["npc_name"] if current and is_npc_fighter(current) else "NPC"
+        npc_name = current["npc_name"] if current and is_npc_fighter(current) else "npc"
         return cls(enc_id, interaction.client, npc_name=npc_name)
 
     async def callback(self, interaction: discord.Interaction):
@@ -247,7 +247,7 @@ def _make_player_turn_view(enc_id: int, bot: commands.Bot) -> discord.ui.View:
     view.add_item(CombatActionButton(enc_id, "submit"))
     view.add_item(CombatManeuverSelect(enc_id))
     current = current_fighter_for_enc(enc_id)
-    if current and not is_npc_fighter(current) and current.get("discord_id"):
+    if current and not is_npc_fighter(current) and current["discord_id"]:
         actor = db.get_user(int(current["discord_id"]))
         if actor and has_injury(actor, "deep_gash"):
             view.add_item(CombatActionButton(enc_id, "staunch"))

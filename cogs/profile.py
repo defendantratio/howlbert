@@ -39,7 +39,7 @@ class _EmbedPaginator(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user is not None and interaction.user.id == self._owner_id
 
-    @discord.ui.button(label='Prev', style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label='prev', style=discord.ButtonStyle.secondary)
     async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self._idx = max(0, self._idx - 1)
         self._sync_buttons()
@@ -49,7 +49,7 @@ class _EmbedPaginator(discord.ui.View):
     async def page_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer_update()
 
-    @discord.ui.button(label='Next', style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label='next', style=discord.ButtonStyle.secondary)
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self._idx = min(len(self._pages) - 1, self._idx + 1)
         self._sync_buttons()

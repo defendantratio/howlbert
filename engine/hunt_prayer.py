@@ -58,22 +58,21 @@ def try_hunt_prayer(discord_id: int, user, day: int) -> discord.Embed:
         )
         return embed
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    mult, n = next_use_multiplier(user, "hunt_prayer", day)
+    _new_energy, _had_energy, penalty = spend_energy(user, "hunt_prayer")
 
     belief = (_get("maw_belief") or "agnostic").lower()
     flavor = _PRAY_FLAVOR.get(belief, _DEFAULT_FLAVOR)
 
-    favor_gain = max(1, int(1 * mult))
+    favor_gain = 1
     new_favor = db.adjust_maw_favor(discord_id, favor_gain)
     db.set_hunt_prayer_day(discord_id, day)
 
     embed = howlbert_embed("Hunt Prayer", flavor, color=SUCCESS_COLOR)
     embed.add_field(name="Maw Favor", value=f"+{favor_gain} → {new_favor}", inline=True)
-    dim = diminishing_note(n)
     footer = f"blessed for today's hunts · +{HUNT_PRAYER_BONE_BONUS} bone roll active · resets at sunrise"
-    if dim:
-        footer += f" · {dim}"
+    if penalty:
+        footer += f" · {penalty}"
     embed.set_footer(text=footer)
     return embed

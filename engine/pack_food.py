@@ -8,7 +8,7 @@ import database as db
 from engine.conditions import apply_meal_energy
 from engine.hunger import meal_hunger_gain
 from engine.thirst import meal_thirst_gain
-from engine.injury_effects import meal_blocked_by_injury, meal_jaw_pain_note
+from engine.injury_effects import meal_jaw_pain_note
 from engine.prey_items import is_cannibal_prey, prey_meta
 
 
@@ -445,8 +445,12 @@ def run_feedall(
     # unlimited; the den reserve it drains is the real cost, so no hard block.
     # only the first communal meal of the sunrise lifts unity, so repeats can't
     # farm den unity for free.
-    from engine.diminishing import record_use, use_count_today
-    feed_repeat = use_count_today(caller, "feedall", day) if caller else 0
+    already_fed_today = int(pack["last_feedall_day"]) >= day
+    feedall_penalty = ""
+    if caller:
+        from engine.energy import spend_energy
+
+        _new_energy, _had_energy, feedall_penalty = spend_energy(caller, "pack_food_share")
 
     members = db.get_pack_den_wolves(pack_id)
     if not members:
@@ -481,16 +485,16 @@ def run_feedall(
         return False, "no packmate could eat from the reserve.", 0
 
     db.set_pack_feedall_day(pack_id, day)
-    if caller:
-        record_use(caller, "feedall", day)
-    if feed_repeat == 0:
+    if not already_fed_today:
         db.adjust_pack_unity(pack_id, 1)
     summary = "\n".join(lines[:12])
     if len(lines) > 12:
         summary += f"\n_…and {len(lines) - 12} more._"
     msg = f"**communal feed**; **{fed}** wolf(s) ate from the reserve.\n{summary}"
-    if feed_repeat > 0:
+    if already_fed_today:
         msg += "\n_already fed the den this sunrise; the reserve still empties, but no extra unity from a repeat meal._"
+    if feedall_penalty:
+        msg += f"\n_{feedall_penalty}_"
     if served_wolf and caller:
         from engine.cannibalism import cannibalism_public_exposure
 

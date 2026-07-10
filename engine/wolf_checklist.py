@@ -9,7 +9,6 @@ from engine.blooding import is_unblooded_juvenile
 from engine.cooldowns import (
     DROWN_SICK_ROLE,
     _used_today,
-    can_hunt_again,
     daily_stipend_status,
 )
 from engine.role_features import is_rogue_wolf
@@ -168,7 +167,7 @@ def _pending_daily_items(
     if not _used_today(user, day, "last_sniff_day"):
         items.append("sniff the wind (`/field action:sniff`)")
 
-    if can_hunt_again(user, day):
+    if not _used_today(user, day, "last_hunt_day"):
         items.append("hunt (`/bones action:hunt`)")
 
     if not _used_today(user, day, "last_fishing_day"):
@@ -337,6 +336,15 @@ def _pending_daily_items(
 
 def _pending_watch_items(user, guild_id: int | None, day: int) -> list[str]:
     items: list[str] = []
+    from config import ENERGY_MAX
+    from engine.energy import current_energy
+
+    energy = current_energy(user)
+    if energy <= ENERGY_MAX * 0.2:
+        items.append(
+            f"energy is low ({energy}/{ENERGY_MAX}); activities still work but cost exhaustion/mood "
+            "until you rest (`/vitals action:rest`) or a sunrise passes."
+        )
     discord_id = int(_field(user, "discord_id", 0) or 0)
     if discord_id:
         maw_karma = db.get_maw_karma(discord_id)

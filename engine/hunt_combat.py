@@ -209,28 +209,15 @@ async def try_complete_hunt_prey_victory(
     db.mark_hunt_prey_rewarded(enc_id)
     db.end_encounter(enc_id)
 
-    from cogs.prey_pile import post_prey_pile_to_channel
-    from engine.prey_items import prey_meta
-
-    stack = db.pick_prey_stack_for_pile(user["id"], world["day_number"])
-    pile_bones = stack["bone_value"] if stack else amount
-    pile_label = prey_meta(stack["prey_key"])["label"] if stack else prey_label
-    if stack:
-        db.remove_prey_stack(stack["id"])
-
-    await post_prey_pile_to_channel(
-        bot,
-        channel,
-        user,
-        prey_bones=pile_bones,
-        prey_label=pile_label,
-        day_number=world["day_number"],
-    )
-
+    # solo kill: the carcass goes straight into the hunter's inventory (granted
+    # above). we do NOT auto-open a fresh-kill pile; the hunter chooses when to
+    # share it with the den via `/preypile`, after which leftovers roll into the
+    # pack stash.
     embed = howlbert_embed("fresh-kill secured", color=SUCCESS_COLOR)
     embed.description = (
-        f"you bring down the **{prey_label}** and drag it to the clearing.\n"
-        "the **fresh-kill cache** is open; packmates can respond below."
+        f"you bring down the **{prey_label}** and drag it home.\n"
+        "the carcass is in your **inventory** (`/inventory`); share it with the den "
+        "any time via **`/preypile`**, or **`/eat`** it yourself."
     )
     embed.add_field(name="haul", value=format_bones(net_amount, signed=True), inline=True)
     if lucky_bonus > 0:

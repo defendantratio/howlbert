@@ -9,7 +9,6 @@ from engine.cat_clan_goods import (
     receive_loot_count,
     roll_clan_loot,
 )
-from engine.cat_pacts import receive_cat_goods, trade_duplicates_cat_pact
 
 
 def test_loot_counts():

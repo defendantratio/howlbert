@@ -1,6 +1,5 @@
 """Book One plot phase mechanics."""
 
-import sqlite3
 
 import database as db
 from engine.plot_blinking import (

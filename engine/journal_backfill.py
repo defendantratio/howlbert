@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 
 import database as db
-from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY
 from engine.character_lore import parse_character_lore
 from engine.wolf_journal import _pack_label
 

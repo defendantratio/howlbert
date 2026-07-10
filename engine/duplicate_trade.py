@@ -231,21 +231,23 @@ def trade_duplicates_between_wolves(
     if not ok:
         return False, detail
 
-    from engine.diminishing import record_use, use_count_today
+    from engine.energy import spend_energy
 
-    trade_repeat = use_count_today(sender, "duptrade", day)
+    already_traded_today = int(sender["last_duplicate_trade_day"]) >= day if "last_duplicate_trade_day" in sender.keys() else False
     db.update_user(sender["discord_id"], last_duplicate_trade_day=day, wolf_id=sender["id"])
-    record_use(sender, "duptrade", day)
+    _new_energy, _had_energy, trade_penalty = spend_energy(sender, "duptrade")
 
     footer = ""
     if require_pack_trade and sender["pack_id"] and recipient["pack_id"]:
-        if trade_repeat == 0:
+        if not already_traded_today:
             new_standing = db.adjust_pack_relation(
                 guild_id, sender["pack_id"], recipient["pack_id"], PACK_DUP_TRADE_RELATION_GAIN
             )
             footer = f"\n\npack standing **+{PACK_DUP_TRADE_RELATION_GAIN}** (now **{new_standing}/10**)."
         else:
             footer = "\n\n_already traded across the border this sunrise; no extra pack standing from a repeat._"
+    if trade_penalty:
+        footer += f"\n\n_{trade_penalty}_"
 
     return True, (
         f"duplicates passed to **{recipient['wolf_name']}** "

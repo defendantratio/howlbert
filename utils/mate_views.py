@@ -16,7 +16,7 @@ from engine.mating import execute_mating, mating_embed_title
 
 from utils.replies import reply_ephemeral
 
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from utils.embeds import ERROR_COLOR, howlbert_embed
 
 
 

@@ -76,35 +76,55 @@ FAILURE_TEXT = {
 
 
 
-def hazard_failure_effects(hazard_key: str, *, failed: bool) -> dict:
+def hazard_failure_effects(hazard_key: str, *, failed: bool, critical: bool = False) -> dict:
 
-    """Side effects applied on failed weather hazard rolls."""
+    """Side effects applied on failed weather hazard rolls.
+
+    A critical failure on top of exposure hazards risks a lasting injury,
+    not just the usual exhaustion/mood hit.
+    """
 
     if not failed:
 
         return {}
 
+    effects: dict = {}
+
     if hazard_key in ("blizzard", "deep_snow", "freezing_rain", "quicksand"):
 
-        return {"exhaustion": 1}
+        effects = {"exhaustion": 1}
 
-    if hazard_key == "extreme_heat":
+    elif hazard_key == "extreme_heat":
 
-        return {"exhaustion": 1, "thirst_loss": 25}
+        effects = {"exhaustion": 1, "thirst_loss": 25}
 
-    if hazard_key == "wildfire_smoke":
+    elif hazard_key == "wildfire_smoke":
 
-        return {"smoke_debuff": 1, "mood_loss": 4}
+        effects = {"smoke_debuff": 1, "mood_loss": 4}
 
-    if hazard_key == "thick_fog":
+    elif hazard_key == "thick_fog":
 
-        return {"mood_loss": 4}
+        effects = {"mood_loss": 4}
 
-    if hazard_key == "thunderstorm":
+    elif hazard_key == "thunderstorm":
 
-        return {"mood_loss": 6}
+        effects = {"mood_loss": 6}
 
-    return {}
+    if critical:
+
+        if hazard_key == "extreme_heat":
+
+            effects["injury"] = "heatstroke"
+
+        elif hazard_key in ("blizzard", "deep_snow", "freezing_rain", "avalanche"):
+
+            effects["injury"] = "hypothermia"
+
+        elif hazard_key == "wildfire_smoke":
+
+            effects["injury"] = "smoke_inhalation"
+
+    return effects
 
 
 
@@ -178,7 +198,7 @@ def resolve_weather_hazard(user, hazard_key: str, severity: str = "severe") -> d
 
 
 
-    effects = hazard_failure_effects(hazard_key, failed=not success)
+    effects = hazard_failure_effects(hazard_key, failed=not success, critical=outcome == "critical_failure")
 
 
 

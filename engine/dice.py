@@ -1,5 +1,4 @@
-from rpg_rules import DC_TIERS
-from engine.character import attr_modifier, best_modifier
+from engine.character import best_modifier
 from engine.disease_effects import disease_check_adjustments
 from engine.genetics import genetic_check_adjustments
 from engine.injury_effects import injury_check_adjustments

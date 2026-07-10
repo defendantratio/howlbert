@@ -9,7 +9,7 @@ from config import PUP_MAX_MOONS
 from engine.conditions import medicine_check, parse_injuries
 from engine.diseases import contagious_rate, disease_display, parse_disease
 from engine.role_features import has_any_role, is_full_medic, wolf_role_key
-from engine.sacred_visits import format_sacred_visit_reminder, sacred_visit_due
+from engine.sacred_visits import sacred_visit_due
 from engine.surgery import participant_has_herb
 from herbs import HERBS
 
@@ -291,13 +291,12 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
             "swim therapy helps **sprains**, **fractured ribs**, or wolves in **splint confinement** "
             "after bone-setting."
         )
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    swim_mult, swim_n = next_use_multiplier(user, "swim", day)
+    _new_energy, _had_energy, swim_penalty = spend_energy(user, "swim")
     bonus = SWIM_REST_BONUS_HP
     if rest_until > day:
         bonus += 1
-    bonus = max(1, int(bonus * swim_mult))
     new_hp = min(int(user["max_hp"]), int(user["hp"]) + bonus)
     db.set_user_conditions(user["discord_id"], wolf_id=user["id"], hp=new_hp)
     db.update_user_by_id(user["id"], last_swim_day=day)
@@ -306,8 +305,7 @@ def run_swim_therapy(user, *, day: int, season: str) -> tuple[bool, str]:
         shorten = "\n_Cold water eases the splint; **1** sunrise less confinement._"
     else:
         shorten = ""
-    dim = diminishing_note(swim_n)
-    dim_note = f"\n_{dim}_" if dim else ""
+    dim_note = f"\n_{swim_penalty}_" if swim_penalty else ""
     return True, (
         f"**{user['wolf_name']}** swims the pack river shallows; muscles loosen, pain fades "
         f"(**+{bonus} hp**, now **{new_hp}/{user['max_hp']}**).{shorten}{dim_note}"

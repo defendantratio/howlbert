@@ -11,7 +11,6 @@ from config import (
     CROSS_PACK_STEAL_BONES,
     CROSS_PACK_STEAL_TEXT,
     FISHING_BONES,
-    LARGE_PREY_ENCOUNTER_CHANCE,
     SCAVENGE_BONES,
     TRACK_BONES,
     WORK_BONES,
@@ -257,8 +256,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     blocked = _activity_block_embed(user, title="cannot hunt", day=day, action="hunt")
     if blocked:
         return blocked, False, None
-    # no hunt cap: hunt as often as you like, but each hunt past your daily
-    # allotment yields steadily less (diminishing returns, not a block).
+    # no hunt cap: hunt as often as you like; energy runs out instead of
+    # blocking, and running on empty costs exhaustion/mood, not the hunt.
     if roll_large_prey_encounter():
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
@@ -316,13 +315,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     amount = roll_hunt_amount()
     if amount > 0:
         amount += dex_bonus
-    # diminishing returns past the wolf's daily hunt allotment
-    from config import HUNTER_HUNTS_PER_SUNRISE
-    from engine.diminishing import multiplier_for_use as _hunt_dim
-    _free_hunts = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
-    _hunt_over = hunts_used_today(user, day) - _free_hunts + 1
-    if _hunt_over > 0 and amount > 0:
-        amount = max(1, int(amount * _hunt_dim(_hunt_over + 1)))
+    from engine.energy import spend_energy
+    _new_energy, _had_energy, hunt_penalty = spend_energy(user, "hunt", discounted=is_hunter(user))
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
 
     # prayer bonus (set by /bones action:pray same day)
@@ -398,6 +392,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         notes = [n for n in (loner_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if hunt_shift:
             notes.append(hunt_shift.strip("_"))
+        if hunt_penalty:
+            notes.append(hunt_penalty)
         from utils.hunting import weather_hunt_modifier_label
 
         weather_note = weather_hunt_modifier_label(world["weather"])
@@ -420,6 +416,8 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         weather_note = weather_hunt_modifier_label(world["weather"])
         if weather_note:
             notes.insert(0, weather_note)
+        if hunt_penalty:
+            notes.append(hunt_penalty)
         if notes:
             footer += " · " + " · ".join(notes)
         from engine.nursing import is_nursing_mother
@@ -509,9 +507,9 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     blocked = _activity_block_embed(user, title="cannot scavenge", day=day, action="scavenge")
     if blocked:
         return blocked
-    from engine.diminishing import next_use_multiplier
-    _scav_mult, _scav_n = next_use_multiplier(user, "scavenge", day)
-    gross = int(roll_range(SCAVENGE_BONES) * _scav_mult)
+    from engine.energy import spend_energy
+    _new_energy, _had_energy, scavenge_penalty = spend_energy(user, "scavenge")
+    gross = roll_range(SCAVENGE_BONES)
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     from engine.shop_items import raven_companion_scavenge_bonus
     gross, raven_scavenge_bonus = raven_companion_scavenge_bonus(user["discord_id"], gross)
@@ -548,14 +546,14 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note) if n]
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scavenge_penalty) if n]
         footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
     else:
-        footer = "today's scavenge is spent; try again after the next sunrise."
-        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n]
+        footer = "nothing worth carrying home this time."
+        notes = [n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note, scavenge_penalty) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
@@ -582,8 +580,8 @@ def try_track(
     blocked = _activity_block_embed(user, title="cannot track", day=day, action="track")
     if blocked:
         return blocked, False
-    from engine.diminishing import record_use
-    record_use(user, "track", day)
+    from engine.energy import spend_energy
+    _new_energy, _had_energy, track_penalty = spend_energy(user, "track")
 
     trail_map = {
         "fresh": "track_fresh",
@@ -610,9 +608,10 @@ def try_track(
     if not ok:
         db.update_user(interaction.user.id, last_track_day=day)
         embed = howlbert_embed("trail lost", track_msg, color=ERROR_COLOR)
-        embed.set_footer(
-            text="today's track is spent; try `/field action:sniff` before tracking next sunrise."
-        )
+        footer = "try `/field action:sniff` before tracking again."
+        if track_penalty:
+            footer += f" · {track_penalty}"
+        embed.set_footer(text=footer)
         return embed, False
 
     wis_bonus = max(0, attr_modifier(get_attr(user, "wis")))
@@ -657,7 +656,7 @@ def try_track(
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
     if net > 0:
         footer = f"{prey_name} in hoard (`/food`) · `/preypile` to share at the den"
-        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, track_penalty) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         from engine.nursing import is_nursing_mother
@@ -666,8 +665,8 @@ def try_track(
             footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
         embed.set_footer(text=footer)
     else:
-        footer = "today's track is spent; try again after the next sunrise."
-        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        footer = "the trail goes cold."
+        notes = [n for n in (raven_track_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, track_penalty) if n]
         if notes:
             footer += " · " + " · ".join(notes)
         embed.set_footer(text=footer)
@@ -694,9 +693,9 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
     blocked = _activity_block_embed(user, title="cannot fish", day=day, action="fishing")
     if blocked:
         return blocked, False
-    from engine.diminishing import next_use_multiplier
-    _fish_mult, _fish_n = next_use_multiplier(user, "fishing", day)
-    gross = int(roll_range(FISHING_BONES) * _fish_mult)
+    from engine.energy import spend_energy
+    _new_energy, _had_energy, fishing_penalty = spend_energy(user, "fishing")
+    gross = roll_range(FISHING_BONES)
     gross, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, gross, day)
     net, tax, payout, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "fishing", season=world["season"], guild_id=guild_id
@@ -750,9 +749,9 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
             f"{prey_name} in hoard (`/food`) · `/preypile` to share · "
             f"{conditions_snippet(tod, wx)}"
         )
-        if season_note or mood_note or hunger_note or thirst_note or exhaustion_note or sniff_note:
+        if season_note or mood_note or hunger_note or thirst_note or exhaustion_note or sniff_note or fishing_penalty:
             footer += " · " + " · ".join(
-                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n
+                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note, fishing_penalty) if n
             )
         from engine.nursing import is_nursing_mother
 
@@ -765,10 +764,10 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         if snake:
             embed.description = (embed.description or "") + f"\n\n{snake}"
     else:
-        footer = "today's fishing is spent; pack waters shift with weather and time (`/world`)."
-        if season_note or mood_note or hunger_note or thirst_note or sniff_note:
+        footer = "pack waters shift with weather and time (`/world`)."
+        if season_note or mood_note or hunger_note or thirst_note or sniff_note or fishing_penalty:
             footer = " · ".join(
-                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note) if n
+                n for n in (season_note, mood_note, hunger_note, thirst_note, exhaustion_note, sniff_note, fishing_penalty) if n
             ) + " · " + footer
         embed.set_footer(text=footer)
     _append_notes_to_footer(embed, fatigue)
@@ -787,19 +786,19 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     blocked = _activity_block_embed(user, title="cannot forage")
     if blocked:
         return blocked
-    from engine.diminishing import use_count_today, record_use
+    from engine.energy import spend_energy
     from engine.role_privileges import is_full_forager
-    # full foragers are the gathering specialists; foraging never gets harder for
-    # them. everyone else faces a climbing dc on repeat forages in one sunrise.
-    _forage_repeat = 0 if is_full_forager(user) else use_count_today(user, "forage", day)
-    record_use(user, "forage", day)
+    _new_energy, _had_energy, forage_penalty = spend_energy(
+        user, "forage", discounted=is_full_forager(user)
+    )
     from engine.forager_perk import grant_forager_auto_herb
 
     auto_herb = grant_forager_auto_herb(user, day=day, guild_id=guild_id)
     forager_note = (
         f"\n\n_forager perk: **{auto_herb}** turned up in pack territory._" if auto_herb else ""
     )
-    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"]) + 3 * _forage_repeat
+    forage_penalty_note = f"\n\n_{forage_penalty}_" if forage_penalty else ""
+    dc = FORAGE_RARITY_DC[rarity] + season_forage_dc_mod(world["season"])
     season_note = season_forage_modifier_label(world["season"])
     season_suffix = f"\n_{season_note}_" if season_forage_dc_mod(world["season"]) else ""
     profs = parse_proficiencies(user["skill_proficiencies"])
@@ -853,7 +852,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
             + (f"\n\n{nettle_note}" if nettle_note else "")
             + forager_note
             + season_suffix
-            + (f"\n\n{mere_note}" if mere_note else ""),
+            + (f"\n\n{mere_note}" if mere_note else "")
+            + forage_penalty_note,
             color=ERROR_COLOR,
         )
         embed.set_footer(text=embed_footer(forage_sunrise_footer(user)))
@@ -866,7 +866,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         embed = howlbert_embed(
             "forage failed",
             format_roll_result(result) + forager_note + season_suffix + spoil_note
-            + (f"\n\n{mere_note}" if mere_note else ""),
+            + (f"\n\n{mere_note}" if mere_note else "")
+            + forage_penalty_note,
             color=ERROR_COLOR,
         )
         embed.set_footer(text=embed_footer(forage_sunrise_footer(user)))
@@ -981,7 +982,8 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         + season_suffix
         + (f"\n\n{sting_note}" if sting_note else "")
         + (f"\n\n{nettle_note}" if nettle_note else "")
-        + (f"\n\n{mere_note}" if mere_note else ""),
+        + (f"\n\n{mere_note}" if mere_note else "")
+        + forage_penalty_note,
         color=SUCCESS_COLOR,
     )
     embed.set_footer(text=embed_footer(forage_sunrise_footer(user, success_hint=True)))
@@ -1188,10 +1190,10 @@ def try_work(
     blocked = _activity_block_embed(user, title="cannot work")
     if blocked:
         return blocked
-    from engine.diminishing import next_use_multiplier, diminishing_note
+    from engine.energy import spend_energy
 
-    mult, use_n = next_use_multiplier(user, "work", day)
-    gross = int(roll_range(WORK_BONES) * mult)
+    _new_energy, _had_energy, work_penalty = spend_energy(user, "work")
+    gross = roll_range(WORK_BONES)
     net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)
@@ -1201,9 +1203,8 @@ def try_work(
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
-    dim = diminishing_note(use_n)
-    if dim:
-        embed.set_footer(text=embed_footer(dim))
+    if work_penalty:
+        embed.set_footer(text=embed_footer(work_penalty))
     elif net == 0:
         embed.set_footer(text=embed_footer("today's work turned up nothing; try again."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
@@ -1233,8 +1234,8 @@ def try_crime(
     blocked = _activity_block_embed(user, title="cannot run a score")
     if blocked:
         return blocked
-    from engine.diminishing import record_use
-    record_use(user, "crime", day)
+    from engine.energy import spend_energy
+    _new_energy, _had_energy, crime_penalty = spend_energy(user, "crime")
 
     if target_pack:
         return _try_cross_pack_steal(
@@ -1245,6 +1246,7 @@ def try_crime(
             raid_type=raid_type,
             scene=scene,
             staff=staff,
+            crime_penalty=crime_penalty,
         )
 
     if victim_row is not None:
@@ -1255,6 +1257,7 @@ def try_crime(
             victim_row=victim_row,
             scene=scene,
             staff=staff,
+            crime_penalty=crime_penalty,
         )
 
     if target_wolf:
@@ -1265,6 +1268,7 @@ def try_crime(
             target_wolf=target_wolf,
             scene=scene,
             staff=staff,
+            crime_penalty=crime_penalty,
         )
 
     db.update_user(interaction.user.id, last_crime_day=day)
@@ -1309,8 +1313,10 @@ def try_crime(
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
-    if net == 0:
-        embed.set_footer(text=embed_footer("today's score is spent; try again after the next sunrise."))
+    if crime_penalty:
+        embed.set_footer(text=embed_footer(crime_penalty))
+    elif net == 0:
+        embed.set_footer(text=embed_footer("nothing worth taking this time."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 
@@ -1323,6 +1329,7 @@ def _try_individual_steal(
     victim_row=None,
     scene: str | None,
     staff: bool,
+    crime_penalty: str = "",
 ) -> discord.Embed | None:
     from config import INDIVIDUAL_STEAL_PCT, INDIVIDUAL_STEAL_RIVALRY_GAIN
 
@@ -1365,7 +1372,10 @@ def _try_individual_steal(
             from engine.healer_code import apply_medic_neutrality_violated
             medic_note = apply_medic_neutrality_violated(interaction.user.id, victim)
             embed.add_field(name="Healer's Neutrality", value=medic_note, inline=False)
-        embed.set_footer(text=f"no bones taken from {victim['wolf_name']}. rivalry deepens.")
+        footer = f"no bones taken from {victim['wolf_name']}. rivalry deepens."
+        if crime_penalty:
+            footer += f" · {crime_penalty}"
+        embed.set_footer(text=footer)
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
     pct = random.uniform(*INDIVIDUAL_STEAL_PCT)
@@ -1399,7 +1409,10 @@ def _try_individual_steal(
             else "the healer's sanctity was violated; the Maw saw what you did in the dark."
         )
         embed.add_field(name="the Great Maw watches", value=maw_note, inline=False)
-    embed.set_footer(text=f"{victim['wolf_name']} won't forget this. rivalry deepens.")
+    footer = f"{victim['wolf_name']} won't forget this. rivalry deepens."
+    if crime_penalty:
+        footer += f" · {crime_penalty}"
+    embed.set_footer(text=footer)
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 
@@ -1412,6 +1425,7 @@ def _try_cross_pack_steal(
     raid_type: str = "bones",
     scene: str | None,
     staff: bool,
+    crime_penalty: str = "",
 ) -> discord.Embed | None:
     from config import GREAT_PACKS
 
@@ -1507,7 +1521,10 @@ def _try_cross_pack_steal(
             value=f"{penalty}" + ("; **cast out** as loner" if kick == "kicked" else ""),
             inline=False,
         )
-        embed.set_footer(text=f"no bones taken from {victim_name}.")
+        footer = f"no bones taken from {victim_name}."
+        if crime_penalty:
+            footer += f" · {crime_penalty}"
+        embed.set_footer(text=footer)
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
     attempted = scaled_steal_attempt(target_pack, roll_range(CROSS_PACK_STEAL_BONES))
@@ -1568,7 +1585,10 @@ def _try_cross_pack_steal(
             value=format_bones(victim_after["treasury"]),
             inline=True,
         )
-    embed.set_footer(text="your den praises a successful rival raid.")
+    footer = "your den praises a successful rival raid."
+    if crime_penalty:
+        footer += f" · {crime_penalty}"
+    embed.set_footer(text=footer)
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
 

@@ -49,7 +49,7 @@ The Maw was once as straightforward as the current. The river provides, the rive
 
 Strength: 6 (+1)  
 Dexterity: 5 (0)  
-Survival: 4 (-1)  
+Survival: 3 (-2)  
 Intelligence: 3 (-2)  
 Charisma: 2 (-2)  
 Wisdom: 1 (-3)

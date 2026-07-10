@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from config import ELDER_MIN_MOONS, JUVENILE_MAX_MOONS, MAX_WOLF_AGE_MOONS, MOONS_PER_ROLLOVER, PUP_MAX_MOONS
+from config import ELDER_MIN_MOONS, JUVENILE_MAX_MOONS, MAX_WOLF_AGE_MOONS, PUP_MAX_MOONS
 from engine.apprentice_roles import APPRENTICE_ROLES
 from engine.role_restrictions import AGE_OVERRIDE_ROLES, JUVENILE_ROLE, PUP_ROLE
 from rpg_rules import ROLE_LABELS, ROLE_PROFICIENCIES

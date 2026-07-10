@@ -1,3 +1,4 @@
+# herb_addiction.py
 """Herb addiction / dependence.
 
 Sedative and opioid-adjacent herbs build tolerance and dependence with repeated

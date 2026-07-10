@@ -7,8 +7,6 @@ import sqlite3
 import database as db
 from config import BOOST_DAILY_BONUS, DAILY_REWARD
 from engine.prestige import apply_bone_bonus, bone_bonus_pct
-# can_hunt_again is unused here directly; re-exported for engine.wolf_checklist.
-from engine.role_privileges import can_hunt_again
 from utils.currency import format_bones
 
 DROWN_SICK_ROLE = "drown_sick"
@@ -82,9 +80,6 @@ def daily_stipend_status(
 ) -> tuple[str, str]:
     """Status line + full note for /cooldowns daily field."""
     base_payout = daily_stipend_amount(prestige_tier, is_booster=False)
-    payout = daily_stipend_amount(
-        prestige_tier, is_booster=is_booster, donor_bonus=donor_bonus
-    )
     from engine.role_features import is_rogue_wolf
 
     if is_rogue_wolf(user):

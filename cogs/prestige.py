@@ -2,11 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from config import GREAT_PACKS, GREAT_PACK_PATH_TIERS
+from config import GREAT_PACK_PATH_TIERS
 from engine.prestige import bone_bonus_pct, format_requirement_progress, format_retirement_breakdown, get_tier_info, next_tier_requirements, unlocked_tier_lines
-from utils.currency import format_bones
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import SUCCESS_COLOR, howlbert_embed, player_message
 PRESTIGE_ACTIONS = [app_commands.Choice(name='view tier', value='view'), app_commands.Choice(name='requirements', value='require'), app_commands.Choice(name='bonuses', value='bonus'), app_commands.Choice(name='legacy', value='legacy'), app_commands.Choice(name='retire wolf', value='retire'), app_commands.Choice(name='hall of fame', value='halloffame')]
 
 class Prestige(commands.Cog):

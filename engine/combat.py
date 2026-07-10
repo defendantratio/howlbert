@@ -2,10 +2,8 @@ import random
 
 from engine.character import attr_modifier
 from engine.character_traits import (
-    trait_clears_infection_on_heal,
     trait_combat_modifier,
     trait_damage_reduction,
-    trait_treat_heal_bonus,
 )
 from engine.combat_guide import COMBAT_MANEUVERS
 from engine.combat_status import attacker_roll_modifiers, maneuver_pin_block, roll_attack_die

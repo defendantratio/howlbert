@@ -3,17 +3,17 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 import database as db
-from config import COLLAB_HUNT_MAX_WOLVES, COLLAB_HUNT_MIN_WOLVES
+from config import COLLAB_HUNT_MIN_WOLVES
 from engine.collab_hunt import build_collab_hunt_embed, try_set_out_collab_hunt, validate_join_collab_hunt, validate_start_collab_hunt, wolves_eligible_to_join
 from utils.combat_views import make_combat_view
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 
 class CollabWolfSelect(discord.ui.Select):
 
     def __init__(self, hunt_id: int, wolves: list):
         options = [discord.SelectOption(label=w['wolf_name'], value=str(w['id'])) for w in wolves[:25]]
-        super().__init__(placeholder='Which wolf joins the hunt?', min_values=1, max_values=1, options=options)
+        super().__init__(placeholder='which wolf joins the hunt?', min_values=1, max_values=1, options=options)
         self.hunt_id = hunt_id
 
     async def callback(self, interaction: discord.Interaction):
@@ -41,11 +41,11 @@ def make_collab_hunt_view(hunt_id: int) -> discord.ui.View:
 
     async def cancel_cb(interaction: discord.Interaction, *, hid=hunt_id):
         await CollabHuntCog.handle_cancel(interaction, hid)
-    join_btn = discord.ui.Button(label='Join hunt', style=discord.ButtonStyle.secondary, emoji='🐺', custom_id=f'howlbert_collab:{hunt_id}:join')
+    join_btn = discord.ui.Button(label='join hunt', style=discord.ButtonStyle.secondary, emoji='🐺', custom_id=f'howlbert_collab:{hunt_id}:join')
     join_btn.callback = join_cb
-    go_btn = discord.ui.Button(label='Set out', style=discord.ButtonStyle.success, emoji='🏹', custom_id=f'howlbert_collab:{hunt_id}:go')
+    go_btn = discord.ui.Button(label='set out', style=discord.ButtonStyle.success, emoji='🏹', custom_id=f'howlbert_collab:{hunt_id}:go')
     go_btn.callback = go_cb
-    cancel_btn = discord.ui.Button(label='Cancel', style=discord.ButtonStyle.danger, custom_id=f'howlbert_collab:{hunt_id}:cancel')
+    cancel_btn = discord.ui.Button(label='cancel', style=discord.ButtonStyle.danger, custom_id=f'howlbert_collab:{hunt_id}:cancel')
     cancel_btn.callback = cancel_cb
     view.add_item(join_btn)
     view.add_item(go_btn)
@@ -54,7 +54,7 @@ def make_collab_hunt_view(hunt_id: int) -> discord.ui.View:
 
 def _disabled_view() -> discord.ui.View:
     view = discord.ui.View(timeout=None)
-    for label in ('Join hunt', 'Set out', 'Cancel'):
+    for label in ('join hunt', 'set out', 'cancel'):
         view.add_item(discord.ui.Button(label=label, style=discord.ButtonStyle.secondary, disabled=True))
     return view
 

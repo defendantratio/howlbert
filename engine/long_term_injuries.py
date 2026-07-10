@@ -20,7 +20,7 @@ LONG_TERM_TYPES = {
         "deception_bonus": 1,
     },
     "chronic_pain": {
-        "label": "Chronic Pain",
+        "label": "Bone-Ache",
         "effect": "On cold or rainy days, disadvantage on the first Strength or Dexterity check.",
         "intimidate_bonus": 0,
     },
@@ -68,7 +68,7 @@ LONG_TERM_TYPES = {
         "wis_bonus": 1,
     },
     "arthritis": {
-        "label": "Arthritis",
+        "label": "Joint-Rot",
         "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
         "intimidate_bonus": 0,
     },
@@ -219,6 +219,64 @@ def convert_untreated_injuries_on_rollover(conn, current_day: int) -> list[tuple
                 (json.dumps(remaining), json.dumps(since), json.dumps(lt_current), row["id"]),
             )
     return converted
+
+
+# source injury -> (complication injury, sunrises untreated before it develops)
+# distinct from CHRONIC_CONVERSION_TARGET: the source injury stays active
+# (it hasn't healed), a second, worse injury just joins it.
+INJURY_COMPLICATION_TARGET = {
+    "fractured_rib": ("bruised_lung", 2),
+    "concussion": ("swollen_eye", 2),
+    "infected_wound": ("abscess", 3),
+    "deep_gash": ("abscess", 3),
+}
+
+
+def apply_injury_complications_on_rollover(conn, current_day: int) -> list[tuple[int, str, str, str]]:
+    """
+    Some injuries left untreated develop a complication after a short
+    window; a fractured rib risks a bruised lung, a concussion risks a
+    swollen eye, an open wound risks an abscess. The source injury stays
+    active (still needs its own treatment); the complication is added
+    alongside it, once. Operates on the rollover's own connection.
+    Returns (wolf_id, wolf_name, source_key, complication_key) tuples.
+    """
+    from engine.conditions import add_injury, parse_injuries, parse_injury_since
+
+    rows = conn.execute(
+        """
+        SELECT id, wolf_name, active_injuries, injury_since
+        FROM users WHERE condition != 'dead' AND active_injuries IS NOT NULL
+        """
+    ).fetchall()
+    complications: list[tuple[int, str, str, str]] = []
+    for row in rows:
+        injuries = parse_injuries(row["active_injuries"])
+        if not injuries:
+            continue
+        since = parse_injury_since(row["injury_since"])
+        updated = list(injuries)
+        changed = False
+        for key in injuries:
+            target = INJURY_COMPLICATION_TARGET.get(key)
+            if not target:
+                continue
+            complication_key, threshold_days = target
+            if complication_key in updated:
+                continue
+            start = since.get(key)
+            if start is None or current_day - start < threshold_days:
+                continue
+            updated = add_injury(updated, complication_key)
+            since[complication_key] = current_day
+            changed = True
+            complications.append((row["id"], row["wolf_name"], key, complication_key))
+        if changed:
+            conn.execute(
+                "UPDATE users SET active_injuries = ?, injury_since = ? WHERE id = ?",
+                (json.dumps(updated), json.dumps(since), row["id"]),
+            )
+    return complications
 
 
 def add_long_term_injury(wolf_id: int, entry: str) -> None:

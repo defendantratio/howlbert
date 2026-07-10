@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 
 from engine.conditions import apply_meal_energy
-from engine.injury_effects import meal_blocked_by_injury, meal_jaw_pain_note
+from engine.injury_effects import meal_jaw_pain_note
 from engine.vitals import living_wolf_block
 from engine.hunger import meal_hunger_gain
 from engine.thirst import meal_thirst_gain

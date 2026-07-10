@@ -4,9 +4,6 @@ from discord.ext import commands
 import database as db
 from config import CURRENCY_LABEL
 from engine.activities import try_daily, try_hunt, try_work
-from engine.amusement_items import amusement_meta
-from engine.amusement_storage import grant_amusement
-from engine.prey_items import prey_meta
 from engine.shop_items import RABBIT_PELT_GIFT_BONES, RABBIT_PELT_STANDING, USABLE_ITEM_KEYS
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
@@ -72,10 +69,10 @@ def _resolve_gift_recipient(interaction: discord.Interaction, user, wolf: discor
     return (None, 'Pick another **player** or one of your wolves with `own_wolf`.')
 
 
-class ReincarnationModal(discord.ui.Modal, title='Reincarnation'):
+class ReincarnationModal(discord.ui.Modal, title='reincarnation'):
     new_name: discord.ui.TextInput = discord.ui.TextInput(
-        label='New name',
-        placeholder='A new identity for the same soul…',
+        label='new name',
+        placeholder='a new identity for the same soul…',
         min_length=1,
         max_length=30,
     )

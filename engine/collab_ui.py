@@ -13,10 +13,10 @@ from engine.collab_patrol import build_collab_patrol_embed
 def _disabled_view(*, trail: bool = False, war: bool = False) -> discord.ui.View:
     view = discord.ui.View(timeout=None)
     if war:
-        join_label = "Join war patrol"
+        join_label = "join war patrol"
     else:
-        join_label = "Join trail" if trail else "Join patrol"
-    for label in (join_label, "Set out", "Cancel"):
+        join_label = "join trail" if trail else "join patrol"
+    for label in (join_label, "set out", "cancel"):
         view.add_item(
             discord.ui.Button(label=label, style=discord.ButtonStyle.secondary, disabled=True)
         )

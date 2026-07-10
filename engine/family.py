@@ -1,9 +1,8 @@
-import json
 import random
 
-from engine.character import attr_modifier, default_stats_for_role
+from engine.character import attr_modifier
 from engine.dice import roll_d20
-from rpg_rules import ROLE_PROFICIENCIES, SKILLS, MAX_SKILL_RANK, XP_PER_TRAIT
+from rpg_rules import SKILLS
 
 GESTATION_DAYS = 63
 XP_PER_ATTRIBUTE = 5

@@ -51,26 +51,29 @@ def test_knotgrass_has_explicit_prep_methods():
     assert "tea" in methods
 
 
-def test_arnica_is_poultice_only():
+def test_arnica_is_external():
+    # external-only herb: lists poultice (its form rule) and never an internal
+    # tea or eaten-raw form.
     from herbs import HERBS
     from engine.herb_guide import _derive_prep_methods
     methods = _derive_prep_methods("arnica", HERBS["arnica"])
-    assert methods == ["poultice"]
+    assert "poultice" in methods
+    assert "tea" not in methods and "eaten raw" not in methods
 
 
-def test_comfrey_includes_poultice_and_chewed():
+def test_comfrey_includes_poultice():
     from herbs import HERBS
     from engine.herb_guide import _derive_prep_methods
     methods = _derive_prep_methods("comfrey", HERBS["comfrey"])
     assert "poultice" in methods
-    assert "chewed" in methods
 
 
-def test_labrador_tea_is_decoction():
+def test_labrador_tea_is_tea():
     from herbs import HERBS
     from engine.herb_guide import _derive_prep_methods
     methods = _derive_prep_methods("labrador_tea", HERBS["labrador_tea"])
-    assert methods == ["decoction"]
+    assert "tea" in methods
+    assert "dried" in methods
 
 
 # ---- herb_admin DEFAULT_METHOD_REQS ----
@@ -149,9 +152,9 @@ _TESTS = [
     test_split_non_herb_key,
     test_split_tea_suffix_not_shadowed_by_labrador_tea,
     test_knotgrass_has_explicit_prep_methods,
-    test_arnica_is_poultice_only,
-    test_comfrey_includes_poultice_and_chewed,
-    test_labrador_tea_is_decoction,
+    test_arnica_is_external,
+    test_comfrey_includes_poultice,
+    test_labrador_tea_is_tea,
     test_default_method_reqs_importable,
     test_default_method_reqs_respiratory,
     test_default_method_reqs_wounds,

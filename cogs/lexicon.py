@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from engine.lexicon import build_terms_embed
-from utils.embeds import EMBED_COLOR, embed_footer, howlbert_embed, choice_label
+from utils.embeds import EMBED_COLOR, embed_footer, howlbert_embed
 
 class Lexicon(commands.Cog):
 

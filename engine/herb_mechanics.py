@@ -1,3 +1,4 @@
+# herb_mechanics.py
 """Mechanical descriptions for the herb compendium (/herbs action:guide)."""
 
 from __future__ import annotations

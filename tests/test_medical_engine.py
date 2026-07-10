@@ -22,7 +22,7 @@ from engine.long_term_injuries import fear_trigger_check, matching_fear_triggers
 from engine.medical_access import can_medic_treat_cross_pack
 from engine.movement_penalties import apply_movement_hunt_penalty
 from engine.season_effects import winter_forage_fail_spoil_chance
-from engine.shop_items import roll_herb_bundle_heal, use_herb_bundle
+from engine.shop_items import roll_herb_bundle_heal
 from engine.travel_hazards import travel_hazard_dc
 from herbs import HERBS
 

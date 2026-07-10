@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from engine.skill_checks import SKILL_CATEGORIES, SKILL_SCENARIOS, opponent_required, scenario_keys_for_category
+from engine.skill_checks import SKILL_CATEGORIES, SKILL_SCENARIOS, scenario_keys_for_category
 from engine.skill_runner import run_skill_scenario
 from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label

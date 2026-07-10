@@ -2,11 +2,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import database as db
 from engine.explore import try_rescout
 from engine.scout_field import try_scout_survey, try_scout_trail
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, howlbert_embed, choice_label
 
 class Scout(commands.Cog):
 

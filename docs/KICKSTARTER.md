@@ -110,7 +110,7 @@ copy-paste block:
 > - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, hydration, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf), old age at 120 moons; optional revive / reincarnation via ko-fi shop.
 > - herbs: 100+ plants with real preparation, side effects, and dependence; the wrong dose, an herb eaten instead of applied, or one pressed into an open wound backfires (toxicity, miscarriage risk, addiction), and sedatives like poppy build tolerance and withdrawal.
 > - genetics: heritable conditions (blindness, deafness, brachycephaly, spinal disorders, inbreeding effects, neurodevelopmental traits, lactase persistence) rolled at birth or passed from parents; each has real mechanical consequences, not just flavor.
-> - design: few hard blocks; most actions use diminishing returns and real penalties instead of cooldowns, so a wolf can always act (hunt again for less, not "come back tomorrow"). consequences, not walls.
+> - design: almost no hard blocks; an energy meter (0 to 100) instead. most actions spend energy, and running out never blocks the action; it still succeeds, but costs extra exhaustion and mood, so a wolf can always act (not "come back tomorrow"). consequences, not walls.
 > - exploration and scouts: venture, rescout, survey, trail.
 > - legacy: prestige, retired wolves, hall of fame.
 >

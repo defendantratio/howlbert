@@ -6,9 +6,9 @@ import database as db
 from engine.pack_leadership import can_act_as_pack_alpha, can_act_as_pack_officer, can_resolve_war
 from engine.pack_food import deposit_all_to_pack_stash, deposit_to_pack_stash, format_pack_stash_line, run_feedall, withdraw_from_pack_stash
 from engine.thirst import run_drinkall
-from engine.pack_unity import format_unity_meter, standing_effect_text, unity_effect_text
+from engine.pack_unity import format_unity_meter, unity_effect_text
 from engine.character import attr_modifier, get_attr
-from config import CURRENCY_LABEL, GREAT_PACKS, MAX_PACK_TAX_RATE
+from config import GREAT_PACKS, MAX_PACK_TAX_RATE
 from engine.prey_storage import format_prey_hoard_line
 from utils.currency import format_bones
 from utils.replies import reply_ephemeral
@@ -461,11 +461,9 @@ class Pack(commands.Cog):
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
         user = db.get_user(interaction.user.id)
-        from engine.diminishing import next_use_multiplier
-        _pat_mult, _pat_n = next_use_multiplier(user, day_column, day)
+        from engine.energy import spend_energy
+        _new_energy, _had_energy, war_penalty = spend_energy(user, 'war_patrol')
         points = points_fn(user)
-        if _pat_n > 1:
-            points = max(1, int(points * _pat_mult))
         db.add_war_score(war['id'], pack['id'], points)
         db.increment_quest_progress(interaction.user.id, 'patrol', guild_id=interaction.guild.id)
         db.update_user(interaction.user.id, **{day_column: day})
@@ -474,6 +472,8 @@ class Pack(commands.Cog):
         embed.add_field(name='Territory', value=war['territory_name'], inline=True)
         embed.add_field(name='Points Earned', value=str(points), inline=True)
         embed.add_field(name='Score', value=f"Attack {war['attacker_score']}; Defend {war['defender_score']}", inline=False)
+        if war_penalty:
+            embed.set_footer(text=war_penalty)
         await interaction.response.send_message(embed=embed)
 
     @pack.command(name='patrol', description='patrol contested territory during a pack war.')

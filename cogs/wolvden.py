@@ -3,7 +3,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
-from engine.amusement_items import amusement_meta
 from engine.amusement_storage import format_amusement_line, gift_amusement
 from engine.crafting import craft_from_remnants, format_hoard_summary, shred_amusement_stack
 from engine.hunger import format_hunger_line

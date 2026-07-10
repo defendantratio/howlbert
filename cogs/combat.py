@@ -8,7 +8,7 @@ from engine.combat import finalize_cross_pack_pvp_death, format_attack, overlay_
 from engine.bestiary import BESTIARY_NPCS, format_npc_summary, npc_hp, stats_for_fighter
 from engine.combat_guide import COMBAT_GUIDE_TOPICS, COMBAT_MANEUVERS, MANEUVER_DETAIL
 from engine.combat_status import apply_crit_status_effects, apply_fumble_status_effects, apply_maneuver_pin_effects, attack_target_block, clear_attack_disadvantage, format_combat_flags, parse_combat_flags, release_pin_states
-from engine.conditions import add_injury, injury_roll_label, parse_injuries
+from engine.conditions import add_injury, parse_injuries
 from engine.combat_injuries import apply_injury_to_list, injury_label, resolve_player_injury_key
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.wolf_autocomplete import make_member_wolf_autocomplete
@@ -24,6 +24,24 @@ from engine.infractions import apply_yield_caught, yield_caught_standing
 from utils.replies import reply_ephemeral
 
 _ally_wolf_autocomplete = make_member_wolf_autocomplete("ally")
+
+async def _other_wolf_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    active = db.get_user(interaction.user.id)
+    if not active:
+        return []
+    choices = []
+    for wolf in db.list_user_wolves(interaction.user.id):
+        if wolf['id'] == active['id']:
+            continue
+        name = wolf['wolf_name']
+        if current and current.lower() not in name.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(name), value=name))
+    return choices[:25]
+
+def _resolve_own_wolf(discord_id: int, name: str):
+    rows = db.list_user_wolves(discord_id)
+    return next((w for w in rows if w['wolf_name'].lower() == name.strip().lower()), None)
 
 async def _combat_reply(interaction: discord.Interaction, **kwargs) -> None:
     """Send combat UI response; works whether or not the interaction was deferred."""
@@ -50,7 +68,7 @@ def _yield_embed_parts(user, name: str, hp_line: str, outcome: str) -> tuple[str
         body += f'\n\n{expulsion}'
     return (title, body, color)
 
-async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot, enc_id: int, body: str, hit: bool, defender_f, new_hp: int, *, title: str='Attack') -> None:
+async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot, enc_id: int, body: str, hit: bool, defender_f, new_hp: int, *, title: str='Attack', attacker_is_npc: bool=False) -> None:
     db.advance_combat_turn(enc_id)
     db.clear_combat_target(interaction.user.id, enc_id)
     enc = db.get_encounter(enc_id)
@@ -60,7 +78,10 @@ async def finish_attack_turn(interaction: discord.Interaction, bot: commands.Bot
     if new_hp == 0 and (not _is_npc(defender_f)):
         footer += ' · `/medic action:deathsaves`'
     embed.set_footer(text=footer)
-    if hit and not _is_npc(defender_f) and db.row_val(defender_f, 'wolf_id'):
+    # healer's neutrality only applies when a *wolf* strikes the medic (a packmate
+    # or rival breaking the taboo); a wild animal or other npc mauling the healer
+    # in a hunt/defence is not a den crime.
+    if hit and not attacker_is_npc and not _is_npc(defender_f) and db.row_val(defender_f, 'wolf_id'):
         from engine.role_features import is_full_medic
         defender_wolf = db.get_user_by_id(db.row_val(defender_f, 'wolf_id'))
         if defender_wolf and is_full_medic(defender_wolf):
@@ -153,7 +174,7 @@ async def execute_npc_attack(interaction: discord.Interaction, bot: commands.Bot
     except ValueError:
         await _combat_reply(interaction, embed=howlbert_embed('Invalid Target', "That attack couldn't land on this target.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
         return True
-    await finish_attack_turn(interaction, bot, enc_id, body, hit, defender_f, new_hp, title='Maneuver' if maneuver_key else 'Attack')
+    await finish_attack_turn(interaction, bot, enc_id, body, hit, defender_f, new_hp, title='Maneuver' if maneuver_key else 'Attack', attacker_is_npc=True)
     return True
 
 def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str, *, maneuver_key: str | None=None, attacker_f=None, allow_free_counter: bool=True) -> tuple[str, int, bool]:
@@ -448,10 +469,10 @@ class Combat(commands.Cog):
         self.bot.add_dynamic_items(*COMBAT_DYNAMIC_ITEMS)
     combat = app_commands.Group(name='combat', description='basil combat; initiative, bite, claw.')
 
-    def _resolve_encounter(self, channel_id: int | None, discord_id: int | None, encounter_id: int | None, *, require_membership: bool=False, joinable_only: bool=False, require_recruiting: bool=False) -> tuple[object | None, str | None]:
+    def _resolve_encounter(self, channel_id: int | None, discord_id: int | None, encounter_id: int | None, *, require_membership: bool=False, joinable_only: bool=False, require_recruiting: bool=False, wolf_id: int | None=None) -> tuple[object | None, str | None]:
         if not channel_id:
             return (None, 'Use this in a server channel.')
-        return db.resolve_combat_encounter(channel_id, discord_id, encounter_id, require_membership=require_membership, joinable_only=joinable_only, require_recruiting=require_recruiting)
+        return db.resolve_combat_encounter(channel_id, discord_id, encounter_id, require_membership=require_membership, joinable_only=joinable_only, require_recruiting=require_recruiting, wolf_id=wolf_id)
 
     async def _send_encounter_error(self, interaction: discord.Interaction, err: str, *, deferred: bool=False) -> None:
         embed = howlbert_embed('Which Fight?', err, color=ERROR_COLOR)
@@ -555,25 +576,31 @@ class Combat(commands.Cog):
         await interaction.followup.send(embed=embed, view=view)
 
     @combat.command(name='join', description='join a fight in this channel (recruiting or mid-encounter).')
-    @app_commands.describe(encounter='fight id from /combat list (optional if only one is open)')
-    @app_commands.autocomplete(encounter=_encounter_autocomplete)
-    async def combat_join(self, interaction: discord.Interaction, encounter: int | None=None):
+    @app_commands.describe(encounter='fight id from /combat list (optional if only one is open)', own_wolf="join with another of your wolves, e.g. to spar packmate-vs-packmate")
+    @app_commands.autocomplete(encounter=_encounter_autocomplete, own_wolf=_other_wolf_autocomplete)
+    async def combat_join(self, interaction: discord.Interaction, encounter: int | None=None, own_wolf: str | None=None):
         user = await self._require_user(interaction)
         if not user:
             return
-        block = young_wolf_block(user, action='combat')
+        target_wolf = user
+        if own_wolf:
+            target_wolf = _resolve_own_wolf(interaction.user.id, own_wolf)
+            if not target_wolf:
+                await interaction.response.send_message(embed=howlbert_embed('Unknown Wolf', 'No wolf with that name on your account. Check `/wolves`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+        block = young_wolf_block(target_wolf, action='combat')
         if block:
             await interaction.response.send_message(embed=howlbert_embed('Too Young', block, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        vitals = self._combat_vitals_block(user, interaction.guild.id)
+        vitals = self._combat_vitals_block(target_wolf, interaction.guild.id)
         if vitals:
             await interaction.response.send_message(embed=howlbert_embed('Cannot Fight', vitals, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         await interaction.response.defer()
-        enc, err = self._resolve_encounter(interaction.channel_id, interaction.user.id, encounter, joinable_only=True)
+        enc, err = self._resolve_encounter(interaction.channel_id, interaction.user.id, encounter, joinable_only=True, wolf_id=target_wolf['id'])
         if err:
             await self._send_encounter_error(interaction, err, deferred=True)
             return
@@ -583,24 +610,24 @@ class Combat(commands.Cog):
             embed = howlbert_embed(title, body, color=ERROR_COLOR)
             await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
             return
-        if db.player_in_encounter(enc['id'], interaction.user.id):
-            embed = howlbert_embed('Already In', "You're already in this fight.", color=ERROR_COLOR)
+        if db.wolf_in_encounter(enc['id'], target_wolf['id']):
+            embed = howlbert_embed('Already In', f"**{target_wolf['wolf_name']}** is already in this fight.", color=ERROR_COLOR)
             await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
             return
-        fighter_id = db.add_combat_fighter(enc['id'], discord_id=interaction.user.id, wolf_id=user['id'], hp=user['hp'], max_hp=user['max_hp'])
+        fighter_id = db.add_combat_fighter(enc['id'], discord_id=interaction.user.id, wolf_id=target_wolf['id'], hp=target_wolf['hp'], max_hp=target_wolf['max_hp'])
         world = db.get_world(interaction.guild.id)
         from engine.role_features import apply_scout_combat_hidden
         from engine.combat import roll_initiative
-        if apply_scout_combat_hidden(user, fighter_id, day=world['day_number'], weather_key=world['weather']):
+        if apply_scout_combat_hidden(target_wolf, fighter_id, day=world['day_number'], weather_key=world['weather']):
             hidden_note = ' **Unseen Paw**; hidden in the obscured air.'
         else:
             hidden_note = ''
         init_note = ''
         if enc['status'] == 'active':
-            _, _, total = roll_initiative(user)
+            _, _, total = roll_initiative(target_wolf)
             db.insert_fighter_into_active_encounter(enc['id'], fighter_id, total)
             init_note = f'\nInitiative **{total}**; slotted into turn order.'
-        embed = howlbert_embed('Joined Combat', f"**{user['wolf_name']}** joins fight **#{enc['id']}** (HP {user['hp']}/{user['max_hp']}).{hidden_note}{init_note}", color=SUCCESS_COLOR)
+        embed = howlbert_embed('Joined Combat', f"**{target_wolf['wolf_name']}** joins fight **#{enc['id']}** (HP {target_wolf['hp']}/{target_wolf['max_hp']}).{hidden_note}{init_note}", color=SUCCESS_COLOR)
         await interaction.followup.send(embed=embed)
 
     @combat.command(name='npc', description='add a predator, hearth-hound, or clan cat from the bestiary.')

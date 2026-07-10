@@ -1,3 +1,4 @@
+# herb_buffs.py
 """Timed and one-shot herb effect buffs (stored as JSON on users.herb_buffs)."""
 
 from __future__ import annotations
@@ -107,6 +108,19 @@ def record_herb_tolerance(user, herb_key: str, injury_key: str, *, day: int = 0)
     tol[f"{herb_key}:{injury_key}"] = day
     buffs["herb_tolerance"] = tol
     return {"herb_buffs": buffs_json(buffs)}
+
+
+def record_bone_treated(user, injury_key: str) -> dict:
+    """Mark a bone-set injury (fractured_rib, spinal_injury, sprained_leg,
+    broken_jaw) as properly herb-treated on its way to healing clean,
+    distinct from one left to knit untreated (malunion risk)."""
+    buffs = dict(get_buffs(user))
+    treated = list(buffs.get("bone_treated", []))
+    if injury_key not in treated:
+        treated.append(injury_key)
+        buffs["bone_treated"] = treated
+        return {"herb_buffs": buffs_json(buffs)}
+    return {}
 
 
 def disease_save_uses_advantage(user) -> bool:
@@ -220,6 +234,16 @@ def grant_flea_ward(user, *, day: int, duration: int = 3) -> dict:
 
 def flea_ward_active(user, day: int) -> bool:
     until = get_buffs(user).get("flea_ward_until_day")
+    return bool(until and int(until) >= day)
+
+
+def grant_bleed_dressed(user, *, day: int, duration: int = 1) -> dict:
+    """cobweb field dressing on a deep gash; skips the next sunrise's bleed tick."""
+    return merge_buff_fields(user, bleed_dressed_until_day=day + duration)
+
+
+def bleed_dressed_active(user, day: int) -> bool:
+    until = get_buffs(user).get("bleed_dressed_until_day")
     return bool(until and int(until) >= day)
 
 

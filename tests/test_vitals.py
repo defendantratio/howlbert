@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 
 import database as db
 from config import HUNGER_LOW_THRESHOLD, MOOD_LOW_THRESHOLD, THIRST_LOW_THRESHOLD

@@ -216,6 +216,11 @@ def try_raid_accuse(
     accused = db.get_pack_by_key(target_pack_key)
     if not accused:
         return howlbert_embed("pack not found", "that den isn't registered here.", color=ERROR_COLOR)
+
+    from engine.energy import spend_energy
+
+    _new_energy, _had_energy, accuse_penalty = spend_energy(user, "accuse")
+
     db.set_raid_alert_accused(int(alert["id"]), accused["id"], day)
 
     suspect_id = int(alert["suspect_pack_id"])
@@ -243,4 +248,6 @@ def try_raid_accuse(
         lines.append(f"pack standing with **{accused_name}** **−1** (now **{wrong_rel}/10**).")
         color = ERROR_COLOR
 
+    if accuse_penalty:
+        lines.append(f"_{accuse_penalty}_")
     return howlbert_embed("raid accusation", "\n".join(lines), color=color)

@@ -1,3 +1,4 @@
+# herb_properties.py
 """fresh vs prepared herb rules; toxicity, required prep, potency."""
 
 from __future__ import annotations
@@ -85,7 +86,10 @@ def form_label(form: str) -> str:
         "ointment": "ointment",
         "sap": "sap",
         "rub": "rub",
-        "cooked": "cooked",
+        "cooked": "eaten cooked",
+        "raw": "eaten raw",
+        "gargle": "gargle",
+        "sweetened": "sweetened",
         "simmered_milk": "simmered milk",
     }.get(form, form)
 

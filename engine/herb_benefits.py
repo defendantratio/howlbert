@@ -1,3 +1,4 @@
+# herb_benefits.py
 """Herb benefit engine.
 
 Backs the recurring functional descriptors in the compendium ``effect`` text

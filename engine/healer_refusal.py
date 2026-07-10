@@ -1,3 +1,4 @@
+# healer_refusal.py
 """Healer's Code; cannot refuse the sick (soft nudges)."""
 
 from __future__ import annotations

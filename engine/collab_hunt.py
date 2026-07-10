@@ -26,7 +26,7 @@ from engine.hunt_combat import (
 )
 from engine.hunt_payout import grant_prey_carcass_canonical, hunt_flavor_for_payout, prey_key_for_payout
 from engine.injury_effects import hunt_blocked_by_injury
-from engine.role_privileges import can_hunt_again, hunts_left_footer, is_hunter, record_hunt_use
+from engine.role_privileges import hunts_left_footer, is_hunter, record_hunt_use
 from engine.role_restrictions import young_wolf_block
 from engine.sniff import apply_sniff_bone_bonus
 from engine.vitals import full_activity_block
@@ -69,8 +69,6 @@ def _hunt_block_reason(user, day: int) -> str | None:
     vitals = full_activity_block(user, day, action="hunt")
     if vitals:
         return vitals
-    if not can_hunt_again(user, day):
-        return "you've used your hunt(s) this sunrise."
     if db.wolf_in_open_collab_hunt(user["id"]):
         return "this wolf is already in an open pack hunt."
     return None
@@ -257,6 +255,7 @@ def payout_collab_hunt(
     lines: list[str] = []
     total_payout = 0
     from engine.blooding import award_blooding_on_hunt
+    from engine.energy import spend_energy
 
     for user in users:
         gross = share + (remainder if user["id"] == hunt["leader_wolf_id"] else 0)
@@ -270,6 +269,10 @@ def payout_collab_hunt(
         if db.collab_hunt_member_rp_said(hunt_id, user["id"]):
             db.adjust_mood(user["id"], COLLAB_RP_MOOD_BONUS)
         total_payout += payout
+
+        _new_energy, _had_energy, hunt_penalty = spend_energy(
+            user, "hunt", discounted=is_hunter(user)
+        )
 
         parts = [f"**{user['wolf_name']}** {format_bones(net, signed=True)}"]
         if tax:
@@ -287,6 +290,8 @@ def payout_collab_hunt(
         )
         if fatigue:
             parts.append(fatigue.replace("**", ""))
+        if hunt_penalty:
+            parts.append(hunt_penalty)
         lines.append(" · ".join(parts))
         if payout > 0:
             award_blooding_on_hunt(user)
@@ -473,7 +478,6 @@ async def complete_collab_hunt_large_prey(
         embed = build_collab_hunt_embed(hunt_id)
         return embed
 
-    world = db.get_world(enc["guild_id"])
     dex_avg = sum(max(0, attr_modifier(get_attr(u, "dex"))) for u in users) // len(users)
     fixed_base = random.randint(*LARGE_PREY_BONES) + dex_avg
 

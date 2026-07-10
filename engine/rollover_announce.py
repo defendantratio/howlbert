@@ -40,7 +40,7 @@ from config import (
 
 from engine.world import season_label, time_label, weather_label
 
-from engine.lunar import BIRTH_LUNAR_LABELS, active_lunar_phase, rollover_now
+from engine.lunar import rollover_now
 
 from utils.embeds import SUCCESS_COLOR, howlbert_embed
 
@@ -544,7 +544,7 @@ async def auto_rollover_loop(bot: commands.Bot) -> None:
                             guild.id,
                             due,
                         )
-                    rolled = await run_guild_rollover(bot, guild.id)
+                    await run_guild_rollover(bot, guild.id)
 
                 except Exception:
 

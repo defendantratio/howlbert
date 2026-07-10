@@ -1,3 +1,4 @@
+# herb_prep_batches.py
 """Mechanical outcomes for /skills herb_prep scenarios."""
 
 from __future__ import annotations

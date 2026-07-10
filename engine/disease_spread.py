@@ -1,3 +1,4 @@
+# disease_spread.py
 """Pack contagion at sunrise; Wolvden-style rollover spread."""
 
 from __future__ import annotations

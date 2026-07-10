@@ -1,11 +1,10 @@
-import json
 import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.death_saves import roll_death_save, stabilize_check
-from engine.attraction import BIRTH_SEX_LABELS, BOND_FIRST_SEXUALITIES, are_bonded_mates, court_attraction_allowed, get_sexuality
-from engine.family import GESTATION_DAYS, XP_PER_ATTRIBUTE, XP_PER_ROLE_FEATURE, XP_PER_SKILL, birth_check, courtship_check, generate_pup_stats, spend_xp_attribute, spend_xp_trait_bonus
+from engine.attraction import BOND_FIRST_SEXUALITIES, are_bonded_mates, court_attraction_allowed, get_sexuality
+from engine.family import GESTATION_DAYS, XP_PER_ATTRIBUTE, XP_PER_ROLE_FEATURE, birth_check, courtship_check, generate_pup_stats, spend_xp_attribute, spend_xp_trait_bonus
 from engine.aging import stage_for_age, stage_label
 from engine.youth_lineage import adoption_eligibility_error, parse_litter_names, random_birth_sex
 from engine.courtship import apply_court_outcome, resolve_court_difficulty, run_court_check
@@ -35,7 +34,6 @@ def _mentor_court_approval_note(courter, target) -> str | None:
     affect the courtship; approval eases it, disapproval adds shadow.
     Returns a note prefixed with '+' (ease) or '-' (tension) or None.
     """
-    import random
     mentor_bonds = db.get_bonds_for_wolf(courter['id'])
     for row in mentor_bonds:
         if row['bond_type'] != 'mentor':
@@ -558,7 +556,6 @@ class Life(commands.Cog):
         return choices[:25]
 
     async def _nursing_pup_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        from config import PUP_MAX_MOONS
         from engine.nursing import is_nursery_caretaker
         user = db.get_user(interaction.user.id)
         if not user:
@@ -650,10 +647,8 @@ class Life(commands.Cog):
             embed = howlbert_embed('Approach Blocked', f"**{target_user['wolf_name']}** lost a vocal rival challenge and cannot be courted until the next sunrise.", color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        # courting is unlimited; repeat courts the same sunrise pay diminishing
-        # mood and friendship (no hard once-per-rollover block).
-        from engine.diminishing import next_use_multiplier
-        court_mult, court_count = next_use_multiplier(user, 'court', day)
+        from engine.energy import spend_energy
+        _new_energy, _had_energy, court_penalty = spend_energy(user, 'court')
         guild_id = interaction.guild.id if interaction.guild else None
         effective, override_note = resolve_court_difficulty(user, target_user, guild_id, difficulty)
         mentor_note = _mentor_court_approval_note(user, target_user)
@@ -662,11 +657,11 @@ class Life(commands.Cog):
         from engine.herb_buffs import mating_fear_active
         fearful = mating_fear_active(user, day)
         result = run_court_check(user, effective, fearful=fearful)
-        mood_line = apply_court_outcome(user, target_user, result, effective, guild_id=guild_id, day=day, reward_mult=court_mult)
+        mood_line = apply_court_outcome(user, target_user, result, effective, guild_id=guild_id, day=day)
         if fearful:
             mood_line += '\n_a lingering **fear of mating** grips you; this courtship was rolled at disadvantage._'
-        if court_count > 1:
-            mood_line += f'\n_courted **{court_count}x** this sunrise; rewards scaled to **{int(court_mult * 100)}%**._'
+        if court_penalty:
+            mood_line += f'\n_{court_penalty}_'
         if result['success']:
             db.update_user(target_user['discord_id'], wolf_id=target_user['id'], receptive_day=day + 7)
         db.update_user(interaction.user.id, wolf_id=user['id'], last_court_day=day)
@@ -1187,7 +1182,7 @@ class Life(commands.Cog):
         ok, msg = train_pup(trainer, pup, attribute=attribute, day=world['day_number'])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Train Pup', msg, color=color)
-        embed.set_footer(text='unlimited; each repeat lesson today raises the dc · pups and juveniles only')
+        embed.set_footer(text='costs energy · pups and juveniles only · /help topic:skills')
         await interaction.response.send_message(embed=embed)
 
     async def _pups(self, interaction: discord.Interaction):
@@ -1249,10 +1244,7 @@ class Life(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        # adoption is unlimited; each repeat the same sunrise makes the bonding
-        # check harder (rolled at disadvantage), not blocked outright.
-        from engine.diminishing import use_count_today, record_use
-        adopt_count = max(use_count_today(user, 'adopt', day), use_count_today(partner_user, 'adopt', day))
+        from engine.energy import spend_energy
         adoptee, adoptee_err = _resolve_adoptee(user, interaction, youth=youth, own_youth=own_youth, youth_wolf=youth_wolf)
         if adoptee_err:
             if adoptee_err == '__not_registered__':
@@ -1266,12 +1258,16 @@ class Life(commands.Cog):
             embed = howlbert_embed('Cannot Adopt', adopt_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        record_use(user, 'adopt', day)
-        record_use(partner_user, 'adopt', day)
-        check = courtship_check(user, 'friendly', fearful=adopt_count > 0)
+        _new_energy, user_had_energy, user_adopt_penalty = spend_energy(user, 'adopt')
+        _new_energy2, partner_had_energy, partner_adopt_penalty = spend_energy(partner_user, 'adopt')
+        running_empty = not user_had_energy or not partner_had_energy
+        check = courtship_check(user, 'friendly', fearful=running_empty)
+        adopt_penalty = ' '.join(p for p in (user_adopt_penalty, partner_adopt_penalty) if p)
         if not check['success']:
-            tired = ' _(repeat adoption today; bonding check at disadvantage)_' if adopt_count > 0 else ''
+            tired = ' _(running on empty; bonding check at disadvantage)_' if running_empty else ''
             embed = howlbert_embed('Adoption Denied', f"Bonding check: **{check['total']}** vs DC **{check['dc']}**; the den is not ready.{tired}", color=ERROR_COLOR)
+            if adopt_penalty:
+                embed.set_footer(text=f'{adopt_penalty} · /help topic:skills')
             await interaction.response.send_message(embed=embed)
             return
         needs_consent = adoptee['discord_id'] not in (interaction.user.id, partner_user['discord_id'])
@@ -1283,6 +1279,8 @@ class Life(commands.Cog):
                 db.adjust_pack_unity(user['pack_id'], 1)
             stage = stage_label(stage_for_age(adoptee['age_months']))
             body = f"**{adoptee['wolf_name']}** ({stage}) joins **{user['wolf_name']}** and **{partner_user['wolf_name']}**'s den."
+            if adopt_penalty:
+                body += f'\n_{adopt_penalty}_'
             from engine.healer_code import apply_medic_adopt_scandal, healer_vow_reminder
             for w in (user, partner_user):
                 rem = healer_vow_reminder(w)

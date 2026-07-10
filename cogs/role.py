@@ -111,8 +111,9 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        from engine.diminishing import next_use_multiplier
-        _re_mult, _re_n = next_use_multiplier(user, 'role_event', day)
+        from engine.energy import spend_energy
+        _new_energy, _had_energy, role_event_penalty = spend_energy(user, 'role_event')
+        _re_first_today = int(user['last_role_event_day']) < day if 'last_role_event_day' in user.keys() else True
         role = user['wolf_role'] if 'wolf_role' in user.keys() else 'hunter'
         pack = user['great_pack'] if 'great_pack' in user.keys() else None
         event = pick_role_event(role, pack)
@@ -130,21 +131,18 @@ class RoleCog(commands.Cog):
             if event.get('prophecy'):
                 prophecy = pick_prophecy()
                 outcome += f'\n\n**Prophecy:** _{prophecy}_'
-            _re_bones = max(0, int(event['bones'] * _re_mult))
+            _re_bones = max(0, event['bones'])
             db.add_bones(interaction.user.id, _re_bones)
             if event.get('standing'):
-                _re_st = event['standing']
-                if _re_st > 0:
-                    _re_st = max(1, int(_re_st * _re_mult))
-                kick = db.adjust_wolf_standing(interaction.user.id, _re_st)
+                kick = db.adjust_wolf_standing(interaction.user.id, event['standing'])
                 outcome += _standing_note(kick, user)
-            if role == 'hunter' and _re_n == 1:
+            if role == 'hunter' and _re_first_today:
                 from engine.hunt_payout import grant_prey_carcass_canonical, prey_key_for_payout
                 prey_key = prey_key_for_payout(_re_bones, user=user, season=world['season'])
                 carcass_name = grant_prey_carcass_canonical(user['id'], guild_id=interaction.guild.id, day=day, prey_key=prey_key)
                 outcome += f'\n\n{carcass_name} dragged to your hoard (`/food`).'
-            if _re_n > 1:
-                outcome += '\n\n_lived over again in one day, the day gives less._'
+            if role_event_penalty:
+                outcome += f'\n\n_{role_event_penalty}_'
             color = SUCCESS_COLOR
         else:
             outcome = event['failure']
@@ -173,7 +171,7 @@ class RoleCog(commands.Cog):
                 footer = footer[:253] + '…'
             embed.set_footer(text=footer)
         else:
-            embed.set_footer(text='/checklist · repeats pay less this sunrise')
+            embed.set_footer(text='/checklist · costs energy')
         await interaction.response.send_message(embed=embed)
 
     async def _prophecy(self, interaction: discord.Interaction):
@@ -191,15 +189,18 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
-        from engine.diminishing import record_use as _rec_proph
-        _rec_proph(user, 'prophecy', day)
+        from engine.energy import spend_energy
+        _new_energy, _had_energy, prophecy_penalty = spend_energy(user, 'prophecy')
         from engine.lexicon import season_display
         line = pick_prophecy()
         season = season_display(db.row_val(world, 'season', 'autumn'))
         weather = db.row_val(world, 'weather', 'fog')
         db.update_user(interaction.user.id, wolf_id=user['id'], last_prophecy_day=day)
         embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather})', color=SUCCESS_COLOR)
-        embed.set_footer(text='it will make sense when it happens; or after it does.')
+        footer = 'it will make sense when it happens; or after it does.'
+        if prophecy_penalty:
+            footer += f' · {prophecy_penalty}'
+        embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
     async def _resolve_role_target(self, interaction: discord.Interaction, member: discord.Member | None, own_wolf: str | None, *, label: str, mentor_wolf: str | None = None):
@@ -208,7 +209,7 @@ class RoleCog(commands.Cog):
             await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
             return None
         if member and own_wolf:
-            await interaction.response.send_message(embed=howlbert_embed('Pick One', f'Use **mentor** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            await interaction.response.send_message(embed=howlbert_embed('Pick One', 'Use **mentor** or **own_wolf**; not both.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return None
         if own_wolf:
             row = _resolve_own_wolf(interaction.user.id, own_wolf)
@@ -221,7 +222,7 @@ class RoleCog(commands.Cog):
             return row
         if member:
             if member.bot or member.id == interaction.user.id:
-                await interaction.response.send_message(embed=howlbert_embed('Invalid', f'Pick a different wolf for the `mentor` option.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                await interaction.response.send_message(embed=howlbert_embed('Invalid', 'Pick a different wolf for the `mentor` option.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return None
             if mentor_wolf:
                 row = db.find_user_wolf(member.id, mentor_wolf)
@@ -231,7 +232,7 @@ class RoleCog(commands.Cog):
                 await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'That wolf is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
                 return None
             return row
-        await interaction.response.send_message(player_message(f'Pick a wolf via `mentor` or your own wolf via `own_wolf`.'), ephemeral=reply_ephemeral())
+        await interaction.response.send_message(player_message('Pick a wolf via `mentor` or your own wolf via `own_wolf`.'), ephemeral=reply_ephemeral())
         return None
 
     async def _shadow(self, interaction: discord.Interaction, mentor_row):

@@ -3,9 +3,7 @@
 from engine.herb_buffs import (
     apply_supplemental_herb,
     disease_save_uses_advantage,
-    grant_disease_save_advantage,
 )
-from engine.herb_storage import parse_herb_stack_id
 from engine.conditions import treat_with_herb
 from herbs import HERBS
 

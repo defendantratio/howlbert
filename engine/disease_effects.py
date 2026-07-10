@@ -1,3 +1,4 @@
+# disease_effects.py
 """Mechanical effects of active disease stages on checks and movement."""
 
 from __future__ import annotations
