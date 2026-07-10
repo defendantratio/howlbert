@@ -258,9 +258,15 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     blocked = _activity_block_embed(user, title="cannot hunt", day=day, action="hunt")
     if blocked:
         return blocked, False, None
-    # no hunt cap: hunt as often as you like; energy runs out instead of
-    # blocking, and running on empty costs exhaustion/mood, not the hunt.
-    if roll_large_prey_encounter():
+    # hunting is throttled by energy, not a cap: hunt as often as you like, each
+    # hunt spends energy (hunters spend less), and acting past empty costs
+    # exhaustion and mood. no diminishing-returns payout on hunt.
+    from engine.energy import spend_energy as _spend_energy
+    from config import HUNT_ENERGY_COST, HUNT_ENERGY_COST_HUNTER
+
+    _hunt_cost = HUNT_ENERGY_COST_HUNTER if is_hunter(user) else HUNT_ENERGY_COST
+    _, _hunt_had_energy, _hunt_energy_note = _spend_energy(user, "hunt", cost=_hunt_cost)
+    if roll_large_prey_encounter(solo=True):
         record_hunt_use(interaction.user.id, wolf_id=user["id"], day=day)
         enc_id = start_large_prey_fight(
             user,
@@ -317,8 +323,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     amount = roll_hunt_amount()
     if amount > 0:
         amount += dex_bonus
-    from engine.energy import spend_energy
-    _new_energy, _had_energy, hunt_penalty = spend_energy(user, "hunt", discounted=is_hunter(user))
+    # no diminishing-returns payout on hunt; energy is the throttle now.
     amount, sniff_bonus, sniff_note = apply_sniff_bone_bonus(user, amount, day)
 
     # prayer bonus (set by /bones action:pray same day)
@@ -392,10 +397,10 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         if is_nursing_mother(updated):
             footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
         notes = [n for n in (loner_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        if _hunt_energy_note:
+            notes.append(_hunt_energy_note)
         if hunt_shift:
             notes.append(hunt_shift.strip("_"))
-        if hunt_penalty:
-            notes.append(hunt_penalty)
         from utils.hunting import weather_hunt_modifier_label
 
         weather_note = weather_hunt_modifier_label(world["weather"])
@@ -415,11 +420,11 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         from utils.hunting import weather_hunt_modifier_label
 
         notes = [n for n in (sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
+        if _hunt_energy_note:
+            notes.append(_hunt_energy_note)
         weather_note = weather_hunt_modifier_label(world["weather"])
         if weather_note:
             notes.insert(0, weather_note)
-        if hunt_penalty:
-            notes.append(hunt_penalty)
         if notes:
             footer += " · " + " · ".join(notes)
         from engine.nursing import is_nursing_mother
@@ -789,10 +794,10 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     if blocked:
         return blocked
     from engine.energy import spend_energy
-    from engine.role_privileges import is_full_forager
-    _new_energy, _had_energy, forage_penalty = spend_energy(
-        user, "forage", discounted=is_full_forager(user)
-    )
+    # foraging has no per-sunrise cap or climbing dc; each forage just spends
+    # energy (foragers tire slower at it, via signature-activity auto-discount).
+    # energy is the sole throttle now.
+    _new_energy, _had_energy, forage_penalty = spend_energy(user, "forage")
     from engine.forager_perk import grant_forager_auto_herb
 
     auto_herb = grant_forager_auto_herb(user, day=day, guild_id=guild_id)
@@ -1196,6 +1201,9 @@ def try_work(
 
     _new_energy, _had_energy, work_penalty = spend_energy(user, "work")
     gross = roll_range(WORK_BONES)
+    from engine.plot_blinking import plot_work_mult
+
+    gross = int(gross * plot_work_mult(user, guild_id))
     net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)

@@ -156,10 +156,14 @@ def run_observe_apprentice(
         if has_any_role(medic, "medic_apprentice") and not is_full_medic(medic)
         else "_senior medic oversees the teaching den._"
     )
+    from engine.plot_blinking import plot_healer_observe_strain_relief
+
+    strain_note = plot_healer_observe_strain_relief(medic, guild_id)
     return True, (
         f"**{medic['wolf_name']}** watches **{patient['wolf_name']}**'s **{focus}** case.\n"
         f"{role_note}\n"
         f"_No surgery performed; cooldown untouched._ next **medicine** check: **+{MENTOR_BONUS_VALUE}**."
+        f"{strain_note}"
     )
 
 

@@ -44,13 +44,15 @@ def hunts_remaining_today(user, day: int) -> int:
 
 
 def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
-    """Footer fragment: current energy, hunting never hard-caps."""
-    from config import ENERGY_MAX
+    """Footer fragment: hunting is throttled by energy, not a cap. Shows the
+    wolf's energy and notes that hunters tire slower on the hunt."""
     from engine.energy import current_energy
+    from config import ENERGY_MAX
 
-    core = f"energy {current_energy(user)}/{ENERGY_MAX}"
+    energy = current_energy(user)
+    core = f"energy **{energy}/{ENERGY_MAX}**; each hunt tires you"
     if role_prefix and is_hunter(user):
-        return f"hunter: {core}"
+        return f"hunter: {core}, but you tire slower on the hunt"
     return core
 
 
@@ -132,21 +134,21 @@ def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
 def forage_sunrise_footer(user, *, success_hint: bool = False) -> str:
     """Footer after a territory forage attempt (full foragers pay less energy)."""
     if is_full_forager(user):
-        base = "Forager · forage again this sunrise · discounted energy cost"
+        base = "forager · forage again this sunrise · you tire slower at it"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if is_forager(user):
-        base = "forager apprentice · forage again this sunrise; costs energy"
+        base = "forager apprentice · forage again this sunrise; each forage spends energy"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if success_hint:
         return (
             "in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · "
-            "forage again this sunrise; costs energy"
+            "forage again this sunrise; each forage spends energy"
         )
-    return "forage again this sunrise; costs energy."
+    return "forage again this sunrise; each forage spends energy."
 
 
 def herb_heal_limit_reached(user) -> bool:
@@ -166,15 +168,11 @@ def treat_limit_reached(user) -> bool:
 def activity_cooldown_label(user, activity: str, *, ready: bool, day: int = 0) -> str:
     """Human label for /cooldowns; hunters and foragers show role perks."""
     if activity == "hunt":
-        left = hunts_remaining_today(user, day)
-        if left > 0:
-            cap = HUNTER_HUNTS_PER_SUNRISE if is_hunter(user) else 1
-            return f"ready ({left}/{cap} left)"
-        return "used"
-    if activity == "forage" and is_full_forager(user):
-        return "unlimited (forager)"
-    if activity == "explore" and is_scout(user):
-        return "unlimited (scout)"
+        return "ready (hunter: tires slower)" if is_hunter(user) else "ready (energy)"
+    if activity == "forage":
+        return "ready (forager: tires slower)" if is_full_forager(user) else "ready (energy)"
+    if activity == "explore":
+        return "ready (scout: tires slower)" if is_scout(user) else "ready (energy)"
     if activity == "rescout" and is_scout(user):
         return "unlimited (scout)"
     if activity == "treat" and is_medic(user):

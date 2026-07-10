@@ -1269,6 +1269,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN plot_phase INTEGER NOT NULL DEFAULT 0"
         )
+    if world_cols and "plot_prompt_index" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN plot_prompt_index INTEGER NOT NULL DEFAULT 0"
+        )
     if world_cols and "last_den_news_dm_day" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN last_den_news_dm_day INTEGER NOT NULL DEFAULT 0"
@@ -1444,6 +1448,18 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "energy" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN energy INTEGER NOT NULL DEFAULT 100"
+        )
+    if "last_energy_at" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_energy_at TEXT NOT NULL DEFAULT ''"
+        )
+    if "genetic_carriers" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN genetic_carriers TEXT NOT NULL DEFAULT '[]'"
+        )
+    if "herb_organ_log" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN herb_organ_log TEXT NOT NULL DEFAULT '{}'"
         )
     if "last_rescout_day" not in user_cols_late:
         conn.execute(
@@ -5458,11 +5474,25 @@ def set_plot_phase(guild_id: int, phase: int) -> sqlite3.Row:
     get_world(guild_id)
     phase = max(0, min(PLOT_MAX_PHASE, int(phase)))
     with get_db() as conn:
+        # entering a new phase restarts its rp-prompt sequence at the first prompt.
         conn.execute(
-            "UPDATE world_state SET plot_phase = ? WHERE guild_id = ?",
+            "UPDATE world_state SET plot_phase = ?, plot_prompt_index = 0 WHERE guild_id = ?",
             (phase, guild_id),
         )
     return get_world(guild_id)
+
+
+def next_plot_prompt_index(guild_id: int) -> int:
+    """Return the current book-one rp-prompt index for the guild, then advance it
+    so successive sunrises walk the phase's prompts in order."""
+    world = get_world(guild_id)
+    idx = int(world["plot_prompt_index"]) if "plot_prompt_index" in world.keys() and world["plot_prompt_index"] is not None else 0
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET plot_prompt_index = ? WHERE guild_id = ?",
+            (idx + 1, guild_id),
+        )
+    return idx
 
 
 def advance_plot_phase(guild_id: int) -> tuple[int, sqlite3.Row]:
@@ -5873,26 +5903,27 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                         "UPDATE users SET active_injuries = ?, max_hp = MAX(1, max_hp + 1) WHERE id = ?",
                         (_jbl.dumps(_injs), user["id"]),
                     )
-            from config import ENERGY_LONG_REST_GAIN, ENERGY_MAX
+            from engine.energy import sunrise_regen_amount as _sunrise_energy
+            from config import ENERGY_MAX as _ENERGY_MAX
 
+            _cur_energy = int(user["energy"]) if "energy" in user.keys() and user["energy"] is not None else _ENERGY_MAX
+            _new_energy = min(_ENERGY_MAX, _cur_energy + _sunrise_energy(user, season=season))
             conn.execute(
                 """
                 UPDATE users
                 SET hp = ?, exhaustion = ?, mood = ?,
-                    energy = MIN(?, energy + ?),
                     herb_heals_today = 0, herb_treats_today = 0,
                     last_rest_day = ?,
                     jaw_meal_shield = 0, smoke_debuff = 0, cough_suppressed = 0,
                     hunger_exhaustion_skip = 0, march_exhaustion_skip = 0,
-                    disease_save_buff = ?, disease_save_buff_days = ?, herb_buffs = ?
+                    disease_save_buff = ?, disease_save_buff_days = ?, herb_buffs = ?,
+                    energy = ?, last_energy_at = ?
                 WHERE id = ?
                 """,
                 (
                     rest_hp,
                     rest_exhaustion,
                     rest["mood"],
-                    ENERGY_MAX,
-                    ENERGY_LONG_REST_GAIN,
                     day_number,
                     tick_fields.get(
                         "disease_save_buff",
@@ -5903,6 +5934,8 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                         int(user["disease_save_buff_days"]) if "disease_save_buff_days" in user.keys() else 0,
                     ),
                     tick_fields.get("herb_buffs", user["herb_buffs"] if "herb_buffs" in user.keys() else "{}"),
+                    _new_energy,
+                    utcnow(),
                     user["id"],
                 ),
             )
@@ -6027,9 +6060,6 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         from engine.vitals import apply_needs_crisis_on_rollover, apply_needs_exhaustion_on_rollover
 
         with get_db() as conn:
-            from engine.energy import regen_energy_on_rollover
-
-            regen_energy_on_rollover(conn)
             vitals_exhaustion = apply_needs_exhaustion_on_rollover(conn)
             mood_exhaustion = apply_mood_exhaustion_on_rollover(conn)
             clamp_hp_for_exhaustion_on_rollover(conn)
@@ -6118,7 +6148,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         else:
             needs_crisis.setdefault("sacred_notes", []).extend(sacred_notes)
     if plot_phase > 0:
-        from engine.plot_blinking import apply_plot_rollover_effects, plot_den_news_line
+        from engine.plot_blinking import apply_plot_rollover_effects, next_blinking_prompt_line, plot_den_news_line
 
         with get_db() as conn:
             plot_notes = apply_plot_rollover_effects(conn, guild_id, new_day, plot_phase)
@@ -6128,6 +6158,11 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         if plot_news:
             needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
                 plot_news
+            )
+        prompt_line = next_blinking_prompt_line(guild_id, plot_phase)
+        if prompt_line:
+            needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).append(
+                prompt_line
             )
     from engine.healer_refusal import healer_refusal_reminder, rot_lung_outbreak_news
 
@@ -6190,11 +6225,11 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
                 needs_crisis.setdefault("season_notes", []).append(
                     f"the den has weathered another winter; **{survivors}** wolves carry that resilience forward."
                 )
-        if new_season == "spring":
-            with get_db() as conn:
-                courtship_notes = apply_courtship_pressure_on_season_change(conn)
-            for _pack_id, note in courtship_notes:
-                needs_crisis.setdefault("season_notes", []).append(note)
+        # courtship pressure applies on every season change (breeding is year-round).
+        with get_db() as conn:
+            courtship_notes = apply_courtship_pressure_on_season_change(conn)
+        for _pack_id, note in courtship_notes:
+            needs_crisis.setdefault("season_notes", []).append(note)
     with get_db() as conn:
         calcify_old_rivalries_on_rollover(conn, new_day)
         decay_idle_bonds_on_rollover(conn, new_day)
@@ -6256,7 +6291,7 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
             "SELECT * FROM users WHERE disease IS NOT NULL AND disease != ''"
         ).fetchall()
         for user in rows:
-            outcome = progress_disease(user)
+            outcome = progress_disease(user, day=day)
             if outcome.get("changed"):
                 new_hp = user["hp"]
                 exhaustion = user["exhaustion"]
@@ -11396,10 +11431,9 @@ _LEGEND_MARKER = "[legend]"
 
 def apply_courtship_pressure_on_season_change(conn) -> list[tuple[int, str]]:
     """
-    Called when a new season begins and that season is spring; a den with
-    fewer than COURTSHIP_PRESSURE_MIN_PAIRS breeding-age mated pairs feels
-    real anxiety about its future as the only season pups can realistically
-    arrive in (63-day gestation) opens up, and loses a touch of unity.
+    Called on every season change; a den with fewer than
+    COURTSHIP_PRESSURE_MIN_PAIRS breeding-age mated pairs feels real anxiety
+    about its future (breeding is year-round) and loses a touch of unity.
     Operates on the rollover's own connection to avoid a nested-connection
     deadlock. Returns a list of (pack_id, note) for each pack hit.
     """
@@ -11450,7 +11484,7 @@ def apply_courtship_pressure_on_season_change(conn) -> list[tuple[int, str]]:
         )
         notes.append((
             pack["id"],
-            f"spring nears and **{pack['name']}** has only **{pair_count}** breeding-age "
+            f"the season turns and **{pack['name']}** has only **{pair_count}** breeding-age "
             f"pair{'s' if pair_count != 1 else ''}; the den murmurs about its future. "
             f"unity **-{COURTSHIP_PRESSURE_UNITY_PENALTY}**.",
         ))

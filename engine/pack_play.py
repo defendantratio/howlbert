@@ -24,6 +24,8 @@ def run_playall(
     if not can_run_pack_bulk_action(user, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG
 
+    # unlimited; throttled by the caller's energy (see engine.energy) rather than
+    # a shrinking mood payout, so a full den romp always lands full mood.
     from engine.energy import spend_energy
     _new_energy, _had_energy, playall_penalty = spend_energy(user, "playall")
     mood_gain = PLAYALL_MOOD_GAIN

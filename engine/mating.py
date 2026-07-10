@@ -161,17 +161,7 @@ def execute_mating(
     if not female or not male:
         return False, "cannot conceive.", ERROR_COLOR, True
 
-    if guild_id:
-        world = db.get_world(guild_id)
-        season = (world["season"] if world and "season" in world.keys() else None) or ""
-        if season != "winter":
-            return (
-                False,
-                f"wolves only conceive in winter; the breeding season has not come yet "
-                f"(current season: **{season}**). courtship and bonding can happen any time.",
-                ERROR_COLOR,
-                False,
-            )
+    # conception is year-round; no breeding-season gate.
 
     from engine.disease_contract import try_mating_disease_spread
     from engine.diseases import blocks_conception, parse_disease

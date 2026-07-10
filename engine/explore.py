@@ -231,6 +231,9 @@ def try_explore(
         return howlbert_embed("unknown action", "pick dig, follow, or investigate.", color=ERROR_COLOR), None
     from engine.role_privileges import is_scout
 
+    # repeat explores are throttled by energy (see engine.energy), not a climbing
+    # dc; scouts still range with their dc bonus below.
+
     from engine.wild_encounters import ambush_embed, maybe_start_activity_ambush
 
     ambush = maybe_start_activity_ambush(
@@ -295,7 +298,10 @@ def try_explore(
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text=explore_penalty or "`/playpen` · `/food`")
+        footer = "each venture spends energy · `/playpen` · `/food`"
+        if explore_penalty:
+            footer = f"{explore_penalty} · `/playpen` · `/food`"
+        embed.set_footer(text=footer)
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
@@ -311,7 +317,10 @@ def try_explore(
             + (f"\n\n{hazard_note}" if hazard_note else ""),
             color=ERROR_COLOR,
         )
-        embed.set_footer(text=explore_penalty or "hazards still find you in the brush")
+        footer = "each venture spends energy · hazards still find you in the brush"
+        if explore_penalty:
+            footer = f"{explore_penalty} · hazards still find you in the brush"
+        embed.set_footer(text=footer)
         append_fatigue_to_footer(embed, explore_fatigue)
         return embed, None
 
@@ -367,14 +376,13 @@ def try_explore(
         + (f"\n\n{hazard_note}" if hazard_note else ""),
         color=SUCCESS_COLOR,
     )
-    footer = explore_penalty or "amusement: `/playpen` · carcasses: `/food` · salvage scraps: `/salvage`"
+    footer = "amusement: `/playpen` · carcasses: `/food` · salvage scraps: `/salvage`"
     if is_scout(user):
         from config import SCOUT_EXPLORE_DC_BONUS
 
-        footer = (
-            explore_penalty
-            or f"scout; cheaper ventures · explore dc −{SCOUT_EXPLORE_DC_BONUS} · /scout rescout · `/playpen` · /food"
-        )
+        footer = f"scout; cheaper ventures · explore dc −{SCOUT_EXPLORE_DC_BONUS} · /scout rescout · `/playpen` · /food"
+    if explore_penalty:
+        footer = f"{explore_penalty} · {footer}"
     embed.set_footer(text=footer)
     append_fatigue_to_footer(embed, explore_fatigue)
     return embed, None

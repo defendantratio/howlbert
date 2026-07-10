@@ -116,8 +116,8 @@ COMBAT_GUIDE_TOPICS["injuries"] = (
     "injury table (1d10)",
     "roll **1d10** whenever a wolf **drops to 0 hp** or takes a **critical hit**.\n\n"
     + _INJURY_LINES
-    + "\n\n**spine bite** (`/combat maneuver`) can inflict **spinal injury** (temporary paralysis) "
-    "or **paralyzed** (permanent) instead of the table roll.\n\n"
+    + "\n\n**spine bite** (`/combat maneuver`) can inflict **spinal injury** (temporary; str/dex at disadvantage, but you can still range out) "
+    "or **paralyzed** (permanent; den-bound) instead of the table roll.\n\n"
     "deep gashes bleed each sunrise until bandaged. infected wounds need a daily save. "
     "treat with `/medic action:treat` and herbs from `/bones action:inventory`.",
 )

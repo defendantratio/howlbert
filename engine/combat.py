@@ -282,10 +282,17 @@ def resolve_attack(
 
     a_mod += trait_combat_modifier(attacker)
 
+    plot_dmg_bonus = 0
+    plot_combat_note = ""
     if attacker_f:
         from engine.collab_combat import collab_assist_bonus
 
         a_mod += collab_assist_bonus(attacker_f["encounter_id"], attacker_f["id"])
+
+        from engine.plot_blinking import plot_combat_bonus
+
+        _p_atk, plot_dmg_bonus, plot_combat_note = plot_combat_bonus(attacker, attacker_f, attack_type)
+        a_mod += _p_atk
 
     a_total = a_die + a_mod
     d_total = d_die + d_mod
@@ -331,6 +338,8 @@ def resolve_attack(
             if hunter_extra:
                 damage += hunter_extra
                 extra = (extra + " " if extra else "") + f"_killer's instinct: +{hunter_extra}._"
+        if plot_dmg_bonus:
+            damage += plot_dmg_bonus
         if crit:
             damage, crit_effect, extra = _apply_crit_to_damage(damage)
     elif fumble:
@@ -341,6 +350,9 @@ def resolve_attack(
 
     if fear_note:
         extra = (extra + " " + fear_note).strip() if extra else fear_note.strip("_")
+
+    if plot_combat_note and plot_combat_note not in (extra or ""):
+        extra = (extra + " " + f"_{plot_combat_note}_").strip() if extra else f"_{plot_combat_note}_"
 
     result = _attack_result_base(attack_name)
     result.update(
