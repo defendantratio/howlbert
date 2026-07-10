@@ -73,8 +73,11 @@ def main() -> None:
     not_preg = _row(is_pregnant=0)
     check("not pregnant", pregnancy_activity_block(not_preg, "hunt", late_day) is None)
 
+    # late pregnancy no longer hard-blocks via full_activity_block; the action
+    # proceeds and engine.strenuous_strain applies the yield/miscarriage risk
+    # on the allow-path instead (see apply_strenuous_strain).
     vitals = full_activity_block(user, late_day, action="explore")
-    check("full_activity_block wires explore", vitals is not None)
+    check("full_activity_block no longer blocks late pregnancy (soft penalty instead)", vitals is None)
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
