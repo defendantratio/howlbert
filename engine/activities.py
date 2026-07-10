@@ -1468,12 +1468,12 @@ def _try_cross_pack_steal(
     staff: bool,
     crime_penalty: str = "",
 ) -> discord.Embed | None:
-    from config import GREAT_PACKS
+    from engine.factions import faction_name, founded_pack_id, is_faction, is_founded_key
 
-    if target_pack not in GREAT_PACKS:
+    if not is_faction(target_pack):
         return howlbert_embed(
             "unknown pack",
-            "pick a rival great pack: greyspire, mistmoor, thistlehide, or silverrush.",
+            "pick a rival great pack (greyspire, mistmoor, thistlehide, silverrush) or a founded pack by name.",
             color=ERROR_COLOR,
         )
 
@@ -1487,15 +1487,15 @@ def _try_cross_pack_steal(
     if not user["pack_id"]:
         return howlbert_embed(
             "no pack",
-            "join a great pack to run a den raid; loners use `/bones action:crime` without a target for scraps.",
+            "join a pack to run a den raid; loners use `/bones action:crime` without a target for scraps.",
             color=ERROR_COLOR,
         )
 
-    victim = db.get_pack_by_key(target_pack)
+    victim = db.get_pack(founded_pack_id(target_pack)) if is_founded_key(target_pack) else db.get_pack_by_key(target_pack)
     if not victim:
-        return howlbert_embed("pack not found", "join a great pack first.", color=ERROR_COLOR)
+        return howlbert_embed("pack not found", "that den could not be found.", color=ERROR_COLOR)
 
-    victim_name = GREAT_PACKS[target_pack]["name"]
+    victim_name = faction_name(target_pack)
 
     if raid_type in ("food", "herbs", "amusement"):
         return _try_cross_pack_goods_steal(

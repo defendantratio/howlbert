@@ -5295,6 +5295,12 @@ def get_pack_by_key(key: str) -> sqlite3.Row | None:
         return conn.execute("SELECT * FROM packs WHERE key = ?", (key,)).fetchone()
 
 
+def list_founded_packs() -> list[sqlite3.Row]:
+    """Player-founded packs (rows with no canonical faction key)."""
+    with get_db() as conn:
+        return conn.execute("SELECT * FROM packs WHERE key IS NULL ORDER BY name").fetchall()
+
+
 def get_pack_by_name(name: str) -> sqlite3.Row | None:
     with get_db() as conn:
         return conn.execute(

@@ -46,6 +46,11 @@ async def _crime_target_autocomplete(interaction: discord.Interaction, current: 
         if current and current.lower() not in label.lower() and current.lower() not in _key:
             continue
         choices.append(app_commands.Choice(name=choice_label(label), value=info['name']))
+    for founded in db.list_founded_packs():
+        label = f"{founded['name']} (founded pack)"
+        if current and current.lower() not in label.lower():
+            continue
+        choices.append(app_commands.Choice(name=choice_label(label), value=founded['name']))
     return choices[:25]
 
 
@@ -131,19 +136,17 @@ class Crime(commands.Cog):
         staff: bool,
     ) -> None:
         from engine.wolf_pack_pacts import is_wolf_pack_target
+        from engine.factions import resolve_pack_target
 
-        wolf_target = is_wolf_pack_target(target)
+        _resolved_target = resolve_pack_target(target)
+        wolf_target = is_wolf_pack_target(target) or (_resolved_target is not None)
 
         if wolf_target:
             if raid_type not in ('bones', 'food', 'herbs', 'amusement'):
                 raid_type = 'bones'
-            from config import GREAT_PACKS
             from engine.activities import try_crime
 
-            gp_key = next(
-                (k for k, info in GREAT_PACKS.items() if target.strip().lower() in (k, info['name'].lower())),
-                None,
-            )
+            gp_key = _resolved_target[1] if _resolved_target else None
             if not gp_key:
                 await interaction.response.send_message(
                     embed=howlbert_embed('unknown pack', 'pick a rival great pack from the autocomplete.', color=ERROR_COLOR),
