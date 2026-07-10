@@ -600,25 +600,27 @@ these are smaller than the big platforms but far denser in wolf rp and warriors 
 
 ---
 
-## 20. dev log (ready-to-post tumblr devlog, late june to now)
+## 20. dev log (ready-to-post tumblr devlog, june 28 to july 11)
 
-drop this on tumblr as a dev update. it reads like a changelog but leans on the brutal, specific hooks. tags at the bottom (first 5 are the searchable ones). trim sections if it runs long for your audience.
+drop this on tumblr as a dev update. it reads like a changelog but leans on the brutal, specific hooks. tags at the bottom (first 5 are the searchable ones). it runs long because a lot shipped; trim sections if it's too much for one post, or split it into two (survival/body/herbs as post one, the loner arc + book one as post two a few days later so the queue doesn't go empty).
 
-> **howlbert dev log: the blinking build**
+> **howlbert dev log: the wild got bigger**
 >
-> been heads-down for a couple weeks. the wild got meaner, the bodies got realer, and book one is finally wired end to end. here is everything that changed.
+> two straight weeks heads-down. the wild got meaner, the bodies got realer, the pack-less got their own path instead of a downgrade, and book one is wired end to end. here is everything that changed.
 >
 > **survival stopped being polite**
-> hydration replaced thirst across the board (it was always hydration, the bar just lied about it). most "come back next sunrise" cooldowns are gone; instead every field, social, and den action now spends **energy**. energy never refuses a command, it just costs you: act at zero and you eat exhaustion and lose mood. it comes back three ways, all tied to how well-fed you are, a big chunk at the sunrise sleep, a little from resting, and a slow real-time drip while your wolf is idle during the day. a starving wolf barely recovers. pregnancy, nursing, illness, and winter all burn extra, so the wrong week can leave a wolf running on empty.
+> hydration replaced thirst across the board (it was always hydration, the bar just lied about it). every cooldown, every "climbs harder each time you repeat it" soft-cap, every diminishing-returns curve, gone. **energy is now the only throttle** in the whole game. energy never refuses a command, it just costs you: act at zero and you eat exhaustion and lose mood. it comes back three ways, all tied to how well-fed you are, a big chunk at the sunrise sleep, a little from resting, and a slow real-time drip while your wolf is idle during the day. a starving wolf barely recovers. pregnancy, nursing, illness, and winter all burn extra, so the wrong week can leave a wolf running on empty. hunters, foragers, and scouts tire slower at their own craft.
 >
 > **the body is real now**
-> reproduction and genetics got teeth. inbreeding is still allowed and still taboo, but now it carries a real biological cost: kin litters surface the family's hidden recessives, carry a heavier mutation load, and run a genuine stillbirth risk. blindness, deafness, and albinism are recessive and pass silently through **carriers**, so a defect can skip a generation and resurface when two carriers breed. pups and juveniles are physically weaker and grow into their strength. litter size tracks the mother's condition. a lone wolf can't just solo an elk anymore. small things, but they add up to a world that behaves like an ecosystem instead of a spreadsheet.
+> reproduction and genetics got teeth, and courtship is year-round now, no more winter-only mating season. inbreeding is still allowed and still taboo, but now it carries a real biological cost: kin litters surface the family's hidden recessives, carry a heavier mutation load, and run a genuine stillbirth risk. blindness, deafness, and albinism are recessive and pass silently through **carriers**, so a defect can skip a generation and resurface when two carriers breed. pups and juveniles are physically weaker and grow into their strength. litter size tracks the mother's condition. a lone wolf can't just solo an elk anymore. elders now age into it too, dementia, wasting, growth-sickness can all set in with age, quietly, on a bad sunrise. small things, but they add up to a world that behaves like an ecosystem instead of a spreadsheet.
+>
+> a spinal injury or a hard birth used to just lock your wolf out of the game for days. now it's a real cost instead of a wall, healing slower, yields worse, real risk if you push it, but you're never fully benched. push a bad spine too far and it can still turn into paralysis, though. some risks stay hard.
 >
 > **herbs that bite back**
-> the healers' den got a full pass. herb prep is now a chain, dry a fresh herb, then turn the dried one into a tea, rub, juice, poultice, gargle, ointment, sap, simmered milk, or eat it raw or cooked, and sweeten a tea or gargle. every "caution" in the compendium is now mechanical. sedatives build tolerance and withdrawal. eat something the book warns is toxic and you can **throw it back up** (there's a real vomiting mechanic now, and it costs hunger, hydration, and mood). lean on one draught too long and the "long-term use" warnings become permanent conditions your wolf carries for life, the sapping, bitter-water, yellow-wither, the trembles. chronic diseases can't always be cured, but the right herbs give supportive care and can hold the sickness at bay for a few sunrises.
+> the healers' den got a full pass, twice. herb prep is now a chain, dry a fresh herb, then turn the dried one into a tea, rub, juice, poultice, gargle, ointment, sap, simmered milk, or eat it raw or cooked, and sweeten a tea or gargle, using methods a wolf could actually do with a mouth and no hands. no more "take as a capsule" in the compendium; if the text says it, a wolf can physically do it now. every "caution" in the compendium is mechanical: sedatives build tolerance and withdrawal, restricted poisons hit the DC and the dice their own entry claims, and toxic herbs used too long leave permanent organ damage, the sapping, bitter-water, yellow-wither, the trembles. eat something the book warns is toxic and you can **throw it back up** (there's a real vomiting mechanic, and it costs hunger, hydration, and mood). chronic diseases can't always be cured, but the right herbs give supportive care and can hold the sickness at bay for a few sunrises.
 >
-> **illness in the wolf tongue**
-> the diseases wear their wolf-world names now. gut-run, weeping-scale, the spotting, the long-forgetting, the sleepless. the clinical name is still there for you, in brackets, but the pack calls it what a wolf would call it.
+> **illness in the wolf tongue, and eleven new ways to get sick**
+> the diseases wear their wolf-world names now. gut-run, weeping-scale, the spotting, the long-forgetting, the sleepless. the clinical name is still there for you, in brackets, but the pack calls it what a wolf would call it. and the den got bigger: tight-chest (asthma), gut-twist (bloat), rasp-chest, the stopping, the dimming, stone-gall, foul-water fever, tick-bite fever, rot-fang, sting-water, and belly-crawlers are all real illnesses now, each with its own progression and its own cure. gorge yourself after a big kill and you can gut-twist. drink from the wrong water and foul-water fever creeps in. an untreated broken tooth can fester into something that spreads to the blood.
 >
 > **the healers' grimmest lesson**
 > medic apprentices can now **dissect a fallen wolf** to learn anatomy. it needs an alpha or a full medic in the den to sanction the training, and if you study a rival's body their pack's alpha has to allow it too. it's solemn work, it costs mood, and the fallen wolf's player gets a quiet notification. this is the in-world reason a medic understands the organs a normal wolf only feels as symptoms.
@@ -626,12 +628,18 @@ drop this on tumblr as a dev update. it reads like a changelog but leans on the 
 > **new prey on the wind**
 > greyspire hunters now bring down mountain goats in the highlands; silverrush turns up water rats along the banks. small flavor, but your hunt drops should smell like your territory.
 >
+> **the pack-less life is its own path now, not a downgrade**
+> loners and rogues used to just be pack wolves with the numbers turned down. not anymore, going it alone is its own way to play. no den, no denmate, no healer on hand, so untended wounds sometimes fester instead of closing clean, and winter bites harder with no shared warmth to sleep against. but a lone wolf reads the small stuff better: **+30% scavenging**, hares and voles pay better solo than they ever did in a pack hunt, and covering open ground on your own pays **+25% more loot**. you can bury a kill in a personal cache to keep it longer than the open hoard, though a scavenger might dig it up on you. howl alone into the dark and something might howl back, another disperser out there, or a patrol that doesn't like strangers on their range. and if you run with rogues, every score you pull raises your **notoriety**: packs hunt you harder for it, but the wild starts to fear you too.
+>
+> **two loners can build something of their own**
+> the dispersal arc has an ending now. two lone wolves with a strong enough bond can found a den together, a real pack with its own name, its own treasury, its own alpha, not a hybrid loner state. other players can be invited in and grow it from there. a founded pack is a full faction now too, raidable, war-able, everything a great pack is. and it carries its founders' history: **founders' grit** is baked into every founded den, dispersers who chose each other and built something from nothing, and on top of that, whatever great pack heritage its current wolves carry with them shows up in the den's own trait. a den built by wolves who came from mistmoor and greyspire quietly carries a piece of both, and it shifts as the wolves living there change.
+>
 > **book one: the blinking is fully wired**
 > the big one. all sixty-plus canon wolves now have a real mechanical lane during the plot, not just flavor text. the highfang who reads omens on the border and lifts the whole pack's standing. the beta who throws himself in front of his alpha in a fight. the grumpy healer who mends two extra points of hurt. the drown-sick oracle who grows calm as the belly-rip goes silent. an alpha who holds their den's unity together through the blame spiral. the twelve phases each carry their own den-wide pressure, and the plot's scene prompts now surface on the sunrise news, in order, one per rollover, so the story unfolds instead of dumping all at once.
 >
-> that's the build. the wild is colder, the medicine is darker, and every canon wolf finally pulls their weight in the story.
+> that's the build. the wild is colder, the medicine is darker, the pack-less have somewhere to go, and every canon wolf finally pulls their weight in the story.
 >
-> four great packs. real injuries, real disease, real permadeath. come lose a wolf with us: [discord invite link]
+> four great packs, and now the dens wolves build for themselves. real injuries, real disease, real permadeath. come lose a wolf with us: [discord invite link]
 >
 > #warrior cats #wolf rp #warriors rp #wolf roleplay #ttrpg #discord bot #worldbuilding #devlog
 
