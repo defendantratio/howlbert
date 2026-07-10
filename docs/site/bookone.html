@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta name="description" content="book one the blinking; plot lanes and mechanics for every wolf in the howlbert world." />
-    <title>howlbert; book one the blinking</title>
+    <title>howlbert · book one: the blinking</title>
     <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
     <style>
@@ -143,6 +143,50 @@
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
         }
 
         .hero {
@@ -304,6 +348,50 @@
             background: var(--maw);
         }
 
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+
         .footer {
             margin-top: 6px;
             text-align: center;
@@ -320,6 +408,26 @@
         }
         .footer .heart {
             color: var(--maw);
+        }
+
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
         }
 
         @media (max-width: 900px) {
@@ -358,6 +466,10 @@
             .hero .description {
                 font-size: 0.9rem;
             }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -366,12 +478,42 @@
 
     <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
 
+    <!-- audio: same as characters.html -->
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <!-- neko -->
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
     <div class="site-wrap">
 
         <div class="main-col">
 
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html" class="current">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
             <header class="glass hero">
-                <h1>book one the blinking</h1>
+                <h1>book one: the blinking</h1>
                 <p class="hook">
                     a wrongness spreads through the caldera in twelve phases.<br />
                     every wolf feels the <span class="maw-word">pressure</span>.
@@ -458,8 +600,6 @@
 
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">aromis</span><span class="lane-role">hunter</span></div><div class="lane-desc">the stubborn hunter who refuses to lose. fishing +15% during the warm-river phases (offsets the pack penalty).</div></div>
 
-                <div class="character-lane"><div class="lane-header"><span class="lane-name">churn</span><span class="lane-role">hunter</span></div><div class="lane-desc">the strongest swimmer, afraid of deep water. not an active plot wolf (replaced by Vulcan Stonehide); no mechanical lane.</div></div>
-
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">ebb</span><span class="lane-role">scout</span></div><div class="lane-desc">the anxious former captive who watches everything. successful survey +1 standing while the plot is active.</div></div>
 
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">pebble</span><span class="lane-role">diplomat</span></div><div class="lane-desc">the anxious diplomat who stutters but succeeds. +1 standing on a successful faction approach while the plot is active.</div></div>
@@ -532,7 +672,6 @@
 
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">palestep</span><span class="lane-role">pup</span></div><div class="lane-desc">the vain pup with pink bows. improved `/explore investigate` fossil-tooth odds and bonus bones during the mill phases (8 to 12).</div></div>
 
-
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">brackenpelt</span><span class="lane-role">hunter</span></div><div class="lane-desc">the steady hunter who patrols the south. patrol +1 standing during paranoia (phases 6 to 10).</div></div>
 
                 <div class="character-lane"><div class="lane-header"><span class="lane-name">cloverfern</span><span class="lane-role">forager</span></div><div class="lane-desc">the warm forager who finds what the forest gives. scavenge +10% while the plot is active.</div></div>
@@ -558,9 +697,19 @@
 
             </section>
 
+            <!-- cta -->
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the blinking is coming. how will you face it?
+                </p>
+            </section>
+
             <footer class="footer">
                 <p>
-                    <span class="heart">♥</span> howlbert; book one the blinking &nbsp;·&nbsp;
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot&nbsp;·&nbsp;
                     <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
                     built with bark and bone
                 </p>
