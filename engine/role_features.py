@@ -117,6 +117,13 @@ def role_check_adjustments(
     if has_any_role(user, DROWN_SICK_ROLE) and skill_key in ("hunting", "intimidation"):
         disadvantage = True
 
+    # a feared rogue (high notoriety) intimidates from a position of dread.
+    if skill_key == "intimidation" and is_rogue_wolf(user):
+        from engine.rogue_notoriety import has_fear_reputation
+
+        if has_fear_reputation(user):
+            advantage = True
+
     return mod, advantage, disadvantage
 
 
