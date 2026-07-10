@@ -6010,9 +6010,15 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         if foster_notes:
             condition_notes.extend(foster_notes)
         with get_db() as conn:
-            from engine.lone_wolf import apply_lone_wolf_loneliness_on_rollover
+            from engine.lone_wolf import (
+                apply_lone_wolf_loneliness_on_rollover,
+                apply_loner_untended_wounds_on_rollover,
+                apply_loner_winter_cold_on_rollover,
+            )
 
             lone_notes = apply_lone_wolf_loneliness_on_rollover(conn, new_day)
+            lone_notes.extend(apply_loner_winter_cold_on_rollover(conn, new_season, new_day))
+            lone_notes.extend(apply_loner_untended_wounds_on_rollover(conn, new_day))
         if lone_notes:
             condition_notes.extend(lone_notes)
         with get_db() as conn:
