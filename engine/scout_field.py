@@ -105,9 +105,10 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         game_day=day,
     )
     db.update_user(interaction.user.id, last_survey_day=day)
-    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+    from engine.activity_exhaustion import append_fatigue_to_footer
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    survey_fatigue = apply_activity_fatigue(db.get_user(interaction.user.id), "survey", "stealth", day)
+    survey_fatigue = apply_strenuous_strain(db.get_user(interaction.user.id), day, "survey")
 
     from engine.role_features import scout_hide_after_check
 
@@ -235,9 +236,10 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         game_day=day,
     )
     db.update_user(interaction.user.id, last_trail_day=day)
-    from engine.activity_exhaustion import apply_activity_fatigue, append_fatigue_to_footer
+    from engine.activity_exhaustion import append_fatigue_to_footer
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    trail_fatigue = apply_activity_fatigue(db.get_user(interaction.user.id), "trail", "tracking", day)
+    trail_fatigue = apply_strenuous_strain(db.get_user(interaction.user.id), day, "trail")
 
     if result["outcome"] == "critical_failure":
         db.adjust_mood(user["id"], -2)

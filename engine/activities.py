@@ -221,11 +221,13 @@ def try_daily(interaction: discord.Interaction) -> discord.Embed | None:
 
 
 def _activity_fatigue_note(user, activity_key: str, day: int, **kwargs) -> str | None:
-    from engine.activity_exhaustion import apply_activity_fatigue, skill_for_activity
+    # Activity-repeat fatigue is retired (energy is the throttle). This hook now
+    # surfaces the strenuous-strain note instead: the cost of hunting/patrolling
+    # through a spinal injury, post-surgery bone rest, or late pregnancy.
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    return apply_activity_fatigue(
-        user, activity_key, skill_for_activity(activity_key, user), day, **kwargs
-    )
+    action = {"fish": "fishing"}.get(activity_key, activity_key)
+    return apply_strenuous_strain(user, day, action)
 
 
 def _append_notes_to_footer(embed, *notes: str | None) -> None:

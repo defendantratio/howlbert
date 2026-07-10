@@ -83,7 +83,7 @@ def vitals_activity_block(user) -> str | None:
 
 def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | None:
     """Vitals (living, exhaustion 5, hunger/hydration crisis) plus critical mood."""
-    from engine.injury_effects import bone_rest_activity_block, has_paralysis, hunt_blocked_by_injury
+    from engine.injury_effects import has_paralysis, hunt_blocked_by_injury
     from engine.mental_effects import field_activity_block, mental_activity_block
 
     block = mental_activity_block(user)
@@ -91,16 +91,15 @@ def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | No
         return block
     from engine.herb_buffs import sedated_blocks_activity
 
-    game_day = day
     rest_day = int(user["last_rest_day"]) if "last_rest_day" in user.keys() else 0
     if sedated_blocks_activity(user, rest_day):
         return (
             "**sedated**; valerian or poppy holds you in deep rest. "
             "no hunting, tracking, or ranging until next sunrise."
         )
-    block = bone_rest_activity_block(user, day=rest_day)
-    if block:
-        return block
+    # post-surgery bone rest no longer blocks field work; pushing through it can
+    # re-break the mending bone instead (see engine.strenuous_strain). Still
+    # surfaced on /vitals as a caution.
     block = field_activity_block(user)
     if block:
         return block
@@ -117,12 +116,8 @@ def full_activity_block(user, day: int = 0, *, action: str = "hunt") -> str | No
     block = quarantine_activity_block(user)
     if block:
         return block
-    from engine.pregnancy import pregnancy_activity_block
-
-    if game_day > 0:
-        block = pregnancy_activity_block(user, action, game_day)
-        if block:
-            return block
+    # late pregnancy no longer blocks strenuous work; the strain risks the litter
+    # instead (see engine.strenuous_strain), with a steeper yield penalty.
     return mood_activity_block(user)
 
 

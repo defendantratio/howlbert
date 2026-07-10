@@ -492,6 +492,16 @@ class Combat(commands.Cog):
         day = db.get_world(guild_id)['day_number']
         return full_activity_block(user, day, action='combat')
 
+    def _apply_combat_strain(self, user, guild_id: int, embed) -> None:
+        """Entering a fight is strenuous; a hurt/pregnant body pays for it once
+        per fight (spinal worsen, bone re-break, or miscarriage risk)."""
+        from engine.strenuous_strain import apply_strenuous_strain
+        day = db.get_world(guild_id)['day_number']
+        note = apply_strenuous_strain(user, day, 'combat')
+        if note and embed:
+            footer = embed.footer.text if embed.footer and embed.footer.text else ''
+            embed.set_footer(text=f'{footer} · {note}' if footer else note)
+
     async def _require_combat_participant(self, interaction: discord.Interaction, enc):
         user = await self._require_user(interaction)
         if not user:
@@ -538,6 +548,7 @@ class Combat(commands.Cog):
         if blurb:
             embed.add_field(name='Your conditions', value=blurb, inline=False)
         embed.set_footer(text='/combat begin when ready · /combat join · /vitals action:condition')
+        self._apply_combat_strain(user, interaction.guild.id, embed)
         await interaction.followup.send(embed=embed)
 
     @combat.command(name='encounter', description='force a random wilderness ambush (90 min cooldown between ambushes).')
@@ -572,6 +583,7 @@ class Combat(commands.Cog):
         embed.description = (embed.description or '') + f'\n\nFight **#{enc_id}**'
         enc = db.get_encounter(enc_id)
         embed.set_footer(text=self._turn_footer(enc))
+        self._apply_combat_strain(user, interaction.guild.id, embed)
         view = make_combat_view(enc_id, self.bot)
         await interaction.followup.send(embed=embed, view=view)
 
@@ -628,6 +640,7 @@ class Combat(commands.Cog):
             db.insert_fighter_into_active_encounter(enc['id'], fighter_id, total)
             init_note = f'\nInitiative **{total}**; slotted into turn order.'
         embed = howlbert_embed('Joined Combat', f"**{target_wolf['wolf_name']}** joins fight **#{enc['id']}** (HP {target_wolf['hp']}/{target_wolf['max_hp']}).{hidden_note}{init_note}", color=SUCCESS_COLOR)
+        self._apply_combat_strain(target_wolf, interaction.guild.id, embed)
         await interaction.followup.send(embed=embed)
 
     @combat.command(name='npc', description='add a predator, hearth-hound, or clan cat from the bestiary.')
