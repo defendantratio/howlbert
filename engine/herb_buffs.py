@@ -637,7 +637,23 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "fields": fields,
         }
 
-    if herb_key in ("snakeroot", "sticklewort", "adders_tongue"):
+    if herb_key == "snakeroot":
+        # compendium: "calms anxiety and promotes sleep" alongside the venom save.
+        fields.update(
+            merge_buff_fields(
+                user, venom_save_advantage=True, calm_until_day=day + 1, sleep_aid_until_day=day + 1
+            )
+        )
+        return {
+            "kind": "minor_relief",
+            "message": (
+                "advantage on the next venom or poison save; a mild sedative calm "
+                "settles in, easing anxiety and aiding sleep."
+            ),
+            "fields": fields,
+        }
+
+    if herb_key in ("sticklewort", "adders_tongue"):
         fields.update(merge_buff_fields(user, venom_save_advantage=True))
         return {
             "kind": "minor_relief",
@@ -851,6 +867,25 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             "kind": "stabilize",
             "message": "postpartum hemorrhage stabilized at **1 hp**.",
             "fields": {"hp": 1, "condition": "stable"},
+        }
+
+    if herb_key == "saffron":
+        # compendium: "sedative and expectorant; eases cough, anxiety, and grief."
+        fields.update(merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1))
+        if disease_key in ("cough", "yellowcough"):
+            fields["cough_suppressed"] = 1
+            return {
+                "kind": "symptom_relief",
+                "message": (
+                    "throat eases: coughing suppressed until next sunrise. "
+                    "mild sedative: calmer, advantage on your next mental illness save."
+                ),
+                "fields": fields,
+            }
+        return {
+            "kind": "minor_relief",
+            "message": "mild sedative: calm settles in; advantage on your next mental illness save.",
+            "fields": fields,
         }
 
     if herb_key in ("mugwort", "garlic_mustard"):
@@ -1119,18 +1154,23 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
         return {"kind": "minor_relief", "message": msg, "fields": fields}
 
     if herb_key == "lizards_tail":
+        # compendium: "sedative rhizome eases fever, body aches, and urinary complaints."
         fields.update(grant_disease_save_advantage(user))
+        fields.update(merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1))
         if disease_key:
             ex = max(0, int(user["exhaustion"] if "exhaustion" in user.keys() else 0) - 1)
             fields["exhaustion"] = ex
             return {
                 "kind": "minor_relief",
-                "message": "fever tea: **−1 exhaustion**; advantage on the next disease save.",
+                "message": (
+                    "fever tea: **−1 exhaustion**; advantage on the next disease save; "
+                    "mild sedative eases the ache."
+                ),
                 "fields": fields,
             }
         return {
             "kind": "disease_save_buff",
-            "message": "bitter root: advantage on the next disease save.",
+            "message": "bitter root: advantage on the next disease save; mild sedative eases the ache.",
             "fields": fields,
         }
 
