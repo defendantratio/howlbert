@@ -4533,10 +4533,10 @@ def add_bones(discord_id: int, amount: int, *, wolf_id: int | None = None) -> No
         )
 
 
-def deduct_bones(discord_id: int, amount: int) -> bool:
+def deduct_bones(discord_id: int, amount: int, *, wolf_id: int | None = None) -> bool:
     if amount <= 0:
         return True
-    wid = _resolve_wolf_id(discord_id)
+    wid = wolf_id or _resolve_wolf_id(discord_id)
     if not wid:
         return False
     with get_db() as conn:

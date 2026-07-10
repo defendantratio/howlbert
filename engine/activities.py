@@ -1751,7 +1751,7 @@ def _try_cross_pack_goods_steal(
         item = db.get_item_by_key(item_key)
         if not item:
             return howlbert_embed("raid failed", "couldn't carry that herb; try again next sunrise.", color=ERROR_COLOR)
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         qty = int(stack["quantity"])
         if qty <= 1:
             db.remove_pack_herb_stack(stack["id"])

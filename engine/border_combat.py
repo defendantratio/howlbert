@@ -177,7 +177,7 @@ async def try_complete_border_victory(
     )
 
     db.adjust_mood(user["id"], BORDER_CAT_MOOD)
-    db.adjust_wolf_standing(user["discord_id"], BORDER_CAT_STANDING)
+    db.adjust_wolf_standing_by_id(user["id"], BORDER_CAT_STANDING)
     db.mark_border_fight_rewarded(enc_id)
     db.end_encounter(enc_id)
 

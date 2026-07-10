@@ -99,8 +99,8 @@ def _apply_social_standing(attacker, defender, scenario_key: str, *, won: bool) 
         return ""
     if not db.row_val(attacker, "pack_id") or db.row_val(attacker, "pack_id") != db.row_val(defender, "pack_id"):
         return ""
-    db.adjust_wolf_standing(attacker["discord_id"], 1)
-    db.adjust_wolf_standing(defender["discord_id"], -1)
+    db.adjust_wolf_standing_by_id(attacker["id"], 1)
+    db.adjust_wolf_standing_by_id(defender["id"], -1)
     return "\n_pack standing: you **+1**, they **−1**._"
 
 
@@ -365,13 +365,13 @@ def apply_scenario_mechanics(
             db.adjust_mood(user["id"], 2)
             lines.append("_they yield ground; **+2 mood**._")
         if scenario.key == "howl_warning" and db.row_val(user, "pack_id"):
-            db.adjust_wolf_standing(user["discord_id"], 1)
+            db.adjust_wolf_standing_by_id(user["id"], 1)
             lines.append("_border claimed; standing **+1**._")
         if scenario.key == "social_calm_pup":
             db.adjust_mood(user["id"], 3)
             lines.append("_pup settles; **+3 mood**._")
         if scenario.key == "social_challenge_alpha":
-            db.adjust_wolf_standing(user["discord_id"], 1)
+            db.adjust_wolf_standing_by_id(user["id"], 1)
             lines.append("_challenge lodged; standing **+1**._")
         if scenario.key == "spirit_recall_patch":
             db.adjust_mood(user["id"], 2)
@@ -388,7 +388,7 @@ def apply_scenario_mechanics(
             db.set_user_conditions(user["discord_id"], hp=new_hp)
             lines.append(f"**−{dmg} hp**")
         if scenario.key in ("social_persuade_alpha", "social_apologize") and db.row_val(user, "pack_id"):
-            db.adjust_wolf_standing(user["discord_id"], -1)
+            db.adjust_wolf_standing_by_id(user["id"], -1)
             lines.append("_pack standing **−1**._")
         if scenario.key == "howl_storm":
             db.set_user_conditions(

@@ -64,6 +64,6 @@ def found_pack(founder, partner, name: str) -> tuple[int | None, str | None]:
             (new_pack_id, fkey, partner["id"]),
         )
         conn.execute("UPDATE packs SET pack_unity = 50 WHERE id = ?", (new_pack_id,))
-    db.deduct_bones(founder["discord_id"], NEW_PACK_FOUND_COST)
-    db.deduct_bones(partner["discord_id"], NEW_PACK_FOUND_COST)
+    db.deduct_bones(founder["discord_id"], NEW_PACK_FOUND_COST, wolf_id=founder["id"])
+    db.deduct_bones(partner["discord_id"], NEW_PACK_FOUND_COST, wolf_id=partner["id"])
     return new_pack_id, None

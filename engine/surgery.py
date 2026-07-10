@@ -129,15 +129,15 @@ def _herb_label(herb_key: str) -> str:
 
 def participant_has_herb(user, herb_key: str) -> bool:
     item = db.get_item_by_key(herb_inventory_key(herb_key))
-    if item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0:
+    if item and db.get_inventory_quantity_for_wolf(user["id"], item["id"]) > 0:
         return True
     return False
 
 
 def consume_participant_herb(user, herb_key: str) -> bool:
     item = db.get_item_by_key(herb_inventory_key(herb_key))
-    if item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0:
-        db.consume_item(user["discord_id"], item["id"], quantity=1)
+    if item and db.get_inventory_quantity_for_wolf(user["id"], item["id"]) > 0:
+        db.consume_item_for_wolf(user["id"], item["id"], quantity=1)
         return True
     return False
 
@@ -150,7 +150,7 @@ consume_surgeon_herb = consume_participant_herb
 def _stick_count(user) -> int:
     item = db.get_item_by_key(herb_inventory_key("stick"))
     if item:
-        return db.get_inventory_quantity(user["discord_id"], item["id"])
+        return db.get_inventory_quantity_for_wolf(user["id"], item["id"])
     return 0
 
 

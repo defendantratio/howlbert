@@ -201,7 +201,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         your_mood = db.adjust_mood(user["id"], mood)
         their_mood = db.adjust_mood(partner["id"], mood)
         lines.append(f"**+{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
-        kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
+        kick = db.adjust_wolf_standing_by_id(user["id"], SOCIALIZE_STANDING_GOOD)
         standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
         if pack_id and not cross_pack:
@@ -214,7 +214,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         your_mood = db.adjust_mood(user["id"], mood)
         their_mood = db.adjust_mood(partner["id"], mood)
         lines.append(f"**+{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
-        kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_GOOD)
+        kick = db.adjust_wolf_standing_by_id(user["id"], SOCIALIZE_STANDING_GOOD)
         standing_note = f"standing **+{SOCIALIZE_STANDING_GOOD}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
         if pack_id and not cross_pack:
@@ -247,7 +247,7 @@ def run_socialize(user, partner, *, pack_id: int, day: int = 0, cross_pack: bool
         db.update_user(user["discord_id"], wolf_id=user["id"], distressed=1)
         db.update_user(partner["discord_id"], wolf_id=partner["id"], distressed=1)
         lines.append(f"**{mood} mood** each (you: **{your_mood}**, them: **{their_mood}**).")
-        kick = db.adjust_wolf_standing(user["discord_id"], SOCIALIZE_STANDING_SCRAP)
+        kick = db.adjust_wolf_standing_by_id(user["id"], SOCIALIZE_STANDING_SCRAP)
         standing_note = f"standing **{SOCIALIZE_STANDING_SCRAP}**."
         expulsion = _expulsion_from_standing(kick, pack_id)
         if pack_id and not cross_pack:

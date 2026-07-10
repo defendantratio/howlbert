@@ -175,7 +175,7 @@ def forge_wolf_pack_pact(
             if treasury_cost:
                 db.add_pack_treasury(pack["id"], treasury_cost)
             return False, f"you need **{personal_cost}** bones for the personal scent-gift."
-        db.add_bones(user["discord_id"], -personal_cost)
+        db.add_bones(user["discord_id"], -personal_cost, wolf_id=user["id"])
 
     dc = spec["dc"]
     if int(pack["pack_unity"]) < 0:

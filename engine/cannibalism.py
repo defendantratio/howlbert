@@ -19,7 +19,7 @@ def _apply_caught_penalty(user) -> str:
         return (
             "\n_the den would have seen everything; you're lucky no pack claims you right now._"
         )
-    db.adjust_wolf_standing(user["discord_id"], -CANNIBALISM_STANDING_PENALTY)
+    db.adjust_wolf_standing_by_id(user["id"], -CANNIBALISM_STANDING_PENALTY)
     db.adjust_mood(user["id"], -CANNIBALISM_MOOD_PENALTY)
     return (
         f"\n**caught.** wolf-meat at the den does not go unnoticed. "
@@ -64,7 +64,7 @@ def cannibalism_eat_consequences(user, prey_key: str) -> str:
         return msg
     if not user["pack_id"]:
         return msg + "\n_no clan saw it; but the taste stays with you._"
-    db.adjust_wolf_standing(user["discord_id"], -CANNIBALISM_STANDING_PENALTY)
+    db.adjust_wolf_standing_by_id(user["id"], -CANNIBALISM_STANDING_PENALTY)
     extra_mood = CANNIBALISM_MOOD_PENALTY - CANNIBALISM_EAT_MOOD_PENALTY
     if extra_mood > 0:
         db.adjust_mood(user["id"], -extra_mood)

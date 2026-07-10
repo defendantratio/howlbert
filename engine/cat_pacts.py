@@ -294,7 +294,7 @@ def forge_cat_pact(
             if treasury_cost:
                 db.add_pack_treasury(pack["id"], treasury_cost)
             return False, f"you need **{personal_cost}** bones for the personal scent-gift."
-        db.add_bones(user["discord_id"], -personal_cost)
+        db.add_bones(user["discord_id"], -personal_cost, wolf_id=user["id"])
 
     dc = spec["dc"]
     if int(pack["pack_unity"]) < 0:
@@ -490,7 +490,7 @@ def raid_cat_clan(
     from engine.infractions import cross_pack_steal_caught_standing, cross_pack_steal_standing
 
     if random.random() < RAID_CLAN_CATCH_CHANCE:
-        kick = db.adjust_wolf_standing(user["discord_id"], cross_pack_steal_caught_standing())
+        kick = db.adjust_wolf_standing_by_id(user["id"], cross_pack_steal_caught_standing())
         trust_note = ""
         if pact:
             new_trust = max(0, int(pact["trust"]) + RAID_CLAN_CAUGHT_TRUST_PENALTY)
@@ -512,7 +512,7 @@ def raid_cat_clan(
 
     lines = grant_clan_loot(user, guild_id=guild_id, day=day, entries=entries)
     standing_gain = cross_pack_steal_standing()
-    db.adjust_wolf_standing(user["discord_id"], standing_gain)
+    db.adjust_wolf_standing_by_id(user["id"], standing_gain)
     trust_note = ""
     if pact:
         new_trust = max(0, int(pact["trust"]) + RAID_CLAN_SUCCESS_TRUST_PENALTY)
@@ -773,7 +773,7 @@ def handle_border_pact_violation(
             new_trust = max(0, int(pact["trust"]) + CAT_PACT_VIOLATION_TRUST)
             db.adjust_cat_pact_trust(user["pack_id"], clan, CAT_PACT_VIOLATION_TRUST)
             db.adjust_pack_unity(user["pack_id"], CAT_PACT_VIOLATION_UNITY)
-            db.adjust_wolf_standing(user["discord_id"], CAT_PACT_VIOLATION_STANDING)
+            db.adjust_wolf_standing_by_id(user["id"], CAT_PACT_VIOLATION_STANDING)
             if new_trust <= 0:
                 db.break_cat_pact(
                     user["pack_id"],

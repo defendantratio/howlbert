@@ -118,8 +118,8 @@ def apply_mentor_mate_caught(user, target, *, guild_id: int | None, day: int) ->
             queued_day=day,
         )
         return random.choice(MENTOR_MATE_NOTICED_TEXT)
-    db.adjust_wolf_standing(user["discord_id"], MENTOR_MATE_CAUGHT_STANDING)
-    db.adjust_wolf_standing(target["discord_id"], MENTOR_MATE_CAUGHT_STANDING)
+    db.adjust_wolf_standing_by_id(user["id"], MENTOR_MATE_CAUGHT_STANDING)
+    db.adjust_wolf_standing_by_id(target["id"], MENTOR_MATE_CAUGHT_STANDING)
     flavor = random.choice(MENTOR_MATE_CAUGHT_TEXT)
     return f"{flavor}\nstanding **{MENTOR_MATE_CAUGHT_STANDING}** for both of you."
 

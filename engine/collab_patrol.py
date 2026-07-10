@@ -325,7 +325,7 @@ def payout_collab_survey(
             )
             from engine.injury_effects import injury_patrol_standing_bonus
             standing_gain += injury_patrol_standing_bonus(user)
-            db.adjust_wolf_standing(user["discord_id"], standing_gain)
+            db.adjust_wolf_standing_by_id(user["id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
         dim = f" _{survey_penalty}_" if survey_penalty else ""
         if standing_delta:
@@ -497,7 +497,7 @@ def resolve_collab_survey(patrol_id: int) -> tuple[discord.Embed | None, str | N
         extra_penalty_lines = []
         for user in users:
             standing_loss = -1 + injury_caught_standing_penalty(user)
-            db.adjust_wolf_standing(user["discord_id"], standing_loss)
+            db.adjust_wolf_standing_by_id(user["id"], standing_loss)
             db.update_user(user["discord_id"], wolf_id=user["id"], last_survey_day=day)
             if standing_loss < -1:
                 extra_penalty_lines.append(

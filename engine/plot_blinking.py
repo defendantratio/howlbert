@@ -297,7 +297,7 @@ def apply_plot_generic_healer_treat_rewards(
         return "\n\n_healer's work counts toward **blink_healer_touch**._"
     db.update_user_by_id(healer["id"], last_plot_healer_day=day)
     if healer["id"] != patient["id"]:
-        kick = db.adjust_wolf_standing(healer["discord_id"], PLOT_GENERIC_HEALER_STANDING)
+        kick = db.adjust_wolf_standing_by_id(healer["id"], PLOT_GENERIC_HEALER_STANDING)
         if kick == "kicked":
             return "\n\n_the den needed your hands; but the pack casts you out._"
         return (
@@ -1028,7 +1028,7 @@ def try_plot_mill_investigate(
     if _is_plot_wolf(user, PALESTEP_NAME):
         bones += 10
     db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
-    standing = db.adjust_wolf_standing(user["discord_id"], 2)
+    standing = db.adjust_wolf_standing_by_id(user["id"], 2)
     kick = " standing **+2**" if standing != "kicked" else " (**cast out**)"
     iron_note = (
         "\n_**Pale'Step**'s nose for iron finds it before anyone else even smells the rust._"
@@ -1276,7 +1276,7 @@ def apply_plot_finnpelt_sniff(user, guild_id: int, day: int) -> str:
     )
     if _finnpelt_daily_available(user, day):
         _mark_finnpelt_daily(user, day)
-        kick = db.adjust_wolf_standing(user["discord_id"], FINNPELT_PLOT_SNIFF_STANDING)
+        kick = db.adjust_wolf_standing_by_id(user["id"], FINNPELT_PLOT_SNIFF_STANDING)
         standing_note = (
             f"**+{FINNPELT_PLOT_SNIFF_STANDING} standing**"
             if kick != "kicked"
@@ -1394,7 +1394,7 @@ def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
     )
     if _maggotbrain_daily_available(user, day):
         _mark_maggotbrain_daily(user, day)
-        kick = db.adjust_wolf_standing(user["discord_id"], MAGGOTBRAIN_PLOT_SNIFF_STANDING)
+        kick = db.adjust_wolf_standing_by_id(user["id"], MAGGOTBRAIN_PLOT_SNIFF_STANDING)
         standing_note = (
             f"**+{MAGGOTBRAIN_PLOT_SNIFF_STANDING} standing**"
             if kick != "kicked"
@@ -1433,7 +1433,7 @@ def apply_plot_firepaw_sniff(user, guild_id: int, day: int) -> str:
     if phase in PARANOIA_PHASES and _firepaw_daily_available(user, day):
         _mark_firepaw_daily(user, day)
         mood = db.adjust_mood(user["id"], FIREPAW_PLOT_SNIFF_MOOD_LATE)
-        kick = db.adjust_wolf_standing(user["discord_id"], FIREPAW_PLOT_SNIFF_STANDING)
+        kick = db.adjust_wolf_standing_by_id(user["id"], FIREPAW_PLOT_SNIFF_STANDING)
         standing_note = (
             f"**+{FIREPAW_PLOT_SNIFF_STANDING} standing**"
             if kick != "kicked"
@@ -1471,7 +1471,7 @@ def apply_plot_soot_sniff(user, guild_id: int, day: int) -> str:
 
     if phase in PARANOIA_PHASES and _soot_daily_available(user, day):
         _mark_soot_daily(user, day)
-        kick = db.adjust_wolf_standing(user["discord_id"], SOOT_PLOT_SNIFF_STANDING)
+        kick = db.adjust_wolf_standing_by_id(user["id"], SOOT_PLOT_SNIFF_STANDING)
         standing_note = (
             f"**+{SOOT_PLOT_SNIFF_STANDING} standing**"
             if kick != "kicked"
