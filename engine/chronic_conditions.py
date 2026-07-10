@@ -36,6 +36,14 @@ def try_cancer_from_age(user, *, chance: float = 0.04) -> str | None:
     return try_contract_disease(user, "cancer", "lump", chance=chance)
 
 
+def try_asthma_from_age(user, *, chance: float = 0.05) -> str | None:
+    return try_contract_disease(user, "asthma", "tight", chance=chance)
+
+
+def try_gallstones_from_age(user, *, chance: float = 0.05) -> str | None:
+    return try_contract_disease(user, "gallstones", "forming", chance=chance)
+
+
 def try_dementia_from_concussion(user) -> str | None:
     injuries = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
     if "concussion" not in injuries:
@@ -152,12 +160,16 @@ def apply_elder_chronic_on_rollover(conn: sqlite3.Connection) -> list[dict]:
                 user["active_injuries"] if "active_injuries" in user.keys() else None
             ):
                 note = try_contract_disease(user, "dementia", "forgetful", chance=1.0)
+        elif roll < 0.25:
+            note = try_asthma_from_age(user, chance=1.0)
+        elif roll < 0.30:
+            note = try_gallstones_from_age(user, chance=1.0)
         if note:
             notes.append(
                 {
                     "wolf_name": user["wolf_name"],
                     "discord_id": user["discord_id"],
-                    "message": note,
+                    "line": note,
                 }
             )
     return notes

@@ -144,6 +144,76 @@ def try_chronic_stress_from_low_mood(
     return try_contract_disease(user, "chronic_stress", "tense", chance=adjusted, conn=conn)
 
 
+def try_depression_from_low_mood(
+    user, low_mood_days: int, *, chance: float = 0.04, conn=None
+) -> str | None:
+    """weeks of unbroken low mood settle into something heavier than stress."""
+    if low_mood_days < 10:
+        return None
+    adjusted = min(0.25, chance + max(0, low_mood_days - 10) * 0.02)
+    return try_contract_disease(user, "depression", "numb", chance=adjusted, conn=conn)
+
+
+def try_urinary_infection_from_dehydration(
+    user, *, chance: float = 0.10, conn=None
+) -> str | None:
+    from config import THIRST_LOW_THRESHOLD
+
+    thirst = int(user["thirst"]) if user and "thirst" in user.keys() else 50
+    if thirst > THIRST_LOW_THRESHOLD:
+        return None
+    if thirst <= 0:
+        chance = min(0.25, chance * 2.0)
+    return try_contract_disease(user, "urinary_infection", "irritation", chance=chance, conn=conn)
+
+
+def try_constipation_from_dehydration(user, *, chance: float = 0.08, conn=None) -> str | None:
+    from config import THIRST_LOW_THRESHOLD
+
+    thirst = int(user["thirst"]) if user and "thirst" in user.keys() else 50
+    if thirst > THIRST_LOW_THRESHOLD:
+        return None
+    return try_contract_disease(user, "constipation", "blocked", chance=chance, conn=conn)
+
+
+def try_tooth_infection_from_broken_tooth(user, *, chance: float = 0.05, conn=None) -> str | None:
+    from engine.conditions import parse_injuries
+
+    injuries = parse_injuries(
+        user["active_injuries"] if user and "active_injuries" in user.keys() else None
+    )
+    if "broken_tooth" not in injuries:
+        return None
+    return try_contract_disease(user, "tooth_infection", "abscess", chance=chance, conn=conn)
+
+
+def apply_physical_illness_rollover(conn, day: int) -> list[dict]:
+    """dehydration and untreated injuries may fester into a physical illness."""
+    rows = conn.execute(
+        """
+        SELECT * FROM users
+        WHERE condition NOT IN ('dead', 'dying')
+          AND (disease IS NULL OR disease = '')
+        """
+    ).fetchall()
+    notes: list[dict] = []
+    for user in rows:
+        note = try_tooth_infection_from_broken_tooth(user, conn=conn)
+        if not note:
+            note = try_urinary_infection_from_dehydration(user, conn=conn)
+        if not note:
+            note = try_constipation_from_dehydration(user, conn=conn)
+        if note:
+            notes.append(
+                {
+                    "wolf_name": user["wolf_name"],
+                    "discord_id": user["discord_id"],
+                    "line": note,
+                }
+            )
+    return notes
+
+
 def try_eating_distress_from_hunger(user, *, chance: float = 0.14, conn=None) -> str | None:
     from config import HUNGER_LOW_THRESHOLD
 
@@ -258,6 +328,10 @@ def try_weather_fever_exposure(user) -> str | None:
     if gp == "mistmoor" and random.random() < 0.35:
         note = try_contract_disease(user, "rot_lung", "fever", chance=0.28)
         return _fever_note_with_delirium(user, note)
+    if random.random() < 0.15:
+        note = try_contract_disease(user, "bronchitis", "irritated", chance=0.20)
+        if note:
+            return _fever_note_with_delirium(user, note)
     note = try_contract_disease(user, "influenza", chance=0.25)
     return _fever_note_with_delirium(user, note)
 
@@ -278,6 +352,16 @@ def try_mistmoor_swamp_exposure(user, *, belly_rip: bool = False) -> str | None:
     note = try_contract_disease(user, "rot_lung", "fever", chance=0.08)
     if note:
         return _fever_note_with_delirium(user, note)
+    return None
+
+
+def try_leptospirosis_exposure(user, *, chance: float = 0.015, clean_water: bool = True) -> str | None:
+    """standing water fouled by wildlife urine; higher risk off the clean creek."""
+    if not clean_water:
+        chance = min(0.08, chance * 4)
+    note = try_contract_disease(user, "leptospirosis", "fever", chance=chance)
+    if note:
+        return f"tainted water: {note}"
     return None
 
 
@@ -399,6 +483,14 @@ def try_poison_ivy_exposure(user, *, chance: float = 0.09) -> str | None:
     return None
 
 
+def try_tick_exposure(user, *, chance: float = 0.06) -> str | None:
+    """brush and tall grass while tracking; tick latches on unnoticed."""
+    note = try_contract_disease(user, "lyme", "bullseye", chance=chance)
+    if note:
+        return f"tick bite: {note}"
+    return None
+
+
 def try_nettle_sting_exposure(user, *, chance: float = 0.55) -> str | None:
     """stinging nettle harvest; rash and welts even when you know the plant."""
     note = try_contract_disease(user, "mild_poison", "stung", chance=chance)
@@ -471,6 +563,8 @@ def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
             continue
 
         note = try_insomnia_from_distress(user, conn=conn)
+        if not note:
+            note = try_depression_from_low_mood(user, low_mood_days, conn=conn)
         if not note:
             note = try_chronic_stress_from_low_mood(user, low_mood_days, conn=conn)
         if not note:
