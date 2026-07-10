@@ -100,17 +100,5 @@ def guild_member_ids_with_wolves(guild: discord.Guild) -> list[int]:
     return [int(r["discord_id"]) for r in rows if int(r["discord_id"]) in member_ids]
 
 
-async def guild_member_ids_with_wolves_resolved(
-    bot: discord.Client, guild: discord.Guild
-) -> list[int]:
-    """Wolf owners in this guild; chunk member list if cache is still cold."""
-    ids = guild_member_ids_with_wolves(guild)
-    if ids:
-        return ids
-    try:
-        await guild.chunk()
-    except (discord.HTTPException, AttributeError):
-        pass
-    return guild_member_ids_with_wolves(guild)
 
 

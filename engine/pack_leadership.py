@@ -4,7 +4,6 @@ from config import GREAT_PACKS
 from engine.apprentice_roles import matches_parent_role
 from engine.factions import is_faction
 
-PACK_OFFICER_ROLES = frozenset({"alpha", "advisor"})
 BETA_ROLE = "advisor"  # Beta wolves use the Advisor role
 
 

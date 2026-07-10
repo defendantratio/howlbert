@@ -5,7 +5,7 @@ from __future__ import annotations
 from config import PUBLIC_GAMEPLAY_MESSAGES
 
 
-def reply_ephemeral(*, private: bool = False) -> bool:
+def reply_ephemeral() -> bool:
     """
     Whether a slash reply should be ephemeral (only the clicker sees it).
 

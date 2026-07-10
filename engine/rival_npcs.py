@@ -16,7 +16,6 @@ import database as db
 GRUDGE_MIN = 0
 GRUDGE_MAX = 100
 GRUDGE_PER_HOSTILE_ENCOUNTER = 8
-GRUDGE_DECAY_ON_GOOD_STANDING = 3
 
 GRUDGE_TIER_LABELS = (
     (15, "wary"),
@@ -113,8 +112,6 @@ def pick_rival_for_hostile_pack(guild_id: int, pack_id: int) -> tuple[dict, str]
     return random.choice(candidates)
 
 
-def pick_rogue_rival() -> dict:
-    return random.choice(ROGUE_RIVALS)
 
 
 def _milestone_tiers() -> tuple[str, ...]:

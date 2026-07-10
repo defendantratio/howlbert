@@ -261,9 +261,6 @@ def log_rite(
     _write(wolf_id, rite_key, summary, guild_id=guild_id, day=day)
 
 
-def format_journal_embed_body(wolf_id: int, *, limit: int = 200) -> str:
-    chunks = format_journal_embed_chunks(wolf_id, limit=limit)
-    return chunks[0] if chunks else "_no journal entries yet; life events are recorded automatically._"
 
 
 def _journal_entry_tier(event_key: str) -> int:

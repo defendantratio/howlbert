@@ -16,7 +16,6 @@ class HerbFormRule:
     external_only: bool = False
     requires_poultice: bool = False
     requires_tea: bool = False
-    fresh_only_bonus: bool = False
     dried_only: bool = False
     notes: str = ""
 
@@ -48,8 +47,8 @@ HERB_FORM_RULES: dict[str, HerbFormRule] = {
     "oleander": HerbFormRule(toxic_if_fresh=True, toxic_dc=18, toxic_damage=(4, 6)),
     "water_hemlock": HerbFormRule(toxic_if_fresh=True, toxic_dc=20, toxic_damage=(6, 6)),
     "deathberries": HerbFormRule(toxic_if_fresh=True, toxic_dc=18, notes="mercy-killing herb only."),
-    "feverfew": HerbFormRule(requires_tea=True, fresh_only_bonus=True, notes="tea works best fresh."),
-    "yarrow": HerbFormRule(fresh_only_bonus=True, notes="fresh yarrow staunches faster (+2 stabilize)."),
+    "feverfew": HerbFormRule(requires_tea=True, notes="tea works best fresh."),
+    "yarrow": HerbFormRule(notes="fresh yarrow staunches faster."),
     "comfrey": HerbFormRule(
         requires_poultice=True,
         notes="promotes bone knitting and tissue repair; for bruises, sprains, and closed injuries. never apply to open wounds (toxins absorb through broken skin) or ingest.",
@@ -112,17 +111,3 @@ def form_label(form: str) -> str:
         "simmered_milk": "simmered milk",
     }.get(form, form)
 
-
-def can_use_form(rule: HerbFormRule, form: str, *, complex_wound: bool) -> tuple[bool, str]:
-    if rule.must_dry_before_use and form == "fresh":
-        return False, "must **dry** this herb before use."
-    if rule.dried_only and form != "dried":
-        return False, "only the **dried** form is safe to use."
-    if rule.external_only and form != "poultice":
-        if form == "fresh":
-            return False, "external poultice only; do not swallow fresh."
-    if rule.requires_tea and form not in ("tea", "dried"):
-        return False, "needs a **tea** (steeped)."
-    if rule.requires_poultice and form == "fresh" and complex_wound:
-        return False, "complex wound needs a proper **poultice** (dc 10) or heals less."
-    return True, ""

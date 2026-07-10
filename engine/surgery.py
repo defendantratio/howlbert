@@ -142,11 +142,6 @@ def consume_participant_herb(user, herb_key: str) -> bool:
     return False
 
 
-# Back-compat aliases
-surgeon_has_herb = participant_has_herb
-consume_surgeon_herb = consume_participant_herb
-
-
 def _stick_count(user) -> int:
     item = db.get_item_by_key(herb_inventory_key("stick"))
     if item:

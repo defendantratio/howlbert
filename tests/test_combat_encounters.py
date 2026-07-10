@@ -37,7 +37,7 @@ def test_reconcile_empty_fighters_ends_encounter():
     assert db.reconcile_encounter_if_broken(enc_id) is True
     enc = db.get_encounter(enc_id)
     assert enc["status"] == "ended"
-    assert db.get_active_encounter(ch) is None
+    assert not db.list_active_encounters(ch)
 
 
 def test_mid_join_inserts_initiative():

@@ -85,12 +85,6 @@ ACTIVITY_COSTS: dict[str, int] = {
 }
 
 
-def energy_cost(activity: str, *, discounted: bool = False) -> int:
-    """Base energy cost for an activity; role specialists pay a flat
-    discounted cost instead (their signature action, not a random one)."""
-    if discounted:
-        return ENERGY_COST_DISCOUNTED
-    return ACTIVITY_COSTS.get(activity, ENERGY_COST_MED)
 
 
 # signature activities per role: a specialist tires slower at their own craft,

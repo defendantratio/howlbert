@@ -151,12 +151,3 @@ def hunt_flavor_for_prey(prey_key: str, amount: int) -> str:
     return random.choice(GENERIC_HUNT_FLAVOR["solid"])
 
 
-def pick_hunt_outcome() -> tuple[int, str]:
-    """roll bone payout and matching flavor (legacy helper)."""
-    amount = roll_hunt_amount()
-    if amount <= 0:
-        return amount, hunt_flavor_for_prey("vole", 0)
-    from engine.prey_items import prey_key_from_hunt_amount
-
-    prey_key = prey_key_from_hunt_amount(amount)
-    return amount, hunt_flavor_for_prey(prey_key, amount)

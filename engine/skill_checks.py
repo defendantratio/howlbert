@@ -21,7 +21,6 @@ class SkillScenario:
     fail_damage: tuple[int, int] | None = None
     fail_mood: int = 0
     success_flag: str | None = None
-    requires_opponent: bool = False
 
 
 @dataclass(frozen=True)

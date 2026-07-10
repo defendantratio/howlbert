@@ -350,7 +350,3 @@ def apply_needs_crisis_on_rollover(
             stabilized.append(entry)
 
     return {"collapses": collapses, "deaths": deaths, "stabilized": stabilized}
-
-
-# Legacy name used during migration
-apply_needs_deaths_on_rollover = apply_needs_crisis_on_rollover

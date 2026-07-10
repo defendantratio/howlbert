@@ -1655,9 +1655,6 @@ def blocks_field(disease_key: str | None, stage: str | None) -> bool:
     return bool(info and (info.get("blocks_field") or info.get("blocks_activity")))
 
 
-def blocks_all_activity(disease_key: str | None, stage: str | None) -> bool:
-    """Deprecated alias; use blocks_field for partial command blocks."""
-    return blocks_field(disease_key, stage)
 
 
 def is_chronic_disease(disease_key: str | None) -> bool:

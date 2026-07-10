@@ -2608,9 +2608,6 @@ def _merge_wolf_profiles_conn(
         )
 
 
-def merge_wolf_profiles(keeper_wolf_id: int, donor_wolf_id: int) -> None:
-    with get_db() as conn:
-        _merge_wolf_profiles_conn(conn, keeper_wolf_id, donor_wolf_id)
 
 
 def _migrate_merge_suffix_duplicate_wolves(conn: sqlite3.Connection) -> None:
@@ -2690,16 +2687,6 @@ def pending_pup_name_taken(
         )
 
 
-def get_pending_stillborn_global(pup_name: str) -> sqlite3.Row | None:
-    with get_db() as conn:
-        return conn.execute(
-            """
-            SELECT * FROM pending_stillborn
-            WHERE pup_name = ? COLLATE NOCASE
-            LIMIT 1
-            """,
-            (pup_name.strip(),),
-        ).fetchone()
 
 
 def validate_wolf_name_available(
@@ -3611,9 +3598,6 @@ def set_active_wolf(discord_id: int, wolf_id: int) -> bool:
         return True
 
 
-def has_used_secondary_switch(discord_id: int) -> bool:
-    account = get_account(discord_id)
-    return bool(account and account["used_secondary_switch"])
 
 
 def get_active_wolf_id(discord_id: int) -> int | None:
@@ -3643,12 +3627,6 @@ def set_wolf_avatar_cache(wolf_id: int, image_bytes: bytes | None, *, url: str |
     update_user_by_id(wolf_id, **fields)
 
 
-def get_wolf_avatar_cache(wolf_id: int) -> sqlite3.Row | None:
-    with get_db() as conn:
-        return conn.execute(
-            "SELECT avatar_url, avatar_image, avatar_cached_at FROM users WHERE id = ?",
-            (wolf_id,),
-        ).fetchone()
 
 
 def set_wolf_ref_image_cache(wolf_id: int, image_bytes: bytes | None) -> None:
@@ -3983,36 +3961,8 @@ def _journal_sort_key(row: sqlite3.Row) -> tuple:
     return (1, game_day, sub, row_id)
 
 
-def format_journal_preview(wolf_id: int, *, limit: int = 5) -> str | None:
-    rows = list_wolf_journal(wolf_id, limit=200, chronological=True)
-    if not rows:
-        return None
-    preview = rows[-limit:]
-    lines: list[str] = []
-    for row in preview:
-        day = row["day"]
-        prefix = f"Day {day} · " if day is not None else ""
-        lines.append(f"✦ {prefix}{row['summary']}")
-    return "\n".join(lines)
 
 
-def list_guild_active_wolves(discord_ids: list[int]) -> list[sqlite3.Row]:
-    if not discord_ids:
-        return []
-    placeholders = ",".join("?" * len(discord_ids))
-    with get_db() as conn:
-        return conn.execute(
-            f"""
-            SELECT u.*
-            FROM users u
-            INNER JOIN account_progress ap
-                ON ap.discord_id = u.discord_id AND ap.active_wolf_id = u.id
-            WHERE u.discord_id IN ({placeholders})
-              AND u.condition != 'dead'
-            ORDER BY COALESCE(u.great_pack, 'zzz'), u.wolf_name COLLATE NOCASE
-            """,
-            discord_ids,
-        ).fetchall()
 
 
 def create_server_npc(
@@ -4552,28 +4502,6 @@ def deduct_bones(discord_id: int, amount: int, *, wolf_id: int | None = None) ->
         return True
 
 
-def transfer_bones(from_id: int, to_id: int, amount: int) -> bool:
-    if amount <= 0:
-        return False
-    from_wid = _resolve_wolf_id(from_id)
-    to_wid = _resolve_wolf_id(to_id)
-    if not from_wid or not to_wid:
-        return False
-    with get_db() as conn:
-        sender = conn.execute(
-            "SELECT bones FROM users WHERE id = ?", (from_wid,)
-        ).fetchone()
-        if not sender or sender["bones"] < amount:
-            return False
-        conn.execute(
-            "UPDATE users SET bones = bones - ? WHERE id = ?",
-            (amount, from_wid),
-        )
-        conn.execute(
-            "UPDATE users SET bones = bones + ? WHERE id = ?",
-            (amount, to_wid),
-        )
-        return True
 
 
 def get_leaderboard(limit: int = 10) -> list[sqlite3.Row]:
@@ -4660,9 +4588,6 @@ def rename_wolf(
     return None
 
 
-def set_great_pack(discord_id: int, great_pack: str) -> None:
-    """Legacy alias; use assign_pack_affiliation."""
-    assign_pack_affiliation(discord_id, great_pack)
 
 
 def _affiliation_fields(affiliation: str) -> tuple[int | None, str | None]:
@@ -4865,19 +4790,6 @@ def _standing_on_pack_switch(
     return 0
 
 
-def pardon_exile(discord_id: int, pack_id: int) -> bool:
-    """Alpha lifts the rejoin cooldown for a wolf exiled from their den. Returns False if no matching exile on file."""
-    user = get_user(discord_id)
-    if not user or "exiled_from_pack_id" not in user.keys() or not user["exiled_from_pack_id"]:
-        return False
-    if int(user["exiled_from_pack_id"]) != int(pack_id):
-        return False
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE users SET exiled_from_pack_id = NULL, exiled_day = 0 WHERE id = ?",
-            (user["id"],),
-        )
-    return True
 
 
 def pardon_exile_by_wolf_id(wolf_id: int, pack_id: int) -> bool:
@@ -4999,11 +4911,6 @@ def resolve_denouncement(denouncement_id: int) -> None:
         conn.execute("UPDATE pack_denouncements SET resolved = 1 WHERE id = ?", (denouncement_id,))
 
 
-def get_denouncement(denouncement_id: int) -> sqlite3.Row | None:
-    with get_db() as conn:
-        return conn.execute(
-            "SELECT * FROM pack_denouncements WHERE id = ?", (denouncement_id,)
-        ).fetchone()
 
 
 def set_hostage(wolf_id: int, host_pack_id: int) -> None:
@@ -5077,12 +4984,6 @@ def get_user_affiliation(user) -> str:
     return LONER_KEY
 
 
-def count_pack_members(pack_id: int) -> int:
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT COUNT(*) AS c FROM users WHERE pack_id = ?", (pack_id,)
-        ).fetchone()
-        return row["c"] if row else 0
 
 
 def set_pending_pack_invite(wolf_id: int, pack_id: int) -> None:
@@ -5256,16 +5157,6 @@ def _recalculate_prestige(conn: sqlite3.Connection, discord_id: int) -> None:
     )
 
 
-def add_legacy(discord_id: int, amount: int) -> None:
-    if amount <= 0:
-        return
-    with get_db() as conn:
-        get_account(discord_id)
-        conn.execute(
-            "UPDATE account_progress SET legacy_score = legacy_score + ? WHERE discord_id = ?",
-            (amount, discord_id),
-        )
-        _recalculate_prestige(conn, discord_id)
 
 
 def record_quest_complete(discord_id: int, reward_bones: int, standing_reward: int) -> None:
@@ -5400,12 +5291,6 @@ def create_pack(name: str, alpha_id: int) -> int:
         return cursor.lastrowid
 
 
-def rename_pack(pack_id: int, name: str) -> None:
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE packs SET name = ? WHERE id = ?",
-            (name.strip(), pack_id),
-        )
 
 
 def set_pack_tax_rate(pack_id: int, rate: int) -> None:
@@ -5636,23 +5521,8 @@ def advance_plot_phase(guild_id: int) -> tuple[int, sqlite3.Row]:
     return new_phase, world
 
 
-def den_news_dm_sent_for_day(guild_id: int, day: int) -> bool:
-    """True if sunrise den-news DMs already went out for this in-game day."""
-    world = get_world(guild_id)
-    if "last_den_news_dm_day" not in world.keys():
-        return False
-    return int(world["last_den_news_dm_day"]) >= int(day)
 
 
-def mark_den_news_dm_sent(guild_id: int, day: int) -> None:
-    with get_db() as conn:
-        conn.execute(
-            """
-            UPDATE world_state SET last_den_news_dm_day = ?
-            WHERE guild_id = ? AND last_den_news_dm_day < ?
-            """,
-            (int(day), guild_id, int(day)),
-        )
 
 
 def save_world(
@@ -6650,9 +6520,9 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                         "line": "collapsed to **0 HP**; use **`/medic action:deathsaves`**.",
                     }
                 )
-    # Genetic condition sunrise effects (pain_exhaustion_gain, hunger_drain).
+    # Genetic condition sunrise effects (pain_exhaustion_gain, hunger_drain, thirst_drain).
     with get_db() as conn:
-        from engine.genetics import genetic_pain_exhaustion_gain, genetic_hunger_drain
+        from engine.genetics import genetic_pain_exhaustion_gain, genetic_hunger_drain, genetic_thirst_drain
         from engine.exhaustion_effects import PAIN_EXHAUSTION_MAX as _PE_MAX_G, EXHAUSTION_MAX as _EX_MAX_G
 
         gen_rows = conn.execute(
@@ -6667,7 +6537,8 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
         for user in gen_rows:
             pe_gain = genetic_pain_exhaustion_gain(user)
             h_drain = genetic_hunger_drain(user)
-            if not pe_gain and not h_drain:
+            t_drain = genetic_thirst_drain(user)
+            if not pe_gain and not h_drain and not t_drain:
                 continue
             updates: list[str] = []
             params: list = []
@@ -6689,6 +6560,11 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                 conn.execute(
                     "UPDATE users SET hunger = MAX(0, hunger - ?) WHERE id = ?",
                     (h_drain, user["id"]),
+                )
+            if t_drain:
+                conn.execute(
+                    "UPDATE users SET thirst = MAX(0, thirst - ?) WHERE id = ?",
+                    (t_drain, user["id"]),
                 )
             if updates:
                 conn.execute(
@@ -6939,17 +6815,6 @@ def _move_item_conn(
     return True
 
 
-def transfer_item(
-    from_discord_id: int, to_discord_id: int, item_id: int, quantity: int
-) -> bool:
-    if quantity <= 0:
-        return False
-    with get_db() as conn:
-        from_wid = _resolve_wolf_id_conn(conn, from_discord_id)
-        to_wid = _resolve_wolf_id_conn(conn, to_discord_id)
-        if not from_wid or not to_wid or from_wid == to_wid:
-            return False
-        return _move_item_conn(conn, from_wid, to_wid, item_id, quantity)
 
 
 TRADE_EXPIRE_SECONDS = 600
@@ -7213,95 +7078,12 @@ def get_quest_by_key(key: str) -> sqlite3.Row | None:
         ).fetchone()
 
 
-def list_board_quests() -> list[sqlite3.Row]:
-    with get_db() as conn:
-        return conn.execute(
-            """
-            SELECT * FROM quests
-            WHERE quest_type IN ('static', 'unique', 'seasonal')
-            ORDER BY difficulty, title
-            """
-        ).fetchall()
 
 
-def create_quest(
-    key: str,
-    title: str,
-    description: str,
-    objective_type: str,
-    objective_count: int,
-    reward_bones: int,
-    *,
-    standing_reward: int = 0,
-    quest_type: str = "static",
-    difficulty: str = "easy",
-) -> int:
-    with get_db() as conn:
-        cursor = conn.execute(
-            """
-            INSERT INTO quests
-            (key, title, description, objective_type, objective_count,
-             reward_bones, standing_reward, quest_type, difficulty)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                key.strip().lower(),
-                title.strip(),
-                description.strip(),
-                objective_type,
-                objective_count,
-                reward_bones,
-                standing_reward,
-                quest_type,
-                difficulty,
-            ),
-        )
-        return cursor.lastrowid
 
 
-def delete_quest_by_key(key: str) -> bool:
-    with get_db() as conn:
-        quest = conn.execute(
-            "SELECT id FROM quests WHERE key = ? COLLATE NOCASE", (key.strip(),)
-        ).fetchone()
-        if not quest:
-            return False
-        active = conn.execute(
-            "SELECT 1 FROM user_quests WHERE quest_id = ? AND status = 'active'",
-            (quest["id"],),
-        ).fetchone()
-        if active:
-            return False
-        conn.execute("DELETE FROM quests WHERE id = ?", (quest["id"],))
-        conn.execute("DELETE FROM user_quests WHERE quest_id = ?", (quest["id"],))
-        return True
 
 
-def get_available_quests(discord_id: int, *, guild_id: int | None = None) -> list[sqlite3.Row]:
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
-        if not wolf_id:
-            return []
-        rows = conn.execute(
-            """
-            SELECT q.*
-            FROM quests q
-            WHERE q.quest_type IN ('static', 'unique', 'seasonal')
-            AND q.required_role IS NULL
-            AND NOT EXISTS (
-                SELECT 1 FROM user_quests uq
-                WHERE uq.quest_id = q.id AND uq.wolf_id = ?
-                AND uq.status IN ('active', 'completed')
-            )
-            ORDER BY q.difficulty, q.title
-            """,
-            (wolf_id,),
-        ).fetchall()
-        if guild_id is not None:
-            from engine.plot_quests import plot_quest_available
-
-            rows = [q for q in rows if plot_quest_available(q["key"], guild_id)]
-        return rows
 
 
 def get_role_quests(discord_id: int) -> list[sqlite3.Row]:
@@ -7361,22 +7143,6 @@ def get_user_active_quests(discord_id: int) -> list[sqlite3.Row]:
         ).fetchall()
 
 
-def get_user_questlog(discord_id: int, limit: int = 15) -> list[sqlite3.Row]:
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
-        if not wolf_id:
-            return []
-        return conn.execute(
-            """
-            SELECT uq.completed_at, q.key AS quest_key, q.title, q.reward_bones, q.difficulty
-            FROM user_quests uq
-            JOIN quests q ON q.id = uq.quest_id
-            WHERE uq.wolf_id = ? AND uq.status = 'completed'
-            ORDER BY uq.completed_at DESC
-            LIMIT ?
-            """,
-            (wolf_id, limit),
-        ).fetchall()
 
 
 def has_completed_unique(discord_id: int, quest_id: int) -> bool:
@@ -7469,24 +7235,6 @@ def accept_quest(
         return True
 
 
-def abandon_quest(discord_id: int, quest_key: str) -> bool:
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
-        if not wolf_id:
-            return False
-        quest = conn.execute(
-            "SELECT id FROM quests WHERE key = ? COLLATE NOCASE", (quest_key.strip(),)
-        ).fetchone()
-        if not quest:
-            return False
-        cursor = conn.execute(
-            """
-            UPDATE user_quests SET status = 'abandoned'
-            WHERE wolf_id = ? AND quest_id = ? AND status = 'active'
-            """,
-            (wolf_id, quest["id"]),
-        )
-        return cursor.rowcount > 0
 
 
 def _auto_complete_ready_quests(discord_id: int, ready_keys: list[str]) -> list[sqlite3.Row]:
@@ -7625,14 +7373,6 @@ def _increment_deposit_quest_progress_conn(
     return ready_keys
 
 
-def increment_deposit_quest_progress(discord_id: int, amount: int) -> list[sqlite3.Row]:
-    """Same auto-completion behavior as increment_quest_progress, for deposit quests."""
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
-        if not wolf_id:
-            return []
-        ready_keys = _increment_deposit_quest_progress_conn(conn, wolf_id, amount)
-    return _auto_complete_ready_quests(discord_id, ready_keys)
 
 
 def get_active_quest_by_key(discord_id: int, quest_key: str) -> sqlite3.Row | None:
@@ -7738,65 +7478,6 @@ def complete_quest(discord_id: int, quest_key: str | None = None) -> sqlite3.Row
     return uq
 
 
-def ensure_daily_quests(discord_id: int, day: int) -> list[sqlite3.Row]:
-    from config import DAILY_QUEST_TEMPLATES
-    import random as rnd
-
-    with get_db() as conn:
-        wolf_id = _resolve_wolf_id_conn(conn, discord_id)
-        if not wolf_id:
-            return []
-        existing = conn.execute(
-            """
-            SELECT uq.*, q.key AS quest_key, q.title, q.description,
-                   q.objective_type, q.objective_count, q.reward_bones,
-                   q.standing_reward, q.difficulty, q.quest_type
-            FROM user_quests uq
-            JOIN quests q ON q.id = uq.quest_id
-            WHERE uq.wolf_id = ? AND q.quest_type = 'daily'
-            AND uq.assigned_day = ? AND uq.status IN ('active', 'completed')
-            """,
-            (wolf_id, day),
-        ).fetchall()
-        if existing:
-            return list(existing)
-
-        daily_standing_reward = {"easy": 1, "medium": 2, "hard": 3}
-        for difficulty in ("easy", "medium", "hard"):
-            pool = DAILY_QUEST_TEMPLATES[difficulty]
-            key, title, desc, obj, count, reward = rnd.choice(pool)
-            quest_key = f"{key}_{day}_{wolf_id}"
-            conn.execute(
-                """
-                INSERT OR IGNORE INTO quests
-                (key, title, description, objective_type, objective_count,
-                 reward_bones, quest_type, difficulty, standing_reward)
-                VALUES (?, ?, ?, ?, ?, ?, 'daily', ?, ?)
-                """,
-                (quest_key, title, desc, obj, count, reward, difficulty, daily_standing_reward[difficulty]),
-            )
-            quest = conn.execute(
-                "SELECT id FROM quests WHERE key = ?", (quest_key,)
-            ).fetchone()
-            conn.execute(
-                """
-                INSERT INTO user_quests (discord_id, wolf_id, quest_id, assigned_day, accepted_at, status)
-                VALUES (?, ?, ?, ?, ?, 'active')
-                """,
-                (discord_id, wolf_id, quest["id"], day, utcnow()),
-            )
-
-        return conn.execute(
-            """
-            SELECT uq.*, q.key AS quest_key, q.title, q.description,
-                   q.objective_type, q.objective_count, q.reward_bones,
-                   q.standing_reward, q.difficulty, q.quest_type
-            FROM user_quests uq
-            JOIN quests q ON q.id = uq.quest_id
-            WHERE uq.wolf_id = ? AND q.quest_type = 'daily' AND uq.assigned_day = ?
-            """,
-            (wolf_id, day),
-        ).fetchall()
 
 
 # --- Warfare ---
@@ -8216,6 +7897,15 @@ def set_user_conditions(
                 "UPDATE users SET disease = NULL, quarantined = 0 WHERE id = ?",
                 (wid,),
             )
+            from engine.herb_buffs import grant_disease_grace
+            wolf_row = conn.execute("SELECT * FROM users WHERE id = ?", (wid,)).fetchone()
+            if wolf_row:
+                grace_fields = grant_disease_grace(wolf_row)
+                if grace_fields.get("herb_buffs") is not None:
+                    conn.execute(
+                        "UPDATE users SET herb_buffs = ? WHERE id = ?",
+                        (grace_fields["herb_buffs"], wid),
+                    )
         if condition == "dead":
             mark_wolf_dead(wid, death_cause or "unknown", conn=conn)
             return
@@ -8462,10 +8152,6 @@ def adjust_maw_favor(discord_id: int, delta: int) -> int:
     return int(row["maw_favor"]) if row else 0
 
 
-def get_maw_favor(discord_id: int) -> int:
-    """Return the active wolf's current Great Maw favor."""
-    row = get_user(discord_id)
-    return int(row["maw_favor"]) if row else 0
 
 
 def set_hunt_prayer_day(discord_id: int, day: int) -> None:
@@ -9347,11 +9033,6 @@ def set_pack_cat_pact_fail_day(pack_id: int, clan_name: str, day: int) -> None:
         )
 
 
-def cat_pact_gift_used_today(pack_id: int, day: int) -> bool:
-    pack = get_pack(pack_id)
-    if not pack:
-        return True
-    return int(pack["last_cat_pact_gift_day"]) >= day
 
 
 def mark_cat_pact_gift_day(pack_id: int, day: int) -> None:
@@ -9745,10 +9426,6 @@ def resolve_combat_encounter(
     )
 
 
-def get_active_encounter(channel_id: int) -> sqlite3.Row | None:
-    """Most recent open fight in a channel (legacy helper)."""
-    active = list_active_encounters(channel_id)
-    return active[0] if active else None
 
 
 def get_encounter(encounter_id: int) -> sqlite3.Row | None:
@@ -10557,10 +10234,6 @@ def add_skill_rank(
     return get_earned_trait_bonus_for_wolf(wolf_id, skill_key)
 
 
-def get_skill_rank_for_wolf(wolf_id: int, skill_key: str) -> int:
-    from engine.character_traits import get_earned_trait_bonus_for_wolf
-
-    return get_earned_trait_bonus_for_wolf(wolf_id, skill_key)
 
 
 def spend_xp(discord_id: int, cost: int) -> bool:
@@ -10613,34 +10286,10 @@ def set_maw_belief(discord_id: int, belief: str, *, wolf_id: int | None = None) 
     return True, None
 
 
-def set_character_lore(discord_id: int, lore_json: str, *, wolf_id: int | None = None) -> tuple[bool, str | None]:
-    from engine.character_lore import parse_character_lore
-
-    if not parse_character_lore(lore_json):
-        return False, "Lore must include at least one non-empty field."
-    wid = wolf_id or _resolve_wolf_id(discord_id)
-    if not wid:
-        return False, "No wolf profile found."
-    update_user(discord_id, wolf_id=wid, character_lore=lore_json)
-    return True, None
 
 
-def set_sexuality(discord_id: int, sexuality: str) -> tuple[bool, str | None]:
-    from engine.attraction import validate_set_sexuality
-
-    user = get_user(discord_id)
-    if not user:
-        return False, "No wolf profile found."
-    stored, err = validate_set_sexuality(user, sexuality)
-    if err:
-        return False, err
-    update_user(discord_id, sexuality=stored)
-    return True, None
 
 
-def set_gender(discord_id: int, gender: str) -> None:
-    """Legacy alias; updates birth_sex."""
-    set_birth_sex(discord_id, gender)
 
 
 def enter_dying_state(discord_id: int) -> None:
@@ -10888,16 +10537,6 @@ def set_bonded_mates(wolf_a_id: int, wolf_b_id: int) -> None:
     log_bonded(wolf_a_id, wolf_b_id)
 
 
-def clear_bonded_mates(wolf_id: int) -> None:
-    user = get_user_by_id(wolf_id)
-    if not user:
-        return
-    partner_id = user["bonded_mate_id"] if "bonded_mate_id" in user.keys() else None
-    update_user(user["discord_id"], wolf_id=wolf_id, bonded_mate_id=None)
-    if partner_id:
-        partner = get_user_by_id(partner_id)
-        if partner and partner["bonded_mate_id"] == wolf_id:
-            update_user(partner["discord_id"], wolf_id=partner_id, bonded_mate_id=None)
 
 
 def _death_context_conn(
@@ -11146,22 +10785,8 @@ def clear_pregnancy(wolf_id: int) -> None:
     )
 
 
-def record_pup(
-    mother_id: int,
-    father_id: int | None,
-    pup_name: str,
-    born_day: int,
-    stats_json: str,
-    *,
-    is_adopted: bool = False,
-) -> int:
-    """Deprecated; pups table removed; births use register_born_wolf."""
-    raise NotImplementedError("Legacy pups ledger removed; use register_born_wolf.")
 
 
-def get_pups_for_wolf(discord_id: int, limit: int = 10) -> list[sqlite3.Row]:
-    """Deprecated; use get_lineage_children_for_discord."""
-    return []
 
 
 def add_pending_stillborn(
@@ -11806,19 +11431,6 @@ def last_active_day(user) -> int:
     return max((int(user[c]) if c in user.keys() and user[c] is not None else 0) for c in _STANDING_ACTIVITY_COLUMNS)
 
 
-def wolf_is_away(user, day: int) -> bool:
-    """A wolf nobody is playing is exempt from *every* negative rollover effect
-    (vitals decay, disease spread/contraction, chronic-illness onset, loneliness,
-    battle fatigue, injury complications, mental illness). True when the wolf is
-    explicitly dormant, or has been idle longer than AUTO_DORMANT_INACTIVE_DAYS.
-    Brand-new worlds (day <= 1) treat everyone as active."""
-    from config import AUTO_DORMANT_INACTIVE_DAYS
-
-    if int(user["dormant"] if "dormant" in user.keys() and user["dormant"] is not None else 0):
-        return True
-    if int(day) <= 1:
-        return False
-    return last_active_day(user) < max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
 
 
 def active_wolf_where(day: int, *, alias: str = "") -> str:
@@ -12125,16 +11737,6 @@ def clear_bond(wolf_a_id: int, wolf_b_id: int, bond_type: str) -> bool:
         return cur.rowcount > 0
 
 
-def count_bonds_for_wolf(wolf_id: int) -> int:
-    with get_db() as conn:
-        row = conn.execute(
-            """
-            SELECT COUNT(*) AS c FROM wolf_bonds
-            WHERE wolf_a_id = ? OR wolf_b_id = ?
-            """,
-            (wolf_id, wolf_id),
-        ).fetchone()
-        return int(row["c"]) if row else 0
 
 
 def get_wolf_family(wolf_id: int) -> sqlite3.Row | None:
@@ -12375,16 +11977,6 @@ def record_court_attempt(courter_wolf_id: int, target_wolf_id: int, day_number: 
         )
 
 
-def court_blocked_for_pair(courter_wolf_id: int, target_wolf_id: int, day_number: int) -> bool:
-    with get_db() as conn:
-        row = conn.execute(
-            """
-            SELECT 1 FROM court_history
-            WHERE courter_wolf_id = ? AND target_wolf_id = ? AND day_number = ?
-            """,
-            (courter_wolf_id, target_wolf_id, day_number),
-        ).fetchone()
-        return row is not None
 
 
 def create_pending_mate(
@@ -13260,9 +12852,6 @@ def set_rp_prompt_status(prompt_id: int, status: str, reviewed_by: int | None = 
         )
 
 
-def delete_rp_prompt(prompt_id: int) -> None:
-    with get_db() as conn:
-        conn.execute("DELETE FROM rp_prompts WHERE id = ?", (prompt_id,))
 
 
 def set_pack_feedall_day(pack_id: int, day: int) -> None:
@@ -13605,18 +13194,6 @@ def remove_herb_stack(stack_id: int) -> None:
         conn.execute("DELETE FROM herb_stacks WHERE id = ?", (stack_id,))
 
 
-def transfer_herb_stack(stack_id: int, new_wolf_id: int) -> bool:
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT id FROM herb_stacks WHERE id = ?", (stack_id,)
-        ).fetchone()
-        if not row:
-            return False
-        conn.execute(
-            "UPDATE herb_stacks SET wolf_id = ? WHERE id = ?",
-            (new_wolf_id, stack_id),
-        )
-        return True
 
 
 # --- Herb seeds & gardens (grow-your-own) ---
@@ -13690,13 +13267,6 @@ def add_herb_planting(
         return int(cur.lastrowid)
 
 
-def get_herb_plantings(wolf_id: int) -> list[sqlite3.Row]:
-    """Legacy: plantings by planter wolf id."""
-    with get_db() as conn:
-        return conn.execute(
-            "SELECT * FROM herb_gardens WHERE wolf_id = ? ORDER BY planted_day ASC, id ASC",
-            (wolf_id,),
-        ).fetchall()
 
 
 def get_pack_herb_plantings(pack_id: int) -> list[sqlite3.Row]:
@@ -13753,13 +13323,6 @@ def remove_herb_planting(planting_id: int) -> None:
         conn.execute("DELETE FROM herb_gardens WHERE id = ?", (planting_id,))
 
 
-def count_herb_plantings(wolf_id: int) -> int:
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT COUNT(*) AS n FROM herb_gardens WHERE wolf_id = ? AND dead = 0",
-            (wolf_id,),
-        ).fetchone()
-        return int(row["n"]) if row else 0
 
 
 def count_pack_herb_plantings(pack_id: int) -> int:

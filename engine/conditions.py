@@ -182,12 +182,6 @@ def roll_severe_injury() -> str:
     return random.choice(SEVERE_INJURY_TABLE)
 
 
-def injury_roll_label(key: str) -> str:
-    info = INJURIES.get(key)
-    if not info:
-        return key
-    roll = info.get("roll", "?")
-    return f"**{info['name']}** (rolled {roll}); {info['effect']}"
 
 
 def add_injury(injuries: list[str], key: str) -> list[str]:
@@ -225,17 +219,8 @@ def apply_meal_energy(user, prey_bones: int) -> tuple[int, int, int]:
     return new_hp, new_exhaustion, hp_gain
 
 
-def apply_short_rest_healing(user, herb_heal: int = 0) -> int:
-    """without herbs: not short-rest healing. with herb: 1d4+1 up to 3/day tracked externally."""
-    heal = herb_heal
-    new_hp = min(user["max_hp"], user["hp"] + heal)
-    return new_hp
 
 
-def apply_long_rest_healing(user) -> tuple[int, int]:
-    """hp and exhaustion recovery from a full sleep."""
-    benefits = apply_long_rest_benefits(user)
-    return benefits["hp"], benefits["exhaustion"]
 
 
 def apply_long_rest_benefits(user, *, season: str | None = None) -> dict[str, int]:
@@ -591,43 +576,6 @@ def treat_with_herb(user, herb_key: str, herb_meta: dict) -> str:
     return "no_effect"
 
 
-def roll_poison_herb_misuse(user, herb_key: str, *, day: int) -> tuple[bool, str, dict]:
-    """
-    con save for restricted poison herbs.
-    returns (survived_ok, message, db_fields).
-    """
-    import random
-
-    import database as db
-
-    from engine.dice import format_roll_result, resolve_check
-    from engine.herb_properties import herb_form_rule
-    from engine.restricted_herbs import is_restricted_herb
-
-    if not is_restricted_herb(herb_key):
-        return True, "", {}
-    rule = herb_form_rule(herb_key)
-    result = resolve_check(
-        user,
-        attr_keys=("attr_con",),
-        skill="Constitution",
-        dc=rule.toxic_dc,
-        proficient=False,
-        skill_key=None,
-        game_day=day,
-    )
-    lo, hi = rule.toxic_damage
-    dmg = random.randint(lo, hi)
-    if result["success"]:
-        dmg = max(1, dmg // 2)
-    new_hp = max(0, int(user["hp"]) - dmg)
-    db.set_user_conditions(user["discord_id"], hp=new_hp)
-    note = "half damage on save" if result["success"] else "full poison damage"
-    return (
-        new_hp > 0,
-        format_roll_result(result) + f"\n**poison misuse**; **−{dmg} hp** ({note}).",
-        {"hp": new_hp},
-    )
 
 
 def herb_special_effect(herb_key: str, user, *, inventory_qty: int = 1) -> str | None:

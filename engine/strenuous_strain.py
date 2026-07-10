@@ -105,10 +105,3 @@ def apply_strenuous_strain(user, day: int, action: str) -> str | None:
     return " ".join(notes) if notes else None
 
 
-def strain_footer(embed, user, day: int, action: str) -> None:
-    """Apply strenuous strain and append its note to an embed footer, if any."""
-    note = apply_strenuous_strain(user, day, action)
-    if not note or embed is None:
-        return
-    footer = embed.footer.text if embed.footer and embed.footer.text else ""
-    embed.set_footer(text=f"{footer} · {note}" if footer else note)

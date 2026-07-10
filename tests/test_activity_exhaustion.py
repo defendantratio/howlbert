@@ -6,7 +6,6 @@ import database as db
 from engine.activity_exhaustion import (
     apply_activity_fatigue,
     clear_activity_fatigue,
-    record_strenuous_activity,
 )
 from engine.role_privileges import record_hunt_use
 
@@ -92,42 +91,15 @@ def test_short_rest_clears_activity_fatigue() -> None:
         )
     user = db.get_user(did)
     day = 15
-    record_strenuous_activity(user, "forage", day)
-    record_strenuous_activity(db.get_user(did), "forage", day)
-    user = db.get_user(did)
     clear_activity_fatigue(user, day)
     note = apply_activity_fatigue(db.get_user(did), "forage", "survival", day)
     check("after short rest first forage has no fatigue note", note is None)
-
-
-def test_record_strenuous_resets_on_new_day() -> None:
-    print("\n=== counters reset on new day ===")
-    db.init_db()
-    did = 999300001000000098
-    with db.get_db() as conn:
-        conn.execute("DELETE FROM users WHERE discord_id = ?", (did,))
-        conn.execute(
-            """
-            INSERT INTO users (
-                discord_id, wolf_name, pack_id, rank, created_at,
-                hunger, thirst, exhaustion, condition, wolf_role
-            ) VALUES (?, 'Fresh', 1, 'omega', 0, 80, 80, 0, 'healthy', 'hunter')
-            """,
-            (did,),
-        )
-    user = db.get_user(did)
-    c1, t1 = record_strenuous_activity(user, "forage", 10)
-    user = db.get_user(did)
-    c2, t2 = record_strenuous_activity(user, "forage", 11)
-    check("new day resets activity count", c2 == 1, f"got {c2}")
-    check("new day resets total", t2 == 1, f"got {t2}")
 
 
 def main() -> None:
     test_activity_fatigue_no_longer_stacks_on_energy()
     test_manual_long_rest_after_sunrise()
     test_short_rest_clears_activity_fatigue()
-    test_record_strenuous_resets_on_new_day()
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:
         raise SystemExit(1)

@@ -7,7 +7,6 @@ from unittest.mock import patch
 from engine.bury_ritual import bury_carcass
 from engine.herb_buffs import (
     apply_supplemental_herb,
-    clear_frostbite,
     disease_save_uses_advantage,
     flea_ward_active,
     get_buffs,
@@ -64,8 +63,8 @@ def test_prickly_ash_clears_frostbite():
     result = apply_supplemental_herb("prickly_ash", user, day=5, outcome="no_effect")
     assert result
     assert "frostbite" in result["message"].lower() or "frozen" in result["message"].lower()
-    cleared = clear_frostbite(user)
-    assert cleared or "frostbite_until_day" not in user.get("herb_buffs", "{}")
+    user["herb_buffs"] = result["fields"]["herb_buffs"]
+    assert "frostbite_until_day" not in get_buffs(user)
 
 
 def test_heather_when_ill():

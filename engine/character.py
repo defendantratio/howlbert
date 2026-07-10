@@ -51,8 +51,6 @@ def reconcile_hp(old_hp: int, old_max: int, attr_str: int, attr_con: int) -> tup
     return hp_after_max_change(old_hp, old_max, new_max), new_max
 
 
-def stat_sum(user) -> int:
-    return sum(user[f"attr_{k}"] for k in ("str", "dex", "con", "int", "cha", "wis"))
 
 
 def best_modifier(user, attr_keys: tuple[str, ...]) -> tuple[int, str]:
@@ -87,11 +85,6 @@ def parse_skill_ranks(raw: str | None) -> dict[str, int]:
         return {}
 
 
-def get_skill_rank(user, skill_key: str) -> int:
-    if not skill_key or not user:
-        return 0
-    raw = user["skill_ranks"] if "skill_ranks" in user.keys() else "{}"
-    return parse_skill_ranks(raw).get(skill_key.lower(), 0)
 
 
 def is_skill_proficient(user, skill_key: str) -> bool:
@@ -103,26 +96,8 @@ def is_skill_proficient(user, skill_key: str) -> bool:
     return skill_key in ROLE_PROFICIENCIES.get(role, ())
 
 
-def skill_proficiency_bonus(user, skill_key: str | None, *, proficient: bool | None = None) -> int:
-    """Legacy hook; proficiency no longer adds to dice (use character traits instead)."""
-    return 0
 
 
-def format_skill_proficiencies_line(user) -> str:
-    """role/sheet training labels only (not added to dice; traits handle modifiers)."""
-    from rpg_rules import ROLE_PROFICIENCIES, SKILLS
-
-    profs = parse_proficiencies(user["skill_proficiencies"] if "skill_proficiencies" in user.keys() else None)
-    role = user["wolf_role"] if "wolf_role" in user.keys() else ""
-    role_profs = set(ROLE_PROFICIENCIES.get(role, ()))
-    labels: list[str] = []
-    for skill_key in sorted(profs | role_profs):
-        label = SKILLS.get(skill_key, ((), skill_key.title()))[1]
-        if skill_key in role_profs and skill_key not in profs:
-            labels.append(f"{label} (role)")
-        else:
-            labels.append(label)
-    return ", ".join(labels) if labels else "none"
 
 
 def default_stats_for_role(role: str) -> dict:

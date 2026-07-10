@@ -46,12 +46,6 @@ def prey_label_from_yield(yield_bones: int) -> str:
     return "a legendary feast"
 
 
-def resolve_prey_label(user) -> str:
-    """use an explicit fresh-kill label (hare, fish) or infer from bone yield."""
-    if user and "last_prey_label" in user.keys() and user["last_prey_label"]:
-        return user["last_prey_label"]
-    yield_bones = int(user["last_hunt_yield"]) if user else 0
-    return prey_label_from_yield(yield_bones)
 
 
 def choice_outcome_message(

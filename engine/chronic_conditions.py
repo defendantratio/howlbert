@@ -32,8 +32,6 @@ def try_dementia_from_age(user, *, chance: float = 0.06) -> str | None:
     return try_contract_disease(user, "dementia", "forgetful", chance=chance)
 
 
-def try_cancer_from_age(user, *, chance: float = 0.04) -> str | None:
-    return try_contract_disease(user, "cancer", "lump", chance=chance)
 
 
 def try_asthma_from_age(user, *, chance: float = 0.05) -> str | None:

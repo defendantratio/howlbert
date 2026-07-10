@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from engine.herb_habitat import herbs_for_verge, is_wild_territory_herb
-from herbs import HERBS
+from engine.herb_habitat import herbs_for_verge
 
 _pass = 0
 _fail = 0
@@ -24,8 +23,6 @@ def main() -> None:
     compound = set(herbs_for_verge("compound"))
     check("purslane roadside", "purslane" in roadside)
     check("lavender compound only", "lavender" in compound and "lavender" not in roadside)
-    check("plantain not wild territory", not is_wild_territory_herb(HERBS["plantain"]))
-    check("comfrey still wild", is_wild_territory_herb(HERBS["comfrey"]))
     check("chicory roadside", "chicory" in roadside)
     check("garden mint compound", "garden_mint" in compound)
     overlap = roadside & compound

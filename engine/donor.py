@@ -568,26 +568,6 @@ def _process_kofi_membership(
     return True, " · ".join(parts) + cap_note, discord_id
 
 
-def process_kofi_donation(
-    *,
-    transaction_id: str,
-    amount_str: str,
-    message: str,
-    verification_token: str,
-    expected_token: str,
-) -> tuple[bool, str, int | None, str | None]:
-    """Backward-compatible wrapper for simple donation fields."""
-    return process_kofi_event(
-        {
-            "kofi_transaction_id": transaction_id,
-            "amount": amount_str,
-            "message": message,
-            "verification_token": verification_token,
-            "type": "Donation",
-            "is_subscription_payment": False,
-        },
-        expected_token=expected_token,
-    )
 
 
 def create_donation_code(

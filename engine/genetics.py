@@ -917,21 +917,6 @@ def genetic_blocks_howl(user) -> tuple[bool, str]:
     return False, ""
 
 
-def genetic_perception_penalty(user) -> int:
-
-    keys = parse_genetic_conditions(
-
-        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
-
-    )
-
-    penalty = 0
-
-    for key in keys:
-
-        penalty += int(GENETIC_CONDITIONS[key].get("perception_penalty", 0))
-
-    return -penalty if penalty else 0
 
 
 
@@ -981,12 +966,8 @@ def genetic_litter_penalty(user) -> int:
     return total
 
 
-def has_inbreeding_depression(user) -> bool:
-    """True when wolf carries inbreeding_depression genetic flag."""
-    keys = parse_genetic_conditions(
-        user["genetic_conditions"] if user and "genetic_conditions" in user.keys() else None
-    )
-    return any(GENETIC_CONDITIONS[k].get("inbreeding_flag") for k in keys)
+
+
 
 
 def genetic_keys_matching_cures(user, cures: tuple) -> list[str]:

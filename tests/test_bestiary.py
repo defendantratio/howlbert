@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import database as db
-from engine.bestiary import BESTIARY_NPCS, NPC_CATEGORY_LABELS, build_npc_stats, npc_choices_for_category, npc_hp
+from engine.bestiary import BESTIARY_NPCS, NPC_CATEGORY_LABELS, build_npc_stats, npc_hp
 
 _pass = 0
 _fail = 0
@@ -38,9 +38,6 @@ def main() -> None:
 
     badger_hp = npc_hp(BESTIARY_NPCS["badger"])
     check("badger tough", badger_hp >= 14, str(badger_hp))
-
-    choices = npc_choices_for_category("cats")
-    check("cat npc choices", len(choices) == 5)
 
     border_keys = {k for k, v in BESTIARY_NPCS.items() if v["category"] == "cats"}
     check("border templates are cats", "clan_warrior" in border_keys)

@@ -13,12 +13,6 @@ def _parsed(user) -> tuple[str | None, str | None]:
     return parse_disease(raw)
 
 
-def active_disease(user) -> str | None:
-    """legacy helper; returns cough stage or disease key."""
-    key, stage = _parsed(user)
-    if key == "cough":
-        return stage
-    return key
 
 
 def disease_check_adjustments(user, attr_keys: tuple[str, ...]) -> tuple[int, bool]:

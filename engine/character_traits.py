@@ -3383,15 +3383,6 @@ def get_earned_trait_bonus_for_wolf(wolf_id: int, skill_key: str) -> int:
     return earned_trait_bonus_total(_traits_for_user(wolf), skill_key.strip().lower())
 
 
-def parse_trait_failure_days(raw: str | None) -> dict[str, int]:
-    """Legacy per-skill failure day map (int values only)."""
-    state = parse_skill_strain_state(raw)
-    out: dict[str, int] = {}
-    for skill, entry in state.items():
-        day = entry.get("last_fail_day")
-        if day is not None:
-            out[skill] = int(day)
-    return out
 
 
 def parse_skill_strain_state(raw: str | None) -> dict[str, dict]:

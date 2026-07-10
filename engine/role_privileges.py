@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from config import HUNTER_HUNTS_PER_SUNRISE
 from engine.role_features import has_any_role, is_full_medic
 
 HUNTER_ROLE = "hunter"
@@ -34,13 +33,6 @@ def hunts_used_today(user, day: int) -> int:
     return int(user["hunt_uses_today"]) if "hunt_uses_today" in user.keys() else 0
 
 
-def hunts_remaining_today(user, day: int) -> int:
-    if not user:
-        return 0
-    if not is_hunter(user):
-        last = int(user["last_hunt_day"]) if "last_hunt_day" in user.keys() else 0
-        return 1 if last < day else 0
-    return max(0, HUNTER_HUNTS_PER_SUNRISE - hunts_used_today(user, day))
 
 
 def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
@@ -106,11 +98,6 @@ def rescout_uses_remaining(user, day: int) -> int:
     return max(0, SCOUT_RESCOUTS_PER_DAY - rescout_uses_today(user, day))
 
 
-def can_rescout_again(user, day: int) -> bool:
-    """Scouts may rescout without a daily cap."""
-    if is_scout(user):
-        return True
-    return rescout_uses_remaining(user, day) > 0
 
 
 def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
@@ -165,20 +152,3 @@ def treat_limit_reached(user) -> bool:
     return int(user["herb_treats_today"] if "herb_treats_today" in user.keys() else 0) >= HERB_TREAT_DAILY_LIMIT
 
 
-def activity_cooldown_label(user, activity: str, *, ready: bool, day: int = 0) -> str:
-    """Human label for /cooldowns; hunters and foragers show role perks."""
-    if activity == "hunt":
-        return "ready (hunter: tires slower)" if is_hunter(user) else "ready (energy)"
-    if activity == "forage":
-        return "ready (forager: tires slower)" if is_full_forager(user) else "ready (energy)"
-    if activity == "explore":
-        return "ready (scout: tires slower)" if is_scout(user) else "ready (energy)"
-    if activity == "rescout" and is_scout(user):
-        return "unlimited (scout)"
-    if activity == "treat" and is_medic(user):
-        return "unlimited (medic)"
-    if activity == "stabilize" and is_medic(user):
-        return "unlimited (medic)"
-    if activity == "surgery" and is_medic(user):
-        return "ready (medic)" if ready else "used this sunrise"
-    return "ready" if ready else "used"

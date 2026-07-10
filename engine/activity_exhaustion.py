@@ -82,24 +82,6 @@ def clear_activity_fatigue(user, day: int) -> None:
     db.update_user(user["discord_id"], wolf_id=user["id"], herb_buffs=buffs_json(buffs))
 
 
-def record_strenuous_activity(
-    user,
-    activity_key: str,
-    day: int,
-    *,
-    activity_count: int | None = None,
-) -> tuple[int, int]:
-    """Record one strenuous action; return (activity_count, total_count) after."""
-    buffs, by_key, total = _fatigue_state(user, day)
-    if activity_count is None:
-        activity_count = int(by_key.get(activity_key, 0)) + 1
-        by_key[activity_key] = activity_count
-    else:
-        by_key[activity_key] = activity_count
-    total += 1
-    buffs["activity_fatigue_total"] = total
-    db.update_user(user["discord_id"], wolf_id=user["id"], herb_buffs=buffs_json(buffs))
-    return activity_count, total
 
 
 def apply_activity_fatigue(

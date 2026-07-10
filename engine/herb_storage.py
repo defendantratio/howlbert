@@ -13,13 +13,6 @@ from engine.herb_buffs import herb_storage_multiplier
 from herbs import herb_inventory_key
 
 
-def effective_storage_limits(user, day: int) -> tuple[int, int, int]:
-    """Return (fresh_days, prepared_days, dried_days) after storage buff multiplier."""
-    mult = herb_storage_multiplier(user, day)
-    fresh = max(1, int(HERB_FRESH_DRY_DAYS * mult))
-    prepared = max(1, int(HERB_PREPARED_STORAGE_DAYS * mult))
-    dried = max(1, int(HERB_DRIED_STORAGE_DAYS * mult))
-    return fresh, prepared, dried
 
 
 def grant_fresh_herb(
@@ -65,33 +58,10 @@ def parse_herb_stack_id(raw: str | None) -> int | None:
     return int(text)
 
 
-def inventory_herb_count(user) -> int:
-    return sum(
-        int(row["quantity"])
-        for row in db.get_inventory_for_wolf(user["id"])
-        if row["key"].startswith("herb_") or row["key"] == "stick"
-    )
 
 
-def list_inventory_herb_summary(discord_id: int) -> str:
-    rows = [
-        row
-        for row in db.get_inventory(discord_id)
-        if row["key"].startswith("herb_") or row["key"] == "stick"
-    ]
-    if not rows:
-        return "no herbs in `/bones action:inventory`; gather with `/field action:forage` or `action:verge`."
-    lines = []
-    for row in rows:
-        lines.append(f"`{row['key']}` **{row['name']}** ×**{row['quantity']}**")
-    return "\n".join(lines)
 
 
-def herb_inventory_footer() -> str:
-    return (
-        "/herbs action:prepare · action:dryall · `/bones action:sell item:herb_arnica` · "
-        "/medic action:treat herb:herb_arnica"
-    )
 
 
 def has_yarrow(user) -> bool:

@@ -83,8 +83,6 @@ SOLO_LARGE_PREY_ENCOUNTER_PCT = 40
 
 # World / rollover; one rollover = one in-game day
 SEASONS = ("spring", "summer", "autumn", "winter")
-SEASON_LENGTH_DAYS = 6
-TIMES_OF_DAY = ("dawn", "day", "dusk", "night")
 
 # Wolf age (in-world moons; one rollover = one sunrise)
 PUP_MAX_MOONS = 6           # under 6 moons = pup life stage
@@ -255,7 +253,6 @@ REINCARNATION_MOOD = 50
 # from a long rest (manual `/vitals action:rest` or automatic sunrise sleep).
 ENERGY_MIN = 0
 ENERGY_MAX = 100
-ENERGY_DEFAULT = 100
 ENERGY_SUNRISE_REGEN = 25
 ENERGY_LONG_REST_GAIN = 35
 ENERGY_SHORT_REST_GAIN = 15
@@ -347,7 +344,6 @@ LONER_WINTER_HUNGER_EXTRA = 4        # extra hunger lost each winter sunrise
 LONER_WINTER_EXHAUSTION_CHANCE = 0.25  # chance of +1 exhaustion each winter sunrise
 # #4 Slower healing: no denmates, no healer.
 LONER_BLEED_WORSEN_CHANCE = 0.30     # chance an untreated bleed ticks an extra hp
-LONER_INFECTION_WORSEN_CHANCE = 0.25  # chance an infection save is taken at disadvantage
 # #5 Roaming: a disperser ranges across biomes.
 LONER_ROAM_BONUS_PCT = 25            # +% explore payout (they cover more ground)
 # #1 Personal cache: solo food store that rots slower than the open hoard.
@@ -405,8 +401,6 @@ WILD_ENCOUNTER_COOLDOWN_MINUTES = 90
 SIGN_FREEZE_AMBUSH_WINDOW_MINUTES = 20
 SIGN_FREEZE_AMBUSH_MULTIPLIER = 0.4
 HUNTER_HUNTS_PER_SUNRISE = 10
-# Repeated field work: 2nd+ same activity tires wolves; untrained skills tire faster.
-ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD = 4
 
 # Auto-dormant: wolves inactive this many days are treated as "away" and skip
 # vitals decay, needs-collapse, and exhaustion death on rollover. Set to 1 so a
@@ -1241,7 +1235,6 @@ HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha":
 GRIM_PLOT_OMEN_CHANCE = 0.20
 GRIM_PLOT_OMEN_STANDING = 2
 # scout survey standing bonus (while plot active) — Stonepiercer, Raven, Ebb, Yarrow, Mossheart
-STONEPIERCER_PLOT_SURVEY_STANDING = 1
 PLOT_SURVEY_STANDING = 1
 # thistlehide/mistmoor plot foragers scavenge mult
 FORAGER_PLOT_SCAVENGE_MULT = 1.10

@@ -24,17 +24,8 @@ DISEASE_DOSE_HERBS: dict[str, tuple[str, str, int, str]] = {
     "dried_skullcap": ("delirium", "wandering", 2, "cumulative"),
 }
 
-# Backward compat alias
-COUGH_DOSE_HERBS: dict[str, tuple[str, int, str]] = {
-    k: (stage, doses, window)
-    for k, (disease, stage, doses, window) in DISEASE_DOSE_HERBS.items()
-    if disease == "cough"
-}
-
 # Symptom suppression only; never hard-clear cough stages via /treat
 COUGH_SUPPRESSION_HERBS = frozenset({"wild_cherry_bark", "labrador_tea", "thyme"})
-
-POISON_MISUSE_HERBS = frozenset({"bloodroot", "oleander", "water_hemlock"})
 
 
 def get_buffs(user) -> dict:
@@ -190,7 +181,7 @@ def tick_buffs_for_rollover(user, new_day: int) -> dict:
         if buffs.get(key) and int(buffs[key]) < new_day:
             buffs.pop(key, None)
     # Clear one-shot injury buffs at sunrise
-    for key in ("injury_heal_halved", "bone_heal_days_reduced", "broom_splint"):
+    for key in ("injury_heal_halved", "bone_heal_days_reduced", "broom_splint", "disease_grace"):
         buffs.pop(key, None)
     fields["herb_buffs"] = buffs_json(buffs)
     fields.update(tick_disease_save_days(user, new_day))
@@ -207,6 +198,17 @@ def bone_heal_days_reduction(user) -> int:
     return int(get_buffs(user).get("bone_heal_days_reduced") or 0)
 
 
+def grant_disease_grace(user) -> dict:
+    """a wolf just cleared of illness gets a brief grace window before a new
+    one can take hold; lasts until the next sunrise so a body that just
+    fought something off isn't instantly vulnerable again the same day."""
+    return merge_buff_fields(user, disease_grace=1)
+
+
+def disease_grace_active(user) -> bool:
+    return bool(get_buffs(user).get("disease_grace"))
+
+
 def infection_ward_active(user, day: int) -> bool:
     until = get_buffs(user).get("infection_ward_until_day")
     return bool(until and int(until) >= day)
@@ -221,19 +223,6 @@ def frostbite_dex_penalty(user, day: int) -> int:
 
 def grant_frostbite(user, *, day: int, duration: int = 7) -> dict:
     return merge_buff_fields(user, frostbite_until_day=day + duration)
-
-
-def clear_frostbite(user) -> dict:
-    buffs = get_buffs(user)
-    if "frostbite_until_day" not in buffs:
-        return {}
-    buffs.pop("frostbite_until_day", None)
-    return {"herb_buffs": buffs_json(buffs)}
-
-
-def grant_flea_ward(user, *, day: int, duration: int = 3) -> dict:
-    """insect-repellent oils (mugwort, garlic mustard, knotgrass)."""
-    return merge_buff_fields(user, flea_ward_until_day=day + duration)
 
 
 def flea_ward_active(user, day: int) -> bool:

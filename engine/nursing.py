@@ -105,11 +105,6 @@ def _pup_hunger_bonus_fields(pup, hunger_gain: int, *, day_number: int | None = 
     return fields
 
 
-def apply_honey_to_pup(pup, *, day_number: int | None = None) -> dict:
-    """feed one pup honey: hunger restore and starvation exhaustion relief."""
-    return _pup_hunger_bonus_fields(
-        pup, HONEY_PUP_HUNGER_BONUS, day_number=day_number
-    )
 
 
 def _feed_pups_with_gains(

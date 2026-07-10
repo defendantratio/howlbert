@@ -134,10 +134,6 @@ def medic_rounds_scan_hoarders(pack_id: int) -> tuple[list[dict], list[str]]:
     return caught, suspicious
 
 
-def medic_rounds_catch_hoarders(pack_id: int) -> list[dict]:
-    """backward-compatible wrapper returning only caught wolves."""
-    caught, _ = medic_rounds_scan_hoarders(pack_id)
-    return caught
 
 
 def try_catch_restricted_hoarder(
@@ -192,19 +188,6 @@ def on_restricted_herb_treat(healer, herb_key: str) -> str:
     return format_standing_penalty(kick, RESTRICTED_HERB_MISUSE_STANDING)
 
 
-def herbbag_hoard_warning(user) -> str:
-    """footer note when a non-medic's bag still holds restricted herbs."""
-    if not user or is_full_medic(user):
-        return ""
-    held = restricted_held_by_user(user)
-    if not held:
-        return ""
-    names = format_herb_names(held)
-    return (
-        f"\n\n⚠ **restricted in inventory:** {names}.\n"
-        f"{RESTRICTED_HERB_HOARD_WARN}\n"
-        "_use `/herbs action:turnin` before a patrol catches the scent._"
-    )
 
 
 def try_catch_hoarder_on_sniff(user) -> str | None:

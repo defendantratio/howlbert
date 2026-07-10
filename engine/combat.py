@@ -117,17 +117,6 @@ def roll_initiative(user) -> tuple[int, int, int]:
     return die, mod, die + mod
 
 
-def npc_combat_stats(*, dex: int = 12, strength: int = 14) -> dict:
-    """generic fallback stat block when no bestiary template is set."""
-    return {
-        "attr_str": strength,
-        "attr_dex": dex,
-        "attr_con": 10,
-        "attr_int": 10,
-        "attr_cha": 10,
-        "attr_wis": 10,
-        "skill_proficiencies": "[]",
-    }
 
 
 def _attack_roll_modifiers(attacker, attack_type, attacker_f, defender_f):

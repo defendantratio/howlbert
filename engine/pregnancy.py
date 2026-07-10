@@ -44,20 +44,3 @@ def pregnancy_hunt_multiplier(user, day: int) -> tuple[float, str]:
     return 0.90, "early pregnancy; the extra weight is already felt (**−10%**)."
 
 
-def pregnancy_activity_block(user, action: str, day: int) -> str | None:
-    """Block strenuous work for pregnant females in the final third of gestation."""
-    if action not in STRENUOUS_ACTIONS:
-        return None
-    sex = user["birth_sex"] if user and "birth_sex" in user.keys() else None
-    if sex != "female":
-        return None
-    if not in_late_pregnancy(user, day):
-        return None
-    elapsed = pregnancy_elapsed(user, day)
-    remaining = max(0, GESTATION_DAYS - elapsed)
-    name = user["wolf_name"] if user and "wolf_name" in user.keys() else "She"
-    return (
-        f"**{name}** is in late pregnancy (**{remaining}** sunrise(s) until birth). "
-        "rest in the den; strenuous work risks the litter. "
-        "Use `/pupcare action:pregnancy` to check gestation."
-    )

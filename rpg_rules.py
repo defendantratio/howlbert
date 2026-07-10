@@ -140,7 +140,6 @@ SKILLS = {
     "medicine": (("attr_wis",), "Medicine"),
 }
 
-PROFICIENCY_BONUS = 2  # legacy; no longer applied on rolls
 MAX_SKILL_RANK = 3  # max earned trait bonus per skill from XP / quests
 SKILL_RANK_BONUS = 1  # legacy alias
 XP_PER_SKILL_RANK = 5  # cost for +1 earned trait bonus
