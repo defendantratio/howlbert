@@ -36,8 +36,9 @@ def pregnancy_hunt_multiplier(user, day: int) -> tuple[float, str]:
     if elapsed <= 0:
         return 1.0, ""
     if elapsed >= GESTATION_DAYS - LATE_PREGNANCY_SUNRISES:
-        # final third already fully blocked by pregnancy_activity_block
-        return 1.0, ""
+        # final third no longer blocked; heavy with pup the hunt barely works,
+        # and pushing it risks the litter (see engine.strenuous_strain).
+        return 0.65, "late pregnancy; heavy with pup, the hunt barely works (**−35%**) and risks the litter."
     if elapsed >= GESTATION_DAYS // 2:
         return 0.80, "mid-to-late pregnancy; carrying a litter slows the hunt (**−20%**)."
     return 0.90, "early pregnancy; the extra weight is already felt (**−10%**)."

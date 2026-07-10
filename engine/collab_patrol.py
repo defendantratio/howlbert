@@ -642,10 +642,17 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
         total = max(0, int(total * (100 + bonus_pct) / 100))
 
     db.add_war_score(war["id"], patrol["pack_id"], total)
+    from engine.strenuous_strain import apply_strenuous_strain
+
+    strain_lines: list[str] = []
     for user in users:
         db.update_user(user["discord_id"], wolf_id=user["id"], last_patrol_day=day)
         db.increment_quest_progress(user["discord_id"], "patrol", guild_id=patrol["guild_id"])
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
+        # a war patrol is strenuous; pushing a hurt/pregnant body has a price.
+        _strain = apply_strenuous_strain(user, day, "patrol")
+        if _strain:
+            strain_lines.append(f"**{user['wolf_name']}**: {_strain}")
 
     db.adjust_pack_unity(patrol["pack_id"], 1)
     war = db.get_active_war_for_pack(patrol["guild_id"], patrol["pack_id"])
@@ -660,6 +667,7 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
         + "\n".join(lines)
         + f"\n\n**+{total} war points** to the score (+{bonus_pct}% pack bonus)"
         + (f"\n{war_line}" if war_line else "")
+        + ("\n\n" + "\n".join(strain_lines) if strain_lines else "")
     )
     db.set_collab_patrol_status(patrol_id, "done", result_text=result_text)
     return build_collab_patrol_embed(patrol_id), None

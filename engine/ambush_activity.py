@@ -140,16 +140,10 @@ def finalize_ambush_activity(encounter_id: int, *, won: bool | None = None) -> N
 
 
 def _ambush_fatigue_note(user, activity: str, day: int) -> str | None:
-    from engine.activity_exhaustion import apply_activity_fatigue
+    from engine.strenuous_strain import apply_strenuous_strain
 
-    if activity == "hunt":
-        from engine.role_privileges import hunts_used_today
-
-        return apply_activity_fatigue(
-            user, "hunt", "hunting", day, activity_count=hunts_used_today(user, day)
-        )
-    if activity == "explore":
-        return apply_activity_fatigue(user, "explore", "survival", day)
+    if activity in ("hunt", "explore"):
+        return apply_strenuous_strain(user, day, activity)
     return None
 
 

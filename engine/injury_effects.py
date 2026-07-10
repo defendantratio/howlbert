@@ -43,15 +43,15 @@ def bone_rest_activity_block(user, *, day: int | None = None) -> str | None:
     if not rest_until or day is None:
         if rest_until and day is None:
             return (
-                "**splint confinement**: bone rest after surgery. "
-                "no hunt, patrol, or ranging until the medic clears you."
+                "**mending bone**: bone rest after surgery. you can still range out, "
+                "but strenuous work risks re-breaking the set bone."
             )
         return None
     if rest_until > day:
         left = rest_until - day
         return (
-            f"**splint confinement**: **{left}** sunrise(s) of bone rest. "
-            "den activities only; `/medic action:swim` may ease recovery."
+            f"**mending bone**: **{left}** sunrise(s) of bone rest. you can still range out, "
+            "but strenuous work risks re-breaking it; `/medic action:swim` may ease recovery."
         )
     return None
 
