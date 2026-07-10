@@ -195,21 +195,45 @@ def withdraw_herb_from_store(
     qty = int(stack["quantity"])
     if qty <= 0:
         return False, "that store entry is empty."
-    item_key = herb_inventory_key(stack["herb_key"])
-    item = db.get_item_by_key(item_key)
-    if not item:
-        return False, "unknown herb item."
-    db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
-    if qty <= 1:
-        db.remove_pack_herb_stack(store_id)
-    else:
-        db.update_pack_herb_stack(store_id, quantity=qty - 1)
+    form = stack["form"] if "form" in stack.keys() else "dried"
     meta = HERBS.get(stack["herb_key"], {})
     name = meta.get("name", stack["herb_key"])
     from engine.restricted_herbs import on_restricted_herb_acquired
 
+    if form == "dried":
+        # dried is the plain inventory item itself; nothing to preserve.
+        item_key = herb_inventory_key(stack["herb_key"])
+        item = db.get_item_by_key(item_key)
+        if not item:
+            return False, "unknown herb item."
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
+        dest_note = "moved to `/bones action:inventory`"
+    else:
+        # any other prep (tea, poultice, ointment, ...) has no item of its
+        # own; withdrawing to a plain inventory item would silently discard
+        # the preparation (see /medic action:treat's required_method check,
+        # which only recognizes the form via a herb_stacks/pack_herb_stacks
+        # row, not the inventory item). Keep the form by moving it into the
+        # wolf's personal forage bag instead.
+        db.add_herb_stack(
+            user["id"],
+            stack["herb_key"],
+            guild_id=guild_id,
+            acquired_day=day,
+            form=form,
+            potency=int(stack["potency"]) if "potency" in stack.keys() else 100,
+        )
+        from engine.herb_properties import form_label
+
+        dest_note = f"kept prepared as **{form_label(form)}** in your forage bag"
+
+    if qty <= 1:
+        db.remove_pack_herb_stack(store_id)
+    else:
+        db.update_pack_herb_stack(store_id, quantity=qty - 1)
+
     hoard_note = on_restricted_herb_acquired(user, stack["herb_key"])
-    msg = f"**{name}** moved to `/bones action:inventory`."
+    msg = f"**{name}** {dest_note}."
     if hoard_note:
         msg = f"{msg}\n\n{hoard_note}"
     return True, msg
