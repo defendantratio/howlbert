@@ -81,9 +81,11 @@ def _pack_display(affiliation: str) -> str:
         return f'**{LONER_LABEL}**; {LONER_DESCRIPTION}'
     if affiliation == ROGUE_KEY:
         return f'**{ROGUE_LABEL}**; {ROGUE_DESCRIPTION}'
-    if affiliation in GREAT_PACKS:
-        info = GREAT_PACKS[affiliation]
-        return f"**{info['name']}** ({info['terrain']})"
+    from engine.factions import resolve_faction
+    info = resolve_faction(affiliation)
+    if info:
+        terrain = info.get('terrain')
+        return f"**{info['name']}** ({terrain})" if terrain else f"**{info['name']}** (founded pack)"
     return 'Unknown'
 
 class Profile(commands.Cog):
@@ -317,6 +319,33 @@ class Profile(commands.Cog):
             embed.add_field(name='Motto', value=f"_{faction['motto']}_", inline=False)
         if current not in UNAFFILIATED_KEYS and pack not in UNAFFILIATED_KEYS:
             embed.set_footer(text=f'paid {format_bones(SETFACTION_CHANGE_COST)} to change great packs.')
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='foundpack', description='two bonded lone wolves raise a den of their own (each pays bones; founder becomes alpha).')
+    @app_commands.describe(name='the name of your new pack', partner='the bonded loner founding it with you')
+    async def foundpack(self, interaction: discord.Interaction, name: str, partner: discord.User):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        partner_user = db.get_user(partner.id)
+        if not partner_user:
+            await interaction.response.send_message(embed=howlbert_embed('No Partner Wolf', f'**{partner.display_name}** has no active wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.found_pack import found_pack
+        new_id, err = found_pack(user, partner_user, name)
+        if err:
+            await interaction.response.send_message(embed=howlbert_embed('Cannot Found a Pack', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from config import NEW_PACK_FOUND_COST
+        embed = howlbert_embed(
+            'A New Pack Rises',
+            f"**{user['wolf_name']}** and **{partner_user['wolf_name']}** end their wandering and raise **{name.strip()}**. "
+            f"**{user['wolf_name']}** leads as **alpha**.\n\neach paid **{NEW_PACK_FOUND_COST}** bones. you share a den now: "
+            "`/pack treasury`, `/pack stash`, collab hunts, and `/packlife`. pups born to you join the pack.",
+            color=SUCCESS_COLOR,
+        )
+        embed.set_footer(text='the loner life is behind you; hold your unity and grow your numbers.')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='rename', description="change your wolf's name.")
@@ -613,12 +642,21 @@ class Profile(commands.Cog):
         from engine.role_features import is_full_medic
         if cond_text != 'Healthy: no active conditions.' or (is_full_medic(user) and day is not None):
             embed.add_field(name='Conditions', value=cond_text, inline=False)
-        if affiliation in GREAT_PACKS:
-            embed.add_field(name='Pack Trait', value=GREAT_PACKS[affiliation]['pack_trait'], inline=False)
+        from engine.factions import resolve_faction as _resolve_faction
+        _faction_info = _resolve_faction(affiliation)
+        if _faction_info:
+            embed.add_field(name='Pack Trait', value=_faction_info['pack_trait'], inline=False)
         # standing is a pack-reputation stat; loners and rogues have no pack, so hide it.
         if affiliation not in UNAFFILIATED_KEYS:
             standing = int(user['standing'])
             embed.add_field(name='Standing', value=f'**{standing}**\n{standing_effect_text(standing)}', inline=False)
+        else:
+            from engine.role_features import is_rogue_wolf
+            if is_rogue_wolf(user):
+                from engine.rogue_notoriety import notoriety_note
+                _noto = notoriety_note(user)
+                if _noto:
+                    embed.add_field(name='Notoriety', value=_noto, inline=False)
         oath_breaks = db.oathbreaker_count(user)
         if oath_breaks:
             embed.add_field(

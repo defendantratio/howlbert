@@ -1,6 +1,7 @@
 """Maw faith / belief; chosen at registration, shown on profile."""
 
 from __future__ import annotations
+from engine.factions import is_faction
 
 MAW_BELIEF_OPTIONS: tuple[tuple[str, str], ...] = (
     ("Orthodox", "orthodox"),
@@ -37,7 +38,7 @@ def resolve_register_maw_belief(belief: str | None, *, affiliation: str) -> str 
 
     if affiliation in UNAFFILIATED_KEYS:
         return None
-    if affiliation in GREAT_PACKS:
+    if is_faction(affiliation):
         return "orthodox"
     return None
 

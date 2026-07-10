@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import database as db
 from config import GREAT_PACKS, LONER_KEY, ROGUE_KEY
+from engine.factions import faction_name, is_faction
 
 
 def _pack_label(key: str | None) -> str:
@@ -13,8 +14,8 @@ def _pack_label(key: str | None) -> str:
         return "lone wolf"
     if key == ROGUE_KEY:
         return "rogue"
-    if key in GREAT_PACKS:
-        return GREAT_PACKS[key]["name"]
+    if is_faction(key):
+        return faction_name(key)
     return key.replace("_", " ").title()
 
 

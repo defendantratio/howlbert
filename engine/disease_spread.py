@@ -61,13 +61,16 @@ def apply_disease_spread_on_rollover(
         if is_respiratory and season == "winter":
             rate = min(1.0, rate * 1.3)
 
+        import database as _db
+
         packmates = conn.execute(
-            """
+            f"""
             SELECT * FROM users
             WHERE pack_id = ? AND id != ?
               AND (disease IS NULL OR disease = '')
               AND condition NOT IN ('dead', 'dying')
               AND (quarantined IS NULL OR quarantined = 0)
+              AND {_db.active_wolf_where(day)}
             """,
             (carrier["pack_id"], carrier["id"]),
         ).fetchall()

@@ -169,8 +169,18 @@ def _grant_loot(
 
     if loot_key == "bones":
         amount = random.randint(3, 12)
+        # roaming: a disperser with no fixed territory covers far more ground.
+        roam = ""
+        _u = db.get_user(discord_id)
+        from engine.role_features import is_unaffiliated_wolf
+
+        if _u and is_unaffiliated_wolf(_u):
+            from config import LONER_ROAM_BONUS_PCT
+
+            amount += max(1, int(amount * LONER_ROAM_BONUS_PCT // 100))
+            roam = " · roaming edge"
         db.add_bones(discord_id, amount, wolf_id=wolf_id)
-        return f"+{amount} 🦴 bones"
+        return f"+{amount} 🦴 bones{roam}"
     if loot_key == "herb":
         from herbs import HERBS
 

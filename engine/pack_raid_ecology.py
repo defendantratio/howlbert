@@ -202,8 +202,10 @@ def try_raid_accuse(
             "only **alpha** or **beta (advisor)** can accuse a rival den.",
             color=ERROR_COLOR,
         )
-    if target_pack_key not in GREAT_PACKS:
-        return howlbert_embed("unknown pack", "pick a great pack key.", color=ERROR_COLOR)
+    from engine.factions import faction_name, founded_pack_id, is_faction, is_founded_key
+
+    if not is_faction(target_pack_key):
+        return howlbert_embed("unknown pack", "pick a great pack or a founded pack.", color=ERROR_COLOR)
 
     guild_id = interaction.guild.id
     alert = db.get_active_raid_alert_for_victim(guild_id, pack["id"], day)
@@ -213,7 +215,7 @@ def try_raid_accuse(
             "no treasury theft to investigate.",
             color=ERROR_COLOR,
         )
-    accused = db.get_pack_by_key(target_pack_key)
+    accused = db.get_pack(founded_pack_id(target_pack_key)) if is_founded_key(target_pack_key) else db.get_pack_by_key(target_pack_key)
     if not accused:
         return howlbert_embed("pack not found", "that den isn't registered here.", color=ERROR_COLOR)
 
@@ -225,7 +227,7 @@ def try_raid_accuse(
 
     suspect_id = int(alert["suspect_pack_id"])
     victim_name = pack["name"]
-    accused_name = GREAT_PACKS[target_pack_key]["name"]
+    accused_name = faction_name(target_pack_key)
     lines: list[str] = [f"**{victim_name}** names **{accused_name}** for the treasury raid."]
 
     if int(accused["id"]) == suspect_id:

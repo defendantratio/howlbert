@@ -342,6 +342,57 @@ class Pack(commands.Cog):
         embed = howlbert_embed('Pardoned', f"**{target['wolf_name']}** may walk back into **{pack['name']}** with `/setfaction` whenever they choose.", color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name='packinvite', description='invite a lone wolf to join your founded pack (founded-pack alpha only).')
+    @app_commands.describe(wolf='the lone wolf to invite', wolf_name="specific wolf from that player's roster")
+    @app_commands.autocomplete(wolf_name=_wolf_name_autocomplete)
+    async def pack_invite(self, interaction: discord.Interaction, wolf: discord.Member, wolf_name: str | None = None):
+        user, pack = await self._require_pack_member(interaction)
+        if not user:
+            return
+        if not _is_alpha(user, pack, discord_admin=is_howlbert_admin(interaction)):
+            await interaction.response.send_message(embed=howlbert_embed('Alpha Only', 'Your active wolf must be the **Alpha** of this pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.factions import is_founded_key
+        if not is_founded_key(user['great_pack'] if 'great_pack' in user.keys() else None):
+            await interaction.response.send_message(embed=howlbert_embed('Not a Founded Pack', 'only **founded packs** recruit by invite; the four great packs are joined with `/setfaction`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        target = db.find_user_wolf(wolf.id, wolf_name) if wolf_name else db.get_user(wolf.id)
+        if not target:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', f'{wolf.display_name} is not on Howlbert.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if int(target['id']) == int(user['id']):
+            await interaction.response.send_message(embed=howlbert_embed('That is You', 'you already lead this pack.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.role_features import is_unaffiliated_wolf
+        if not is_unaffiliated_wolf(target):
+            await interaction.response.send_message(embed=howlbert_embed('Already in a Pack', f"**{target['wolf_name']}** already belongs to a pack; only lone wolves and rogues can be recruited.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        db.set_pending_pack_invite(target['id'], pack['id'])
+        embed = howlbert_embed('Invited', f"**{target['wolf_name']}** is invited into **{pack['name']}**. they accept with **`/packjoin`** (with that wolf active).", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='packjoin', description='accept a pending invite into a founded pack.')
+    async def pack_join(self, interaction: discord.Interaction):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        pend = int(user['pending_pack_invite'] if 'pending_pack_invite' in user.keys() else 0)
+        if not pend:
+            await interaction.response.send_message(embed=howlbert_embed('No Invite', 'no pending pack invite for this wolf. a founded-pack alpha must `/pack invite` you first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        pack = db.get_pack(pend)
+        if not pack:
+            db.set_pending_pack_invite(user['id'], 0)
+            await interaction.response.send_message(embed=howlbert_embed('Gone', 'that pack no longer exists; the invite is void.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        err = db.join_founded_pack(interaction.user.id, pend)
+        if err:
+            await interaction.response.send_message(embed=howlbert_embed('Cannot Join', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        embed = howlbert_embed('A New Denmate', f"**{user['wolf_name']}** joins **{pack['name']}**; the loner life is behind you. share the den with `/pack treasury`, `/pack stash`, and collab hunts.", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed)
+
     @pack.command(name='upgrade', description='spend treasury to improve the den; blunts bad-weather hunt penalties (alpha only).')
     async def pack_upgrade(self, interaction: discord.Interaction):
         from config import DEN_UPGRADE_MAX_LEVEL, DEN_UPGRADE_WEATHER_MITIGATION_PCT

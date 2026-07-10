@@ -53,6 +53,23 @@ def is_rogue_wolf(user) -> bool:
     return has_any_role(user, "rogue") or gp == ROGUE_KEY
 
 
+def has_pack(user) -> bool:
+    """True if the wolf belongs to a great pack (has a den)."""
+    if not user:
+        return False
+    return bool(user["pack_id"] if "pack_id" in user.keys() else None)
+
+
+def is_unaffiliated_wolf(user) -> bool:
+    """No great pack: a loner or a rogue."""
+    return bool(user) and not has_pack(user)
+
+
+def is_loner_wolf(user) -> bool:
+    """A lone wolf; unaffiliated but not a hostile rogue."""
+    return is_unaffiliated_wolf(user) and not is_rogue_wolf(user)
+
+
 def is_full_medic(user) -> bool:
     return has_any_role(user, "medic")
 
@@ -99,6 +116,13 @@ def role_check_adjustments(
 
     if has_any_role(user, DROWN_SICK_ROLE) and skill_key in ("hunting", "intimidation"):
         disadvantage = True
+
+    # a feared rogue (high notoriety) intimidates from a position of dread.
+    if skill_key == "intimidation" and is_rogue_wolf(user):
+        from engine.rogue_notoriety import has_fear_reputation
+
+        if has_fear_reputation(user):
+            advantage = True
 
     return mod, advantage, disadvantage
 

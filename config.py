@@ -336,6 +336,39 @@ ROLLOVER_SCAVENGE_THIRST = 6
 # sniff/dex bonuses so individual traits can still compensate somewhat.
 LONER_HUNT_PENALTY_PCT = 20  # % reduction on hunt yield when no pack_id
 
+# --- Loner / rogue dispersal life (immersion) ---
+# #2 Scavenger's edge: loners lean on carrion and small prey to offset the
+# large-prey they can't take alone.
+LONER_SCAVENGE_BONUS_PCT = 30   # +% bones on /field scavenge for loners/rogues
+LONER_SMALL_PREY_BONUS_PCT = 25  # +% on small-prey (low) hunt payouts
+LONER_SMALL_PREY_MAX = 14       # a solo hunt at/under this yield counts as small quarry
+# #3 No den warmth: no pack to huddle with.
+LONER_WINTER_HUNGER_EXTRA = 4        # extra hunger lost each winter sunrise
+LONER_WINTER_EXHAUSTION_CHANCE = 0.25  # chance of +1 exhaustion each winter sunrise
+# #4 Slower healing: no denmates, no healer.
+LONER_BLEED_WORSEN_CHANCE = 0.30     # chance an untreated bleed ticks an extra hp
+LONER_INFECTION_WORSEN_CHANCE = 0.25  # chance an infection save is taken at disadvantage
+# #5 Roaming: a disperser ranges across biomes.
+LONER_ROAM_BONUS_PCT = 25            # +% explore payout (they cover more ground)
+# #1 Personal cache: solo food store that rots slower than the open hoard.
+LONER_CACHE_SLOTS = 8                # max buried caches at once
+LONER_CACHE_ROT_MULT = 3            # cached carcasses last ~3x longer
+LONER_CACHE_RAID_CHANCE = 0.12       # chance a cache is pilfered each sunrise
+# #6 Lonely howl: advertise for a mate on the wind.
+LONER_HOWL_MATE_CHANCE = 0.30        # chance the howl draws an unpaired loner lead
+LONER_HOWL_DANGER_CHANCE = 0.20      # chance it draws a resident patrol instead
+# #7 Found a new pack: two bonded loners can raise their own den.
+NEW_PACK_FOUND_COST = 150            # bones each founder pays to establish a den
+# #8 Rogue notoriety: repeat raiders get hunted.
+ROGUE_NOTORIETY_PER_RAID = 1        # notoriety gained per successful raid/crime
+ROGUE_NOTORIETY_MAX = 10
+ROGUE_NOTORIETY_AMBUSH_PER_POINT = 0.03  # +3% patrol-ambush odds per notoriety
+ROGUE_NOTORIETY_FEAR_THRESHOLD = 5  # at/above this, packs fear you (intimidation edge)
+ROGUE_NOTORIETY_DECAY_PER_SUNRISE = 1  # notoriety cools when you lie low
+# #9 Transient wariness: packs patrol against any rogue near their range, even
+# before notoriety builds. Flat bump to field-ambush odds on top of notoriety.
+ROGUE_WARINESS_AMBUSH_FLAT = 4  # +4 percentage points of ambush chance for rogues
+
 # Pups in winter gain exhaustion from cold exposure each sunrise even when fed.
 PUP_WINTER_COLD_EXHAUSTION_CHANCE = 0.15  # 15% per sunrise in winter
 
