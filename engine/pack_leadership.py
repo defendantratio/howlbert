@@ -2,6 +2,7 @@
 
 from config import GREAT_PACKS
 from engine.apprentice_roles import matches_parent_role
+from engine.factions import is_faction
 
 PACK_OFFICER_ROLES = frozenset({"alpha", "advisor"})
 BETA_ROLE = "advisor"  # Beta wolves use the Advisor role
@@ -23,7 +24,7 @@ def _pack_key(pack) -> str | None:
 
 def is_great_pack_row(pack) -> bool:
     key = _pack_key(pack)
-    return bool(key and key in GREAT_PACKS)
+    return bool(key) and is_faction(key)
 
 
 def is_pack_alpha(user, pack) -> bool:

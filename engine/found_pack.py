@@ -1,8 +1,10 @@
 """Two bonded lone wolves raise a den of their own; the end of the dispersal arc.
 
 A founded den is a real pack row (shared pack_id: treasury, stash, collab hunts,
-alpha) but keeps the founders' unaffiliated faction identity, so it does not
-collide with the four canonical great-pack factions. The founder becomes alpha.
+alpha) AND a true faction: both founders take the faction key ``founded_<id>``
+(see engine.factions), so the pack shows its own name, trait, standing, and
+relations everywhere a great pack would, without colliding with the four
+canonical great packs. The founder becomes alpha.
 """
 
 from __future__ import annotations
@@ -43,12 +45,20 @@ def found_pack(founder, partner, name: str) -> tuple[int | None, str | None]:
         return None, f"founding a den costs **{NEW_PACK_FOUND_COST}** bones from **each** founder."
 
     new_pack_id = db.create_pack(name, founder["id"])
+    from engine.factions import founded_key_for
+
+    fkey = founded_key_for(new_pack_id)
     with db.get_db() as conn:
+        # founded pack is a real faction: both founders carry its faction key
+        # (founded_<id>) as their great_pack, plus the shared pack_id (den).
         conn.execute(
-            "UPDATE users SET pack_id = ?, wolf_role = 'alpha' WHERE id = ?",
-            (new_pack_id, founder["id"]),
+            "UPDATE users SET pack_id = ?, great_pack = ?, wolf_role = 'alpha' WHERE id = ?",
+            (new_pack_id, fkey, founder["id"]),
         )
-        conn.execute("UPDATE users SET pack_id = ? WHERE id = ?", (new_pack_id, partner["id"]))
+        conn.execute(
+            "UPDATE users SET pack_id = ?, great_pack = ? WHERE id = ?",
+            (new_pack_id, fkey, partner["id"]),
+        )
         conn.execute("UPDATE packs SET pack_unity = 50 WHERE id = ?", (new_pack_id,))
     db.deduct_bones(founder["discord_id"], NEW_PACK_FOUND_COST)
     db.deduct_bones(partner["discord_id"], NEW_PACK_FOUND_COST)

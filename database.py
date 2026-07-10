@@ -4984,6 +4984,10 @@ def get_user_affiliation(user) -> str:
         return ROGUE_KEY
     if gp and gp in GREAT_PACKS:
         return gp
+    from engine.factions import is_founded_key
+
+    if is_founded_key(gp):
+        return gp
     return LONER_KEY
 
 

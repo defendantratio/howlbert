@@ -9,6 +9,7 @@ import discord
 import database as db
 from config import GREAT_PACKS
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed
+from engine.factions import faction_name, is_faction
 
 MARK_REFRESH_FLAVORS = (
     "you drag your scent along the border post; the den's claim reads loud and fresh.",
@@ -138,7 +139,7 @@ def mark_territory(
         return howlbert_embed("pack not found", "that great pack isn't in this den.", color=ERROR_COLOR)
 
     pack_key = pack["key"] if "key" in pack.keys() and pack["key"] else user["great_pack"]
-    if not pack_key or pack_key not in GREAT_PACKS:
+    if not pack_key or not is_faction(pack_key):
         return howlbert_embed(
             "not a great pack",
             "only the four great packs mark shared borders.",
@@ -206,5 +207,5 @@ def mark_territory(
         f"**{terr['name']}** (`{terr['key']}`)\n{body}{relation_note}",
         color=SUCCESS_COLOR if not relation_note else ERROR_COLOR,
     )
-    embed.set_footer(text=f"{GREAT_PACKS[pack_key]['name']} scent · sunrise {day}")
+    embed.set_footer(text=f"{faction_name(pack_key)} scent · sunrise {day}")
     return embed

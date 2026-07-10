@@ -81,9 +81,11 @@ def _pack_display(affiliation: str) -> str:
         return f'**{LONER_LABEL}**; {LONER_DESCRIPTION}'
     if affiliation == ROGUE_KEY:
         return f'**{ROGUE_LABEL}**; {ROGUE_DESCRIPTION}'
-    if affiliation in GREAT_PACKS:
-        info = GREAT_PACKS[affiliation]
-        return f"**{info['name']}** ({info['terrain']})"
+    from engine.factions import resolve_faction
+    info = resolve_faction(affiliation)
+    if info:
+        terrain = info.get('terrain')
+        return f"**{info['name']}** ({terrain})" if terrain else f"**{info['name']}** (founded pack)"
     return 'Unknown'
 
 class Profile(commands.Cog):
@@ -640,8 +642,10 @@ class Profile(commands.Cog):
         from engine.role_features import is_full_medic
         if cond_text != 'Healthy: no active conditions.' or (is_full_medic(user) and day is not None):
             embed.add_field(name='Conditions', value=cond_text, inline=False)
-        if affiliation in GREAT_PACKS:
-            embed.add_field(name='Pack Trait', value=GREAT_PACKS[affiliation]['pack_trait'], inline=False)
+        from engine.factions import resolve_faction as _resolve_faction
+        _faction_info = _resolve_faction(affiliation)
+        if _faction_info:
+            embed.add_field(name='Pack Trait', value=_faction_info['pack_trait'], inline=False)
         # standing is a pack-reputation stat; loners and rogues have no pack, so hide it.
         if affiliation not in UNAFFILIATED_KEYS:
             standing = int(user['standing'])

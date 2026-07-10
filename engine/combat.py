@@ -9,6 +9,7 @@ from engine.combat_guide import COMBAT_MANEUVERS
 from engine.combat_status import attacker_roll_modifiers, maneuver_pin_block, roll_attack_die
 from engine.rolls import roll_d20
 from engine.injury_effects import attack_roll_modifiers, bite_attack_blocked
+from engine.factions import faction_name
 CRIT_HIT_EFFECTS = {
     1: "Bonus damage (+1d4)",
     2: "Knock target prone",
@@ -578,7 +579,7 @@ def finalize_cross_pack_pvp_death(
 
     new_standing = db.adjust_pack_relation(guild_id, k_pack, v_pack, -3)
     victim_den = db.get_pack(v_pack)
-    name = victim_den["name"] if victim_den else GREAT_PACKS[v_gp]["name"]
+    name = victim_den["name"] if victim_den else faction_name(v_gp)
     note = f"pack standing with **{name}** **−3** (now **{new_standing}/10**)."
     note += format_standing_war_flash(guild_id, k_pack, v_pack, new_standing)
     from engine.battle_fatigue import record_pack_combat_day
