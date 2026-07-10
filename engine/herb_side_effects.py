@@ -9,7 +9,8 @@ Archetypes:
  ; toxic_ingest      eating an internal-only-dangerous herb: CON save or hp loss
  ; open_wound_toxic  applying a skin-absorbed toxin (comfrey, arnica) to an open
                       wound: toxins enter the blood, CON save or hp loss
- ; abortifacient     internal use on a pregnant wolf: risk of miscarriage
+ ; abortifacient     internal use on a pregnant wolf: risk of miscarriage (35%)
+ ; mild_abortifacient  as above but a smaller risk (15%): herbs merely "avoid in pregnancy"
  ; sedative_overdose heavy sedatives: chance of grogginess (+1 exhaustion)
  ; allergy           allergenic herbs: chance of a mild reaction (mood/pain)
  ; laxative          strong-laxative herbs: chance to contract diarrhea
@@ -74,6 +75,9 @@ HERB_SIDE_EFFECTS: dict[str, tuple[str, ...]] = {
     "saffron": ("abortifacient",),
     "passionflower": ("abortifacient",),
     "slippery_elm": ("abortifacient",),  # compendium: "whole bark may be abortifacient / cause miscarriage"
+    # smaller risk: compendium only says "avoid in pregnancy" / "safety not established".
+    "cattail": ("mild_abortifacient",),
+    "heather": ("mild_abortifacient",),
 
     # sedative overdose (grogginess)
     "poppy_seeds": ("sedative_overdose",),
@@ -179,9 +183,12 @@ def roll_herb_side_effects(patient, herb_key: str, form: str, *, day: int) -> st
                 db.set_user_conditions(patient["discord_id"], wolf_id=patient["id"], hp=new_hp)
                 notes.append(f"_pressed to broken skin, the toxins seep into the blood; **-{dmg} hp**. use it only on closed injuries._")
 
-    if "abortifacient" in tags and internal:
+    if ("abortifacient" in tags or "mild_abortifacient" in tags) and internal:
         is_preg = int(patient["is_pregnant"]) if "is_pregnant" in patient.keys() else 0
-        if is_preg and random.random() < 0.35 and not _con_save(patient, 14):
+        # a full abortifacient is a real hazard; a mild one (herbs merely "avoid in
+        # pregnancy") is a smaller risk.
+        chance = 0.35 if "abortifacient" in tags else 0.15
+        if is_preg and random.random() < chance and not _con_save(patient, 14):
             db.clear_pregnancy(patient["id"])
             db.adjust_mood(patient["id"], -15)
             notes.append("_the herb brings on cramping; the pregnancy is **lost**. mood plummets._")

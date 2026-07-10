@@ -41,9 +41,11 @@ def apply_battle_fatigue_on_rollover(conn: sqlite3.Connection, day: int) -> list
         if new_strain <= 0:
             continue
         drain = new_strain * WAR_STRAIN_MOOD_DRAIN
+        import database as _db
+
         members = conn.execute(
             "SELECT id, wolf_name, discord_id, mood FROM users "
-            "WHERE pack_id = ? AND condition NOT IN ('dead', 'dying')",
+            f"WHERE pack_id = ? AND condition NOT IN ('dead', 'dying') AND {_db.active_wolf_where(day)}",
             (pack_id,),
         ).fetchall()
         for wolf in members:

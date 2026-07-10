@@ -18,6 +18,7 @@ from config import (
 from engine.cat_pacts import pact_border_chance_multiplier
 from engine.prey_items import SNIFF_FLAVORS
 from utils.embeds import SUCCESS_COLOR, howlbert_embed
+from engine.factions import is_faction
 
 
 SNIFF_ENCOUNTER_PACKMATE = (
@@ -105,7 +106,7 @@ def _encounter_flavor(user, other) -> str:
     if user["pack_id"] and user["pack_id"] == other["pack_id"]:
         return random.choice(SNIFF_ENCOUNTER_PACKMATE).format(name=name)
     gp = other["great_pack"] if "great_pack" in other.keys() and other["great_pack"] else None
-    if gp and gp in GREAT_PACKS:
+    if gp and is_faction(gp):
         pack = GREAT_PACKS[gp]["name"]
         return random.choice(SNIFF_ENCOUNTER_FACTION).format(name=name, pack=pack)
     return random.choice(SNIFF_ENCOUNTER_STRANGER).format(name=name)
@@ -197,7 +198,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
             footer_bits.append("border tension")
 
     gp = user["great_pack"] if "great_pack" in user.keys() and user["great_pack"] else None
-    if gp and gp in GREAT_PACKS:
+    if gp and is_faction(gp):
         from engine.territory_marking import read_marks_for_sniff
 
         marks = read_marks_for_sniff(gp, guild_id=interaction.guild.id, day=day)

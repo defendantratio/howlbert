@@ -212,6 +212,24 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         f"**{wolf_name}** howls alone; no den answers, only wind.\n"
         f"{pick_howl_flavor(echo_count=0)}"
     )
+    # a lone wolf howls to advertise for a mate; the wind can carry it to another
+    # disperser (hope) or to a resident patrol (danger).
+    import random as _rand_howl
+    from config import LONER_HOWL_MATE_CHANCE, LONER_HOWL_DANGER_CHANCE
+
+    _howl_roll = _rand_howl.random()
+    if _howl_roll < LONER_HOWL_MATE_CHANCE:
+        _m = db.adjust_mood(user["id"], 6)
+        body += (
+            "\n\n_far off, a lone howl answers; another wolf walks packless out there. "
+            f"hope stirs (**+6 mood**, now {_m}). find them, court, and bond to raise a den of your own (`/foundpack`)._"
+        )
+    elif _howl_roll < LONER_HOWL_MATE_CHANCE + LONER_HOWL_DANGER_CHANCE:
+        _m = db.adjust_mood(user["id"], -5)
+        body += (
+            "\n\n_your howl carries too far; a resident patrol answers with bared teeth. "
+            f"you slip into the dark, rattled (**−5 mood**, now {_m}). howling near claimed ground is a gamble._"
+        )
     if message:
         body += f"\n\n_{message.strip()}_"
     if howl_penalty:

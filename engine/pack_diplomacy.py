@@ -10,6 +10,7 @@ from engine.character import parse_proficiencies
 from engine.pack_relations import can_aid_rival, can_share_territory
 from engine.dice import format_roll_result, resolve_check
 from engine.skill_runner import run_skill_scenario
+from engine.factions import faction_name
 
 DIPLOMATIC_HOWL_SUCCESS = (
     "your howl carries clear intent; **{pack}** answers with lowered hackles.",
@@ -94,7 +95,7 @@ def diplomatic_howl(
         ok = result["success"]
         body = format_roll_result(result)
 
-    target_name = GREAT_PACKS[target["key"]]["name"] if target["key"] in GREAT_PACKS else target["name"]
+    target_name = faction_name(target["key"], default=target["name"])
     if ok:
         new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], 1)
         flavor = random.choice(DIPLOMATIC_HOWL_SUCCESS).format(pack=target_name)

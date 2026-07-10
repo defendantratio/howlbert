@@ -1570,6 +1570,19 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN dormant INTEGER NOT NULL DEFAULT 0"
         )
+    if "rogue_notoriety" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN rogue_notoriety INTEGER NOT NULL DEFAULT 0"
+        )
+    if "pending_pack_invite" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN pending_pack_invite INTEGER NOT NULL DEFAULT 0"
+        )
+    _prey_cols = {r[1] for r in conn.execute("PRAGMA table_info(prey_stacks)").fetchall()}
+    if "cached" not in _prey_cols:
+        conn.execute("ALTER TABLE prey_stacks ADD COLUMN cached INTEGER NOT NULL DEFAULT 0")
+    if "cache_day" not in _prey_cols:
+        conn.execute("ALTER TABLE prey_stacks ADD COLUMN cache_day INTEGER NOT NULL DEFAULT 0")
     if "last_weep_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_weep_day INTEGER NOT NULL DEFAULT 0"
@@ -4978,6 +4991,10 @@ def get_user_affiliation(user) -> str:
         return ROGUE_KEY
     if gp and gp in GREAT_PACKS:
         return gp
+    from engine.factions import is_founded_key
+
+    if is_founded_key(gp):
+        return gp
     return LONER_KEY
 
 
@@ -4987,6 +5004,35 @@ def count_pack_members(pack_id: int) -> int:
             "SELECT COUNT(*) AS c FROM users WHERE pack_id = ?", (pack_id,)
         ).fetchone()
         return row["c"] if row else 0
+
+
+def set_pending_pack_invite(wolf_id: int, pack_id: int) -> None:
+    update_user_by_id(wolf_id, pending_pack_invite=pack_id)
+
+
+def join_founded_pack(discord_id: int, pack_id: int) -> str | None:
+    """Move a wolf into a founded pack as a member (faction key founded_<id>).
+    Returns an error message or None on success."""
+    user = get_user(discord_id)
+    if not user:
+        return "Not registered."
+    pack = get_pack(pack_id)
+    if not pack:
+        return "That pack no longer exists."
+    from engine.factions import founded_key_for
+
+    fkey = founded_key_for(pack_id)
+    with get_db() as conn:
+        old_pack_id = user["pack_id"]
+        if old_pack_id and int(old_pack_id) != int(pack_id):
+            old_pack = conn.execute("SELECT * FROM packs WHERE id = ?", (old_pack_id,)).fetchone()
+            if old_pack and old_pack["alpha_id"] == discord_id:
+                _promote_pack_alpha(conn, old_pack_id, exclude_id=discord_id)
+        conn.execute(
+            "UPDATE users SET pack_id = ?, great_pack = ?, pending_pack_invite = 0 WHERE id = ?",
+            (pack_id, fkey, user["id"]),
+        )
+    return None
 
 
 def delete_wolf_profile(discord_id: int) -> str:
@@ -5250,6 +5296,12 @@ def get_pack(pack_id: int) -> sqlite3.Row | None:
 def get_pack_by_key(key: str) -> sqlite3.Row | None:
     with get_db() as conn:
         return conn.execute("SELECT * FROM packs WHERE key = ?", (key,)).fetchone()
+
+
+def list_founded_packs() -> list[sqlite3.Row]:
+    """Player-founded packs (rows with no canonical faction key)."""
+    with get_db() as conn:
+        return conn.execute("SELECT * FROM packs WHERE key IS NULL ORDER BY name").fetchall()
 
 
 def get_pack_by_name(name: str) -> sqlite3.Row | None:
@@ -5807,11 +5859,6 @@ def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
         )
 
 
-def _decay_mood_on_rollover() -> None:
-    """Legacy alias; vitals decay includes mood."""
-    _decay_vitals_on_rollover()
-
-
 def _update_mood_streak_on_rollover(day: int) -> None:
     """Increment low_mood_streak for active wolves below the mood threshold; reset otherwise."""
     from config import AUTO_DORMANT_INACTIVE_DAYS, LOW_MOOD_STREAK_THRESHOLD
@@ -6018,9 +6065,19 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         if foster_notes:
             condition_notes.extend(foster_notes)
         with get_db() as conn:
-            from engine.lone_wolf import apply_lone_wolf_loneliness_on_rollover
+            from engine.lone_wolf import (
+                apply_lone_wolf_loneliness_on_rollover,
+                apply_loner_untended_wounds_on_rollover,
+                apply_loner_winter_cold_on_rollover,
+            )
 
             lone_notes = apply_lone_wolf_loneliness_on_rollover(conn, new_day)
+            lone_notes.extend(apply_loner_winter_cold_on_rollover(conn, new_season, new_day))
+            lone_notes.extend(apply_loner_untended_wounds_on_rollover(conn, new_day))
+            from engine.rogue_notoriety import decay_notoriety_on_rollover
+
+            decay_notoriety_on_rollover(conn, new_day)
+        lone_notes.extend(raid_loner_caches_on_rollover(new_day))
         if lone_notes:
             condition_notes.extend(lone_notes)
         with get_db() as conn:
@@ -6040,7 +6097,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         with get_db() as conn:
             from engine.long_term_injuries import apply_winter_cold_injury_on_rollover
 
-            cold_injury_notes = apply_winter_cold_injury_on_rollover(conn, new_season)
+            cold_injury_notes = apply_winter_cold_injury_on_rollover(conn, new_season, new_day)
         if cold_injury_notes:
             needs_crisis["cold_injury"] = cold_injury_notes
         with get_db() as conn:
@@ -6303,7 +6360,8 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
     notes: list[dict] = []
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT * FROM users WHERE disease IS NOT NULL AND disease != ''"
+            f"SELECT * FROM users WHERE disease IS NOT NULL AND disease != '' "
+            f"AND {active_wolf_where(day)}"
         ).fetchall()
         for user in rows:
             outcome = progress_disease(user, day=day)
@@ -6436,11 +6494,12 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                         )
 
         inj_rows = conn.execute(
-            """
+            f"""
             SELECT * FROM users
             WHERE active_injuries IS NOT NULL
               AND active_injuries != ''
               AND active_injuries != '[]'
+              AND {active_wolf_where(day)}
             """
         ).fetchall()
         for user in inj_rows:
@@ -6596,9 +6655,9 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
         from engine.disease_contract import try_contract_disease
 
         meat_rows = conn.execute(
-            """
+            f"""
             SELECT * FROM users
-            WHERE dormant = 0 AND condition NOT IN ('dead', 'dying')
+            WHERE {active_wolf_where(day)} AND condition NOT IN ('dead', 'dying')
               AND (disease IS NULL OR disease = '')
             """
         ).fetchall()
@@ -6622,6 +6681,18 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                             "line": "goes gaunt from a meatless stretch; " + note,
                         }
                     )
+
+        # elders may develop dementia, wasting, or cancer with age (away wolves exempt).
+        from engine.chronic_conditions import apply_elder_chronic_on_rollover
+
+        for _ec in apply_elder_chronic_on_rollover(conn, day):
+            notes.append(
+                {
+                    "wolf_name": _ec["wolf_name"],
+                    "discord_id": _ec["discord_id"],
+                    "line": _ec["message"],
+                }
+            )
 
     from engine.disease_contract import apply_pending_milk_fever_on_rollover
 
@@ -11606,6 +11677,33 @@ def last_active_day(user) -> int:
     return max((int(user[c]) if c in user.keys() and user[c] is not None else 0) for c in _STANDING_ACTIVITY_COLUMNS)
 
 
+def wolf_is_away(user, day: int) -> bool:
+    """A wolf nobody is playing is exempt from *every* negative rollover effect
+    (vitals decay, disease spread/contraction, chronic-illness onset, loneliness,
+    battle fatigue, injury complications, mental illness). True when the wolf is
+    explicitly dormant, or has been idle longer than AUTO_DORMANT_INACTIVE_DAYS.
+    Brand-new worlds (day <= 1) treat everyone as active."""
+    from config import AUTO_DORMANT_INACTIVE_DAYS
+
+    if int(user["dormant"] if "dormant" in user.keys() and user["dormant"] is not None else 0):
+        return True
+    if int(day) <= 1:
+        return False
+    return last_active_day(user) < max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
+
+
+def active_wolf_where(day: int, *, alias: str = "") -> str:
+    """SQL predicate (no leading AND) matching wolves that are NOT away: not
+    dormant and not idle past AUTO_DORMANT_INACTIVE_DAYS. The set-based mirror of
+    wolf_is_away for rollover UPDATE/SELECT statements."""
+    from config import AUTO_DORMANT_INACTIVE_DAYS
+
+    active_since = max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
+    p = (alias + ".") if alias else ""
+    last_seen = "MAX(" + ", ".join(f"COALESCE({p}{c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    return f"{p}dormant = 0 AND ({last_seen} >= {active_since} OR {int(day)} <= 1)"
+
+
 def decay_idle_standing_on_rollover(conn, current_day: int) -> int:
     """
     A wolf who's gone quiet for a long while drifts back toward neutral (0)
@@ -12613,6 +12711,65 @@ def remove_prey_stack(stack_id: int) -> None:
         conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack_id,))
 
 
+# --- Loner personal cache (buried carcasses that keep longer) ---
+def bury_prey_stack_in_cache(stack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE prey_stacks SET cached = 1, cache_day = ? WHERE id = ?", (day, stack_id)
+        )
+
+
+def dig_prey_stack_from_cache(stack_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE prey_stacks SET cached = 0 WHERE id = ?", (stack_id,))
+
+
+def get_cached_prey_stacks(wolf_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM prey_stacks WHERE wolf_id = ? AND cached = 1 ORDER BY cache_day ASC",
+            (wolf_id,),
+        ).fetchall()
+
+
+def count_cached_prey_stacks(wolf_id: int) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM prey_stacks WHERE wolf_id = ? AND cached = 1", (wolf_id,)
+        ).fetchone()
+        return int(row["c"]) if row else 0
+
+
+def raid_loner_caches_on_rollover(day: int) -> list[dict]:
+    """Each sunrise a buried cache may be pilfered by another scavenger. Returns
+    rollover notes for the owners who lost one."""
+    import random as _r
+    from config import LONER_CACHE_RAID_CHANCE
+
+    notes: list[dict] = []
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT ps.id, ps.prey_key, u.wolf_name, u.discord_id
+            FROM prey_stacks ps JOIN users u ON u.id = ps.wolf_id
+            WHERE ps.cached = 1
+            """
+        ).fetchall()
+        from engine.prey_items import prey_meta
+
+        for stack in rows:
+            if _r.random() < LONER_CACHE_RAID_CHANCE:
+                conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack["id"],))
+                notes.append(
+                    {
+                        "wolf_name": stack["wolf_name"],
+                        "discord_id": stack["discord_id"],
+                        "line": f"a scavenger sniffed out your buried **{prey_meta(stack['prey_key'])['name']}**; the cache was robbed.",
+                    }
+                )
+    return notes
+
+
 def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
     """Mark rotting prey, delete spoiled carcasses. Returns rollover notes for owners."""
     from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, is_forage_food, prey_meta, spoilage_terms
@@ -12631,6 +12788,10 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
         for stack in rows:
             age = day - stack["acquired_day"]
             rot_days = prey_meta(stack["prey_key"]).get("rot_days", 5)
+            # a buried personal cache keeps far longer than the open hoard.
+            if "cached" in stack.keys() and stack["cached"]:
+                from config import LONER_CACHE_ROT_MULT
+                rot_days *= LONER_CACHE_ROT_MULT
             meta = prey_meta(stack["prey_key"])
             terms = spoilage_terms(stack["prey_key"])
             forage = is_forage_food(stack["prey_key"])

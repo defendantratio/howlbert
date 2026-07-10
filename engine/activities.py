@@ -337,10 +337,18 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     loner_note = ""
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
     if not pack_id and amount > 0:
-        from config import LONER_HUNT_PENALTY_PCT
-        penalty = max(1, int(amount * LONER_HUNT_PENALTY_PCT // 100))
-        amount = max(0, amount - penalty)
-        loner_note = f"hunting alone: −{LONER_HUNT_PENALTY_PCT}% yield"
+        # a lone wolf takes small quarry (hares, voles) just fine, but loses the
+        # pack coordination that brings down big game. reward the former, penalize
+        # the latter (scavenger's edge / dispersal realism).
+        from config import LONER_HUNT_PENALTY_PCT, LONER_SMALL_PREY_BONUS_PCT, LONER_SMALL_PREY_MAX
+        if amount <= LONER_SMALL_PREY_MAX:
+            bonus = max(1, int(amount * LONER_SMALL_PREY_BONUS_PCT // 100))
+            amount += bonus
+            loner_note = f"lone hunter, small quarry: +{LONER_SMALL_PREY_BONUS_PCT}% yield"
+        else:
+            penalty = max(1, int(amount * LONER_HUNT_PENALTY_PCT // 100))
+            amount = max(0, amount - penalty)
+            loner_note = f"big game without a pack: −{LONER_HUNT_PENALTY_PCT}% yield"
 
     # --- always calculate payout (important: unindented from the if above) ---
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
@@ -521,6 +529,13 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     from engine.shop_items import raven_companion_scavenge_bonus
     gross, raven_scavenge_bonus = raven_companion_scavenge_bonus(user["discord_id"], gross)
     raven_scavenge_note = f"raven companion (+{raven_scavenge_bonus} bones)" if raven_scavenge_bonus > 0 else ""
+    # scavenger's edge: loners and rogues live off carrion, so they work it better.
+    scav_loner_note = ""
+    if not (user["pack_id"] if "pack_id" in user.keys() else None):
+        from config import LONER_SCAVENGE_BONUS_PCT
+        _sb = max(1, int(gross * LONER_SCAVENGE_BONUS_PCT // 100))
+        gross += _sb
+        scav_loner_note = f"scavenger's edge: +{LONER_SCAVENGE_BONUS_PCT}%"
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
@@ -553,7 +568,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scavenge_penalty) if n]
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scav_loner_note, scavenge_penalty) if n]
         footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
@@ -950,7 +965,9 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     from config import GARDEN_FORAGE_SEED_CHANCE
     from engine.herb_growing import can_cultivate
 
-    if can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
+    # only pack wolves have a den garden to sow; loners and rogues keep no plots.
+    _has_den = bool(user["pack_id"] if "pack_id" in user.keys() else None)
+    if _has_den and can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
         db.add_herb_seeds(user["id"], herb_key)
         seed_note = f"\n\nyou also pocket a few **{meta['name']} seeds** for the den garden (`/garden plant`)."
     food_note = ""
@@ -1294,7 +1311,13 @@ def try_crime(
         embed.set_footer(text="no bones earned. the den remembers.")
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
-    if roll_crime_caught():
+    from engine.role_features import is_rogue_wolf
+    _extra_catch = 0.0
+    if is_rogue_wolf(user):
+        from engine.rogue_notoriety import notoriety
+        from config import ROGUE_NOTORIETY_AMBUSH_PER_POINT
+        _extra_catch = notoriety(user) * ROGUE_NOTORIETY_AMBUSH_PER_POINT
+    if roll_crime_caught() or (_extra_catch and random.random() < _extra_catch):
         kick = db.adjust_wolf_standing(interaction.user.id, crime_caught_standing())
         embed = howlbert_embed("caught", pick_crime_caught_flavor(), color=ERROR_COLOR)
         embed.add_field(
@@ -1313,6 +1336,12 @@ def try_crime(
     )
     gid = interaction.guild.id if interaction.guild else None
     db.increment_quest_progress(interaction.user.id, "crime", guild_id=gid)
+    # a rogue who pulls off a border score grows more notorious with the packs.
+    _noto_note = ""
+    if net > 0 and is_rogue_wolf(user):
+        from engine.rogue_notoriety import gain_notoriety, notoriety_note
+        gain_notoriety(user)
+        _noto_note = notoriety_note(db.get_user(interaction.user.id))
     updated = db.get_user(interaction.user.id)
     body = random.choice(CRIME_TEXT)
     if plot_suffix:
@@ -1320,6 +1349,8 @@ def try_crime(
     title = "empty paws" if net == 0 else "score pulled"
     embed = howlbert_embed(title, body, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="earned", value=format_bones(net, signed=True), inline=True)
+    if _noto_note:
+        embed.add_field(name="notoriety", value=_noto_note, inline=False)
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
@@ -1437,12 +1468,12 @@ def _try_cross_pack_steal(
     staff: bool,
     crime_penalty: str = "",
 ) -> discord.Embed | None:
-    from config import GREAT_PACKS
+    from engine.factions import faction_name, founded_pack_id, is_faction, is_founded_key
 
-    if target_pack not in GREAT_PACKS:
+    if not is_faction(target_pack):
         return howlbert_embed(
             "unknown pack",
-            "pick a rival great pack: greyspire, mistmoor, thistlehide, or silverrush.",
+            "pick a rival great pack (greyspire, mistmoor, thistlehide, silverrush) or a founded pack by name.",
             color=ERROR_COLOR,
         )
 
@@ -1456,15 +1487,15 @@ def _try_cross_pack_steal(
     if not user["pack_id"]:
         return howlbert_embed(
             "no pack",
-            "join a great pack to run a den raid; loners use `/bones action:crime` without a target for scraps.",
+            "join a pack to run a den raid; loners use `/bones action:crime` without a target for scraps.",
             color=ERROR_COLOR,
         )
 
-    victim = db.get_pack_by_key(target_pack)
+    victim = db.get_pack(founded_pack_id(target_pack)) if is_founded_key(target_pack) else db.get_pack_by_key(target_pack)
     if not victim:
-        return howlbert_embed("pack not found", "join a great pack first.", color=ERROR_COLOR)
+        return howlbert_embed("pack not found", "that den could not be found.", color=ERROR_COLOR)
 
-    victim_name = GREAT_PACKS[target_pack]["name"]
+    victim_name = faction_name(target_pack)
 
     if raid_type in ("food", "herbs", "amusement"):
         return _try_cross_pack_goods_steal(
