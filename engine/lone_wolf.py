@@ -11,9 +11,11 @@ LONE_WOLF_SOCIAL_WINDOW_DAYS = 2
 
 def apply_lone_wolf_loneliness_on_rollover(conn: sqlite3.Connection, day: int) -> list[dict]:
     """Drain mood for wolves with no pack. Wolves who socialized recently feel it less."""
+    import database as _db
+
     rows = conn.execute(
         "SELECT id, discord_id, wolf_name, mood, last_socialize_day "
-        "FROM users WHERE pack_id IS NULL AND condition != 'dead'"
+        f"FROM users WHERE pack_id IS NULL AND condition != 'dead' AND {_db.active_wolf_where(day)}"
     ).fetchall()
     notes: list[dict] = []
     for wolf in rows:
