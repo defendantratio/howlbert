@@ -572,7 +572,9 @@ def finalize_cross_pack_pvp_death(
     v_gp = victim["great_pack"] if "great_pack" in victim.keys() else None
     if not k_gp or not v_gp or k_gp == v_gp:
         return None
-    if k_gp not in GREAT_PACKS or v_gp not in GREAT_PACKS:
+    from engine.factions import is_faction
+
+    if not is_faction(k_gp) or not is_faction(v_gp):
         return None
 
     from engine.pack_relations import format_standing_war_flash

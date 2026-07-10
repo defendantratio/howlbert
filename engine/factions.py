@@ -62,3 +62,29 @@ def is_faction(key) -> bool:
 def faction_name(key, default: str = "a rival den") -> str:
     info = resolve_faction(key)
     return info["name"] if info else default
+
+
+def resolve_pack_target(target: str) -> tuple[int | None, str] | None:
+    """Resolve a raid/relation target named by faction key OR pack name to
+    ``(pack_id, faction_key)``; handles the four canonical great packs and any
+    founded pack. Returns None if no such faction is found."""
+    from config import GREAT_PACKS
+    import database as db
+
+    t = (target or "").strip().lower()
+    if not t:
+        return None
+    for k, info in GREAT_PACKS.items():
+        if t == k or t == info["name"].lower():
+            row = db.get_pack_by_key(k)
+            return (row["id"] if row else None, k)
+    if is_founded_key(target):
+        pid = founded_pack_id(target)
+        if pid and db.get_pack(pid):
+            return (pid, target)
+    row = db.get_pack_by_name(target.strip())
+    if row:
+        key = row["key"] if "key" in row.keys() else None
+        if not key:  # a founded pack carries no canonical key
+            return (row["id"], founded_key_for(row["id"]))
+    return None
