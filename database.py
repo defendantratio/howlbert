@@ -8127,6 +8127,48 @@ def grant_item(discord_id: int, item_id: int, quantity: int = 1, *, conn: sqlite
         _apply(c)
 
 
+def grant_item_for_wolf(wolf_id: int, item_id: int, quantity: int = 1, *, conn: sqlite3.Connection | None = None) -> None:
+    """Grant an item to a *specific* wolf, bypassing discord_id -> active-wolf
+    resolution. Use this when acting on a wolf object directly (e.g. a possessed
+    wolf), so grants don't leak to the owner's active wolf."""
+    def _apply(c: sqlite3.Connection) -> None:
+        row = c.execute(
+            "SELECT quantity FROM inventory WHERE wolf_id = ? AND item_id = ?",
+            (wolf_id, item_id),
+        ).fetchone()
+        if row:
+            c.execute(
+                "UPDATE inventory SET quantity = quantity + ? WHERE wolf_id = ? AND item_id = ?",
+                (quantity, wolf_id, item_id),
+            )
+        else:
+            c.execute(
+                "INSERT INTO inventory (wolf_id, item_id, quantity) VALUES (?, ?, ?)",
+                (wolf_id, item_id, quantity),
+            )
+
+    if conn is not None:
+        _apply(conn)
+        return
+    with get_db() as c:
+        _apply(c)
+
+
+def get_inventory_for_wolf(wolf_id: int) -> list[sqlite3.Row]:
+    """Inventory of a specific wolf (bypasses discord_id -> active-wolf resolution)."""
+    with get_db() as conn:
+        return conn.execute(
+            """
+            SELECT i.key, i.name, i.description, i.price, i.sell_price, inv.quantity
+            FROM inventory inv
+            JOIN items i ON i.id = inv.item_id
+            WHERE inv.wolf_id = ? AND inv.quantity > 0
+            ORDER BY i.name ASC
+            """,
+            (wolf_id,),
+        ).fetchall()
+
+
 def consume_item(discord_id: int, item_id: int, quantity: int = 1) -> bool:
     with get_db() as conn:
         wolf_id = _resolve_wolf_id_conn(conn, discord_id)
