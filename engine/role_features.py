@@ -53,6 +53,23 @@ def is_rogue_wolf(user) -> bool:
     return has_any_role(user, "rogue") or gp == ROGUE_KEY
 
 
+def has_pack(user) -> bool:
+    """True if the wolf belongs to a great pack (has a den)."""
+    if not user:
+        return False
+    return bool(user["pack_id"] if "pack_id" in user.keys() else None)
+
+
+def is_unaffiliated_wolf(user) -> bool:
+    """No great pack: a loner or a rogue."""
+    return bool(user) and not has_pack(user)
+
+
+def is_loner_wolf(user) -> bool:
+    """A lone wolf; unaffiliated but not a hostile rogue."""
+    return is_unaffiliated_wolf(user) and not is_rogue_wolf(user)
+
+
 def is_full_medic(user) -> bool:
     return has_any_role(user, "medic")
 

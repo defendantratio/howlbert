@@ -337,10 +337,18 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
     loner_note = ""
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
     if not pack_id and amount > 0:
-        from config import LONER_HUNT_PENALTY_PCT
-        penalty = max(1, int(amount * LONER_HUNT_PENALTY_PCT // 100))
-        amount = max(0, amount - penalty)
-        loner_note = f"hunting alone: −{LONER_HUNT_PENALTY_PCT}% yield"
+        # a lone wolf takes small quarry (hares, voles) just fine, but loses the
+        # pack coordination that brings down big game. reward the former, penalize
+        # the latter (scavenger's edge / dispersal realism).
+        from config import LONER_HUNT_PENALTY_PCT, LONER_SMALL_PREY_BONUS_PCT, LONER_SMALL_PREY_MAX
+        if amount <= LONER_SMALL_PREY_MAX:
+            bonus = max(1, int(amount * LONER_SMALL_PREY_BONUS_PCT // 100))
+            amount += bonus
+            loner_note = f"lone hunter, small quarry: +{LONER_SMALL_PREY_BONUS_PCT}% yield"
+        else:
+            penalty = max(1, int(amount * LONER_HUNT_PENALTY_PCT // 100))
+            amount = max(0, amount - penalty)
+            loner_note = f"big game without a pack: −{LONER_HUNT_PENALTY_PCT}% yield"
 
     # --- always calculate payout (important: unindented from the if above) ---
     net_amount, tax, payout, lucky_bonus, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
@@ -521,6 +529,13 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     from engine.shop_items import raven_companion_scavenge_bonus
     gross, raven_scavenge_bonus = raven_companion_scavenge_bonus(user["discord_id"], gross)
     raven_scavenge_note = f"raven companion (+{raven_scavenge_bonus} bones)" if raven_scavenge_bonus > 0 else ""
+    # scavenger's edge: loners and rogues live off carrion, so they work it better.
+    scav_loner_note = ""
+    if not (user["pack_id"] if "pack_id" in user.keys() else None):
+        from config import LONER_SCAVENGE_BONUS_PCT
+        _sb = max(1, int(gross * LONER_SCAVENGE_BONUS_PCT // 100))
+        gross += _sb
+        scav_loner_note = f"scavenger's edge: +{LONER_SCAVENGE_BONUS_PCT}%"
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
@@ -553,7 +568,7 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         from engine.disease_contract import try_scavenge_filth_exposure
 
         filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scavenge_penalty) if n]
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scav_loner_note, scavenge_penalty) if n]
         footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)
