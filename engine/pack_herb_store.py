@@ -42,7 +42,7 @@ def count_depositable_inventory_herbs(user) -> int:
     from engine.restricted_herbs import is_restricted_herb
 
     total = 0
-    for row in db.get_inventory(user["discord_id"]):
+    for row in db.get_inventory_for_wolf(user["id"]):
         key = row["key"]
         if not key.startswith("herb_"):
             continue
@@ -58,7 +58,7 @@ def count_fresh_herbs_total(user) -> int:
     from engine.restricted_herbs import is_restricted_herb
 
     total = 0
-    for row in db.get_inventory(user["discord_id"]):
+    for row in db.get_inventory_for_wolf(user["id"]):
         key = row["key"]
         if not key.startswith("herb_"):
             continue
@@ -96,9 +96,9 @@ def deposit_inventory_herb_to_store(
     item = db.get_item_by_key(key)
     if not item:
         return False, "unknown herb item."
-    if db.get_inventory_quantity(user["discord_id"], item["id"]) < 1:
+    if db.get_inventory_quantity_for_wolf(user["id"], item["id"]) < 1:
         return False, f"you don't have **{item['name']}** in `/bones action:inventory`."
-    if not db.consume_item(user["discord_id"], item["id"], quantity=1):
+    if not db.consume_item_for_wolf(user["id"], item["id"], quantity=1):
         return False, "could not use herb from `/bones action:inventory`."
     meta = HERBS.get(herb_key, {})
     name = meta.get("name", herb_key)
@@ -132,7 +132,7 @@ def deposit_all_herbs_to_store(
 
     inventory_herbs = [
         (row["key"], row["name"], int(row["quantity"]))
-        for row in db.get_inventory(user["discord_id"])
+        for row in db.get_inventory_for_wolf(user["id"])
         if row["key"].startswith("herb_")
     ]
     inventory_count = sum(
@@ -199,7 +199,7 @@ def withdraw_herb_from_store(
     item = db.get_item_by_key(item_key)
     if not item:
         return False, "unknown herb item."
-    db.grant_item(user["discord_id"], item["id"], quantity=1)
+    db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
     if qty <= 1:
         db.remove_pack_herb_stack(store_id)
     else:
@@ -277,9 +277,9 @@ def turnin_restricted_herb(
             "anyone can stock other herbs via `/herbs action:store mode:deposit` or `mode:depositall`.",
         )
     item = db.get_item_by_key(key)
-    if not item or db.get_inventory_quantity(user["discord_id"], item["id"]) < 1:
+    if not item or db.get_inventory_quantity_for_wolf(user["id"], item["id"]) < 1:
         return False, f"you don't have **{herb_key.replace('_', ' ').title()}** in `/bones action:inventory`."
-    if not db.consume_item(user["discord_id"], item["id"], quantity=1):
+    if not db.consume_item_for_wolf(user["id"], item["id"], quantity=1):
         return False, "could not use herb from inventory."
     meta = HERBS.get(herb_key, {})
     name = meta.get("name", herb_key)
