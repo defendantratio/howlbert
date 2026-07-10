@@ -514,12 +514,13 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
         }
 
     if herb_key in ("wild_cherry_bark", "labrador_tea", "edelweiss", "sage", "thyme"):
-        # wild cherry bark is also a mild sedative + calmative (compendium:
-        # "sedative and digestive tea. calms anxiety"): it steadies the mind and
-        # aids sleep without the full knockout / rest-block of valerian or poppy.
+        # wild cherry bark and thyme are also mild sedatives + calmatives
+        # (compendium: wild_cherry_bark "sedative...calms anxiety"; thyme
+        # "calms anxiety and aids restful sleep"): they steady the mind and
+        # aid sleep without the full knockout / rest-block of valerian or poppy.
         # calm_until_day grants advantage on mind/social checks;
         # sleep_aid_until_day grants advantage on mental-illness saves.
-        mild_sedative = herb_key == "wild_cherry_bark"
+        mild_sedative = herb_key in ("wild_cherry_bark", "thyme")
         if disease_key in ("cough", "yellowcough"):
             fields["cough_suppressed"] = 1
             # one merge_buff_fields call per path: a second call re-reads the
@@ -909,7 +910,7 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
 
     if herb_key == "rosemary":
         fields["mood"] = min(100, mood + 3)
-        if disease_key in ("dementia", "grief_melancholy", "obsession"):
+        if disease_key in ("dementia", "grief_melancholy", "obsession", "anxiety", "chronic_stress"):
             fields.update(grant_disease_save_advantage(user))
             return {
                 "kind": "minor_relief",
