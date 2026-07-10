@@ -42,7 +42,7 @@ def grant_fresh_herb(
     item = db.get_item_by_key(item_key)
     if not item:
         return "", "unknown herb item."
-    db.grant_item(user["discord_id"], item["id"], quantity=1, conn=conn)
+    db.grant_item_for_wolf(user["id"], item["id"], quantity=1, conn=conn)
     hoard_note = ""
     from engine.restricted_herbs import on_restricted_herb_acquired
 
@@ -68,7 +68,7 @@ def parse_herb_stack_id(raw: str | None) -> int | None:
 def inventory_herb_count(user) -> int:
     return sum(
         int(row["quantity"])
-        for row in db.get_inventory(user["discord_id"])
+        for row in db.get_inventory_for_wolf(user["id"])
         if row["key"].startswith("herb_") or row["key"] == "stick"
     )
 
@@ -96,14 +96,14 @@ def herb_inventory_footer() -> str:
 
 def has_yarrow(user) -> bool:
     item = db.get_item_by_key("herb_yarrow")
-    return bool(item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0)
+    return bool(item and db.get_inventory_quantity_for_wolf(user["id"], item["id"]) > 0)
 
 
 def consume_yarrow_from_bag(user) -> bool:
     """Consume one yarrow from inventory."""
     item = db.get_item_by_key("herb_yarrow")
-    if item and db.get_inventory_quantity(user["discord_id"], item["id"]) > 0:
-        db.consume_item(user["discord_id"], item["id"], quantity=1)
+    if item and db.get_inventory_quantity_for_wolf(user["id"], item["id"]) > 0:
+        db.consume_item_for_wolf(user["id"], item["id"], quantity=1)
         return True
     return False
 

@@ -102,7 +102,7 @@ def _stabilize_bonus(herb_key: str, form: str) -> tuple[bool, bool, bool, bool]:
 
 def _get_prepared_herb_from_inventory(user, herb_key: str, required_form: str | None = None):
     """find a prepared herb in inventory matching the herb_key and optionally required form."""
-    rows = db.get_inventory(user["discord_id"])
+    rows = db.get_inventory_for_wolf(user["id"])
     for row in rows:
         if not row["key"].startswith("herb_"):
             continue
@@ -120,7 +120,7 @@ def _get_prepared_herb_from_inventory(user, herb_key: str, required_form: str | 
 
 def _consume_inventory_herb(user, item_id: int, quantity: int = 1) -> bool:
     """consume an herb from inventory."""
-    return db.consume_item(user["discord_id"], item_id, quantity=quantity)
+    return db.consume_item_for_wolf(user["id"], item_id, quantity=quantity)
 
 
 def treat_from_herb_stack(
@@ -169,7 +169,7 @@ def treat_from_herb_stack(
     # if not found, try as herb_key string
     if not herb_item:
         # try to find the herb in inventory
-        rows = db.get_inventory(healer["discord_id"])
+        rows = db.get_inventory_for_wolf(healer["id"])
         for row in rows:
             if not row["key"].startswith("herb_"):
                 continue
@@ -187,7 +187,7 @@ def treat_from_herb_stack(
         return False, "that herb isn't in your inventory. use `/bones action:inventory` to see your herbs."
 
     # check quantity
-    qty = db.get_inventory_quantity(healer["discord_id"], herb_item["id"])
+    qty = db.get_inventory_quantity_for_wolf(healer["id"], herb_item["id"])
     if qty < 1:
         return False, f"you don't have **{herb_item['name']}** in your inventory."
 

@@ -6,3 +6,7 @@ __pycache__/
 .venv/
 venv/
 *.bak
+
+# db backups
+*.bak-*
+fable.db.bak*

@@ -227,20 +227,20 @@ def prepare_herb_from_inventory(
     item = db.get_item_by_key(key)
     if not item:
         return False, "unknown herb item."
-    qty = db.get_inventory_quantity(user["discord_id"], item["id"])
+    qty = db.get_inventory_quantity_for_wolf(user["id"], item["id"])
     if qty < 1:
         return False, f"you don't have **{item['name']}** in `/bones action:inventory`."
-    if not db.consume_item(user["discord_id"], item["id"], quantity=1):
+    if not db.consume_item_for_wolf(user["id"], item["id"], quantity=1):
         return False, "could not use herb from `/bones action:inventory`."
 
     meta = HERBS.get(herb_key, {})
     if method not in PREP_METHODS:
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         return False, _METHOD_LIST_MSG
     # inventory herbs are fresh; a method that must be built from a tea/gargle
     # (like sweeten) can't be run on a raw inventory herb.
     if "fresh" not in PREP_METHODS[method]["from"]:
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         allowed = " or ".join(PREP_METHODS[method]["from"])
         return False, f"**{METHOD_LABELS.get(method, method)}** needs a **{allowed}** herb; prepare that first from your forage bag."
 
@@ -263,7 +263,7 @@ def prepare_herb_from_inventory(
             format_roll_result(result) + f"\n\n**{name}** ruined; batch spoiled.",
         )
     if not result["success"]:
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         if method == "dry":
             return (
                 False,
@@ -277,7 +277,7 @@ def prepare_herb_from_inventory(
     potency = 90 if (method == "dry" and result["outcome"] != "critical_success") else 100
 
     if method == "dry":
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         bonus = " Stores for months in `/bones action:inventory`."
         return (
             True,
@@ -286,7 +286,7 @@ def prepare_herb_from_inventory(
 
     pack_id = int(user["pack_id"]) if user and user["pack_id"] else 0
     if not pack_id:
-        db.grant_item(user["discord_id"], item["id"], quantity=1)
+        db.grant_item_for_wolf(user["id"], item["id"], quantity=1)
         return (
             False,
             "join a pack to prepare non-dried forms into the healers' den store (or prepare from your `/food`/forage bag).",
@@ -320,7 +320,7 @@ def dry_all_fresh_herbs(
     _ = at_den
     inventory_herbs = [
         (row["key"], row["name"], int(row["quantity"]))
-        for row in db.get_inventory(user["discord_id"])
+        for row in db.get_inventory_for_wolf(user["id"])
         if row["key"].startswith("herb_")
     ]
     pack_id = int(user["pack_id"]) if user and user["pack_id"] else None

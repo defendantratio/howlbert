@@ -100,11 +100,11 @@ def execute_schism(
         )
 
     db.adjust_pack_relation(guild_id, old_pack_id, new_pack_id, -(10 - SCHISM_STARTING_STANDING))
-    db.adjust_wolf_standing(leader["discord_id"], SCHISM_LEADER_STANDING_GAIN)
+    db.adjust_wolf_standing_by_id(leader["id"], SCHISM_LEADER_STANDING_GAIN)
     if old_alpha_id and old_alpha_id != leader["id"]:
         old_alpha = db.get_user_by_id(old_alpha_id)
         if old_alpha:
-            db.adjust_wolf_standing(old_alpha["discord_id"], -SCHISM_OLD_ALPHA_STANDING_LOSS)
+            db.adjust_wolf_standing_by_id(old_alpha["id"], -SCHISM_OLD_ALPHA_STANDING_LOSS)
 
     follower_names = [f["wolf_name"] for f in followers]
     body = (

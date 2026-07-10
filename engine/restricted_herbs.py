@@ -53,7 +53,7 @@ def restricted_held_by_user(user) -> set[str]:
     if not user:
         return frozenset()
     held: set[str] = set()
-    for row in db.get_inventory(user["discord_id"]):
+    for row in db.get_inventory_for_wolf(user["id"]):
         if not row["key"].startswith("herb_"):
             continue
         herb_key = row["key"].replace("herb_", "", 1)

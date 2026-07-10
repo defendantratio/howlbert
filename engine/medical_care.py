@@ -74,7 +74,7 @@ def run_medic_rounds(medic, *, day: int) -> tuple[bool, str]:
             sacred_due.append(f"**{name}**: sacred visit due")
         inv_count = sum(
             int(row["quantity"])
-            for row in db.get_inventory(wolf["discord_id"])
+            for row in db.get_inventory_for_wolf(wolf["id"])
             if row["key"].startswith("herb_") or row["key"] == "stick"
         )
         if inv_count < 2:

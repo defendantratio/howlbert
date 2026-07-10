@@ -259,7 +259,7 @@ def try_sniff(interaction) -> tuple[discord.Embed, int | None]:
                 body += f"\n\n{bond_line}"
             rival_bond = db.get_bond(user["id"], encounter["id"], "rivalry")
             if rival_bond and int(rival_bond["strength"]) >= 50:
-                db.adjust_wolf_standing(user["discord_id"], 1)
+                db.adjust_wolf_standing_by_id(user["id"], 1)
                 body += "\n_your rival is out here too. the standing you carry sharpens._"
             mood_gain = SNIFF_WOLF_ENCOUNTER_MOOD
             new_mood = db.adjust_mood(user["id"], mood_gain)
