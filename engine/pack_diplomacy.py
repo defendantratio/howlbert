@@ -121,16 +121,16 @@ def share_territory(
     if not ok_rel:
         return False, rel_err
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    share_mult, share_n = next_use_multiplier(user, "share_territory", day)
+    _new_energy, _had_energy, share_penalty = spend_energy(user, "share_territory")
 
     terr_name = _shared_territory_name(guild_id, pack["id"], target["id"])
     db.record_pack_diplomacy(guild_id, pack["id"], target["id"], "share", day)
-    standing_gain = max(1, int(1 * share_mult))
+    standing_gain = 1
     new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(SHARE_FLAVORS).format(territory=terr_name, pack=target["name"])
-    dim = f" _{diminishing_note(share_n)}_" if share_n > 1 else ""
+    dim = f" _{share_penalty}_" if share_penalty else ""
     return True, f"{flavor}\n\nstanding **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"
 
 
@@ -156,16 +156,16 @@ def aid_rival_pack(
     if not war:
         return False, f"**{target['name']}** isn't fighting an active territory war right now."
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    aid_mult, aid_n = next_use_multiplier(user, "aid_rival_pack", day)
+    _new_energy, _had_energy, aid_penalty = spend_energy(user, "aid_rival_pack")
 
     db.record_pack_diplomacy(guild_id, pack["id"], target["id"], "aid", day)
-    standing_gain = max(1, int(2 * aid_mult))
+    standing_gain = 2
     new_standing = db.adjust_pack_relation(guild_id, pack["id"], target["id"], standing_gain)
     flavor = random.choice(AID_FLAVORS).format(pack=target["name"])
     war_note = f"_they contest **{war['territory_name']}**._"
-    dim = f" _{diminishing_note(aid_n)}_" if aid_n > 1 else ""
+    dim = f" _{aid_penalty}_" if aid_penalty else ""
     return True, (
         f"{flavor}\n{war_note}\n\n"
         f"standing **+{standing_gain}** with **{target['name']}** (now **{new_standing}/10**).{dim}"

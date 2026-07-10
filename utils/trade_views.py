@@ -12,7 +12,7 @@ class TradeAcceptButton(ui.DynamicItem, template=r"^fable_trade:(?P<trade_id>\d+
     def __init__(self, trade_id: int):
         super().__init__(
             ui.Button(
-                label="Accept",
+                label="accept",
                 style=discord.ButtonStyle.success,
                 custom_id=f"fable_trade:{trade_id}:accept",
             )
@@ -33,7 +33,7 @@ class TradeDeclineButton(ui.DynamicItem, template=r"^fable_trade:(?P<trade_id>\d
     def __init__(self, trade_id: int):
         super().__init__(
             ui.Button(
-                label="Decline",
+                label="decline",
                 style=discord.ButtonStyle.secondary,
                 custom_id=f"fable_trade:{trade_id}:decline",
             )

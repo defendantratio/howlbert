@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import database as db
 from engine.amusement_items import amusement_meta
-from engine.amusement_storage import format_amusement_line
 
 
 def format_pack_amusement_line(stack) -> str:

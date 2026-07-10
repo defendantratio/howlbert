@@ -37,9 +37,9 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     day = world["day_number"]
     wolf_name = user["wolf_name"]
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    howl_mult, howl_n = next_use_multiplier(user, "howl", day)
+    _new_energy, _had_energy, howl_penalty = spend_energy(user, "howl")
 
     from engine.character_traits import trait_blocks_howl
     from engine.genetics import genetic_blocks_howl
@@ -92,8 +92,6 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         _mood_cost, mood_note = apply_plot_howl_mood_cost(user, pack, interaction.guild.id)
         flavor = pick_howl_flavor(echo_count=echo_count, muted=muted)
 
-        if unity_gain:
-            unity_gain = max(1, int(unity_gain * howl_mult))
         dissolve = ""
         if unity_gain:
             dissolve = db.adjust_pack_unity(pack["id"], unity_gain)
@@ -103,7 +101,6 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         standing_gain = 2 if echo_count >= 3 else 1
         if muted:
             standing_gain = 1
-        standing_gain = max(1, int(standing_gain * howl_mult))
 
         kick = db.adjust_wolf_standing(interaction.user.id, standing_gain)
         db.update_user(interaction.user.id, last_howl_day=day)
@@ -138,9 +135,8 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
             body += f"\n\n_{mood_note}_"
         if moon_note:
             body += f"\n{moon_note}"
-        dim_note = diminishing_note(howl_n)
-        if dim_note:
-            body += f"\n\n_{dim_note}_"
+        if howl_penalty:
+            body += f"\n\n_{howl_penalty}_"
         from engine.plot_blinking import try_plot_witness
 
         body += try_plot_witness(user, interaction.guild.id, day, action="howl")
@@ -209,7 +205,7 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
         await interaction.response.send_message(embed=embed)
         return
 
-    lone_standing_gain = max(1, int(1 * howl_mult))
+    lone_standing_gain = 1
     kick = db.adjust_wolf_standing(interaction.user.id, lone_standing_gain)
     db.update_user(interaction.user.id, last_howl_day=day)
     body = (
@@ -218,9 +214,8 @@ async def execute_howl(interaction: discord.Interaction, message: str | None = N
     )
     if message:
         body += f"\n\n_{message.strip()}_"
-    dim_note = diminishing_note(howl_n)
-    if dim_note:
-        body += f"\n\n_{dim_note}_"
+    if howl_penalty:
+        body += f"\n\n_{howl_penalty}_"
     embed = howlbert_embed("lone howl", body, color=SUCCESS_COLOR)
     embed.add_field(
         name="standing",

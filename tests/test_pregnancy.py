@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import database as db
 from engine.family import GESTATION_DAYS
 from engine.pregnancy import (
     LATE_PREGNANCY_SUNRISES,

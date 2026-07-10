@@ -1,3 +1,4 @@
+# healer_code.py
 """Medic / healer vows: RP law with standing loss and exile when caught or scandalous."""
 
 from __future__ import annotations

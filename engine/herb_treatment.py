@@ -1,3 +1,4 @@
+# herb_treatment.py
 """Mechanical outcomes for compendium herbs via `/medic action:treat` (delegates to engine.herb_buffs)."""
 
 from __future__ import annotations

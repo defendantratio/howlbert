@@ -20,7 +20,7 @@ FORAGE_RARITY_DC = {
 # Back-compat alias; prefer SEASON_FORAGE_DC_MOD from config
 SEASON_FORAGE_MOD = SEASON_FORAGE_DC_MOD
 
-# Injury table; roll 1d10 on critical hit or dropping to 0 HP
+# Injury table; roll 1d10 when a wolf is dropped to 0 HP
 INJURY_TABLE = (
     "broken_tooth",
     "torn_claw",
@@ -34,6 +34,19 @@ INJURY_TABLE = (
     "broken_jaw",
 )
 
+# Severe injury table; a critical hit (outside spine_bite, which has its own
+# paralysis odds) risks one of these instead of the base table above.
+SEVERE_INJURY_TABLE = (
+    "nerve_damage",
+    "flail_chest",
+    "ruptured_tendon",
+    "dislocated_shoulder",
+    "crushed_paw",
+    "internal_bleeding",
+    "lost_eye",
+    "ligament_tear",
+)
+
 INJURIES = {
     "broken_tooth": {
         "name": "Broken Tooth",
@@ -41,6 +54,7 @@ INJURIES = {
         "treatment": "Permanent.",
         "permanent": True,
         "roll": 1,
+        "penalties": {"bite_disadvantage": True},
     },
     "torn_claw": {
         "name": "Torn Claw",
@@ -49,6 +63,9 @@ INJURIES = {
         "heal_days": 7,
         "permanent": False,
         "roll": 2,
+        "penalties": {"claw_damage_penalty": 1},
+        "treat_herbs": ["horsetail"],
+        "heal_reduction": 4,
     },
     "deep_gash": {
         "name": "Deep Gash",
@@ -57,6 +74,9 @@ INJURIES = {
         "permanent": False,
         "bleeding": True,
         "roll": 3,
+        "penalties": {"hp_loss_per_sunrise": 1, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["yarrow", "oak_bark", "cattail", "cobwebs"],
+        "bandage_required": True,
     },
     "sprained_leg": {
         "name": "Sprained Leg",
@@ -65,6 +85,9 @@ INJURIES = {
         "heal_days": 7,
         "permanent": False,
         "roll": 4,
+        "penalties": {"dex_disadvantage": True, "speed_halved": True},
+        "treat_herbs": ["comfrey", "arnica", "tansy"],
+        "heal_reduction": 3,
     },
     "fractured_rib": {
         "name": "Fractured Rib",
@@ -74,6 +97,9 @@ INJURIES = {
         "permanent": False,
         "blocks_hunt": True,
         "roll": 5,
+        "penalties": {"str_disadvantage": True, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["comfrey", "bindweed", "broom"],
+        "heal_reduction": 5,
     },
     "concussion": {
         "name": "Concussion",
@@ -82,6 +108,9 @@ INJURIES = {
         "heal_days": 7,
         "permanent": False,
         "roll": 6,
+        "penalties": {"int_disadvantage": True},
+        "treat_herbs": ["dried_skullcap"],
+        "heal_reduction": 2,
     },
     "punctured_paw": {
         "name": "Punctured Paw",
@@ -90,6 +119,9 @@ INJURIES = {
         "heal_days": 7,
         "permanent": False,
         "roll": 7,
+        "penalties": {"dex_disadvantage": True, "mobility_penalty": True},
+        "treat_herbs": ["oak_bark", "dock", "plantain"],
+        "heal_reduction": 4,
     },
     "infected_wound": {
         "name": "Infected Wound",
@@ -98,6 +130,9 @@ INJURIES = {
         "permanent": False,
         "infection": True,
         "roll": 8,
+        "penalties": {"hp_loss_per_sunrise": 1, "exhaustion_gain_on_fail": 1},
+        "treat_herbs": ["yarrow", "goldenrod", "burdock_root", "wild_garlic"],
+        "cure_dc": 14,
     },
     "torn_ear": {
         "name": "Torn Ear / Lost Eye",
@@ -105,6 +140,7 @@ INJURIES = {
         "treatment": "Torn ear heals cosmetically; penalty remains. Lost eye: no cure.",
         "permanent": True,
         "roll": 9,
+        "penalties": {"perception_penalty": 1},
     },
     "broken_jaw": {
         "name": "Broken Jaw",
@@ -114,6 +150,9 @@ INJURIES = {
         "permanent": False,
         "blocks_bite": True,
         "roll": 10,
+        "penalties": {"bite_blocked": True, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["comfrey", "bindweed", "slippery_elm"],
+        "heal_reduction": 7,
     },
     "spinal_injury": {
         "name": "Spinal Injury",
@@ -126,6 +165,9 @@ INJURIES = {
         "permanent": False,
         "paralysis": True,
         "blocks_strenuous": True,
+        "penalties": {"paralysis": True, "pain_exhaustion_gain": 2},
+        "treat_herbs": ["comfrey", "bindweed", "broom"],
+        "heal_reduction": 7,
     },
     "paralyzed": {
         "name": "Paralyzed (Permanent)",
@@ -136,6 +178,8 @@ INJURIES = {
         "permanent": True,
         "paralysis": True,
         "blocks_strenuous": True,
+        "blocks_all_activity": True,
+        "penalties": {"paralysis": True},
     },
     "festering_wound": {
         "name": "Festering Wound",
@@ -148,6 +192,9 @@ INJURIES = {
         "infection": True,
         "festering": True,
         "heal_days": 7,
+        "penalties": {"hp_loss_per_sunrise": 1, "exhaustion_gain_per_sunrise": 1},
+        "treat_herbs": ["yarrow", "goldenrod", "burdock_root"],
+        "cure_dc": 15,
     },
     "scorched_hide": {
         "name": "Scorched Hide",
@@ -159,6 +206,9 @@ INJURIES = {
         "permanent": False,
         "heat_injury": True,
         "heal_days": 7,
+        "penalties": {"exhaustion_gain_per_sunrise": 1, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["cobwebs", "common_mallow"],
+        "herb_cure": False,
     },
     "bruised_lung": {
         "name": "Bruised Lung",
@@ -171,6 +221,8 @@ INJURIES = {
         "permanent": False,
         "heal_days": 14,
         "surgery_only": True,
+        "penalties": {"str_penalty": 1, "wis_penalty": 1, "hunt_mult": 0.80},
+        "treat_herbs": [],
     },
     "swollen_eye": {
         "name": "Swollen Eye",
@@ -183,6 +235,8 @@ INJURIES = {
         "permanent": False,
         "heal_days": 5,
         "vision_impaired": True,
+        "penalties": {"attack_disadvantage": True, "perception_penalty": 2},
+        "treat_herbs": ["celandine", "feverfew", "witch_hazel"],
     },
     "blood_loss": {
         "name": "Blood Loss",
@@ -193,6 +247,9 @@ INJURIES = {
         "treatment": "3 full rests; clears automatically",
         "permanent": False,
         "blood_loss": True,
+        "heal_days": 3,
+        "penalties": {"max_hp_penalty": 1},
+        "auto_clear": True,
     },
     "snake_venom": {
         "name": "Snake Venom",
@@ -204,6 +261,9 @@ INJURIES = {
         "permanent": False,
         "heal_days": 5,
         "snake_venom": True,
+        "penalties": {"dex_penalty": 4, "hp_loss_per_sunrise": 1, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["blackberry", "snakeroot", "sticklewort", "adders_tongue", "feverfew"],
+        "cure_dc": 14,
     },
     "insect_sting": {
         "name": "Insect Sting",
@@ -214,10 +274,159 @@ INJURIES = {
         "permanent": False,
         "heal_days": 3,
         "insect_sting": True,
+        "penalties": {"dex_penalty": 1, "mood_loss_per_sunrise": 6},
+        "treat_herbs": ["dock", "burdock_root", "blackberry", "jewelweed"],
+    },
+    "lost_eye": {
+        "name": "Lost Eye",
+        "effect": "Permanent −2 to Perception; disadvantage on ranged attacks.",
+        "treatment": "Permanent.",
+        "permanent": True,
+        "heal_days": None,
+        "penalties": {"perception_penalty": 2, "ranged_disadvantage": True},
+    },
+    "nerve_damage": {
+        "name": "Dead-Limb",
+        "effect": "Limb partially paralyzed; −2 Dex; cannot use that limb fully; permanent.",
+        "treatment": "No cure; can compensate with training.",
+        "permanent": True,
+        "heal_days": None,
+        "penalties": {"dex_penalty": 2},
+    },
+    "flail_chest": {
+        "name": "Caved-Chest",
+        "effect": "Multiple ribs broken; breathing laboured; −1 Con; −20% hunt; risk of lung puncture.",
+        "treatment": "Surgery only; 6 weeks rest; comfrey poultice for pain.",
+        "heal_days": 42,
+        "permanent": False,
+        "blocks_hunt": True,
+        "surgery_required": True,
+        "painful": True,
+        "penalties": {"con_penalty": 1, "hunt_mult": 0.80, "pain_exhaustion_gain": 2},
+        "treat_herbs": ["comfrey", "willow_bark"],
+    },
+    "heatstroke": {
+        "name": "Heatstroke (Sun-Sick)",
+        "effect": "Exhaustion; +1 exhaustion; −4 mood; CON save each sunrise or +1 exhaustion.",
+        "treatment": "Cool water; rest; feverfew; can be fatal if untreated.",
+        "heal_days": 3,
+        "permanent": False,
+        "heatstroke": True,
+        "penalties": {"exhaustion_gain_per_sunrise": 1, "mood_loss_per_sunrise": 4},
+        "treat_herbs": ["feverfew", "watermint", "willow_bark"],
+        "cure_dc": 12,
+    },
+    "hypothermia": {
+        "name": "Hypothermia (Chill-Bite)",
+        "effect": "Shivering; +1 exhaustion; −2 Dex; risk of death in cold.",
+        "treatment": "Warmth; honey; rest; avoid extreme cold.",
+        "heal_days": 3,
+        "permanent": False,
+        "hypothermia": True,
+        "penalties": {"dex_penalty": 2, "exhaustion_gain_per_sunrise": 1},
+        "treat_herbs": ["honey", "pine_bark"],
+    },
+    "smoke_inhalation": {
+        "name": "Smoke-Lung",
+        "effect": "Coughing; −1 Con; −10% hunt; risk of pneumonia.",
+        "treatment": "Mullein or lungwort tea; rest; avoid smoke.",
+        "heal_days": 7,
+        "permanent": False,
+        "smoke_injury": True,
+        "penalties": {"con_penalty": 1, "hunt_mult": 0.90},
+        "treat_herbs": ["mullein", "lungwort", "pine_needle"],
+        "heal_reduction": 3,
+    },
+    "ruptured_tendon": {
+        "name": "Snapped Sinew",
+        "effect": "Cannot put weight on leg; −30% hunt; disadvantage on Dex; +1 pain exhaustion.",
+        "treatment": "Surgery only; long healing (6 weeks); no herb cure.",
+        "heal_days": 42,
+        "permanent": False,
+        "surgery_only": True,
+        "painful": True,
+        "penalties": {"dex_disadvantage": True, "hunt_mult": 0.70, "pain_exhaustion_gain": 1},
+        "treat_herbs": [],
+    },
+    "dislocated_shoulder": {
+        "name": "Wrenched Joint",
+        "effect": "Arm useless; disadvantage on Strength & Dexterity; −20% hunt; +1 pain exhaustion.",
+        "treatment": "Pop back in (medicine DC 15); then rest 1-2 weeks; willow bark for pain.",
+        "heal_days": 10,
+        "permanent": False,
+        "painful": True,
+        "penalties": {"str_disadvantage": True, "dex_disadvantage": True, "hunt_mult": 0.80, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["willow_bark", "comfrey", "arnica"],
+        "heal_reduction": 3,
+        "cure_dc": 15,
+    },
+    "crushed_paw": {
+        "name": "Mangled Paw",
+        "effect": "Multiple fractures; cannot walk; −50% hunt; +2 pain exhaustion; infection risk.",
+        "treatment": "Comfrey poultice + splint; 3 weeks rest; dock leaf for swelling.",
+        "heal_days": 21,
+        "permanent": False,
+        "painful": True,
+        "penalties": {"dex_penalty": 4, "hunt_mult": 0.50, "pain_exhaustion_gain": 2},
+        "treat_herbs": ["comfrey", "dock", "plantain", "bindweed"],
+        "heal_reduction": 7,
+    },
+    "internal_bleeding": {
+        "name": "Blood-Within",
+        "effect": "−1 HP per sunrise; risk of shock; cannot be bandaged externally.",
+        "treatment": "Shepherd's purse + yarrow tea; requires medicine check DC 15 to stop; otherwise fatal.",
+        "heal_days": 5,
+        "permanent": False,
+        "penalties": {"hp_loss_per_sunrise": 1, "pain_exhaustion_gain": 1},
+        "treat_herbs": ["shepherds_purse", "yarrow", "horsetail"],
+        "cure_dc": 15,
+    },
+    "abscess": {
+        "name": "Pus-Pocket",
+        "effect": "Swollen, painful lump; −4 mood; −1 HP if untreated; bursts after 3 days.",
+        "treatment": "Hot compress + burdock root; lance with stick (surgery).",
+        "heal_days": 5,
+        "permanent": False,
+        "infection": True,
+        "penalties": {"mood_loss_per_sunrise": 4, "hp_loss_per_sunrise": 1},
+        "treat_herbs": ["burdock_root", "dock", "wild_garlic"],
+        "heal_reduction": 2,
+        "surgery_optional": True,
+    },
+    "muscle_strain": {
+        "name": "Pulled Sinew",
+        "effect": "Reduced speed; −10% hunt; disadvantage on Strength checks.",
+        "treatment": "Rest 3 days; comfrey poultice reduces to 1 day.",
+        "heal_days": 3,
+        "permanent": False,
+        "penalties": {"str_disadvantage": True, "hunt_mult": 0.90},
+        "treat_herbs": ["comfrey", "arnica", "meadowsweet"],
+        "heal_reduction": 2,
+    },
+    "ligament_tear": {
+        "name": "Torn Gristle",
+        "effect": "Joint unstable; −15% hunt; pain on movement; +1 pain exhaustion.",
+        "treatment": "Surgery needed; long recovery (4 weeks); no simple herb cure.",
+        "heal_days": 28,
+        "permanent": False,
+        "surgery_only": True,
+        "painful": True,
+        "penalties": {"hunt_mult": 0.85, "pain_exhaustion_gain": 1},
+        "treat_herbs": [],
+    },
+    "splinter": {
+        "name": "Thorn-Stuck",
+        "effect": "Local pain; risk of infection; −1 Dex in that paw.",
+        "treatment": "Remove with stick (survival/medicine DC 10); then dock leaf.",
+        "heal_days": 2,
+        "permanent": False,
+        "penalties": {"dex_penalty": 1},
+        "treat_herbs": ["dock", "plantain"],
+        "cure_dc": 10,
     },
 }
 
-from engine.diseases import COUGH_STAGES, DISEASES
+from engine.diseases import COUGH_STAGES
 
 DISEASE_STAGES = COUGH_STAGES
 

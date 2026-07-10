@@ -186,11 +186,11 @@ def try_verge_forage(interaction, site: str = "roadside"):
     world = db.get_world(guild_id)
     day = world["day_number"]
 
-    from engine.diminishing import use_count_today, record_use
-    # full foragers ignore the climb; everyone else faces a rising dc on
-    # repeat verge-forages in one sunrise, instead of a hard block.
-    verge_repeat = 0 if is_full_forager(user) else use_count_today(user, "verge_forage", day)
-    record_use(user, "verge_forage", day)
+    from engine.energy import spend_energy
+
+    _new_energy, _had_energy, verge_penalty = spend_energy(
+        user, "verge_forage", discounted=is_full_forager(user)
+    )
 
     from engine.forager_perk import grant_forager_auto_herb
 
@@ -210,13 +210,13 @@ def try_verge_forage(interaction, site: str = "roadside"):
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     season_mod = season_forage_dc_mod(world["season"])
-    dc = spec["dc"] + season_mod + 3 * verge_repeat
-    repeat_note = f"; repeat edge-forage today (dc +{3 * verge_repeat})" if verge_repeat else ""
+    dc = spec["dc"] + season_mod
+    penalty_note = f"\n_{verge_penalty}_" if verge_penalty else ""
     season_suffix = (
-        f"\n_{season_forage_modifier_label(world['season'])} · effective dc **{dc}**{repeat_note}._"
-        if season_mod or verge_repeat
+        f"\n_{season_forage_modifier_label(world['season'])} · effective dc **{dc}**._"
+        if season_mod
         else f"\n_effective dc **{dc}**._"
-    )
+    ) + penalty_note
     proficient = spec["skill_key"] in profs or "herblore" in profs
     result = resolve_check(
         user,
@@ -320,7 +320,7 @@ def try_verge_forage(interaction, site: str = "roadside"):
         + season_suffix,
         color=SUCCESS_COLOR,
     )
-    footer = "/field action:verge · once per sunrise"
+    footer = "/field action:verge · costs energy"
     if season_mod:
         footer += f" · {season_forage_modifier_label(world['season'])}"
     embed.set_footer(text=footer)

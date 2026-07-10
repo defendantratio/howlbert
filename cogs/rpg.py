@@ -3,13 +3,13 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from rpg_rules import DC_TIERS, ROLE_LABELS, SKILLS
-from engine.character import attr_modifier, parse_proficiencies
+from engine.character import attr_modifier
 from engine.dice import format_roll_result, resolve_check
 from engine.shop_items import consume_item_by_key, has_item
 from engine.role_features import can_use_role_reroll, has_any_role
 from engine.role_privileges import HERB_HEAL_DAILY_LIMIT, herb_heal_limit_reached
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 
 class Rpg(commands.Cog):
 
@@ -198,6 +198,9 @@ class Rpg(commands.Cog):
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
         embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
         embed.add_field(name='Hydration', value=format_thirst_line(user), inline=True)
+        from engine.energy import current_energy
+        from config import ENERGY_MAX
+        embed.add_field(name='Energy', value=f"{current_energy(user)}/{ENERGY_MAX}", inline=True)
         from engine.treatment_plan import build_treatment_checklist
         checklist = build_treatment_checklist(user, day=day)
         embed.add_field(name='Treatment plan', value=checklist, inline=False)
@@ -237,15 +240,17 @@ class Rpg(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             from engine.activity_exhaustion import clear_activity_fatigue
+            from config import ENERGY_LONG_REST_GAIN
             rest = apply_long_rest_benefits(user, season=world['season'] if world and 'season' in world.keys() else None)
             clear_activity_fatigue(user, day)
             mark_manual_long_rest(user, day)
             db.set_user_conditions(interaction.user.id, hp=rest['hp'], exhaustion=rest['exhaustion'], last_rest_day=day, herb_heals_today=0)
             db.update_user(interaction.user.id, wolf_id=user['id'], mood=rest['mood'])
+            new_energy = db.adjust_energy(user['id'], ENERGY_LONG_REST_GAIN)
             mood_gain = rest['mood'] - int(user['mood'])
             hp_gain = rest['hp'] - int(user['hp'])
             ex_drop = int(user['exhaustion']) - rest['exhaustion']
-            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
+            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + f"\nEnergy **+{ENERGY_LONG_REST_GAIN}** (now {new_energy})." + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
             return
         if herb_heal_limit_reached(user):
@@ -262,7 +267,7 @@ class Rpg(commands.Cog):
             heal = random.randint(1, 4) + 1
             db.consume_item(interaction.user.id, item['id'])
         from engine.activity_exhaustion import clear_activity_fatigue
-        from config import SHORT_REST_EXHAUSTION_RELIEF
+        from config import ENERGY_SHORT_REST_GAIN, SHORT_REST_EXHAUSTION_RELIEF
         new_hp = min(user['max_hp'], user['hp'] + heal) if heal else user['hp']
         clear_activity_fatigue(user, day)
         old_exhaustion = int(user['exhaustion']) if 'exhaustion' in user.keys() else 0
@@ -272,9 +277,11 @@ class Rpg(commands.Cog):
         if new_exhaustion != old_exhaustion:
             ex_note = f" Exhaustion **−{old_exhaustion - new_exhaustion}** (now {new_exhaustion})."
         db.set_user_conditions(interaction.user.id, **fields)
+        new_energy = db.adjust_energy(user['id'], ENERGY_SHORT_REST_GAIN)
+        ex_note += f" Energy **+{ENERGY_SHORT_REST_GAIN}** (now {new_energy})."
         msg = 'Short rest.' + (f" Comfrey healed **{heal} HP** (now {new_hp}/{user['max_hp']})." if heal else ' No herb used.') + ex_note
         if old_exhaustion == 0:
-            msg += f' _(No exhaustion to clear. Clears activity strain; HP recovery needs comfrey.)_'
+            msg += ' _(No exhaustion to clear. Clears activity strain; HP recovery needs comfrey.)_'
         else:
             msg += f' _(Clears activity strain; reduces exhaustion by {SHORT_REST_EXHAUSTION_RELIEF} per rest. HP recovery needs comfrey.)_'
         embed = howlbert_embed('Short Rest', msg, color=SUCCESS_COLOR)

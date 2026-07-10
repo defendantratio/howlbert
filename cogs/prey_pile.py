@@ -111,7 +111,7 @@ class PreyWolfSelect(discord.ui.Select):
         self.pile_id = pile_id
         self.choice = choice
         options = [discord.SelectOption(label=choice_label(w['wolf_name']), value=str(w['id']), description='respond as this wolf') for w in wolves[:25]]
-        super().__init__(placeholder='Which wolf responds?', options=options, min_values=1, max_values=1)
+        super().__init__(placeholder='which wolf responds?', options=options, min_values=1, max_values=1)
 
     async def callback(self, interaction: discord.Interaction):
         wolf_id = int(self.values[0])

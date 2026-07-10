@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 
 import database as db
 from config import ACTIVITY_FATIGUE_CROSS_TOTAL_THRESHOLD

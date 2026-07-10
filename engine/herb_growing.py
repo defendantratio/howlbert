@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from config import SEASONS
 from herbs import HERBS
 
 # Light needs

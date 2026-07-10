@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import database as db
 from engine.pack_relations import (
     can_aid_rival,
     can_join_friendly_pack_hunt,

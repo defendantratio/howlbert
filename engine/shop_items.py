@@ -74,7 +74,7 @@ def roll_herb_bundle_grants() -> list[tuple[str, str]]:
 
 def grant_herb_bundle(discord_id: int) -> tuple[list[str], str]:
     """Grant random herbs to inventory. Returns (item keys, summary line)."""
-    from herbs import HERBS, herb_inventory_key
+    from herbs import herb_inventory_key
 
     grants = roll_herb_bundle_grants()
     if not grants:
@@ -110,7 +110,6 @@ def use_herb_bundle(user, discord_id: int) -> tuple[bool, str, dict]:
 
 def roll_prey_bundle_grants() -> list[str]:
     """random prey keys for a prey bundle; mostly small game."""
-    from engine.prey_items import PREY_CATALOG
 
     count = random.randint(2, 3)
     small = ("vole", "hare", "rabbit", "fish", "grouse", "agouti")

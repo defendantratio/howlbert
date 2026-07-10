@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from engine.character import attr_modifier, compute_max_hp, format_max_hp_breakdown
+from engine.character import compute_max_hp, format_max_hp_breakdown
 
 # --- Combat NPC stat blocks ---
 

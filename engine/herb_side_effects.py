@@ -1,3 +1,4 @@
+# herb_side_effects.py
 """Herb side-effect engine.
 
 Turns the previously cosmetic ``side_effects`` compendium text into real,

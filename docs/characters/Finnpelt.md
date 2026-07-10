@@ -48,15 +48,31 @@ Born to high-ranking warrior during bitter starvation; weak drag down the whole,
 
 
 
-See registered traits on wolf_id 94 for mechanical bonuses.
+Fighting (Strength +4): Crushing presence and armor-like resilience; anchors any line he holds.
+
+Intimidation (Charisma +4): Commands respect through sheer presence, not ceremony.
+
+Border Patrol (Survival +3): Holds the Greyspire border for days so younger hunters can sleep.
 
 
 
-## Statistics (Total: 32; Hunter range)
+## Weaknesses
 
 
 
-Strength: 7 (+2)  
+**Emotionally Oblivious (Wisdom -2):** Fails to register others' fear or feeling; reads only the tactical situation.
+
+**Inflexible and Strict (Charisma -2):** Believes every gear must turn perfectly; unbending on duty and patrol.
+
+**Haunted by the Lost Crown (Wisdom -2):** Struggles with no longer wearing the crown; still enforces dark rules the Alpha cannot speak.
+
+
+
+## Statistics (Total: 32; former Alpha, alpha range 30 to 35)
+
+
+
+Strength: 7 (+1)  
 
 Dexterity: 4 (-1)  
 
@@ -64,7 +80,7 @@ Survival: 5 (0)
 
 Intelligence: 5 (0)  
 
-Charisma: 8 (+3)  
+Charisma: 8 (+2)  
 
 Wisdom: 3 (-2)
 

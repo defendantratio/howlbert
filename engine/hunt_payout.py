@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from engine.hunt import hunt_flavor_for_prey
-from engine.prey_items import canonical_prey_bones, prey_key_from_hunt_amount, prey_meta
+from engine.prey_items import canonical_prey_bones, prey_key_from_hunt_amount
 
 
 def prey_key_for_payout(payout: int, user=None, *, season: str | None = None) -> str:

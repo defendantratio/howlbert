@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import database as db
 from engine.combat_hazards import (
     grant_field_injury,
     resolve_combat_hazard,

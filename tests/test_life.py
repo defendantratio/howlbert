@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import database as db
-from engine.blooding import award_blooding_on_hunt, blooding_gate_message, is_unblooded_juvenile
+from engine.blooding import blooding_gate_message, is_unblooded_juvenile
 from engine.courtship import suggest_court_difficulty
 from engine.youth_lineage import parse_litter_names
 

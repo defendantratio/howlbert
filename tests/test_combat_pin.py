@@ -10,7 +10,6 @@ from engine.combat_status import (
     apply_maneuver_pin_effects,
     attack_target_block,
     attacker_roll_modifiers,
-    clear_fighter_pin,
     is_holding_pin,
     maneuver_pin_block,
     parse_combat_flags,

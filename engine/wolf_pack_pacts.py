@@ -565,18 +565,17 @@ def trade_duplicates_wolf_pack_pact(
         return False, detail
 
     from config import WOLF_PACT_DUP_STANDING_MAX
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    trade_mult, trade_n = next_use_multiplier(user, "duplicate_trade", day)
+    _new_energy, _had_energy, trade_penalty = spend_energy(user, "duplicate_trade")
     standing_gain = min(WOLF_PACT_DUP_STANDING_MAX, max(1, bundle.total_items // 4))
-    standing_gain = max(1, int(standing_gain * trade_mult))
     standing = db.adjust_pack_relation(guild_id, pack["id"], other["id"], standing_gain)
     db.update_user(user["discord_id"], last_duplicate_trade_day=day, wolf_id=user["id"])
 
     from engine.wolf_pact_goods import barter_loot_count, grant_wolf_pact_loot, roll_wolf_pact_loot
 
     treaty = _active_wolf_treaty(pack["id"], other["id"])
-    loot_count = max(0, int(barter_loot_count(bundle.total_items, standing=standing) * trade_mult))
+    loot_count = barter_loot_count(bundle.total_items, standing=standing)
     loot_lines: list[str] = []
     if loot_count > 0 and treaty:
         entries = roll_wolf_pact_loot(
@@ -585,7 +584,7 @@ def trade_duplicates_wolf_pack_pact(
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_no goods this time._"
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
-    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
+    dim = f"\n\n_{trade_penalty}_" if trade_penalty else ""
     return True, (
         f"**{other_name}** scouts take your duplicate hoard at the neutral stone.\n"
         f"standing **+{standing_gain}** (now **{standing}/10**).\n\n"
@@ -619,9 +618,9 @@ def trade_food_wolf_pack_pact(
     if uses_left <= 0:
         return False, "there's nothing left of that to trade."
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    trade_mult, trade_n = next_use_multiplier(user, "wolf_pact_food_trade", day)
+    _new_energy, _had_energy, trade_penalty = spend_energy(user, "wolf_pact_food_trade")
 
     meta = prey_meta(stack["prey_key"])
     if is_forage_food(stack["prey_key"]):
@@ -640,9 +639,6 @@ def trade_food_wolf_pack_pact(
         loot_count = max(1, min(3, bone_value // 15))
         flavor = f"fresh-kill shared with **{GREAT_PACKS.get(other['key'], {}).get('name', other['name'])}**."
 
-    standing_gain = max(1, int(standing_gain * trade_mult))
-    loot_count = int(loot_count * trade_mult)
-
     db.remove_prey_stack(stack_id)
     standing = db.adjust_pack_relation(guild_id, pack["id"], other["id"], standing_gain)
     db.update_user(user["discord_id"], last_cat_food_trade_day=day, wolf_id=user["id"])
@@ -654,7 +650,7 @@ def trade_food_wolf_pack_pact(
         entries = roll_wolf_pact_loot(other["key"], pact_type=treaty["pact_type"], count=loot_count)
         loot_lines = grant_wolf_pact_loot(user, guild_id=guild_id, day=day, entries=entries)
     loot_block = "\n".join(f"• {line}" for line in loot_lines) if loot_lines else "_they send nothing back this time._"
-    dim = f"\n\n_{diminishing_note(trade_n)}_" if trade_n > 1 else ""
+    dim = f"\n\n_{trade_penalty}_" if trade_penalty else ""
     return True, (
         f"{flavor}\nstanding **+{standing_gain}** (now **{standing}/10**).\n\n"
         f"**you gave up:** {meta['name']} ({uses_left} use(s))\n\n"
@@ -682,11 +678,11 @@ def receive_wolf_pack_goods(
             f"(need **{WOLF_PACT_RECEIVE_MIN_STANDING}**). gift, barter, or share territory first."
         )
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
     from engine.wolf_pact_goods import grant_wolf_pact_loot, receive_loot_count, roll_wolf_pact_loot
 
-    receive_mult, receive_n = next_use_multiplier(user, "wolf_receive", day)
-    count = int(receive_loot_count(standing, treaty["pact_type"]) * receive_mult)
+    _new_energy, _had_energy, receive_penalty = spend_energy(user, "wolf_receive")
+    count = receive_loot_count(standing, treaty["pact_type"])
     if count <= 0:
         return False, "standing is too low for border gifts."
 
@@ -695,7 +691,7 @@ def receive_wolf_pack_goods(
     db.update_user(user["discord_id"], last_wolf_receive_day=day, wolf_id=user["id"])
     other_name = GREAT_PACKS.get(other["key"], {}).get("name", other["name"])
     body = "\n".join(f"• {line}" for line in lines)
-    dim = f"\n\n_{diminishing_note(receive_n)}_" if receive_n > 1 else ""
+    dim = f"\n\n_{receive_penalty}_" if receive_penalty else ""
     return True, (
         f"**{other_name}** left goods at the neutral stone (standing **{standing}**).\n\n"
         f"{body}{dim}\n\n_barter duplicates with `action:trade`_"

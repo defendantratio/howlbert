@@ -44,10 +44,11 @@ def hunts_remaining_today(user, day: int) -> int:
 
 
 def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
-    """Footer fragment: N hunt(s) left this sunrise."""
-    left = hunts_remaining_today(user, day)
-    noun = "hunt" if left == 1 else "hunts"
-    core = f"{left} {noun} left this sunrise"
+    """Footer fragment: current energy, hunting never hard-caps."""
+    from config import ENERGY_MAX
+    from engine.energy import current_energy
+
+    core = f"energy {current_energy(user)}/{ENERGY_MAX}"
     if role_prefix and is_hunter(user):
         return f"hunter: {core}"
     return core
@@ -110,13 +111,6 @@ def can_rescout_again(user, day: int) -> bool:
     return rescout_uses_remaining(user, day) > 0
 
 
-def can_hunt_again(user, day: int) -> bool:
-    """hunters get hunter_hunts_per_sunrise per sunrise; others once."""
-    if is_hunter(user):
-        return hunts_used_today(user, day) < HUNTER_HUNTS_PER_SUNRISE
-    return int(user["last_hunt_day"]) < day
-
-
 def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
     """Territory forage roll: trained gatherers use Herblore; others use Survival."""
     prof_set = set(profs) if profs is not None else set()
@@ -136,23 +130,23 @@ def forage_check_params(user, profs) -> tuple[tuple[str, str], str, str, bool]:
 
 
 def forage_sunrise_footer(user, *, success_hint: bool = False) -> str:
-    """Footer after a territory forage attempt (full foragers may go again)."""
+    """Footer after a territory forage attempt (full foragers pay less energy)."""
     if is_full_forager(user):
-        base = "Forager · forage again this sunrise · fatigue still applies"
+        base = "Forager · forage again this sunrise · discounted energy cost"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if is_forager(user):
-        base = "forager apprentice · forage again this sunrise; dc climbs each repeat"
+        base = "forager apprentice · forage again this sunrise; costs energy"
         if success_hint:
             return f"in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · {base}"
         return base
     if success_hint:
         return (
             "in `/bones action:inventory` · `/medic action:treat herb:herb_arnica` · "
-            "forage again this sunrise; dc climbs each repeat"
+            "forage again this sunrise; costs energy"
         )
-    return "forage again this sunrise; dc climbs each repeat."
+    return "forage again this sunrise; costs energy."
 
 
 def herb_heal_limit_reached(user) -> bool:

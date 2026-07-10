@@ -11,7 +11,7 @@ from engine.donor import apply_donation_grant, create_donation_code, donor_statu
 from engine.kofi_shop import fulfill_shop_order, list_pending_shop_orders
 from engine.kofi_webhook import start_kofi_webhook, stop_kofi_webhook
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 from utils.permissions import is_howlbert_admin
 logger = logging.getLogger('howlbert.patron')
 

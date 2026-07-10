@@ -153,22 +153,20 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         append_fatigue_to_footer(embed, survey_fatigue)
         return embed
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    survey_mult, survey_n = next_use_multiplier(user, "survey", day)
+    _new_energy, _had_energy, survey_penalty = spend_energy(user, "survey")
 
     bones = random.randint(*SCOUT_SURVEY_BONES)
     if result["outcome"] == "critical_success":
         bones += 8
     bones += survey_victim_bone_bonus(user, interaction.guild.id, day)
-    bones = max(1, int(bones * survey_mult))
     db.add_bones(interaction.user.id, bones, wolf_id=user["id"])
     standing = 2 if result["outcome"] == "critical_success" else 1
     from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
 
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     standing += plot_thistlehide_patrol_standing_bonus(interaction.guild.id, gp, user=user)
-    standing = max(1, int(standing * survey_mult))
     db.adjust_wolf_standing(interaction.user.id, standing)
     db.increment_quest_progress(interaction.user.id, "survey", guild_id=interaction.guild.id)
     db.increment_quest_progress(interaction.user.id, "patrol", guild_id=interaction.guild.id)
@@ -189,8 +187,7 @@ def try_scout_survey(interaction) -> discord.Embed | None:
         extra += f"\n_{shift_note}_"
     if witness:
         extra += witness
-    dim = diminishing_note(survey_n)
-    dim_extra = f"\n_{dim}_" if dim else ""
+    dim_extra = f"\n_{survey_penalty}_" if survey_penalty else ""
     embed = howlbert_embed(
         "🗺️ survey",
         format_roll_result(result)
@@ -223,9 +220,9 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     if vitals_block:
         return howlbert_embed("cannot trail", vitals_block, color=ERROR_COLOR)
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
-    trail_mult, trail_n = next_use_multiplier(user, "trail", day)
+    _new_energy, _had_energy, trail_penalty = spend_energy(user, "trail")
 
     profs = parse_proficiencies(user["skill_proficiencies"])
     result = resolve_check(
@@ -279,7 +276,6 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     bones = random.randint(*SCOUT_TRAIL_BONES)
     if result["outcome"] == "critical_success":
         bones += 10
-    bones = max(1, int(bones * trail_mult))
     db.add_bones(interaction.user.id, bones, wolf_id=user["id"])
     db.increment_quest_progress(interaction.user.id, "trail")
 
@@ -288,7 +284,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
         keys, weights = zip(*TRAIL_PREY)
         loot = random.choices(keys, weights=weights, k=1)[0]
         if loot == "bones":
-            extra = max(1, int(random.randint(4, 10) * trail_mult))
+            extra = random.randint(4, 10)
             db.add_bones(interaction.user.id, extra, wolf_id=user["id"])
             prey_line = f"\n**sign cache**; +{extra} bones tucked under stone."
         else:
@@ -306,8 +302,7 @@ def try_scout_trail(interaction) -> discord.Embed | None:
     intel = ""
     if random.random() < (0.45 if result["outcome"] == "critical_success" else 0.25):
         intel = f"\n_{random.choice(TRAIL_INTEL)}_"
-    dim = diminishing_note(trail_n)
-    dim_extra = f"\n_{dim}_" if dim else ""
+    dim_extra = f"\n_{trail_penalty}_" if trail_penalty else ""
     embed = howlbert_embed(
         "👣 trail",
         format_roll_result(result)

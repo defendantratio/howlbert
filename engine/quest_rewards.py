@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from config import QUEST_SKILL_REWARDS, QUEST_XP_REWARDS
-from rpg_rules import SKILLS, SKILL_RANK_BONUS
+from rpg_rules import SKILLS
 from utils.currency import format_bones
 
 

@@ -11,7 +11,6 @@ from engine.herb_buffs import (
     disease_save_uses_advantage,
     flea_ward_active,
     get_buffs,
-    grant_flea_ward,
     grant_frostbite,
     herb_storage_multiplier,
     pain_relief_active,

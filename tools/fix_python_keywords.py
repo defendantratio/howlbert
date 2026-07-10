@@ -1,7 +1,6 @@
 """Restore Python True/False/None after mistaken lowercase pass in code (not strings)."""
 from __future__ import annotations
 
-import re
 import tokenize
 from io import BytesIO
 from pathlib import Path

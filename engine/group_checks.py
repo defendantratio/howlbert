@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 
 from engine.dice import format_roll_result, resolve_check
 from engine.character import is_skill_proficient

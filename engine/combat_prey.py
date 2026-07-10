@@ -5,7 +5,6 @@ from __future__ import annotations
 import database as db
 from engine.hunt_combat import is_hunt_prey_encounter
 from engine.hunt_payout import grant_prey_carcass_canonical
-from engine.prey_items import prey_meta
 
 # Bestiary template key -> food hoard key (large_prey handled by hunt_combat).
 # Every bestiary NPC drops something; anything not listed explicitly here
@@ -85,7 +84,6 @@ def try_grant_combat_kill_carcass(
         day=day,
         prey_key=prey_key,
     )
-    meta = prey_meta(prey_key)
     note = f"**{name}** dragged to your hoard (`/food`)."
     if prey_key == "wolf_carcass":
         note += (

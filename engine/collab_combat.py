@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import random
 
 import database as db
-from engine.bestiary import stats_for_fighter
-from engine.character import attr_modifier
-from engine.combat import roll_initiative
 
 COLLAB_ASSIST_PER_ALLY = 1
 COLLAB_ASSIST_CAP = 3

@@ -121,23 +121,23 @@ def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     returns (reward lines, whether blessings were applied).
     """
     import database as db
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
     from engine.herb_buffs import merge_buff_fields
 
-    sacred_mult, sacred_n = next_use_multiplier(user, "sacred_visit", day)
+    _new_energy, _had_energy, sacred_penalty = spend_energy(user, "sacred_visit")
 
     lines: list[str] = []
-    standing_gain = max(1, int(SACRED_STANDING_GAIN * sacred_mult))
+    standing_gain = SACRED_STANDING_GAIN
     db.adjust_wolf_standing_by_id(user["id"], standing_gain, triggered_day=day)
     lines.append(f"**+{standing_gain} standing**")
 
-    mood_gain = max(1, int(SACRED_MOOD_GAIN * sacred_mult))
+    mood_gain = SACRED_MOOD_GAIN
     mood = db.adjust_mood(user["id"], mood_gain)
     lines.append(f"**+{mood_gain} mood** (now **{mood}**)")
 
     pack_id = user["pack_id"] if "pack_id" in user.keys() else None
     if pack_id:
-        unity_gain = max(1, int(SACRED_PACK_UNITY_GAIN * sacred_mult))
+        unity_gain = SACRED_PACK_UNITY_GAIN
         db.adjust_pack_unity(int(pack_id), unity_gain)
         lines.append(f"**+{unity_gain} pack unity**")
 
@@ -151,9 +151,8 @@ def apply_sacred_visit_blessings(user, *, day: int) -> tuple[list[str], bool]:
     lines.append(
         f"next **medicine/herblore** check **+{SACRED_MEDICINE_BONUS}**"
     )
-    dim = diminishing_note(sacred_n)
-    if dim:
-        lines.append(f"_{dim}_")
+    if sacred_penalty:
+        lines.append(f"_{sacred_penalty}_")
     return lines, True
 
 

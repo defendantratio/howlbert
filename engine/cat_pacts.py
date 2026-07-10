@@ -705,16 +705,12 @@ def receive_cat_goods(
         )
 
     from engine.cat_clan_goods import grant_clan_loot, receive_loot_count, roll_clan_loot
-    from engine.diminishing import use_count_today, record_use
+    from engine.energy import spend_energy
 
     count = receive_loot_count(trust, pact["pact_type"])
-    _recv_repeat = use_count_today(user, "cat_receive", day)
-    record_use(user, "cat_receive", day)
-    if _recv_repeat > 0:
-        # the clan already shared today; a second ask the same sunrise gets scraps
-        count = max(1, count - _recv_repeat) if count > 0 else 0
     if count <= 0:
-        return False, "trust is too low for border gifts, or the clan has nothing more to spare today."
+        return False, "trust is too low for border gifts."
+    _new_energy, _had_energy, cat_receive_penalty = spend_energy(user, "cat_receive")
 
     loot_entries = roll_clan_loot(
         stored_clan, pact_type=pact["pact_type"], count=count
@@ -738,11 +734,12 @@ def receive_cat_goods(
         if omen:
             new_mood = db.adjust_mood(user["id"], CAT_PACT_STARCLAN_MOOD)
             starclan_note = f"\n\n_{omen}_\n**+{CAT_PACT_STARCLAN_MOOD} mood** (now **{new_mood}**)."
+    penalty_note = f"\n\n_{cat_receive_penalty}_" if cat_receive_penalty else ""
     return True, (
         f"{flavor} (**{pact_label}**, trust **{trust}**).\n\n"
-        f"{body}\n\n"
-        "_one collection per wolf per sunrise. barter duplicates with `action:trade`._"
+        f"{body}"
         f"{starclan_note}"
+        f"{penalty_note}"
     )
 
 

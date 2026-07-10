@@ -3,17 +3,17 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 import database as db
-from config import COLLAB_PATROL_MAX_WOLVES, COLLAB_PATROL_MIN_WOLVES
+from config import COLLAB_PATROL_MIN_WOLVES
 from engine.collab_patrol import build_collab_patrol_embed, try_set_out_collab_patrol, validate_join_collab_patrol, validate_start_collab_patrol, wolves_eligible_to_join_patrol
 from utils.combat_views import make_combat_view
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 
 class PatrolWolfSelect(discord.ui.Select):
 
     def __init__(self, patrol_id: int, wolves: list):
         options = [discord.SelectOption(label=w['wolf_name'], value=str(w['id'])) for w in wolves[:25]]
-        super().__init__(placeholder='Which scout joins?', min_values=1, max_values=1, options=options)
+        super().__init__(placeholder='which scout joins?', min_values=1, max_values=1, options=options)
         self.patrol_id = patrol_id
 
     async def callback(self, interaction: discord.Interaction):
@@ -35,7 +35,7 @@ def make_collab_patrol_view(patrol_id: int) -> discord.ui.View:
     patrol = db.get_collab_patrol(patrol_id)
     trail = patrol and 'patrol_kind' in patrol.keys() and (patrol['patrol_kind'] == 'trail')
     war = patrol and 'patrol_kind' in patrol.keys() and (patrol['patrol_kind'] == 'war_patrol')
-    join_label = 'Join war patrol' if war else 'Join trail' if trail else 'Join patrol'
+    join_label = 'join war patrol' if war else 'join trail' if trail else 'join patrol'
 
     async def join_cb(interaction: discord.Interaction, *, pid=patrol_id):
         await CollabPatrolCog.handle_join(interaction, pid)
@@ -47,9 +47,9 @@ def make_collab_patrol_view(patrol_id: int) -> discord.ui.View:
         await CollabPatrolCog.handle_cancel(interaction, pid)
     join_btn = discord.ui.Button(label=join_label, style=discord.ButtonStyle.secondary, emoji='🐾' if trail else '👣', custom_id=f'howlbert_patrol:{patrol_id}:join')
     join_btn.callback = join_cb
-    go_btn = discord.ui.Button(label='Set out', style=discord.ButtonStyle.success, emoji='🗺️', custom_id=f'howlbert_patrol:{patrol_id}:go')
+    go_btn = discord.ui.Button(label='set out', style=discord.ButtonStyle.success, emoji='🗺️', custom_id=f'howlbert_patrol:{patrol_id}:go')
     go_btn.callback = go_cb
-    cancel_btn = discord.ui.Button(label='Cancel', style=discord.ButtonStyle.danger, custom_id=f'howlbert_patrol:{patrol_id}:cancel')
+    cancel_btn = discord.ui.Button(label='cancel', style=discord.ButtonStyle.danger, custom_id=f'howlbert_patrol:{patrol_id}:cancel')
     cancel_btn.callback = cancel_cb
     view.add_item(join_btn)
     view.add_item(go_btn)
@@ -58,8 +58,8 @@ def make_collab_patrol_view(patrol_id: int) -> discord.ui.View:
 
 def _disabled_view(*, trail: bool=False, war: bool=False) -> discord.ui.View:
     view = discord.ui.View(timeout=None)
-    join_label = 'Join war patrol' if war else 'Join trail' if trail else 'Join patrol'
-    for label in (join_label, 'Set out', 'Cancel'):
+    join_label = 'join war patrol' if war else 'join trail' if trail else 'join patrol'
+    for label in (join_label, 'set out', 'cancel'):
         view.add_item(discord.ui.Button(label=label, style=discord.ButtonStyle.secondary, disabled=True))
     return view
 

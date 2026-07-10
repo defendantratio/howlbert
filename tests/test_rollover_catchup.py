@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import database as db
 from config import ROLLOVER_HOUR, ROLLOVER_MINUTE, ROLLOVER_TIMEZONE

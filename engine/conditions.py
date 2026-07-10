@@ -1,10 +1,10 @@
 import json
 import random
 
-from engine.character import attr_modifier, parse_proficiencies
+from engine.character import attr_modifier
 from engine.exhaustion_effects import effective_max_hp
 from engine.rolls import roll_d20
-from herbs import EXHAUSTION_EFFECTS, INJURIES, INJURY_TABLE
+from herbs import EXHAUSTION_EFFECTS, INJURIES, INJURY_TABLE, SEVERE_INJURY_TABLE
 
 def parse_injuries(raw: str | None) -> list[str]:
     if not raw:
@@ -177,6 +177,11 @@ def roll_injury() -> str:
     return INJURY_TABLE[roll - 1]
 
 
+def roll_severe_injury() -> str:
+    """roll on the severe injury table (critical hits outside spine_bite)."""
+    return random.choice(SEVERE_INJURY_TABLE)
+
+
 def injury_roll_label(key: str) -> str:
     info = INJURIES.get(key)
     if not info:
@@ -314,9 +319,14 @@ def progress_injuries(user, *, day: int | None = None) -> dict:
     }
 
     if "deep_gash" in injuries:
+        from engine.herb_buffs import bleed_dressed_active
+
         result["changed"] = True
-        result["hp_loss"] += 1
-        result["messages"].append("**Deep Gash**; bleeding costs **1 HP** until bandaged.")
+        if bleed_dressed_active(user, day):
+            result["messages"].append("**Deep Gash**; field-dressed, no bleeding this sunrise.")
+        else:
+            result["hp_loss"] += 1
+            result["messages"].append("**Deep Gash**; bleeding costs **1 HP** until bandaged.")
 
     if "infected_wound" in injuries:
         from engine.herb_buffs import infection_ward_active
@@ -349,7 +359,7 @@ def progress_injuries(user, *, day: int | None = None) -> dict:
 def progress_disease(user) -> dict:
     """daily disease progression roll. returns outcome dict."""
     from engine.diseases import encode_disease, get_stage_info, parse_disease
-    from engine.herb_buffs import consume_disease_save_after_roll, roll_disease_save_die
+    from engine.herb_buffs import roll_disease_save_die
 
     raw = user["disease"] if "disease" in user.keys() else None
     disease_key, stage = parse_disease(raw)

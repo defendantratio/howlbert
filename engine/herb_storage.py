@@ -1,3 +1,4 @@
+# herb_storage.py
 """Herb inventory helpers (foraged herbs live in `/bones action:inventory`)."""
 
 from __future__ import annotations
@@ -6,12 +7,10 @@ import database as db
 from config import (
     HERB_DRIED_STORAGE_DAYS,
     HERB_FRESH_DRY_DAYS,
-    HERB_PREPARED_FORMS,
     HERB_PREPARED_STORAGE_DAYS,
 )
 from engine.herb_buffs import herb_storage_multiplier
-from engine.herb_properties import form_label
-from herbs import HERBS, herb_inventory_key
+from herbs import herb_inventory_key
 
 
 def effective_storage_limits(user, day: int) -> tuple[int, int, int]:

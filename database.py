@@ -4122,8 +4122,6 @@ def register_user(
     genetic_conditions: str | None = None,
     maw_belief: str | None = None,
 ) -> int:
-    import json
-
     from engine.aging import proficiencies_for_role, resolve_register_age, sync_role_to_age
     from rpg_rules import ROLE_PROFICIENCIES
     from engine.character import compute_max_hp, default_stats_for_role
@@ -5171,7 +5169,7 @@ def get_completed_quest_count(discord_id: int) -> int:
 
 def retire_wolf(discord_id: int) -> tuple[int, int] | None:
     """Returns (legacy_gained, new_prestige_tier) or None if not registered."""
-    from engine.prestige import legacy_from_retirement, calculate_tier
+    from engine.prestige import legacy_from_retirement
 
     user = get_user(discord_id)
     if not user:
@@ -5866,7 +5864,7 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
             clear_blood_loss = tick_fields.pop("_clear_blood_loss", False)
             if clear_blood_loss:
                 import json as _jbl
-                from engine.conditions import parse_injuries as _pibll, add_injury as _aibll
+                from engine.conditions import parse_injuries as _pibll
                 _inj_raw = user["active_injuries"] if "active_injuries" in user.keys() else None
                 _injs = _pibll(_inj_raw)
                 if "blood_loss" in _injs:
@@ -5875,11 +5873,13 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                         "UPDATE users SET active_injuries = ?, max_hp = MAX(1, max_hp + 1) WHERE id = ?",
                         (_jbl.dumps(_injs), user["id"]),
                     )
-                    from engine.conditions import clear_injury_since as _cisbl
+            from config import ENERGY_LONG_REST_GAIN, ENERGY_MAX
+
             conn.execute(
                 """
                 UPDATE users
                 SET hp = ?, exhaustion = ?, mood = ?,
+                    energy = MIN(?, energy + ?),
                     herb_heals_today = 0, herb_treats_today = 0,
                     last_rest_day = ?,
                     jaw_meal_shield = 0, smoke_debuff = 0, cough_suppressed = 0,
@@ -5891,6 +5891,8 @@ def _long_rest_all_wolves_on_rollover(day_number: int, *, season: str | None = N
                     rest_hp,
                     rest_exhaustion,
                     rest["mood"],
+                    ENERGY_MAX,
+                    ENERGY_LONG_REST_GAIN,
                     day_number,
                     tick_fields.get(
                         "disease_save_buff",
@@ -6025,6 +6027,9 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         from engine.vitals import apply_needs_crisis_on_rollover, apply_needs_exhaustion_on_rollover
 
         with get_db() as conn:
+            from engine.energy import regen_energy_on_rollover
+
+            regen_energy_on_rollover(conn)
             vitals_exhaustion = apply_needs_exhaustion_on_rollover(conn)
             mood_exhaustion = apply_mood_exhaustion_on_rollover(conn)
             clamp_hp_for_exhaustion_on_rollover(conn)
@@ -6201,10 +6206,21 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             needs_crisis.setdefault("den_news", {}).setdefault("pack_events", []).extend(bond_news)
         from engine.long_term_injuries import (
             LONG_TERM_TYPES,
+            apply_injury_complications_on_rollover,
             convert_untreated_injuries_on_rollover,
         )
 
+        injury_complications = apply_injury_complications_on_rollover(conn, new_day)
         chronic_conversions = convert_untreated_injuries_on_rollover(conn, new_day)
+    if injury_complications:
+        from herbs import INJURIES
+
+        for wolf_id, wolf_name, injury_key, complication_key in injury_complications:
+            label = INJURIES.get(complication_key, {}).get("name", complication_key)
+            needs_crisis.setdefault("season_notes", []).append(
+                f"**{wolf_name}**'s untreated {injury_key.replace('_', ' ')} has worsened; "
+                f"**{label}** sets in."
+            )
     if chronic_conversions:
         for wolf_id, wolf_name, injury_key, target in chronic_conversions:
             label = LONG_TERM_TYPES.get(target, {}).get("label", target)
@@ -6250,7 +6266,7 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                     conn.execute("UPDATE users SET quarantined = 0 WHERE id = ?", (user["id"],))
                     # Post-recovery immunity: 7 sunrises before the same disease can re-infect.
                     if day and outcome.get("disease_key"):
-                        from engine.herb_buffs import get_buffs as _gbimm, merge_buff_fields as _mbfimm
+                        from engine.herb_buffs import merge_buff_fields as _mbfimm
                         _imm_key = f"immune_until_{outcome['disease_key']}"
                         _imm_fields = _mbfimm(user, **{_imm_key: day + 7})
                         conn.execute(
@@ -6395,7 +6411,7 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
             if outcome.get("exhaustion_gain"):
                 gain = outcome["exhaustion_gain"]
                 gain, _ = consume_march_exhaustion_skip(conn, user, gain)
-                from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_PI, PAIN_EXHAUSTION_MAX as _PEXMAX_PI, consume_pain_exhaustion_skip
+                from engine.exhaustion_effects import EXHAUSTION_MAX as _EXMAX_PI, consume_pain_exhaustion_skip
 
                 gain, _ = consume_pain_exhaustion_skip(conn, user, gain)
                 if gain:
@@ -9402,8 +9418,14 @@ def resolve_combat_encounter(
     require_membership: bool = False,
     joinable_only: bool = False,
     require_recruiting: bool = False,
+    wolf_id: int | None = None,
 ) -> tuple[sqlite3.Row | None, str | None]:
-    """Pick the fight a command should target. Returns (encounter, error_message)."""
+    """Pick the fight a command should target. Returns (encounter, error_message).
+
+    `wolf_id`, when given, scopes `joinable_only`'s "already there" check to that
+    specific wolf rather than the whole account, so a second wolf on the same
+    account can join a fight a packmate is already in (self-owned-wolf combat).
+    """
 
     def _fresh(enc_id: int) -> sqlite3.Row | None:
         reconcile_encounter_if_broken(enc_id)
@@ -9411,6 +9433,11 @@ def resolve_combat_encounter(
         if enc and enc["status"] in ("recruiting", "active"):
             return enc
         return None
+
+    def _already_joined(enc_id: int) -> bool:
+        if wolf_id is not None:
+            return wolf_in_encounter(enc_id, wolf_id)
+        return bool(discord_id) and player_in_encounter(enc_id, discord_id)
 
     if encounter_id is not None:
         enc = get_encounter(encounter_id)
@@ -9421,7 +9448,7 @@ def resolve_combat_encounter(
             return None, f"Fight **#{encounter_id}** is not open."
         if require_membership and discord_id and not player_in_encounter(enc["id"], discord_id):
             return None, f"You're not in fight **#{encounter_id}**."
-        if joinable_only and discord_id and player_in_encounter(enc["id"], discord_id):
+        if joinable_only and _already_joined(enc["id"]):
             return None, "You're already in that fight."
         if require_recruiting and enc["status"] != "recruiting":
             return None, f"Fight **#{encounter_id}** has already begun; `/combat join` still works mid-fight."
@@ -9431,8 +9458,8 @@ def resolve_combat_encounter(
     if not active:
         return None, "No open fights here. `/combat start` opens a new one."
 
-    if joinable_only and discord_id:
-        candidates = [e for e in active if not player_in_encounter(e["id"], discord_id)]
+    if joinable_only and (discord_id or wolf_id is not None):
+        candidates = [e for e in active if not _already_joined(e["id"])]
         if require_recruiting:
             candidates = [e for e in candidates if e["status"] == "recruiting"]
         if not candidates:
@@ -9507,7 +9534,6 @@ def setup_hunt_prey_encounter(
     prey_name: str,
 ) -> int:
     """Create an active hunt fight vs large prey (deer/elk)."""
-    import json
     import random
 
     from engine.bestiary import stats_for_fighter
@@ -9842,10 +9868,18 @@ def player_in_encounter(encounter_id: int, discord_id: int) -> bool:
     )
 
 
+def wolf_in_encounter(encounter_id: int, wolf_id: int) -> bool:
+    """Wolf-level membership check; lets a second wolf on the same account
+    join a fight its packmate is already in (self-owned-wolf combat)."""
+    return any(
+        f
+        for f in get_combat_fighters(encounter_id)
+        if f["wolf_id"] == wolf_id and not f["npc_name"]
+    )
+
+
 def rebuild_encounter_initiative(encounter_id: int) -> None:
     """Re-roll initiative for every fighter and restart turn order."""
-    import json
-
     from engine.bestiary import stats_for_fighter
     from engine.character import attr_modifier
     from engine.combat import roll_initiative
@@ -11017,8 +11051,6 @@ def register_born_wolf(
     genetic_conditions: str | None = None,
     father_hidden: bool = False,
 ) -> int:
-    import json
-
     from engine.aging import proficiencies_for_role, sync_role_to_age
     from engine.character import compute_max_hp
     from engine.role_restrictions import PUP_ROLE
@@ -11455,10 +11487,10 @@ def decay_stalled_mentorships_on_rollover(conn, current_day: int) -> list[tuple[
     for row in rows:
         if row["a_role"] in SHADOWABLE_APPRENTICES:
             apprentice_id, apprentice_name = row["a_id"], row["a_name"]
-            mentor_id, mentor_name, mentor_seen = row["b_id"], row["b_name"], row["b_seen"]
+            mentor_name, mentor_seen = row["b_name"], row["b_seen"]
         elif row["b_role"] in SHADOWABLE_APPRENTICES:
             apprentice_id, apprentice_name = row["b_id"], row["b_name"]
-            mentor_id, mentor_name, mentor_seen = row["a_id"], row["a_name"], row["a_seen"]
+            mentor_name, mentor_seen = row["a_name"], row["a_seen"]
         else:
             continue
         if current_day - int(mentor_seen) < MENTOR_STALL_IDLE_DAYS:
@@ -11644,14 +11676,12 @@ def decay_idle_bonds_on_rollover(conn, current_day: int) -> int:
 
 def collect_bond_den_news_on_rollover(conn, current_day: int) -> list[str]:
     """Produce den-news lines for meaningful bond tier crossings this rollover."""
-    from engine.den_news_bonds import bond_tier, bond_cooling_line, bond_graduation_line
-    from engine.apprentice_roles import APPRENTICE_ROLES
+    from engine.den_news_bonds import bond_cooling_line, bond_graduation_line
 
     lines: list[str] = []
     TIER_THRESHOLDS = (80, 60, 40, 20)
 
     # Bonds that just decayed across a tier threshold
-    stale_before = current_day - 1
     decay_rows = conn.execute(
         """
         SELECT wb.wolf_a_id, wb.wolf_b_id, wb.bond_type, wb.strength,
@@ -12356,7 +12386,48 @@ def get_open_prey_piles() -> list[sqlite3.Row]:
 
 
 def close_prey_piles_for_guild(guild_id: int) -> None:
+    """Close open piles at rollover. Any carcass portions no wolf ate are not
+    wasted: the leftovers roll into the hunter's pack prey stash."""
+    from engine.prey_items import prey_key_from_label, prey_meta
+
     with get_db() as conn:
+        open_piles = conn.execute(
+            "SELECT * FROM prey_piles WHERE guild_id = ? AND status = 'open'",
+            (guild_id,),
+        ).fetchall()
+        for pile in open_piles:
+            hunter = conn.execute(
+                "SELECT pack_id FROM users WHERE id = ?", (pile["hunter_wolf_id"],)
+            ).fetchone()
+            pack_id = int(hunter["pack_id"]) if hunter and hunter["pack_id"] else 0
+            prey_key = prey_key_from_label(pile["prey_label"])
+            if not pack_id or not prey_key:
+                continue
+            base_uses = int(prey_meta(prey_key).get("uses", 1) or 1)
+            eaters = conn.execute(
+                "SELECT COUNT(*) FROM prey_pile_responses WHERE pile_id = ? AND choice = 'eat'",
+                (pile["id"],),
+            ).fetchone()[0]
+            leftover = base_uses - int(eaters)
+            if leftover <= 0:
+                continue
+            conn.execute(
+                """
+                INSERT INTO pack_prey_stacks
+                (pack_id, guild_id, prey_key, uses_left, bone_value, acquired_day,
+                 is_rotting, deposited_by)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+                """,
+                (
+                    pack_id,
+                    guild_id,
+                    prey_key,
+                    leftover,
+                    int(pile["prey_bones"]),
+                    int(pile["day_number"]),
+                    pile["hunter_wolf_id"],
+                ),
+            )
         conn.execute(
             "UPDATE prey_piles SET status = 'closed' WHERE guild_id = ? AND status = 'open'",
             (guild_id,),

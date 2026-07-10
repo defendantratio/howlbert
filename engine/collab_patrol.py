@@ -309,14 +309,13 @@ def payout_collab_survey(
     remainder = base - share * len(users)
 
     lines: list[str] = []
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
     from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
 
     for user in users:
         bones = share + (remainder if user["id"] == patrol["leader_wolf_id"] else 0)
-        survey_mult, survey_n = next_use_multiplier(user, "survey", day)
+        _new_energy, _had_energy, survey_penalty = spend_energy(user, "survey")
         if bones > 0:
-            bones = max(0, int(bones * survey_mult))
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
         standing_gain = standing_delta
         if standing_delta:
@@ -328,7 +327,7 @@ def payout_collab_survey(
             standing_gain += injury_patrol_standing_bonus(user)
             db.adjust_wolf_standing(user["discord_id"], standing_gain)
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        dim = f" _{diminishing_note(survey_n)}_" if survey_n > 1 else ""
+        dim = f" _{survey_penalty}_" if survey_penalty else ""
         if standing_delta:
             lines.append(f"**{user['wolf_name']}** +{bones} bones · standing **+{standing_gain}**{dim}")
         else:
@@ -390,16 +389,15 @@ def payout_collab_trail(
     remainder = base - share * len(users)
 
     lines: list[str] = []
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
     for user in users:
         bones = share + (remainder if user["id"] == patrol["leader_wolf_id"] else 0)
-        trail_mult, trail_n = next_use_multiplier(user, "trail", day)
+        _new_energy, _had_energy, trail_penalty = spend_energy(user, "trail")
         if bones > 0:
-            bones = max(0, int(bones * trail_mult))
             db.add_bones(user["discord_id"], bones, wolf_id=user["id"])
         db.adjust_mood(user["id"], COLLAB_PATROL_MOOD_BONUS)
-        dim = f" _{diminishing_note(trail_n)}_" if trail_n > 1 else ""
+        dim = f" _{trail_penalty}_" if trail_penalty else ""
         lines.append(f"**{user['wolf_name']}** +{bones} bones{dim}")
 
     _mark_trail_done(users, day)
@@ -627,16 +625,15 @@ def resolve_collab_war_patrol(patrol_id: int) -> tuple[discord.Embed | None, str
     if not war:
         return None, "the war ended before your patrol set out."
 
-    from engine.diminishing import diminishing_note, next_use_multiplier
+    from engine.energy import spend_energy
 
     lines: list[str] = []
     raw_points = 0
     for user in users:
         pts = random.randint(2, 5) + max(0, attr_modifier(get_attr(user, "con")))
-        patrol_mult, patrol_n = next_use_multiplier(user, "war_patrol", day)
-        pts = max(1, int(pts * patrol_mult))
+        _new_energy, _had_energy, patrol_penalty = spend_energy(user, "war_patrol")
         raw_points += pts
-        dim = f" _{diminishing_note(patrol_n)}_" if patrol_n > 1 else ""
+        dim = f" _{patrol_penalty}_" if patrol_penalty else ""
         lines.append(f"**{user['wolf_name']}** +{pts} pts{dim}")
 
     bonus_pct = (len(users) - 1) * COLLAB_PATROL_BONUS_PCT_PER_SCOUT if users else 0

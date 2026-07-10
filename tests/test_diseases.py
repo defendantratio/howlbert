@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import database as db
-from engine.disease_contract import try_contract_disease, try_poop_roll_exposure
+from engine.disease_contract import try_contract_disease
 from engine.diseases import contagious_rate, disease_matches_cure, encode_disease, parse_disease
 from engine.disease_spread import apply_disease_spread_on_rollover
 from engine.quarantine import is_quarantined

@@ -8,7 +8,7 @@ import sqlite3
 
 from config import WOLF_STANDING_KICK_THRESHOLD
 from engine.aging import proficiencies_for_role, sync_role_to_age
-from engine.character import attr_modifier, parse_proficiencies
+from engine.character import attr_modifier
 from engine.dice import roll_d20
 from engine.pack_leadership import is_pack_alpha, wolf_role_key
 from engine.role_restrictions import life_stage
@@ -35,22 +35,22 @@ def _resolve_bout(a, b) -> tuple[sqlite3.Row, str]:
     a_total, a_detail = _leadership_roll(a)
     b_total, b_detail = _leadership_roll(b)
     if a_detail["die"] == 20 and b_detail["die"] != 20:
-        winner, loser = a, b
+        winner = a
         note = " (critical)"
     elif b_detail["die"] == 20 and a_detail["die"] != 20:
-        winner, loser = b, a
+        winner = b
         note = " (critical)"
     elif a_detail["die"] == 1 and b_detail["die"] != 1:
-        winner, loser = b, a
+        winner = b
         note = " (fumble)"
     elif b_detail["die"] == 1 and a_detail["die"] != 1:
-        winner, loser = a, b
+        winner = a
         note = " (fumble)"
     elif a_total >= b_total:
-        winner, loser = a, b
+        winner = a
         note = ""
     else:
-        winner, loser = b, a
+        winner = b
         note = ""
     line = (
         f"**{a['wolf_name']}** {a_total} vs **{b['wolf_name']}** {b_total}{note} "
@@ -143,7 +143,6 @@ def _install_pack_alpha(conn: sqlite3.Connection, wolf_id: int, pack_id: int) ->
             "UPDATE users SET wolf_role = ?, skill_proficiencies = ? WHERE id = ?",
             (new_role, profs, row["id"]),
         )
-    age = int(user["age_months"]) if "age_months" in user.keys() else 24
     profs = proficiencies_for_role("alpha")
     conn.execute(
         """

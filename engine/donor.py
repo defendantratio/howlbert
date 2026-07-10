@@ -716,7 +716,7 @@ def donor_status_lines(discord_id: int) -> list[str]:
 
     lines.append(
         "• membership tiers on ko-fi (**$5** minimum): **den friend** ($5), "
-        f"**pack benefactor** ($10), **legend** ($25)"
+        "**pack benefactor** ($10), **legend** ($25)"
     )
 
     bonus = donor_daily_bonus(discord_id)

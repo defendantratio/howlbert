@@ -10,7 +10,7 @@ from engine.lexicon import format_sunrise
 from engine.season_effects import season_activity_blurb
 from engine.world import forecast_weather, season_blurb, season_label, time_blurb, time_label, weather_label
 from utils.replies import reply_ephemeral
-from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
+from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 HAZARD_CHOICES = [app_commands.Choice(name='blizzard', value='blizzard'), app_commands.Choice(name='flood / rapid river', value='flood'), app_commands.Choice(name='wildfire smoke', value='wildfire_smoke'), app_commands.Choice(name='freezing rain / ice', value='freezing_rain'), app_commands.Choice(name='extreme heat', value='extreme_heat'), app_commands.Choice(name='thick fog', value='thick_fog'), app_commands.Choice(name='thunderstorm', value='thunderstorm'), app_commands.Choice(name='avalanche', value='avalanche'), app_commands.Choice(name='deep snow', value='deep_snow'), app_commands.Choice(name='quicksand / mud', value='quicksand')]
 HAZARD_SEVERITY_CHOICES = [app_commands.Choice(name='moderate', value='moderate'), app_commands.Choice(name='severe', value='severe'), app_commands.Choice(name='extreme', value='extreme')]
 TRAVEL_TERRITORY_CHOICES = [app_commands.Choice(name='river', value='river'), app_commands.Choice(name='swamp', value='swamp'), app_commands.Choice(name='mountain', value='mountain'), app_commands.Choice(name='forest', value='forest'), app_commands.Choice(name='twolegplace', value='twolegplace')]
@@ -223,6 +223,17 @@ class World(commands.Cog):
             db.adjust_mood(user['id'], -int(effects['mood_loss']))
         if effects.get('smoke_debuff'):
             db.update_user(interaction.user.id, wolf_id=user['id'], smoke_debuff=1)
+        if effects.get('injury'):
+            import json
+            from engine.combat_injuries import injury_label
+            from engine.conditions import add_injury, parse_injuries
+            inj_key = effects['injury']
+            injuries = parse_injuries(user['active_injuries'] if 'active_injuries' in user.keys() else None)
+            if inj_key not in injuries:
+                updated = add_injury(injuries, inj_key)
+                db.set_user_conditions(interaction.user.id, wolf_id=user['id'], active_injuries=json.dumps(updated))
+                effects = dict(effects)
+                effects['injury_note'] = f"the exposure leaves its mark: {injury_label(inj_key)}"
         if hazard in ('blizzard', 'freezing_rain', 'deep_snow') and (not result['success']):
             from engine.disease_contract import try_weather_fever_exposure
             fever = try_weather_fever_exposure(user)
@@ -236,6 +247,8 @@ class World(commands.Cog):
         embed = howlbert_embed('Weather Hazard', body, color=color)
         if effects.get('fever_note'):
             embed.description = (embed.description or '') + f"\n\n{effects['fever_note']}"
+        if effects.get('injury_note'):
+            embed.description = (embed.description or '') + f"\n\n{effects['injury_note']}"
         user = db.get_user(interaction.user.id)
         from engine.vitals import vitals_response_footer
         embed.set_footer(text=vitals_response_footer(user, default='/world action:hazard · /vitals action:condition · /medic action:treat'))
@@ -291,11 +304,11 @@ class World(commands.Cog):
         if not interaction.guild:
             await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
             return
-        from engine.diminishing import diminishing_note, next_use_multiplier
+        from engine.energy import spend_energy
         from engine.starclan_omens import mark_rest_omen, roll_rest_omen
         world = db.get_world(interaction.guild.id)
         day = int(world['day_number'])
-        omen_mult, omen_n = next_use_multiplier(user, 'omen', day)
+        _new_energy, _had_energy, omen_penalty = spend_energy(user, 'omen')
         kind, body = roll_rest_omen()
         mark_rest_omen(user, day)
         if kind == 'good':
@@ -305,12 +318,11 @@ class World(commands.Cog):
             db.update_user_by_id(user['id'], omen_buff='bad')
             body += '\n_Disadvantage on your first roll next sunrise._'
         elif kind == 'vision':
-            mood_gain = max(1, int(4 * omen_mult))
+            mood_gain = 4
             new_mood = db.adjust_mood(user['id'], mood_gain)
             body += f'\n**+{mood_gain} mood** (now **{new_mood}**).'
         embed = howlbert_embed('StarClan Omen', body)
-        dim = diminishing_note(omen_n)
-        embed.set_footer(text=f'{dim} · /checklist' if dim else '/checklist')
+        embed.set_footer(text=f'{omen_penalty} · /checklist' if omen_penalty else '/checklist')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='hazard', description='face a weather hazard; opposed roll vs the environment.')

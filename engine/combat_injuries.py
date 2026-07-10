@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 
-from engine.conditions import add_injury, parse_injuries, roll_injury
+from engine.conditions import add_injury, roll_injury, roll_severe_injury
 from herbs import INJURIES
 
 
@@ -18,7 +18,9 @@ def resolve_player_injury_key(
 ) -> str | None:
     """
     Pick an injury key when a player wolf is critically hit or dropped to 0 HP.
-    Spine Bite can inflict temporary or permanent paralysis instead of the 1d10 table.
+    Spine Bite can inflict temporary or permanent paralysis instead of a table
+    roll. Any other critical hit risks the severe injury table; a plain
+    knockout (no crit) uses the base 1d10 table.
     """
     if not hit:
         return None
@@ -30,7 +32,12 @@ def resolve_player_injury_key(
                 return "spinal_injury"
         if random.random() < 0.18:
             return "spinal_injury"
-    if crit or new_hp == 0:
+        if new_hp == 0:
+            return roll_injury()
+        return None
+    if crit:
+        return roll_severe_injury()
+    if new_hp == 0:
         return roll_injury()
     return None
 

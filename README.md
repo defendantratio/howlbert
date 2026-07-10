@@ -94,7 +94,7 @@ howlbert leans toward measurable, granular wolf-ecology effects over flavor text
 ✦ **injury at the den vs. in the field**: patrolling while hurt earns a standing **bonus** (up to +2) for putting the pack first; but if the patrol goes wrong (spotted, ambushed) an injured wolf takes **extra** standing loss on top, since the injury is why they couldn't get away clean  
 ✦ **disease needs real contact**: den-spread illness at sunrise checks whether a wolf was actually in the field that day; wolves who hunted, patrolled, scouted, or tracked have **−50%** exposure to respiratory disease and **−25%** to contact disease versus one who stayed denbound all day. trail/border encounters in `/field action:sniff` can also pass illness directly, same as `/playpen action:socialize` and `/explore`  
 ✦ **long-term marks aren't just injuries**: the `long_term_injuries` system also stores permanent non-injury traits like arrival choices (bold/quiet/wary) and birth circumstances; a +1 skill bonus that follows a wolf for life  
-✦ **few hard blocks, mostly diminishing returns**: instead of "come back next sunrise" cooldowns, most actions (hunt, forage, scavenge, fish, work, weep, grooming, faction moves, courtship, adoption, pup training, and the alpha-led communal drink/feed/play, and more) can be repeated but pay steadily less each time in a sunrise (or, for adoption and pup training, get harder); only the long rest and the daily stipend stay once-per-sunrise. consequences and penalties, not walls  
+✦ **almost no hard blocks; an energy meter instead**: instead of "come back next sunrise" cooldowns, most repeatable actions (hunt, forage, scavenge, fish, work, weep, grooming, faction moves, courtship, adoption, pup training, and the alpha-led communal drink/feed/play, and more) spend energy (0 to 100). running out never blocks the action itself; it still succeeds, but costs extra exhaustion and mood instead. energy refills with a small drip each sunrise and a bigger chunk from a long or short rest; only the long rest and the daily stipend stay once-per-sunrise. consequences and penalties, not walls  
 ✦ **pup care is need-gated, not blocked**: each pup takes milk or nursery mash once a sunrise, so mothers and caretakers can feed as many pups as still need it (nursing costs the mother hunger), instead of one feed per feeder  
 ✦ **continuous hunger and hydration**: vitals drain in real time between sunrises (checked on `/vitals`, `/eat`, `/drink`), so neglect bites gradually rather than only at rollover  
 ✦ **liquid diet**: `/drink type:broth` or `type:milk` to sip when a broken jaw stops you chewing solid meat; liquids feed only partway (hunger caps at 60) and never fully satisfy a carnivore; broth is bought or den-brewed from bones, milk comes from cat clans or settlement raids  
@@ -135,8 +135,8 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/hoarding`  | `hoard`, `gift`, `shred`                                                                                      |
 | `/playpen`   | `toys`, `play`, `playall`, `toystore`, `socialize`, `groom`                                                   |
 | `/packlife`  | `feedall`, `drinkall`, `howl`                                                                                 |
-| `/howl`      | pack howl (standalone; once per sunrise)                                                                      |
-| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `freeze`, `track`, `greet`, `grieve`, `challenge`, `whimper`, `growl`, `nuzzle`, `lick`, `read` (unlimited; repeat signs on the same partner pay out less mood, down to 20%) |
+| `/howl`      | pack howl (standalone; costs energy)                                                                          |
+| `/sign`      | body/visual language: `alert`, `rally`, `play`, `submit`, `soothe`, `threaten`, `freeze`, `track`, `greet`, `grieve`, `challenge`, `whimper`, `growl`, `nuzzle`, `lick`, `read` (unlimited; `read` costs energy, other signals pay less to the same partner on repeat) |
 | `/world`     | `time`, `weather`, `forecast`, `cooldowns`, `plot`, `hazard`, `travel`, `encounter`, `omen`                   |
 | `/garden`    | `plots`, `seeds`, `plant`, `tend`, `harvest`, `clear`, `buy`, `guide` (grow your own herbs from seed)         |
 | `/role`      | `quests`, `event`, `prophecy`                                                                         |
@@ -168,7 +168,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/journal`                                             | read-only automatic life timeline (birth, pack, bonds, blooding, death, rites) |
 | `/rite`                                                | den ceremonies: `naming`, `blooding`, `mourning`, `trial` · mate rituals: `bone_gift` (costs 3 bones, +5 mood to target), `joining_howl` (one-time; +1 maw_favor each), `moon_witness` (full moon only; +2 maw_favor each, seals romance bond) |
 | `/npc`                                                 | server npc registry (`add`/`remove` admin); `/npc say`, `/npc sign` (real mood/standing effects on the target's wolf), `/npc narrate` (admin; no named speaker) |
-| `/weep`                                                 | silverrush only: release grief at the weep stone (unlimited; repeats soothe less) |
+| `/weep`                                                 | silverrush only: release grief at the weep stone (unlimited, costs energy) |
 | `/proxy`                                               | speak in-character as your wolves; import from tupperbox |
 | `/wolves` `/switchwolf` `/rename` `/setfaction`        | multi-wolf and faction                                 |
 | `/food` `/eat` `/drink` `/salvage` `/preypile` `/bury` | prey hoard and survival                                |
@@ -176,7 +176,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/scout rescout` `/survey` `/trail`                    | scout field commands                                   |
 | `/pack …`                                              | treasury, stash, tax, territory, wars, unity, `pact` (cat clans), `share`/`aid`, `tradepack`, `brokenrite` |
 | `/bonds`                                               | friendships, rivalries, kin, mentors, found families; fling auto-detected on profile when mated pair has no romance bond |
-| `/sign`                                                | body/visual language; mute wolves rally without a howl; unlimited, diminishing returns on repeat partners |
+| `/sign`                                                | body/visual language; mute wolves rally without a howl; unlimited; `read` costs energy, other signals pay less to the same partner on repeat |
 | `/combat …`                                            | initiative combat; `/combat encounter` for ambushes; combat panel: **bite**, **claw**, **maneuver**, **run away**, **submit** (yield + submission/spare/finish mechanics) |
 | `/hazard`                                              | weather opposed roll                                   |
 | `/medic action:quarantine`                               | isolate sick wolves (or `action:quarantine`)           |
@@ -184,7 +184,7 @@ discord caps slash commands at 100; howlbert uses **hub commands** with an `acti
 | `/crime`                                               | petty theft, or raid a rival wolf-pack den / cat-clan camp |
 | `/pact`                                                | negotiate treaties with cat clans or great wolf packs (alpha or diplomat) |
 | `/disguise`                                            | roll in another pack's scent to cross their territory undetected (risky) |
-| `/gossip`                                              | plant a damaging rumor about another wolf (once per sunrise; backfires if traced) |
+| `/gossip`                                              | plant a damaging rumor about another wolf (costs energy; backfires if traced) |
 | `/rivals`                                              | view your wolf's rival npcs and grudge levels          |
 | `/foster`                                              | send a pup to an allied pack as a diplomatic gesture (alpha only) |
 | `/tribute`                                             | send bones to another pack to clear blood debt (alpha/advisor) |
@@ -276,7 +276,7 @@ howlbert implements basil's tabletop rules across creation, rolls, combat, herbs
 
 **hp** = 10 + str + survival (con score). **pack unity** (0 to 10) rises from quests and falls from wars. **lone wolves** cannot use `/pack`. **rogues** cannot draw `/bones action:daily`.
 
-**herb compendium:** 100+ plants, each with real preparation, side effects, and (for sedatives) addiction. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide.
+**herb compendium:** 100+ plants, each with real preparation, side effects, and (for sedatives) addiction. `/field action:forage` in territory or `action:verge` at the thunderpath edge; `/herbs action:guide` for the guide. **preparation** chains: dry a fresh herb, then turn the dried herb into a **tea, rub, juice, poultice, gargle, ointment, sap, simmered milk**, or eat it **raw/cooked**; a **tea** or **gargle** can be **sweetened** with honey. each form is an herblore check with its own effect.
 
 **herb gardens:** grow your own with `/garden`; buy/find seeds (`seeds`, `buy`), `plant`, `tend` daily, then `harvest`; `/garden guide` lists each plant's growing conditions (light, water, season).
 
@@ -335,8 +335,8 @@ speak in-character as your wolves, tupperbox-style, plus slash tools that work w
 ✦ `/rite bone_gift` · `joining_howl` · `moon_witness`; mate rituals: bone-gift costs 3 bones and lifts mood; joining howl announces a bond publicly (+1 maw_favor each, once per pair); moon's witness seals true mateship under the full moon (+2 maw_favor each, romance bond sealed, once per pair)  
 ✦ `/npc add` · `remove` · `list` (admin); `/npc say`, `/npc sign` (real effects on a player's wolf), `/npc narrate` (admin; no named speaker)  
 ✦ `/family`; relationship web rendered as a diagram, with the focus wolf's proxy avatar  
-✦ `/sign`; body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, whimper, growl, nuzzle, lick, etc.); unlimited, but repeat signs on the same partner pay out less mood  
-✦ `/weep`; silverrush only: release grief alone at the weep stone (unlimited; each repeat soothes less; also eases the `grief_melancholy` condition)  
+✦ `/sign`; body language when a wolf can't howl (mute rally, alert, play, freeze, track, greet, grieve, challenge, whimper, growl, nuzzle, lick, etc.); unlimited; `read` costs energy, other signals pay less to the same partner on repeat  
+✦ `/weep`; silverrush only: release grief alone at the weep stone (unlimited, costs energy; also eases the `grief_melancholy` condition)  
 ✦ **birthdays** are celebrated automatically in the sunrise den news whenever a wolf crosses a full year (12 moons)  
 ✦ optional **rp ambience**: set `RP_AMBIENCE_CHANNEL_IDS` in `.env` for sunrise season/weather/moon posts on rollover
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from config import MOOD_CRITICAL_THRESHOLD
-from engine.character import attr_modifier, parse_proficiencies
 from engine.conditions import parse_injuries
 from herbs import INJURIES
 
@@ -300,7 +299,7 @@ def format_injury_brief(key: str) -> str:
 
 
 def try_prey_counter_injury(user, amount: int, day: int) -> str | None:
-    """15% chance of sprained_leg or punctured_paw on a failed hunt (amount <= 0)."""
+    """15% chance of a minor injury (sprained leg, punctured paw, pulled muscle, or a thorn) on a failed hunt (amount <= 0)."""
     import json
     import random
     from engine.conditions import add_injury, parse_injuries
@@ -310,7 +309,7 @@ def try_prey_counter_injury(user, amount: int, day: int) -> str | None:
         return None
     if random.random() >= 0.15:
         return None
-    key = random.choice(("sprained_leg", "punctured_paw"))
+    key = random.choice(("sprained_leg", "punctured_paw", "muscle_strain", "splinter"))
     current = parse_injuries(user["active_injuries"] if "active_injuries" in user.keys() else None)
     if key in current:
         return None

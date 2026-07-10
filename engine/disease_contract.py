@@ -1,3 +1,4 @@
+# disease_contract.py
 """Contract illnesses from filth, prey, weather, and close contact."""
 
 from __future__ import annotations

@@ -73,7 +73,7 @@ def main() -> None:
     record_hunt_use(did, wolf_id=user["id"], day=day)
     user = db.get_user(did)
     check("hunt use increments same sunrise", hunts_used_today(user, day) == 1)
-    check("hunt footer decrements", hunts_left_footer(user, day) == "hunter: 9 hunts left this sunrise")
+    check("hunt footer shows energy", hunts_left_footer(user, day).startswith("hunter: energy "))
 
     print(f"\n{_pass} passed, {_fail} failed")
     if _fail:

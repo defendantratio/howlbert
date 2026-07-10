@@ -1,5 +1,5 @@
 import os, sqlite3
-from config import DB_PATH, BOT_DISPLAY_NAME
+from config import DB_PATH
 print("HOWLBERT_DB_PATH env:", os.getenv("HOWLBERT_DB_PATH"))
 print("config.DB_PATH:", DB_PATH)
 p = "fable.db"
