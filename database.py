@@ -5804,11 +5804,6 @@ def _decay_vitals_on_rollover(day: int = 0, weather: str = "") -> None:
         )
 
 
-def _decay_mood_on_rollover() -> None:
-    """Legacy alias; vitals decay includes mood."""
-    _decay_vitals_on_rollover()
-
-
 def _update_mood_streak_on_rollover(day: int) -> None:
     """Increment low_mood_streak for active wolves below the mood threshold; reset otherwise."""
     from config import AUTO_DORMANT_INACTIVE_DAYS, LOW_MOOD_STREAK_THRESHOLD

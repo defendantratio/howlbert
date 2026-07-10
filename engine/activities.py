@@ -950,7 +950,9 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
     from config import GARDEN_FORAGE_SEED_CHANCE
     from engine.herb_growing import can_cultivate
 
-    if can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
+    # only pack wolves have a den garden to sow; loners and rogues keep no plots.
+    _has_den = bool(user["pack_id"] if "pack_id" in user.keys() else None)
+    if _has_den and can_cultivate(herb_key) and random.random() < GARDEN_FORAGE_SEED_CHANCE:
         db.add_herb_seeds(user["id"], herb_key)
         seed_note = f"\n\nyou also pocket a few **{meta['name']} seeds** for the den garden (`/garden plant`)."
     food_note = ""
