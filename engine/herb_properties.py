@@ -59,6 +59,25 @@ HERB_FORM_RULES: dict[str, HerbFormRule] = {
     "meadowsweet": HerbFormRule(requires_tea=True),
     "labrador_tea": HerbFormRule(requires_tea=True),
     "arnica": HerbFormRule(external_only=True, requires_poultice=True),
+    "death_cap": HerbFormRule(
+        toxic_if_fresh=True,
+        toxic_dc=18,
+        toxic_damage=(3, 6),
+        notes="intensely toxic; organ failure and seizures.",
+    ),
+    "wintergreen": HerbFormRule(
+        toxic_if_fresh=True,
+        toxic_dc=10,
+        toxic_damage=(1, 4),
+        external_only=True,
+        notes="oil unsafe to eat; external use only.",
+    ),
+    "wolfsbane": HerbFormRule(
+        toxic_if_fresh=True,
+        toxic_dc=20,
+        toxic_damage=(2, 6),
+        notes="extremely toxic; all parts poisonous; absorbed through skin.",
+    ),
     # add new rules if needed
 }
 
