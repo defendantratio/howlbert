@@ -6037,7 +6037,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
         with get_db() as conn:
             from engine.long_term_injuries import apply_winter_cold_injury_on_rollover
 
-            cold_injury_notes = apply_winter_cold_injury_on_rollover(conn, new_season)
+            cold_injury_notes = apply_winter_cold_injury_on_rollover(conn, new_season, new_day)
         if cold_injury_notes:
             needs_crisis["cold_injury"] = cold_injury_notes
         with get_db() as conn:
@@ -6288,7 +6288,8 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
     notes: list[dict] = []
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT * FROM users WHERE disease IS NOT NULL AND disease != ''"
+            f"SELECT * FROM users WHERE disease IS NOT NULL AND disease != '' "
+            f"AND {active_wolf_where(day)}"
         ).fetchall()
         for user in rows:
             outcome = progress_disease(user, day=day)
@@ -6421,11 +6422,12 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                         )
 
         inj_rows = conn.execute(
-            """
+            f"""
             SELECT * FROM users
             WHERE active_injuries IS NOT NULL
               AND active_injuries != ''
               AND active_injuries != '[]'
+              AND {active_wolf_where(day)}
             """
         ).fetchall()
         for user in inj_rows:
@@ -6581,9 +6583,9 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
         from engine.disease_contract import try_contract_disease
 
         meat_rows = conn.execute(
-            """
+            f"""
             SELECT * FROM users
-            WHERE dormant = 0 AND condition NOT IN ('dead', 'dying')
+            WHERE {active_wolf_where(day)} AND condition NOT IN ('dead', 'dying')
               AND (disease IS NULL OR disease = '')
             """
         ).fetchall()
@@ -11589,6 +11591,33 @@ _STANDING_ACTIVITY_COLUMNS = (
 def last_active_day(user) -> int:
     """Most recent of several common activity timestamps, as a 'last seen' proxy."""
     return max((int(user[c]) if c in user.keys() and user[c] is not None else 0) for c in _STANDING_ACTIVITY_COLUMNS)
+
+
+def wolf_is_away(user, day: int) -> bool:
+    """A wolf nobody is playing is exempt from *every* negative rollover effect
+    (vitals decay, disease spread/contraction, chronic-illness onset, loneliness,
+    battle fatigue, injury complications, mental illness). True when the wolf is
+    explicitly dormant, or has been idle longer than AUTO_DORMANT_INACTIVE_DAYS.
+    Brand-new worlds (day <= 1) treat everyone as active."""
+    from config import AUTO_DORMANT_INACTIVE_DAYS
+
+    if int(user["dormant"] if "dormant" in user.keys() and user["dormant"] is not None else 0):
+        return True
+    if int(day) <= 1:
+        return False
+    return last_active_day(user) < max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
+
+
+def active_wolf_where(day: int, *, alias: str = "") -> str:
+    """SQL predicate (no leading AND) matching wolves that are NOT away: not
+    dormant and not idle past AUTO_DORMANT_INACTIVE_DAYS. The set-based mirror of
+    wolf_is_away for rollover UPDATE/SELECT statements."""
+    from config import AUTO_DORMANT_INACTIVE_DAYS
+
+    active_since = max(0, int(day) - AUTO_DORMANT_INACTIVE_DAYS)
+    p = (alias + ".") if alias else ""
+    last_seen = "MAX(" + ", ".join(f"COALESCE({p}{c}, 0)" for c in _STANDING_ACTIVITY_COLUMNS) + ")"
+    return f"{p}dormant = 0 AND ({last_seen} >= {active_since} OR {int(day)} <= 1)"
 
 
 def decay_idle_standing_on_rollover(conn, current_day: int) -> int:

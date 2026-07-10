@@ -446,10 +446,13 @@ def apply_mental_illness_rollover(conn, day: int) -> list[dict]:
     from config import MOOD_LOW_THRESHOLD
     from engine.herb_buffs import get_buffs, merge_buff_fields
 
+    import database as _db
+
     rows = conn.execute(
-        """
+        f"""
         SELECT * FROM users
         WHERE condition NOT IN ('dead', 'dying')
+          AND {_db.active_wolf_where(day)}
         """
     ).fetchall()
     notes: list[dict] = []

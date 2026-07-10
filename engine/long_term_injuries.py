@@ -261,10 +261,13 @@ def apply_injury_complications_on_rollover(conn, current_day: int) -> list[tuple
     """
     from engine.conditions import add_injury, parse_injuries, parse_injury_since
 
+    import database as _db
+
     rows = conn.execute(
-        """
+        f"""
         SELECT id, wolf_name, active_injuries, injury_since
         FROM users WHERE condition != 'dead' AND active_injuries IS NOT NULL
+          AND {_db.active_wolf_where(current_day)}
         """
     ).fetchall()
     complications: list[tuple[int, str, str, str]] = []
@@ -562,16 +565,18 @@ def check_adjustments(
 SEVERE_INJURIES = frozenset({"fractured_rib", "spinal_injury", "paralysis"})
 
 
-def apply_winter_cold_injury_on_rollover(conn, season: str) -> list[dict]:
+def apply_winter_cold_injury_on_rollover(conn, season: str, day: int = 0) -> list[dict]:
     """Winter cold worsens severe injuries: −1 HP per sunrise for fractured ribs,
     spinal injuries, and paralysis. Doesn't kill outright (floor 1 HP) so medics
     still have a window to intervene."""
     if season != "winter":
         return []
     from engine.conditions import parse_injuries
+    import database as _db
 
     rows = conn.execute(
-        "SELECT * FROM users WHERE condition NOT IN ('dead', 'dying') AND active_injuries IS NOT NULL AND active_injuries != ''"
+        f"SELECT * FROM users WHERE condition NOT IN ('dead', 'dying') AND active_injuries IS NOT NULL "
+        f"AND active_injuries != '' AND {_db.active_wolf_where(day)}"
     ).fetchall()
     notes: list[dict] = []
     for wolf in rows:
