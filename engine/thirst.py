@@ -184,6 +184,8 @@ def run_drinkall(
     if caller and not can_run_pack_bulk_action(caller, pack, discord_admin=discord_admin):
         return False, PACK_BULK_ALPHA_ONLY_MSG, 0
 
+    # unlimited; throttled by the caller's energy (see engine.energy) rather than
+    # a shrinking restore, so a led creek trip always tops the den off.
     from engine.energy import spend_energy
     drinkall_penalty = ""
     if caller:

@@ -127,6 +127,9 @@ class Faction(commands.Cog):
         flavor, delta, bonus_bones = try_faction_approach(user, faction, day=day)
         from engine.energy import spend_energy
         _new_energy, _had_energy, faction_penalty = spend_energy(user, "faction_action")
+        if delta > 0:
+            from engine.plot_blinking import plot_faction_approach_bonus
+            delta += plot_faction_approach_bonus(user, faction, interaction.guild.id)
         new_standing = db.adjust_faction_standing(gp, faction, delta)
         db.set_last_faction_action_day(interaction.user.id, day)
         if faction_penalty:
@@ -170,6 +173,7 @@ class Faction(commands.Cog):
         if delta == 0:
             await interaction.response.send_message(embed=howlbert_embed("Trade Failed", flavor, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
+        # tribute no longer diminishes on repeat; the throttle is energy.
         from engine.energy import spend_energy
         _new_energy, _had_energy, faction_penalty = spend_energy(user, "faction_action")
         new_standing = db.adjust_faction_standing(gp, faction, delta)
@@ -210,6 +214,7 @@ class Faction(commands.Cog):
             for f in FACTIONS:
                 if f != faction:
                     db.adjust_faction_standing(gp, f, -1)
+        # a successful settlement raid can carry off livestock milk
         milk_note = ""
         if not caught and faction == "lowland_settlements":
             import random as _milk_rand

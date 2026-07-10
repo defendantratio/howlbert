@@ -47,8 +47,8 @@ def train_pup(trainer, pup, *, attribute: str, day: int) -> tuple[bool, str]:
             f"(+{PUP_TRAIN_MAX_LIFETIME_BONUS} lifetime cap reached)."
         )
 
-    # unlimited; the lifetime cap is the real ceiling. energy spent per lesson
-    # instead of a hard block or a climbing dc.
+    # unlimited; the lifetime cap is the real ceiling. repeat lessons are
+    # throttled by the trainer's energy (see engine.energy), not a climbing dc.
     from engine.energy import spend_energy
 
     _new_energy, _had_energy, train_penalty = spend_energy(trainer, "pup_training")

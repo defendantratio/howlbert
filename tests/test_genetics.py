@@ -54,8 +54,18 @@ def test_birth_roll() -> None:
     print("\n=== birth mutations ===")
     mother = Row(genetic_conditions='["partial_blindness"]')
     father = Row(genetic_conditions="[]")
-    conditions, lethal = roll_pup_genetic_conditions(mother, father, birth_outcome="success")
-    check("returns tuple", isinstance(conditions, list) and isinstance(lethal, bool))
+    conditions, carriers, lethal = roll_pup_genetic_conditions(mother, father, birth_outcome="success")
+    check("returns tuple", isinstance(conditions, list) and isinstance(carriers, list) and isinstance(lethal, bool))
+    # one affected parent + one clear parent => pup is a carrier, never affected
+    check("recessive from one parent is carrier not expressed",
+          "partial_blindness" not in conditions and "partial_blindness" in carriers)
+    # kin pairing surfaces recessives and inbreeding depression far more often
+    kin_hits = 0
+    for _ in range(200):
+        c, _cn, _l = roll_pup_genetic_conditions(mother, father, birth_outcome="success", kin=True)
+        if "partial_blindness" in c or "inbreeding_depression" in c:
+            kin_hits += 1
+    check("kin mating expresses defects", kin_hits > 20)
 
 
 def test_missing_limb_not_herb_curable() -> None:

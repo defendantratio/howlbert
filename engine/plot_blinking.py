@@ -102,6 +102,10 @@ MAGGOTBRAIN_NAME = "MaggotBrain"
 VULCAN_NAME = "Vulcan Stonehide"
 RIME_NAME = "Rime"
 ROOT_NAME = "Root"
+FROSTBURN_NAME = "Frostburn"
+HOLLOWSTEM_NAME = "Hollowstem"
+PUDDLEBANE_NAME = "Puddlebane"
+GASP_NAME = "Gasp"
 MIREWORT_NAME = "mirewort"
 DRIFTPUP_NAME = "Driftpup"
 PALESTEP_NAME = "Pale'Step"
@@ -113,10 +117,41 @@ SYPHA_NAME = "Sypha"
 MURKVEIN_NAME = "Murkvein"
 AROMIS_NAME = "Aromis"
 LUCID_NAME = "Lucid"
-ELTANIN_NAME = "Eltanin"
 CLOVERFERN_NAME = "Cloverfern"
 KANAMI_NAME = "Kanami"
 SKYE_NAME = "Skye"
+IRONJAW_NAME = "Ironjaw"
+SLATE_NAME = "Slate"
+SLUDGE_NAME = "Sludge"
+CROAKER_NAME = "Croaker"
+CURLGRIP_NAME = "Curlgrip"
+MOSSGAZE_NAME = "Mossgaze"
+THORN_NAME = "Thorn"
+RIFT_NAME = "Rift"
+SALTMUZZLE_NAME = "Saltmuzzle"
+GRIM_NAME = "Grim"
+STONEPIERCER_NAME = "Stonepiercer"
+MOTH_NAME = "Moth"
+SLEET_NAME = "Sleet"
+PEBBLE_NAME = "Pebble"
+REEDWHISPER_NAME = "Reedwhisper"
+ASHBARK_NAME = "Ashbark"
+CINDER_NAME = "Cinder"
+ROTTEDDUST_NAME = "Rotteddust"
+RIVENMAW_NAME = "Rivenmaw"
+DUSK_NAME = "Dusk"
+SCAB_NAME = "Scab"
+TALUS_NAME = "Talus"
+RAVEN_NAME = "Raven"
+EBB_NAME = "Ebb"
+YARROW_NAME = "Yarrow"
+MOSSHEART_NAME = "Mossheart"
+FERNSPOT_NAME = "Fernspot"
+BARKHOLLOW_NAME = "Barkhollow"
+MUDNOSE_NAME = "Mudnose"
+THYME_NAME = "Thyme"
+# named Book One pups; each grows a little steadier for living through the blinking
+PLOT_PUP_NAMES = ("Cinderpup", "Harepup", "Ripplepup", "Mosspup", "Mudpup")
 
 HEALER_PLOT_PHASES = frozenset(range(5, 12))
 SOOT_PLOT_PHASES = frozenset(range(5, 12))
@@ -315,6 +350,18 @@ def plot_den_news_line(phase: int, day: int) -> str:
     return f"**the blinking** (phase {phase}, sunrise {day}); _{meta['news']}_"
 
 
+def next_blinking_prompt_line(guild_id: int, phase: int) -> str:
+    """The phase's rp scene prompt for this sunrise, walked in order (one per
+    rollover, restarting at the first prompt when the phase advances)."""
+    from engine.rp_prompts import BLINKING_PROMPTS
+
+    prompts = BLINKING_PROMPTS.get(phase)
+    if not prompts:
+        return ""
+    idx = db.next_plot_prompt_index(guild_id)
+    return f"**the blinking; scene prompt**: _{prompts[idx % len(prompts)]}_"
+
+
 def plot_status_fields(world) -> list[tuple[str, str, bool]]:
     phase = int(world["plot_phase"]) if "plot_phase" in world.keys() else 0
     if phase <= 0:
@@ -402,8 +449,15 @@ def apply_plot_rollover_effects(
     notes: list[str] = []
 
     if phase == 1:
-        shielded_packs = []
-        for name, pack in ((RIME_NAME, "greyspire"), (ROOT_NAME, "thistlehide")):
+        # a pup guardian in the den spares that pack's pups the moon's weight.
+        guardians: dict[str, str] = {}
+        for name, pack in (
+            (RIME_NAME, "greyspire"),
+            (FROSTBURN_NAME, "greyspire"),
+            (ROOT_NAME, "thistlehide"),
+        ):
+            if pack in guardians:
+                continue
             watching = conn.execute(
                 """
                 SELECT 1 FROM users
@@ -415,7 +469,8 @@ def apply_plot_rollover_effects(
                 (name, pack),
             ).fetchone()
             if watching:
-                shielded_packs.append(pack)
+                guardians[pack] = name
+        shielded_packs = list(guardians.keys())
         if shielded_packs:
             placeholders = ", ".join("?" for _ in shielded_packs)
             conn.execute(
@@ -436,10 +491,73 @@ def apply_plot_rollover_effects(
                 """
             )
         notes.append("The bitten moon weighs on every wolf; **−1 mood**.")
-        if "greyspire" in shielded_packs:
-            notes.append("**Rime** keeps the Greyspire pups close; they are spared the moon's weight.")
-        if "thistlehide" in shielded_packs:
-            notes.append("**Root** wraps her tail around the Thistlehide pups; they are spared the moon's weight.")
+        for pack, name in guardians.items():
+            notes.append(f"**{name}** keeps the {pack.capitalize()} pups close; they are spared the moon's weight.")
+
+    # Hollowstem gathers the Mistmoor pups close through the blinking (any phase).
+    hollowstem = conn.execute(
+        """
+        SELECT 1 FROM users
+        WHERE LOWER(wolf_name) = LOWER(?)
+          AND great_pack = 'mistmoor'
+          AND condition NOT IN ('dead', 'dying')
+        LIMIT 1
+        """,
+        (HOLLOWSTEM_NAME,),
+    ).fetchone()
+    if hollowstem:
+        conn.execute(
+            """
+            UPDATE users
+            SET mood = MIN(100, mood + 2)
+            WHERE great_pack = 'mistmoor'
+              AND wolf_role = 'pup'
+              AND condition NOT IN ('dead', 'dying')
+            """
+        )
+        notes.append("**Hollowstem** gathers the Mistmoor pups close; the youngest feel safe, **+2 mood**.")
+
+    # named wolves who steady themselves through the blinking.
+    #   (name, pack or None for any, mood, only_phase or None, flavor)
+    from config import PLOT_PUP_MOOD
+
+    mood_lanes = [
+        (PUDDLEBANE_NAME, "mistmoor", 2, None, "**Puddlebane** works the bog with quiet purpose; **+2 mood**."),
+        (GASP_NAME, "mistmoor", 3, 5, "**Gasp** feels the belly-rip go quiet and grows calm as the others fret; **+3 mood**."),
+    ]
+    # named plot pups grow a little steadier for living through the blinking.
+    for pup in PLOT_PUP_NAMES:
+        mood_lanes.append((pup, None, PLOT_PUP_MOOD, None, f"**{pup}** weathers another sunrise of the blinking; **+{PLOT_PUP_MOOD} mood**."))
+    for name, pack, amt, only_phase, flavor in mood_lanes:
+        if only_phase is not None and phase != only_phase:
+            continue
+        if pack:
+            row = conn.execute(
+                "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) AND great_pack = ? "
+                "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+                (name, pack),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) "
+                "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+                (name,),
+            ).fetchone()
+        if row:
+            conn.execute("UPDATE users SET mood = MIN(100, mood + ?) WHERE id = ?", (amt, row["id"]))
+            notes.append(flavor)
+
+    # Dusk (mistmoor beta) turns up a hidden cache some sunrises.
+    dusk = conn.execute(
+        "SELECT id FROM users WHERE LOWER(wolf_name) = LOWER(?) AND great_pack = 'mistmoor' "
+        "AND condition NOT IN ('dead', 'dying') LIMIT 1",
+        (DUSK_NAME,),
+    ).fetchone()
+    if dusk:
+        from config import DUSK_PLOT_CACHE_BONES, DUSK_PLOT_CACHE_CHANCE
+        if random.random() < DUSK_PLOT_CACHE_CHANCE:
+            conn.execute("UPDATE users SET bones = bones + ? WHERE id = ?", (DUSK_PLOT_CACHE_BONES, int(dusk["id"])))
+            notes.append(f"**Dusk** noses out a hidden cache in the reeds; **+{DUSK_PLOT_CACHE_BONES} bones**.")
 
     if phase in WARM_RIVER_PHASES:
         vulcan_watching = conn.execute(
@@ -495,14 +613,30 @@ def apply_plot_rollover_effects(
 
     if phase == 10:
         _adjust_all_cat_trust(conn, guild_id, -2)
+        # a steady alpha holds their den together through the blame spiral.
+        unity_mitigators = {"silverrush": SALTMUZZLE_NAME, "mistmoor": MURKVEIN_NAME}
         for key in GREAT_PACKS:
             pack = db.get_pack_by_key(key)
-            if pack:
-                outcome = db.adjust_pack_unity(pack["id"], -1)
-                if outcome == "dissolved":
-                    notes.append(f"**{pack['name']}** fractures under blame (**unity −5**).")
-                else:
-                    notes.append(f"**{pack['name']}** unity slips amid accusations (**−1**).")
+            if not pack:
+                continue
+            mitigator = unity_mitigators.get(key)
+            if mitigator:
+                held = conn.execute(
+                    """
+                    SELECT 1 FROM users
+                    WHERE great_pack = ? AND LOWER(wolf_name) = LOWER(?)
+                      AND condition NOT IN ('dead', 'dying') LIMIT 1
+                    """,
+                    (key, mitigator),
+                ).fetchone()
+                if held:
+                    notes.append(f"**{mitigator}** holds **{pack['name']}** together through the blame; unity steady.")
+                    continue
+            outcome = db.adjust_pack_unity(pack["id"], -1)
+            if outcome == "dissolved":
+                notes.append(f"**{pack['name']}** fractures under blame (**unity −5**).")
+            else:
+                notes.append(f"**{pack['name']}** unity slips amid accusations (**−1**).")
 
     if phase == 12:
         _adjust_all_cat_trust(conn, guild_id, 5)
@@ -569,7 +703,48 @@ def _adjust_all_cat_trust(conn: sqlite3.Connection, guild_id: int, delta: int) -
         (guild_id,),
     ).fetchall()
     for row in rows:
-        db.adjust_cat_pact_trust(int(row["pack_id"]), row["clan_name"], delta)
+        pack_id = int(row["pack_id"])
+        pack_delta = delta
+        # Sleet (greyspire diplomat) softens the paranoia trust loss for her den.
+        if delta < 0:
+            has_sleet = conn.execute(
+                """
+                SELECT 1 FROM users
+                WHERE pack_id = ? AND LOWER(wolf_name) = LOWER(?)
+                  AND great_pack = 'greyspire' AND condition NOT IN ('dead', 'dying')
+                LIMIT 1
+                """,
+                (pack_id, SLEET_NAME),
+            ).fetchone()
+            if has_sleet:
+                from config import SLEET_PLOT_CAT_TRUST_RELIEF
+
+                pack_delta = min(0, delta + SLEET_PLOT_CAT_TRUST_RELIEF)
+        db.adjust_cat_pact_trust(pack_id, row["clan_name"], pack_delta)
+
+
+def plot_rank_dispute_standing(winner, guild_id: int | None) -> int:
+    """Moth (greyspire lowbelly) climbs on a rank-dispute win during the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(winner, MOTH_NAME):
+        return 0
+    if (winner["great_pack"] if "great_pack" in winner.keys() else None) != "greyspire":
+        return 0
+    from config import MOTH_PLOT_RANK_STANDING
+
+    return MOTH_PLOT_RANK_STANDING
+
+
+def plot_prophecy_standing(user, guild_id: int | None) -> int:
+    """Gasp earns standing when the den heeds her prophecy during the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    if not _is_plot_wolf(user, GASP_NAME):
+        return 0
+    from config import GASP_PLOT_PROPHECY_STANDING
+
+    return GASP_PLOT_PROPHECY_STANDING
 
 
 def _accelerate_pack_fish_rot(conn: sqlite3.Connection, guild_id: int, day: int) -> int:
@@ -611,14 +786,34 @@ def plot_activity_payout_mult(
             if user and _is_plot_wolf(user, AROMIS_NAME):
                 from config import AROMIS_PLOT_FISHING_MULT
                 return AROMIS_PLOT_FISHING_MULT, "blinking; Aromis refuses to let the warm water win (**+15%** fish)."
+            if user and _is_plot_wolf(user, CROAKER_NAME) and phase in (4, 8):
+                from config import CROAKER_PLOT_FISHING_MULT
+                return CROAKER_PLOT_FISHING_MULT, "blinking; Croaker knows exactly where the fish hide (**+30%** fish)."
+            if user and _is_plot_wolf(user, CURLGRIP_NAME) and phase in (4, 8):
+                from config import CURLGRIP_PLOT_FISHING_MULT
+                return CURLGRIP_PLOT_FISHING_MULT, "blinking; Curlgrip works the warm shallows (**+20%** fish)."
             return 0.70, "blinking; warm silverrush water (**−30%** fish)."
         return 0.85, "blinking; river sickness (**−15%** fish)."
+    # named greyspire hunters stack their bonus on top of the phase-3 pack bonus
+    if activity in ("hunt", "scavenge") and gp == "greyspire" and user and _is_plot_wolf(user, IRONJAW_NAME) and phase in (3, 9):
+        from config import IRONJAW_PLOT_HUNT_MULT
+        mult = round(IRONJAW_PLOT_HUNT_MULT * (1.10 if phase == 3 else 1.0), 3)
+        return mult, "blinking; Ironjaw hunts the ridge like no other (**+15%**)."
+    if activity == "hunt" and gp == "greyspire" and user and _is_plot_wolf(user, SLATE_NAME) and phase in (3, 7):
+        from config import SLATE_PLOT_HUNT_MULT
+        mult = round(SLATE_PLOT_HUNT_MULT * (1.10 if phase == 3 else 1.0), 3)
+        return mult, "blinking; Slate presses the hunt (**+10%**)."
+    if activity == "hunt" and gp == "mistmoor" and user and _is_plot_wolf(user, SLUDGE_NAME):
+        from config import SLUDGE_PLOT_HUNT_MULT
+        return SLUDGE_PLOT_HUNT_MULT, "blinking; Sludge takes the swamp's water-prey (**+20%** hunt)."
+    if activity == "hunt" and gp == "greyspire" and user and _is_plot_wolf(user, TALUS_NAME):
+        from config import TALUS_PLOT_HUNT_MULT
+        return TALUS_PLOT_HUNT_MULT, "blinking; Talus keeps the ridge fed (**+10%** hunt)."
+    if activity == "hunt" and gp == "thistlehide" and phase in PARANOIA_PHASES and user and _is_plot_wolf(user, RIVENMAW_NAME):
+        from config import RIVENMAW_PLOT_HUNT_MULT
+        return RIVENMAW_PLOT_HUNT_MULT, "blinking; Rivenmaw hunts the tense border hard (**+10%**)."
     if activity in ("hunt", "scavenge", "track") and phase == 3 and gp == "greyspire":
         return 1.10, "blinking; iron-scented ridge (**+10%** hunt)."
-    if activity == "hunt" and phase in PARANOIA_PHASES and gp == "thistlehide":
-        if user and _is_plot_wolf(user, ELTANIN_NAME):
-            from config import ELTANIN_PLOT_HUNT_MULT
-            return ELTANIN_PLOT_HUNT_MULT, "blinking; Eltanin is already moving (**+10%** hunt)."
     if activity == "track" and phase in PARANOIA_PHASES and gp == "thistlehide":
         if user and _is_plot_wolf(user, LUCID_NAME):
             from config import LUCID_PLOT_TRACK_MULT
@@ -627,7 +822,87 @@ def plot_activity_payout_mult(
         if user and _is_plot_wolf(user, CLOVERFERN_NAME):
             from config import CLOVERFERN_PLOT_SCAVENGE_MULT
             return CLOVERFERN_PLOT_SCAVENGE_MULT, "blinking; Cloverfern finds what the forest is still willing to give (**+10%** scavenge)."
+        if user and _is_plot_wolf(user, MOSSGAZE_NAME):
+            from config import MOSSGAZE_PLOT_SCAVENGE_MULT
+            return MOSSGAZE_PLOT_SCAVENGE_MULT, "blinking; Mossgaze knows the forest's quiet larders (**+10%** scavenge)."
+        if user and (_is_plot_wolf(user, FERNSPOT_NAME) or _is_plot_wolf(user, BARKHOLLOW_NAME)):
+            from config import FORAGER_PLOT_SCAVENGE_MULT
+            return FORAGER_PLOT_SCAVENGE_MULT, "blinking; the forest's foragers still find what it will give (**+10%** scavenge)."
+    if activity == "scavenge" and phase > 0 and gp == "silverrush":
+        if user and _is_plot_wolf(user, CINDER_NAME):
+            from config import CINDER_PLOT_SCAVENGE_MULT
+            return CINDER_PLOT_SCAVENGE_MULT, "blinking; Cinder, driftwood-born, scavenges the banks well (**+10%**)."
+    if activity == "scavenge" and phase > 0 and gp == "greyspire":
+        if user and _is_plot_wolf(user, SCAB_NAME):
+            from config import SCAB_PLOT_SCAVENGE_MULT
+            return SCAB_PLOT_SCAVENGE_MULT, "blinking; Scab knows which scraps go unwatched (**+15%** scavenge)."
+    if activity == "scavenge" and phase > 0 and gp == "mistmoor":
+        if user and _is_plot_wolf(user, MUDNOSE_NAME):
+            from config import FORAGER_PLOT_SCAVENGE_MULT
+            return FORAGER_PLOT_SCAVENGE_MULT, "blinking; Mudnose roots up the bog's hidden food (**+10%** scavenge)."
     return 1.0, ""
+
+
+_COMBAT_PLOT_NAMES = {n.casefold() for n in (ICEFANG_NAME, THORN_NAME, RIFT_NAME)}
+
+
+def _living_ally_present(fighters, attacker_f) -> bool:
+    """A living non-npc packmate stands in the fight beside the attacker."""
+    for f in fighters:
+        if f["id"] == attacker_f["id"] or f["npc_name"]:
+            continue
+        if int(f["hp"]) > 0:
+            return True
+    return False
+
+
+def _named_ally_present(fighters, attacker_f, canon_name: str) -> bool:
+    """A specific named wolf is a living fighter beside the attacker."""
+    for f in fighters:
+        if f["id"] == attacker_f["id"] or f["npc_name"] or int(f["hp"]) <= 0:
+            continue
+        wid = f["wolf_id"] if "wolf_id" in f.keys() else None
+        if not wid:
+            continue
+        w = db.get_user_by_id(wid)
+        if w and (w["wolf_name"] or "").strip().casefold() == canon_name.casefold():
+            return True
+    return False
+
+
+def plot_combat_bonus(attacker, attacker_f, attack_type: str) -> tuple[int, int, str]:
+    """Book One combat lanes: returns (attack_bonus, damage_bonus, note).
+
+    Icefang bites harder in border fights; Thorn fights harder with a packmate
+    beside him; Rift throws himself in when Saltmuzzle is in the fight. All only
+    during border paranoia (phases 6 to 10)."""
+    if not attacker_f:
+        return 0, 0, ""
+    name = ((db.row_val(attacker, "wolf_name", "") or "").strip().casefold())
+    if name not in _COMBAT_PLOT_NAMES:
+        return 0, 0, ""
+    enc = db.get_encounter(attacker_f["encounter_id"])
+    if not enc:
+        return 0, 0, ""
+    guild_id = enc["guild_id"] if "guild_id" in enc.keys() else None
+    if not guild_id or plot_phase(guild_id) not in PARANOIA_PHASES:
+        return 0, 0, ""
+    gp = db.row_val(attacker, "great_pack", "") or ""
+    if _is_plot_wolf(attacker, ICEFANG_NAME) and gp == "greyspire":
+        is_border = bool(enc["is_border_fight"]) if "is_border_fight" in enc.keys() else False
+        if attack_type == "bite" and is_border:
+            return 0, 2, "blinking; Icefang bites like the mountain's will (**+2 dmg**)."
+        return 0, 0, ""
+    fighters = db.get_combat_fighters(attacker_f["encounter_id"])
+    if _is_plot_wolf(attacker, THORN_NAME) and gp == "greyspire":
+        if _living_ally_present(fighters, attacker_f):
+            return 2, 0, "blinking; Thorn fights harder with a packmate beside him (**+2 atk**)."
+        return 0, 0, ""
+    if _is_plot_wolf(attacker, RIFT_NAME) and gp == "silverrush":
+        if _named_ally_present(fighters, attacker_f, SALTMUZZLE_NAME):
+            return 2, 0, "blinking; Rift throws himself between Saltmuzzle and the teeth (**+2 atk**)."
+        return 0, 0, ""
+    return 0, 0, ""
 
 
 def plot_drink_thirst_bonus(guild_id: int, great_pack: str | None) -> tuple[int, str]:
@@ -722,6 +997,9 @@ def plot_thistlehide_patrol_standing_bonus(
             bonus += FINNPELT_PLOT_PATROL_STANDING
         elif _is_plot_wolf(user, BRACKENPELT_NAME):
             bonus += BRACKENPELT_PLOT_PATROL_STANDING
+        elif _is_plot_wolf(user, ASHBARK_NAME):
+            from config import ASHBARK_PLOT_PATROL_STANDING
+            bonus += ASHBARK_PLOT_PATROL_STANDING
     if user and great_pack == "greyspire" and plot_phase(guild_id) in PARANOIA_PHASES:
         if _is_plot_wolf(user, ICEFANG_NAME):
             from config import ICEFANG_PLOT_PATROL_STANDING
@@ -820,14 +1098,54 @@ def _pack_healer_plot_bonus(healer, guild_id: int | None, canon_name: str, pack:
     return getattr(_cfg, config_key, 0)
 
 
+def _pack_healer_rot_lung_bonus(healer, patient, guild_id, canon_name, pack, config_key) -> int:
+    """Extra heal a rot-lung specialist adds when the patient has rot-lung."""
+    if not guild_id or plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return 0
+    if not _is_plot_wolf(healer, canon_name):
+        return 0
+    if (healer["great_pack"] if "great_pack" in healer.keys() else None) != pack:
+        return 0
+    from engine.diseases import parse_disease
+    key, _ = parse_disease(patient["disease"] if "disease" in patient.keys() else None)
+    if key != "rot_lung":
+        return 0
+    import config as _cfg
+    return getattr(_cfg, config_key, 0)
+
+
 def plot_healer_heal_bonus(healer, patient, guild_id: int | None) -> int:
     """stacked book one heal bonuses for canon healer wolves."""
     bonus = plot_firepaw_heal_bonus(healer, guild_id) + plot_soot_heal_bonus(healer, patient, guild_id)
     bonus += _pack_healer_plot_bonus(healer, guild_id, HEMLOCK_NAME, "greyspire", "HEMLOCK_PLOT_TREAT_HEAL_BONUS")
     bonus += _pack_healer_plot_bonus(healer, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_TREAT_HEAL_BONUS")
     bonus += _pack_healer_plot_bonus(healer, guild_id, SYPHA_NAME, "thistlehide", "SYPHA_PLOT_TREAT_HEAL_BONUS")
-    bonus += _pack_healer_plot_bonus(healer, guild_id, MURKVEIN_NAME, "mistmoor", "MURKVEIN_PLOT_TREAT_HEAL_BONUS")
+    # mistmoor's treat lane belongs to Mirewort the medic, not Murkvein the alpha.
+    bonus += _pack_healer_plot_bonus(healer, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_TREAT_HEAL_BONUS")
+    bonus += _pack_healer_plot_bonus(healer, guild_id, ROTTEDDUST_NAME, "mistmoor", "ROTTEDDUST_PLOT_TREAT_HEAL_BONUS")
+    # rot-lung specialists heal it harder
+    bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, RIPPLE_NAME, "silverrush", "RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS")
+    bonus += _pack_healer_rot_lung_bonus(healer, patient, guild_id, MIREWORT_NAME, "mistmoor", "MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS")
     return bonus
+
+
+def plot_healer_observe_strain_relief(medic, guild_id: int | None) -> str:
+    """Named Book One healers ease their own medicine strain when they observe."""
+    if not guild_id or plot_phase(guild_id) not in HEALER_PLOT_PHASES:
+        return ""
+    from config import HEALER_PLOT_OBSERVE_STRAIN
+
+    name = ((medic["wolf_name"] if "wolf_name" in medic.keys() else "") or "").strip().casefold()
+    relief = {k.casefold(): v for k, v in HEALER_PLOT_OBSERVE_STRAIN.items()}
+    amount = relief.get(name)
+    if not amount:
+        return ""
+    from engine.character_traits import reduce_skill_strain
+
+    removed = reduce_skill_strain(medic["id"], "medicine", amount)
+    if removed:
+        return f"\n\n_the blinking sharpens {name}'s eye; **−{removed} medicine strain**._"
+    return ""
 
 
 def _firepaw_daily_available(user, day: int) -> bool:
@@ -966,6 +1284,90 @@ def apply_plot_finnpelt_sniff(user, guild_id: int, day: int) -> str:
         )
         lines.append(f"ridge held without the crown; {standing_note}.")
     return "\n\n_" + " ".join(lines) + "_"
+
+
+def apply_plot_grim_sniff(user, guild_id: int, day: int) -> str:
+    """Grim (greyspire highfang) reads a pack-wide omen on the border during
+    paranoia; a chance to lift the whole pack's standing for the sunrise."""
+    if not _is_plot_wolf(user, GRIM_NAME):
+        return ""
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    if gp != "greyspire" or plot_phase(guild_id) not in PARANOIA_PHASES:
+        return ""
+    from config import GRIM_PLOT_OMEN_CHANCE, GRIM_PLOT_OMEN_STANDING
+
+    if random.random() >= GRIM_PLOT_OMEN_CHANCE:
+        return ""
+    with db.get_db() as conn:
+        conn.execute(
+            "UPDATE users SET standing = standing + ? "
+            "WHERE great_pack = 'greyspire' AND condition NOT IN ('dead', 'dying')",
+            (GRIM_PLOT_OMEN_STANDING,),
+        )
+    return (
+        f"\n\n_Grim reads a greyspire omen in the border scent; the whole pack stands "
+        f"taller (**+{GRIM_PLOT_OMEN_STANDING} standing** to all of greyspire)._"
+    )
+
+
+def plot_work_mult(user, guild_id: int | None) -> float:
+    """Moth (greyspire lowbelly) works twice as hard through the blinking."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 1.0
+    if not _is_plot_wolf(user, MOTH_NAME):
+        return 1.0
+    if (user["great_pack"] if "great_pack" in user.keys() else None) != "greyspire":
+        return 1.0
+    from config import MOTH_PLOT_WORK_MULT
+
+    return MOTH_PLOT_WORK_MULT
+
+
+def plot_faction_approach_bonus(user, faction: str, guild_id: int | None) -> int:
+    """Book One diplomats win extra ground on a successful faction approach.
+    (name -> (pack, faction or None for any, extra standing))"""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    from config import (
+        PEBBLE_PLOT_FACTION_STANDING,
+        REEDWHISPER_PLOT_FACTION_STANDING,
+        SLEET_PLOT_FACTION_STANDING,
+    )
+
+    table = {
+        SLEET_NAME: ("greyspire", "thorne_lumber", SLEET_PLOT_FACTION_STANDING),
+        PEBBLE_NAME: ("silverrush", None, PEBBLE_PLOT_FACTION_STANDING),
+        REEDWHISPER_NAME: ("mistmoor", None, REEDWHISPER_PLOT_FACTION_STANDING),
+        THYME_NAME: ("thistlehide", None, 1),
+    }
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    for name, (pack, fac, bonus) in table.items():
+        if _is_plot_wolf(user, name) and gp == pack and (fac is None or faction == fac):
+            return bonus
+    return 0
+
+
+_SURVEY_SCOUTS = {
+    STONEPIERCER_NAME: "greyspire",
+    RAVEN_NAME: "greyspire",
+    EBB_NAME: "silverrush",
+    YARROW_NAME: "mistmoor",
+    MOSSHEART_NAME: "thistlehide",
+}
+
+
+def plot_survey_standing_bonus(user, guild_id: int | None) -> int:
+    """Book One scouts earn extra standing on a successful survey while the
+    blinking is active."""
+    if not guild_id or plot_phase(guild_id) <= 0:
+        return 0
+    gp = user["great_pack"] if "great_pack" in user.keys() else None
+    for name, pack in _SURVEY_SCOUTS.items():
+        if _is_plot_wolf(user, name) and gp == pack:
+            from config import PLOT_SURVEY_STANDING
+
+            return PLOT_SURVEY_STANDING
+    return 0
 
 
 def apply_plot_maggotbrain_sniff(user, guild_id: int, day: int) -> str:
@@ -1279,7 +1681,8 @@ def try_plot_sniff_extras(user, guild_id: int, *, day: int = 0) -> str:
         rivershroud_block = apply_plot_rivershroud_sniff(user, guild_id, day)
         finnpelt_block = apply_plot_finnpelt_sniff(user, guild_id, day)
         maggotbrain_block = apply_plot_maggotbrain_sniff(user, guild_id, day)
-        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block, maggotbrain_block):
+        grim_block = apply_plot_grim_sniff(user, guild_id, day)
+        for block in (firepaw_block, soot_block, rivershroud_block, finnpelt_block, maggotbrain_block, grim_block):
             if block:
                 healer_blocks.append(block.strip().strip("_"))
     else:

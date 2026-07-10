@@ -164,10 +164,11 @@ def try_scout_survey(interaction) -> discord.Embed | None:
     bones += survey_victim_bone_bonus(user, interaction.guild.id, day)
     db.add_bones(interaction.user.id, bones, wolf_id=user["id"])
     standing = 2 if result["outcome"] == "critical_success" else 1
-    from engine.plot_blinking import plot_thistlehide_patrol_standing_bonus
+    from engine.plot_blinking import plot_survey_standing_bonus, plot_thistlehide_patrol_standing_bonus
 
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     standing += plot_thistlehide_patrol_standing_bonus(interaction.guild.id, gp, user=user)
+    standing += plot_survey_standing_bonus(user, interaction.guild.id)
     db.adjust_wolf_standing(interaction.user.id, standing)
     db.increment_quest_progress(interaction.user.id, "survey", guild_id=interaction.guild.id)
     db.increment_quest_progress(interaction.user.id, "patrol", guild_id=interaction.guild.id)

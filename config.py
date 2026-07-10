@@ -76,6 +76,10 @@ HUNT_OUTCOMES = [
 # Chance (percent) that `/bones action:hunt` triggers a cornered deer/elk fight instead of a normal roll
 LARGE_PREY_ENCOUNTER_CHANCE = 15
 LARGE_PREY_BONES = (30, 55)
+# A lone wolf rarely commits to elk/moose-sized prey; only a cornered, sick, or
+# desperate large animal is takeable solo. Solo hunts meet large prey at this
+# fraction of the base chance (pack hunts keep the full rate).
+SOLO_LARGE_PREY_ENCOUNTER_PCT = 40
 
 # World / rollover; one rollover = one in-game day
 SEASONS = ("spring", "summer", "autumn", "winter")
@@ -257,6 +261,18 @@ ENERGY_LONG_REST_GAIN = 35
 ENERGY_SHORT_REST_GAIN = 15
 ENERGY_EMPTY_EXHAUSTION_GAIN = 1
 ENERGY_EMPTY_MOOD_LOSS = 4
+# Hunting is throttled by energy, not a hard daily cap. Everyone can hunt until
+# they tire; hunters, the specialists, spend far less energy per hunt, so they
+# get many more hunts before running low (roughly ~11 vs ~5 on a full bar).
+HUNT_ENERGY_COST = 18
+HUNT_ENERGY_COST_HUNTER = 9
+# Real-time daytime drip; energy trickles back while a wolf is idle (not acting)
+# during the day, on top of the sunrise sleep. Coupled to hunger: a starving
+# wolf has no calories to spare, so regen (drip and sunrise) scales with hunger
+# down to a floor. hunger at/above ENERGY_HUNGER_FULL restores at full rate.
+ENERGY_REALTIME_REGEN_PER_HOUR = 6
+ENERGY_HUNGER_FULL = 80
+ENERGY_HUNGER_FLOOR = 0.2
 
 # Per-activity energy costs. Role-privileged specialists (full forager,
 # scout, medic, ...) pay a discounted cost on their signature actions
@@ -610,9 +626,8 @@ STRANGER_SCENT_MOOD_PENALTY = 3
 # A temporary injury left untreated long past its normal heal time doesn't
 # just sit there forever; it ages into a permanent long-term injury instead.
 CHRONIC_CONVERSION_MULTIPLIER = 3
-# As spring (the only season pups can realistically be born by, given the
-# 63-day gestation) nears, a den with too few breeding-age mated pairs feels
-# real anxiety about its future and loses a touch of unity.
+# On each season change, a den with too few breeding-age mated pairs feels
+# real anxiety about its future (breeding is year-round) and loses a touch of unity.
 COURTSHIP_PRESSURE_MIN_PAIRS = 2
 COURTSHIP_PRESSURE_UNITY_PENALTY = 2
 # The smallest pup in a large litter starts at a real disadvantage, but
@@ -1179,25 +1194,69 @@ FISHING_BONES = (10, 22)
 BRACKENPELT_PLOT_PATROL_STANDING = 1
 # Icefang Stoneguard plot (Book One; Greyspire border)
 ICEFANG_PLOT_PATROL_STANDING = 1
-# Hemlock healer plot (Book One; Greyspire den)
-HEMLOCK_PLOT_TREAT_HEAL_BONUS = 1
-# Ripple healer plot (Book One; Silverrush den)
-RIPPLE_PLOT_TREAT_HEAL_BONUS = 1
-# Sypha healer plot (Book One; Thistlehide den)
-SYPHA_PLOT_TREAT_HEAL_BONUS = 1
-# Murkvein healer plot (Book One; Mistmoor den)
-MURKVEIN_PLOT_TREAT_HEAL_BONUS = 1
+# Book One healer treat-heal bonuses (phases 5 to 11)
+HEMLOCK_PLOT_TREAT_HEAL_BONUS = 2   # greyspire medic
+RIPPLE_PLOT_TREAT_HEAL_BONUS = 1    # silverrush healer
+SYPHA_PLOT_TREAT_HEAL_BONUS = 2     # thistlehide healer
+MIREWORT_PLOT_TREAT_HEAL_BONUS = 2  # mistmoor medic (bookone's mistmoor treat lane)
+# extra heal when treating rot-lung specifically (rot-lung specialists)
+RIPPLE_PLOT_ROT_LUNG_HEAL_BONUS = 1
+MIREWORT_PLOT_ROT_LUNG_HEAL_BONUS = 2
+# observe strain relief per healer (phases 5 to 11)
+HEALER_PLOT_OBSERVE_STRAIN = {"Hemlock": 3, "Ripple": 2, "Mirewort": 3, "Sypha": 3, "Rotteddust": 1}
+# Grim greyspire-alpha sniff omen (paranoia): chance for pack-wide standing
+GRIM_PLOT_OMEN_CHANCE = 0.20
+GRIM_PLOT_OMEN_STANDING = 2
+# scout survey standing bonus (while plot active) — Stonepiercer, Raven, Ebb, Yarrow, Mossheart
+STONEPIERCER_PLOT_SURVEY_STANDING = 1
+PLOT_SURVEY_STANDING = 1
+# thistlehide/mistmoor plot foragers scavenge mult
+FORAGER_PLOT_SCAVENGE_MULT = 1.10
+# Moth greyspire-lowbelly work payout multiplier (while plot active)
+MOTH_PLOT_WORK_MULT = 2.0
+# Sleet greyspire-diplomat: extra standing when approaching thorne lumber
+SLEET_PLOT_FACTION_STANDING = 1
+# Sleet softens her pack's paranoia cat-trust loss by this much (toward 0)
+SLEET_PLOT_CAT_TRUST_RELIEF = 2
+# Moth: extra standing on a rank-dispute win while the plot is active
+MOTH_PLOT_RANK_STANDING = 3
+# Gasp: extra standing when drawing a prophecy while the plot is active
+GASP_PLOT_PROPHECY_STANDING = 1
+# Pebble (silverrush) and Reedwhisper (mistmoor) diplomat faction-approach bonuses
+PEBBLE_PLOT_FACTION_STANDING = 1
+REEDWHISPER_PLOT_FACTION_STANDING = 2
+# Ashbark (thistlehide hunter) patrol standing during paranoia
+ASHBARK_PLOT_PATROL_STANDING = 1
+# Cinder (silverrush driftwood) scavenge multiplier while plot active
+CINDER_PLOT_SCAVENGE_MULT = 1.10
+# Rotteddust (mistmoor healer apprentice) treat heal bonus (phases 5-11)
+ROTTEDDUST_PLOT_TREAT_HEAL_BONUS = 1
+# Rivenmaw (thistlehide hunter) hunt multiplier during paranoia
+RIVENMAW_PLOT_HUNT_MULT = 1.10
+# Scab (greyspire lowbelly) scavenge mult; Talus (greyspire hunter) hunt mult
+SCAB_PLOT_SCAVENGE_MULT = 1.15
+TALUS_PLOT_HUNT_MULT = 1.10
+# Dusk (mistmoor beta) sunrise cache-find: chance and bones
+DUSK_PLOT_CACHE_CHANCE = 0.20
+DUSK_PLOT_CACHE_BONES = 3
+# each named plot pup steadies a little each sunrise during the blinking
+PLOT_PUP_MOOD = 1
 # Aromis fishing plot (Book One; Silverrush, Warm Below)
 AROMIS_PLOT_FISHING_MULT = 1.15
 # Lucid tracking plot (Book One; Thistlehide border)
 LUCID_PLOT_TRACK_MULT = 1.10
-# Eltanin hunting plot (Book One; Thistlehide border)
-ELTANIN_PLOT_HUNT_MULT = 1.10
 # Cloverfern scavenge plot (Book One; Thistlehide den)
 CLOVERFERN_PLOT_SCAVENGE_MULT = 1.10
 # Kanami and Skye border-sense plot (Book One; Thistlehide paranoia)
 KANAMI_PLOT_BORDER_MULT = 0.75
 SKYE_PLOT_BORDER_MULT = 0.75
+# Book One payout lanes (batch): hunters, fishers, forager
+IRONJAW_PLOT_HUNT_MULT = 1.15    # greyspire hunter; phases 3 & 9 (stacks with phase-3 pack bonus)
+SLATE_PLOT_HUNT_MULT = 1.10      # greyspire hunter; phases 3 & 7
+SLUDGE_PLOT_HUNT_MULT = 1.20     # mistmoor hunter; water hunts while plot active
+CROAKER_PLOT_FISHING_MULT = 1.30  # silverrush fisher; phases 4 & 8
+CURLGRIP_PLOT_FISHING_MULT = 1.20  # silverrush fisher; phases 4 & 8
+MOSSGAZE_PLOT_SCAVENGE_MULT = 1.10  # thistlehide forager; while plot active
 
 # Pack warfare
 WAR_DURATION_DAYS = 2

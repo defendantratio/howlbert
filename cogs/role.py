@@ -75,7 +75,7 @@ class RoleCog(commands.Cog):
         rows = db.get_role_quests(interaction.user.id)
         if not rows:
             embed = howlbert_embed(f'Role Quests: {label}', 'No role quests available right now. You may have finished them all, or none are posted for your path yet.')
-            embed.set_footer(text='/role action:event · repeats pay less this sunrise')
+            embed.set_footer(text='/role action:event · spends energy')
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         embed = howlbert_embed(f'Role Quests: {label}', 'Quests only your role can take; accepted automatically.')
@@ -171,7 +171,7 @@ class RoleCog(commands.Cog):
                 footer = footer[:253] + '…'
             embed.set_footer(text=footer)
         else:
-            embed.set_footer(text='/checklist · costs energy')
+            embed.set_footer(text='/checklist · spends energy')
         await interaction.response.send_message(embed=embed)
 
     async def _prophecy(self, interaction: discord.Interaction):
@@ -196,7 +196,13 @@ class RoleCog(commands.Cog):
         season = season_display(db.row_val(world, 'season', 'autumn'))
         weather = db.row_val(world, 'weather', 'fog')
         db.update_user(interaction.user.id, wolf_id=user['id'], last_prophecy_day=day)
-        embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather})', color=SUCCESS_COLOR)
+        from engine.plot_blinking import plot_prophecy_standing
+        prophecy_note = ''
+        gasp_standing = plot_prophecy_standing(user, interaction.guild.id)
+        if gasp_standing:
+            db.adjust_wolf_standing(interaction.user.id, gasp_standing)
+            prophecy_note = f'\n\n_the den heeds the oracle through the blinking; **+{gasp_standing} standing**._'
+        embed = howlbert_embed('Prophecy from the Dark Water', f'You press your nose to the mud. The chewing slows.\n\n**_{line}_**\n\nThe moon feels closer tonight. ({season}, {weather}){prophecy_note}', color=SUCCESS_COLOR)
         footer = 'it will make sense when it happens; or after it does.'
         if prophecy_penalty:
             footer += f' · {prophecy_penalty}'
@@ -262,11 +268,11 @@ class RoleCog(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         from engine.rank_dispute import run_rank_dispute
-        ok, msg = run_rank_dispute(user, target_row, day=world['day_number'])
+        ok, msg = run_rank_dispute(user, target_row, day=world['day_number'], guild_id=interaction.guild.id if interaction.guild else None)
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Rank Dispute', msg, color=color)
         if ok:
-            embed.set_footer(text='shifts den feed priority · repeats pay less this sunrise')
+            embed.set_footer(text='shifts den feed priority · spends energy')
         await interaction.response.send_message(embed=embed, ephemeral=False if ok else reply_ephemeral())
 
 def _skill_attrs(skill: str) -> tuple[str, ...]:

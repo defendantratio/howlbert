@@ -31,7 +31,7 @@ Wolves fear open flame (campfires, torches, wildfires).
 - **Guard** role: one failed save reroll per sunrise.
 - **Frightened**: cannot move closer; disadvantage on attacks/checks while fire in sight until 30+ ft away or extinguished.
 
-## Rival Challenge (Spring)
+## Rival Challenge (mating access)
 
 `/courtship action:rival target:@defender rival_mode:physical|vocal favor_challenger:true`
 
@@ -77,7 +77,7 @@ Wolves fear open flame (campfires, torches, wildfires).
 
 Shown on `/world action:time`. Mechanical hooks in `config.py` and `engine/season_effects.py`.
 
-- **Spring**: mating rivals, herbs +2 forage, rivers +2 DC.
+- **Spring**: herbs +2 forage, rivers +2 DC.
 - **Summer**: heat hazards, small prey hunt −2 DC, wildfire smoke.
 - **Autumn**: hunt −1 DC, post-frost forage +2, cache +1 day food.
 - **Winter**: forage +5 DC, hunt +2 DC, **+50% hunger decay** on rollover, cached meals from autumn apply.

@@ -356,7 +356,7 @@ def progress_injuries(user, *, day: int | None = None) -> dict:
     return result
 
 
-def progress_disease(user) -> dict:
+def progress_disease(user, *, day: int = 0) -> dict:
     """daily disease progression roll. returns outcome dict."""
     from engine.diseases import encode_disease, get_stage_info, parse_disease
     from engine.herb_buffs import roll_disease_save_die
@@ -448,6 +448,18 @@ def progress_disease(user) -> dict:
         return result
 
     if info.get("next"):
+        # herb-held chronic diseases stall instead of worsening this sunrise.
+        from engine.diseases import is_chronic_disease
+
+        if is_chronic_disease(disease_key):
+            from engine.chronic_care import chronic_halt_active
+
+            if chronic_halt_active(user, disease_key, day):
+                result["messages"].append(
+                    f"**{info['name']}**; save **{total}** vs dc **{info['dc']}**: "
+                    f"held at bay by herb-care; it does not worsen."
+                )
+                return result
         new_stage = info["next"]
         result["new_stage"] = encode_disease(disease_key, new_stage)
         nxt = get_stage_info(disease_key, new_stage)

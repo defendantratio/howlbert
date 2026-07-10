@@ -18,7 +18,7 @@ class Scout(commands.Cog):
         if embed:
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @scout.command(name='survey', description='map the pack border unseen; bones, standing, intel (repeats pay less).')
+    @scout.command(name='survey', description='map the pack border unseen; bones, standing, intel (spends energy; scouts tire slower).')
     @app_commands.describe(collaborate='call a pack patrol; scouts in your den join via buttons')
     async def scout_survey(self, interaction: discord.Interaction, collaborate: bool=False):
         if collaborate:
@@ -29,7 +29,7 @@ class Scout(commands.Cog):
         if embed:
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
-    @scout.command(name='trail', description='follow a cold scent off the main paths; bones and prey chance (repeats pay less).')
+    @scout.command(name='trail', description='follow a cold scent off the main paths; bones and prey chance (spends energy; scouts tire slower).')
     @app_commands.describe(collaborate='call a pack trail; scouts in your den join via buttons')
     async def scout_trail(self, interaction: discord.Interaction, collaborate: bool=False):
         if collaborate:

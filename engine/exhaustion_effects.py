@@ -10,6 +10,12 @@ from config import MOOD_LOW_THRESHOLD
 
 EXHAUSTION_MAX = 10
 
+# Impairment line: at/above this, effective max HP halves (see effective_max_hp);
+# can't-move is 8, death at sunrise is EXHAUSTION_MAX (10). Repeated field
+# activity alone must never push a wolf past this line in a single application —
+# crossing further toward death has to come from other sources.
+EXHAUSTION_ACTIVITY_CAP = 6
+
 # Pain exhaustion is a separate 0 to 5 pool from painful injuries and diseases;
 # at the cap it overflows into main exhaustion.
 PAIN_EXHAUSTION_MAX = 5

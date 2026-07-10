@@ -70,7 +70,7 @@ def main() -> None:
     paralyzed = Row(active_injuries='["paralyzed"]')
     spinal = Row(active_injuries='["spinal_injury"]')
     check("paralyzed blocks", hunt_blocked_by_injury(paralyzed) is not None)
-    check("spinal blocks", hunt_blocked_by_injury(spinal) is not None)
+    check("spinal injury no longer hard-blocks (penalty instead)", hunt_blocked_by_injury(spinal) is None)
     check("has_paralysis", has_paralysis(spinal))
 
     print("\n=== spine bite injury ===")

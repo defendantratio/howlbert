@@ -117,7 +117,7 @@ class Roleplay(commands.Cog):
             return
         await interaction.response.send_message(embed=howlbert_embed('Whisper Sent', f"**{wolf['wolf_name']}** whispered to **{member.display_name}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
-    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (costs energy).')
+    @app_commands.command(name='weep', description='silverrush only: release grief alone at the weep stone (unlimited; spends energy).')
     async def weep(self, interaction: discord.Interaction):
         wolf = _active_wolf(interaction)
         if not wolf:
@@ -150,7 +150,7 @@ class Roleplay(commands.Cog):
         if weep_penalty:
             lines.append(f'_{weep_penalty}_')
         embed = howlbert_embed('weep stone', '\n'.join(lines), color=SUCCESS_COLOR)
-        embed.set_footer(text='it is forbidden to watch another wolf weep · costs energy')
+        embed.set_footer(text='it is forbidden to watch another wolf weep · unlimited; spends energy')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @location.command(name='set', description="mark your wolf's current in-character location.")

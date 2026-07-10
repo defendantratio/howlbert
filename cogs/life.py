@@ -21,7 +21,7 @@ from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_mess
 from utils.notifications import notify_consent_request
 from utils.herb_autocomplete import herb_inventory_autocomplete
 from utils.wolf_autocomplete import make_member_wolf_autocomplete
-from cogs.care_handlers import lay_to_rest, naming_ceremony, quarantine_command, sacred_visit, spirit_ritual, treat
+from cogs.care_handlers import dissect_cadaver, lay_to_rest, naming_ceremony, quarantine_command, sacred_visit, spirit_ritual, treat
 
 def _resolve_own_wolf(discord_id: int, name: str):
     rows = db.list_user_wolves(discord_id)
@@ -161,8 +161,8 @@ class Life(commands.Cog):
         return user
 
     @app_commands.command(name='medic', description='clinical care, herb treatment, spirit rites, and sick-den quarantine.')
-    @app_commands.describe(action='medic action (see dropdown for the full list)', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', patient_wolf="specific wolf from that player's roster", own_patient='your other wolf as patient (stabilize, surgery, observe, ritual, naming)', helper='assisting medic for surgery (medicine dc 10 → advantage)', helper_wolf="specific wolf from helper's roster", own_helper='your other wolf as surgery helper', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf to prepare (lay_to_rest)', deceased_wolf="specific wolf from that player's roster (lay_to_rest)", own_deceased='your own dead wolf (lay_to_rest)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', wolf_name="specific wolf from that player's roster (quarantine)", own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
-    @app_commands.choices(action=[app_commands.Choice(name='death save (dying wolf)', value='deathsaves'), app_commands.Choice(name='stabilize packmate', value='stabilize'), app_commands.Choice(name='surgery on patient', value='surgery'), app_commands.Choice(name='treat with herb', value='treat'), app_commands.Choice(name='den checkup', value='checkup'), app_commands.Choice(name='sacred visit (medic)', value='sacred'), app_commands.Choice(name='spirit ritual', value='ritual'), app_commands.Choice(name='pup naming rite', value='naming'), app_commands.Choice(name='lay wolf to rest', value='lay_to_rest'), app_commands.Choice(name='swim therapy (river)', value='swim'), app_commands.Choice(name='quarantine sick wolf', value='quarantine'), app_commands.Choice(name='observe case (apprentice)', value='observe')], procedure=[app_commands.Choice(name='stitch wound (deep gash / infection)', value='stitch'), app_commands.Choice(name='set bone / splint (comfrey + bindweed + 2 sticks)', value='set_bone'), app_commands.Choice(name='extract thorn or splinter', value='extract'), app_commands.Choice(name='amputate ruined limb', value='amputate')])
+    @app_commands.describe(action='medic action (see dropdown for the full list)', patient='packmate (stabilize, surgery, treat, ritual, naming, observe)', patient_wolf="specific wolf from that player's roster", own_patient='your other wolf as patient (stabilize, surgery, observe, ritual, naming)', helper='assisting medic for surgery (medicine dc 10 → advantage)', helper_wolf="specific wolf from helper's roster", own_helper='your other wolf as surgery helper', procedure='surgery type (surgery only)', herb='herb key or forage stack (treat)', ritual_herb='douglas_sagewort, lavender, or mountain_ash (ritual)', deceased='dead wolf (lay_to_rest, dissect)', deceased_wolf="specific wolf from that player's roster (lay_to_rest, dissect)", own_deceased='your own dead wolf (lay_to_rest, dissect)', lay_herb='rosemary, lavender, or mint (lay_to_rest)', wolf='packmate to isolate or release (quarantine)', wolf_name="specific wolf from that player's roster (quarantine)", own_wolf='your other wolf (quarantine, treat)', release='release from quarantine instead of isolating', use_yarrow='apply yarrow for +2 (stabilize)', use_cobwebs='cobwebs auto-stabilize (stabilize)', use_poppy='poppy seeds sedation +2 (amputation surgery)', use_meadowsweet='meadowsweet pain ease +1 (stitch / set bone / amputate)', use_loosestrife='purple loosestrife +1 (stitch only)', use_plantain='plantain soothe +1 (extract only)', use_rush_stalks='rush stalks lash splint +2 (set bone only)')
+    @app_commands.choices(action=[app_commands.Choice(name='death save (dying wolf)', value='deathsaves'), app_commands.Choice(name='stabilize packmate', value='stabilize'), app_commands.Choice(name='surgery on patient', value='surgery'), app_commands.Choice(name='treat with herb', value='treat'), app_commands.Choice(name='den checkup', value='checkup'), app_commands.Choice(name='sacred visit (medic)', value='sacred'), app_commands.Choice(name='spirit ritual', value='ritual'), app_commands.Choice(name='pup naming rite', value='naming'), app_commands.Choice(name='lay wolf to rest', value='lay_to_rest'), app_commands.Choice(name='swim therapy (river)', value='swim'), app_commands.Choice(name='quarantine sick wolf', value='quarantine'), app_commands.Choice(name='observe case (apprentice)', value='observe'), app_commands.Choice(name='dissect cadaver (apprentice; learn anatomy)', value='dissect')], procedure=[app_commands.Choice(name='stitch wound (deep gash / infection)', value='stitch'), app_commands.Choice(name='set bone / splint (comfrey + bindweed + 2 sticks)', value='set_bone'), app_commands.Choice(name='extract thorn or splinter', value='extract'), app_commands.Choice(name='amputate ruined limb', value='amputate')])
     @app_commands.autocomplete(herb=herb_inventory_autocomplete, own_wolf=_quarantine_own_wolf_autocomplete, own_patient=_quarantine_own_wolf_autocomplete, own_helper=_quarantine_own_wolf_autocomplete, own_deceased=_quarantine_own_wolf_autocomplete, patient_wolf=_patient_wolf_autocomplete, helper_wolf=_helper_wolf_autocomplete, deceased_wolf=_deceased_wolf_autocomplete, wolf_name=_quarantine_wolf_autocomplete)
     async def medic(self, interaction: discord.Interaction, action: str, patient: discord.Member | None=None, own_patient: str | None=None, helper: discord.Member | None=None, own_helper: str | None=None, procedure: str='stitch', herb: str | None=None, ritual_herb: str | None=None, deceased: discord.Member | None=None, own_deceased: str | None=None, lay_herb: str | None=None, wolf: discord.Member | None=None, own_wolf: str | None=None, release: bool=False, use_yarrow: bool=False, use_cobwebs: bool=False, use_poppy: bool=False, use_meadowsweet: bool=False, use_loosestrife: bool=False, use_plantain: bool=False, use_rush_stalks: bool=False, patient_wolf: str | None=None, helper_wolf: str | None=None, deceased_wolf: str | None=None, wolf_name: str | None=None):
         if action == 'deathsaves':
@@ -277,6 +277,8 @@ class Life(commands.Cog):
             await naming_ceremony(interaction, patient, own_patient=own_patient, patient_wolf=patient_wolf)
         elif action == 'lay_to_rest':
             await lay_to_rest(interaction, deceased, lay_herb, own_deceased=own_deceased, deceased_wolf=deceased_wolf)
+        elif action == 'dissect':
+            await dissect_cadaver(interaction, deceased, own_deceased=own_deceased, deceased_wolf=deceased_wolf)
         elif action == 'swim':
             await self._swim_therapy(interaction)
         elif action == 'quarantine':
@@ -576,7 +578,7 @@ class Life(commands.Cog):
 
     @app_commands.command(name='courtship', description='court, mate, or check pregnancy status.')
     @app_commands.describe(action='court, mate, pregnancy, or rival', target='defender wolf (another player)', target_wolf="specific wolf from that player's roster (rival)", partner='challenger wolf (another player; default: you)', partner_wolf="specific wolf from that player's roster (court/mate)", rival_mode='physical pin or vocal howl (rival)', favor_challenger='receptive female favors challenger (+2)', own_wolf='one of your other wolves (court/mate)', difficulty='social difficulty (court)', respond='accept or decline pending request (mate)')
-    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (winter)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
+    @app_commands.choices(action=[app_commands.Choice(name='court another wolf', value='court'), app_commands.Choice(name='mate with partner', value='mate'), app_commands.Choice(name='check pregnancy', value='pregnancy'), app_commands.Choice(name='rival challenge (mating access)', value='rival')], difficulty=[app_commands.Choice(name='auto: from standing', value='auto'), app_commands.Choice(name='friendly (dc 12)', value='friendly'), app_commands.Choice(name='neutral (dc 15)', value='neutral'), app_commands.Choice(name='hostile (dc 18)', value='hostile')], respond=[app_commands.Choice(name='accept pending request', value='accept'), app_commands.Choice(name='decline pending request', value='decline')], rival_mode=[app_commands.Choice(name='physical (strength + hunting)', value='physical'), app_commands.Choice(name='vocal (charisma + intimidation)', value='vocal')])
     @app_commands.autocomplete(own_wolf=_other_wolf_autocomplete, target_wolf=_target_wolf_autocomplete, partner_wolf=_partner_wolf_autocomplete)
     async def courtship(self, interaction: discord.Interaction, action: str, target: discord.Member | None=None, partner: discord.Member | None=None, own_wolf: str | None=None, difficulty: str='auto', respond: str | None=None, rival_mode: str='physical', favor_challenger: bool=False, target_wolf: str | None=None, partner_wolf: str | None=None):
         if action == 'court':
@@ -802,10 +804,6 @@ class Life(commands.Cog):
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
                 return
             world = db.get_world(interaction.guild.id)
-            if world['season'] != 'spring':
-                embed = howlbert_embed('Wrong Season', 'Mating season ended before you could respond.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
             if partner_user['receptive_day'] < world['day_number']:
                 embed = howlbert_embed('Not Receptive', 'You are no longer receptive; they must `/courtship action:court` you again.', color=ERROR_COLOR)
                 await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -1025,10 +1023,14 @@ class Life(commands.Cog):
         father_id = father['id'] if father else None
         from engine.genetics import GENETIC_CONDITIONS, encode_genetic_conditions, roll_pup_genetic_conditions
         from engine.stillborn import format_stillborn_save_hint, save_pending_stillborn
+        from engine.attraction import kinship_taboo
+        # parents who share close blood raise recessive expression, mutation load,
+        # inbreeding depression, and stillbirth risk for every pup in the litter.
+        is_kin = bool(father) and kinship_taboo(user, father) is not None
         world = db.get_world(interaction.guild.id)
         born_day = world['day_number']
         for pup_name in parsed_names:
-            conditions, lethal = roll_pup_genetic_conditions(user, father, birth_outcome=result['outcome'])
+            conditions, carriers, lethal = roll_pup_genetic_conditions(user, father, birth_outcome=result['outcome'], kin=is_kin)
             if lethal:
                 stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
                 save_pending_stillborn(discord_id=user['discord_id'], mother_wolf_id=user['id'], pup_name=pup_name, genetic_conditions=conditions, stats=stats, father_wolf_id=father_id, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), born_day=born_day)
@@ -1036,11 +1038,16 @@ class Life(commands.Cog):
                 continue
             stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
             pup_id = db.register_born_wolf(discord_id=user['discord_id'], wolf_name=pup_name, mother_wolf_id=user['id'], father_wolf_id=father_id, stats=stats, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), genetic_conditions=encode_genetic_conditions(conditions), father_hidden=hide_father)
+            if carriers:
+                db.update_user(user['discord_id'], wolf_id=pup_id, genetic_carriers=encode_genetic_conditions(carriers))
             born_pup_ids.append(pup_id)
             born_names.append(pup_name)
             if conditions:
                 muts = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in conditions))
                 mutation_lines.append(f'**{pup_name}**: {muts}')
+            if carriers:
+                carrier_names = ', '.join((GENETIC_CONDITIONS[c]['name'] for c in carriers))
+                inheritance_lines.append(f'**{pup_name}** silently carries {carrier_names} (unexpressed; can pass to pups).')
             from engine.family import inherit_parent_skill_trait
 
             inherit_note = inherit_parent_skill_trait(pup_id, user, father)
@@ -1182,7 +1189,7 @@ class Life(commands.Cog):
         ok, msg = train_pup(trainer, pup, attribute=attribute, day=world['day_number'])
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Train Pup', msg, color=color)
-        embed.set_footer(text='costs energy · pups and juveniles only · /help topic:skills')
+        embed.set_footer(text='unlimited; each lesson spends energy · pups and juveniles only')
         await interaction.response.send_message(embed=embed)
 
     async def _pups(self, interaction: discord.Interaction):

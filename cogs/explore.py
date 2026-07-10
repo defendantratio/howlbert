@@ -51,7 +51,7 @@ class Explore(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (scouts pay less energy).')
+    @app_commands.command(name='explore', description='range the biome: dig, follow scent, or investigate (spends energy; scouts tire slower).')
     @app_commands.describe(action='what you try in the wild')
     @app_commands.choices(action=[app_commands.Choice(name='🕳️ dig', value='dig'), app_commands.Choice(name='👃 follow scent', value='follow'), app_commands.Choice(name='🔍 investigate', value='investigate')])
     async def explore(self, interaction: discord.Interaction, action: str):
@@ -245,9 +245,9 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if result['success'] else ERROR_COLOR
         body = result['body'] + (f"\n_{socialize_penalty}_" if socialize_penalty else '')
         embed = howlbert_embed('Socialize', body, color=color)
-        footer = '/bonds · costs energy · /checklist'
+        footer = '/bonds · spends energy · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · costs energy'
+            footer = '/bonds · cross-pack; no den unity change · spends energy'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -378,9 +378,9 @@ class Explore(commands.Cog):
         hoard_line = f'\n\n{hoard_caught}' if hoard_caught else ''
         groom_penalty_line = f'\n_{groom_penalty}_' if groom_penalty else ''
         embed = howlbert_embed('Groom', f"You work burrs from **{partner['wolf_name']}**'s coat; **+{mood_gain} mood** each.\nYour mood: **{your_mood}** · Theirs: **{their_mood}**" + (f'\nThey gain **+{heal} HP** from the care.' if heal else '') + unity_line + spread_line + soothe_line + bond_line + hoard_line + groom_penalty_line, color=SUCCESS_COLOR)
-        footer = '/bonds · costs energy · /checklist'
+        footer = '/bonds · spends energy · /checklist'
         if cross_pack:
-            footer = '/bonds · cross-pack; no den unity change · costs energy'
+            footer = '/bonds · cross-pack; no den unity change · spends energy'
         embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
@@ -400,7 +400,7 @@ class Explore(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         embed = howlbert_embed('Play All', msg, color=color)
         if ok:
-            embed.set_footer(text='alpha · costs energy · /checklist')
+            embed.set_footer(text='alpha · spends energy · /checklist')
         elif not ok:
             embed.set_footer(text='/playpen action:play · /checklist')
         await interaction.response.send_message(embed=embed)
@@ -469,6 +469,7 @@ class Explore(commands.Cog):
             return
         world = db.get_world(interaction.guild.id)
         day = world['day_number']
+        # no climbing dc on repeat gossip; spreading rumors just spends energy.
         from engine.energy import spend_energy
         _new_energy, _had_energy, whisper_penalty = spend_energy(user, 'whisper')
         if target and own_wolf:
