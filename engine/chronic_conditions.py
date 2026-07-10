@@ -125,14 +125,16 @@ def try_near_death_mental_trauma(user) -> str | None:
     return "; ".join(notes) if notes else None
 
 
-def apply_elder_chronic_on_rollover(conn: sqlite3.Connection) -> list[dict]:
-    """Elders may develop dementia, wasting, or cancer if not already ill."""
+def apply_elder_chronic_on_rollover(conn: sqlite3.Connection, day: int = 0) -> list[dict]:
+    """Elders may develop dementia, wasting, or cancer if not already ill.
+    Wolves nobody is playing (dormant or auto-away) are exempt."""
     rows = conn.execute(
-        """
+        f"""
         SELECT * FROM users
         WHERE condition NOT IN ('dead', 'dying')
           AND age_months >= ?
           AND (disease IS NULL OR disease = '')
+          AND {db.active_wolf_where(day)}
         """,
         (ELDER_CHRONIC_AGE,),
     ).fetchall()
@@ -140,18 +142,17 @@ def apply_elder_chronic_on_rollover(conn: sqlite3.Connection) -> list[dict]:
     for user in rows:
         roll = random.random()
         note = None
+        # pass the rollover's own connection so nested writes don't lock the db.
         if roll < 0.015:
-            note = try_cancer_from_age(user, chance=1.0)
+            note = try_contract_disease(user, "cancer", "lump", chance=1.0, conn=conn)
         elif roll < 0.10:
-            note = try_contract_disease(user, "wasting_sickness", "waning", chance=1.0)
+            note = try_contract_disease(user, "wasting_sickness", "waning", chance=1.0, conn=conn)
         elif roll < 0.16:
-            note = try_dementia_from_age(user, chance=1.0)
-        elif roll < 0.20:
-            note = try_dementia_from_concussion(user)
-            if not note and "concussion" in parse_injuries(
-                user["active_injuries"] if "active_injuries" in user.keys() else None
-            ):
-                note = try_contract_disease(user, "dementia", "forgetful", chance=1.0)
+            note = try_contract_disease(user, "dementia", "forgetful", chance=1.0, conn=conn)
+        elif roll < 0.20 and "concussion" in parse_injuries(
+            user["active_injuries"] if "active_injuries" in user.keys() else None
+        ):
+            note = try_contract_disease(user, "dementia", "forgetful", chance=1.0, conn=conn)
         if note:
             notes.append(
                 {

@@ -6610,6 +6610,18 @@ def _progress_conditions(guild_id: int, *, day: int = 0) -> list[dict]:
                         }
                     )
 
+        # elders may develop dementia, wasting, or cancer with age (away wolves exempt).
+        from engine.chronic_conditions import apply_elder_chronic_on_rollover
+
+        for _ec in apply_elder_chronic_on_rollover(conn, day):
+            notes.append(
+                {
+                    "wolf_name": _ec["wolf_name"],
+                    "discord_id": _ec["discord_id"],
+                    "line": _ec["message"],
+                }
+            )
+
     from engine.disease_contract import apply_pending_milk_fever_on_rollover
 
     world = get_world(guild_id)
