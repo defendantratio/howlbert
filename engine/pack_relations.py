@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 
 import database as db
+from engine.factions import faction_name
 
 HOSTILE_STANDING_THRESHOLD = 3
 FRIENDLY_STANDING_THRESHOLD = 8
@@ -193,7 +194,7 @@ def sniff_encounter_lines(
         return "", None
 
     gp = other["great_pack"] if "great_pack" in other.keys() and other["great_pack"] else None
-    pack_name = GREAT_PACKS[gp]["name"] if gp and gp in GREAT_PACKS else "a rival den"
+    pack_name = faction_name(gp) if gp else "a rival den"
 
     if _scent_disguise_active(user, guild_id, other):
         return (
