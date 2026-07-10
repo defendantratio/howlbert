@@ -62,7 +62,6 @@ def stabilize_bonus(
 
 def stabilize_check(
     healer,
-    target_has_herblore: bool = False,
     *,
     yarrow: bool = False,
     yarrow_fresh: bool = False,

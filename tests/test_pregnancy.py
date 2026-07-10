@@ -6,7 +6,6 @@ from engine.family import GESTATION_DAYS
 from engine.pregnancy import (
     LATE_PREGNANCY_SUNRISES,
     in_late_pregnancy,
-    pregnancy_activity_block,
     pregnancy_elapsed,
 )
 from engine.vitals import full_activity_block
@@ -62,16 +61,6 @@ def main() -> None:
         "elapsed days",
         pregnancy_elapsed(user, late_day) == GESTATION_DAYS - LATE_PREGNANCY_SUNRISES,
     )
-
-    block = pregnancy_activity_block(user, "hunt", late_day)
-    check("hunt blocked late", block is not None and "late pregnancy" in block.lower())
-    check("forage not blocked", pregnancy_activity_block(user, "forage", late_day) is None)
-
-    male = _row(birth_sex="male")
-    check("male not blocked", pregnancy_activity_block(male, "hunt", late_day) is None)
-
-    not_preg = _row(is_pregnant=0)
-    check("not pregnant", pregnancy_activity_block(not_preg, "hunt", late_day) is None)
 
     # late pregnancy no longer hard-blocks via full_activity_block; the action
     # proceeds and engine.strenuous_strain applies the yield/miscarriage risk

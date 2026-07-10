@@ -158,8 +158,6 @@ def can_use_role_reroll(user, day: int) -> bool:
     return used < day
 
 
-def charisma_reroll_roles(user) -> tuple[str, ...]:
-    return tuple(r for r in role_keys(user) if r in CHARISMA_REROLL_ROLES)
 
 
 def bonus_feature_label(user) -> str | None:

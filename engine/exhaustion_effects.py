@@ -120,20 +120,8 @@ def exhaustion_activity_block(user) -> str | None:
     return None
 
 
-def exhaustion_hunt_multiplier(exhaustion: int) -> float:
-    """level 2+: speed halved → reduced hunt payout."""
-    if exhaustion >= 2:
-        return 0.5
-    return 1.0
 
 
-def apply_exhaustion_hunt_penalty(amount: int, exhaustion: int) -> tuple[int, str]:
-    if amount <= 0 or exhaustion < 2:
-        return amount, ""
-    mult = exhaustion_hunt_multiplier(exhaustion)
-    reduced = max(0, int(amount * mult))
-    note = f"exhaustion {exhaustion}; speed halved, **−50%** hunt bones."
-    return reduced, note
 
 
 def apply_mood_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:

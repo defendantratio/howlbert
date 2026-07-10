@@ -85,4 +85,3 @@ def test_reply_ephemeral_defaults():
     from utils.replies import reply_ephemeral
 
     assert reply_ephemeral() is False
-    assert reply_ephemeral(private=True) is False

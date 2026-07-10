@@ -139,6 +139,9 @@ def birth_check(mother) -> dict:
 
     if success and extra_pup_milk(mother):
         litter += 1
+    from engine.genetics import genetic_litter_penalty
+
+    litter = max(1, litter - genetic_litter_penalty(mother))
     return {
         "die": die,
         "total": total,

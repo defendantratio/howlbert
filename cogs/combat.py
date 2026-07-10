@@ -275,7 +275,7 @@ def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str,
         else:
             counter_stats = db.get_user(defender_f['discord_id'])
             counter_att_name = counter_stats['wolf_name'] if counter_stats else def_name
-        counter_body, counter_hp, _ = _apply_attack_result(attacker_f, 'claw', counter_stats, counter_att_name, attacker_f=defender_f, allow_free_counter=False)
+        counter_body, _, _ = _apply_attack_result(attacker_f, 'claw', counter_stats, counter_att_name, attacker_f=defender_f, allow_free_counter=False)
         injury_note += f'\n\n**Free counterattack!** {counter_body}'
     body = format_attack(result, att_name, def_name) + status_note + injury_note
     return (body, new_hp, result['hit'])
@@ -501,17 +501,6 @@ class Combat(commands.Cog):
         if note and embed:
             footer = embed.footer.text if embed.footer and embed.footer.text else ''
             embed.set_footer(text=f'{footer} · {note}' if footer else note)
-
-    async def _require_combat_participant(self, interaction: discord.Interaction, enc):
-        user = await self._require_user(interaction)
-        if not user:
-            return (None, None)
-        fighter = db.resolve_player_fighter(enc['id'], interaction.user.id)
-        if not fighter:
-            embed = howlbert_embed('Not In Combat', 'You must be in this encounter to run NPC turns.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return (None, None)
-        return (user, fighter)
 
     def _current_fighter(self, enc):
         return _current_fighter_static(enc)

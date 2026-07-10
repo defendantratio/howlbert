@@ -15,7 +15,6 @@ SYNODIC_MONTH = 29.530588853
 KNOWN_NEW_MOON_JD = 2451549.5
 PHASE_WINDOW = 1 / 16  # ~1.8 days each side of new/full/quarter
 
-BIRTH_LUNAR_PHASES = ("new_moon", "half_moon", "full_moon")
 
 BIRTH_LUNAR_LABELS = {
     "new_moon": "new moon",

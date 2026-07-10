@@ -60,16 +60,12 @@ def roll_crime_caught() -> bool:
     return random.random() < CRIME_CATCH_CHANCE
 
 
-def roll_cross_pack_steal_caught() -> bool:
-    return random.random() < CROSS_PACK_STEAL_CATCH_CHANCE
 
 
 def roll_cross_pack_mate_caught() -> bool:
     return random.random() < CROSS_PACK_MATE_CATCH_CHANCE
 
 
-def roll_medic_mate_caught() -> bool:
-    return random.random() < MEDIC_MATE_CATCH_CHANCE
 
 
 def roll_yield_caught() -> bool:
@@ -104,8 +100,6 @@ def cross_pack_mate_caught_standing() -> int:
     return CROSS_PACK_MATE_CAUGHT_STANDING
 
 
-def medic_mate_caught_standing() -> int:
-    return MEDIC_MATE_CAUGHT_STANDING
 
 
 def yield_caught_standing() -> int:
@@ -147,8 +141,6 @@ def pick_cross_pack_mate_caught_flavor() -> str:
     return random.choice(CROSS_PACK_MATE_CAUGHT_TEXT)
 
 
-def pick_medic_mate_caught_flavor() -> str:
-    return random.choice(MEDIC_MATE_CAUGHT_TEXT)
 
 
 def _apply_standing_penalties(

@@ -232,9 +232,6 @@ PACK_WIDE = {key for key, info in SIGNAL_CATALOG.items() if info["scope"] == "pa
 EITHER_SCOPE = {key for key, info in SIGNAL_CATALOG.items() if info["scope"] == "either"}
 
 
-def signal_choices() -> list[tuple[str, str]]:
-    """(label, key) pairs for the command choice list."""
-    return [(info["name"], key) for key, info in SIGNAL_CATALOG.items()]
 
 
 # ASL-style posture composition: optional handshape/location/movement

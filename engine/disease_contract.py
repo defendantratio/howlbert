@@ -31,6 +31,9 @@ def try_contract_disease(
     """
     if not user or user["condition"] in ("dead", "dying"):
         return None
+    from engine.herb_buffs import disease_grace_active
+    if disease_grace_active(user):
+        return None
     if chance < 1.0 and random.random() > chance:
         return None
 
@@ -43,7 +46,7 @@ def try_contract_disease(
     if not info:
         return None
 
-    existing_key, existing_stage = parse_disease(
+    existing_key, _ = parse_disease(
         user["disease"] if "disease" in user.keys() else None
     )
     if existing_key:
@@ -431,11 +434,6 @@ def apply_pending_milk_fever_on_rollover(conn, day: int) -> list[dict]:
                 }
             )
     return notes
-
-
-def try_contract_milk_fever(user, *, difficult_birth: bool = False) -> str | None:
-    """deprecated alias; birth flow should call schedule_milk_fever_risk with the den day."""
-    return None
 
 
 def try_sick_traveler_exposure(user) -> str | None:

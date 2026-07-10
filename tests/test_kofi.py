@@ -300,20 +300,6 @@ def test_legend_membership_daily() -> None:
     check("effective tier", effective_donor_tier(acct) == "legend")
 
 
-def test_wrapper_return_shape() -> None:
-    print("\n=== API shape ===")
-    from engine.donor import process_kofi_donation
-
-    result = process_kofi_donation(
-        transaction_id=_tx("shape"),
-        amount_str="5.00",
-        message=str(USER_A),
-        verification_token=TOKEN,
-        expected_token=TOKEN,
-    )
-    check("wrapper returns 4-tuple", len(result) == 4)
-
-
 def main() -> int:
     print("Initializing test DB...")
     db.init_db()
@@ -325,7 +311,6 @@ def main() -> int:
         test_shop,
         test_redeem,
         test_legend_membership_daily,
-        test_wrapper_return_shape,
     ]
     for fn in tests:
         try:

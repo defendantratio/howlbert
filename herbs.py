@@ -18,7 +18,6 @@ FORAGE_RARITY_DC = {
 }
 
 # Back-compat alias; prefer SEASON_FORAGE_DC_MOD from config
-SEASON_FORAGE_MOD = SEASON_FORAGE_DC_MOD
 
 # Injury table; roll 1d10 when a wolf is dropped to 0 HP
 INJURY_TABLE = (
@@ -443,16 +442,4 @@ EXHAUSTION_EFFECTS = {
     10: "Death.",
 }
 
-PACK_UNITY_EFFECTS = {
-    "low": "Unity 1 to 2: −10% hunt bones.",
-    "breaking": "Unity 0: −20% hunt bones; plain howls cannot raise unity.",
-    "fracturing": "Unity −1 to −4: −25% hunt bones; need Alpha/Beta (Advisor) to rally.",
-    "collapse": "Unity −5: pack dissolves; all members become loners.",
-    "high": "Unity ≥ 8: +10% hunt bones.",
-}
 
-RIVAL_STANDING_EFFECTS = {
-    "friendly": "Standing ≥ 8: may share hunting grounds.",
-    "hostile": "Standing ≤ 3: attacks on sight.",
-    "war": "Standing 0: constant skirmishes.",
-}

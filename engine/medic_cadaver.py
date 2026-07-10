@@ -64,19 +64,6 @@ def pack_has_living_alpha(pack_id) -> bool:
     return False
 
 
-def get_dead_packmates(pack_id: int) -> list:
-    """Dead wolves from the same pack that are still stored (not purged)."""
-    if not pack_id:
-        return []
-    with db.get_db() as conn:
-        return conn.execute(
-            """
-            SELECT * FROM users
-            WHERE pack_id = ? AND condition = 'dead'
-            ORDER BY death_day DESC, id DESC
-            """,
-            (pack_id,),
-        ).fetchall()
 
 
 def can_dissect(apprentice, cadaver, *, day: int) -> tuple[bool, str]:
@@ -172,5 +159,3 @@ def perform_dissection(apprentice, cadaver, *, day: int) -> tuple[bool, bool, st
     return True, True, "\n".join(lines)
 
 
-def get_last_dissect_day(apprentice) -> int:
-    return int(get_buffs(apprentice).get("last_dissect_day", 0))

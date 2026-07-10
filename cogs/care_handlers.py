@@ -11,14 +11,6 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message
 
 
-async def prepare_herb(interaction: discord.Interaction, stack_id: int, prep_method: str):
-    _ = (stack_id, prep_method)
-    await interaction.response.send_message(
-        player_message('forage herbs live in `/bones action:inventory`. use `/herbs action:prepare` with an inventory herb key.'),
-        ephemeral=reply_ephemeral()
-    )
-
-
 async def dryall(interaction: discord.Interaction):
     user = db.get_user(interaction.user.id)
     if not user or not interaction.guild:
@@ -429,6 +421,15 @@ async def treat(
         who = 'their disease' if treat_patient else 'your disease'
         msg = f"**{meta.get('name', item['name'])}** cured {who}."
 
+    elif outcome == 'cough_dose':
+        from engine.herb_buffs import apply_disease_dose
+        _cured, _dose_fields2, _dose_msg = apply_disease_dose(treat_subject, herb_key, day=treat_day)
+        if _dose_fields2:
+            db.update_user(subject_did, wolf_id=subject_id, **_dose_fields2)
+        if _cured:
+            db.set_user_conditions(subject_did, wolf_id=subject_id, clear_disease=True, condition='healthy')
+        msg = f"**{item['name']}**: {_dose_msg}"
+
     elif outcome == 'rabies_ease':
         from engine.herb_buffs import grant_disease_save_advantage
         db.update_user(subject_did, wolf_id=subject_id, **grant_disease_save_advantage(treat_subject))
@@ -439,10 +440,16 @@ async def treat(
         )
 
     elif outcome == 'cured_injury':
+        from engine.character_traits import trait_clears_infection_on_heal
         for inj in meta.get('cures', ()):
             if inj in injuries:
                 injuries.remove(inj)
                 db.clear_injury_since(subject_id, inj)
+        _infection_cleared = False
+        if 'infected_wound' in injuries and trait_clears_infection_on_heal(user):
+            injuries.remove('infected_wound')
+            db.clear_injury_since(subject_id, 'infected_wound')
+            _infection_cleared = True
         db.set_user_conditions(
             subject_did,
             wolf_id=subject_id,
@@ -451,6 +458,8 @@ async def treat(
         )
         who = f"**{treat_subject['wolf_name']}**'s injury" if treat_patient else 'your injury'
         msg = f"**{item['name']}** treated {who}."
+        if _infection_cleared:
+            msg += " a practiced touch clears the infection too."
 
     elif outcome == 'cured_genetic':
         from engine.genetics import genetic_keys_matching_cures, remove_genetic_keys
@@ -472,15 +481,17 @@ async def treat(
 
     elif outcome == 'healed' or herb_key == 'comfrey':
         from engine.exhaustion_effects import effective_max_hp
+        from engine.character_traits import trait_treat_heal_bonus
         cap = effective_max_hp(treat_subject)
         lo = max(1, cap // 5)
         hi = max(2, cap // 3)
+        _heal_bonus = trait_treat_heal_bonus(user)
         if herb_key == 'comfrey':
-            heal = random.randint(lo, hi)
+            heal = random.randint(lo, hi) + _heal_bonus
             heal_label = 'comfrey (raw)'
             prep_hint = f' _prepare as poultice for up to {hi + 1} hp._'
         else:
-            heal = random.randint(lo, hi)
+            heal = random.randint(lo, hi) + _heal_bonus
             heal_label = meta.get('name', item['name'])
             prep_hint = ''
         new_hp = min(cap, int(treat_subject['hp']) + heal)
@@ -627,6 +638,12 @@ async def treat(
     _addict_note = register_herb_dose(_se_fresh, herb_key, day=treat_day)
     if _addict_note:
         msg += _addict_note
+
+    if interaction.guild:
+        from engine.plot_blinking import try_plot_treat_extras
+        _plot_note = try_plot_treat_extras(user, treat_subject, guild_id=interaction.guild.id, day=treat_day)
+        if _plot_note:
+            msg += f'\n\n{_plot_note}'
 
     embed = howlbert_embed('treatment', msg, color=SUCCESS_COLOR)
     embed.set_footer(text='care plan: `/vitals action:condition` · surgery: `/medic action:surgery`')

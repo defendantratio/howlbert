@@ -8,7 +8,6 @@ from engine.herb_growing import (
     evaluate_growth,
     growing_profile,
     harvest_yield,
-    season_is_suitable,
     watering_overdue_penalty,
 )
 
@@ -45,13 +44,6 @@ def test_off_season_slows_hardy_and_kills_tender():
 
     daisy = growing_profile("daisy")  # not hardy
     assert effective_grow_days(daisy, "winter") == daisy.grow_days * 2
-
-
-def test_season_suitability():
-    yarrow = growing_profile("yarrow")
-    assert season_is_suitable(yarrow, "spring")
-    assert season_is_suitable(yarrow, "autumn")   # hardy tolerates
-    assert not season_is_suitable(yarrow, "winter")
 
 
 def test_high_water_herb_dies_when_neglected():
@@ -151,7 +143,6 @@ if __name__ == "__main__":
     test_poison_and_bark_not_cultivable()
     test_cultivable_list_excludes_restricted()
     test_off_season_slows_hardy_and_kills_tender()
-    test_season_suitability()
     test_high_water_herb_dies_when_neglected()
     test_drought_hardy_herb_survives_neglect()
     test_matures_after_grow_days()

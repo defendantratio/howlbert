@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from config import (
-    DRINK_COOLDOWN_MINUTES,
     DRINK_EXHAUSTION_RELIEF,
     DRINK_HP_RESTORE,
     DRINK_HUNGER_RESTORE,
@@ -40,9 +39,6 @@ def user_thirst(user) -> int:
     return int(user["thirst"])
 
 
-def drink_cooldown_minutes(user) -> int:
-    last_at = user["last_drink_at"] if "last_drink_at" in user.keys() else ""
-    return cooldown_minutes_remaining(last_at or None, DRINK_COOLDOWN_MINUTES)
 
 
 def thirst_activity_block(user) -> str | None:

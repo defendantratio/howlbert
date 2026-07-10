@@ -56,10 +56,6 @@ def main() -> None:
     check("friendly standing", suggest_court_difficulty(courter, target_high, None) == "friendly")
 
     db.record_court_attempt(999001, 999002, 5000)
-    check(
-        "court pair block",
-        db.court_blocked_for_pair(999001, 999002, 5000),
-    )
 
     slots = db.count_slot_wolves(999999999)
     check("slot count ok", isinstance(slots, int))

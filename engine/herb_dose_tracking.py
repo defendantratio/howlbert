@@ -60,14 +60,6 @@ def record_herb_dose(user, herb_key: str, day: int) -> dict:
     return {"daily_use_log": json.dumps(log)}
 
 
-def can_take_dose(user, herb_key: str, day: int) -> tuple[bool, str]:
-    """Whether the wolf is still under the daily cap for this herb."""
-    max_dose = MAX_DAILY_DOSE.get(herb_key)
-    if max_dose is None:
-        return True, ""
-    if get_todays_dose_count(user, herb_key, day) >= max_dose:
-        return False, f"daily limit reached for **{herb_key.replace('_', ' ')}** ({max_dose} per sunrise)."
-    return True, ""
 
 
 def check_herb_overdose(user, herb_key: str, day: int) -> tuple[bool, str, str]:

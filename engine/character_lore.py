@@ -78,19 +78,6 @@ def lore_for_display(user) -> dict | None:
     return parse_character_lore(_user_lore_raw(user))
 
 
-def format_lore_profile_hint(user) -> str | None:
-    lore = lore_for_display(user)
-    if not lore:
-        return None
-    parts = []
-    if lore.get("appearance"):
-        text = lore["appearance"]
-        if len(text) > 180:
-            text = text[:177] + "…"
-        from engine.pronouns import adapt_text_for_user
-
-        parts.append(adapt_text_for_user(text, user))
-    return "\n".join(parts) if parts else "lore on file; use `/profile sheet:true` for the full sheet."
 
 
 def lore_embed_fields(user) -> list[tuple[str, str]]:

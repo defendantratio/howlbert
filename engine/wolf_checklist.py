@@ -23,9 +23,6 @@ def _field(user, key: str, default=None):
     return default
 
 
-def _has_text(user, key: str) -> bool:
-    val = _field(user, key)
-    return bool(val and str(val).strip())
 
 
 def _has_proxy(user) -> bool:

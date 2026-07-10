@@ -13,8 +13,6 @@ from utils.replies import reply_ephemeral
 from utils.embeds import ERROR_COLOR, howlbert_embed
 
 
-def _is_error(embed: discord.Embed) -> bool:
-    return embed.color == ERROR_COLOR
 
 
 # --- Shop ---

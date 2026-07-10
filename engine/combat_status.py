@@ -146,6 +146,11 @@ def attacker_roll_modifiers(
         if int(attacker["exhaustion"]) >= 3:
             disadvantage = True
 
+    from engine.injury_effects import in_shock
+
+    if in_shock(attacker):
+        disadvantage = True
+
     hunger_note = ""
     if attacker:
         from config import HUNGER_LOW_THRESHOLD, THIRST_LOW_THRESHOLD

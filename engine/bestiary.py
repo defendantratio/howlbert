@@ -629,9 +629,3 @@ def format_npc_summary(template_key: str) -> str:
     return "\n".join(lines)
 
 
-def npc_choices_for_category(category: str) -> list[tuple[str, str]]:
-    return [
-        (key, data["name"])
-        for key, data in BESTIARY_NPCS.items()
-        if data["category"] == category
-    ]

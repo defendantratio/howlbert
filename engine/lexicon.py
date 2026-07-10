@@ -14,8 +14,6 @@ TIME_WOLF_NAMES: dict[str, tuple[str, str]] = {
 }
 
 # One game rollover = one sunrise
-SUNRISE_LABEL = "sunrise"
-MOON_LABEL = "moon"  # ~30 sunrises between full moons
 
 LEXICON_CATEGORIES: dict[str, list[tuple[str, str]]] = {
     "basic": [
@@ -86,7 +84,6 @@ LEXICON_CATEGORIES: dict[str, list[tuple[str, str]]] = {
     ],
 }
 
-INSULTS_FLAT = [term for term, _ in LEXICON_CATEGORIES["insults"]]
 
 
 def season_display(season: str) -> str:

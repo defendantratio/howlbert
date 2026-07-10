@@ -150,7 +150,7 @@ def _cure_labels(cures: tuple) -> str:
         else:
             labels.append(key.replace("_", " ").title())
     suffix = "…" if len(cures) > 10 else ""
-    return f"\n**treats:** {', '.join(labels)}{suffix}" if labels else ""
+    return f"\ntreats: {', '.join(labels)}{suffix}" if labels else ""
 
 
 def _usage_hint(herb_key: str, meta: dict) -> str:
@@ -166,17 +166,26 @@ def _prep_line(herb_key: str, meta: dict) -> str:
     methods = _derive_prep_methods(herb_key, meta)
     if not methods:
         return ""
-    return f"\n_prepare via: {' · '.join(methods)}_"
+    return f"\nprepare via: {' · '.join(methods)}"
+
+
+def _territory(meta: dict) -> str:
+    habitats = ", ".join(HABITAT_LABELS.get(h, h) for h in meta.get("habitat", ("wild",)))
+    packs = meta.get("packs") or ()
+    if packs:
+        pack_names = ", ".join(p.replace("_", " ").title() for p in packs)
+        return f"{habitats} · {pack_names}"
+    return habitats
 
 
 def format_herb_block(herb_key: str, meta: dict) -> str:
-    habitats = ", ".join(HABITAT_LABELS.get(h, h) for h in meta.get("habitat", ("wild",)))
+    hint = _usage_hint(herb_key, meta)
     block = (
         f"**{meta['name']}** · `{herb_key}` · _{meta['rarity']}_\n"
-        f"_{habitats}_\n"
+        f"_{_territory(meta)}_\n"
         f"{meta['effect']}"
-        f"{_cure_labels(meta.get('cures', ()))}\n"
-        f"{_usage_hint(herb_key, meta)}"
+        f"{_cure_labels(meta.get('cures', ()))}"
+        f"{(chr(10) + hint) if hint else ''}"
         f"{_prep_line(herb_key, meta)}"
     )
     return block

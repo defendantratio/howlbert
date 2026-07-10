@@ -13,9 +13,6 @@ RAVEN_COMPANION_TRACK_BONUS_PCT = 10
 USABLE_ITEM_KEYS = frozenset(
     {"herb_bundle", "prey_bundle", "den_charm", "rabbit_pelt", "revive", "reincarnation"}
 )
-PASSIVE_ITEM_KEYS = frozenset({"lucky_tooth", "raven_companion"})
-ROLL_ITEM_KEYS = frozenset({"safe_roll"})
-RP_ITEM_KEYS = frozenset({"extra_paw"})
 
 
 def has_item(discord_id: int, key: str) -> bool:

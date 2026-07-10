@@ -16,12 +16,6 @@ from config import (
 )
 from engine.role_features import is_full_medic
 
-HEALER_CODE_SUMMARY = (
-    "**Healer's Code:** celibacy and no pups are expected; breaking it costs **standing** if caught. "
-    "Bearing or adopting pups exiles the litter and usually the healer. "
-    "Neutral in rivalries; cannot refuse the sick; interpreter of omens."
-)
-
 HEALER_VIOLATION_REMINDER = (
     "_The **Healer's Code** forbids mates and pups: if the den learns, you lose standing; "
     "pups may be cast out._"
@@ -32,13 +26,6 @@ def healer_vow_reminder(user) -> str | None:
     if is_full_medic(user):
         return HEALER_VIOLATION_REMINDER
     return None
-
-
-def healer_daily_tasks_blurb() -> str:
-    return (
-        "herb stores · treat wounded · assist births · pack health rounds · sacred visits "
-        "each half-moon · train apprentices · prepare the dead."
-    )
 
 
 def roll_medic_violation_caught() -> bool:

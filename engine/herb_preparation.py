@@ -31,7 +31,6 @@ PREP_METHODS: dict[str, dict] = {
     "milk":     {"form": "simmered_milk", "dc": 12, "from": ("fresh", "dried"),  "bonus": " Simmered in milk; soothing for pups and sore eyes."},
 }
 
-PREP_FORMS = tuple(PREP_METHODS)
 
 METHOD_LABELS = {
     "dry": "dry", "poultice": "poultice", "juice": "juice", "raw": "eaten raw",
@@ -77,67 +76,6 @@ def _prep_transition(method: str, current_form: str) -> tuple[bool, str]:
     return True, spec["form"]
 
 
-def prepare_herb_stack(
-    user,
-    stack_id: int,
-    method: str,
-    *,
-    day: int,
-    at_den: bool = False,
-) -> tuple[bool, str]:
-    if method not in PREP_METHODS:
-        return False, _METHOD_LIST_MSG
-    stack = db.get_herb_stack(stack_id)
-    if not stack or stack["wolf_id"] != user["id"]:
-        return False, "that herb isn't in your forage bag."
-    herb_key = stack["herb_key"]
-    meta = HERBS.get(herb_key, {})
-    ok, target = _prep_transition(method, stack["form"])
-    if not ok:
-        return False, target
-
-    dc = _prep_dc(method, user, herb_key)
-    result = resolve_check(
-        user,
-        attr_keys=("attr_int", "attr_wis"),
-        skill="Herblore",
-        dc=dc,
-        proficient=_herblore_proficient(user),
-        skill_key="herblore",
-        game_day=day,
-    )
-    if result["outcome"] == "critical_failure":
-        db.remove_herb_stack(stack_id)
-        return (
-            False,
-            format_roll_result(result)
-            + f"\n\n**{meta.get('name', herb_key)}** ruined; batch spoiled.",
-        )
-    if not result["success"]:
-        if method == "dry":
-            db.update_herb_stack(stack_id, potency=max(40, int(stack["potency"]) - 30))
-            return (
-                False,
-                format_roll_result(result)
-                + "\n\npoor drying; **reduced potency** (still usable).",
-            )
-        return False, format_roll_result(result) + "\n\npreparation failed; the herb keeps its form; try again."
-
-    potency = 90 if (method == "dry" and result["outcome"] != "critical_success") else 100
-    db.update_herb_stack(
-        stack_id,
-        form=target,
-        acquired_day=day,
-        potency=min(120, potency),
-    )
-    from engine.herb_properties import form_label
-
-    bonus = PREP_METHODS[method]["bonus"]
-    return (
-        True,
-        format_roll_result(result)
-        + f"\n\n**{meta.get('name', herb_key)}** → **{form_label(target)}**.{bonus}",
-    )
 
 
 def prepare_pack_herb_stack(

@@ -33,8 +33,6 @@ def is_pup(role: str) -> bool:
     return role == PUP_ROLE
 
 
-def is_juvenile(role: str) -> bool:
-    return role == JUVENILE_ROLE
 
 
 def is_young_wolf(role: str) -> bool:

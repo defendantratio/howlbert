@@ -163,11 +163,6 @@ def cultivable_herbs() -> list[str]:
     return sorted(k for k in HERBS if can_cultivate(k))
 
 
-def season_is_suitable(profile: GrowProfile, season: str) -> bool:
-    if season in profile.seasons:
-        return True
-    # Hardy plants can be kept alive (slowly) outside their best season.
-    return profile.hardy and season != "winter"
 
 
 def effective_grow_days(profile: GrowProfile, season: str) -> int:

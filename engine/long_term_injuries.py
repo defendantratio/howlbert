@@ -92,7 +92,6 @@ LONG_TERM_TYPES = {
     },
 }
 
-CURE_HERBS = frozenset({"wolfsbane", "swamp_milkweed"})
 
 FEAR_TRIGGER_DC = 12
 
@@ -342,9 +341,6 @@ def roll_combat_scar(wolf_id: int | None) -> str | None:
     )
 
 
-def add_fear_trigger(wolf_id: int, trigger: str) -> None:
-    key = trigger.strip().lower().replace(" ", "_")
-    add_long_term_injury(wolf_id, f"fear:{key}")
 
 
 def matching_fear_triggers(
@@ -400,55 +396,11 @@ def clear_long_term_injuries(wolf_id: int) -> None:
     db.update_user_by_id(wolf_id, long_term_injuries="[]")
 
 
-def try_cure_long_term(herb_key: str, user) -> tuple[bool, str]:
-    if herb_key not in CURE_HERBS:
-        return False, ""
-    entries = parse_long_term_injuries(
-        user["long_term_injuries"] if "long_term_injuries" in user.keys() else None
-    )
-    if not entries:
-        return False, "no long-term injuries to lift."
-    if herb_key == "wolfsbane":
-        dmg = random.randint(2, 6)
-        new_hp = max(0, int(user["hp"]) - dmg)
-        db.set_user_conditions(user["discord_id"], hp=new_hp)
-        clear_long_term_injuries(user["id"])
-        return True, (
-            f"spirit curse broken; long-term marks fade. the patient takes **{dmg}** poison damage."
-        )
-    clear_long_term_injuries(user["id"])
-    return True, "marsh milk breaks the old curse; long-term injuries ease."
 
 
 COMBAT_VICTORIES_FOR_BATTLE_HARDENED = 5
 
 
-def record_combat_victory(wolf_id: int) -> str | None:
-    """
-    Increment a wolf's combat-victory counter. Grants battle_hardened at 5 wins.
-    Returns a player-facing note when the trait is earned, or None.
-    """
-    wolf = db.get_user_by_id(wolf_id)
-    if not wolf:
-        return None
-    current_lt = parse_long_term_injuries(
-        wolf["long_term_injuries"] if "long_term_injuries" in wolf.keys() else None
-    )
-    if "battle_hardened" in current_lt:
-        return None
-    from engine.herb_buffs import buffs_json, get_buffs
-
-    buffs = get_buffs(wolf)
-    wins = int(buffs.get("combat_victories", 0)) + 1
-    buffs["combat_victories"] = wins
-    db.update_user_by_id(wolf_id, herb_buffs=buffs_json(buffs))
-    if wins >= COMBAT_VICTORIES_FOR_BATTLE_HARDENED:
-        add_long_term_injury(wolf_id, "battle_hardened")
-        return (
-            f"**{wolf['wolf_name']}** has fought through {wins} serious battles; "
-            f"they are now **Battle-Hardened**; {LONG_TERM_TYPES['battle_hardened']['effect']}"
-        )
-    return None
 
 
 def check_adjustments(

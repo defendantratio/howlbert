@@ -51,10 +51,3 @@ def new_moon_stealth_dc_mod() -> int:
     return -2 if is_new_moon() else 0
 
 
-def moon_flavor_note() -> str:
-    phase = moon_phase()
-    if phase == "full moon":
-        return "full moon: howls and rallies carry further (+1 unity)."
-    if phase == "new moon":
-        return "new moon: no light to betray you (-2 dc on sniff/scout survey)."
-    return ""

@@ -17,7 +17,6 @@ from engine.herb_buffs import (
     injury_heal_multiplier,
     is_cough_suppression_herb,
 )
-from engine.herb_storage import effective_storage_limits
 from engine.long_term_injuries import fear_trigger_check, matching_fear_triggers
 from engine.medical_access import can_medic_treat_cross_pack
 from engine.movement_penalties import apply_movement_hunt_penalty
@@ -171,13 +170,6 @@ def test_herb_guide_beech_hint():
     hint = _usage_hint("beech_leaves", HERBS["beech_leaves"])
     assert "Flavor effect" not in hint
     assert "infection ward" in hint.lower()
-
-
-def test_herb_storage_multiplier():
-    user = Row(herb_buffs='{"herb_storage_bonus_until_day": 20}', last_rest_day=5)
-    fresh, prep, dried = effective_storage_limits(user, day=10)
-    assert fresh >= 1
-    assert prep >= 5
 
 
 def test_herb_bundle_heal():

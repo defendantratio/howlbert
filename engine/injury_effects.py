@@ -61,9 +61,6 @@ def bone_rest_activity_block(user, *, day: int | None = None) -> str | None:
 strenuous_activity_blocked_by_injury = hunt_blocked_by_injury
 
 
-def meal_blocked_by_injury(user) -> str | None:
-    # no injury blocks eating outright; broken jaw adds pain exhaustion (see meal_jaw_pain_note)
-    return None
 
 
 def meal_jaw_pain_note(user) -> str:
@@ -97,39 +94,8 @@ def attack_roll_modifiers(user, attack_type: str) -> tuple[int, bool]:
     return damage_mod, disadvantage
 
 
-def perception_penalty(user) -> int:
-    from engine.genetics import genetic_perception_penalty
-
-    penalty = genetic_perception_penalty(user)
-    if has_injury(user, "torn_ear"):
-        penalty -= 1
-    return penalty
 
 
-def check_penalty_for_injury(user, attr: str) -> int:
-    """flat penalty on attribute checks from injuries."""
-    injuries = active_injury_keys(user)
-    penalty = 0
-    if attr == "int" and "concussion" in injuries:
-        penalty -= 1
-    if attr == "wis" and "concussion" in injuries and "swollen_eye" not in injuries:
-        # Early orbital blur before full swollen_eye sets in (days 1-2).
-        penalty -= 1
-    if attr == "wis" and "torn_ear" in injuries:
-        penalty -= 1
-    if attr == "dex" and "punctured_paw" in injuries:
-        penalty -= 1
-    if attr == "str" and "fractured_rib" in injuries:
-        penalty -= 1
-    if attr == "str" and "bruised_lung" in injuries:
-        penalty -= 1
-    if attr == "wis" and "bruised_lung" in injuries:
-        penalty -= 1
-    if attr == "dex" and "snake_venom" in injuries:
-        penalty -= 4
-    if attr == "dex" and "insect_sting" in injuries:
-        penalty -= 1
-    return penalty
 
 
 def injury_check_adjustments(
@@ -284,19 +250,8 @@ def in_shock(fighter_f) -> bool:
     return max_hp > 0 and hp / max_hp < 0.25
 
 
-def active_bleed_per_round(user) -> int:
-    """HP drained per combat round from active bleeding injuries."""
-    injuries = active_injury_keys(user)
-    if "deep_gash" in injuries:
-        return 1
-    return 0
 
 
-def format_injury_brief(key: str) -> str:
-    info = INJURIES.get(key)
-    if not info:
-        return key
-    return f"**{info['name']}**; {info['effect']}"
 
 
 def try_prey_counter_injury(user, amount: int, day: int) -> str | None:

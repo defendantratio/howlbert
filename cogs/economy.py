@@ -354,7 +354,6 @@ class Economy(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         gives_item = offer_row is not None and offer_quantity > 0
-        wants_item = want_row is not None and for_quantity > 0
         if not gives_item and offer_bones <= 0:
             embed = howlbert_embed('Nothing Offered', 'Include an `offer_item` and/or `offer_bones` greater than 0.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

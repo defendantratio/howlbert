@@ -22,10 +22,6 @@ def has_spirit_curse(user) -> bool:
     return SPIRIT_CURSE_KEY in parse_long_term_injuries(raw)
 
 
-def format_spirit_curse_line(user) -> str | None:
-    if not has_spirit_curse(user):
-        return None
-    return f"**spirit curse**; {SPIRIT_CURSE_BLURB}"
 
 
 def apply_spirit_curse(wolf_id: int, *, source: str = "") -> tuple[bool, str]:

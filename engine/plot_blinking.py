@@ -214,8 +214,6 @@ def _silverrush_canon_plot_active(user, guild_id: int, canon_name: str, role: st
     return wolf_role_key(user) == role
 
 
-def vulcan_plot_active(user, guild_id: int) -> bool:
-    return _silverrush_canon_plot_active(user, guild_id, VULCAN_NAME, "hunter")
 
 
 def is_plot_healer_role(user) -> bool:
@@ -333,8 +331,6 @@ def plot_phase(guild_id: int) -> int:
     return db.get_plot_phase(guild_id)
 
 
-def plot_is_active(guild_id: int) -> bool:
-    return plot_phase(guild_id) > 0
 
 
 def phase_meta(phase: int) -> dict[str, Any] | None:
@@ -1046,11 +1042,6 @@ def firepaw_plot_active(user, guild_id: int) -> bool:
         return False
     gp = user["great_pack"] if "great_pack" in user.keys() else None
     return gp == "thistlehide"
-
-
-def firepaw_can_treat_patient(user, guild_id: int) -> bool:
-    """medic apprentice firepaw may treat packmates during healer-plot phases."""
-    return firepaw_plot_active(user, guild_id) and plot_phase(guild_id) in HEALER_PLOT_PHASES
 
 
 def soot_plot_active(user, guild_id: int) -> bool:

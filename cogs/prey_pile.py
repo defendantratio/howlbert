@@ -132,7 +132,7 @@ def make_prey_pile_view(pile_id: int) -> discord.ui.View:
     for key, info in PREY_CHOICES.items():
         custom_id = f'fable_prey:{pile_id}:{key}'
 
-        async def callback(interaction: discord.Interaction, *, choice=key, cid=custom_id):
+        async def callback(interaction: discord.Interaction, *, choice=key):
             await PreyPileCog.handle_prey_choice(interaction, pile_id, choice)
         button = discord.ui.Button(label=info['label'], emoji=info['emoji'], style=BUTTON_STYLES.get(key, discord.ButtonStyle.secondary), custom_id=custom_id)
         button.callback = callback

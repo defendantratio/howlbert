@@ -143,7 +143,6 @@ BLINKING_PROMPTS: dict[int, tuple[str, ...]] = {
     ),
 }
 
-PACK_LABEL_CHOICES = tuple(GREAT_PACKS.keys()) + (LONER_KEY, ROGUE_KEY)
 
 
 def _static_pool(pack: str | None, mood: str | None) -> list[dict]:

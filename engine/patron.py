@@ -231,8 +231,6 @@ def grant_second_boost(discord_id: int) -> str | None:
     return f"**den patron**; second boost slot: **+{BOOST_SECOND_BONES}** bones."
 
 
-def booster_daily_bonus() -> int:
-    return BOOST_DAILY_BONUS
 
 
 def patron_status_lines(discord_id: int, *, is_boosting: bool) -> list[str]:
