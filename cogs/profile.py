@@ -319,6 +319,33 @@ class Profile(commands.Cog):
             embed.set_footer(text=f'paid {format_bones(SETFACTION_CHANGE_COST)} to change great packs.')
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name='foundpack', description='two bonded lone wolves raise a den of their own (each pays bones; founder becomes alpha).')
+    @app_commands.describe(name='the name of your new pack', partner='the bonded loner founding it with you')
+    async def foundpack(self, interaction: discord.Interaction, name: str, partner: discord.User):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(embed=howlbert_embed('Not Registered', 'Use `/register` first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        partner_user = db.get_user(partner.id)
+        if not partner_user:
+            await interaction.response.send_message(embed=howlbert_embed('No Partner Wolf', f'**{partner.display_name}** has no active wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.found_pack import found_pack
+        new_id, err = found_pack(user, partner_user, name)
+        if err:
+            await interaction.response.send_message(embed=howlbert_embed('Cannot Found a Pack', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from config import NEW_PACK_FOUND_COST
+        embed = howlbert_embed(
+            'A New Pack Rises',
+            f"**{user['wolf_name']}** and **{partner_user['wolf_name']}** end their wandering and raise **{name.strip()}**. "
+            f"**{user['wolf_name']}** leads as **alpha**.\n\neach paid **{NEW_PACK_FOUND_COST}** bones. you share a den now: "
+            "`/pack treasury`, `/pack stash`, collab hunts, and `/packlife`. pups born to you join the pack.",
+            color=SUCCESS_COLOR,
+        )
+        embed.set_footer(text='the loner life is behind you; hold your unity and grow your numbers.')
+        await interaction.response.send_message(embed=embed)
+
     @app_commands.command(name='rename', description="change your wolf's name.")
     @app_commands.describe(name="your wolf's new name")
     async def rename(self, interaction: discord.Interaction, name: str):
