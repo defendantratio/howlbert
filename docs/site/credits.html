@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta name="description" content="credits and links for howlbert, the discord wolf rp bot." />
-    <title>howlbert; credits and links</title>
+    <title>howlbert · credits and links</title>
     <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
     <style>
@@ -372,6 +372,73 @@
             color: var(--maw);
         }
 
+        /* developer card */
+        .developer-card {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin: 8px 0 4px 0;
+        }
+        .developer-card .dev-avatar {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--line);
+            transition: border-color 0.3s;
+        }
+        .developer-card .dev-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .developer-card .dev-avatar:hover {
+            border-color: var(--maw);
+        }
+        .developer-card .dev-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        .developer-card .dev-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--bone);
+        }
+        .developer-card .dev-tags {
+            font-size: 0.95rem;
+            color: var(--bone-dim);
+            margin-top: 2px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+        }
+        .developer-card .dev-tags span {
+            white-space: nowrap;
+        }
+        .developer-card .dev-bio {
+            font-size: 0.95rem;
+            color: var(--bone);
+            margin-top: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .developer-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .developer-card .dev-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            .developer-card .dev-tags {
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 900px) {
             .hero h1 {
                 font-size: 2.4rem;
@@ -430,6 +497,7 @@
 
         <div class="main-col">
 
+            <!-- top bar: directory navigation -->
             <div class="glass top-bar">
                 <nav class="top-bar-directory" aria-label="page directory">
                     <h3>directory</h3>
@@ -447,6 +515,7 @@
                 </nav>
             </div>
 
+            <!-- hero / header -->
             <header class="glass hero">
                 <h1>credits and links</h1>
                 <p class="hook">
@@ -459,6 +528,49 @@
                 </p>
             </header>
 
+            <!-- developer -->
+            <section class="glass content-section">
+                <h2>the developer</h2>
+                <p>howlbert is the vision and work of one wolf, who pours their heart into every line of code and every piece of lore.</p>
+                <div class="developer-card">
+                    <div class="dev-avatar">
+                        <img src="https://iili.io/ClJzTVR.png" alt="basil avatar" />
+                    </div>
+                    <div class="dev-info">
+                        <div class="dev-name">basil</div>
+                        <div class="dev-tags">
+                            <span>✦ he/him</span>
+                            <span>✦ 20 y/o</span>
+                            <span>✦ neurodivergent</span>
+                            <span>✦ queer</span>
+                            <span>✦ disabled</span>
+                            <span>✦ artist</span>
+                            <span>✦ programmer</span>
+                        </div>
+                        <div class="dev-bio">
+                            basil is the primary developer, worldbuilder, and caretaker of howlbert.
+                            he writes the code that brings the wolf-world to life, crafts the herbs and diseases,
+                            shapes the blinking, and keeps the den running through every sunrise.
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top:12px;">you can find basil in the discord server, usually buried in logs. he is always open to ideas, questions, and stories.</p>
+            </section>
+
+            <!-- team -->
+            <section class="glass content-section">
+                <h2>the howlbert team</h2>
+                <p>howlbert is built and maintained by a small, dedicated den of wolves who believe in the power of story and the weight of survival.</p>
+                <ul>
+                    <li><strong>development</strong> – the code, the database, the slash commands, the endless debugging of edge cases. the bones of the bot.</li>
+                    <li><strong>lore and worldbuilding</strong> – the wolf-world, the four packs, the maw, the cats, the twoleg factions, the herbs, the diseases, the blinking. the fur on the bones.</li>
+                    <li><strong>community and moderation</strong> – the wolves who keep the den warm, the scenes alive, and the stories flowing.</li>
+                    <li><strong>art and design</strong> – the icons, the web pages, the visual soul of the wolf-world.</li>
+                </ul>
+                <p>if you would like to contribute, join the discord and raise your voice. the pack grows stronger with every new wolf.</p>
+            </section>
+
+            <!-- inspirations -->
             <section class="glass content-section">
                 <h2>inspirations</h2>
                 <p>howlbert is not affiliated with these projects, but their spirit runs in its veins. each one left a mark on the mechanics, the lore, or the feel of the wolf-world.</p>
@@ -499,30 +611,10 @@
                     <div class="credit-link"><a href="https://unbelievaboat.com/" target="_blank">unbelievaboat.com →</a></div>
                 </div>
 
-                <div class="credit-card">
-                    <div class="credit-icon">📜</div>
-                    <div class="credit-body">
-                        <div class="credit-name">basil's wolf ttrpg</div>
-                        <div class="credit-desc">the rpg rules, skill checks, combat, herbs, and conditions follow the homebrew system created by basil. it is the mechanical spine of howlbert.</div>
-                    </div>
-                    <div class="credit-link"><span style="color:var(--bone-dim);">homebrew · used with respect</span></div>
-                </div>
-
                 <p>these worlds are not our own, but they taught us how to build one. the maw chews, the pack remembers, and the howl carries on.</p>
             </section>
 
-            <section class="glass content-section">
-                <h2>the howlbert team</h2>
-                <p>howlbert is built and maintained by a small, dedicated den of wolves who believe in the power of story and the weight of survival.</p>
-                <ul>
-                    <li><strong>development</strong> – the code, the database, the slash commands, the endless debugging of edge cases. the bones of the bot.</li>
-                    <li><strong>lore and worldbuilding</strong> – the caldera, the four packs, the maw, the cats, the twoleg factions, the herbs, the diseases, the blinking. the fur on the bones.</li>
-                    <li><strong>community and moderation</strong> – the wolves who keep the den warm, the scenes alive, and the stories flowing.</li>
-                    <li><strong>art and design</strong> – the icons, the web pages, the visual soul of the wolf-world.</li>
-                </ul>
-                <p>if you would like to contribute, join the discord and raise your voice. the pack grows stronger with every new wolf.</p>
-            </section>
-
+            <!-- links -->
             <section class="glass content-section">
                 <h2>links and places</h2>
                 <p>follow the scent trail to these places. they are the borders of our world, the paths to the wider den.</p>
@@ -569,6 +661,7 @@
                 <p style="margin-top:14px;">if you have a question, a suggestion, or a story to tell, the den is open. the maw listens. the pack remembers.</p>
             </section>
 
+            <!-- spirit -->
             <section class="glass content-section">
                 <h2>the spirit of the world</h2>
                 <div class="pull-quote">
@@ -579,6 +672,7 @@
                 <p>thank you for being part of it. thank you for carrying the story forward.</p>
             </section>
 
+            <!-- footer -->
             <footer class="footer">
                 <p>
                     <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
@@ -587,9 +681,9 @@
                 </p>
             </footer>
 
-        </div>
+        </div><!-- /main-col -->
 
-    </div>
+    </div><!-- /site-wrap -->
 
     <script>
         (function() {
