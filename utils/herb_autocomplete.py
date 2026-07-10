@@ -49,12 +49,13 @@ async def herb_inventory_autocomplete(
     needle = current.lower()
     items = db.get_inventory(interaction.user.id)
 
-    # build herb_key -> {form: potency}; one entry per form, most recent wins
-    # (get_herb_stacks returns rows ORDER BY acquired_day DESC so first seen = most recent).
-    # pulls both the personal forage bag AND the pack den store, since
-    # /medic action:treat accepts either as proof of preparation (see
-    # care_handlers.treat's prepared_stack_source).
-    stacks_by_herb: dict[str, dict[str, int]] = {}
+    # build herb_key -> {form: (potency, qty)}; potency keeps the most recent
+    # stack's value (get_herb_stacks returns rows ORDER BY acquired_day DESC
+    # so first seen = most recent), qty sums every matching stack. pulls both
+    # the personal forage bag (one row per unit) AND the pack den store
+    # (explicit quantity column), since /medic action:treat accepts either as
+    # proof of preparation (see care_handlers.treat's prepared_stack_source).
+    stacks_by_herb: dict[str, dict[str, list[int]]] = {}
     user_row = None
     try:
         user_row = db.get_user(interaction.user.id)
@@ -63,15 +64,15 @@ async def herb_inventory_autocomplete(
                 hk = str(stack["herb_key"])
                 form_key = str(stack["form"])
                 herb_forms = stacks_by_herb.setdefault(hk, {})
-                if form_key not in herb_forms:
-                    herb_forms[form_key] = int(stack["potency"])
+                entry = herb_forms.setdefault(form_key, [int(stack["potency"]), 0])
+                entry[1] += 1
             if user_row["pack_id"]:
                 for stack in db.get_pack_herb_stacks(int(user_row["pack_id"])):
                     hk = str(stack["herb_key"])
                     form_key = str(stack["form"])
                     herb_forms = stacks_by_herb.setdefault(hk, {})
-                    if form_key not in herb_forms:
-                        herb_forms[form_key] = int(stack["potency"])
+                    entry = herb_forms.setdefault(form_key, [int(stack["potency"]), 0])
+                    entry[1] += int(stack["quantity"])
     except Exception:
         pass
 
@@ -92,14 +93,14 @@ async def herb_inventory_autocomplete(
 
         if form:
             # prepared item with its own DB entry (herb_knotgrass_infusion exists as an item)
-            potency = stacks_by_herb.get(herb_key, {}).get(form)
+            potency = stacks_by_herb.get(herb_key, {}).get(form, [None, 0])[0]
             pot_str = f" {potency}%" if potency is not None else ""
             label = f"{display_name} - {form}{pot_str} x{qty}"
         else:
             # raw herb; annotate with any prepared stacks (one per unique form)
             herb_forms = stacks_by_herb.get(herb_key, {})
             if herb_forms:
-                prep_note = "; ".join(f"{f} {p}%" for f, p in list(herb_forms.items())[:3])
+                prep_note = "; ".join(f"{f} {p}% x{q}" for f, (p, q) in list(herb_forms.items())[:3])
                 label = f"{display_name} x{qty} · {prep_note}"
             else:
                 label = f"{display_name} x{qty}"
@@ -122,8 +123,8 @@ async def herb_inventory_autocomplete(
         display_name = meta["name"].lower()
         if needle and needle not in item_key and needle not in display_name:
             continue
-        prep_note = "; ".join(f"{f} {p}%" for f, p in list(herb_forms.items())[:3])
-        label = f"{display_name} x0 · {prep_note} (prepared)"
+        prep_note = "; ".join(f"{f} {p}% x{q}" for f, (p, q) in list(herb_forms.items())[:3])
+        label = f"{display_name} · {prep_note} (prepared)"
         choices.append(app_commands.Choice(name=label[:100], value=item_key))
 
     return choices[:25]
