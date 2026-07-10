@@ -1221,7 +1221,7 @@ def try_work(
     from engine.plot_blinking import plot_work_mult
 
     gross = int(gross * plot_work_mult(user, guild_id))
-    net, tax, _, _, _, _, _, _, _ = award_bones(user, gross, world["weather"], "work")
+    net, tax, _, _, _, _, _, _, season_note = award_bones(user, gross, world["weather"], "work")
     db.update_user(interaction.user.id, last_work_day=day)
     updated = db.get_user(interaction.user.id)
     title = "empty paws" if net == 0 else random.choice(WORK_TEXT)
@@ -1230,8 +1230,9 @@ def try_work(
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
-    if work_penalty:
-        embed.set_footer(text=embed_footer(work_penalty))
+    footer = " · ".join(n for n in (work_penalty, season_note) if n)
+    if footer:
+        embed.set_footer(text=embed_footer(footer))
     elif net == 0:
         embed.set_footer(text=embed_footer("today's work turned up nothing; try again."))
     return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)

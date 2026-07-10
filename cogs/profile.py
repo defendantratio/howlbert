@@ -76,6 +76,20 @@ def _paginate_embed_fields(embed: discord.Embed, *, max_fields: int=25) -> list[
     return pages
 PACK_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']}; {info['path']}"), value=key) for key, info in GREAT_PACKS.items()] + [app_commands.Choice(name=choice_label(f'{LONER_LABEL}; walk apart from any pack'), value=LONER_KEY), app_commands.Choice(name=choice_label(f'{ROGUE_LABEL}; hostile, border-raiding loner'), value=ROGUE_KEY)]
 
+async def _pack_register_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    """Great packs + loner/rogue + any live founded pack (dynamic; can't be a static Choice list)."""
+    from engine.factions import founded_key_for
+    cur = current.lower()
+    choices: list[app_commands.Choice[str]] = []
+    for choice in PACK_CHOICES:
+        if not cur or cur in choice.name.lower():
+            choices.append(choice)
+    for pack in db.list_founded_packs():
+        label = choice_label(f"{pack['name']}; a founded pack")
+        if not cur or cur in label.lower():
+            choices.append(app_commands.Choice(name=label, value=founded_key_for(pack['id'])))
+    return choices[:25]
+
 def _pack_display(affiliation: str) -> str:
     if affiliation == LONER_KEY:
         return f'**{LONER_LABEL}**; {LONER_DESCRIPTION}'
@@ -94,8 +108,9 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
-    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)')
+    @app_commands.autocomplete(pack=_pack_register_autocomplete)
+    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS])
     async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
         is_admin = is_howlbert_admin(interaction)
@@ -107,6 +122,11 @@ class Profile(commands.Cog):
         if name_err:
             title = 'Name Taken' if 'already taken' in name_err else 'Invalid Name'
             embed = howlbert_embed(title, name_err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        from engine.factions import is_faction
+        if pack not in (LONER_KEY, ROGUE_KEY) and not is_faction(pack):
+            embed = howlbert_embed('Unknown Pack', 'pick a pack from the autocomplete list; a great pack, a founded pack, lone wolf, or rogue.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         age_months = starting_age
@@ -167,6 +187,14 @@ class Profile(commands.Cog):
             embed.add_field(name='Pack Trait', value=faction['pack_trait'], inline=False)
             herbs = ', '.join((HERBS[k]['name'] if k in HERBS else k.replace('_', ' ').title() for k in faction['starting_herbs']))
             embed.add_field(name='Starting Herbs', value=f'{herbs}\n_Added to `/bones action:inventory` (stable shop herbs). Foraged stacks use `/bones action:inventory`._', inline=False)
+        elif pack not in (LONER_KEY, ROGUE_KEY):
+            from engine.factions import founded_pack_heritage_trait, founded_pack_id, resolve_faction
+            faction = resolve_faction(pack)
+            if faction:
+                embed.add_field(name='Motto', value=f"_{faction['motto']}_", inline=False)
+                fpid = founded_pack_id(pack)
+                trait = founded_pack_heritage_trait(fpid) if fpid else faction['pack_trait']
+                embed.add_field(name='Pack Trait', value=trait, inline=False)
         else:
             embed.add_field(name='The Rogue Path', value='No pack treasury, tax, or trait; free to roam. Use `/setfaction` to join a Great Pack later.', inline=False)
         embed.add_field(name='Next Steps', value='Try `/profile` for your sheet, `/rpg action:roll` for skill checks, `/bones action:hunt` or `action:work` for bones.\nNew here? **`/help topic:getting-started`** walks through courtship, pups, and the den.', inline=False)
@@ -642,10 +670,12 @@ class Profile(commands.Cog):
         from engine.role_features import is_full_medic
         if cond_text != 'Healthy: no active conditions.' or (is_full_medic(user) and day is not None):
             embed.add_field(name='Conditions', value=cond_text, inline=False)
-        from engine.factions import resolve_faction as _resolve_faction
+        from engine.factions import founded_pack_heritage_trait, founded_pack_id, resolve_faction as _resolve_faction
         _faction_info = _resolve_faction(affiliation)
         if _faction_info:
-            embed.add_field(name='Pack Trait', value=_faction_info['pack_trait'], inline=False)
+            _fpid = founded_pack_id(affiliation)
+            _trait = founded_pack_heritage_trait(_fpid) if _fpid else _faction_info['pack_trait']
+            embed.add_field(name='Pack Trait', value=_trait, inline=False)
         # standing is a pack-reputation stat; loners and rogues have no pack, so hide it.
         if affiliation not in UNAFFILIATED_KEYS:
             standing = int(user['standing'])

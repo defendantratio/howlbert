@@ -136,6 +136,10 @@ def disease_save_uses_advantage(user) -> bool:
         disease_key, _ = parse_disease(user["disease"] if "disease" in user.keys() else None)
         if is_mental_disease(disease_key):
             return True
+    from engine.pack_traits import has_pack_trait
+
+    if has_pack_trait(user, "mistmoor"):
+        return True
     return False
 
 

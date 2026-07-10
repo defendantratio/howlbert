@@ -92,6 +92,11 @@ def award_bones(
         if plot_note:
             season_note = f"{season_note} · {plot_note}" if season_note else plot_note
     amount = apply_bone_bonus(amount, account["prestige_tier"])
+    from engine.pack_traits import founders_grit_bonus
+
+    amount, grit_note = founders_grit_bonus(amount, user)
+    if grit_note:
+        season_note = f"{season_note} · {grit_note}" if season_note else grit_note
     if activity in HUNT_ACTIVITIES and day is not None:
         from engine.injury_effects import injury_hunt_multiplier
         from engine.pregnancy import pregnancy_hunt_multiplier
