@@ -146,7 +146,11 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
         msg += f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"
     if plot_line:
         msg += f"\n_{plot_line}_"
-    from engine.disease_contract import try_silverrush_sewage_exposure, try_mistmoor_swamp_exposure
+    from engine.disease_contract import (
+        try_leptospirosis_exposure,
+        try_mistmoor_swamp_exposure,
+        try_silverrush_sewage_exposure,
+    )
 
     rot_note = try_silverrush_sewage_exposure(user)
     if rot_note:
@@ -155,6 +159,9 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
         swamp_note = try_mistmoor_swamp_exposure(user)
         if swamp_note:
             msg += f"\n_{swamp_note}_"
+    lepto_note = try_leptospirosis_exposure(user, clean_water=clean_water)
+    if lepto_note:
+        msg += f"\n_{lepto_note}_"
     if guild_id is not None:
         from engine.plot_blinking import try_plot_witness
 

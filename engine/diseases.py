@@ -1050,6 +1050,376 @@ DISEASES: dict[str, dict] = {
             },
         },
     },
+    "asthma": {
+        "label": "Tight-Chest",
+        "contagious": 0.0,
+        "chronic": True,
+        "respiratory": True,
+        "spread_stage": "tight",
+        "stages": {
+            "tight": {
+                "name": "Tight-Chest (Tight)",
+                "dc": 12,
+                "next": "wheeze",
+                "effect": (
+                    "Airways narrow under exertion: −10% hunt bones; "
+                    "**mullein** or **lungwort** eases breathing."
+                ),
+                "hunt_mult": 0.9,
+                "cure_on_save": True,
+            },
+            "wheeze": {
+                "name": "Tight-Chest (Wheeze)",
+                "dc": 14,
+                "next": "crisis",
+                "effect": "Wheezing breath and low stamina: +1 exhaustion; −25% hunt bones.",
+                "exhaustion_gain": 1,
+                "hunt_mult": 0.75,
+            },
+            "crisis": {
+                "name": "Tight-Chest (Crisis)",
+                "dc": 17,
+                "next": None,
+                "effect": (
+                    "Breath won't come at all under strain: −1 HP/sunrise; "
+                    "−50% hunt bones; fatal without den rest and **mullein**."
+                ),
+                "hp_loss": 1,
+                "hunt_mult": 0.5,
+                "lethal": True,
+            },
+        },
+    },
+    "bloat": {
+        "label": "Gut-Twist",
+        "contagious": 0.0,
+        "spread_stage": "distension",
+        "stages": {
+            "distension": {
+                "name": "Gut-Twist (Distension)",
+                "dc": 13,
+                "next": "torsion",
+                "effect": (
+                    "Belly swells tight after gorging; pacing and drooling; −6 mood; "
+                    "**fennel** or **garden mint** may settle it."
+                ),
+                "mood_loss": 6,
+                "thirst_loss": 4,
+                "cure_on_save": True,
+            },
+            "torsion": {
+                "name": "Gut-Twist (Torsion)",
+                "dc": 18,
+                "next": None,
+                "effect": (
+                    "Gut twists on itself; cannot hunt or range until treated; "
+                    "−2 HP/sunrise; fatal without a Medic's care."
+                ),
+                "hp_loss": 2,
+                "blocks_field": True,
+                "lethal": True,
+            },
+        },
+    },
+    "bronchitis": {
+        "label": "Rasp-Chest",
+        "contagious": 0.30,
+        "respiratory": True,
+        "spread_stage": "irritated",
+        "stages": {
+            "irritated": {
+                "name": "Rasp-Chest (Irritated)",
+                "dc": 12,
+                "next": "productive",
+                "effect": (
+                    "Dry rasping cough deep in the chest: −4 mood; "
+                    "**mullein**, **lungwort**, or **plantain** soothes it."
+                ),
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+            "productive": {
+                "name": "Rasp-Chest (Wet Cough)",
+                "dc": 14,
+                "next": "chronic",
+                "effect": "Wet, rattling cough: +1 exhaustion; −15% hunt bones.",
+                "exhaustion_gain": 1,
+                "hunt_mult": 0.85,
+            },
+            "chronic": {
+                "name": "Rasp-Chest (Chronic)",
+                "dc": 16,
+                "next": None,
+                "effect": "Lingers deep in the lungs: −1 HP/sunrise; −30% hunt bones.",
+                "hp_loss": 1,
+                "hunt_mult": 0.7,
+            },
+        },
+    },
+    "constipation": {
+        "label": "The Stopping",
+        "contagious": 0.0,
+        "spread_stage": "blocked",
+        "stages": {
+            "blocked": {
+                "name": "The Stopping (Blocked)",
+                "dc": 11,
+                "next": "impacted",
+                "effect": (
+                    "Gut backs up; strained and uncomfortable: −4 hunger; −4 mood; "
+                    "**bindweed** or extra water."
+                ),
+                "hunger_loss": 4,
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+            "impacted": {
+                "name": "The Stopping (Impacted)",
+                "dc": 14,
+                "next": None,
+                "effect": "Gut fully blocked: −8 hunger; −1 HP/sunrise; needs Medic care.",
+                "hunger_loss": 8,
+                "hp_loss": 1,
+                "mood_loss": 6,
+            },
+        },
+    },
+    "depression": {
+        "label": "The Dimming",
+        "contagious": 0.0,
+        "chronic": True,
+        "mental": True,
+        "spread_stage": "numb",
+        "stages": {
+            "numb": {
+                "name": "The Dimming (Numb)",
+                "dc": 12,
+                "next": "withdrawn",
+                "effect": (
+                    "Days blur gray and flavorless: −6 mood each sunrise; "
+                    "**borage** or pack comfort."
+                ),
+                "mood_loss": 6,
+                "cure_on_save": True,
+            },
+            "withdrawn": {
+                "name": "The Dimming (Withdrawn)",
+                "dc": 14,
+                "next": "despair",
+                "effect": (
+                    "Pulls away from the den: −8 mood; −6 hunger; "
+                    "**borage** and steady den care."
+                ),
+                "mood_loss": 8,
+                "hunger_loss": 6,
+            },
+            "despair": {
+                "name": "The Dimming (Despair)",
+                "dc": 17,
+                "next": None,
+                "effect": (
+                    "Nothing left to reach for: −10 mood; −8 hunger; blocks socialize; "
+                    "den care, patience, and time."
+                ),
+                "mood_loss": 10,
+                "hunger_loss": 8,
+                "blocks_social": True,
+            },
+        },
+    },
+    "gallstones": {
+        "label": "Stone-Gall",
+        "contagious": 0.0,
+        "chronic": True,
+        "spread_stage": "forming",
+        "stages": {
+            "forming": {
+                "name": "Stone-Gall (Forming)",
+                "dc": 13,
+                "next": "blocking",
+                "effect": (
+                    "Dull ache under the ribs after rich meals: −4 mood; −4 hydration; "
+                    "**celandine** may dissolve it early."
+                ),
+                "mood_loss": 4,
+                "thirst_loss": 4,
+                "cure_on_save": True,
+            },
+            "blocking": {
+                "name": "Stone-Gall (Blocking)",
+                "dc": 17,
+                "next": None,
+                "effect": (
+                    "Bile duct blocked; yellowing and pain: −1 HP/sunrise; −8 hydration; "
+                    "fatal without a Medic's care."
+                ),
+                "hp_loss": 1,
+                "thirst_loss": 8,
+                "lethal": True,
+            },
+        },
+    },
+    "leptospirosis": {
+        "label": "Foul-Water Fever",
+        "contagious": 0.08,
+        "mating_contagious": 0.0,
+        "spread_stage": "fever",
+        "stages": {
+            "fever": {
+                "name": "Foul-Water Fever (Fever)",
+                "dc": 13,
+                "next": "kidney_strain",
+                "effect": (
+                    "Fever from tainted water or infected urine: +1 exhaustion; −6 hydration; "
+                    "**dandelion** or **watermint** early on."
+                ),
+                "exhaustion_gain": 1,
+                "thirst_loss": 6,
+                "cure_on_save": True,
+            },
+            "kidney_strain": {
+                "name": "Foul-Water Fever (Kidney Strain)",
+                "dc": 16,
+                "next": "organ_failure",
+                "effect": "Kidneys strain to keep up: −10 hydration; −1 HP/sunrise; −20% hunt bones.",
+                "thirst_loss": 10,
+                "hp_loss": 1,
+                "hunt_mult": 0.8,
+            },
+            "organ_failure": {
+                "name": "Foul-Water Fever (Organ Failure)",
+                "dc": 19,
+                "next": None,
+                "effect": "Kidneys and liver fail together: −2 HP/sunrise; −12 hydration.",
+                "hp_loss": 2,
+                "thirst_loss": 12,
+                "lethal": True,
+            },
+        },
+    },
+    "lyme": {
+        "label": "Tick-Bite Fever",
+        "contagious": 0.0,
+        "chronic": True,
+        "spread_stage": "bullseye",
+        "stages": {
+            "bullseye": {
+                "name": "Tick-Bite Fever (Bite Mark)",
+                "dc": 12,
+                "next": "joint_ache",
+                "effect": (
+                    "A ring-marked bite lingers and itches: −4 mood; "
+                    "**willow bark** or **goldenrod** early on."
+                ),
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+            "joint_ache": {
+                "name": "Tick-Bite Fever (Joint Ache)",
+                "dc": 15,
+                "next": "chronic_lyme",
+                "effect": "Infection settles in the joints: disadvantage on Dexterity; −15% hunt bones.",
+                "hunt_mult": 0.85,
+            },
+            "chronic_lyme": {
+                "name": "Tick-Bite Fever (Chronic)",
+                "dc": 18,
+                "next": None,
+                "effect": "Joints ache for good on damp days: −30% hunt bones; −6 mood.",
+                "hunt_mult": 0.7,
+                "mood_loss": 6,
+            },
+        },
+    },
+    "tooth_infection": {
+        "label": "Rot-Fang",
+        "contagious": 0.0,
+        "spread_stage": "abscess",
+        "stages": {
+            "abscess": {
+                "name": "Rot-Fang (Abscess)",
+                "dc": 13,
+                "next": "sepsis_risk",
+                "effect": (
+                    "A cracked tooth festers at the root: −4 mood; disadvantage on bite attacks; "
+                    "**alder bark** or **prickly ash** eases it."
+                ),
+                "mood_loss": 4,
+                "hunt_mult": 0.9,
+                "cure_on_save": True,
+            },
+            "sepsis_risk": {
+                "name": "Rot-Fang (Spreading)",
+                "dc": 17,
+                "next": None,
+                "effect": (
+                    "Infection spreads past the jaw into the blood: −1 HP/sunrise; −6 mood; "
+                    "fatal without a Medic's care."
+                ),
+                "hp_loss": 1,
+                "mood_loss": 6,
+                "lethal": True,
+            },
+        },
+    },
+    "urinary_infection": {
+        "label": "Sting-Water",
+        "contagious": 0.0,
+        "spread_stage": "irritation",
+        "stages": {
+            "irritation": {
+                "name": "Sting-Water (Irritation)",
+                "dc": 11,
+                "next": "spreading",
+                "effect": (
+                    "Stinging discomfort passing water: −6 hydration; −4 mood; "
+                    "**bindweed**, **goldenrod**, or extra water."
+                ),
+                "thirst_loss": 6,
+                "mood_loss": 4,
+                "cure_on_save": True,
+            },
+            "spreading": {
+                "name": "Sting-Water (Spreading)",
+                "dc": 15,
+                "next": None,
+                "effect": "Infection climbs toward the kidneys: −10 hydration; −1 HP/sunrise.",
+                "thirst_loss": 10,
+                "hp_loss": 1,
+                "mood_loss": 6,
+            },
+        },
+    },
+    "worms": {
+        "label": "Belly-Crawlers",
+        "contagious": 0.10,
+        "spread_stage": "mild_burden",
+        "stages": {
+            "mild_burden": {
+                "name": "Belly-Crawlers (Mild)",
+                "dc": 11,
+                "next": "heavy_burden",
+                "effect": (
+                    "Parasites from raw prey sap strength quietly: −6 hunger each sunrise; "
+                    "**tansy** or **knotgrass** clears them early."
+                ),
+                "hunger_loss": 6,
+                "cure_on_save": True,
+            },
+            "heavy_burden": {
+                "name": "Belly-Crawlers (Heavy)",
+                "dc": 14,
+                "next": None,
+                "effect": (
+                    "Burden grows heavy: −12 hunger; −15% hunt bones; "
+                    "pups hit hardest by the drain."
+                ),
+                "hunger_loss": 12,
+                "hunt_mult": 0.85,
+                "juvenile_hp_loss": 2,
+            },
+        },
+    },
 }
 
 # Backward compat for imports from herbs.py
@@ -1078,6 +1448,17 @@ MULTI_STAGE_DISEASES = frozenset(
         "eating_distress",
         "mild_poison",
         "leafbare_cough",
+        "asthma",
+        "bloat",
+        "bronchitis",
+        "constipation",
+        "depression",
+        "gallstones",
+        "leptospirosis",
+        "lyme",
+        "tooth_infection",
+        "urinary_infection",
+        "worms",
     }
 )
 
@@ -1095,6 +1476,7 @@ MENTAL_DISEASES = frozenset(
         "night_terrors",
         "chronic_stress",
         "eating_distress",
+        "depression",
     }
 )
 
