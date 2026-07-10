@@ -50,8 +50,12 @@ async def herb_inventory_autocomplete(
     items = db.get_inventory(interaction.user.id)
 
     # build herb_key -> {form: potency}; one entry per form, most recent wins
-    # (get_herb_stacks returns rows ORDER BY acquired_day DESC so first seen = most recent)
+    # (get_herb_stacks returns rows ORDER BY acquired_day DESC so first seen = most recent).
+    # pulls both the personal forage bag AND the pack den store, since
+    # /medic action:treat accepts either as proof of preparation (see
+    # care_handlers.treat's prepared_stack_source).
     stacks_by_herb: dict[str, dict[str, int]] = {}
+    user_row = None
     try:
         user_row = db.get_user(interaction.user.id)
         if user_row:
@@ -61,8 +65,17 @@ async def herb_inventory_autocomplete(
                 herb_forms = stacks_by_herb.setdefault(hk, {})
                 if form_key not in herb_forms:
                     herb_forms[form_key] = int(stack["potency"])
+            if user_row["pack_id"]:
+                for stack in db.get_pack_herb_stacks(int(user_row["pack_id"])):
+                    hk = str(stack["herb_key"])
+                    form_key = str(stack["form"])
+                    herb_forms = stacks_by_herb.setdefault(hk, {})
+                    if form_key not in herb_forms:
+                        herb_forms[form_key] = int(stack["potency"])
     except Exception:
         pass
+
+    seen_herb_keys: set[str] = set()
 
     for row in items:
         if not row["key"].startswith("herb_") and row["key"] != "stick":
@@ -72,6 +85,7 @@ async def herb_inventory_autocomplete(
         display_name = row["name"].lower()
         qty = row["quantity"]
         item_key = row["key"]
+        seen_herb_keys.add(herb_key)
 
         if needle and needle not in item_key and needle not in display_name:
             continue
@@ -90,6 +104,26 @@ async def herb_inventory_autocomplete(
             else:
                 label = f"{display_name} x{qty}"
 
+        choices.append(app_commands.Choice(name=label[:100], value=item_key))
+
+    # herbs whose raw copy was fully used up preparing them (inventory qty
+    # hit 0, so they dropped out of db.get_inventory above) are still
+    # selectable as long as a prepared stack remains; without this, a herb
+    # vanishes from /medic action:treat the moment it's fully prepared.
+    from herbs import HERBS
+
+    for herb_key, herb_forms in stacks_by_herb.items():
+        if herb_key in seen_herb_keys or not herb_forms:
+            continue
+        meta = HERBS.get(herb_key)
+        if not meta:
+            continue
+        item_key = f"herb_{herb_key}"
+        display_name = meta["name"].lower()
+        if needle and needle not in item_key and needle not in display_name:
+            continue
+        prep_note = "; ".join(f"{f} {p}%" for f, p in list(herb_forms.items())[:3])
+        label = f"{display_name} x0 · {prep_note} (prepared)"
         choices.append(app_commands.Choice(name=label[:100], value=item_key))
 
     return choices[:25]

@@ -77,16 +77,16 @@ def _has_herbs(*keys: str):
 
 
 # _stick_count (engine/surgery.py) resolves sticks via the inventory item
-# system now (db.get_item_by_key + db.get_inventory_quantity by discord_id),
-# not the older herb_stacks table. Mock that path instead.
+# system now (db.get_item_by_key + db.get_inventory_quantity_for_wolf by
+# wolf id), not the older herb_stacks table. Mock that path instead.
 STICK_ITEM = {"id": 999, "key": "stick"}
 
 
 def _stick_quantity(count: int, *, on_patient: bool = False):
-    target_discord_id = 200 if on_patient else 100
+    target_wolf_id = 2 if on_patient else 1
 
-    def side_effect(discord_id: int, item_id: int) -> int:
-        return count if discord_id == target_discord_id else 0
+    def side_effect(wolf_id: int, item_id: int) -> int:
+        return count if wolf_id == target_wolf_id else 0
 
     return side_effect
 
@@ -96,7 +96,7 @@ def main() -> None:
     patient = _patient()
 
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(0)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(0)
     ), patch("engine.surgery.is_full_medic", return_value=True):
         missing = missing_surgery_herbs(surgeon, patient, SURGERY_PROCEDURES["set_bone"])
         check("set_bone missing stick", "stick" in missing)
@@ -105,7 +105,7 @@ def main() -> None:
         check("stick missing fails surgery", not ok and "stick" in msg.lower(), msg)
 
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(1)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb", side_effect=_has_herbs()
     ):
@@ -113,7 +113,7 @@ def main() -> None:
         check("one stick not enough", not ok and "2 sticks" in msg, repr(msg))
 
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(2)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(2)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("comfrey", "bindweed", "stick"),
@@ -135,7 +135,7 @@ def main() -> None:
 
     stitch_patient = _patient(active_injuries='["deep_gash"]')
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick", "meadowsweet"),
@@ -151,7 +151,7 @@ def main() -> None:
 
     consumed.clear()
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick", "meadowsweet"),
@@ -167,7 +167,7 @@ def main() -> None:
         check("meadowsweet flavor on success", "Meadowsweet" in msg, msg)
 
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(2)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(2)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("comfrey", "bindweed", "stick"),
@@ -183,7 +183,7 @@ def main() -> None:
 
     dying = _patient(condition="dying", hp=0, active_injuries='["deep_gash"]')
     with patch("engine.surgery.db.get_item_by_key", return_value=STICK_ITEM), patch(
-        "engine.surgery.db.get_inventory_quantity", side_effect=_stick_quantity(1, on_patient=True)
+        "engine.surgery.db.get_inventory_quantity_for_wolf", side_effect=_stick_quantity(1, on_patient=True)
     ), patch("engine.surgery.is_full_medic", return_value=True), patch(
         "engine.surgery.participant_has_herb",
         side_effect=lambda u, k: k in ("cobwebs", "yarrow", "stick"),

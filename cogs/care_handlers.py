@@ -113,14 +113,12 @@ async def treat(
         return
 
     qty = db.get_inventory_quantity(interaction.user.id, item['id'])
-    if qty < 1:
-        embed = howlbert_embed(
-            'not in inventory',
-            f"you don't have **{item['name']}**.",
-            color=ERROR_COLOR
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-        return
+    # a fully-prepared herb (tea/poultice/ointment) can leave the raw copy at
+    # 0 once /herbs action:prepare consumes it; the qty<1 case is decided
+    # below, after we know whether a matching prepared stack can cover it
+    # instead (see prepared_stack_source).
+    prepared_stack_source: str | None = None
+    prepared_stack_row = None
 
     if treat_limit_reached(user):
         embed = howlbert_embed(
@@ -236,6 +234,8 @@ async def treat(
                 for s in stacks:
                     if s['herb_key'] == herb_key and s['form'] == required_method:
                         has_prepared = True
+                        prepared_stack_source = 'pack'
+                        prepared_stack_row = s
                         break
 
             if not has_prepared:
@@ -243,6 +243,8 @@ async def treat(
                 for s in personal_stacks:
                     if s['herb_key'] == herb_key and s['form'] == required_method:
                         has_prepared = True
+                        prepared_stack_source = 'personal'
+                        prepared_stack_row = s
                         break
 
             if not has_prepared:
@@ -336,9 +338,22 @@ async def treat(
             await interaction.response.send_message(embed=embed)
             return
 
-    # consume herb
+    # consume herb: from the raw dried copy normally, or from the prepared
+    # stack itself when the raw copy was fully used up making it (see
+    # prepared_stack_source above).
     use_qty = 3 if herb_key == 'ragweed' and special == 'reduce_exhaustion' else 1
-    if not db.consume_item(interaction.user.id, item['id'], quantity=use_qty):
+    if qty >= use_qty:
+        db.consume_item(interaction.user.id, item['id'], quantity=use_qty)
+    elif prepared_stack_row is not None:
+        if prepared_stack_source == 'pack':
+            remaining = int(prepared_stack_row['quantity']) - 1
+            if remaining > 0:
+                db.update_pack_herb_stack(int(prepared_stack_row['id']), quantity=remaining)
+            else:
+                db.remove_pack_herb_stack(int(prepared_stack_row['id']))
+        else:
+            db.remove_herb_stack(int(prepared_stack_row['id']))
+    else:
         embed = howlbert_embed(
             'not in inventory',
             f"you don't have enough **{item['name']}**.",
