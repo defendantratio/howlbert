@@ -159,6 +159,16 @@ def _usage_hint(herb_key: str, meta: dict) -> str:
     return build_usage_hint(herb_key, meta)
 
 
+def _prep_line(herb_key: str, meta: dict) -> str:
+    """`prepare via` line: the forms this herb can be worked into (`/herbs action:prepare`)."""
+    if meta.get("poison") or meta.get("rarity") == "restricted":
+        return ""
+    methods = _derive_prep_methods(herb_key, meta)
+    if not methods:
+        return ""
+    return f"\n_prepare via: {' · '.join(methods)}_"
+
+
 def format_herb_block(herb_key: str, meta: dict) -> str:
     habitats = ", ".join(HABITAT_LABELS.get(h, h) for h in meta.get("habitat", ("wild",)))
     block = (
@@ -167,6 +177,7 @@ def format_herb_block(herb_key: str, meta: dict) -> str:
         f"{meta['effect']}"
         f"{_cure_labels(meta.get('cures', ()))}\n"
         f"{_usage_hint(herb_key, meta)}"
+        f"{_prep_line(herb_key, meta)}"
     )
     return block
 
