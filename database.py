@@ -1571,6 +1571,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN rogue_notoriety INTEGER NOT NULL DEFAULT 0"
         )
+    if "pending_pack_invite" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN pending_pack_invite INTEGER NOT NULL DEFAULT 0"
+        )
     _prey_cols = {r[1] for r in conn.execute("PRAGMA table_info(prey_stacks)").fetchall()}
     if "cached" not in _prey_cols:
         conn.execute("ALTER TABLE prey_stacks ADD COLUMN cached INTEGER NOT NULL DEFAULT 0")
@@ -4997,6 +5001,35 @@ def count_pack_members(pack_id: int) -> int:
             "SELECT COUNT(*) AS c FROM users WHERE pack_id = ?", (pack_id,)
         ).fetchone()
         return row["c"] if row else 0
+
+
+def set_pending_pack_invite(wolf_id: int, pack_id: int) -> None:
+    update_user_by_id(wolf_id, pending_pack_invite=pack_id)
+
+
+def join_founded_pack(discord_id: int, pack_id: int) -> str | None:
+    """Move a wolf into a founded pack as a member (faction key founded_<id>).
+    Returns an error message or None on success."""
+    user = get_user(discord_id)
+    if not user:
+        return "Not registered."
+    pack = get_pack(pack_id)
+    if not pack:
+        return "That pack no longer exists."
+    from engine.factions import founded_key_for
+
+    fkey = founded_key_for(pack_id)
+    with get_db() as conn:
+        old_pack_id = user["pack_id"]
+        if old_pack_id and int(old_pack_id) != int(pack_id):
+            old_pack = conn.execute("SELECT * FROM packs WHERE id = ?", (old_pack_id,)).fetchone()
+            if old_pack and old_pack["alpha_id"] == discord_id:
+                _promote_pack_alpha(conn, old_pack_id, exclude_id=discord_id)
+        conn.execute(
+            "UPDATE users SET pack_id = ?, great_pack = ?, pending_pack_invite = 0 WHERE id = ?",
+            (pack_id, fkey, user["id"]),
+        )
+    return None
 
 
 def delete_wolf_profile(discord_id: int) -> str:
