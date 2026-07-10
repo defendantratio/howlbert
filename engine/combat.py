@@ -29,12 +29,19 @@ def _apply_defender_damage_reduction(defender, damage: int, extra: str) -> tuple
     if damage <= 0:
         return damage, extra
     reduction, label = trait_damage_reduction(defender)
-    if reduction <= 0:
-        return damage, extra
-    new_damage = max(0, damage - reduction)
-    note = f"_{label}: −{reduction} damage._"
-    extra = (extra + " " + note).strip() if extra else note
-    return new_damage, extra
+    if reduction > 0:
+        damage = max(0, damage - reduction)
+        note = f"_{label}: −{reduction} damage._"
+        extra = (extra + " " + note).strip() if extra else note
+    if damage > 0:
+        from engine.pack_traits import pack_damage_reduction
+
+        pack_reduction, pack_label = pack_damage_reduction(defender)
+        if pack_reduction > 0:
+            damage = max(0, damage - pack_reduction)
+            note = f"_{pack_label}: −{pack_reduction} damage._"
+            extra = (extra + " " + note).strip() if extra else note
+    return damage, extra
 
 
 def _apply_crit_to_damage(damage: int) -> tuple[int, int, str]:

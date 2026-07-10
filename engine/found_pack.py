@@ -51,6 +51,10 @@ def found_pack(founder, partner, name: str) -> tuple[int | None, str | None]:
     with db.get_db() as conn:
         # founded pack is a real faction: both founders carry its faction key
         # (founded_<id>) as their great_pack, plus the shared pack_id (den).
+        # each member's former_great_pack (see assign_pack_affiliation) is
+        # blended into the pack's displayed trait live, from whoever is
+        # actually in the den right now (see engine.factions.resolve_faction);
+        # nothing needs to be snapshotted here.
         conn.execute(
             "UPDATE users SET pack_id = ?, great_pack = ?, wolf_role = 'alpha' WHERE id = ?",
             (new_pack_id, fkey, founder["id"]),

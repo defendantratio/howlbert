@@ -193,6 +193,7 @@ def init_db():
     _run_canonical_mates_once()
     _run_pronoun_backfill_once()
     _run_herb_stacks_to_inventory_once()
+    _run_former_great_pack_backfill_once()
 
 
 def _run_canonical_bonds_once() -> None:
@@ -289,6 +290,66 @@ def _run_pronoun_backfill_once() -> None:
     with get_db() as conn:
         conn.execute(
             "INSERT INTO app_meta (key, value) VALUES ('pronoun_backfill_v3', ?)",
+            (str(updated),),
+        )
+
+
+def _run_former_great_pack_backfill_once() -> None:
+    """Reconstruct former_great_pack for wolves who went loner/rogue/founded
+    before that column existed. The only surviving trace is the wolf journal's
+    "left **X**." / "moved from **X** to **Y**." text (see
+    engine.wolf_journal.log_pack_change); walk each wolf's history for the
+    most recent entry naming one of the four great packs."""
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        row = conn.execute(
+            "SELECT value FROM app_meta WHERE key = 'former_great_pack_backfill_v1'"
+        ).fetchone()
+        if row:
+            return
+        wolves = conn.execute(
+            "SELECT id FROM users WHERE former_great_pack IS NULL"
+        ).fetchall()
+
+    import re
+
+    from config import GREAT_PACKS
+
+    name_to_key = {info["name"]: key for key, info in GREAT_PACKS.items()}
+    pattern = re.compile(r"^(?:left|moved from) \*\*([^*]+)\*\*")
+
+    updated = 0
+    with get_db() as conn:
+        for wolf in wolves:
+            entries = conn.execute(
+                """
+                SELECT summary FROM wolf_journal_entries
+                WHERE wolf_id = ? AND event_key IN ('pack_left', 'pack_joined')
+                ORDER BY id DESC
+                """,
+                (wolf["id"],),
+            ).fetchall()
+            for entry in entries:
+                m = pattern.match(entry["summary"])
+                if not m:
+                    continue
+                gp_key = name_to_key.get(m.group(1))
+                if gp_key:
+                    conn.execute(
+                        "UPDATE users SET former_great_pack = ? WHERE id = ?",
+                        (gp_key, wolf["id"]),
+                    )
+                    updated += 1
+                    break
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('former_great_pack_backfill_v1', ?)",
             (str(updated),),
         )
 
@@ -1600,6 +1661,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "father_hidden" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN father_hidden INTEGER NOT NULL DEFAULT 0"
+        )
+    if "former_great_pack" not in user_cols_late:
+        conn.execute("ALTER TABLE users ADD COLUMN former_great_pack TEXT")
+    if "last_stone_endurance_day" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN last_stone_endurance_day INTEGER NOT NULL DEFAULT 0"
         )
     if "oathbreaker_count" not in user_cols_late:
         conn.execute(
@@ -4604,6 +4671,14 @@ def _affiliation_fields(affiliation: str) -> tuple[int | None, str | None]:
         return None, None
     if affiliation == ROGUE_KEY:
         return None, ROGUE_KEY
+    from engine.factions import founded_pack_id
+
+    fpid = founded_pack_id(affiliation)
+    if fpid is not None:
+        pack = get_pack(fpid)
+        if not pack:
+            return None, None
+        return pack["id"], affiliation
     if affiliation not in GREAT_PACKS:
         return None, None
     pack = get_pack_by_key(affiliation)
@@ -4699,13 +4774,17 @@ def assign_pack_affiliation(discord_id: int, affiliation: str, *, guild_id: int 
                 _promote_pack_alpha(conn, old_pack_id, exclude_id=discord_id)
 
         if affiliation in (LONER_KEY, ROGUE_KEY):
+            # remember the great pack a wolf left; founding requires being a
+            # loner, so this is the only trace once great_pack is cleared (see
+            # engine.found_pack, which blends it into the new pack's trait).
+            former = old_great_pack if old_great_pack in GREAT_PACKS else None
             conn.execute(
                 """
                 UPDATE users
-                SET great_pack = ?, pack_id = NULL
+                SET great_pack = ?, pack_id = NULL, former_great_pack = COALESCE(?, former_great_pack)
                 WHERE id = ?
                 """,
-                (None if affiliation == LONER_KEY else ROGUE_KEY, wolf_id),
+                (None if affiliation == LONER_KEY else ROGUE_KEY, former, wolf_id),
             )
             went_loner_key = None if affiliation == LONER_KEY else ROGUE_KEY
         else:
@@ -8209,34 +8288,42 @@ def _expel_wolf_from_pack_conn(
     if pack and pack["alpha_id"] == user["discord_id"]:
         _promote_pack_alpha(conn, pack_id, exclude_id=user["discord_id"])
 
+    # remember the great pack a wolf is leaving (see former_great_pack in
+    # assign_pack_affiliation); expulsion/exile is another path to loner.
+    old_great_pack = user["great_pack"] if "great_pack" in user.keys() else None
+    former = old_great_pack if old_great_pack in GREAT_PACKS else None
+
     if reset_standing:
         if record_exile_day is not None:
             conn.execute(
                 """
                 UPDATE users
                 SET great_pack = NULL, pack_id = NULL, standing = 0,
-                    exiled_from_pack_id = ?, exiled_day = ?
+                    exiled_from_pack_id = ?, exiled_day = ?,
+                    former_great_pack = COALESCE(?, former_great_pack)
                 WHERE id = ?
                 """,
-                (pack_id, record_exile_day, wolf_id),
+                (pack_id, record_exile_day, former, wolf_id),
             )
         else:
             conn.execute(
                 """
                 UPDATE users
-                SET great_pack = NULL, pack_id = NULL, standing = 0
+                SET great_pack = NULL, pack_id = NULL, standing = 0,
+                    former_great_pack = COALESCE(?, former_great_pack)
                 WHERE id = ?
                 """,
-                (wolf_id,),
+                (former, wolf_id),
             )
     else:
         conn.execute(
             """
             UPDATE users
-            SET great_pack = NULL, pack_id = NULL
+            SET great_pack = NULL, pack_id = NULL,
+                former_great_pack = COALESCE(?, former_great_pack)
             WHERE id = ?
             """,
-            (wolf_id,),
+            (former, wolf_id),
         )
 
 

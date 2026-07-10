@@ -78,12 +78,20 @@ def resolve_check(
         omen_disadv = True
     exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
     exhaust_disadv = exhaustion >= 1
+    pack_adv = False
+    if skill == "Constitution":
+        # Mistmoor's Rot's Blessing: advantage on saves against poison (the
+        # only callers using this raw ability-save label are poison rolls;
+        # disease-progression saves go through herb_buffs.disease_save_uses_advantage).
+        from engine.pack_traits import has_pack_trait
+
+        pack_adv = has_pack_trait(user, "mistmoor")
     use_disadv = (
         inj_disadv or disease_disadv or gen_disadv or exhaust_disadv or role_dis
         or trait_disadv or lt_disadv or fire_disadv or omen_disadv or fear_disadv
     )
     use_adv = (
-        (role_adv or howl_adv or blood_oath_adv or herb_adv or omen_adv) and not use_disadv
+        (role_adv or howl_adv or blood_oath_adv or herb_adv or omen_adv or pack_adv) and not use_disadv
     )
     if use_adv:
         die = max(roll_d20(), roll_d20())

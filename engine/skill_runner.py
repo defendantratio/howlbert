@@ -614,6 +614,14 @@ def run_skill_scenario(
     if use_yarrow and scenario.key == "surv_stabilize":
         dc = max(5, dc - 2)
 
+    if scenario.key in ("surv_swim", "surv_river"):
+        from engine.pack_traits import swim_check_dc_adjustment
+
+        swim_adj = swim_check_dc_adjustment(user)
+        if swim_adj:
+            dc = max(5, dc + swim_adj)
+            extra_notes.append("Swift Current (+2)")
+
     result = resolve_check(
         user,
         attr_keys=scenario.attr_keys,

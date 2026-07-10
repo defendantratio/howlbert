@@ -30,9 +30,14 @@ def founded_key_for(pack_id: int) -> str:
     return f"{FOUNDED_PREFIX}{int(pack_id)}"
 
 
+FOUNDERS_GRIT = "**Founders' Grit**: a young pack forged from lone wolves who chose each other."
+
+
 def resolve_faction(key) -> dict | None:
     """Descriptor for a canonical or founded faction, or None if the key is not
-    a faction (loner / rogue / unknown)."""
+    a faction (loner / rogue / unknown). Cheap: no per-member query (this is
+    called from hot paths like combat/activities). For the blended heritage
+    trait shown on a founded pack's profile, see ``founded_pack_heritage_trait``."""
     from config import GREAT_PACKS
 
     if key in GREAT_PACKS:
@@ -47,11 +52,39 @@ def resolve_faction(key) -> dict | None:
                 "name": pack["name"],
                 "path": "a founded pack; dispersers who raised their own den",
                 "motto": "we made our own way",
-                "pack_trait": "**Founders' Grit**: a young pack forged from lone wolves who chose each other.",
+                "pack_trait": FOUNDERS_GRIT,
                 "founded": True,
                 "pack_id": pid,
             }
     return None
+
+
+def founded_pack_heritage_keys(pack_id: int) -> set[str]:
+    """Great pack keys currently represented in the den, drawn from every
+    living member's former_great_pack (see assign_pack_affiliation) — not
+    just the two original founders, so this grows and shrinks as membership
+    changes. Used both for display (founded_pack_heritage_trait) and for the
+    mechanical effects in engine.pack_traits."""
+    import database as db
+
+    keys: set[str] = set()
+    for member in db.get_pack_members(pack_id):
+        gp_key = member["former_great_pack"] if "former_great_pack" in member.keys() else None
+        if gp_key:
+            keys.add(gp_key)
+    return keys
+
+
+def founded_pack_heritage_trait(pack_id: int) -> str:
+    """Founders' Grit plus a line for each great pack trait represented in
+    the den right now (see founded_pack_heritage_keys)."""
+    from config import GREAT_PACKS
+
+    traits = [FOUNDERS_GRIT]
+    for gp_key in GREAT_PACKS:
+        if gp_key in founded_pack_heritage_keys(pack_id):
+            traits.append(f"**{GREAT_PACKS[gp_key]['name']} heritage**: {GREAT_PACKS[gp_key]['pack_trait']}")
+    return "\n".join(traits)
 
 
 def is_faction(key) -> bool:
