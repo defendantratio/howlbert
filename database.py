@@ -1571,6 +1571,11 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN rogue_notoriety INTEGER NOT NULL DEFAULT 0"
         )
+    _prey_cols = {r[1] for r in conn.execute("PRAGMA table_info(prey_stacks)").fetchall()}
+    if "cached" not in _prey_cols:
+        conn.execute("ALTER TABLE prey_stacks ADD COLUMN cached INTEGER NOT NULL DEFAULT 0")
+    if "cache_day" not in _prey_cols:
+        conn.execute("ALTER TABLE prey_stacks ADD COLUMN cache_day INTEGER NOT NULL DEFAULT 0")
     if "last_weep_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_weep_day INTEGER NOT NULL DEFAULT 0"
@@ -6026,6 +6031,7 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             from engine.rogue_notoriety import decay_notoriety_on_rollover
 
             decay_notoriety_on_rollover(conn, new_day)
+        lone_notes.extend(raid_loner_caches_on_rollover(new_day))
         if lone_notes:
             condition_notes.extend(lone_notes)
         with get_db() as conn:
@@ -12647,6 +12653,65 @@ def remove_prey_stack(stack_id: int) -> None:
         conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack_id,))
 
 
+# --- Loner personal cache (buried carcasses that keep longer) ---
+def bury_prey_stack_in_cache(stack_id: int, day: int) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE prey_stacks SET cached = 1, cache_day = ? WHERE id = ?", (day, stack_id)
+        )
+
+
+def dig_prey_stack_from_cache(stack_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE prey_stacks SET cached = 0 WHERE id = ?", (stack_id,))
+
+
+def get_cached_prey_stacks(wolf_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM prey_stacks WHERE wolf_id = ? AND cached = 1 ORDER BY cache_day ASC",
+            (wolf_id,),
+        ).fetchall()
+
+
+def count_cached_prey_stacks(wolf_id: int) -> int:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM prey_stacks WHERE wolf_id = ? AND cached = 1", (wolf_id,)
+        ).fetchone()
+        return int(row["c"]) if row else 0
+
+
+def raid_loner_caches_on_rollover(day: int) -> list[dict]:
+    """Each sunrise a buried cache may be pilfered by another scavenger. Returns
+    rollover notes for the owners who lost one."""
+    import random as _r
+    from config import LONER_CACHE_RAID_CHANCE
+
+    notes: list[dict] = []
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT ps.id, ps.prey_key, u.wolf_name, u.discord_id
+            FROM prey_stacks ps JOIN users u ON u.id = ps.wolf_id
+            WHERE ps.cached = 1
+            """
+        ).fetchall()
+        from engine.prey_items import prey_meta
+
+        for stack in rows:
+            if _r.random() < LONER_CACHE_RAID_CHANCE:
+                conn.execute("DELETE FROM prey_stacks WHERE id = ?", (stack["id"],))
+                notes.append(
+                    {
+                        "wolf_name": stack["wolf_name"],
+                        "discord_id": stack["discord_id"],
+                        "line": f"a scavenger sniffed out your buried **{prey_meta(stack['prey_key'])['name']}**; the cache was robbed.",
+                    }
+                )
+    return notes
+
+
 def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
     """Mark rotting prey, delete spoiled carcasses. Returns rollover notes for owners."""
     from engine.prey_items import PREY_ROTTEN_GRACE_DAYS, is_forage_food, prey_meta, spoilage_terms
@@ -12665,6 +12730,10 @@ def rot_prey_stacks(guild_id: int, day: int) -> list[dict]:
         for stack in rows:
             age = day - stack["acquired_day"]
             rot_days = prey_meta(stack["prey_key"]).get("rot_days", 5)
+            # a buried personal cache keeps far longer than the open hoard.
+            if "cached" in stack.keys() and stack["cached"]:
+                from config import LONER_CACHE_ROT_MULT
+                rot_days *= LONER_CACHE_ROT_MULT
             meta = prey_meta(stack["prey_key"])
             terms = spoilage_terms(stack["prey_key"])
             forage = is_forage_food(stack["prey_key"])

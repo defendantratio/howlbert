@@ -267,6 +267,67 @@ class Hunting(commands.Cog):
         embed.set_footer(text='burial is final; no bones or salvage from buried carcasses.')
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name='cache', description='personal food cache for packless wolves: bury a carcass to keep it, dig it up later, or list it.')
+    @app_commands.describe(action='bury a hoard carcass, dig up a cache, or list your caches', stack='stack id (a `/food` carcass to bury, or a cache id from `action:list` to dig up)')
+    @app_commands.choices(action=[app_commands.Choice(name='bury a carcass', value='bury'), app_commands.Choice(name='dig up a cache', value='dig'), app_commands.Choice(name='list caches', value='list')])
+    @app_commands.autocomplete(stack=_prey_stack_autocomplete)
+    async def cache(self, interaction: discord.Interaction, action: str, stack: str | None = None):
+        user = db.get_user(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(player_message('Use `/register` first.'), ephemeral=reply_ephemeral())
+            return
+        from engine.role_features import is_unaffiliated_wolf
+        if not is_unaffiliated_wolf(user):
+            await interaction.response.send_message(embed=howlbert_embed('No Personal Cache', 'pack wolves share the den `/pack stash`; the buried personal cache is for **loners and rogues** with no den.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.prey_items import prey_meta
+        world = db.get_world(interaction.guild.id) if interaction.guild else None
+        day = world['day_number'] if world else 0
+        if action == 'list':
+            cached = db.get_cached_prey_stacks(user['id'])
+            if not cached:
+                await interaction.response.send_message(embed=howlbert_embed('Empty Cache', 'nothing buried. bury a `/food` carcass with `/cache action:bury`.', color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
+                return
+            from config import LONER_CACHE_SLOTS
+            lines = [f"**#{s['id']}** {prey_meta(s['prey_key'])['name']} · buried sunrise {s['cache_day']}" + (' · **rotting**' if s['is_rotting'] else '') for s in cached]
+            embed = howlbert_embed(f"Buried Cache ({len(cached)}/{LONER_CACHE_SLOTS})", '\n'.join(lines))
+            embed.set_footer(text='`/cache action:dig stack:<id>` to unearth · caches keep longer but can be pilfered')
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        if not stack:
+            await interaction.response.send_message(player_message('Pick a `stack` id.'), ephemeral=reply_ephemeral())
+            return
+        try:
+            stack_id = int(stack)
+        except ValueError:
+            await interaction.response.send_message(player_message('Pick a carcass by stack id.'), ephemeral=reply_ephemeral())
+            return
+        row = db.get_prey_stack(stack_id)
+        if not row or int(row['wolf_id']) != int(user['id']):
+            await interaction.response.send_message(embed=howlbert_embed('Not Yours', 'that carcass is not in your hoard or cache.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if action == 'bury':
+            if int(row['cached']):
+                await interaction.response.send_message(embed=howlbert_embed('Already Buried', 'that carcass is already in your cache.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            from config import LONER_CACHE_SLOTS
+            if db.count_cached_prey_stacks(user['id']) >= LONER_CACHE_SLOTS:
+                await interaction.response.send_message(embed=howlbert_embed('Cache Full', f'you can bury at most **{LONER_CACHE_SLOTS}** carcasses. dig one up first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+                return
+            db.bury_prey_stack_in_cache(stack_id, day)
+            from config import LONER_CACHE_ROT_MULT
+            embed = howlbert_embed('Cached', f"you bury the **{prey_meta(row['prey_key'])['name']}** in a scrape and scent-mark it. it keeps roughly **{LONER_CACHE_ROT_MULT}x** longer than the open hoard.", color=SUCCESS_COLOR)
+            embed.set_footer(text='dig it up with `/cache action:dig` before another scavenger finds it.')
+            await interaction.response.send_message(embed=embed)
+            return
+        # dig
+        if not int(row['cached']):
+            await interaction.response.send_message(embed=howlbert_embed('Not Buried', 'that carcass is already in your open hoard.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        db.dig_prey_stack_from_cache(stack_id)
+        embed = howlbert_embed('Unearthed', f"you dig up the **{prey_meta(row['prey_key'])['name']}**; back in your `/food` hoard.", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed)
+
     async def _sniff(self, interaction: discord.Interaction):
         user = db.get_user(interaction.user.id)
         if not user:
