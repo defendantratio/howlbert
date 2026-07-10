@@ -73,6 +73,7 @@ HERB_SIDE_EFFECTS: dict[str, tuple[str, ...]] = {
     "raspberry_leaves": ("abortifacient",),
     "saffron": ("abortifacient",),
     "passionflower": ("abortifacient",),
+    "slippery_elm": ("abortifacient",),  # compendium: "whole bark may be abortifacient / cause miscarriage"
 
     # sedative overdose (grogginess)
     "poppy_seeds": ("sedative_overdose",),
