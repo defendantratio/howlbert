@@ -904,7 +904,15 @@ def try_forage(interaction: discord.Interaction, rarity: str = "common") -> disc
         and "wild" in m.get("habitat", ("wild",))
     ]
     if user["great_pack"]:
-        pack_herbs = [k for k, m in HERBS.items() if user["great_pack"] in m.get("packs", ())]
+        pack_herbs = [
+            k
+            for k, m in HERBS.items()
+            if user["great_pack"] in m.get("packs", ())
+            and m["rarity"] == rarity
+            and m.get("rarity") != "restricted"
+            and not m.get("poison")
+            and "wild" in m.get("habitat", ("wild",))
+        ]
         if pack_herbs and random.random() < 0.4:
             pool = pack_herbs
     if not pool:

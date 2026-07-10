@@ -72,6 +72,11 @@ LONG_TERM_TYPES = {
         "effect": "chronic joint stiffness; **-1** on Dexterity checks always; **disadvantage** on Dexterity checks in cold or wet weather. daisy or willow bark eases pain for 1 sunrise.",
         "intimidate_bonus": 0,
     },
+    "lick_granuloma": {
+        "label": "Raw-Lick",
+        "effect": "obsessive licking scarred the skin into a raw, thickened patch that won't fully close; that spot **reopens easily** and carries lingering risk of infection.",
+        "intimidate_bonus": 0,
+    },
     # cumulative organ damage from prolonged internal herb overuse (see
     # engine.herb_side_effects). permanent; the price of leaning on one draught.
     "low_potassium": {
