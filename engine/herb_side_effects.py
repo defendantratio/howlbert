@@ -133,6 +133,10 @@ ORGAN_TOXIC_HERBS: dict[str, tuple[str, int]] = {
     "dock": ("kidney_damage", 10),        # oxalates strain the kidneys
     "witch_hazel": ("liver_damage", 10),   # high oral doses harm liver/kidney
     "burdock_root": ("liver_damage", 10),  # high doses may harm the liver
+    "coltsfoot": ("liver_damage", 6),     # hepatotoxic pyrrolizidine alkaloids; short-term use only
+    "rosemary": ("kidney_damage", 8),     # large doses cause kidney damage
+    "skunk_cabbage": ("kidney_damage", 8),  # overconsumption causes kidney failure
+    "parsley": ("kidney_damage", 10),     # oil in high doses is hepatotoxic; kidney damage
 }
 
 

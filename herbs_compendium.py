@@ -44,7 +44,7 @@ HERBS = {
         packs=("greyspire",),
         cures=("sprained_leg", "punctured_paw", "arthritis"),
         side_effects="highly toxic if ingested; nausea, vomiting, irregular heartbeat, coma; topical may cause itching or rash.",
-        preparation="external use only as poultice, gel, cream, or ointment; homeopathic dilutions are safer.",
+        preparation="external use only; chewed into a poultice or rubbed on as ointment.",
     ),
     "beech_leaves": _h(
         "Beech Leaves",
@@ -85,7 +85,7 @@ HERBS = {
         packs=("mistmoor",),
         cures=("influenza", "leafbare_cough"),
         side_effects="large amounts cause severe diarrhea; contains hepatotoxic pyrrolizidine alkaloids; liver damage.",
-        preparation="traditional use at 2g of leaves and flowers.",
+        preparation="leaves and flowers eaten fresh or dried.",
     ),
     "borage": _h(
         "Borage",
@@ -134,7 +134,7 @@ HERBS = {
         packs=("silverrush", "mistmoor"),
         cures=("deep_gash", "sprained_leg", "infected_wound"),
         side_effects="generally safe short-term; may cause mild gi discomfort; avoid in pregnancy.",
-        preparation="pollen taken as capsules; young shoots and rhizomes eaten.",
+        preparation="pollen and young shoots eaten fresh; rhizomes chewed.",
     ),
     "celandine": _h(
         "Celandine",
@@ -159,7 +159,7 @@ HERBS = {
         "removes nausea; eases redscratch itch; leaf juice clears infected wounds. stimulates appetite and eases gut troubles in wasting wolves.",
         cures=("infected_wound", "diarrhea", "redscratch", "eating_distress", "wasting_sickness"),
         side_effects="generally safe; potential for mild gi discomfort or allergic reactions.",
-        preparation="juice extracted from leaves or root for infected wounds and bellyache.",
+        preparation="leaves or root chewed to release juice; applied to wounds or eaten for bellyache.",
     ),
     "chickweed": _h(
         "Chickweed",
@@ -211,7 +211,8 @@ HERBS = {
         packs=("greyspire",),
         cures=("infected_wound", "influenza", "leafbare_cough"),
         side_effects="common: nausea, upset stomach; allergic reactions possible including anaphylaxis.",
-        preparation="tea, tincture, tablet, or capsule.",
+        preparation="tea, or root chewed and dried for later use.",
+        prep_methods=("tea", "dried"),
     ),
     "daisy": _h(
         "Daisy",
@@ -252,7 +253,7 @@ HERBS = {
         "sedative rest for concussion recovery; anti-anxiety and anti-inflammatory. treats nervous conditions, seizure-like episodes, depression, grief. high doses cause confusion and irregular heartbeat.",
         cures=("concussion", "dementia", "feral_shift", "anxiety", "delirium", "obsession", "pack_madness", "insomnia", "grief_melancholy"),
         side_effects="generally well-tolerated; may cause confusion, stupor, vivid dreams, mild digestive disturbances.",
-        preparation="1 to 2g dried herb steeped in 1 cup water for 5 minutes.",
+        preparation="dried herb steeped in water.",
     ),
     "dock": _h(
         "Dock",
@@ -305,7 +306,7 @@ HERBS = {
         habitat=("compound",),
         cures=("eating_distress", "leafbare_cough", "bloat", "infected_wound"),
         side_effects="generally safe; rare: stomach upset, seizures; oil may cause hallucinations.",
-        preparation="seeds used as spice or tea; oil used with caution.",
+        preparation="seeds eaten fresh, or steeped as tea.",
     ),
     "feverfew": _h(
         "Feverfew",
@@ -313,7 +314,7 @@ HERBS = {
         "reduces inflammation and fever; advantage on disease saves for 1 day. treats swollen eyes and head pain. chewing fresh leaves causes mouth sores; use dried only.",
         cures=("influenza", "redscratch", "pox", "rot_lung", "milk_fever", "swollen_eye", "leafbare_cough"),
         side_effects="5 to 15% develop mouth ulcers or gi irritation; may increase bleeding; abrupt stop may cause rebound headaches.",
-        preparation="dried leaf or extract taken orally.",
+        preparation="fresh or dried leaf eaten.",
     ),
     "foxglove": _h(
         "Foxglove",
@@ -329,7 +330,7 @@ HERBS = {
         "+2 hp per 8h rest. slows early rabies (+2 next save, no cure). anti-inflammatory and diuretic; clears urinary infection and wound infection.",
         cures=("infected_wound", "deep_gash", "urinary_infection", "lyme"),
         side_effects="generally well-tolerated; may cause heartburn; allergic reactions possible.",
-        preparation="tea, tincture, or supplement.",
+        preparation="tea, or poultice from bruised leaves.",
     ),
     "heather": _h(
         "Heather",
@@ -354,6 +355,7 @@ HERBS = {
         cures=("leafbare_cough", "deep_gash"),
         side_effects="generally safe; may cause blood sugar spikes; allergic reactions possible.",
         preparation="used directly or mixed with other herbs.",
+        prep_methods=("eaten raw",),
     ),
     "horsetail": _h(
         "Horsetail",
@@ -361,7 +363,7 @@ HERBS = {
         "+3 medicine to stabilize dying; hemostatic poultice closes wounds and stops bleeding. antimicrobial; treats torn claws, paw wounds, and urinary complaints. long-term use may cause thiamine deficiency.",
         cures=("deep_gash", "torn_claw", "punctured_paw", "urinary_infection"),
         side_effects="contains thiaminase; long-term use may cause thiamine deficiency; high doses may cause liver injury.",
-        preparation="tea, poultice, or supplement.",
+        preparation="tea or poultice.",
     ),
     "ivy_vines": _h(
         "Ivy Vines",
@@ -369,7 +371,8 @@ HERBS = {
         "preserves dried herbs 2 extra weeks; leaf extract thins chest mucus and opens airways; eases fever, leaf-bare cough, and asthma.",
         cures=("leafbare_cough", "influenza", "asthma"),
         side_effects="rarely causes noticeable side effects; nausea and vomiting possible with excessive doses.",
-        preparation="pill, powder, or extract.",
+        preparation="leaves dried and chewed; steeped as tea.",
+        prep_methods=("dried", "tea"),
     ),
     "jewelweed": _h(
         "Jewelweed",
@@ -387,6 +390,7 @@ HERBS = {
         cures=("mild_poison", "diarrhea", "urinary_infection", "infected_wound"),
         side_effects="allergic reactions possible; excessive use may cause kidney damage; large doses cause convulsions.",
         preparation="berries eaten directly; leaves used for respiratory issues.",
+        prep_methods=("eaten raw", "tea"),
     ),
     "knotgrass": _h(
         "Knotgrass",
@@ -395,7 +399,7 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("diarrhea", "fleas", "leafbare_cough", "urinary_infection", "worms"),
         side_effects="no serious side effects reported; may cause mild gi discomfort.",
-        preparation="1.5g taken 3 to 5 times daily; tea for kidney and bladder conditions.",
+        preparation="eaten fresh several times a day; tea for kidney and bladder conditions.",
         prep_methods=("poultice", "tea"),
     ),
     "labrador_tea": _h(
@@ -422,7 +426,7 @@ HERBS = {
         habitat=("compound",),
         cures=("influenza", "anxiety", "insomnia", "grief_melancholy", "night_terrors"),
         side_effects="generally well-tolerated; allergic skin reactions possible; large oral doses may cause nausea.",
-        preparation="leaves or flowers eaten; aromatherapy; essential oil; diluted.",
+        preparation="leaves or flowers eaten, or carried and sniffed for their scent.",
     ),
     "mullein": _h(
         "Mullein",
@@ -432,7 +436,7 @@ HERBS = {
         habitat=("roadside",),
         cures=("yellowcough", "rot_lung", "cancer", "asthma", "bronchitis"),
         side_effects="no common or severe side effects; tiny hairs may cause skin irritation; seeds contain rotenone.",
-        preparation="tea, tincture, or smoked.",
+        preparation="tea, or dried leaf chewed.",
     ),
     "lungwort": _h(
         "Lungwort",
@@ -441,7 +445,7 @@ HERBS = {
         packs=("greyspire", "mistmoor"),
         cures=("yellowcough", "rot_lung", "cancer", "asthma", "bronchitis"),
         side_effects="generally safe in moderation; large doses may cause stomach discomfort; may contain liver-toxic substances.",
-        preparation="tea, tincture, topical application.",
+        preparation="tea, or leaves chewed and applied to the skin.",
     ),
     "marsh_mallow": _h(
         "Marsh-Mallow Root",
@@ -478,7 +482,7 @@ HERBS = {
         packs=("mistmoor",),
         cures=("influenza", "urinary_infection"),
         side_effects="contains saponins; poisonous when ingested; causes irritation, nausea, vomiting.",
-        preparation="dried roots ground into powder; tea.",
+        preparation="dried roots crushed between the teeth; steeped as tea.",
     ),
     "meadowsweet": _h(
         "Meadowsweet",
@@ -487,7 +491,7 @@ HERBS = {
         packs=("silverrush",),
         cures=("sprained_leg", "diarrhea", "eating_distress", "influenza", "lyme", "arthritis"),
         side_effects="contains salicylates; increases bleeding risk; large amounts or long-term use possibly unsafe.",
-        preparation="tea, tincture; traditional adult dose: 2.5 to 3.5g flower or 4 to 5g herb daily.",
+        preparation="tea from the flower or dried herb.",
     ),
     "mountain_ash": _h(
         "Mountain Ash (Rowan)",
@@ -530,7 +534,7 @@ HERBS = {
         habitat=("compound",),
         cures=("anxiety", "insomnia", "feral_shift"),
         side_effects="common: dizziness, drowsiness, confusion; not for use by pregnant wolves.",
-        preparation="tea or dietary supplement.",
+        preparation="tea from the dried vine and flower.",
     ),
     "pine_needle": _h(
         "Pine Needles",
@@ -539,7 +543,7 @@ HERBS = {
         packs=("greyspire",),
         cures=("cough", "leafbare_cough", "urinary_infection", "asthma"),
         side_effects="may cause uterine contractions; avoid pregnancy; large quantities may cause stomach upset.",
-        preparation="tea; essential oil; diluted, with caution.",
+        preparation="tea from fresh or dried needles.",
     ),
     "pine_bark": _h(
         "Pine Bark",
@@ -548,7 +552,7 @@ HERBS = {
         packs=("greyspire",),
         cures=("leafbare_cough", "punctured_paw", "asthma"),
         side_effects="minor: stomach upset, headaches, dizziness; may increase bleeding risk.",
-        preparation="extract supplement.",
+        preparation="inner bark chewed or steeped as tea.",
     ),
     "plantain": _h(
         "Plantain",
@@ -558,7 +562,7 @@ HERBS = {
         habitat=("roadside", "compound"),
         cures=("leafbare_cough", "deep_gash", "punctured_paw", "torn_claw", "asthma", "bronchitis"),
         side_effects="anaphylaxis possible; mild: nausea, vomiting, bloating; high doses may cause serious allergic reactions.",
-        preparation="tea, tincture, poultice.",
+        preparation="tea, or leaves chewed into a poultice.",
     ),
     "poison_ivy": _h(
         "Poison Ivy",
@@ -628,7 +632,7 @@ HERBS = {
         habitat=("compound",),
         cures=("grief_melancholy", "dementia", "chronic_stress", "anxiety", "obsession"),
         side_effects="large amounts cause vomiting, sun sensitivity, kidney damage; undiluted oil toxic.",
-        preparation="culinary herb, tea, essential oil; diluted.",
+        preparation="eaten fresh, or steeped as tea.",
     ),
     "rush_stalks": _h(
         "Rush Stalks",
@@ -646,7 +650,7 @@ HERBS = {
         habitat=("compound",),
         cures=("dying", "milk_fever", "leafbare_cough", "anxiety", "grief_melancholy"),
         side_effects="generally safe up to 100mg daily; large doses (>5g) cause vomiting, dizziness, bloody urine; may cause miscarriage.",
-        preparation="used as spice or supplement.",
+        preparation="petals eaten fresh or dried.",
     ),
     "sage": _h(
         "Sage",
@@ -663,7 +667,7 @@ HERBS = {
         "treats severe cough and blackcough; antispasmodic for the chest. toxic fresh (dc 12); contains oxalates; causes mouth pain. overconsumption causes kidney failure.",
         cures=("cough", "leafbare_cough", "asthma"),
         side_effects="possibly safe in small amounts; large amounts cause nausea, vomiting, dizziness; contains oxalates.",
-        preparation="ointment from roots boiled in oil; dried form only.",
+        preparation="dried root chewed or steeped as tea; dried form only.",
     ),
     "slippery_elm": _h(
         "Slippery Elm",
@@ -672,7 +676,7 @@ HERBS = {
         packs=("thistlehide",),
         cures=("broken_jaw", "diarrhea", "eating_distress", "anxiety", "urinary_infection"),
         side_effects="no known side effects orally; topical may cause contact dermatitis; whole bark may be abortifacient.",
-        preparation="powdered bark; tea, tincture.",
+        preparation="inner bark chewed, or steeped as tea.",
     ),
     "snakeroot": _h(
         "Snakeroot",
@@ -680,7 +684,7 @@ HERBS = {
         "advantage vs snake venom saves; calms anxiety and promotes sleep. excessive use causes depression, nightmares, and severe diarrhea.",
         cures=("anxiety", "insomnia", "mild_poison"),
         side_effects="nasal congestion, sedation, gi upset, bradycardia; diarrhea, depression.",
-        preparation="powdered root: 50 to 300mg daily.",
+        preparation="root chewed in small amounts.",
     ),
     "sorrel": _h(
         "Sorrel",
@@ -713,7 +717,7 @@ HERBS = {
         "with comfrey -1 broken bone healing day. dried leaves drive off fleas. reduces joint inflammation and clears urinary complaints. cook or dry before use; raw stings.",
         cures=("fractured_rib", "sprained_leg", "fleas", "urinary_infection", "lyme", "arthritis"),
         side_effects="generally safe in moderate amounts; common: constipation, diarrhea, upset stomach; touching plant causes irritation.",
-        preparation="dried or cooked form safe; tea, tincture, supplement.",
+        preparation="dried or cooked form safe; tea, or eaten cooked.",
     ),
     "swamp_milkweed": _h(
         "Swamp Milkweed",
@@ -755,7 +759,7 @@ HERBS = {
         "+2 medicine for any injury. more tannin than oak bark; strongly astringent; treats diarrhea and acute gut sickness; soothes throat inflammation and infected wounds.",
         cures=("diarrhea", "leafbare_cough", "infected_wound"),
         side_effects="generally well-tolerated; mild stomach pain or heartburn possible.",
-        preparation="tea, tincture, topical.",
+        preparation="tea, or root chewed and applied to the skin.",
     ),
     "valerian": _h(
         "Valerian",
@@ -764,7 +768,7 @@ HERBS = {
         habitat=("compound",),
         cures=("anxiety", "insomnia", "feral_shift", "eating_distress", "grief_melancholy", "shock_emotional"),
         side_effects="generally well-tolerated; common: dizziness, headache, daytime drowsiness; withdrawal symptoms if discontinued.",
-        preparation="tea, tincture, supplement.",
+        preparation="root chewed, or steeped as tea.",
     ),
     "watermint": _h(
         "Watermint",
@@ -788,7 +792,7 @@ HERBS = {
         "stops coughing for 2 hours, even blackcough; sedative and digestive tea. calms anxiety. contains cyanogenic glycosides; short-term use only (10 to 14 days); large doses toxic.",
         cures=("cough", "leafbare_cough", "diarrhea", "anxiety"),
         side_effects="generally safe in small amounts; excessive doses toxic due to cyanogenic glycosides; short-term use only.",
-        preparation="bark tea or syrup; short-term use only.",
+        preparation="bark chewed or steeped as tea; short-term use only.",
     ),
     "wild_garlic": _h(
         "Wild Garlic",
@@ -805,7 +809,7 @@ HERBS = {
         packs=("mistmoor", "silverrush"),
         cures=("influenza", "sprained_leg", "fractured_rib", "lyme", "arthritis"),
         side_effects="common: nausea, vomiting, diarrhea, heartburn, rash; may affect blood clotting; similar to aspirin.",
-        preparation="bark chewed in small amounts for pain; tea, tincture.",
+        preparation="bark chewed in small amounts for pain; steeped as tea.",
     ),
     "wintergreen": _h(
         "Wintergreen",
@@ -813,7 +817,7 @@ HERBS = {
         "often misidentified; 1d4 poison (dc 10). oil is unsafe to eat. external redness and irritation; large amounts cause tinnitus, confusion, and death.",
         poison=True,
         side_effects="oil is unsafe to take orally; topical: redness, irritation; large amounts cause ringing in ears, nausea, confusion.",
-        preparation="external use only; tea with caution; oil externally; diluted.",
+        preparation="external use only; leaves rubbed on the skin, or tea with caution.",
     ),
     "witch_hazel": _h(
         "Witch Hazel",
@@ -821,7 +825,7 @@ HERBS = {
         "astringent and hemostatic; reduces eye swelling; soothes poison ivy rash and insect stings; eases chest cough. internal use in large doses may cause liver problems.",
         cures=("swollen_eye", "infected_wound", "poison_ivy", "leafbare_cough", "mild_poison"),
         side_effects="most common: dry skin; high doses may cause liver or kidney problems; contains trace safrole.",
-        preparation="topical application; distillate or cream; internal use with caution.",
+        preparation="bark or leaves chewed and applied to the skin; tea with caution for internal use.",
     ),
     "wolfsbane": _h(
         "Wolfsbane",
@@ -839,7 +843,7 @@ HERBS = {
         "+2 medicine to stabilize; stops bleeding; cleanses torn claws. anti-inflammatory; lowers blood pressure. also settles gut sickness. allergic reactions possible.",
         cures=("deep_gash", "infected_wound", "shaking_sickness", "torn_claw", "diarrhea"),
         side_effects="generally considered safe; may interact with lithium; allergic reactions possible.",
-        preparation="tea, tincture, topical application.",
+        preparation="tea, or leaves chewed and applied to wounds.",
     ),
     "catmint": _h(
         "Catmint Tea",
@@ -920,7 +924,7 @@ HERBS = {
         habitat=("roadside",),
         cures=("deep_gash", "internal_bleeding"),
         side_effects="possibly safe in small amounts short-term; large amounts cause heart palpitations; causes uterine contractions; avoid pregnancy.",
-        preparation="tea, tincture, powder.",
+        preparation="tea, or fresh leaves chewed.",
     ),
     "garlic_mustard": _h(
         "Garlic Mustard",
