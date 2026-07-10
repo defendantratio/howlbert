@@ -619,6 +619,13 @@ class Profile(commands.Cog):
         if affiliation not in UNAFFILIATED_KEYS:
             standing = int(user['standing'])
             embed.add_field(name='Standing', value=f'**{standing}**\n{standing_effect_text(standing)}', inline=False)
+        else:
+            from engine.role_features import is_rogue_wolf
+            if is_rogue_wolf(user):
+                from engine.rogue_notoriety import notoriety_note
+                _noto = notoriety_note(user)
+                if _noto:
+                    embed.add_field(name='Notoriety', value=_noto, inline=False)
         oath_breaks = db.oathbreaker_count(user)
         if oath_breaks:
             embed.add_field(

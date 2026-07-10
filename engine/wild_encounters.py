@@ -174,6 +174,16 @@ def roll_activity_ambush(activity: str, user=None) -> bool:
         return False
     if user is not None and recently_froze(user):
         chance *= SIGN_FREEZE_AMBUSH_MULTIPLIER
+    if user is not None:
+        # packs are wary of any rogue near their range (flat), and hunt a
+        # notorious one harder (scales with notoriety).
+        from engine.role_features import is_rogue_wolf
+
+        if is_rogue_wolf(user):
+            from engine.rogue_notoriety import notoriety_ambush_bonus
+            from config import ROGUE_WARINESS_AMBUSH_FLAT
+
+            chance += ROGUE_WARINESS_AMBUSH_FLAT + notoriety_ambush_bonus(user)
     return random.uniform(0, 100) <= chance
 
 

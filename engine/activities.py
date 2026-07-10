@@ -1311,7 +1311,13 @@ def try_crime(
         embed.set_footer(text="no bones earned. the den remembers.")
         return _apply_extra_paw(interaction, embed, scene=scene, staff=staff)
 
-    if roll_crime_caught():
+    from engine.role_features import is_rogue_wolf
+    _extra_catch = 0.0
+    if is_rogue_wolf(user):
+        from engine.rogue_notoriety import notoriety
+        from config import ROGUE_NOTORIETY_AMBUSH_PER_POINT
+        _extra_catch = notoriety(user) * ROGUE_NOTORIETY_AMBUSH_PER_POINT
+    if roll_crime_caught() or (_extra_catch and random.random() < _extra_catch):
         kick = db.adjust_wolf_standing(interaction.user.id, crime_caught_standing())
         embed = howlbert_embed("caught", pick_crime_caught_flavor(), color=ERROR_COLOR)
         embed.add_field(
@@ -1330,6 +1336,12 @@ def try_crime(
     )
     gid = interaction.guild.id if interaction.guild else None
     db.increment_quest_progress(interaction.user.id, "crime", guild_id=gid)
+    # a rogue who pulls off a border score grows more notorious with the packs.
+    _noto_note = ""
+    if net > 0 and is_rogue_wolf(user):
+        from engine.rogue_notoriety import gain_notoriety, notoriety_note
+        gain_notoriety(user)
+        _noto_note = notoriety_note(db.get_user(interaction.user.id))
     updated = db.get_user(interaction.user.id)
     body = random.choice(CRIME_TEXT)
     if plot_suffix:
@@ -1337,6 +1349,8 @@ def try_crime(
     title = "empty paws" if net == 0 else "score pulled"
     embed = howlbert_embed(title, body, color=SUCCESS_COLOR if net else ERROR_COLOR)
     embed.add_field(name="earned", value=format_bones(net, signed=True), inline=True)
+    if _noto_note:
+        embed.add_field(name="notoriety", value=_noto_note, inline=False)
     if tax > 0:
         embed.add_field(name="pack tax", value=format_bones(tax), inline=True)
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)

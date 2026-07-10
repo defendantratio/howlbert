@@ -1567,6 +1567,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN dormant INTEGER NOT NULL DEFAULT 0"
         )
+    if "rogue_notoriety" not in user_cols_late:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN rogue_notoriety INTEGER NOT NULL DEFAULT 0"
+        )
     if "last_weep_day" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN last_weep_day INTEGER NOT NULL DEFAULT 0"
@@ -6019,6 +6023,9 @@ def perform_rollover(guild_id: int, rollover_at: datetime | None = None) -> tupl
             lone_notes = apply_lone_wolf_loneliness_on_rollover(conn, new_day)
             lone_notes.extend(apply_loner_winter_cold_on_rollover(conn, new_season, new_day))
             lone_notes.extend(apply_loner_untended_wounds_on_rollover(conn, new_day))
+            from engine.rogue_notoriety import decay_notoriety_on_rollover
+
+            decay_notoriety_on_rollover(conn, new_day)
         if lone_notes:
             condition_notes.extend(lone_notes)
         with get_db() as conn:

@@ -365,8 +365,9 @@ ROGUE_NOTORIETY_MAX = 10
 ROGUE_NOTORIETY_AMBUSH_PER_POINT = 0.03  # +3% patrol-ambush odds per notoriety
 ROGUE_NOTORIETY_FEAR_THRESHOLD = 5  # at/above this, packs fear you (intimidation edge)
 ROGUE_NOTORIETY_DECAY_PER_SUNRISE = 1  # notoriety cools when you lie low
-# #9 Transient wariness: packs watch unaffiliated wolves.
-ROGUE_WARINESS_GATHERING_BLOCK = True  # rogues barred from fourtrees gatherings
+# #9 Transient wariness: packs patrol against any rogue near their range, even
+# before notoriety builds. Flat bump to field-ambush odds on top of notoriety.
+ROGUE_WARINESS_AMBUSH_FLAT = 4  # +4 percentage points of ambush chance for rogues
 
 # Pups in winter gain exhaustion from cold exposure each sunrise even when fed.
 PUP_WINTER_COLD_EXHAUSTION_CHANCE = 0.15  # 15% per sunrise in winter
