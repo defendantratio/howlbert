@@ -96,10 +96,12 @@ def _pup_hunger_bonus_fields(pup, hunger_gain: int, *, day_number: int | None = 
     if int(pup["hunger"]) < HUNGER_LOW_THRESHOLD and int(
         pup["exhaustion"] if "exhaustion" in pup.keys() else 0
     ) > 0:
-        fields["exhaustion"] = max(
-            0,
-            int(pup["exhaustion"]) - HONEY_PUP_EXHAUSTION_RELIEF,
-        )
+        old_ex = int(pup["exhaustion"])
+        fields["exhaustion"] = max(0, old_ex - HONEY_PUP_EXHAUSTION_RELIEF)
+        relieved = old_ex - fields["exhaustion"]
+        if relieved > 0:
+            from engine.energy import gain_energy_from_exhaustion_relief
+            gain_energy_from_exhaustion_relief(pup, relieved)
     if day_number is not None:
         fields["last_milk_day"] = day_number
     return fields

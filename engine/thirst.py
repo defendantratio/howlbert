@@ -123,6 +123,8 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
     new_exhaustion = max(0, old_exhaustion - DRINK_EXHAUSTION_RELIEF)
     if new_exhaustion != old_exhaustion:
         db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=new_exhaustion)
+        from engine.energy import gain_energy_from_exhaustion_relief
+        gain_energy_from_exhaustion_relief(user, old_exhaustion - new_exhaustion)
 
     # drink as often as you like; but forcing water down when already fully
     # watered bloats the gut, adding pain exhaustion (overhydration)

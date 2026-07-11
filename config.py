@@ -258,6 +258,9 @@ ENERGY_LONG_REST_GAIN = 35
 ENERGY_SHORT_REST_GAIN = 15
 ENERGY_EMPTY_EXHAUSTION_GAIN = 1
 ENERGY_EMPTY_MOOD_LOSS = 4
+# a real body recovers energy along with exhaustion: eating, drinking, and any
+# herb/rest effect that relieves exhaustion also gives a bit of energy back.
+ENERGY_GAIN_PER_EXHAUSTION_RELIEVED = 8
 # Hunting is throttled by energy, not a hard daily cap. Everyone can hunt until
 # they tire; hunters, the specialists, spend far less energy per hunt, so they
 # get many more hunts before running low (roughly ~11 vs ~5 on a full bar).

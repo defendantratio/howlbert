@@ -227,6 +227,7 @@ def _feed_wolf_from_stack(wolf, stack, *, day: int = 0) -> tuple[bool, str]:
     if day and not is_forage_food(stack["prey_key"]):
         db.update_user(wolf["discord_id"], wolf_id=wolf["id"], last_meat_day=day)
     meta = prey_meta(stack["prey_key"])
+    old_exhaustion = int(wolf["exhaustion"]) if "exhaustion" in wolf.keys() else 0
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(wolf, stack["bone_value"])
     hunger_gain = meal_hunger_gain(stack["prey_key"])
     new_hunger = db.adjust_hunger(wolf["id"], hunger_gain)
@@ -238,6 +239,9 @@ def _feed_wolf_from_stack(wolf, stack, *, day: int = 0) -> tuple[bool, str]:
         hp=new_hp,
         exhaustion=new_exhaustion,
     )
+    if new_exhaustion < old_exhaustion:
+        from engine.energy import gain_energy_from_exhaustion_relief
+        gain_energy_from_exhaustion_relief(wolf, old_exhaustion - new_exhaustion)
 
     disease_note = ""
     if stack["is_rotting"]:

@@ -27,6 +27,7 @@ from config import (
     ENERGY_COST_MED,
     ENERGY_EMPTY_EXHAUSTION_GAIN,
     ENERGY_EMPTY_MOOD_LOSS,
+    ENERGY_GAIN_PER_EXHAUSTION_RELIEVED,
     ENERGY_HUNGER_FLOOR,
     ENERGY_HUNGER_FULL,
     ENERGY_LONG_REST_GAIN,
@@ -200,6 +201,16 @@ def sync_energy(user) -> int:
         user["discord_id"], wolf_id=user["id"], energy=new_energy, last_energy_at=db.utcnow()
     )
     return new_energy
+
+
+def gain_energy_from_exhaustion_relief(user, relieved: int) -> int:
+    """A real body recovers energy alongside exhaustion: call this anywhere
+    exhaustion is actively lowered (eating, drinking, herbs, rest-adjacent
+    effects) with the amount of exhaustion just relieved. No-op for
+    ``relieved <= 0``. Returns the wolf's new energy total."""
+    if not user or "id" not in user.keys() or relieved <= 0:
+        return current_energy(user)
+    return db.adjust_energy(user["id"], relieved * ENERGY_GAIN_PER_EXHAUSTION_RELIEVED)
 
 
 def spend_energy(user, activity: str, *, discounted: bool = False, cost: int | None = None) -> tuple[int, bool, str]:

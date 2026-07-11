@@ -22,6 +22,9 @@ import database as db
 
 LIQUID_HUNGER_CAP = 60
 
+# less restorative than a real meal or cold creek water; keeps you going, not thriving
+LIQUID_EXHAUSTION_RELIEF = 1
+
 # lapping milk as a grown wolf is undignified; costs personal standing
 MILK_STANDING_LOSS = 2
 
@@ -112,6 +115,15 @@ def drink_liquid(user, liquid_key: str) -> tuple[bool, str]:
     new_hunger = db.adjust_hunger(user["id"], capped_hunger - hunger) if capped_hunger != hunger else hunger
     new_thirst = db.adjust_thirst(user["id"], thirst_gain)
 
+    old_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
+    new_exhaustion = max(0, old_exhaustion - LIQUID_EXHAUSTION_RELIEF)
+    exhaustion_note = ""
+    if new_exhaustion != old_exhaustion:
+        db.set_user_conditions(discord_id, wolf_id=user["id"], exhaustion=new_exhaustion)
+        from engine.energy import gain_energy_from_exhaustion_relief
+        gain_energy_from_exhaustion_relief(user, old_exhaustion - new_exhaustion)
+        exhaustion_note = f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"
+
     # a grown wolf lapping milk loses face
     standing_note = ""
     if liquid_key == "milk":
@@ -122,5 +134,5 @@ def drink_liquid(user, liquid_key: str) -> tuple[bool, str]:
 
     gained = capped_hunger - hunger
     hunger_bit = f"hunger **{new_hunger}** (+{gained})" if gained > 0 else f"hunger **{new_hunger}**"
-    msg = f"you lap up **{label}**; {hunger_bit}, hydration **{new_thirst}** (+{thirst_gain}).{cap_note}{upset_note}{standing_note}"
+    msg = f"you lap up **{label}**; {hunger_bit}, hydration **{new_thirst}** (+{thirst_gain}){exhaustion_note}.{cap_note}{upset_note}{standing_note}"
     return True, msg
