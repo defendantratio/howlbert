@@ -2101,6 +2101,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE account_progress ADD COLUMN invite_reward_count INTEGER NOT NULL DEFAULT 0"
         )
+    if acct_cols_late and "referral_milestone" not in acct_cols_late:
+        conn.execute(
+            "ALTER TABLE account_progress ADD COLUMN referral_milestone INTEGER NOT NULL DEFAULT 0"
+        )
 
     conn.execute(
         """
@@ -4517,6 +4521,88 @@ def get_leaderboard(limit: int = 10) -> list[sqlite3.Row]:
         ).fetchall()
     clean = [r for r in rows if not is_test_leaderboard_user(r["discord_id"], r["wolf_name"])]
     return clean[:limit]
+
+
+def get_referral_leaderboard(guild_id: int, limit: int = 10) -> list[sqlite3.Row]:
+    """Wolves who brought the most new members home; counts only referrals that
+    fully paid out (the invitee stuck around long enough), not raw invite clicks."""
+    from engine.test_accounts import is_test_leaderboard_user
+
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT inviter_discord_id, COUNT(*) AS referral_count
+            FROM invite_referrals
+            WHERE guild_id = ? AND referrer_granted = 1
+            GROUP BY inviter_discord_id
+            ORDER BY referral_count DESC
+            """,
+            (guild_id,),
+        ).fetchall()
+    clean = []
+    for row in rows:
+        wolf = get_user(row["inviter_discord_id"])
+        wolf_name = wolf["wolf_name"] if wolf else ""
+        if is_test_leaderboard_user(row["inviter_discord_id"], wolf_name):
+            continue
+        clean.append(row)
+    return clean[:limit]
+
+
+def count_successful_referrals(discord_id: int, conn=None) -> int:
+    """Lifetime count of fully-paid-out referrals for this inviter, across every
+    guild; the uncapped number the referral milestone titles are based on
+    (separate from the monthly-capped bones/standing payout)."""
+    def _run(c):
+        return c.execute(
+            "SELECT COUNT(*) AS c FROM invite_referrals WHERE inviter_discord_id = ? AND referrer_granted = 1",
+            (discord_id,),
+        ).fetchone()
+
+    row = _run(conn) if conn is not None else None
+    if row is None and conn is None:
+        with get_db() as c:
+            row = _run(c)
+    return int(row["c"]) if row else 0
+
+
+def get_referral_milestone(discord_id: int, conn=None) -> int:
+    def _run(c):
+        return c.execute(
+            "SELECT referral_milestone FROM account_progress WHERE discord_id = ?",
+            (discord_id,),
+        ).fetchone()
+
+    row = _run(conn) if conn is not None else None
+    if row is None and conn is None:
+        with get_db() as c:
+            row = _run(c)
+    if not row or row["referral_milestone"] is None:
+        return 0
+    return int(row["referral_milestone"])
+
+
+def set_referral_milestone(discord_id: int, milestone: int, conn=None) -> None:
+    def _run(c):
+        row = c.execute(
+            "SELECT discord_id FROM account_progress WHERE discord_id = ?", (discord_id,)
+        ).fetchone()
+        if row:
+            c.execute(
+                "UPDATE account_progress SET referral_milestone = ? WHERE discord_id = ?",
+                (milestone, discord_id),
+            )
+        else:
+            c.execute(
+                "INSERT INTO account_progress (discord_id, referral_milestone) VALUES (?, ?)",
+                (discord_id, milestone),
+            )
+
+    if conn is not None:
+        _run(conn)
+    else:
+        with get_db() as c:
+            _run(c)
 
 
 def get_hall_of_fame(limit: int = 10) -> list[sqlite3.Row]:
@@ -10336,131 +10422,6 @@ def apply_death_save_result(discord_id: int, success: bool, nat20: bool = False)
 
     update_user(discord_id, death_save_round=round_num + 1, death_save_successes=round_num)
     return "continue"
-
-
-def revive_wolf(discord_id: int) -> str | None:
-    """Revive a dead active wolf. Returns error code or None on success."""
-    user = get_user(discord_id)
-    if not user:
-        return "not_registered"
-    if user["condition"] != "dead":
-        return "not_dead"
-
-    from config import MAX_WOLF_AGE_MOONS, NEEDS_SURVIVAL_RESTORE, REVIVE_MOOD_FLOOR, REVIVE_OLD_AGE_RESET
-
-    old_age = int(user["age_months"]) if "age_months" in user.keys() else 24
-    new_age = REVIVE_OLD_AGE_RESET if old_age >= MAX_WOLF_AGE_MOONS else old_age
-
-    with get_db() as conn:
-        conn.execute(
-            """
-            UPDATE users
-            SET condition = 'healthy',
-                hp = 1,
-                death_save_round = 0,
-                death_save_fails = 0,
-                death_save_successes = 0,
-                cause_of_death = NULL,
-                death_day = NULL,
-                hunger = ?,
-                thirst = ?,
-                mood = MAX(?, mood),
-                age_months = ?
-            WHERE id = ?
-            """,
-            (
-                NEEDS_SURVIVAL_RESTORE,
-                NEEDS_SURVIVAL_RESTORE,
-                REVIVE_MOOD_FLOOR,
-                new_age,
-                user["id"],
-            ),
-        )
-    from engine.wolf_journal import log_revived
-
-    log_revived(user["id"], user["wolf_name"])
-    return None
-
-
-def reincarnate_as_new_life(discord_id: int, new_name: str) -> str | None:
-    """
-    Dead wolf returns in a new body: new name, juvenile age, same build & standing.
-    Clears prey/toy hoards. Returns error code or None on success.
-    """
-    from config import (
-        HUNGER_DEFAULT,
-        REINCARNATION_MOOD,
-        REINCARNATION_START_AGE_MOONS,
-        THIRST_DEFAULT,
-    )
-    from engine.aging import proficiencies_for_role, sync_role_to_age
-
-    user = get_user(discord_id)
-    if not user:
-        return "not_registered"
-    if user["condition"] != "dead":
-        return "not_dead"
-
-    cleaned, name_err = validate_wolf_name_available(
-        new_name, exclude_wolf_id=user["id"], label="Wolf names"
-    )
-    if name_err:
-        if "already taken" in name_err:
-            return "name_taken"
-        return f"name:{name_err}"
-    if cleaned.lower() == user["wolf_name"].lower():
-        return "same_name"
-
-    old_role = user["wolf_role"] if "wolf_role" in user.keys() else "hunter"
-    if old_role == "elder":
-        old_role = "hunter"
-    new_role = sync_role_to_age(REINCARNATION_START_AGE_MOONS, old_role)
-    profs = proficiencies_for_role(new_role)
-    max_hp = int(user["max_hp"])
-    wolf_id = user["id"]
-
-    with get_db() as conn:
-        conn.execute("DELETE FROM prey_stacks WHERE wolf_id = ?", (wolf_id,))
-        conn.execute("DELETE FROM herb_stacks WHERE wolf_id = ?", (wolf_id,))
-        conn.execute("DELETE FROM amusement_stacks WHERE wolf_id = ?", (wolf_id,))
-        conn.execute(
-            """
-            UPDATE users
-            SET wolf_name = ?,
-                age_months = ?,
-                wolf_role = ?,
-                skill_proficiencies = ?,
-                condition = 'healthy',
-                hp = ?,
-                death_save_round = 0,
-                death_save_fails = 0,
-                death_save_successes = 0,
-                cause_of_death = NULL,
-                death_day = NULL,
-                hunger = ?,
-                thirst = ?,
-                mood = ?,
-                disease = NULL,
-                active_injuries = '[]',
-                exhaustion = 0
-            WHERE id = ?
-            """,
-            (
-                cleaned,
-                REINCARNATION_START_AGE_MOONS,
-                new_role,
-                profs,
-                max_hp,
-                HUNGER_DEFAULT,
-                THIRST_DEFAULT,
-                REINCARNATION_MOOD,
-                wolf_id,
-            ),
-        )
-    from engine.wolf_journal import log_reincarnated
-
-    log_reincarnated(wolf_id, user["wolf_name"], cleaned)
-    return None
 
 
 def stabilize_patient(discord_id: int) -> None:

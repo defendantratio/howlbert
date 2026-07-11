@@ -130,7 +130,14 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
     if deaths:
 
-        loss_lines = [f"**{d['wolf_name']}**; died of {d['cause']}" for d in deaths[:10]]
+        from engine.obituary import format_obituary_line
+
+        loss_lines = [
+            format_obituary_line(d["wolf_id"], d["wolf_name"], d["cause"])
+            if d.get("wolf_id")
+            else f"**{d['wolf_name']}**; died of {d['cause']}"
+            for d in deaths[:10]
+        ]
 
         if len(deaths) > 10:
 

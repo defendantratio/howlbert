@@ -69,56 +69,6 @@ def _resolve_gift_recipient(interaction: discord.Interaction, user, wolf: discor
     return (None, 'Pick another **player** or one of your wolves with `own_wolf`.')
 
 
-class ReincarnationModal(discord.ui.Modal, title='reincarnation'):
-    new_name: discord.ui.TextInput = discord.ui.TextInput(
-        label='new name',
-        placeholder='a new identity for the same soul…',
-        min_length=1,
-        max_length=30,
-    )
-
-    def __init__(self, shop_item_id: int, old_name: str):
-        super().__init__()
-        self._shop_item_id = shop_item_id
-        self._old_name = old_name
-
-    async def on_submit(self, interaction: discord.Interaction) -> None:
-        name = self.new_name.value.strip()
-        err = db.reincarnate_as_new_life(interaction.user.id, name)
-        if err == 'not_dead':
-            embed = howlbert_embed('Still Breathing', '**Reincarnation** only works when your active wolf is **dead**.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if err == 'same_name':
-            embed = howlbert_embed('Same Name', 'Pick a **new** name; reincarnation is a new identity.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if err == 'name_taken':
-            embed = howlbert_embed('Name Taken', 'Another wolf already uses that name. Choose a different one.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if err and err.startswith('name:'):
-            embed = howlbert_embed('Invalid Name', err[5:], color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        if err:
-            embed = howlbert_embed("Can't Reincarnate", str(err), color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        db.consume_item(interaction.user.id, self._shop_item_id)
-        reborn = db.get_user(interaction.user.id)
-        from config import REINCARNATION_START_AGE_MOONS
-        from rpg_rules import ROLE_LABELS
-        role_label = ROLE_LABELS.get(reborn['wolf_role'], reborn['wolf_role'])
-        embed = howlbert_embed('Reincarnated', color=SUCCESS_COLOR)
-        embed.description = (
-            f"The mist takes **{self._old_name}**; **{reborn['wolf_name']}** wakes in a younger body.\n\n"
-            f"**{REINCARNATION_START_AGE_MOONS} moons** · **{role_label}** · stats & standing kept\n"
-            f"Food hoard & toys cleared · `/food` `/playpen action:toys`"
-        )
-        await interaction.response.send_message(embed=embed)
-
-
 class Economy(commands.Cog):
     trade = app_commands.Group(name='trade', description='offer items and bones to another wolf (they must accept).')
 
@@ -597,7 +547,7 @@ class Economy(commands.Cog):
         key = item.strip().lower()
         shop_item = db.get_item_by_key(key)
         if not shop_item or key not in USABLE_ITEM_KEYS:
-            embed = howlbert_embed("Can't Use That", 'Check `/bones action:inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`, `revive`, `reincarnation`. `lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. `extra_paw` works with `/bones action:work` or `/crime`.', color=ERROR_COLOR)
+            embed = howlbert_embed("Can't Use That", 'Check `/bones action:inventory`; usable keys: `herb_bundle`, `prey_bundle`, `den_charm`, `rabbit_pelt`. `lucky_tooth` is passive on `/bones action:hunt`. `safe_roll` works with `/rpg action:roll use_safe_roll:true`. `extra_paw` works with `/bones action:work` or `/crime`.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
         if db.get_inventory_quantity(interaction.user.id, shop_item['id']) < 1:
@@ -682,34 +632,5 @@ class Economy(commands.Cog):
             embed.set_footer(text='/bones action:balance · /profile')
             await interaction.response.send_message(embed=embed)
             return
-        if key == 'revive':
-            if user['condition'] != 'dead':
-                embed = howlbert_embed('Still Breathing', '**Revive** only works when your active wolf is **dead**. Use `/vitals action:condition` to check; or `/rpg action:delete confirm:DELETE` / `/register` for a fresh wolf.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            wolf_name = user['wolf_name']
-            old_age = user['age_months'] if 'age_months' in user.keys() else 24
-            err = db.revive_wolf(interaction.user.id)
-            if err:
-                embed = howlbert_embed("Can't Revive", err, color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            db.consume_item(interaction.user.id, shop_item['id'])
-            revived = db.get_user(interaction.user.id)
-            from config import MAX_WOLF_AGE_MOONS
-            body = f'Mist thins around **{wolf_name}**; breath returns, paws find earth again.\n**1 HP** · hunger & hydration restored.'
-            if old_age >= MAX_WOLF_AGE_MOONS and revived['age_months'] < old_age:
-                body += f"\n\nAge reset to **{revived['age_months']} moons** (was **{old_age}**; too ancient to walk the wild unchanged)."
-            embed = howlbert_embed('Revived', body, color=SUCCESS_COLOR)
-            await interaction.response.send_message(embed=embed)
-            return
-        if key == 'reincarnation':
-            if user['condition'] != 'dead':
-                embed = howlbert_embed('Still Breathing', '**Reincarnation** only works when your active wolf is **dead**.', color=ERROR_COLOR)
-                await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-                return
-            await interaction.response.send_modal(ReincarnationModal(shop_item_id=shop_item['id'], old_name=user['wolf_name']))
-            return
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Economy(bot))

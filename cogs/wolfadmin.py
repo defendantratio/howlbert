@@ -503,7 +503,7 @@ class WolfAdmin(commands.Cog):
         if player:
             title = f'Death Log; {player.display_name}'
         embed = howlbert_embed(title, '\n\n'.join(sections), color=SUCCESS_COLOR)
-        embed.set_footer(text='cause is recorded at death; log persists after revive.')
+        embed.set_footer(text='cause is recorded permanently at death.')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
 async def setup(bot: commands.Bot):

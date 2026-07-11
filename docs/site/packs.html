@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="howlbert, a discord wolf rp bot. four packs, one throat, and a wounded god that keeps count." />
+    <title>howlbert · the four packs</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & base ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ── theme toggle ── */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        /* ── layout ── */
+        .site-wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── glass boxes ── */
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        /* ── top bar ── */
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        /* ── hero ── */
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        /* ── content ── */
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 20px 0 8px 0;
+        }
+        .content-section h4 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--bone);
+            margin: 14px 0 6px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section .pull-quote {
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--bone);
+            border-left: 3px solid var(--maw);
+            padding-left: 18px;
+            margin: 16px 0 16px 6px;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+        .content-section .pull-quote .source {
+            display: block;
+            font-style: normal;
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            margin-top: 4px;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+
+        /* pack cards */
+        .pack-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 16px 0 24px 0;
+            background: var(--glass-bg);
+        }
+        .pack-card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .pack-card .pack-motto {
+            font-style: italic;
+            color: var(--bone-dim);
+            margin-bottom: 12px;
+        }
+
+        .pack-card.mistmoor {
+            border-left: 4px solid var(--rot);
+        }
+        .pack-card.silverrush {
+            border-left: 4px solid var(--river);
+        }
+        .pack-card.thistlehide {
+            border-left: 4px solid var(--moss);
+        }
+        .pack-card.greyspire {
+            border-left: 4px solid var(--stone);
+        }
+
+        .pack-card .trait {
+            background: var(--glass-bg);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin: 6px 0 10px 0;
+            font-size: 0.9rem;
+            border: 1px solid var(--line);
+        }
+
+        .pack-card .sub-section {
+            margin: 8px 0;
+        }
+        .pack-card .sub-section strong {
+            color: var(--bone);
+        }
+
+        .location-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            margin: 6px 0 8px 0;
+            font-size: 0.9rem;
+        }
+        .location-list span {
+            background: var(--glass-bg);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+        }
+
+        /* ranks table */
+        .ranks-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .ranks-grid .rank-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .ranks-grid .rank-desc {
+            color: var(--bone-dim);
+        }
+
+        .role-features {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .role-features .role-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .role-features .role-desc {
+            color: var(--bone-dim);
+        }
+
+        .attr-range {
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            font-style: italic;
+        }
+
+        /* ── cta ── */
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .cta-btn.tertiary {
+            border-color: var(--river);
+        }
+        .cta-btn.tertiary:hover {
+            background: var(--river);
+            color: var(--ink);
+            border-color: var(--river);
+        }
+
+        /* ── footer ── */
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        /* ── audio ── */
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ── neko override ── */
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .ranks-grid,
+            .role-features {
+                grid-template-columns: 1fr !important;
+                gap: 2px 0 !important;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+            .location-list {
+                gap: 4px 8px;
+            }
+            .location-list span {
+                font-size: 0.7rem;
+                padding: 1px 8px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <!-- ── theme toggle ── -->
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <!-- ── hidden audio ── -->
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <!-- ── neko ── -->
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+    <!-- ── site ── -->
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <!-- top bar: directory -->
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html" class="current">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="namegen.html">⟡ wolf name generator</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- hero -->
+            <header class="glass hero">
+                <h1>the four packs</h1>
+                <p class="hook">
+                    four territories, four paths, and a <span class="maw-word">hungry god</span> that watches them all.
+                </p>
+                <p class="description">
+                    long, long, long, long ago, there was the one pack. they lived in a valley where the mountain's
+                    shadow touched the river's edge, and the forest met the swamp. they were many. they were strong.
+                    they had a single alpha, chosen by the great maw's sign: a wolf born with a white paw like a moon-claw.
+                    but the maw is hungry. always hungry.
+                </p>
+            </header>
+
+            <!-- the one pack origin -->
+            <section class="glass content-section">
+                <h2>the one pack</h2>
+                <p>
+                    a sickness came, perhaps the wasting sickness, perhaps something older. the one pack split into
+                    four groups: those who fled to the mountains, seeking high, clean air; those who sank into the swamp,
+                    seeking the maw's belly for answers; those who vanished into the forest, seeking cover; and those
+                    who followed the river, seeking tears to match their grief.
+                </p>
+                <p>
+                    they never reunited. over generations, they forgot each other's languages, though they can still
+                    understand enough to trade and fight. they became the four packs.
+                </p>
+                <div class="pull-quote">
+                    the great maw watches. the moon blinks. and the wolves fight over scraps of a world
+                    that is slowly being eaten by twoleg iron.
+                    <span class="source">— an old saying</span>
+                </div>
+                <p>
+                    each pack now guards its territory with teeth and fear. they trade, they fight, they scheme.
+                    but beneath it all, they remember, dimly, that they were once one. and the prophecy says
+                    they may be one again, when the hunger ends, or begins again.
+                </p>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- MISTMOOR                                                      -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <div class="pack-card mistmoor">
+                    <h3>mistmoor</h3>
+                    <div class="pack-motto">"the swamp remembers. the maw chews."</div>
+                    <p><strong>path of the belly.</strong> closest to the maw and its belly-rip. the rotmother rules by patience, letting rivals mistake themselves into the mud. mistmoor breathes rot-lung and reads dreams; its healers and its drown-sick are the most feared and the most needed in the caldera.</p>
+
+                    <div class="trait"><strong>trait — rot's blessing:</strong> advantage on saving throws against poison and disease.</div>
+
+                    <div class="sub-section">
+                        <strong>appearance:</strong> dark-furred, often black or deep brown, with thin coats that dry quickly. many have missing patches of fur from mange or the rot. their eyes are pale yellow, like marsh gas.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>culture &amp; tone:</strong> mistmoor wolves speak in riddles and half-truths. they laugh at things that aren't funny. they are patient, not like greyspire's stoic patience, but the patience of a bog slowly swallowing a carcass. outsiders find them deeply unsettling.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>hierarchy:</strong> alpha (often called the rot-king, rot-queen or rot-parent), beta, hunters (specialize in waterfowl, frogs, and beaver), warriors (fight dirty, mud in eyes, biting soft parts), elders (those who haven't succumbed to the rot are considered touched by the maw), pups (born in litters, but only the strongest survive the swamp fever), and diplomats (the only mistmoor wolves who speak plainly; they are considered strange by their own pack).
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity:</strong> none directly. the swamp is too wet for mining, too foul for logging, too haunted for twolegs. old twoleg structures, a half-sunken chapel, a collapsed bridge, rust quietly. the pack avoids these places, believing the maw's belly consumes not just flesh but memory.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>rituals — rot-feasts:</strong> mistmoor practices deliberate carrion eating. they find a rotting carcass, days old, writhing with maggots, and the whole pack feeds. they build disease resistance this way. outsiders whisper they eat their own dead. the truth is worse: mistmoor sometimes keeps the dying alive, wolves wounded in battle, or pups too weak to thrive, and feeds them small pieces of rot to study the border between life and dissolution. they do this not out of cruelty, but out of a twisted spiritual search. the maw's belly is where things break down into new things. they want to watch that process with open eyes.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>relations with other packs:</strong> everyone hates mistmoor. greyspire calls them belly-lickers. thistlehide refuses to share borders with them (a marsh lies between). silverrush trades with them reluctantly, river wolves sometimes need the rot-feast knowledge to cure the wasting sickness.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>locations:</strong>
+                        <div class="location-list">
+                            <span>mistmoor den</span>
+                            <span>the belly-rip</span>
+                            <span>the rotting mere</span>
+                            <span>the bog</span>
+                            <span>glow-fungus hollow</span>
+                            <span>the sick den</span>
+                            <span>the sog grave</span>
+                            <span>the rot-feast grounds</span>
+                            <span>the sinkholes</span>
+                            <span>the half-sunken chapel</span>
+                            <span>the collapsed bridge</span>
+                            <span>the brackish reach</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- SILVERRUSH                                                    -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <div class="pack-card silverrush">
+                    <h3>silverrush</h3>
+                    <div class="pack-motto">"the river flows. the stones weep."</div>
+                    <p><strong>path of the tears.</strong> grief carried like water. silverrush sends its mourners alone to the weep stone to release what they cannot say. it is the pack the human world touches first and worst: upstream twoleg sewage poisons its river with river rot, an incurable sickness that no healer has ever broken.</p>
+
+                    <div class="trait"><strong>trait — swift current:</strong> +2 to dexterity checks involving swimming or crossing water.</div>
+
+                    <div class="sub-section">
+                        <strong>appearance:</strong> sleek, silver-grey, and white, camouflage against water and mist. webbed toes (a mild genetic trait) and thick, oily coats that shed water. their tails are bushier for swimming.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>culture &amp; tone:</strong> silverrush wolves are superstitious, secretive, and prone to melancholy. they watch the water constantly. they speak of omens in the way a dead fish floats or the way foam gathers on eddies. they are the most spiritual of the packs, or the most desperate, depending on who you ask.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>hierarchy:</strong> alpha (chosen by surviving the drown-rite), beta, hunters (salmon specialists, also beaver and waterfowl), warriors (fight in the shallows; drowning is a common kill), scouts (monitor the dam and the twoleg fishermen), elders (those who haven't died of the wasting sickness are considered blessed), pups (born in riverbank dens, lost frequently to flash floods), and diplomats (soft-spoken, good at listening; they gather secrets from other packs).
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity — the dam and sewage:</strong> upstream, twolegs built a dam, a wall of stone and iron that holds back the maw's tears. the dam changes water levels unpredictably. flash releases drown pups in their dens. the pack has lost three litters in two years. some silverrush wolves advocate destroying the dam by chewing through control cables, a suicide mission, but desperation grows.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity — sewage overflow:</strong> downstream, twolegs have a waste-place. when it rains too hard, the river turns foul. wolves who drink from it develop wasting sickness, a slow, gut-rotting death. it has claimed three wolves in two years. no cure. mistmoor offered a rot-feast treatment; it did nothing. the sickness turns the wolf's own bowels against them. they die shitting blood, begging for water they can no longer keep down.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>taboo — twoleg food:</strong> some silverrush wolves have been seen accepting food from twoleg fishermen, scraps of gutted fish, thrown onto the bank. this is a dangerous taboo. accepting twoleg food makes a wolf soft, or so the elders say. but the fishermen's scraps are clean, and the wasting sickness is not. the pack is divided: survival or tradition.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>the drown-rite:</strong> to become alpha, a wolf must swim under the river at its deepest, darkest pool, the maw's mouth, and stay submerged until they feel the current change direction. some do not come up. those who do are often different, their eyes wilder, their howls more desperate. the pack believes they have touched the maw's tears directly. the truth: prolonged hypoxia causes brain damage. silverrush alphas are brilliant and mad in equal measure.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>the weep stone:</strong> a boulder by the river where wolves go to scream alone. it is forbidden to watch another wolf weep. what happens at the weep stone stays in the river's memory.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>relations with other packs:</strong> tense alliance with thistlehide (same human threats). formal neutrality with greyspire (they trade fish for mountain herbs). open distrust of mistmoor, but silverrush diplomats quietly visit the swamp to learn about rot and disease, hoping to cure the wasting sickness. they never admit this.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>locations:</strong>
+                        <div class="location-list">
+                            <span>silverrush den</span>
+                            <span>the river's edge</span>
+                            <span>the sandbar</span>
+                            <span>the deep channels</span>
+                            <span>the rapids</span>
+                            <span>the shallows</span>
+                            <span>the neutral bend</span>
+                            <span>the weep stone</span>
+                            <span>the dam</span>
+                            <span>the riverbank dens</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- THISTLEHIDE                                                   -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <div class="pack-card thistlehide">
+                    <h3>thistlehide</h3>
+                    <div class="pack-motto">"the forest remembers the names of the dead."</div>
+                    <p><strong>path of the fur.</strong> memory and lineage. the dead are not gone while the forest still holds their names. thistlehide keeps the fullest healer tradition and the deepest patrols; its wolves grieve openly and remember everything.</p>
+
+                    <div class="trait"><strong>trait — whisper tree:</strong> once per session, ask one question about the forest's past or present, answered by your ancestor-tree.</div>
+
+                    <div class="sub-section">
+                        <strong>appearance:</strong> tawny, brown, and russet coats, excellent camouflage among trees. their fur grows thick in winter, thin in summer. many have small scars from thorns and brambles (hence the name, they hide even in thistles).
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>culture &amp; tone:</strong> thistlehide wolves are pragmatic, blunt, and stubborn. they do not trust easily but are fiercely loyal once bonds are forged. they tell long stories around kills. they sing (howl) more than any other pack, not just for war, but for joy, for grief, for the simple pleasure of sound. greyspire finds this obnoxious.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>hierarchy:</strong> alpha (often the wolf who knows the forest best, not the strongest fighter), beta, hunters (the pack's pride; thistlehide hunters are legendary), warriors (defend the borders against rogues and the logging crews), scouts (map the changing forest), elders (keepers of the oral history), pups (raised in hidden dens), and diplomats (rough-voiced and honest; they are the only wolves other packs trust).
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity — logging and pipelines:</strong> logging trucks race down the thunderpath at night, their eyes blinding, their roar deafening. wolves are hit occasionally. the pack has learned to use the highway as a barrier; they chase rivals onto it. a pack of rogues was wiped out last winter when thistlehide drove them into the path of a logging truck.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity — pipeline survey stakes:</strong> twolegs have driven white stakes through the forest, marking a future pipeline, a metal vein that will bleed oil. the pack doesn't understand the stakes, but they smell of future destruction. some thistlehide wolves have begun urinating on the stakes as a futile protest. one elder, called stump-paw, lost a foot to a twoleg leg-hold set near the stakes. she now teaches pups to smell iron before stepping.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>bark-burial:</strong> when a wolf dies, the pack strips the flesh from the bones (using scavengers and time) and then wedges the bones into the crevices of old trees. they believe the forest, the maw's fur, will absorb the wolf's memory and spread it through the roots. one elder admitted, in a fever, that some wolves aren't dead when they are tied to the trees. "the woodpeckers take a long time," she whispered, before dying herself.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>relations with other packs:</strong> cautiously allied with silverrush (both need to protect water sources). openly hostile to greyspire (a border dispute over a high valley). avoid mistmoor entirely; the swamp is bad hunting, bad company, bad air.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>locations:</strong>
+                        <div class="location-list">
+                            <span>thistlehide den</span>
+                            <span>the whisper tree</span>
+                            <span>the thistle thicket</span>
+                            <span>the sparring grounds</span>
+                            <span>the thunderpath</span>
+                            <span>the pipeline stakes</span>
+                            <span>the bark-burial trees</span>
+                            <span>the high valley</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- GREYSPIRE                                                     -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <div class="pack-card greyspire">
+                    <h3>greyspire</h3>
+                    <div class="pack-motto">"strength is truth. blood is law."</div>
+                    <p><strong>path of the teeth.</strong> rule by strength and timing. the highfang keeps the seat by being cruelest at the right moment and most generous at the next. weakness is culled; loyalty is bought in fresh-kill and fear. thin air, hard travel, and long winters make greyspire the harshest den to be born into.</p>
+
+                    <div class="trait"><strong>trait — stone endurance:</strong> once per long rest, reduce damage from a single source by 1d6 + strength modifier.</div>
+
+                    <div class="sub-section">
+                        <strong>appearance:</strong> thick grey, slate, and silver coats, built for cold and high altitude. their fur is dense and coarse. many have scars from the mountain's sharp rocks and from challenges that went to first blood. their eyes are hard, pale blue or grey, like winter sky.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>culture &amp; tone:</strong> greyspire wolves are blunt, hierarchical, and brutally honest. they respect strength above all else. weakness is not tolerated; it is culled. they are stoic, speaking only when necessary, and they hold grudges for generations. they believe the mountain is the maw's teeth, and they are the jaw that bites.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>hierarchy:</strong> alpha (the highfang, chosen by strength and cunning), beta (the second, often the wolf who lost the last challenge), hunters (mountain goats, deer, and the occasional stray sheep), warriors (the stoneguard, the mountain's shield), scouts (run the high passes, watching for intruders), elders (those who survived long enough to grow old are feared and respected), pups (born in the high caves, only the strongest survive the cold), and diplomats (rare, and often the cruelest; they are sent to other packs to intimidate).
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>human activity — the miners:</strong> twolegs have dug into the mountain, mining for iron and coal. the screaming earth, as the pack calls it, is a scar on the mountain's side. the miners bring noise, fire, and the thunderstick. greyspire has lost wolves to the miners' guns. they have also learned to raid the miners' supply caches for metal scraps, which they trade with the crows.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>the crows:</strong> greyspire's human allies. the mountain pack and the crows deal with each other, bones and carrion for useful scrap, in silent, dignified exchanges. the crows are a band of scavenger twolegs who hoard wire, glove-leather, and shining metal. push them and the whole band closes on you like the birds they are named for. the only faction that trades in objects a wolf can actually carry off, and the only twolegs any pack calls something close to friends.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>the rite of broken canine:</strong> the only challenge that can unseat a sitting alpha. first blood, submission, or death. in book one, thistlehide's finnpelt yielded the seat to river'shroud through this rite and now patrols as a hunter.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>relations with other packs:</strong> despised by mistmoor (they call them belly-lickers). openly hostile to thistlehide (a border dispute over a high valley). formal neutrality with silverrush (trade fish for mountain herbs). greyspire considers itself the strongest pack and looks down on all the others.
+                    </div>
+
+                    <div class="sub-section">
+                        <strong>locations:</strong>
+                        <div class="location-list">
+                            <span>greyspire den</span>
+                            <span>greyspire high ridge</span>
+                            <span>the high pass</span>
+                            <span>stoneguard watch</span>
+                            <span>the ice caves</span>
+                            <span>the volcanic vents</span>
+                            <span>the narrow passes</span>
+                            <span>the high ledge</span>
+                            <span>the miners' camp</span>
+                            <span>the screaming earth</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- RANKS & ROLES                                                 -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <h2>ranks and roles</h2>
+                <p>
+                    every wolf in a pack has a role. rank sets who eats first, who patrols, and who answers for failure.
+                    the hierarchy is brutal, but it is the only thing that keeps the pack alive in a shrinking world.
+                </p>
+
+                <h3>the hierarchy</h3>
+                <div class="ranks-grid">
+                    <span class="rank-name">alpha</span>
+                    <span class="rank-desc">absolute authority. their word is law. challenged only through the rite of broken canine.</span>
+
+                    <span class="rank-name">alpha's guard / advisor</span>
+                    <span class="rank-desc">the alpha's teeth and shadow. they eat before the rest of the pack except the alpha.</span>
+
+                    <span class="rank-name">medic</span>
+                    <span class="rank-desc">the keeper of the green tongue. they alone know the full herb guide. forbidden to mate.</span>
+
+                    <span class="rank-name">forager</span>
+                    <span class="rank-desc">the medic's paws. they collect herbs but do not treat; that is the medic's sacred right.</span>
+
+                    <span class="rank-name">hunter</span>
+                    <span class="rank-desc">the pack's belly. they have the right to eat first after the alpha and guard.</span>
+
+                    <span class="rank-name">scout</span>
+                    <span class="rank-desc">the pack's eyes. they run the borders, read scent trails, and spy on rival packs.</span>
+
+                    <span class="rank-name">guard</span>
+                    <span class="rank-desc">defend the den site, the nursery, and the alpha. they handle culling.</span>
+
+                    <span class="rank-name">caretaker</span>
+                    <span class="rank-desc">watch over pups, juveniles, and the den itself. often wolves who have never had litters.</span>
+
+                    <span class="rank-name">juvenile</span>
+                    <span class="rank-desc">not yet full adults. they must complete a blooding, killing alone, to earn an adult role.</span>
+
+                    <span class="rank-name">pup</span>
+                    <span class="rank-desc">vulnerable. not named until they survive the first moon.</span>
+
+                    <span class="rank-name">elder</span>
+                    <span class="rank-desc">respected but not sentimental. fed last. if winter is hard, they walk into the snow.</span>
+
+                    <span class="rank-name">diplomat</span>
+                    <span class="rank-desc">the pack's voice. they speak for the pack in negotiations and gather secrets from outsiders.</span>
+                </div>
+
+                <h3>role features</h3>
+                <p>
+                    each role grants a unique feature, usable once per session or per long rest where noted.
+                </p>
+                <div class="role-features">
+                    <span class="role-name">alpha</span>
+                    <span class="role-desc"><strong>commanding howl:</strong> as an action, all allies who hear you gain advantage on their next attack or skill check.</span>
+
+                    <span class="role-name">medic</span>
+                    <span class="role-desc"><strong>green tongue:</strong> use herblore in place of medicine for healing checks; never misidentify a plant, a failed roll just finds nothing.</span>
+
+                    <span class="role-name">forager</span>
+                    <span class="role-desc"><strong>nose of the land:</strong> once per day, automatically find one common herb in your pack's territory, no roll required.</span>
+
+                    <span class="role-name">hunter</span>
+                    <span class="role-desc"><strong>killer's instinct:</strong> when you bite a surprised or prone target, deal +1d6 damage.</span>
+
+                    <span class="role-name">scout</span>
+                    <span class="role-desc"><strong>unseen paw:</strong> can hide even while only lightly obscured (tall grass, light undergrowth).</span>
+
+                    <span class="role-name">guard</span>
+                    <span class="role-desc"><strong>defender's resolve:</strong> when an adjacent packmate is attacked, impose disadvantage on the attack roll.</span>
+
+                    <span class="role-name">caretaker</span>
+                    <span class="role-desc"><strong>soothing lick:</strong> spend one minute licking a frightened or raging wolf to remove the fear/rage condition.</span>
+
+                    <span class="role-name">diplomat</span>
+                    <span class="role-desc"><strong>silver tongue:</strong> once per session, reroll a failed charisma-based skill check and take the second result. you also have advantage on persuasion checks when negotiating between packs.</span>
+
+                    <span class="role-name">elder</span>
+                    <span class="role-desc"><strong>wisdom of years:</strong> once per day, reroll any failed skill check and take the second result.</span>
+
+                    <span class="role-name">alpha's guard/advisor</span>
+                    <span class="role-desc"><strong>blood oath:</strong> you know one secret about the alpha. once per session, use it for advantage on a charisma roll against them.</span>
+                </div>
+
+                <h3>attribute ranges</h3>
+                <p>
+                    distribute points across all six attributes (1–10 each). the total sum must fall within your role's range.
+                </p>
+                <ul>
+                    <li><strong>alpha:</strong> 30–35</li>
+                    <li><strong>alpha's guard/advisor:</strong> 27–32</li>
+                    <li><strong>medic:</strong> 20–25</li>
+                    <li><strong>guard:</strong> 18–22</li>
+                    <li><strong>hunter:</strong> 16–20</li>
+                    <li><strong>scout:</strong> 16–20</li>
+                    <li><strong>forager:</strong> 15–20</li>
+                    <li><strong>diplomat:</strong> 15–20</li>
+                    <li><strong>elder:</strong> 15–20</li>
+                    <li><strong>caretaker:</strong> 12–18</li>
+                </ul>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- CURRENT TENSIONS                                              -->
+            <!-- ============================================================ -->
+
+            <section class="glass content-section">
+                <h2>current tensions</h2>
+                <p>
+                    the world is shrinking, and the packs are fracturing. these are the threads that could unravel everything.
+                </p>
+
+                <h3>the dam sabotage</h3>
+                <p>
+                    a silverrush wolf is recruiting volunteers from thistlehide (explosives knowledge from the mining camp?) to destroy the dam. greyspire wants the dam gone too; it diverts water from their lower streams. mistmoor doesn't care, but they'll send a spy to watch. the mission is almost certainly a death sentence.
+                </p>
+
+                <h3>the pipeline survey</h3>
+                <p>
+                    thistlehide wolves are raiding the survey camps at night, stealing stakes and leaving mutilated twoleg dolls. the twolegs are responding with poison bait and leg-holds. one thistlehide pup has already died. the pack is considering a full-scale attack on the survey crew, which would bring the logging trucks and the shooters.
+                </p>
+
+                <h3>the rot-feast festival</h3>
+                <p>
+                    once a year, mistmoor invites one wolf from each other pack to witness a rot-feast. it is a test of diplomacy and stomach. last year, the silverrush diplomat vomited into the bog. the mistmoor alpha laughed and said, "the maw accepts your offering." this year, greyspire is sending a scarred old warrior instead of a diplomat. no one knows why.
+                </p>
+
+                <h3>the mining camp raid</h3>
+                <p>
+                    a renegade group of young greyspire wolves is planning a large-scale raid on the miners' supply cache. they want explosives. they want guns. the elders forbid it, but the young are hungry, for food, for glory, for revenge against the screaming earth. the beta is secretly supporting them.
+                </p>
+
+                <h3>the twoleg fishermen</h3>
+                <p>
+                    a silverrush she-wolf has become pregnant by a loner who eats twoleg food. the pups are half-soft, half-wild. the pack must decide: drown them, raise them, or exile the mother. meanwhile, the fishermen have left a fish-baited trap at the water's edge. it smells of meat. the pups are curious.
+                </p>
+
+                <h3>mating and bloodlines</h3>
+                <p>
+                    mating is not always romantic. it is political. the alpha chooses which wolves breed to produce strong, healthy pups. refusing a chosen mate is treason, exile or death. wolves may form personal bonds, called tail-twining, but these are informal and can be broken by the alpha at any time. unwanted pregnancies are common. the medic knows which herbs induce miscarriage. these are used quietly, often without the male's knowledge.
+                </p>
+
+                <h3>punishment and exile</h3>
+                <p>
+                    the worst punishment is not death but exile without a name. the wolf is driven out, and the pack never speaks of them again. they become wind-eater, a ghost that the great maw does not remember. physical punishments include biting off a tail (loss of balance), breaking a paw (limp for life), or slitting the tongue (can no longer howl, the ultimate shame). exiled wolves sometimes gather in cursed packs, broken, starving things that haunt the edges of territory, waiting to steal pups or kill alone wolves.
+                </p>
+
+                <h3>the rivalry of scents</h3>
+                <p>
+                    wolves identify each other primarily by scent. enemy packs deliberately rub themselves in wild garlic or rotting fish to confuse scent trails. a wolf who smells of another pack without permission is assumed to be a spy and is executed.
+                </p>
+
+                <div class="pull-quote">
+                    nothing here is clean. everything is old, corrupted, and hungry.
+                    <span class="source">— a mistmoor saying</span>
+                </div>
+            </section>
+
+            <!-- cta -->
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the packs are at each other's throats. which path will you walk?
+                </p>
+            </section>
+
+            <!-- footer -->
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <!-- ── theme toggle script ── -->
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>

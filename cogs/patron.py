@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.kickstarter import grant_tier2_rewards, kickstarter_badge_text
-from engine.patron import grant_first_boost, grant_second_boost, patron_status_lines, record_invite_join
+from engine.patron import grant_first_boost, grant_second_boost, patron_status_lines, record_invite_join, referral_leaderboard_lines
 from engine.donor import apply_donation_grant, create_donation_code, donor_status_lines, redeem_code
 from engine.kofi_shop import fulfill_shop_order, list_pending_shop_orders
 from engine.kofi_webhook import start_kofi_webhook, stop_kofi_webhook
@@ -111,6 +111,17 @@ class Patron(commands.Cog):
         embed.set_footer(text='/redeem · ko-fi shop orders may need `/register` + discord id in the message')
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
+    @app_commands.command(name='referrals', description='see who brought the most wolves home to the den.')
+    async def referral_leaderboard(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            await interaction.response.send_message(player_message('Use this in a server.'), ephemeral=reply_ephemeral())
+            return
+        lines = referral_leaderboard_lines(interaction.guild.id)
+        embed = howlbert_embed('Den Builders', '\n'.join(lines), color=SUCCESS_COLOR)
+        from config import INVITE_REFERRAL_ROLLOVERS
+        embed.set_footer(text=f'invite a friend; welcome bones + a referrer payout after {INVITE_REFERRAL_ROLLOVERS} sunrises · `/patron` for your own totals')
+        await interaction.response.send_message(embed=embed)
+
     @app_commands.command(name='redeem', description='redeem a one-time donation or gift code.')
     @app_commands.describe(code='code from ko-fi, patreon, or an admin')
     async def redeem(self, interaction: discord.Interaction, code: str):
@@ -139,6 +150,75 @@ class Patron(commands.Cog):
         color = SUCCESS_COLOR if ok else ERROR_COLOR
         title = 'Grant Applied' if ok else 'Grant Failed'
         await interaction.response.send_message(embed=howlbert_embed(title, f'{player.mention}: {note}', color=color), ephemeral=reply_ephemeral())
+
+    async def _item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        items = db.get_all_items()
+        choices = []
+        for row in items:
+            if current and current.lower() not in row['key'] and current.lower() not in row['name'].lower():
+                continue
+            choices.append(app_commands.Choice(name=f"{row['name']} ({row['key']})", value=row['key']))
+        return choices[:25]
+
+    @patronadmin.command(name='item', description='manually grant any item (e.g. a chosen herb for a herb satchel order) to a player.')
+    @app_commands.describe(player='discord member', item='item key, e.g. herb_yarrow', quantity='how many to grant')
+    @app_commands.autocomplete(item=_item_autocomplete)
+    async def patronadmin_item(self, interaction: discord.Interaction, player: discord.Member, item: str, quantity: app_commands.Range[int, 1, 20]=1):
+        if not await self._require_admin(interaction):
+            return
+        if not db.get_user(player.id):
+            await interaction.response.send_message(embed=howlbert_embed('No Wolf', f'{player.display_name} must `/register` before an item grant.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        item_row = db.get_item_by_key(item.strip().lower())
+        if not item_row:
+            await interaction.response.send_message(embed=howlbert_embed('Unknown Item', f'no item with key `{item}`.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        db.grant_item(player.id, item_row['id'], quantity)
+        await interaction.response.send_message(embed=howlbert_embed('Item Granted', f"{player.mention}: **{quantity}x {item_row['name']}** added to `/bones action:inventory`.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
+
+    @patronadmin.command(name='spotlight', description='post this week\'s "wolf of the week" pick to this channel.')
+    async def patronadmin_spotlight(self, interaction: discord.Interaction):
+        if not await self._require_admin(interaction):
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(embed=howlbert_embed('Server Only', 'use this in a server.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        if not world:
+            await interaction.response.send_message(embed=howlbert_embed('No World', 'run `/rollover` at least once first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.spotlight import pick_wolf_of_the_week, format_spotlight_post
+        pick = pick_wolf_of_the_week(interaction.guild.id, world['day_number'])
+        if not pick:
+            await interaction.response.send_message(embed=howlbert_embed('No Spotlight Yet', 'nothing noteworthy logged in the den journal this week; try again after more play.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        await interaction.response.send_message(embed=howlbert_embed('🐾 Wolf of the Week', format_spotlight_post(pick), color=SUCCESS_COLOR))
+
+    @patronadmin.command(name='quietwolves', description='list players whose wolves have gone quiet (for a manual re-engagement dm).')
+    @app_commands.describe(days='no tracked activity in this many sunrises (default 5)')
+    async def patronadmin_quietwolves(self, interaction: discord.Interaction, days: app_commands.Range[int, 1, 60] = 5):
+        if not await self._require_admin(interaction):
+            return
+        from config import QUIETWOLVES_COMMAND_ENABLED
+        if not QUIETWOLVES_COMMAND_ENABLED:
+            await interaction.response.send_message(embed=howlbert_embed('Dormant For Now', 'this command is intentionally turned off (`QUIETWOLVES_COMMAND_ENABLED` in config.py); a past activity-reminder dm landed poorly with the community, so this is waiting on player feedback before it goes live. flip the flag when ready.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        if not interaction.guild:
+            await interaction.response.send_message(embed=howlbert_embed('Server Only', 'use this in a server.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        world = db.get_world(interaction.guild.id)
+        if not world:
+            await interaction.response.send_message(embed=howlbert_embed('No World', 'run `/rollover` at least once first.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
+            return
+        from engine.reengagement import find_quiet_wolves
+        quiet = find_quiet_wolves(world['day_number'], threshold_days=days)
+        if not quiet:
+            await interaction.response.send_message(embed=howlbert_embed('Quiet Wolves', f'nobody has gone quiet for **{days}+** sunrises. den is active.', color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
+            return
+        lines = [f"<@{w['discord_id']}> — **{w['wolf_name']}**; quiet **{w['days_quiet']}** sunrises" for w in quiet[:25]]
+        embed = howlbert_embed('Quiet Wolves', '\n'.join(lines), color=SUCCESS_COLOR)
+        embed.set_footer(text='a friendly manual dm to a few of these goes a long way; docs/GROWTH_IDEAS.md section 18')
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
     @kickstarter.command(name='grant', description='grant the permanent kickstarter backer badge.')
     @app_commands.describe(player='discord member who backed tier 2+')
@@ -187,7 +267,10 @@ class Patron(commands.Cog):
         lines = []
         for row in rows:
             who = f"<@{row['discord_id']}>" if row['discord_id'] else row['email'] or '-'
-            lines.append(f"**#{row['id']}**; **{row['product_label']}** · {who} · ${int(row['amount_cents']) / 100:.2f} · {row['created_at'][:10]}")
+            line = f"**#{row['id']}**; **{row['product_label']}** · {who} · ${int(row['amount_cents']) / 100:.2f} · {row['created_at'][:10]}"
+            if row['notes']:
+                line += f"\n> {row['notes'][:200]}"
+            lines.append(line)
         await interaction.response.send_message(embed=howlbert_embed('Pending Shop Orders', '\n'.join(lines) + '\n\nMark done with `/patronadmin fulfill`.', color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
     @patronadmin.command(name='fulfill', description='mark a ko-fi shop order as fulfilled.')

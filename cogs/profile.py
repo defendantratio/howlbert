@@ -90,6 +90,14 @@ async def _pack_register_autocomplete(interaction: discord.Interaction, current:
             choices.append(app_commands.Choice(name=label, value=founded_key_for(pack['id'])))
     return choices[:25]
 
+def _profile_badges(discord_id: int) -> str | None:
+    from engine.kickstarter import profile_footer_suffix
+    from engine.patron import referral_badge_text
+
+    badges = [b for b in (profile_footer_suffix(discord_id), referral_badge_text(discord_id)) if b]
+    return ' · '.join(badges) if badges else None
+
+
 def _pack_display(affiliation: str) -> str:
     if affiliation == LONER_KEY:
         return f'**{LONER_LABEL}**; {LONER_DESCRIPTION}'
@@ -361,7 +369,12 @@ class Profile(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('No Partner Wolf', f'**{partner.display_name}** has no active wolf.', color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         from engine.found_pack import found_pack
-        new_id, err = found_pack(user, partner_user, name)
+        _world = db.get_world(interaction.guild.id) if interaction.guild else None
+        new_id, err = found_pack(
+            user, partner_user, name,
+            guild_id=interaction.guild.id if interaction.guild else None,
+            day=_world['day_number'] if _world else None,
+        )
         if err:
             await interaction.response.send_message(embed=howlbert_embed('Cannot Found a Pack', err, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
@@ -720,19 +733,16 @@ class Profile(commands.Cog):
                 if born:
                     footer += f" (+ {born} born pup{('s' if born != 1 else '')})"
                 footer += ' · /switchwolf to change'
-                from engine.kickstarter import profile_footer_suffix
-                badge = profile_footer_suffix(target.id)
+                badge = _profile_badges(target.id)
                 if badge:
                     footer = f'{badge} · {footer}'
                 embed.set_footer(text=footer)
             else:
-                from engine.kickstarter import profile_footer_suffix
-                badge = profile_footer_suffix(target.id)
+                badge = _profile_badges(target.id)
                 if badge:
                     embed.set_footer(text=badge)
         else:
-            from engine.kickstarter import profile_footer_suffix
-            badge = profile_footer_suffix(target.id)
+            badge = _profile_badges(target.id)
             if badge:
                 embed.set_footer(text=badge)
         trim_embed_fields(embed)

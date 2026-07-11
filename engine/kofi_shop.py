@@ -188,13 +188,8 @@ def process_kofi_shop_order(
                     db.grant_item(discord_id, item_row["id"])
                     lines.append(f"**{label}** → **{item_row['name']}** in `/bones action:inventory`")
                     dm_parts.append(
-                        f"**{item_row['name']}** is in `/bones action:inventory`.\n"
-                        + (
-                            "When your wolf dies, use `/bones action:use item:revive` to bring them back as-is."
-                            if grant_item_key == "revive"
-                            else "When your wolf dies, use `/bones action:use item:reincarnation new_name:<name>` "
-                            "for a new identity with the same stats."
-                        )
+                        f"**{item_row['name']}** is in `/bones action:inventory`; "
+                        "check `/bones action:use` for how to use it."
                     )
                     _insert_shop_order(
                         conn,
@@ -235,6 +230,7 @@ def process_kofi_shop_order(
                     product_label=label,
                     amount_cents=int(prod.get("price_cents", amount_cents)),
                     status="pending",
+                    notes=message,
                 )
                 lines.append(f"**{label}**; queued for manual delivery")
                 dm_parts.append(

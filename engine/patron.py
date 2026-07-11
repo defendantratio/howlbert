@@ -17,6 +17,7 @@ from config import (
     INVITE_REFERRER_STANDING,
     INVITE_REGISTER_WINDOW_DAYS,
     INVITE_WELCOME_BONES,
+    REFERRAL_MILESTONES,
 )
 
 
@@ -24,12 +25,21 @@ def _month_key() -> str:
     return datetime.date.today().strftime("%y-%m")
 
 
-def _invite_payouts_this_month(discord_id: int) -> int:
-    account = db.get_account(discord_id)
-    if not account:
+def _invite_payouts_this_month(discord_id: int, conn=None) -> int:
+    def _run(c):
+        return c.execute(
+            "SELECT invite_reward_month, invite_reward_count FROM account_progress WHERE discord_id = ?",
+            (discord_id,),
+        ).fetchone()
+
+    row = _run(conn) if conn is not None else None
+    if row is None and conn is None:
+        with db.get_db() as c:
+            row = _run(c)
+    if not row:
         return 0
-    month = account["invite_reward_month"] if "invite_reward_month" in account.keys() else ""
-    count = int(account["invite_reward_count"]) if "invite_reward_count" in account.keys() else 0
+    month = row["invite_reward_month"] or ""
+    count = int(row["invite_reward_count"] or 0)
     if month != _month_key():
         return 0
     return count
@@ -126,6 +136,21 @@ def on_wolf_registered(
     )
 
 
+def _check_referral_milestone(discord_id: int, conn=None) -> str | None:
+    """Uncapped, cosmetic-only title track for lifetime successful referrals;
+    separate from the monthly bones/standing cap above. Returns a note the
+    first time a new threshold is crossed, else None."""
+    count = db.count_successful_referrals(discord_id, conn=conn)
+    current = db.get_referral_milestone(discord_id, conn=conn)
+    newly_earned = [n for n in sorted(REFERRAL_MILESTONES) if current < n <= count]
+    if not newly_earned:
+        return None
+    highest = newly_earned[-1]
+    db.set_referral_milestone(discord_id, highest, conn=conn)
+    title = REFERRAL_MILESTONES[highest]
+    return f"<@{discord_id}> reached **{count}** lifetime referrals; new title unlocked: **{title}**."
+
+
 def process_invite_rollovers(guild_id: int, day: int) -> list[str]:
     """After sunrise; count referral rollovers and pay inviters."""
     notes: list[str] = []
@@ -157,14 +182,15 @@ def process_invite_rollovers(guild_id: int, day: int) -> list[str]:
                 continue
 
             inviter_id = int(row["inviter_discord_id"])
-            if _invite_payouts_this_month(inviter_id) >= INVITE_MAX_PAYOUTS_PER_MONTH:
-                continue
             inviter_wolf = conn.execute(
                 "SELECT id FROM users WHERE discord_id = ? LIMIT 1", (inviter_id,)
             ).fetchone()
             if not inviter_wolf:
                 continue
 
+            # the referral itself always counts (leaderboard + milestone titles
+            # track every successful referral, uncapped); only the bones/standing
+            # payout is limited to INVITE_MAX_PAYOUTS_PER_MONTH per inviter.
             conn.execute(
                 """
                 UPDATE invite_referrals SET referrer_granted = 1
@@ -172,21 +198,34 @@ def process_invite_rollovers(guild_id: int, day: int) -> list[str]:
                 """,
                 (guild_id, row["invitee_discord_id"]),
             )
-            conn.execute(
-                "UPDATE users SET bones = bones + ? WHERE discord_id = ?",
-                (INVITE_REFERRER_BONES, inviter_id),
-            )
-            conn.execute(
-                "UPDATE users SET standing = standing + ? WHERE discord_id = ?",
-                (INVITE_REFERRER_STANDING, inviter_id),
-            )
 
-            _increment_invite_payout(inviter_id, conn=conn)
-            notes.append(
-                f"<@{inviter_id}> earned **{INVITE_REFERRER_BONES}** bones + "
-                f"**{INVITE_REFERRER_STANDING}** standing; "
-                f"<@{row['invitee_discord_id']}> stayed **{INVITE_REFERRAL_ROLLOVERS}** sunrises."
-            )
+            payout_capped = _invite_payouts_this_month(inviter_id, conn=conn) >= INVITE_MAX_PAYOUTS_PER_MONTH
+            if payout_capped:
+                note = (
+                    f"<@{inviter_id}> brought <@{row['invitee_discord_id']}> home "
+                    f"(**{INVITE_REFERRAL_ROLLOVERS}** sunrises); monthly referrer payout "
+                    f"already capped at **{INVITE_MAX_PAYOUTS_PER_MONTH}**, but the referral still counts."
+                )
+            else:
+                conn.execute(
+                    "UPDATE users SET bones = bones + ? WHERE discord_id = ?",
+                    (INVITE_REFERRER_BONES, inviter_id),
+                )
+                conn.execute(
+                    "UPDATE users SET standing = standing + ? WHERE discord_id = ?",
+                    (INVITE_REFERRER_STANDING, inviter_id),
+                )
+                _increment_invite_payout(inviter_id, conn=conn)
+                note = (
+                    f"<@{inviter_id}> earned **{INVITE_REFERRER_BONES}** bones + "
+                    f"**{INVITE_REFERRER_STANDING}** standing; "
+                    f"<@{row['invitee_discord_id']}> stayed **{INVITE_REFERRAL_ROLLOVERS}** sunrises."
+                )
+            notes.append(note)
+
+            milestone_note = _check_referral_milestone(inviter_id, conn=conn)
+            if milestone_note:
+                notes.append(milestone_note)
 
     return notes
 
@@ -233,6 +272,49 @@ def grant_second_boost(discord_id: int) -> str | None:
 
 
 
+def referral_title(discord_id: int) -> str | None:
+    """Current uncapped referral milestone title, if any has been earned."""
+    milestone = db.get_referral_milestone(discord_id)
+    return REFERRAL_MILESTONES.get(milestone)
+
+
+def referral_badge_text(discord_id: int) -> str | None:
+    """`/profile` footer badge for the current referral title, if any."""
+    title = referral_title(discord_id)
+    return f"🐾 {title}" if title else None
+
+
+def referral_milestone_line(discord_id: int) -> str:
+    """`/patron` line: current title (if any) plus how many more referrals to the next one."""
+    count = db.count_successful_referrals(discord_id)
+    current = db.get_referral_milestone(discord_id)
+    title = REFERRAL_MILESTONES.get(current)
+    next_threshold = next((n for n in sorted(REFERRAL_MILESTONES) if n > current), None)
+    title_bit = f"**{title}**" if title else "none yet"
+    line = f"referral title: {title_bit} · **{count}** lifetime referrals"
+    if next_threshold:
+        remaining = next_threshold - count
+        line += f" · **{remaining}** more to **{REFERRAL_MILESTONES[next_threshold]}**"
+    return line
+
+
+def referral_leaderboard_lines(guild_id: int, *, limit: int = 10) -> list[str]:
+    """`who brought the most wolves home` — the visible half of the referral
+    loop; the reward itself already exists (record_invite_join/process_invite_rollovers
+    above), this just surfaces it so it reads as a flex, not a quiet backend bonus."""
+    rows = db.get_referral_leaderboard(guild_id, limit=limit)
+    if not rows:
+        return ["no referrals have paid out yet; invite a friend and stick around."]
+    lines = []
+    for i, row in enumerate(rows, start=1):
+        count = int(row["referral_count"])
+        wolves = "wolf" if count == 1 else "wolves"
+        title = referral_title(int(row["inviter_discord_id"]))
+        title_bit = f" · **{title}**" if title else ""
+        lines.append(f"**{i}.** <@{row['inviter_discord_id']}> — **{count}** {wolves} brought home{title_bit}")
+    return lines
+
+
 def patron_status_lines(discord_id: int, *, is_boosting: bool) -> list[str]:
     account = db.get_account(discord_id)
     lines: list[str] = []
@@ -255,6 +337,7 @@ def patron_status_lines(discord_id: int, *, is_boosting: bool) -> list[str]:
         f"referrer (after {INVITE_REFERRAL_ROLLOVERS} sunrises): "
         f"**{INVITE_REFERRER_BONES}** bones + **{INVITE_REFERRER_STANDING}** standing"
     )
+    lines.append(referral_milestone_line(discord_id))
     from engine.kickstarter import kickstarter_status_lines
 
     ks_lines = kickstarter_status_lines(discord_id)

@@ -69,83 +69,42 @@ no in-game bones included.
 
 ## tier 2; rp extras
 
-### revive; $35
+### herb satchel; $8
 
-**listing title (use exactly):** `revive`
+**listing title (use exactly):** `herb satchel`
 
 **paste into ko-fi description:**
 
 ```
-when your wolf falls in mistmoor, not every story has to end.
+the green tongue, without the walk to find it.
 
-revive is a one-time in-game item for howlbert, our discord wolf rp bot. purchase grants a revive token to your inventory; use it when your active wolf is dead to pull them back from the mist.
+herb satchel is a one-time in-game item for howlbert, our discord wolf rp bot. purchase grants your choice of herb (pick one from the compendium, `/herbs action:guide`), added to your inventory as raw stock, same as if you'd foraged it yourself.
 
 what you get
-• same wolf; same name, attributes, skills, standing, bones, pack, and inventory
-• returned at 1 hp with hunger and hydration restored
-• if they died of old age (120 moons), they return at 60 moons
+• 2 to 4 units of one herb of your choice, in its raw/dried form
+• still needs preparing and using the normal way: `/herbs action:prepare`, `/medic action:treat`
+• does not skip the medicine check, the right-herb-for-the-ailment matching, or any of the normal treatment mechanics
+
+what this is not
+• not a cure, not a heal, not a shortcut around any check or roll
+• does not touch injuries, disease, or hp directly; it's stock, not a spell
+• restricted/poison herbs are not available through this listing
 
 how to use
 1. join our discord server and /register your wolf first
-2. put your discord user id in this order message (see /patron in-server for help)
-3. after purchase, check /inventory for revive
-4. when your wolf dies: `/bones action:use item:revive`
+2. put your discord user id **and** which herb you want (exact name from `/herbs action:guide`) in this order message
+3. after purchase, check `/bones action:inventory` for your herb
 
-not sold for bones at the in-game trading post. personal reward only; never taken from pack treasury. one revive item per purchase.
-
-questions? open a ticket in discord or dm staff.
-```
-
-**webhook keywords:** revive, second chance, bring back
-
-**ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/revive.png`). pale mist, wolf rising from snow, cool moon; breath returning.
-
-put your **discord user id** in the order notes.
-
----
-
-### reincarnation; $28
-
-**listing title (use exactly):** `reincarnation`
-
-**paste into ko-fi description:**
-
-```
-the soul remembers. the body changes.
-
-reincarnation is a one-time in-game item for howlbert, our discord wolf rp bot. for wolves who died but whose story isn't finished; return in a new body with a new name, while keeping the build you earned.
-
-what you keep
-• attributes, skills, standing, bones, great pack, and inventory items
-• your account, legacy, and wolf slot on your profile
-
-what's new
-• a new wolf name you choose at use
-• 12 moons of age (juvenile); a second life in the pack
-• role synced to your new age
-
-what resets
-• prey hoard and toys cleared (fresh start for `/prey` and `/playpen action:toys`)
-• full hp, healthy condition, no injuries or disease
-
-how to use
-1. join our discord server and /register first
-2. put your discord user id in this order message (see /patron in-server)
-3. after purchase, check /inventory for reincarnation
-4. when your wolf dies: `/bones action:use item:reincarnation new_name:YourNewName`
-
-not the same as revive ($35); revive brings back the same wolf unchanged. reincarnation is for a new identity with the same soul and stats.
-
-not sold for bones. personal reward only. one item per purchase.
+not sold for bones at the in-game trading post. personal reward only; never taken from pack treasury.
 
 questions? open a ticket in discord or dm staff.
 ```
 
-**webhook keywords:** reincarnation, new life, new body
+**webhook keywords:** herb satchel, herb bundle, choose herb
 
-**ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/reincarnation.png`). ghost wolf + younger wolf through mist/stones; same soul, new body.
+**ko-fi image:** illustrated linework + soft color (see `docs/shop-assets/herb-satchel.png`). a bundle of dried herbs tied with cord, den-store style.
 
-put your **discord user id** in the order notes.
+put your **discord user id and chosen herb** in the order notes.
 
 ---
 
@@ -231,8 +190,7 @@ put your discord user id in the order message.
 | 9 | wolf portrait | https://ko-fi.com/s/1acef91903 |
 | 10 | custom item name | https://ko-fi.com/s/7293d845b2 |
 | 11 | legend gift card | https://ko-fi.com/s/ff775b47c9 |
-| 12 | revive ($35) | https://ko-fi.com/s/75109e65b8 |
-| 13 | reincarnation ($28) | https://ko-fi.com/s/931aa27911 |
+| 12 | herb satchel ($8) | (create listing; add link here) |
 
 ## admin
 

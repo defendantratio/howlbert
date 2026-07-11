@@ -204,6 +204,7 @@ def apply_old_age_deaths_on_rollover(
         )
         deaths.append(
             {
+                "wolf_id": row["id"],
                 "wolf_name": row["wolf_name"],
                 "discord_id": row["discord_id"],
                 "cause": f"old age ({row['age_months']} moons)",

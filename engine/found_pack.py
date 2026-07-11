@@ -23,7 +23,9 @@ def _strong_bond(a_id: int, b_id: int) -> bool:
     return False
 
 
-def found_pack(founder, partner, name: str) -> tuple[int | None, str | None]:
+def found_pack(
+    founder, partner, name: str, *, guild_id: int | None = None, day: int | None = None
+) -> tuple[int | None, str | None]:
     """Validate and found a new den. Returns (new_pack_id, error)."""
     if not is_loner_wolf(founder):
         return None, "only a lone wolf (loner) can found a new pack; rogues and pack wolves cannot."
@@ -66,4 +68,9 @@ def found_pack(founder, partner, name: str) -> tuple[int | None, str | None]:
         conn.execute("UPDATE packs SET pack_unity = 50 WHERE id = ?", (new_pack_id,))
     db.deduct_bones(founder["discord_id"], NEW_PACK_FOUND_COST, wolf_id=founder["id"])
     db.deduct_bones(partner["discord_id"], NEW_PACK_FOUND_COST, wolf_id=partner["id"])
+
+    from engine.wolf_journal import log_achievement
+
+    log_achievement(founder["id"], founder["wolf_name"], f"Founder of {name}", guild_id=guild_id, day=day)
+    log_achievement(partner["id"], partner["wolf_name"], f"Founder of {name}", guild_id=guild_id, day=day)
     return new_pack_id, None

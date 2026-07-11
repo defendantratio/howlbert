@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="howlbert, a discord wolf rp bot. four territories, one throat, and a wounded god that keeps count." />
+    <title>howlbert · the human world</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--bone);
+            margin: 20px 0 8px 0;
+        }
+        .content-section h4 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--bone);
+            margin: 14px 0 6px 0;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone);
+            max-width: 70ch;
+        }
+        .content-section .pull-quote {
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--bone);
+            border-left: 3px solid var(--maw);
+            padding-left: 18px;
+            margin: 16px 0 16px 6px;
+            max-width: 55ch;
+            line-height: 1.6;
+        }
+        .content-section .pull-quote .source {
+            display: block;
+            font-style: normal;
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            margin-top: 4px;
+        }
+        .content-section ul,
+        .content-section ol {
+            margin: 8px 0 12px 20px;
+            color: var(--bone);
+        }
+        .content-section li {
+            margin-bottom: 4px;
+        }
+
+        .faction-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 12px 0 20px 0;
+            background: var(--glass-bg);
+        }
+        .faction-card h4 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 4px;
+        }
+        .faction-card .ally-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: var(--moss);
+            color: var(--ink);
+            padding: 2px 12px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+        .faction-card .enemy-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: var(--maw);
+            color: var(--ink);
+            padding: 2px 12px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+
+        .standing-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4px 16px;
+            margin: 10px 0 12px 0;
+            font-size: 0.9rem;
+        }
+        .standing-grid .action-name {
+            font-weight: 600;
+            color: var(--bone);
+        }
+        .standing-grid .action-desc {
+            color: var(--bone-dim);
+        }
+
+        .pack-relationship {
+            border-left: 3px solid var(--line);
+            padding-left: 16px;
+            margin: 14px 0 10px 0;
+        }
+        .pack-relationship .pack-name {
+            font-weight: 600;
+            color: var(--bone);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .cta-btn.tertiary {
+            border-color: var(--river);
+        }
+        .cta-btn.tertiary:hover {
+            background: var(--river);
+            color: var(--ink);
+            border-color: var(--river);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .standing-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2px 0 !important;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html" class="current">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="namegen.html">⟡ wolf name generator</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>the human world</h1>
+                <p class="hook">
+                    not a villain with a plan, but <span class="maw-word">weather with hands</span>, winning slowly.
+                </p>
+                <p class="description">
+                    wolves call humans twolegs, and the twoleg world presses on the wolf-world from every edge.
+                    it is not evil. it is not cruel. it is simply hungry, like the maw, but without the maw's patience.
+                </p>
+            </header>
+
+            <!-- the twoleg factions -->
+            <section class="glass content-section">
+                <h2>the twoleg factions</h2>
+                <p>
+                    humans are not a monolith. the wolves recognize several groups.
+                </p>
+
+                <!-- lowland settlements -->
+                <div class="faction-card">
+                    <h4>the lowland settlements</h4>
+                    <p>
+                        farmers, trappers, small-town folk. they fear the packs but have learned to live alongside them.
+                        some settlements pay informal "tribute" to nearby packs to avoid raids. others set traps and
+                        offer bounties.
+                    </p>
+                </div>
+
+                <!-- thorne lumber -->
+                <div class="faction-card">
+                    <h4>the thorne lumber company <span class="enemy-tag">thistlehide's enemy</span></h4>
+                    <p>
+                        aggressive expansionists. they've clear-cut three forests in the last decade and are now
+                        pushing into thistlehide territory. they carry rifles. lots of rifles.
+                    </p>
+                </div>
+
+                <!-- the river mill -->
+                <div class="faction-card">
+                    <h4>the river mill <span class="enemy-tag">silverrush's enemy</span></h4>
+                    <p>
+                        operated by northern pulp &amp; paper. they claim their runoff is "within legal limits."
+                        the fish disagree. silverrush is preparing for war, but the mill has guards with dogs,
+                        <em>domesticated</em> wolves, which the packs find obscene.
+                    </p>
+                </div>
+
+                <!-- the crows -->
+                <div class="faction-card">
+                    <h4>the crows <span class="ally-tag">greyspire's allies</span></h4>
+                    <p>
+                        named after silas crow, the human who allied with greyspire. the crows are not a formal group
+                        but a loose network of trappers, exiles, and outlaws who trade with greyspire exclusively.
+                        they live in the foothills, speak a crude sign language to communicate with wolves, and are
+                        universally despised by the other three packs.
+                    </p>
+                </div>
+
+                <!-- the university expedition -->
+                <div class="faction-card">
+                    <h4>the university expedition</h4>
+                    <p>
+                        three scholars from the capital city arrived six months ago, claiming to study "canine social
+                        structures." they have cameras, recording equipment, and absolutely <em>no survival instincts</em>.
+                        they currently live in a tent on the border between thistlehide and silverrush territory.
+                        both packs are watching them. so is the lumber company. so are the crows.
+                    </p>
+                </div>
+            </section>
+
+            <!-- relationship with humans: silverrush -->
+            <section class="glass content-section">
+                <h2>silverrush and the twolegs</h2>
+                <p>
+                    the river is a highway. humans use it for trade, transport, and fishing. silverrush has learned
+                    to <em>share</em>, a concept the other packs find incomprehensible.
+                </p>
+
+                <h3>the toll of tears</h3>
+                <p>
+                    a century ago, humans built a bridge across the stoneroot. the wolves could have destroyed it.
+                    instead, the current at the time, swift-as-sorrow, made a deal with the humans through
+                    patient gestures and repeated offerings. the humans left fresh meat on the bridge each day,
+                    and in return, the wolves let them cross freely. over time, the humans began to leave more,
+                    sometimes the remains of their own dead, and the tear-drinkers say these borrowed bones
+                    keep the weeping stones flowing.
+                </p>
+
+                <h3>the factory upstream</h3>
+                <p>
+                    ten years ago, a human paper mill opened north of the weeping stones. the water has changed,
+                    it tastes of sickness now. fish are dying. pups born near the mill are <em>wrong</em>, twisted spines,
+                    milky eyes, howls that sound like weeping. silverrush has sent three delegations to the mill,
+                    leaving dead fish and rotting carcasses at the gates as a warning. the humans laughed and
+                    threw the offerings into the river. the fourth delegation did not return.
+                </p>
+            </section>
+
+            <!-- relationship with humans: mistmoor -->
+            <section class="glass content-section">
+                <h2>mistmoor and the twolegs</h2>
+                <p>
+                    humans fear the rotting mere. good. those who enter are lost folk, fugitives, madmen, researchers
+                    from the lowland university who think they can "study" the swamp's unique ecosystem. mistmoor does
+                    not raid human camps. they <em>collect</em> humans.
+                </p>
+
+                <h3>the bargain of flesh</h3>
+                <p>
+                    the rotparent keeps three to six humans alive at any time. not as slaves, as <em>offerings</em>.
+                    when the maw hungers, and the maw is always hungry, a human is led to the belly-rip and given a
+                    choice through gestures and the wolves' patient waiting: jump into the sinkhole, or be eaten.
+                    the choice <em>matters</em>. wolves who witness the offering say the maw's chewing grows louder
+                    when the human <em>chooses</em> the fall.
+                </p>
+
+                <h3>the bleeding stumps</h3>
+                <p>
+                    two years ago, a group of loggers tried to clear the swamp's edge. mistmoor slaughtered them but
+                    left their axes planted in the ground as markers. now the loggers' bones hang from the cypress trees,
+                    stripped clean by scavengers. the human authorities have noticed. a punitive expedition is being planned.
+                </p>
+            </section>
+
+            <!-- relationship with humans: thistlehide -->
+            <section class="glass content-section">
+                <h2>thistlehide and the twolegs</h2>
+                <p>
+                    thistlehide's forest borders human farmland. this has been... complicated. the humans here are
+                    settlers, loggers, farmers, families fleeing the cities. they cut trees. thistlehide <em>is</em>
+                    the trees, in a spiritual sense. conflict is inevitable.
+                </p>
+
+                <h3>the compromise of rotten timber</h3>
+                <p>
+                    forty years ago, a heartwood named briar-throat made a deal with a human family, the harrows.
+                    through months of careful observation and repeated offerings, the wolves learned that the harrows
+                    would leave fresh-kill at the forest edge in exchange for the wolves not attacking their livestock.
+                    the harrows cut only deadfall and sick trees. in return, thistlehide left them alone and sometimes
+                    left bones and antlers at the treeline as a gesture of peace.
+                </p>
+
+                <h3>the broken truce</h3>
+                <p>
+                    last spring, the harrows sold their land. the new owners, the thorne lumber company, do not respect
+                    the old deal. they have cut twenty live oaks. thistlehide has killed four loggers. the humans are
+                    arming themselves. worse: some young wolves are whispering that the harrows <em>betrayed</em> the
+                    pack by leaving. the memory-knot is growing heavy.
+                </p>
+
+                <h3>the harrow daughter</h3>
+                <p>
+                    the last remaining harrow, a young human woman who refused to leave when her family sold the land.
+                    she lives alone in the old farmhouse, still leaving fresh meat at the forest edge. she has learned
+                    to read the wolves' body language and responds with careful gestures of her own. she leaves offerings
+                    of bones and fresh-kill, and the pack has learned to recognize her scent. she is not a threat.
+                    rivershroud has forbidden her death. skye disagrees.
+                </p>
+            </section>
+
+            <!-- relationship with humans: greyspire -->
+            <section class="glass content-section">
+                <h2>greyspire and the twolegs</h2>
+                <p>
+                    the mountains are harsh, and humans who venture here are desperate, trappers, exiles, fools.
+                    greyspire has learned that humans are <em>weak alone</em> but <em>dangerous in numbers</em>.
+                    they raid human camps for steel traps, which they use as weapons, and dried meat. captured humans
+                    are sometimes <em>traded back</em> to lowland settlements for goods, a practice the other packs
+                    find barbaric.
+                </p>
+
+                <h3>the crow's bargain</h3>
+                <p>
+                    twenty winters ago, a human prospector named silas crow stumbled into greyspire territory
+                    half-frozen. the highfang at the time, old grimfang, spared him in exchange for <em>iron points</em>,
+                    arrowheads and knives that the wolves learned to use as tools. crow taught the wolves to set ambushes
+                    using human techniques, communicating through careful gestures and demonstrations. when crow died
+                    (of age, in his sleep, a luxury no greyspire wolf has ever known), grimfang buried him in the
+                    tooth split. now greyspire wolves make offerings of fresh-kill at crow's grave before raids,
+                    though the maw's priests call this heresy.
+                </p>
+            </section>
+
+            <!-- standing mechanics -->
+            <section class="glass content-section">
+                <h2>standing with the factions</h2>
+                <p>
+                    every faction remembers. a wolf can raise or lower a faction's standing through actions.
+                    the oak knot, five points of standing, marks a real relationship crossing over from tolerance
+                    to something like an understanding.
+                </p>
+
+                <div class="standing-grid">
+                    <span class="action-name">observe</span>
+                    <span class="action-desc">watch a faction from cover. learn their routines, their weaknesses, their habits. low risk, low reward.</span>
+
+                    <span class="action-name">approach</span>
+                    <span class="action-desc">roll wisdom against dc 12. a calm, careful approach that does not startle. raises standing if successful.</span>
+
+                    <span class="action-name">trade</span>
+                    <span class="action-desc">costs 3 bones. leave a kill at the edge of their territory. +2 standing. the crows trade in scrap and tools; other factions trade in food and bones.</span>
+
+                    <span class="action-name">raid</span>
+                    <span class="action-desc">roll strength against dc 13. disrupt their operations, steal supplies. lowers standing with that faction; if caught, −1 standing with all factions.</span>
+
+                    <span class="action-name">sabotage</span>
+                    <span class="action-desc">thorne lumber (thistlehide) or river mill (silverrush). dc 15. a memory-knot tracker keeps count of how many times you have struck back.</span>
+                </div>
+
+                <h3>the oak knot</h3>
+                <p>
+                    five points of standing with a faction. the oak knot marks a real relationship crossing over
+                    from tolerance to something like an understanding. at oak knot, a faction will warn you of danger.
+                    at oak knot, they will leave food out for you, deliberately. at oak knot, they will not shoot first.
+                </p>
+                <p>
+                    oak knot is rare. it takes patience, luck, and a willingness to trust the enemy.
+                    but it is the only way the wolves can survive the human world.
+                </p>
+
+                <div class="pull-quote">
+                    the twolegs are not evil. they are not cruel. they are simply hungry, like the maw,
+                    but without the maw's patience.
+                    <span class="source">— a mistmoor drown-sick</span>
+                </div>
+            </section>
+
+             <!-- cta -->
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the human world is closing in. how will you survive it?
+                </p>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                'light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+
+</html>

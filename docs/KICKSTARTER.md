@@ -91,7 +91,7 @@ the feature milestones (b to e) are roughly ~220 hrs of work. at the base goal t
 
 ### why basil / why trust
 - creator of howlbert; bot is playable now (not vaporware).
-- existing ko-fi for transparent ongoing support and shop (revive, reincarnation, bone pouches).
+- existing ko-fi for transparent ongoing support and shop (herb satchels, bone pouches).
 - open roadmap; monthly backer updates during fulfillment.
 - personal rewards never drain pack treasury. same rule as ko-fi.
 
@@ -107,7 +107,7 @@ copy-paste block:
 > - four great packs: greyspire (mountain), mistmoor (swamp), thistlehide (forest), silverrush (river), or lone wolf.
 > - economy: bones from hunt, work, quests, and daily stipend; trading post, prey hoard, toys.
 > - survival: hunger and hydration drain through the day, not only at sunrise; eat fresh kills, or sip broth and non-wolf milk (bought, raided, or bartered) when a broken jaw stops you chewing; a meat-free stretch risks wasting sickness, and weaned wolves are lactose intolerant unless they carry the trait.
-> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, hydration, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf), old age at 120 moons; optional revive / reincarnation via ko-fi shop.
+> - life: injuries (including venom and festering wounds), 30+ diseases with granular daily penalties (hunger, hydration, exhaustion, pain, hunt yield), a separate pain exhaustion tracker herbs can target specifically, death saves (three failed saves end the wolf, permanently, no exceptions), old age at 120 moons.
 > - herbs: 100+ plants with real preparation, side effects, and dependence; the wrong dose, an herb eaten instead of applied, or one pressed into an open wound backfires (toxicity, miscarriage risk, addiction), and sedatives like poppy build tolerance and withdrawal.
 > - genetics: heritable conditions (blindness, deafness, brachycephaly, spinal disorders, inbreeding effects, neurodevelopmental traits, lactase persistence) rolled at birth or passed from parents; each has real mechanical consequences, not just flavor.
 > - design: almost no hard blocks; an energy meter (0 to 100) instead. most actions spend energy, and running out never blocks the action; it still succeeds, but costs extra exhaustion and mood, so a wolf can always act (not "come back tomorrow"). consequences, not walls.
@@ -236,7 +236,7 @@ everything in tier 1, plus:
 *unlimited*
 
 everything in tier 2, plus:
-- 150 bones (bone cache equivalent) or choice of one revive or one reincarnation item in `/inventory` (not both, backer picks)
+- 150 bones (bone cache equivalent) or two herb satchels of your choice in `/inventory` (not both, backer picks)
 - vote in backer poll: next exploration theme (e.g. "river flood season" vs "ash winter", flavor only)
 
 ---
@@ -278,7 +278,7 @@ everything in tier 5, plus:
 everything in tier 6, plus:
 - patron credit on one great pack's lore sidebar (e.g. "thistlehide expansion supported by ..."). flavor only, no mechanical pack bonus.
 - first hunt story snippet (~300 words) for your wolf
-- revive + reincarnation both granted in inventory
+- five herb satchels of your choice granted in inventory
 
 **important:** patron credit is acknowledgment, not ownership of the pack. all four packs remain equal in mechanics.
 
@@ -289,7 +289,7 @@ everything in tier 6, plus:
 
 everything in tier 4 (legend tier), plus:
 - digital wolf portrait (illustrated linework + soft color, simple background)
-- revive + reincarnation in inventory
+- five herb satchels of your choice granted in inventory
 
 **delivery:** 90 days; reference sheet via survey.
 
@@ -297,8 +297,7 @@ everything in tier 4 (legend tier), plus:
 
 ### add-ons (kickstarter add-on feature)
 - +$25, extra bone pouch (75 bones)
-- +$35, revive item
-- +$28, reincarnation item
+- +$8, extra herb satchel (choice of herb)
 - +$12, extra custom wolf blurb (if main tier didn't include)
 
 ---
@@ -309,7 +308,7 @@ everything in tier 4 (legend tier), plus:
 2. have you `/register`ed a wolf? (y/n. if n, instructions to register before grant)
 3. which great pack are you in? (greyspire / mistmoor / thistlehide / silverrush / loner / n/a yet)
 4. tier 2 bonus item: lucky tooth / den charm / herb bundle?
-5. tier 3 choice: revive or reincarnation?
+5. tier 3 choice: bones or herb satchels?
 6. tier 5+: proposed landmark / quest / blurb details (text fields)
 7. tier 7: great pack patron preference (1 to 4)
 8. portrait tier: reference links / description
@@ -407,7 +406,7 @@ no mechanical advantage. tier 7 patron credits are flavor acknowledgments only.
 
 - [ ] backer survey live within 48 hours
 - [ ] milestone a: vps provisioned, bot migrated, smoke test
-- [ ] grant script or manual pass for bone/revive/reincarnation tiers (`/patronadmin kickstarter tier2` for tier 2 badge + bones + item)
+- [ ] grant script or manual pass for bone/herb-satchel tiers (`/patronadmin kickstarter tier2` for tier 2 badge + bones + item)
 - [ ] discord roles for tier 1+
 - [ ] monthly update #1 within 30 days
 - [ ] readme credits section updated
@@ -424,6 +423,6 @@ no mechanical advantage. tier 7 patron credits are flavor acknowledgments only.
 > howlbert; a discord bot for realistic sentient wolf rp. greyspire, mistmoor, thistlehide, silverrush. fund 24/7 uptime + new wild content. ks live: [link]
 
 **short bio add-on:**  
-> kickstarter (limited): https://[your-ks-link]. ko-fi shop still open for tips and revive/reincarnation.
+> kickstarter (limited): https://[your-ks-link]. ko-fi shop still open for tips and herb satchels.
 
 ---

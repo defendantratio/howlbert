@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="a wolf name generator for howlbert, the discord wolf rp bot. pack-flavoured, wolf-world names for your character." />
+    <title>howlbert · wolf name generator</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 18px;
+        }
+        .side-nav a {
+            font-size: 0.85rem;
+            padding: 2px 0;
+        }
+        .side-nav a:hover {
+            padding-left: 4px;
+        }
+        .side-nav .current {
+            color: var(--maw);
+            font-weight: 700;
+        }
+
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.2rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.02rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        .content-section {
+            padding: 18px 26px 26px;
+        }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .content-section p {
+            margin-bottom: 12px;
+            color: var(--bone-dim);
+            max-width: 70ch;
+        }
+
+        /* generator controls */
+        .gen-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 14px 0 20px;
+        }
+        .gen-controls label {
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: var(--bone-dim);
+            margin-right: 4px;
+        }
+        select {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.95rem;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--ctrl-bg);
+            color: var(--bone);
+            text-transform: lowercase;
+            cursor: pointer;
+        }
+        .gen-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--maw);
+            background: var(--maw);
+            color: var(--ink);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .gen-btn:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+        }
+        .gen-btn:active {
+            transform: translateY(0);
+        }
+
+        .name-results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 60px;
+        }
+        .name-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--ink-soft);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px 20px;
+            animation: fadeIn 0.35s ease;
+        }
+        .name-card .name-text {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--bone);
+            letter-spacing: 1px;
+        }
+        .name-card .copy-btn {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone-dim);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+        .name-card .copy-btn:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .name-card .copy-btn.copied {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .name-empty {
+            color: var(--bone-dim);
+            font-style: italic;
+            padding: 10px 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.2rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.05rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.7rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.9rem;
+            }
+            .hero .description {
+                font-size: 0.85rem;
+            }
+            .gen-btn, .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+            .name-card .name-text {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="namegen.html" class="current">⟡ wolf name generator</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>wolf name generator</h1>
+                <p class="hook">
+                    every name in the <span class="maw-word">wolf-world</span> means something.<br />
+                    find one for your wolf before you <span class="maw-word">/register</span>.
+                </p>
+                <p class="description">
+                    wolf-world names lean compound and sensory; a thing seen, a thing done, a thing felt.
+                    pick a great pack to flavour the result (or leave it wild for a loner's name),
+                    then generate until one feels like your wolf.
+                </p>
+            </header>
+
+            <section class="glass content-section">
+                <h2>generate a name</h2>
+
+                <div class="gen-controls">
+                    <label for="packSelect">flavour</label>
+                    <select id="packSelect">
+                        <option value="any">any / surprise me</option>
+                        <option value="greyspire">greyspire — mountain, strength, blood is law</option>
+                        <option value="mistmoor">mistmoor — swamp, omens, the maw's belly</option>
+                        <option value="thistlehide">thistlehide — forest, memory, the dead</option>
+                        <option value="silverrush">silverrush — river, grief, poison upstream</option>
+                        <option value="loner">loner / rogue — plain, wary, self-made</option>
+                    </select>
+
+                    <label for="styleSelect">style</label>
+                    <select id="styleSelect">
+                        <option value="any">any style</option>
+                        <option value="compound">compound (riverbone, ashfall)</option>
+                        <option value="single">single word (soot, marrow)</option>
+                    </select>
+
+                    <button class="gen-btn" id="generateBtn" type="button">generate</button>
+                </div>
+
+                <div class="name-results" id="nameResults">
+                    <p class="name-empty">no names generated yet; press generate.</p>
+                </div>
+            </section>
+
+            <section class="glass content-section">
+                <h2>a note on names</h2>
+                <p>
+                    this generator is a starting point, not a rulebook; nothing here is required by
+                    the bot itself. mix and match pieces, shorten a compound to a nickname, or use a
+                    generated name as inspiration and change a syllable until it's really yours.
+                    once you've picked one, bring it to <span style="color:var(--maw); font-weight:700;">/register</span>
+                    on the discord server.
+                </p>
+            </section>
+
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                    <a href="play.html" class="cta-btn">how to play</a>
+                </div>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                    'light');
+            } catch (_) {}
+        })();
+    </script>
+
+    <script>
+        (function() {
+            // wolf-world name parts, grouped by pack flavour. each pack leans on
+            // its own terrain and culture (mountain/blood, swamp/omen, forest/memory,
+            // river/grief) so the generator's output reads as "of this pack," not generic.
+            const PARTS = {
+                greyspire: {
+                    prefixes: ['stone', 'iron', 'grey', 'crag', 'flint', 'shale', 'ridge', 'boulder', 'granite', 'high'],
+                    suffixes: ['claw', 'fang', 'peak', 'horn', 'tooth', 'spire', 'gnaw', 'jaw', 'grip', 'blood'],
+                    singles: ['flint', 'gravel', 'shale', 'quarry', 'blizzard', 'talon', 'crag', 'basalt']
+                },
+                mistmoor: {
+                    prefixes: ['mist', 'fen', 'swamp', 'reed', 'bog', 'shroud', 'murk', 'hollow', 'drown', 'silt'],
+                    suffixes: ['wisp', 'shroud', 'omen', 'drift', 'mire', 'gaze', 'whisper', 'root', 'sink', 'tide'],
+                    singles: ['tallow', 'wraith', 'fen', 'omen', 'marrow', 'moss', 'hollow', 'silt']
+                },
+                thistlehide: {
+                    prefixes: ['thorn', 'bramble', 'oak', 'thistle', 'moss', 'fern', 'elder', 'bark', 'root', 'ash'],
+                    suffixes: ['bramble', 'leaf', 'bark', 'thorn', 'grove', 'hollow', 'bough', 'wood', 'nettle', 'vine'],
+                    singles: ['bramble', 'thistle', 'birch', 'bracken', 'elder', 'nettle', 'briar', 'moss']
+                },
+                silverrush: {
+                    prefixes: ['river', 'silver', 'rush', 'current', 'shale', 'brook', 'flood', 'foam', 'grey', 'still'],
+                    suffixes: ['bone', 'current', 'stream', 'rush', 'wake', 'tide', 'water', 'run', 'drift', 'shroud'],
+                    singles: ['eddy', 'silt', 'current', 'foam', 'gravel', 'reed', 'shale', 'brook']
+                },
+                loner: {
+                    prefixes: ['dust', 'lone', 'grey', 'wild', 'road', 'far', 'still', 'thin', 'quiet', 'old'],
+                    suffixes: ['paw', 'wander', 'trail', 'edge', 'howl', 'run', 'foot', 'watch', 'road', 'shade'],
+                    singles: ['dust', 'wander', 'gaunt', 'ash', 'quiet', 'scraps', 'shade', 'echo']
+                }
+            };
+
+            const ALL_PACKS = Object.keys(PARTS);
+
+            // book one's canon roster (engine/character_lore_data.py); excluded so the
+            // generator never hands out a name that's already someone else's wolf.
+            const CANON_NAMES = new Set([
+                'aromis', 'ashbark', 'barkhollow', 'brackenpelt', 'cinder', 'cinderpup',
+                'cloverfern', 'croaker', 'curlgrip', 'driftpup', 'dusk', 'ebb', 'fernspot',
+                'finnpelt', 'firepaw', 'frostburn', 'gasp', 'grim', 'harepup', 'hemlock',
+                'hollowstem', 'icefang', 'ironjaw', 'kanami', 'lucid', 'maggotbrain',
+                'mossgaze', 'mossheart', 'mosspup', 'moth', 'mudnose', 'mudpup', 'murkvein',
+                "pale'step", 'pebble', 'puddlebane', 'raven', 'reedwhisper', 'rift', 'rime',
+                'ripple', 'ripplepup', 'riptide', 'rivenmaw', 'rivershroud', 'root',
+                'rotteddust', 'saltmuzzle', 'scab', 'skye', 'slate', 'sleet', 'sludge',
+                'soot', 'splinter', 'stonepiercer', 'sypha', 'talus', 'thorn', 'thyme',
+                'vulcan stonehide', 'yarrow', 'mirewort'
+            ]);
+
+            function pick(arr) {
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            function capitalize(word) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }
+
+            function generateOne(packKey, style) {
+                const key = packKey === 'any' ? pick(ALL_PACKS) : packKey;
+                const bank = PARTS[key];
+                const useCompound = style === 'compound' ? true : (style === 'single' ? false : Math.random() < 0.7);
+
+                if (useCompound) {
+                    let prefix = pick(bank.prefixes);
+                    let suffix = pick(bank.suffixes);
+                    // avoid an identical prefix/suffix pairing reading oddly, e.g. "boneBone"
+                    let attempts = 0;
+                    while (prefix === suffix && attempts < 5) {
+                        suffix = pick(bank.suffixes);
+                        attempts++;
+                    }
+                    return capitalize(prefix) + suffix;
+                }
+                return capitalize(pick(bank.singles));
+            }
+
+            function copyToClipboard(text, btn) {
+                function done() {
+                    const original = btn.textContent;
+                    btn.textContent = 'copied';
+                    btn.classList.add('copied');
+                    setTimeout(function() {
+                        btn.textContent = original;
+                        btn.classList.remove('copied');
+                    }, 1200);
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(done).catch(function() {
+                        fallbackCopy(text, done);
+                    });
+                } else {
+                    fallbackCopy(text, done);
+                }
+            }
+
+            function fallbackCopy(text, done) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (_) {}
+                document.body.removeChild(ta);
+                done();
+            }
+
+            function renderResults(names) {
+                const wrap = document.getElementById('nameResults');
+                wrap.innerHTML = '';
+                names.forEach(function(name) {
+                    const card = document.createElement('div');
+                    card.className = 'name-card';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'name-text';
+                    nameSpan.textContent = name;
+
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.type = 'button';
+                    copyBtn.textContent = 'copy';
+                    copyBtn.addEventListener('click', function() {
+                        copyToClipboard(name, copyBtn);
+                    });
+
+                    card.appendChild(nameSpan);
+                    card.appendChild(copyBtn);
+                    wrap.appendChild(card);
+                });
+            }
+
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                const packKey = document.getElementById('packSelect').value;
+                const style = document.getElementById('styleSelect').value;
+                // seenLower tracks by lowercase so a name can't repeat within this batch
+                // even if it turns up once as a "single" and once inside a compound.
+                const seenLower = new Set();
+                const names = [];
+                let guard = 0;
+                while (names.length < 5 && guard < 200) {
+                    guard++;
+                    const n = generateOne(packKey, style);
+                    const key = n.toLowerCase();
+                    if (seenLower.has(key) || CANON_NAMES.has(key)) continue;
+                    seenLower.add(key);
+                    names.push(n);
+                }
+                renderResults(names);
+            });
+        })();
+    </script>
+
+    <!-- optional neko cat (from original) -->
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+</body>
+
+</html>

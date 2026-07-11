@@ -55,9 +55,8 @@ def living_wolf_block(user) -> str | None:
     cond = user["condition"] if "condition" in user.keys() else "healthy"
     if cond == "dead":
         return (
-            "your wolf has died. `/bones action:use item:revive` (same wolf) or "
-            "`/bones action:use item:reincarnation new_name:<name>` (new name, same stats) from ko-fi, "
-            "or `/switchwolf` / `/register` / `/rpg action:delete confirm:DELETE`."
+            "your wolf has died. permanently, no exceptions. "
+            "`/switchwolf` to another wolf, or `/rpg action:delete confirm:DELETE` then `/register` for a new one."
         )
     if cond == "dying":
         return (

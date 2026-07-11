@@ -60,7 +60,7 @@ def format_conditions(user, *, day: int | None = None) -> str:
     hp = int(user["hp"]) if "hp" in user.keys() else 1
     if cond == "dead":
         lines.append(
-            "**dead**; `/bones action:use item:revive` or reincarnate, or `/switchwolf` for a new wolf."
+            "**dead**; permanently. `/rpg action:delete confirm:DELETE` then `/register` for a new wolf."
         )
     elif cond == "dying" or hp <= 0:
         rnd = (

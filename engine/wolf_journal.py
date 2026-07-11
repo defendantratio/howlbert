@@ -136,14 +136,6 @@ def log_stabilized(wolf_id: int, wolf_name: str) -> None:
     _write(wolf_id, "stabilized", f"**{wolf_name}** clawed back from the brink and stabilized.")
 
 
-def log_revived(wolf_id: int, wolf_name: str) -> None:
-    _write(wolf_id, "revived", f"**{wolf_name}** was revived; death did not hold.")
-
-
-def log_reincarnated(wolf_id: int, old_name: str, new_name: str) -> None:
-    _write(wolf_id, "reincarnated", f"**{old_name}** returned in a new body as **{new_name}**.")
-
-
 def log_surgery(wolf_id: int, wolf_name: str, procedure: str, *, success: bool) -> None:
     verb = "survived" if success else "did not survive"
     _write(wolf_id, "surgery", f"**{wolf_name}** {verb} a **{procedure}** surgery.")
@@ -157,8 +149,21 @@ def log_trained(wolf_id: int, wolf_name: str) -> None:
     _write(wolf_id, "trained", f"**{wolf_name}**'s training is complete; the lessons stuck.")
 
 
-def log_achievement(wolf_id: int, wolf_name: str, title: str) -> None:
-    _write(wolf_id, "achievement", f"**{wolf_name}** earned the **{title}** trophy.")
+def log_achievement(
+    wolf_id: int,
+    wolf_name: str,
+    title: str,
+    *,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> None:
+    _write(
+        wolf_id,
+        "achievement",
+        f"**{wolf_name}** earned the **{title}** trophy.",
+        guild_id=guild_id,
+        day=day,
+    )
 
 
 def log_quest_complete(

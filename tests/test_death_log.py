@@ -50,18 +50,24 @@ def test_set_user_conditions_dead_uses_death_cause():
     assert len(db.list_death_log(wolf_id=wolf_id)) == 1
 
 
-def test_revive_clears_cause_but_keeps_log():
+def test_clearing_death_condition_keeps_log():
+    """Death is permanent for players now (no revive/reincarnation shop items), but
+    the death log must still persist independent of a wolf's current condition,
+    since admin tooling (scripts/revive_all_dead.py) can still clear it directly."""
     wolf_id = _insert_wolf(9003, "Fern")
 
     db.mark_wolf_dead(wolf_id, "exhaustion")
     assert db.get_user(9003)["cause_of_death"] == "exhaustion"
 
-    err = db.revive_wolf(9003)
-    assert err is None
-    revived = db.get_user(9003)
-    assert revived["condition"] == "healthy"
-    assert revived["cause_of_death"] is None
-    assert revived["death_day"] is None
+    with db.get_db() as conn:
+        conn.execute(
+            "UPDATE users SET condition = 'healthy', cause_of_death = NULL, death_day = NULL WHERE id = ?",
+            (wolf_id,),
+        )
+    cleared = db.get_user(9003)
+    assert cleared["condition"] == "healthy"
+    assert cleared["cause_of_death"] is None
+    assert cleared["death_day"] is None
     assert len(db.list_death_log(wolf_id=wolf_id)) == 1
 
 
@@ -79,6 +85,6 @@ if __name__ == "__main__":
     db.init_db()
     test_mark_wolf_dead_records_cause_and_log()
     test_set_user_conditions_dead_uses_death_cause()
-    test_revive_clears_cause_but_keeps_log()
+    test_clearing_death_condition_keeps_log()
     test_list_current_dead_wolves()
     print("OK")

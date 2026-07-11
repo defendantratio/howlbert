@@ -11,7 +11,7 @@ RAVEN_COMPANION_SCAVENGE_BONUS_PCT = 20
 RAVEN_COMPANION_TRACK_BONUS_PCT = 10
 
 USABLE_ITEM_KEYS = frozenset(
-    {"herb_bundle", "prey_bundle", "den_charm", "rabbit_pelt", "revive", "reincarnation"}
+    {"herb_bundle", "prey_bundle", "den_charm", "rabbit_pelt"}
 )
 
 

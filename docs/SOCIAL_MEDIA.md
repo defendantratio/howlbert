@@ -16,10 +16,12 @@ a full playbook for building an audience for howlbert, a discord wolf rp bot, an
 
 every post should move someone one step along that funnel. if a post does not build the world, teach a mechanic, or show a real moment, it does not earn its slot.
 
-**the one principle that matters most: build the runway before you launch.**
-you already decided to open the kickstarter only after social reach exists. that is correct. a kickstarter with no audience fails on day one; the algorithm and the "almost funded" psychology both need an existing crowd. so the first 6 to 8 weeks are pure audience building with zero asking. you do not mention the kickstarter until the runway is built.
+**the one principle that matters most: build the runway before i launch.**
+i already decided to open the kickstarter only after social reach exists. that is correct. a kickstarter with no audience fails on day one; the algorithm and the "almost funded" psychology both need an existing crowd. so the first 6 to 8 weeks are pure audience building with zero asking. i don't mention the kickstarter until the runway is built.
 
-**what makes howlbert postable:** it is not a generic bot. the hooks are the brutal, specific mechanics (a broken jaw changes what you can eat; there is no cure for river rot; three failed death saves and the wolf is gone) and the emotional weight of a persistent wolf you can lose. lead with those, always.
+**what makes howlbert postable:** it is not a generic bot. the hooks are the brutal, specific mechanics (a broken jaw changes what i can eat; there is no cure for river rot; three failed death saves and the wolf is gone) and the emotional weight of a persistent wolf i can lose. lead with those, always.
+
+**where i actually stand, read before the video sections:** i'm shy about performing on mic, and animal art isn't my strength yet, but i want to use this project as a reason to actually get better at both, in public, rather than avoid them. so the plan below shifts shape rather than dropping video entirely: **short-form (tiktok, reels) stays deprioritized** — that format lives and dies on a hook in the first two seconds, which is a bad fit for a slow, cozy world and a bad place to practice narration under pressure. **long-form, narrated youtube is a real second track instead**, forgiving of a rough take and a better match for this world's actual pacing. text-first channels (tumblr, bluesky, the directories and forums in sections 16-17) are still the fastest wins and still make up most of the runway, but see `docs/GROWTH_IDEAS.md`'s learn-in-public section for how the narration/art practice itself becomes postable content instead of something to hide until it's polished.
 
 ---
 
@@ -33,12 +35,12 @@ do these in order. do not skip to the campaign until the runway is built.
 - pin one post that explains what howlbert is, with a screenshot and the discord link.
 - post 3 to 4 times per week: mostly mechanic hooks and lore. no asking.
 
-**weeks 3 to 4: add tumblr and start video.**
-- add tumblr once you have 2 to 3 lore posts ready; it is where wolf rp and warrior cats audiences live and where posts get reblogged for months.
-- record your first 3 short videos (section 7). you launch instagram and tiktok only when you have a week of video queued.
+**weeks 3 to 4: add tumblr; video is optional, not a gate.**
+- add tumblr once i have 2 to 3 lore posts ready; it is where wolf rp and warrior cats audiences live and where posts get reblogged for months. this is the platform to actually invest in during this window.
+- short-form (section 7) is still optional and shouldn't gate instagram/tiktok launch — see section 1. long-form, narrated youtube is the video track actually worth building toward; it just runs on its own schedule (a video every couple of weeks, not a weekly quota) rather than being folded into this early-weeks checklist.
 
 **weeks 5 to 6: consistency and community.**
-- you should now be posting daily across the tier 1 platforms without scrambling, because you batch (section 6).
+- i should now be posting daily across the tier 1 platforms without scrambling, because i batch (section 6).
 - start engaging outward: reply to wolf rp and ttrpg accounts, join the conversations, do not just broadcast (section 10).
 - watch which pillar performs (mechanics vs lore vs community) and lean into it.
 
@@ -59,13 +61,13 @@ when reach is steady and the discord is growing on its own, open the kickstarter
 - best for: discord bot discovery, dev updates, short clips, kickstarter reach
 - audience: discord bot community, wolf sim players (wolvden, animal rpg), warrior cats adjacent, indie ttrpg
 - cadence: 3 to 4 times per week, building to daily during the runway
-- algorithm notes: the feed favors native media (image, gif, video) and replies; it throttles posts that contain outbound links. **put the discord/kickstarter link in a reply to your own post, not in the main post.** post text plus a screenshot, then reply with the link.
+- algorithm notes: the feed favors native media (image, gif, video) and replies; it throttles posts that contain outbound links. **put the discord/kickstarter link in a reply to my own post, not in the main post.** post text plus a screenshot, then reply with the link.
 - format: short text hook, screenshot, or a gif of a hunt roll or a sunrise injury message
 
 **bluesky** (@howlbert.bsky.social)
 - best for: creative writing, rp, indie dev; the wolf rp and warrior cats crowds are already migrating here
 - audience: overlaps heavily with tumblr; more narrative and adult than twitter
-- cadence: 3 to 4 times per week; you can cross-post from twitter with minimal edits
+- cadence: 3 to 4 times per week; i can cross-post from twitter with minimal edits
 - algorithm notes: chronological plus following-based, so consistency matters more than virality. links are fine here (no throttle) but still lead with the hook. always add alt text to images for reach and accessibility.
 
 **tumblr** (howlbert or howlbert-rpg)
@@ -74,13 +76,15 @@ when reach is steady and the discord is growing on its own, open the kickstarter
 - cadence: 2 to 3 times per week; evergreen posts get reblogged for months, so each post keeps working
 - algorithm notes: discovery is by tags, and **only the first 5 tags of a post are searchable.** choose them deliberately (see section 5). reblogs, not likes, drive reach; ask a question or leave room for people to add to the post.
 
-### tier 2 (add when tier 1 is stable)
+### tier 2 (add when tier 1 is stable, optional given the constraints in section 1)
+
+instagram and tiktok both lean heavily on reels/video, which is now a low-priority experiment rather than a plan requirement (see section 1). instagram also leans on wolf art and character portraits, which is a real cost given i don't have a free artist collaborator; treat any instagram presence as static screenshots and canva graphics, not a portrait-driven account. it's fine to skip this tier entirely and put that effort into tumblr, the newsletter, and the community/forum channels in `docs/GROWTH_IDEAS.md` instead.
 
 **instagram** (@howlbert.rp or @howlbert.bot)
 - best for: wolf art, character portraits, aesthetic screenshots, and especially reels
 - reels are the growth driver; treat them as a separate track from static posts
 - cadence: 1 to 2 static posts per week; 2 to 3 reels per week (cross-post to tiktok)
-- algorithm notes: reels reach far past your followers; static posts mostly reach existing followers. a strong first frame and the first 2 seconds decide everything. put the link in the bio (only one clickable link) and say "link in bio."
+- algorithm notes: reels reach far past my followers; static posts mostly reach existing followers. a strong first frame and the first 2 seconds decide everything. put the link in the bio (only one clickable link) and say "link in bio."
 
 **tiktok** (@howlbert or @howlbertrpg)
 - best for: reaching new people through the algorithm; wolf rp, ttrpg, and "dark cozy game" audiences are active
@@ -91,7 +95,7 @@ when reach is steady and the discord is growing on its own, open the kickstarter
 **reddit** (targeted posts, not an account to maintain)
 - post campaign announcements and genuinely useful updates to: r/discordapp, r/discordbots, r/worldbuilding, r/RoleplayingForReddit, and any active wolf rp or warriors sub
 - read each sub's rules first; reddit punishes anything that reads as an ad. lead with value (a story, a mechanic breakdown), mention the bot as context.
-- do not start your own subreddit until players are already posting organically; an empty sub is worse than none.
+- do not start my own subreddit until players are already posting organically; an empty sub is worse than none.
 
 ---
 
@@ -108,7 +112,7 @@ aim for this weekly mix. it keeps the account from becoming all-promo or all-lor
 | how-to tips | 15% | retain and convert people who just joined |
 
 ### mechanics spotlights
-explain one system clearly and dramatically. these are your best top-of-funnel hooks.
+explain one system clearly and dramatically. these are my best top-of-funnel hooks.
 - "pain exhaustion is a separate pool from normal exhaustion in howlbert. a snake bite fills it. herbs like willow bark and poppy drain only that pool. your wolf can be too tired to move and too hurt to rest at the same time."
 - "injuries cut your hunt yield, not just your combat. a sprained leg hunts at a penalty; add a deep gash and it stacks, down to half. hurt wolves come home with less."
 - "there are almost no cooldowns in howlbert. hunt, forage, explore as many times as you want; every action just spends energy, and your wolf tires. it respects your time and models real stamina instead of blocking you with a 'come back tomorrow' wall."
@@ -123,7 +127,9 @@ pure fiction; no gameplay needed. these travel furthest on tumblr and bluesky.
 ### community highlights (with permission)
 - a screenshot of a wolf barely surviving a con save against septic shock (blur the username)
 - a player's commissioned wolf portrait
-- "wolf of the week": a short writeup of a memorable in-server moment
+- "wolf of the week": now bot-generated — `/patronadmin spotlight` picks the most noteworthy `wolf_journal` moment from the last 7 sunrises and formats the post (`docs/GROWTH_IDEAS.md` section 40); run it weekly and post the result
+- the in-world obituary line on a striking death — also bot-generated (`docs/GROWTH_IDEAS.md` section 41), the den news "losses" field and the death-saves failure message both write one automatically now
+- "caption this": post a `/vitals` panel or a combat log with no caption, ask people to guess what happened (`docs/GROWTH_IDEAS.md` section 43) — interactive posts outperform static ones (section 21a)
 - a player-submitted backstory snippet
 
 ### dev updates
@@ -141,14 +147,14 @@ pure fiction; no gameplay needed. these travel furthest on tumblr and bluesky.
 
 ## 5. how to write a post that performs
 
-the examples above are good, but you will write hundreds of your own. these are the rules behind them.
+the examples above are good, but i will write hundreds of my own. these are the rules behind them.
 
 **the hook is the first line, and it is the whole game.**
 most people read only the first line before deciding to scroll. front-load the most striking, specific, or brutal detail. "there is no cure for river rot" beats "howlbert has a disease system."
 
 **be specific, not general.** numbers and named things stick. "a wolf with a sprained leg and a deep gash hunts at around 60%" beats "injuries matter." "the third echo belongs to the maw" beats "the lore is deep."
 
-**one idea per post.** if you are explaining two mechanics, that is two posts.
+**one idea per post.** if i'm explaining two mechanics, that is two posts.
 
 **end with a soft next step, not a hard sell.** during the runway: "this is howlbert," "wolf rp with teeth," or nothing at all. links go in a reply (twitter) or the bio (instagram/tiktok), never crammed into the hook.
 
@@ -171,10 +177,10 @@ most people read only the first line before deciding to scroll. front-load the m
 the reason most solo accounts die is scrambling for a post every day. do not. **batch once a week.**
 
 **one 2-hour session, once a week:**
-1. write 7 to 10 short posts across the pillars (aim for the section 4 mix). keep a running notes file of hooks so you never start from a blank page.
+1. write 7 to 10 short posts across the pillars (aim for the section 4 mix). keep a running notes file of hooks so i never start from a blank page.
 2. capture 3 to 5 screenshots or gifs from the bot (a good roll, an injury message, a rollover, a `/vitals` screen).
 3. record or assemble 2 to 3 short videos (section 7).
-4. schedule or queue everything: tumblr has a native queue; bluesky and twitter can be posted from your notes each morning in 5 minutes; buffer/later can schedule once you outgrow manual.
+4. schedule or queue everything: tumblr has a native queue; bluesky and twitter can be posted from my notes each morning in 5 minutes; buffer/later can schedule once i outgrow manual.
 
 **daily (5 minutes):** post the day's scheduled item, then spend a few minutes replying to comments and to other accounts (section 10). that is it.
 
@@ -182,9 +188,9 @@ keeping a hooks/ideas file is the single highest-leverage habit; every good mome
 
 ---
 
-## 7. short-form video (tiktok and instagram reels)
+## 7. short-form video (tiktok and instagram reels) — optional, low priority
 
-these platforms reach the most new people. treat each video as a standalone mini-story with a hook in the first second.
+these platforms reach the most new people *in theory*, but per section 1, treat this whole section as an occasional experiment, not a pillar to build a schedule around. the types below are written as on-screen text over a screen recording (no voiceover required), so none of them require my voice, but be honest with myself that a silent screen recording of typing a discord command is a weaker hook than a creator with a face or voice, and don't be surprised or discouraged if it underperforms text-first channels. if i do try one, type a is the lowest-effort and most content-agnostic to start with.
 
 ### video types (a separate track that pulls from every pillar)
 
@@ -213,7 +219,7 @@ these platforms reach the most new people. treat each video as a standalone mini
 - text: "check this every sunrise. it shows everything wrong with your wolf."
 
 ### production, all free or cheap
-- **screen capture:** obs studio (free) or your phone's screen recorder for the discord app.
+- **screen capture:** obs studio (free) or my phone's screen recorder for the discord app.
 - **editing:** capcut (free, the standard for reels/tiktok; captions, trims, text overlays, trending sounds).
 - **thumbnails and lore graphics:** canva (free tier is enough).
 - **specs:** 9:16 vertical, 15 to 30 seconds for tiktok (reels can reach 60 but shorter wins), large high-contrast text, captions always on, hook in second one, one clear call to action at the end.
@@ -221,11 +227,115 @@ these platforms reach the most new people. treat each video as a standalone mini
 
 ---
 
+## 7b. long-form youtube — the real video track
+
+this is the video format actually worth building toward, not short-form. long-form is forgiving of a rough take, doesn't need a hook in the first two seconds, and fits a slow, cozy world better than a clip built to grab a stranger scrolling past.
+
+**format ideas, roughly in order of production effort:**
+- **atmosphere, no narration, music only:** slow footage or stills (a `/vitals` panel, a hunt roll, in-world screenshots) set to mood-appropriate music, letting captions/on-screen text carry the story where needed. zero performance pressure; a good place to start.
+- **narrated devlog or world-tour:** a spoken walkthrough of a mechanic, a plot arc, or "what I built this week," recorded once, kept even if the narration is a little rough. per section 1, the practice itself is the point early on, not a polished delivery.
+- **an occasional longer session:** a played-through hunt, a rollover, a look at the herb compendium — closer to a devlog-with-gameplay than a produced trailer.
+
+**cadence:** roughly one video every two to four weeks, not a weekly quota — long-form takes longer to make and doesn't need to compete with the batching cadence in section 6.
+
+**music, when going the no-narration route:** stick to sources with clear, current free-for-use licensing so a video doesn't eat a copyright claim.
+- **[youtube's own audio library](https://www.youtube.com/audiolibrary)** — free, built directly into youtube studio, zero attribution headaches since it's designed for exactly this.
+- **[pixabay music](https://pixabay.com/music/)** — free, no attribution required, searchable by mood (a good match for "atmospheric," "dark ambient," "folk").
+- **[incompetech](https://incompetech.com/)** (kevin macleod) — free with attribution, a long-standing, reliable standby for indie/hobby video.
+- pick a mood that matches the world (slow, atmospheric, a little melancholy) over anything upbeat or trend-driven; the tone should match the "cozy, not attention-grabbing" pitch, not fight it.
+
+---
+
+## 7c. the first video, step by step
+
+the first video does two jobs at once, same as the first post in section 14: **hook** (make the world feel real) and **orient** (say what howlbert is and where to go). it should also be the easiest one to actually finish, since finishing it is what proves the format is sustainable. target length: 4 to 7 minutes — long enough to breathe, short enough to not become a second job.
+
+**1. pick the concept: "welcome to the wolf-world" — a narrated world-tour/devlog hybrid.**
+this is the version that does the most funnel work for the least production complexity: it's the youtube equivalent of the pinned first post, explaining the hook and the world in one sitting, and it doubles as the pinned video on the channel. narration can be a little rough — per section 1, that's the point early on, not a flaw to fix before posting.
+
+**2. write a short script before recording anything.** don't ad-lib the whole thing; a loose script keeps the take short and avoids the re-record spiral. rough beats, roughly timed:
+- **0:00 to 0:20 — the hook, cold open, no logo yet.** death is permanent, full stop, no exceptions, no shop item that undoes it (the old draft hedged this with "mostly/usually" to paper over a revive/reincarnation shop item that no longer exists; the shop only sells things like herbs now, nothing that undoes death, so the hook doesn't need softening): *"in howlbert, death is real. there is no cure for river rot. three failed death saves, and that wolf is gone. for good."* over an atmospheric screenshot or slow pan, not a talking head.
+- **0:20 to 0:40 — title card.** my existing logo/pfp, one line under it: "a discord wolf rp bot."
+- **0:40 to 2:00 — what the world is.** the caldera, the four packs, the maw, in the same voice as the tumblr lore posts (section 4 of the content pillars) — this can lean on the `docs/site/world.html` and `packs.html` text almost directly, since it's already written in the right voice.
+- **2:00 to 4:00 — what actually happens to a wolf.** walk through one full mechanic loop on screen: register, hunt, get hurt, treat the wound, survive (or don't). screen-recorded gameplay under the narration, not a talking head; this is the "prove it's real, not vaporware" beat from the kickstarter schedule (`docs/KICKSTARTER.md`), reused here for free.
+- **4:00 to 5:00 — who it's for and the invite.** "story over pay-to-win," who the packs are for, and the actual call to action: "join the pack, link below."
+- **end card, 5 to 10 seconds:** the wordmark again, the discord link written out on screen (people can't click a spoken link), and the same line closing every platform's first post.
+
+**3. record in two passes, not one.** record the gameplay/screenshots footage first (obs studio, free, already in section 8's tooling list), then record narration separately over the finished footage rather than trying to talk and play at the same time — this alone removes most of the pressure that causes stutters and re-takes, since a flubbed line is a 10-second re-record against silence, not a whole ruined take.
+
+**4. edit with a free tool.** capcut (already the standard pick in section 7) or davinci resolve's free tier for something with more room to grow into; either is enough for cuts, captions, and a text overlay under the narration for accessibility and for anyone watching muted.
+
+**5. thumbnail:** one clear image (a striking in-bot screenshot or the wordmark on the neocities dark background), 3 to 5 words of large text max ("a wolf that can die" reads better at thumbnail size than a full sentence). canva's free tier covers this.
+
+**6. title and description, written for search as well as the click:**
+- **title:** something with "wolf rp" and "discord bot" in it plainly, not just the hook — e.g. *"howlbert: a discord wolf rp bot where your wolf can actually die"* — search and the click-through both matter on youtube, unlike tiktok.
+- **description, first two lines matter most (shown before "show more"):** the same hook line, then a one-sentence description of the bot.
+- **first comment, pinned by me:** the discord invite link, so it's not competing for space in the description and is easy to find.
+- **tags:** wolf rp, discord bot, ttrpg, permadeath, indie game — plain, not clever; this is discovery, not branding.
+
+**7. after publishing:** pin it to the channel, post it to tumblr/bluesky the same way a lore post would go out (a still frame or the thumbnail plus the hook line, video linked), and treat the youtube description's discord link as the actual conversion point — the video's job is to get someone to click through, not to hold them on youtube.
+
+**8. what "good enough to post" means for video one:** the narration doesn't need to be smooth, the cuts don't need to be fancy, and the pacing doesn't need to be tight — it needs to explain the world clearly and end on the invite. per the learn-in-public idea in `docs/GROWTH_IDEAS.md`, a slightly rough first video is honest, not a problem to solve before shipping it.
+
+**a note on the hook, read before recording:** an earlier draft of this plan hedged the hook to "mostly/usually permanent" because `revive` and `reincarnation` shop items existed and could undo a death for anyone who paid — that's not pay-to-win in the usual sense (no pvp, no competitive "win" state this game has to begin with; the closest thing to progression, the prestige/legacy tiers, is earned entirely through play, not bought), but it did mean the marketing's absolute "and not come back" line wasn't quite true, and this audience notices that kind of gap. both items have since been dropped; the ko-fi shop's only rp-adjacent item now is a herb satchel (choice of herb, still requires the normal medicine check and prep to use — a convenience, not a shortcut around anything). death being unconditionally permanent is true again, so the hook doesn't need hedging anymore.
+
+---
+
+## 7d. the first video: full script
+
+read this at a normal pace, out loud, once, before recording, to check the timing actually lands near the section 7c beats. every `[bracket]` is a direction, not something to say out loud.
+
+> **[0:00–0:20 — cold open, atmospheric footage, no logo]**
+>
+> "in howlbert, death is real.
+>
+> there's no cure for river rot. three failed death saves, and most wolves don't come back from that.
+>
+> this is a discord bot about surviving that world anyway."
+>
+> **[0:20–0:35 — title card: my logo/pfp, centered, on the neocities dark background]**
+>
+> on-screen text only: "howlbert — a discord wolf rp bot."
+>
+> **[0:35–1:50 — world tour, screenshots/slow pans of the site or in-bot art, pulled loosely from `docs/site/world.html` and `packs.html`]**
+>
+> "howlbert is set in a world where four packs share one dying wild and one hungry god.
+>
+> greyspire holds the mountain by strength. mistmoor lives in the maw's belly, in the swamp. thistlehide remembers its dead in the forest. silverrush carries its grief like river-water, drinking the poison the twolegs pour upstream.
+>
+> and underneath all four: the maw. not good, not evil — wounded, and hungry, and always chewing. illness is the maw eating. injury is the maw eating. all a wolf gets to choose is how they meet the teeth."
+>
+> **[1:50–4:00 — screen-recorded gameplay under narration: /register, a hunt roll, an injury, a treat command]**
+>
+> "here's what that actually looks like. you register a wolf, pick a pack — or go it alone as a loner or a rogue. then you live: hunt, forage, build bonds, hold territory.
+>
+> injuries and disease are real and they stack. a sprained leg costs you on the hunt. a broken jaw changes what you can even eat. there are no cooldowns — energy is the only thing slowing you down, so the world never tells you to just come back tomorrow.
+>
+> and if it goes wrong, it can really go wrong. three failed death saves and that wolf is gone. permanently. no shop item, no workaround, nothing that brings them back — every wolf in the den plays by the same rules, whether it's your first sunrise or your fiftieth."
+>
+> **[4:00–4:45 — a slower, calmer beat: found-family/community footage or screenshots, if any exist]**
+>
+> "but it's not just survival. it's found family, pack politics, slow-burn plots that unfold over real sunrises, not cutscenes. book one, the current arc, gives every canon wolf in the world a real mechanical role in the story, not just flavor text."
+>
+> **[4:45–5:15 — the pitch, direct to camera or over a calm screenshot]**
+>
+> "if that sounds like your kind of world: this is a solo project, made by one person, and it's free to play. story over pay-to-win — nothing in the shop makes your wolf stronger than anyone else's, it's all cosmetic or convenience.
+>
+> i'm also running a kickstarter [replace with the actual campaign line once it's live, or cut this beat entirely during the pre-launch runway — see section 2, don't mention the kickstarter before the runway is built], and you can find howlbert on tumblr, bluesky, and [any other platform actually live at the time] if you want lore and dev updates between videos."
+>
+> **[5:15–5:30 — end card: logo, discord link spelled out on screen, same closing line as every other platform's first post]**
+>
+> "join the pack. link's in the description and the pinned comment. thanks for watching."
+
+**adapting this over time:** the kickstarter beat only belongs in the video once the runway (section 2) is actually built and the campaign is live or imminent — cut it entirely before then, and re-record just that 30-second beat when it's time rather than reshooting the whole video. the social-platform beat should list only what's actually active when this gets recorded, not the full aspirational list from section 3.
+
+---
+
 ## 8. assets and tooling (where the visuals come from)
 
-you cannot post text forever; visuals carry reach. sources, cheapest first:
-- **in-bot screenshots and gifs:** your richest free source. a good hunt roll, an injury sunrise message, a `/vitals` panel, a rollover announcement. use a clean discord theme and blur usernames.
-- **wolf art:** the ko-fi shop portrait commissions are already a source; feature them (with the artist and owner credited). for lore graphics, silhouettes and atmospheric stock over canva work well. if you use ai art, disclose it; the wolf rp and warriors communities care a lot about art honesty and will turn on undisclosed ai.
+i cannot post text forever; visuals carry reach. sources, cheapest first:
+- **in-bot screenshots and gifs:** my richest free source. a good hunt roll, an injury sunrise message, a `/vitals` panel, a rollover announcement. use a clean discord theme and blur usernames.
+- **wolf art:** the ko-fi shop portrait commissions are already a source; feature them (with the artist and owner credited). for lore graphics, silhouettes and atmospheric stock over canva work well. if i use ai art, disclose it; the wolf rp and warriors communities care a lot about art honesty and will turn on undisclosed ai.
 - **player-submitted content:** ask the discord for backstories, portraits, and memorable moments; it fills the community pillar and makes players feel seen.
 - **design tools:** canva (graphics), capcut (video), obs (capture). that is the whole stack.
 
@@ -252,7 +362,7 @@ accounts that only broadcast plateau. accounts that participate grow.
 - **reply outward daily:** find wolf rp, warrior cats, and indie ttrpg accounts and reply with something real, not a plug. be a member of the community first.
 - **answer every comment quickly,** especially in the first hour of a post; it signals the algorithm and builds relationships.
 - **ask questions in captions** ("which great pack would you join?") to invite replies and reblogs.
-- **collaborate:** once you have a foothold, offer other wolf rp creators a cross-post, a shared prompt, or a guest lore piece.
+- **collaborate:** once i have a foothold, offer other wolf rp creators a cross-post, a shared prompt, or a guest lore piece.
 - **what not to do:** do not spam links, do not reply "check out my bot" under strangers' posts, do not buy followers, do not argue with critics publicly. one graceless reply can define the account.
 
 ---
@@ -261,7 +371,7 @@ accounts that only broadcast plateau. accounts that participate grow.
 
 howlbert's darkness (terminal disease, mercy kills, pup culling, permadeath) is a genuine draw, but public feeds and younger audiences need care.
 - **lead with emotional weight, not gore.** "he lived. barely." lands harder and safer than graphic description.
-- **use content warnings** where a platform or community expects them (tumblr especially): tag or label posts about death, illness, or animal harm. it protects readers and marks you as trustworthy.
+- **use content warnings** where a platform or community expects them (tumblr especially): tag or label posts about death, illness, or animal harm. it protects readers and marks i as trustworthy.
 - **frame culling and mercy as the world's harsh realism,** the way nature documentaries do, not as shock content.
 - **never punch down or make light of real-world-coded suffering.** the mechanics model wolf ecology and grief; keep it in that register.
 
@@ -271,7 +381,7 @@ handled well, the darkness is exactly what makes howlbert memorable in a sea of 
 
 ## 12. kickstarter campaign schedule
 
-schedule these during the campaign window, on top of your normal cadence. mix text and video.
+schedule these during the campaign window, on top of my normal cadence. mix text and video.
 
 | day | post |
 |-----|------|
@@ -280,7 +390,7 @@ schedule these during the campaign window, on top of your normal cadence. mix te
 | day 3 | proof it is real: screen recording of a live hunt/rollover; "already playable, not vaporware" |
 | day 5 | community highlight + a pack-choice poll |
 | day 7 | mid-week update: funding progress + "what milestone c means for your pack" |
-| day 10 | ko-fi shop callout: revive and reincarnation explained (and how they differ) |
+| day 10 | ko-fi shop callout: the herb satchel explained (still a real medicine check, not a shortcut) |
 | day 14 | milestone d spotlight: what the combat and healing depth will feel like in play (before/after) |
 | day 16 | lore reel: the maw's throat / gravelback |
 | last 72h | urgency: "we are this close; here is what happens if we miss," with a countdown |
@@ -299,9 +409,9 @@ keep asking-fatigue down: for every campaign ask, still post a normal lore or me
 | tumblr | howlbert or howlbert-rpg |
 | instagram | @howlbert.rp |
 | tiktok | @howlbert or @howlbertrpg (check availability) |
-| email (ko-fi and contact) | howlbertrpg@gmail.com or your existing address |
+| email (ko-fi and contact) | howlbertrpg@gmail.com or my existing address |
 
-**pick one handle and use it everywhere it is free** so people can find you across platforms. check availability on all five before committing.
+**pick one handle and use it everywhere it is free** so people can find i across platforms. check availability on all five before committing.
 
 **bio (adapt per platform):** "discord wolf rp bot. four great packs, 100+ herbs, 30+ diseases, real wolf ecology, permadeath. story over pay-to-win. link below."
 
@@ -309,28 +419,28 @@ keep asking-fatigue down: for every campaign ask, still post a normal lore or me
 
 ---
 
-## 14. your first post on each platform (in depth)
+## 14. my first post on each platform (in depth)
 
-your first post is the one every new visitor checks before deciding to follow, so it has to do two jobs at once: **hook** (make the world feel real and different) and **orient** (say what howlbert is and where to go). pin it where the platform allows. below is exactly what to post on each, with copy you can adapt. the visual for almost every "first post" should be a striking in-bot screenshot: a `/vitals` panel showing 2 failed death saves, an injury sunrise message, or a rollover announcement. blur usernames.
+my first post is the one every new visitor checks before deciding to follow, so it has to do two jobs at once: **hook** (make the world feel real and different) and **orient** (say what howlbert is and where to go). pin it where the platform allows. below is exactly what to post on each, with copy i can adapt. the visual for almost every "first post" should be a striking in-bot screenshot: a `/vitals` panel showing 2 failed death saves, an injury sunrise message, or a rollover announcement. blur usernames.
 
 ### twitter/x
 
 **goal:** a pinned hook that reads in the first line and explains itself by the last, with the link kept out of the main post (links throttle reach here).
 
 **post text (adapt):**
-> your wolf can die, and not come back.
+> death is real, and it's usually permanent.
 >
-> howlbert is a discord wolf rp bot. four great packs, real injuries and disease, permadeath. there is no cure for river rot. three failed death saves and they are gone.
+> howlbert is a discord wolf rp bot. four great packs, real injuries and disease. there is no cure for river rot. three failed death saves and most wolves don't come back from that.
 >
 > story over pay-to-win.
 
-**then, as a reply to your own post:**
+**then, as a reply to my own post:**
 > join the pack: [discord invite link]
 
 **format checklist:**
 - attach one strong screenshot to the main post (native media lifts reach).
 - put the link in the reply, never the main post.
-- pin the main post to your profile.
+- pin the main post to my profile.
 - no hashtags, or one at most; discovery here is reposts and replies, not tags.
 - immediately after posting, reply to 3 to 5 wolf rp or ttrpg accounts so the account is not talking to an empty room.
 
@@ -339,40 +449,40 @@ your first post is the one every new visitor checks before deciding to follow, s
 **goal:** the same hook, but here links do not throttle, so the link can live in the post. alt text is mandatory for reach and accessibility.
 
 **post text (adapt):**
-> your wolf can die, and not come back.
+> death is real, and it's usually permanent.
 >
-> howlbert is a discord wolf rp bot: four great packs, real injuries and disease, permadeath. no cure for river rot; three failed death saves and they are gone.
+> howlbert is a discord wolf rp bot: four great packs, real injuries and disease. no cure for river rot; three failed death saves and most wolves don't come back from that.
 >
 > join the pack: [discord invite link]
 
 **format checklist:**
 - attach the screenshot and **write alt text** describing it (e.g., "a wolf's condition panel showing two failed death saves and one success").
-- pin the post to your profile.
+- pin the post to my profile.
 - keep it to a few short lines with white space.
 - reply to a handful of wolf rp and warriors accounts right after posting; bluesky growth is chronological and social, so early conversation matters.
 
 ### tumblr
 
-**goal:** tumblr rewards depth and reblogs for months, so your first post is longer and lore-forward. open with atmosphere, then explain the bot, then the link.
+**goal:** tumblr rewards depth and reblogs for months, so my first post is longer and lore-forward. open with atmosphere, then explain the bot, then the link.
 
 **post structure (adapt):**
 > **howlbert: a wolf rp bot with teeth**
 >
 > a perfect circle of packed earth in a collapsed caldera, where all four territories touch. the tongue-stone at the center is flat and black and warm even in winter. every howl echoes three times. the third echo belongs to the maw.
 >
-> howlbert is a discord bot for realistic, sentient wolf roleplay. four great packs, 100+ herbs, 30+ diseases with real daily penalties, permadeath, and a bones economy. injuries cut your hunt yield; a broken jaw changes what you can eat; there is no cure for river rot. story over pay-to-win.
+> howlbert is a discord bot for realistic, sentient wolf roleplay. four great packs, 100+ herbs, 30+ diseases with real daily penalties, death that's usually permanent, and a bones economy. injuries cut your hunt yield; a broken jaw changes what you can eat; there is no cure for river rot. story over pay-to-win.
 >
 > join the pack: [discord invite link]
 
 **format checklist:**
 - add a header image (the maw's throat art, a wolf silhouette, or a lore graphic).
 - **the first 5 tags are the only searchable ones.** use: #wolf rp, #warrior cats, #warriors rp, #wolf roleplay, #ttrpg. match how the community actually tags.
-- pin the post to your blog.
+- pin the post to my blog.
 - if the themes get dark (death, illness, culling), add a content warning tag; tumblr expects it.
 
 #### tumblr launch sequence: the first five posts
 
-tumblr is a slow burn; one post is not a launch. queue these over the first two weeks (one every 2 to 3 days) so a new follower who lands on your blog scrolls a real world, not a single ad. lead with lore, let mechanics and the invite ride underneath. reblog your own best post once a week at a different time; tumblr has no feed decay, so old posts keep finding people for months.
+tumblr is a slow burn; one post is not a launch. queue these over the first two weeks (one every 2 to 3 days) so a new follower who lands on my blog scrolls a real world, not a single ad. lead with lore, let mechanics and the invite ride underneath. reblog my own best post once a week at a different time; tumblr has no feed decay, so old posts keep finding people for months.
 
 **post 1; the pinned introduction (day 1).** the lore-forward intro above. pin it. this is the post every other one sends people back to.
 
@@ -383,7 +493,7 @@ tumblr is a slow burn; one post is not a launch. queue these over the first two 
 
 tags: #wolf rp #warriors #worldbuilding #lore #creature
 
-**post 3; the mechanic that hooks (day 6).** one brutal system, told as a story, with a screenshot if you have one.
+**post 3; the mechanic that hooks (day 6).** one brutal system, told as a story, with a screenshot if i have one.
 > in most rp bots your character is safe. in howlbert your wolf can catch **river rot** from the poisoned river, and there is no cure. not a hard one. none. your healer can ease the pain, buy days, sit with them. that is all anyone can do.
 >
 > injuries cut your hunt yield. a broken jaw changes what you can eat. three failed death saves is permanent. it is a discord bot; it plays like a hard little rpg about surviving a shrinking wild.
@@ -397,11 +507,11 @@ tags: #wolf rp #ttrpg #discord #indie games #wolf roleplay
 **post 4; a character or the packs (day 9).** let people pick a side; faction posts get reblogged as "i'm a ___ wolf."
 > four great packs, four ways to survive the same dying wild.
 >
-> **greyspire** rules the mountain by strength; blood is law. **mistmoor** breathes the swamp and reads the maw's dreams. **thistlehide** remembers the names of its dead in the forest. **silverrush** carries its grief like river-water, and drinks the poison the twolegs pour upstream.
+> **greyspire** rules the mountain by strength; blood is law. **mistmoor** breathes the swamp and lives in the maw's belly. **thistlehide** remembers the names of its dead in the forest. **silverrush** carries its grief like river-water, and drinks the poison the twolegs pour upstream.
 >
 > which den would keep you alive? which one would you die for? [discord invite]
 
-tags: #wolf rp #warrior cats #warriors rp #which one are you #wolf roleplay
+tags: #wolf rp #warrior cats #warriors rp #which one are i #wolf roleplay
 
 **post 5; the human threat / the stakes (day 12).** the theme that makes it more than a wolf sim.
 > the villain of howlbert is not a rival alpha. it is us.
@@ -426,14 +536,14 @@ tags: #wolf rp #worldbuilding #ttrpg #dark #wolf roleplay
 > #wolfrp #warriorcats #discordbot #indiegame #ttrpg #wolfroleplay #rp
 
 **format checklist:**
-- set the single bio link to your discord invite before posting.
+- set the single bio link to my discord invite before posting.
 - 5 to 10 hashtags below the caption, mixing broad (#wolfrp, #indiegame) and niche (#discordbot).
-- pin the post to the top of your profile grid.
+- pin the post to the top of my profile grid.
 - write the first line to stand alone; instagram truncates captions.
 
 ### tiktok
 
-**goal:** your first post is a short video, not text. it should be one of the video types (a mechanic in 30 seconds, or a lore drop) with a hook in the very first second.
+**goal:** my first post is a short video, not text. it should be one of the video types (a mechanic in 30 seconds, or a lore drop) with a hook in the very first second.
 
 **recommended first video (type a):**
 - screen-record typing `/bones action:hunt` and getting a failed, injuring roll.
@@ -470,11 +580,11 @@ tags: #wolf rp #worldbuilding #ttrpg #dark #wolf roleplay
 
 ## 15. home base: a link hub now, a lore site later
 
-social profiles are rented land; you want one url you own and control that points to everything. it also solves a real problem: instagram and tiktok allow only one clickable bio link, so that link should be your hub, not a raw discord invite.
+social profiles are rented land; i want one url i own and control that points to everything. it also solves a real problem: instagram and tiktok allow only one clickable bio link, so that link should be my hub, not a raw discord invite.
 
 ### the link hub (do this now; about one hour)
 
-**carrd** (carrd.co) is the standard: a free one-page site, fast to build, clean on mobile. **strawpage** (strawpage.com) is a free alternative that is popular in the tumblr, rp, and toyhouse crowd and has a more handmade feel. either works; pick one. carrd is more polished, strawpage fits the niche aesthetic. you do not need both.
+**carrd** (carrd.co) is the standard: a free one-page site, fast to build, clean on mobile. **strawpage** (strawpage.com) is a free alternative that is popular in the tumblr, rp, and toyhouse crowd and has a more handmade feel. either works; pick one. carrd is more polished, strawpage fits the niche aesthetic. i do not need both.
 
 **what goes on it:**
 - a hero line: the hook ("a discord wolf rp bot where wolves stay dead").
@@ -482,11 +592,11 @@ social profiles are rented land; you want one url you own and control that point
 - buttons, in priority order: **join the discord**, **ko-fi**, **kickstarter** (added when live), then each social account, then "read the lore" (points to the neocities site once it exists).
 - one strong wolf image or lore graphic, on-brand (dark, atmospheric).
 
-**then:** set this hub url as the single bio link on instagram and tiktok, and include it in the pinned posts everywhere. it becomes the one address you share anywhere offline or in dms.
+**then:** set this hub url as the single bio link on instagram and tiktok, and include it in the pinned posts everywhere. it becomes the one address i share anywhere offline or in dms.
 
 ### the lore site (phase 2, after the runway)
 
-**neocities** (neocities.org) is a free static-site host beloved in the indie, web-revival, and rp scene, which overlaps heavily with your audience. it is more effort than a carrd (you write html and css), so it is a phase-2 project, not a launch task. use it as the **world bible**: the deep, evergreen content that does not fit a social post and keeps working as a searchable reference. most of the writing already exists in `docs/LORE.md`; the site is that document, given a body.
+**neocities** (neocities.org) is a free static-site host beloved in the indie, web-revival, and rp scene, which overlaps heavily with my audience. it is more effort than a carrd (i write html and css), so it is a phase-2 project, not a launch task. use it as the **world bible**: the deep, evergreen content that does not fit a social post and keeps working as a searchable reference. most of the writing already exists in `docs/LORE.md`; the site is that document, given a body.
 
 #### the aesthetic
 
@@ -511,7 +621,7 @@ use css variables so the whole site recolours from one place. a warm-dark base w
 }
 ```
 
-**usage rules:** background `--ink`, body text `--bone`, links `--moss` going `--river` on hover, headings in `--bone` with a `--maw` underline or drop-cap only where you want weight. the red (`--maw`) is a spice, not a base; if it is everywhere it stops meaning death. give each pack page its own accent (moss, rot, stone, river) so the four dens feel distinct while sharing the frame.
+**usage rules:** background `--ink`, body text `--bone`, links `--moss` going `--river` on hover, headings in `--bone` with a `--maw` underline or drop-cap only where i want weight. the red (`--maw`) is a spice, not a base; if it is everywhere it stops meaning death. give each pack page its own accent (moss, rot, stone, river) so the four dens feel distinct while sharing the frame.
 
 #### typography
 
@@ -530,33 +640,33 @@ a flat, hand-linkable structure. every page reachable from a persistent top nav.
 4. **the four packs** (`packs.html` plus one page each: `greyspire.html`, `mistmoor.html`, `thistlehide.html`, `silverrush.html`): a hub page with four cards, then a full page per pack in that pack's accent colour, covering terrain, path, motto, trait, culture, and leadership. these are the most reblogged/linkable pages; make them beautiful.
 5. **the human world** (`twolegs.html`): the river rot, the thunderpath, the fishermen, the mill, traps and fences. the stakes page.
 6. **bestiary of illness** (`illness.html`): the diseases and the green tongue. generate the herb and disease tables from the bot's own data (export to json, render with a tiny build script) so they never drift from the game.
-7. **the wolves** (`characters.html`): the canon anchors by pack, each with a portrait, a one-line essence, and their role. link out to per-character deep pages later if you want.
+7. **the wolves** (`characters.html`): the canon anchors by pack, each with a portrait, a one-line essence, and their role. link out to per-character deep pages later if i want.
 8. **book one: the blinking** (`bookone.html`): the current arc as an in-world account (the twelve phases as an escalating story, not the staff mechanics table). update it as the arc advances; it doubles as a "what's happening now" page.
-9. **how to play** (`play.html`): register, pick a pack, survive your first sunrise; the on-ramp for people arriving cold from search or a directory.
-10. **credits / links** (`credits.html`): artists, fonts, the tools you used, and every social link. web-revival etiquette rewards a generous credits page.
+9. **how to play** (`play.html`): register, pick a pack, survive my first sunrise; the on-ramp for people arriving cold from search or a directory.
+10. **credits / links** (`credits.html`): artists, fonts, the tools i used, and every social link. web-revival etiquette rewards a generous credits page.
 
 #### layout and touches
 
 - a persistent left or top nav listing all pages; a small pack-accented sidebar on pack pages.
 - pull-quotes in the display serif with a `--maw` rule for the heaviest lore lines (the maw's, the mottos).
 - a subtle paper or fog texture at low opacity over `--ink`, and hairline `--line` dividers; avoid pure-black flatness.
-- an "88x31" style button for people to link back to you, and a webring or "wolves of neocities" link section if you find one; the neocities crowd loves this and it drives real cross-traffic.
+- an "88x31" style button for people to link back to me, and a webring or "wolves of neocities" link section if i find one; the neocities crowd loves this and it drives real cross-traffic.
 - fully responsive and light on assets: compress images, no heavy scripts. it should open fast on a phone.
 
 #### build and upload
 
 - write plain html and css; one shared `style.css` with the variables above, one html file per page. no framework needed. 
-- drag the files into neocities (free tier) or push with their cli. set the custom domain later if you buy one.
+- drag the files into neocities (free tier) or push with their cli. set the custom domain later if i buy one.
 
-**why it is worth it:** it delights the exact niche (wolf rp and warriors players love a lovingly made lore site), it hosts content too deep for feeds, it is discoverable in search, it gives your "read the lore" button a real destination, and the web-revival community around neocities itself becomes a small discovery channel. build it when you want a home with more room than a one-pager; the writing is already done in `docs/LORE.md`.
+**why it is worth it:** it delights the exact niche (wolf rp and warriors players love a lovingly made lore site), it hosts content too deep for feeds, it is discoverable in search, it gives my "read the lore" button a real destination, and the web-revival community around neocities itself becomes a small discovery channel. build it when i want a home with more room than a one-pager; the writing is already done in `docs/LORE.md`.
 
 ---
 
 ## 16. discord discovery: server and bot directories
 
-this is the most direct funnel you have and the plan was missing it. people literally search these sites to find servers and bots to join, so the intent is far higher than a passive social scroll. do this early; for a discord bot it may out-convert social media.
+this is the most direct funnel i have and the plan was missing it. people literally search these sites to find servers and bots to join, so the intent is far higher than a passive social scroll. do this early; for a discord bot it may out-convert social media.
 
-- **disboard** (disboard.org): the biggest discord **server** list. list the howlbert server, write a hook-led description, and tag it (roleplay, wolf, rp, community, warriors). you can **bump** the listing every 2 hours to stay visible; bump when you can.
+- **disboard** (disboard.org): the biggest discord **server** list. list the howlbert server, write a hook-led description, and tag it (roleplay, wolf, rp, community, warriors). i can **bump** the listing every 2 hours to stay visible; bump when i can.
 - **discadia**, **discord.me**, **discords.com**: additional server directories; list on each with the same tight description and tags.
 - **top.gg** (top.gg): the major **bot** list. list howlbert as a bot with a strong description, tags, and screenshots. note that bot listings usually require the bot to be public and may need verification once it is in enough servers; follow their process.
 - **rules and upkeep:** keep every listing description short and hook-led (lead with the brutal mechanic, not a feature list), keep the invite link working, and reply to reviews and ratings. make sure the server has a clear landing channel and an easy `/register` path, because directory traffic arrives cold and leaves fast if the first screen is confusing.
@@ -569,17 +679,16 @@ these are smaller than the big platforms but far denser in wolf rp and warriors 
 
 - **roleplay forums**: proboards-hosted wolf rp forums and general rp forum sites still have dedicated members. post an intro in the correct "advertise your rp / affiliates" board, following the format they require.
 - **deviantart** (deviantart.com): older but still home to wolf and warriors art, character refs, and lore journals, with active groups. good for sharing portraits, refs, and world posts to an art-minded audience.
-- **itch.io** (optional): even though howlbert is a discord bot, an itch page with a devlog reaches indie-game players and gives you another home for updates. lower priority; add it only if you have bandwidth.
+- **itch.io** (optional): even though howlbert is a discord bot, an itch page with a devlog reaches indie-game players and gives me another home for updates. lower priority; add it only if i have bandwidth.
 
 **one rule across all of these:** never drop a bare "join my bot" link. lead with a story, a piece of lore, or a mechanic, and let the bot be the context. these communities punish advertising and reward participation.
 
 ---
 
-## 18. what you do not need (yet)
+## 18. what i do not need (yet)
 
-- **youtube:** overkill until the community is a few hundred and you can invest in tutorial or devlog videos.
 - **a subreddit:** only once players post there on their own; an empty sub reads as dead.
-- **paid scheduling tools:** manual posting is fine at this scale; add buffer or later only when you are running 5+ posts a week across 3+ platforms.
+- **paid scheduling tools:** manual posting is fine at this scale; add buffer or later only when i'm running 5+ posts a week across 3+ platforms.
 - **paid ads:** organic reach and community are cheaper and more durable at launch; revisit ads only if the kickstarter has budget and a proven-converting video.
 
 ---
@@ -588,14 +697,14 @@ these are smaller than the big platforms but far denser in wolf rp and warriors 
 
 1. check handle availability across all five platforms; register twitter/x and bluesky first.
 2. write the bio and set the same profile image everywhere.
-3. build the link hub (carrd or strawpage, section 15) and set it as your instagram/tiktok bio link.
-4. list the howlbert server on disboard and discadia, and the bot on top.gg (section 16); these are your highest-intent funnel.
+3. build the link hub (carrd or strawpage, section 15) and set it as my instagram/tiktok bio link.
+4. list the howlbert server on disboard and discadia, and the bot on top.gg (section 16); these are my highest-intent funnel.
 5. prepare 8 to 10 posts (mechanics and lore) so the account is never empty.
-6. make and pin your first post on each platform using the templates in section 14.
+6. make and pin my first post on each platform using the templates in section 14.
 7. start a hooks/ideas notes file; add to it every time the bot or the discord does something postable.
 8. post 3 to 4 times the first week; reply to at least a few wolf rp accounts daily.
-9. add tumblr once you have 2 to 3 lore posts ready.
-10. record your first 3 videos; launch instagram and tiktok only when a week of video is queued.
+9. add tumblr once i have 2 to 3 lore posts ready.
+10. video is optional (section 1/7); skip instagram and tiktok entirely if i'd rather, and put that time into `docs/GROWTH_IDEAS.md`'s text/community channels instead.
 11. do not mention the kickstarter yet. build the runway first (section 2).
 
 ---
@@ -653,37 +762,37 @@ this section answers three real questions: why the accounts are not gaining trac
 
 almost every early account stalls for the same handful of reasons. diagnose against this list honestly.
 
-**1. you are broadcasting, not participating.** the single most repeated finding in the research: engagement has to come first. commenting, reblogging, and joining conversations in the wolf-rp and warriors community *before and alongside* posting is what gets a brand-new account seen. an account that only posts its own stuff is invisible; the algorithm and the community both reward the account that shows up in other people's replies and reblogs. **fix:** spend more time replying than posting. every day, reblog or comment on 5 to 10 wolf-rp / warriors / ttrpg posts as howlbert, adding something real, not "check out my bot."
+**1. i'm broadcasting, not participating.** the single most repeated finding in the research: engagement has to come first. commenting, reblogging, and joining conversations in the wolf-rp and warriors community *before and alongside* posting is what gets a brand-new account seen. an account that only posts its own stuff is invisible; the algorithm and the community both reward the account that shows up in other people's replies and reblogs. **fix:** spend more time replying than posting. every day, reblog or comment on 5 to 10 wolf-rp / warriors / ttrpg posts as howlbert, adding something real, not "check out my bot."
 
-**2. you are spread too thin.** trying to keep five platforms alive at once burns you out and means none of them get the volume they need to catch. **fix:** pick one primary and one secondary, and go hard on those. for this audience the primary is tumblr (wolf-rp and warriors live there and posts get reblogged for months) and the secondary is tiktok (short clips are the cheapest reach). let the others idle or cross-post.
+**2. i'm spread too thin.** trying to keep five platforms alive at once burns me out and means none of them get the volume they need to catch. **fix:** pick one primary and one secondary, and go hard on those. for this audience the primary is tumblr (wolf-rp and warriors live there and posts get reblogged for months) and the secondary is tiktok (short clips are the cheapest reach). let the others idle or cross-post.
 
-**3. your posts read as announcements.** static "here is a feature" posts underperform badly. the research puts hard numbers on it: posts with interactive elements get ~150% more engagement than static announcements, and behind-the-scenes content gets ~58% more than standard promo. **fix:** lead with the brutal specific hooks and make posts *do* something. polls ("your wolf finds a rival pup alone at the border; what do they do?"), "reblog with your wolf's name and cause of death," screenshots of a real brutal moment, dev-log peeks. the pinned mechanic hooks (no cure for river rot; three failed death saves and they are gone) are your best cold-open every time.
+**3. my posts read as announcements.** static "here is a feature" posts underperform badly. the research puts hard numbers on it: posts with interactive elements get ~150% more engagement than static announcements, and behind-the-scenes content gets ~58% more than standard promo. **fix:** lead with the brutal specific hooks and make posts *do* something. polls ("your wolf finds a rival pup alone at the border; what do they do?"), "reblog with your wolf's name and cause of death," screenshots of a real brutal moment, dev-log peeks. the pinned mechanic hooks (no cure for river rot; three failed death saves and they are gone) are my best cold-open every time.
 
-**4. you are not using each platform's discovery engine.** organic reach is throttled everywhere; you have to feed the discovery mechanic. on tumblr that is the first five tags (only those are searchable). on tiktok it is trending sounds and hooking the first two seconds. on bluesky it is starter packs and feeds. posting without these is posting into the void. **fix:** every post uses the platform's discovery levers, not generic hashtags.
+**4. i'm not using each platform's discovery engine.** organic reach is throttled everywhere; i have to feed the discovery mechanic. on tumblr that is the first five tags (only those are searchable). on tiktok it is trending sounds and hooking the first two seconds. on bluesky it is starter packs and feeds. posting without these is posting into the void. **fix:** every post uses the platform's discovery levers, not generic hashtags.
 
-**5. you are measuring the wrong thing.** follower count is a vanity metric; the research is blunt that social followers convert to backers at only ~2%, while email signups convert at ~5% and *kickstarter page pre-launch follows* at 15% to 30%. an account with 200 highly-engaged followers who reblog and join the discord is worth more than 2,000 passive ones. **fix:** measure discord joins, wolves registered, email/"notify me" signups, and kickstarter follows, not raw followers.
+**5. i'm measuring the wrong thing.** follower count is a vanity metric; the research is blunt that social followers convert to backers at only ~2%, while email signups convert at ~5% and *kickstarter page pre-launch follows* at 15% to 30%. an account with 200 highly-engaged followers who reblog and join the discord is worth more than 2,000 passive ones. **fix:** measure discord joins, wolves registered, email/"notify me" signups, and kickstarter follows, not raw followers.
 
 **6. patience.** marketing is a marathon; early posts reach a handful of people, and that is normal. what matters is whether they reach *the right* handful (rebloggers, tastemakers, active rp-ers). keep volume up, keep experimenting, and give it months, not weeks.
 
 ### 21b. how much traction to aim for before the kickstarter
 
-**stop chasing the "10,000 followers" rule.** it is quoted everywhere but it is a raw-social vanity target. the number that actually predicts funding is **kickstarter pre-launch page followers** (the "notify me on launch" follow button on your campaign page), because those people opted in specifically for *this* project and convert at 15% to 30%.
+**stop chasing the "10,000 followers" rule.** it is quoted everywhere but it is a raw-social vanity target. the number that actually predicts funding is **kickstarter pre-launch page followers** (the "notify me on launch" follow button on my campaign page), because those people opted in specifically for *this* project and convert at 15% to 30%.
 
 grounded tabletop / small-project benchmarks:
 
 - **~1,000 quality kickstarter pre-launch followers** is the number associated with funding a ~$100k campaign and hitting the goal inside the first 24 hours. ~2,000 tracks to ~$175k.
-- for a **modest first campaign** (a few hundred backers, a realistic goal for a solo discord-bot project), aim for **500 to 1,000 kickstarter pre-launch followers plus a "notify me" email list in the low hundreds.** at a 15% to 30% conversion that is your funded core on day one, and day-one momentum is what pulls in the other ~70% of backers who were never pre-launch followers.
+- for a **modest first campaign** (a few hundred backers, a realistic goal for a solo discord-bot project), aim for **500 to 1,000 kickstarter pre-launch followers plus a "notify me" email list in the low hundreds.** at a 15% to 30% conversion that is my funded core on day one, and day-one momentum is what pulls in the other ~70% of backers who were never pre-launch followers.
 - the first 100 followers are the most loyal and convert best; do not discount a small, hot list.
 
 so the real readiness checklist is not a follower number, it is:
 
-1. a **kickstarter pre-launch page is live** and you are driving every bit of reach to its follow button (do this early; it is the metric that matters).
+1. a **kickstarter pre-launch page is live** and i'm driving every bit of reach to its follow button (do this early; it is the metric that matters).
 2. **500 to 1,000 pre-launch follows** and/or a few hundred email/notify signups.
-3. the **discord grows on its own** (people join and register wolves without you dragging them in) which proves the funnel converts.
+3. the **discord grows on its own** (people join and register wolves without me dragging them in) which proves the funnel converts.
 4. **at least one platform where posts reliably get real engagement** (reblogs / comments / shares), not just impressions.
-5. an **8 to 10 week dedicated pre-launch push** before you hit go, inside a ~6 month total runway.
+5. an **8 to 10 week dedicated pre-launch push** before i hit go, inside a ~6 month total runway.
 
-if those are true, launch. if you are sitting at near-zero engagement, the fix is section 21a, not "post more announcements."
+if those are true, launch. if i'm sitting at near-zero engagement, the fix is section 21a, not "post more announcements."
 
 ### 21c. best practices per platform (2025 to 2026)
 
@@ -697,15 +806,15 @@ if those are true, launch. if you are sitting at near-zero engagement, the fix i
 **tiktok (secondary; cheapest reach).**
 - the algorithm favors authentic, creative, low-polish content over ads; short gameplay/dev clips and behind-the-scenes perform best.
 - hook in the first two seconds, ride a trending sound, keep it under ~30 seconds to start.
-- do not launch it until you have a week of clips queued; consistency matters more than production value.
+- do not launch it until i have a week of clips queued; consistency matters more than production value.
 
 **bluesky (good for narrative / adult rp overlap).**
 - get onto and build starter packs and custom feeds; that is the discovery mechanic.
 - more narrative and text-friendly than twitter; lore snippets and dev threads do well.
 - overlaps heavily with the tumblr crowd, so cross-post lore there.
 
-**instagram / reels (only when you have video).**
-- visual-first; pull the same clips you cut for tiktok. reels are the reach engine, the feed is the portfolio.
+**instagram / reels (only when i have video).**
+- visual-first; pull the same clips i cut for tiktok. reels are the reach engine, the feed is the portfolio.
 - link-in-bio to the carrd/link hub since ig kills in-post links.
 
 **twitter / x (optional, declining for this niche).**
@@ -717,7 +826,7 @@ if those are true, launch. if you are sitting at near-zero engagement, the fix i
 
 ### 21d. the one-line summary
 
-engagement before broadcasting; concentrate on tumblr + tiktok; measure discord joins / registrations / kickstarter follows instead of raw followers; and aim for **500 to 1,000 kickstarter pre-launch followers** (plus a small notify list and a self-growing discord) before you launch, not a five-figure follower count.
+engagement before broadcasting; concentrate on tumblr + tiktok; measure discord joins / registrations / kickstarter follows instead of raw followers; and aim for **500 to 1,000 kickstarter pre-launch followers** (plus a small notify list and a self-growing discord) before i launch, not a five-figure follower count.
 
 **sources:** launchboom crowdfunding guide; pledgebox follower-to-backer; the city of games "how many followers to fund a kickstarter"; prelaunch.marketing conversion-rate data; enworld pre-launch-followers-vs-funded threads; 5wpr and questgamedev / indiegamebusiness indie-marketing guides (2025 to 2026).
 

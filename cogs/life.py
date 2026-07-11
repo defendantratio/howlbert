@@ -382,7 +382,9 @@ class Life(commands.Cog):
             body += '\n\n**Stabilized at 1 HP.** Depleted hunger/hydration restored to a survivable level.'
             color = SUCCESS_COLOR
         elif outcome == 'died':
-            body += '\n\n**The wolf dies.** `/bones action:use item:revive` or `/bones action:use item:reincarnation new_name:<name>` if you have one (Ko-fi shop), or `/rpg action:delete confirm:DELETE` / `/register` for a fresh wolf.'
+            from engine.obituary import format_obituary_line
+            obituary = format_obituary_line(user['id'], user['wolf_name'], 'failed death saves')
+            body += f"\n\n**The wolf dies. Permanently.**\n{obituary}\n`/rpg action:delete confirm:DELETE` then `/register` for a fresh wolf."
             color = ERROR_COLOR
         else:
             body += f"\n\nSurvived round {result['round']}. **Round {result['round'] + 1}** next."

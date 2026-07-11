@@ -10,3 +10,4 @@ venv/
 # db backups
 *.bak-*
 fable.db.bak*
+.DS_Store

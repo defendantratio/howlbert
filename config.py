@@ -203,18 +203,10 @@ DEFAULT_SHOP_ITEMS = (
         30,
     ),
     (
-        "revive",
-        "Revive",
-        "Use `/bones action:use item:revive` when your active wolf is **dead**; same name & stats, back at 1 HP. "
-        "Old-age deaths reset to 60 moons. **Ko-fi shop only**.",
-        0,
-        0,
-    ),
-    (
-        "reincarnation",
-        "Reincarnation",
-        "Use `/bones action:use item:reincarnation new_name:<name>` when **dead**; new name & juvenile age (12 moons), "
-        "but keep attributes, skills, standing & bones. Clears prey/toys. **Ko-fi shop only**.",
+        "herb_satchel",
+        "Herb Satchel",
+        "Choice of one herb, delivered as raw stock to `/bones action:inventory`. Still needs "
+        "`/herbs action:prepare` and `/medic action:treat` the normal way. **Ko-fi shop only**.",
         0,
         0,
     ),
@@ -409,6 +401,10 @@ HUNTER_HUNTS_PER_SUNRISE = 10
 # vitals decay, needs-collapse, and exhaustion death on rollover. Set to 1 so a
 # wolf nobody plays for a sunrise stops decaying (and can't slowly die).
 AUTO_DORMANT_INACTIVE_DAYS = 1
+# /patronadmin quietwolves: off by default. an earlier rollover-reminder dm
+# feature landed poorly with the community; keep this dormant until there's
+# been a chance to check in with players first (docs/GROWTH_IDEAS.md section 44).
+QUIETWOLVES_COMMAND_ENABLED = False
 # Low mood streak: consecutive sunrises below threshold give a hunt penalty.
 LOW_MOOD_STREAK_THRESHOLD = 30
 LOW_MOOD_STREAK_HUNT_PENALTY_PCT = 10
@@ -705,6 +701,15 @@ INVITE_REGISTER_WINDOW_DAYS = 7
 INVITE_REFERRAL_ROLLOVERS = 3
 INVITE_MAX_PAYOUTS_PER_MONTH = 3
 
+# uncapped, cosmetic-only titles for lifetime successful referrals (does not
+# replace or extend the monthly bones/standing cap above; a player who brings
+# in a whole friend group in one month still only banks INVITE_MAX_PAYOUTS_PER_MONTH
+# worth of bones, but keeps earning these titles regardless of the cap).
+REFERRAL_MILESTONES: dict[int, str] = {
+    5: "Den-Builder",
+    25: "Pack Founder",
+}
+
 BOOST_FIRST_BONES = 60
 BOOST_FIRST_STANDING = 3
 BOOST_FIRST_MOOD = 10
@@ -840,21 +845,13 @@ KOFI_SHOP_CATALOG: dict[str, dict] = {
         "match_names": ("legend gift", "gift card"),
         "direct_link_codes": ("ff775b47c9",),
     },
-    "revive": {
-        "label": "Revive",
-        "price_cents": 3500,
-        "delivery": "instant",
-        "grant_item": "revive",
-        "match_names": ("revive", "second chance", "bring back"),
-        "direct_link_codes": ("75109e65b8",),
-    },
-    "reincarnation": {
-        "label": "Reincarnation",
-        "price_cents": 2800,
-        "delivery": "instant",
-        "grant_item": "reincarnation",
-        "match_names": ("reincarnation", "new life", "new body"),
-        "direct_link_codes": ("931aa27911",),
+    "herb_satchel": {
+        "label": "Herb Satchel",
+        "price_cents": 800,
+        "delivery": "manual",
+        "sla_days": 3,
+        "match_names": ("herb satchel", "herb bundle", "choose herb"),
+        "direct_link_codes": (),
     },
 }
 

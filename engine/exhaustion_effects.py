@@ -201,6 +201,7 @@ def apply_exhaustion_death_on_rollover(
         )
         deaths.append(
             {
+                "wolf_id": row["id"],
                 "wolf_name": row["wolf_name"],
                 "discord_id": row["discord_id"],
                 "cause": "exhaustion",

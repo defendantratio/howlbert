@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="howlbert, a discord wolf rp bot. four territories, one throat, and a wounded god that keeps count." />
+    <title>howlbert · the world bible</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & base ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        /* light theme – warm bone & earth */
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        /* dark theme – caldera at night */
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ── theme toggle ── */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        /* ── layout ── */
+        .site-wrap {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── glass boxes ── */
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        /* ── top bar ── */
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+
+        /* ── hero ── */
+        .hero {
+            padding: 34px 30px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3.6rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .subhead {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 400;
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+            color: var(--bone-dim);
+            margin-bottom: 18px;
+        }
+        .hero .hook {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--bone);
+            max-width: 60ch;
+            margin: 0 auto 6px;
+        }
+        .hero .hook .maw-word {
+            color: var(--maw);
+            font-weight: 600;
+        }
+        .hero .description {
+            font-size: 1.05rem;
+            color: var(--bone-dim);
+            max-width: 65ch;
+            margin: 8px auto 0;
+            line-height: 1.7;
+        }
+
+        /* ── map ── */
+        .map-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+        }
+        .map-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin-bottom: 16px;
+        }
+
+        .map-viewport {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+            background: #0e0f0d;
+            border: 2px solid var(--line);
+            border-radius: 16px;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .map-viewport:active {
+            cursor: grabbing;
+        }
+
+        .map-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform-origin: 0 0;
+            pointer-events: none;
+            will-change: transform;
+            transition: transform 0.05s linear;
+            image-rendering: auto;
+        }
+
+        .map-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 20;
+        }
+
+        .map-ctrl-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--ctrl-bg);
+            backdrop-filter: blur(6px);
+            color: var(--bone);
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: lowercase;
+            padding: 0;
+        }
+
+        .map-ctrl-btn:hover {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+            transform: scale(1.08);
+        }
+
+        .map-ctrl-btn.reset-btn {
+            font-size: 1rem;
+        }
+
+        /* ── cta ── */
+        .cta-section {
+            padding: 18px 26px 26px;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .cta-section .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            text-shadow: none;
+        }
+        .cta-btn.primary {
+            background: var(--maw);
+            border-color: var(--maw);
+            color: var(--ink);
+        }
+        .cta-btn.primary:hover {
+            background: #c04a52;
+            border-color: #c04a52;
+            color: var(--ink);
+        }
+        .cta-btn.secondary {
+            border-color: var(--moss);
+        }
+        .cta-btn.secondary:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--moss);
+        }
+        .cta-btn.tertiary {
+            border-color: var(--river);
+        }
+        .cta-btn.tertiary:hover {
+            background: var(--river);
+            color: var(--ink);
+            border-color: var(--river);
+        }
+
+        /* ── marquee (horizontal) ── */
+        .marquee-section {
+            padding: 12px 0;
+            overflow: hidden;
+            border-top: 1px solid var(--line);
+            background: var(--glass-bg);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+        }
+        .marquee-section h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 8px 16px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .marquee-track {
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            padding: 4px 0;
+        }
+        .marquee-inner {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 12px;
+            width: max-content;
+            animation: scroll-horizontal 30s linear infinite;
+        }
+        .marquee-inner img {
+            display: block;
+            border-radius: 6px;
+            max-width: 100px;
+            max-height: 80px;
+            width: auto;
+            height: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--line);
+            flex-shrink: 0;
+        }
+        .marquee-section:hover .marquee-inner {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll-horizontal {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* ── footer ── */
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        /* ── audio ── */
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ── neko override ── */
+        #nl {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 999;
+            pointer-events: none;
+        }
+        #nl a {
+            display: none;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: 4px;
+            }
+            .hero .hook {
+                font-size: 1.1rem;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .map-ctrl-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            .map-ctrl-btn.reset-btn {
+                font-size: 0.9rem;
+            }
+            .marquee-inner img {
+                max-width: 70px;
+                max-height: 60px;
+            }
+            .marquee-inner {
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+            }
+            .hero .hook {
+                font-size: 0.95rem;
+            }
+            .hero .description {
+                font-size: 0.9rem;
+            }
+            .cta-btn {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+            .map-viewport {
+                border-radius: 10px;
+            }
+            .marquee-inner img {
+                max-width: 55px;
+                max-height: 50px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <!-- ── theme toggle ── -->
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <!-- ── hidden audio ── -->
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <!-- ── neko ── -->
+    <div id="nl"></div>
+    <script>
+        NekoType = "white";
+    </script>
+    <script src="https://webneko.net/n20171213.js">
+    </script>
+
+    <!-- ── site ── -->
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <!-- top bar: directory -->
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="namegen.html">⟡ wolf name generator</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- hero -->
+            <header class="glass hero">
+                <h1>howlbert</h1>
+                <div class="subhead">the world bible</div>
+                <p class="hook">
+                    four territories, one throat, and a <span class="maw-word">wounded god</span> that keeps count.
+                </p>
+                <p class="description">
+                    a discord wolf rp bot set in a world where mountain, forest, swamp, and river
+                    meet at the tongue-stone. the packs share one faith: the maw, a hungry god that chews
+                    on illness, injury, birth, and death, and watches how a wolf meets the teeth.
+                    the wild is shrinking, the river is fouling, and every season the teeth close a little further.
+                </p>
+            </header>
+
+            <!-- map with zoom & pan -->
+            <section class="glass map-section" aria-label="the world map">
+                <h2>the world map</h2>
+                <div class="map-viewport" id="viewport">
+                    <img src="https://iili.io/CcJcpRa.png" alt="labelled map of the world; four territories with all locations" class="map-image" id="mapImage" />
+                    <div class="map-controls">
+                        <button class="map-ctrl-btn" id="zoomIn" aria-label="zoom in">+</button>
+                        <button class="map-ctrl-btn" id="zoomOut" aria-label="zoom out">−</button>
+                        <button class="map-ctrl-btn reset-btn" id="resetView" aria-label="reset view">⟲</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- cta -->
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                </div>
+                
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--bone-dim);">
+                    the caldera waits. how will you meet the teeth?
+                </p>
+            </section>
+
+            <!-- marquee stamps (horizontal) -->
+            <div class="marquee-section">
+                <h3>stamps &amp; buttons</h3>
+                <div class="marquee-track">
+                    <div class="marquee-inner" id="marqueeInner">
+                        <img src="https://iili.io/FdP3fyl.jpg" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FdP3CjS.webp" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FdP3nZ7.webp" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FdP3zGe.gif" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FnsQPun.gif" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FnsQ4yX.jpg" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FdP3awB.gif" alt="stamp" loading="lazy" />
+                        <img src="https://iili.io/FdP3Bu2.png" alt="stamp" loading="lazy" />
+                      
+                    </div>
+                </div>
+            </div>
+
+            <!-- footer -->
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <!-- ── theme toggle + map interaction script ── -->
+    <script>
+        (function() {
+            // ---- theme ----
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme(
+                'light');
+            } catch (_) {}
+
+            // ---- map zoom + pan ----
+            const viewport = document.getElementById('viewport');
+            const mapImg = document.getElementById('mapImage');
+
+            let scale = 1;
+            let panX = 0;
+            let panY = 0;
+
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let startPanX = 0;
+            let startPanY = 0;
+
+            function applyTransform() {
+                mapImg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            }
+
+            function zoom(factor, centerX, centerY) {
+                const oldScale = scale;
+                scale *= factor;
+                scale = Math.min(Math.max(scale, 0.4), 10);
+
+                const ratio = scale / oldScale;
+                panX = centerX - (centerX - panX) * ratio;
+                panY = centerY - (centerY - panY) * ratio;
+
+                applyTransform();
+            }
+
+            function resetView() {
+                scale = 1;
+                panX = 0;
+                panY = 0;
+                applyTransform();
+            }
+
+            // mouse drag
+            viewport.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startPanX = panX;
+                startPanY = panY;
+                viewport.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                panX = startPanX + dx;
+                panY = startPanY + dy;
+                applyTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    viewport.style.cursor = 'grab';
+                }
+            });
+
+            // mouse wheel
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const factor = e.deltaY < 0 ? 1.1 : 0.9;
+                zoom(factor, mouseX, mouseY);
+            }, { passive: false });
+
+            // touch
+            let lastTouchDist = 0;
+            let touchStartPanX = 0;
+            let touchStartPanY = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isTouching = false;
+
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    isTouching = true;
+                    isDragging = true;
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                    startPanX = panX;
+                    startPanY = panY;
+                } else if (e.touches.length === 2) {
+                    const t1 = e.touches[0];
+                    const t2 = e.touches[1];
+                    lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                    touchStartPanX = panX;
+                    touchStartPanY = panY;
+                    isTouching = true;
+                    isDragging = false;
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging) {
+                    const touch = e.touches[0];
+                    const dx = touch.clientX - touchStartX;
+                    const dy = touch.clientY - touchStartY;
+                    panX = startPanX + dx;
+                    panY = startPanY + dy;
+                    applyTransform();
+                } else if (e.touches.length === 2) {
+                    const t1 = e.touches[0];
+                    const t2 = e.touches[1];
+                    const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+
+                    if (lastTouchDist > 0) {
+                        const rect = viewport.getBoundingClientRect();
+                        const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
+                        const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
+
+                        const scaleFactor = dist / lastTouchDist;
+                        const oldScale = scale;
+                        scale *= scaleFactor;
+                        scale = Math.min(Math.max(scale, 0.4), 10);
+                        const ratio = scale / oldScale;
+
+                        panX = midX - (midX - panX) * ratio;
+                        panY = midY - (midY - panY) * ratio;
+                        applyTransform();
+                    }
+                    lastTouchDist = dist;
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', (e) => {
+                if (e.touches.length === 0) {
+                    isDragging = false;
+                    isTouching = false;
+                    lastTouchDist = 0;
+                }
+            }, { passive: true });
+
+            // buttons
+            document.getElementById('zoomIn').addEventListener('click', () => {
+                const rect = viewport.getBoundingClientRect();
+                zoom(1.15, rect.width / 2, rect.height / 2);
+            });
+
+            document.getElementById('zoomOut').addEventListener('click', () => {
+                const rect = viewport.getBoundingClientRect();
+                zoom(0.85, rect.width / 2, rect.height / 2);
+            });
+
+            document.getElementById('resetView').addEventListener('click', resetView);
+
+            // prevent context menu
+            viewport.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // initial state
+            applyTransform();
+            viewport.style.cursor = 'grab';
+        })();
+    </script>
+
+</body>
+
+</html>
