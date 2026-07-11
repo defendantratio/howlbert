@@ -134,20 +134,3 @@ separate from official directories (disboard, top.gg), the wolf-rp and warriors-
 
 if only doing a few of these: **finishing the referral loop (1)** and **discord discovery (5)** are the highest-leverage because they are free, compounding, and aimed at people already inside or already searching — closer to section 16/21b's "highest-intent funnel" framing in the social media plan than a cold audience play, and (1) in particular is mostly done already. **the in-character wolf account (2)**, **toyhouse/art fight (4)**, and **micro-influencer gifting (8)** are the best next tier: cheap, on-brand, and reach warmer, more specific audiences than a generic post. **the conservation tie-in (9)** is the one genuinely different acquisition angle in this whole list — it reaches people none of your other channels touch. the rest are good opportunistic adds once the core runway from `docs/SOCIAL_MEDIA.md` is already running.
 
-## COLLABORATION TEMPLATE
--
-Consider using this template when looking for collaboration opportunities! This can help you get on the same page as potential collab partners faster:
--
-
-Platform:
-Game(s):
-Timezone:
-General information about the collab:
-
-Age range of collab partners:
-Is your content Family-Friendly?: Yes/No
-Is your content for those 18+ Only?: Yes/No
-
-What I want out of the collab:
-What I don't want from the collab:
-
