@@ -111,6 +111,7 @@ def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
 
     meta = prey_meta(stack["prey_key"])
     old_hunger = int(user["hunger"]) if "hunger" in user.keys() else 0
+    old_exhaustion_pre_meal = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
     new_hp, new_exhaustion, hp_gain = apply_meal_energy(user, stack["bone_value"])
     hunger_gain = meal_hunger_gain(stack["prey_key"])
     new_hunger = db.adjust_hunger(user["id"], hunger_gain)
@@ -134,6 +135,9 @@ def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
         hp=new_hp,
         exhaustion=new_exhaustion,
     )
+    if new_exhaustion < old_exhaustion_pre_meal:
+        from engine.energy import gain_energy_from_exhaustion_relief
+        gain_energy_from_exhaustion_relief(user, old_exhaustion_pre_meal - new_exhaustion)
 
     from engine.prey_items import is_forage_food
 

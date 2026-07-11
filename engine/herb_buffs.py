@@ -1152,8 +1152,12 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
         fields.update(grant_disease_save_advantage(user))
         fields.update(merge_buff_fields(user, calm_until_day=day + 1, sleep_aid_until_day=day + 1))
         if disease_key:
-            ex = max(0, int(user["exhaustion"] if "exhaustion" in user.keys() else 0) - 1)
+            old_ex = int(user["exhaustion"] if "exhaustion" in user.keys() else 0)
+            ex = max(0, old_ex - 1)
             fields["exhaustion"] = ex
+            if ex < old_ex:
+                from engine.energy import gain_energy_from_exhaustion_relief
+                gain_energy_from_exhaustion_relief(user, old_ex - ex)
             return {
                 "kind": "minor_relief",
                 "message": (

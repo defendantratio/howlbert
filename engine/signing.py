@@ -768,6 +768,9 @@ async def execute_sign(
         old_ex = int(user["exhaustion"])
         new_ex = max(0, old_ex - SIGN_STRETCH_EXHAUSTION_RELIEF)
         db.set_user_conditions(interaction.user.id, wolf_id=user["id"], exhaustion=new_ex)
+        if new_ex < old_ex:
+            from engine.energy import gain_energy_from_exhaustion_relief
+            gain_energy_from_exhaustion_relief(user, old_ex - new_ex)
         if old_ex == new_ex:
             lines.append("a good shake-off, though you weren't carrying much tiredness to begin with.")
         else:

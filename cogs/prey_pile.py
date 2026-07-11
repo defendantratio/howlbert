@@ -46,8 +46,9 @@ async def _apply_prey_choice(interaction: discord.Interaction, pile_id: int, cho
         from engine.prey_items import prey_key_from_label
         from engine.thirst import meal_thirst_gain
         jaw_note = meal_jaw_pain_note(wolf)
+        old_exhaustion = int(wolf['exhaustion'])
         new_hp, new_exhaustion, hp_gain = apply_meal_energy(wolf, pile['prey_bones'])
-        exhaustion_delta = new_exhaustion; int(wolf['exhaustion'])
+        exhaustion_delta = old_exhaustion - new_exhaustion
         prey_key = prey_key_from_label(pile['prey_label'])
         if prey_key:
             hunger_gain = meal_hunger_gain(prey_key)
@@ -55,6 +56,9 @@ async def _apply_prey_choice(interaction: discord.Interaction, pile_id: int, cho
             db.adjust_hunger(wolf['id'], hunger_gain)
             db.adjust_thirst(wolf['id'], thirst_gain)
         db.set_user_conditions(wolf['discord_id'], wolf_id=wolf['id'], hp=new_hp, exhaustion=new_exhaustion)
+        if exhaustion_delta > 0:
+            from engine.energy import gain_energy_from_exhaustion_relief
+            gain_energy_from_exhaustion_relief(wolf, exhaustion_delta)
     dispute_note = ''
     skirmish_id = None
     hunter = db.get_user_by_id(pile['hunter_wolf_id'])

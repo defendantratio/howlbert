@@ -364,6 +364,9 @@ async def treat(
         old_ex = int(user['exhaustion'])
         new_ex = max(0, old_ex - 1)
         db.set_user_conditions(interaction.user.id, wolf_id=user['id'], exhaustion=new_ex)
+        if new_ex < old_ex:
+            from engine.energy import gain_energy_from_exhaustion_relief
+            gain_energy_from_exhaustion_relief(user, old_ex - new_ex)
         msg = f"**{item['name']}**: exhaustion **{old_ex}** -> **{new_ex}**."
 
     elif special == 'hunger_shield':

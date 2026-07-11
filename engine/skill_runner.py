@@ -302,13 +302,21 @@ def apply_scenario_mechanics(
             if lift_spirit_curse(user["id"]):
                 lines.append("_curse scent lifts from the pelt._")
         if scenario.key == "surv_blizzard_shelter":
-            ex = max(0, int(user["exhaustion"]) - 1)
+            old_ex = int(user["exhaustion"])
+            ex = max(0, old_ex - 1)
             db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            if ex < old_ex:
+                from engine.energy import gain_energy_from_exhaustion_relief
+                gain_energy_from_exhaustion_relief(user, old_ex - ex)
             db.adjust_mood(user["id"], 4)
             lines.append("_lee found; **−1 exhaustion**, **+4 mood**._")
         if scenario.key == "nav_blizzard_camp":
-            ex = max(0, int(user["exhaustion"]) - 1)
+            old_ex = int(user["exhaustion"])
+            ex = max(0, old_ex - 1)
             db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            if ex < old_ex:
+                from engine.energy import gain_energy_from_exhaustion_relief
+                gain_energy_from_exhaustion_relief(user, old_ex - ex)
             db.adjust_mood(user["id"], 3)
             lines.append("_camp found; **−1 exhaustion**, **+3 mood**._")
         if scenario.category == "howling":
@@ -336,12 +344,20 @@ def apply_scenario_mechanics(
             db.update_user(user["discord_id"], wolf_id=user["id"], **fields)
             lines.append("_splint ready; bone injuries heal **2 days** faster._")
         if scenario.key == "craft_travois":
-            ex = max(0, int(user["exhaustion"]) - 1)
+            old_ex = int(user["exhaustion"])
+            ex = max(0, old_ex - 1)
             db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            if ex < old_ex:
+                from engine.energy import gain_energy_from_exhaustion_relief
+                gain_energy_from_exhaustion_relief(user, old_ex - ex)
             lines.append("_travois lashed; **−1 exhaustion** hauling the wounded._")
         if scenario.key == "surv_dig_den":
-            ex = max(0, int(user["exhaustion"]) - 1)
+            old_ex = int(user["exhaustion"])
+            ex = max(0, old_ex - 1)
             db.set_user_conditions(user["discord_id"], wolf_id=user["id"], exhaustion=ex)
+            if ex < old_ex:
+                from engine.energy import gain_energy_from_exhaustion_relief
+                gain_energy_from_exhaustion_relief(user, old_ex - ex)
             lines.append("_den scraped; **−1 exhaustion** from shelter work._")
         if scenario.key == "surv_diagnose":
             key, stage = parse_disease_from_user(user)
