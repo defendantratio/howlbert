@@ -64,30 +64,6 @@ you do not need a large streamer; you need a handful of small ones (hundreds to 
 
 pitch: "permadeath wolf rp discord bot, free, 20 minutes to try." offer a light incentive: a "streamer's wolf" cosmetic title or founding-player credit for anyone who joins from the stream. this doubles as content: clip the vod for a tiktok/reel (type c, "community moment," already in the plan's video framework) — someone else generating your best raw footage for free.
 
-### ready to post: smallstreamercommunity collab ad
-
-post this in smallstreamercommunity's freeform collab ad channel, filled into their required template. it leads with the hook (a wolf that can really die), keeps expectations loose since this is a discord bot rather than a stream native game, and is explicit about the darker themes and the 18+ server up front so nobody signs up for a surprise.
-
-> **platform:** discord (howlbert is a free discord bot, playable and showable on whatever platform you stream: twitch, youtube, kick, tiktok live, all fine)
->
-> **game(s):** howlbert, a permadeath wolf roleplay bot. real injuries and disease, no cooldowns (energy is the only throttle), a wolf you can genuinely lose for good.
->
-> **timezone:** flexible, async friendly. i'm one solo dev, not a live co host, so this isn't a "stream together" collab, think "try it live on your own schedule" rather than a scheduled two person stream.
->
-> **general information about the collab:** i'm looking for streamers to try howlbert live, chat driven, for 20 to 30 minutes, register a wolf, hunt, forage, maybe watch chat pick which risky choice to make. it's slow burn and stat driven, closer to a cozy survival sim than a shooter, so it plays well with chat participation (let chat vote on actions, name the wolf, etc). i'll be in your discord or chat during the stream if you want live support, and i'll clip and credit the vod afterward (with your permission) for howlbert's own socials. happy to set your wolf, or a wolf named after your channel, up with a small "streamer's wolf" cosmetic title as a thank you, and credit you as a founding tester in the server.
->
-> **age range of collab partners:** the howlbert discord server is 18+ only, so i'm looking for streamers whose audience skews adult, or who are comfortable filtering for that.
->
-> **is your content family friendly?:** no. it's fantasy wolf ecology content (hunting, injury, illness, and permadeath are core mechanics), with animal death and some genuinely dark themes (terminal illness, mercy killing). no gore and no sexual content, but the tone is closer to a nature documentary than a cozy game, and it's paired with an 18+ discord.
->
-> **is your content for those 18+ only?:** yes. the discord server howlbert lives in is 18+ only.
->
-> **what i want out of the collab:** a genuine 20+ minute live try through in front of your chat, a mention or link to the discord if you had fun, and (only with your ok) permission to clip a moment or two for howlbert's own social accounts with full credit to you.
->
-> **what i don't want from the collab:** no exclusivity, no pressure to make it a recurring series unless you want to, no need to oversell it to your chat. if it's not for you or your audience, no hard feelings and thanks for the look.
-
-adjust the tone slightly per-server (some collab channels want it terser), but keep the "what I don't want" line — a no-pressure ask reads as trustworthy in these communities and gets more replies than a pitch that sounds like it needs a yes.
-
 ---
 
 ## 7. youtube shorts, distinct from a full youtube channel
@@ -154,24 +130,77 @@ separate from official directories (disboard, top.gg), the wolf-rp and warriors-
 
 ---
 
+## 14. record your own rp as an "actual play" — your ~24 members are the cast
+
+the biggest owned-content lever you already have the raw material for. actual-play (recorded ttrpg/rp sessions) is one of the most reliable discovery engines in this hobby, and unlike a podcast *about* the game it needs no audience to start — the content **is** the community playing. you have ~24 people and a bot that generates plot beats: that's a cast and a script generator.
+
+- **record it free with craig** ([craig.chat](https://craig.chat/)) — a multi-track discord voice recorder on 340k+ servers, built for exactly this crowd; `/join` to start, `/stop` to end, and it returns a separate clean track *per speaker* (edit one mic without touching the others). run a scheduled voice-channel rp "gathering" (tie it to the in-world moon-howl / fourtrees events the bot already has), record it, lightly cut it in [audacity](https://www.audacityteam.org/) (free).
+- **one recording, two publishes:** a "howlbert actual play" video on youtube (evergreen search + feeds the shorts pipeline in section 7) *and* the audio pushed to a podcast host (section 15). one session = a video + a podcast episode + 3–4 clips.
+- **why it fits 24 members:** it converts activity you already run into a marketing asset with no new cast to recruit, and it deepens retention (people schedule around a recurring recorded event — section 18) while producing the discovery content at the same time.
+
+---
+
+## 15. an in-world audio series ("field dispatches") — the podcast, done for small scale
+
+you asked about a podcast. a *talk-about-the-game* podcast at 24 members has no audience yet — don't build that. build the version that works at any scale: a short (2–4 min) **in-character narrated audio series** — a wolf's field diary, a warning about river rot, a border report after a rollover — evergreen, searchable, and repurposed straight from the bot's sunrise-news scene prompts (free scripts, the same well section 2 draws from).
+
+- **host it free on [spotify for podcasters](https://podcasters.spotify.com/)** (the former anchor): free hosting that distributes to spotify and exports an rss feed for apple podcasts etc. record in audacity, one voice, minimal edit.
+- this is a *different surface* from the in-character text blog (section 2) and the podcast-*guesting* play (section 11): owned audio you control, it seeds podcast-search discovery, and each episode is also a video (waveform + ref art) for youtube/tiktok. keep it in-world so it reads as a persona, not an ad. one episode a fortnight is plenty.
+
+---
+
+## 16. start an email newsletter now — the one audience an algorithm can't throttle
+
+every channel in the plan is rented land (a platform decides your reach). a newsletter is the one **owned, portable** audience: you keep the list, no feed gates it, it compounds. start it at 24 subscribers — that's fine; it's an asset that only grows.
+
+- **[buttondown](https://buttondown.com/)** — free up to 100 subscribers with no feature crippling, clean markdown, you fully own the list (the minimalist, writer-first choice). or **[substack](https://substack.com/)** if you'll trade simplicity for built-in discovery — its recommendation network can surface you to other newsletters' readers, a real if small growth vector. ko-fi also has built-in email broadcasts if you'd rather keep it all in one place.
+- content is nearly free: a monthly "dispatch from the wild" = one balance/lore devlog note + one in-world snippet + a "wolf of the month" from your canon roster. link the join form from the strawpage hub and pin it in the server.
+- **why it matters at your size:** these 24 are your highest-intent people; capturing even a fraction as subscribers means you can reach them for the kickstarter launch (`docs/KICKSTARTER.md`) *directly* instead of hoping a discord ping or a tweet lands. section 21b of the social plan already flags email as the highest-converting funnel — this is how you start building that list *today*.
+
+---
+
+## 17. a community-editable fan wiki (miraheze), not just the dev-owned lore site
+
+section 10 turns the dev-owned neocities site into seo real estate. a *community-editable* wiki is a different animal and does two jobs a static site can't: it's a collaborative project that gives your 24 members something to build together (retention), and community wikis rank well for exactly the "wolf rp lore / [creature] rp" searches you want.
+
+- **use [miraheze](https://miraheze.org/)** — free, nonprofit, **no ads**, gdpr-clean, community-owned — over [fandom](https://www.fandom.com/), which is ad-cluttered and widely advised against for new wikis in 2026. request a wiki, seed it with your book-one canon roster and world/disease/herb pages (content you already have), then let trusted members add their own wolves and write-ups.
+- caveat: miraheze needs a little mediawiki know-how to set up nicely — treat it as a "when a few members want to co-build lore" project, not a day-one task. it's the closest thing to the **"own forum"** you asked about that makes sense at this scale: a standalone web forum would just split a 24-person community, and discord's built-in **forum channels** (section 18) already cover in-server threaded rp/lore for free.
+
+---
+
+## 18. the honest part: at 24 members, retention and co-creation beat acquisition
+
+blunt truth from the research on sub-50 servers: pouring acquisition into a leaky bucket wastes it — a small server with a high active-member ratio beats a bigger dead one, and your fastest growth is turning the 24 into people who **stay and recruit**. this is absent from the whole doc and it's the highest-leverage thing on this list.
+
+- **onboarding:** enable discord's **welcome screen** + **onboarding** (server settings → onboarding) so a new joiner instantly knows what the server is in one sentence and has a clear first action (`/register`, pick a pack). first impressions decide whether a join becomes a member.
+- **one reliable weekly ritual beats four random ones:** a fixed weekly in-world event (a fourtrees gathering, a moon-howl night) people schedule around — pair it with the section-14 recording so the ritual doubles as content.
+- **question-of-the-day / low-pressure prompts:** a recurring in-character prompt ("what would your wolf do at the border tonight?") keeps the channel warm; empty channels kill small servers.
+- **the 48-hour lurker dm:** when someone joins and doesn't post, a friendly manual dm two days later ("saw you joined — anything you're looking for?") recovers a surprising share of silent joiners. trivial at this scale.
+- **you visibly *playing*, not just moderating** — small servers live or die on the founder being a genuine participant.
+- **co-creation = free evangelism:** let members name an npc, vote on a plot branch, or get a landmark named for their wolf (the bot already has npc/landmark hooks). people don't leave — or shut up about — a world they helped build. it's the cheapest word-of-mouth engine you have.
+
+---
+
+## 19. run one time-boxed "server event" as a launch moment
+
+a small server needs *reasons to invite a friend today*, not just a standing open door. a one-off, **dated**, in-world event — "the great migration," a "founding season," a limited plot arc with a commemorative cosmetic for anyone who takes part — creates urgency, gives members a concrete "come do this with me this weekend" pitch, and is inherently postable (a countdown, a recap, screenshots) across every channel in the social plan.
+
+- announce a date, offer a **participation-only cosmetic** (a founding-season title/badge — you already have the cosmetic/title system), and let current members bring one friend into the event specifically; hang a light referral hook off it (section 1).
+- recap it as content afterward (a section-14 recording, a newsletter dispatch, a shorts clip). distinct from the *cross-server* joint events in section 3 — this one is your own house throwing the party.
+
+---
+
+## 20. reserve your namespace while it's free
+
+cheap housekeeping, not a channel — claim your name everywhere before a squatter does, so future searches resolve to you.
+- **create the subreddit [r/howlbert](https://www.reddit.com/)** even if you don't use it yet: an owned space that ranks in search and is ready when you're bigger (the social plan only covers posting to *existing* subreddits). free to reserve; sit on it.
+- grab the matching handle on any in-plan platform you haven't claimed, plus a **[guilded](https://www.guilded.gg/)** mirror of the discord as a hedge/landing page. minutes of work, avoids a future headache.
+
+---
+
 ## priority read
 
-if only doing a few of these: **finishing the referral loop (1)** and **discord discovery (5)** are the highest-leverage because they are free, compounding, and aimed at people already inside or already searching — closer to section 16/21b's "highest-intent funnel" framing in the social media plan than a cold audience play, and (1) in particular is mostly done already. **the in-character wolf account (2)**, **toyhouse/art fight (4)**, and **micro-influencer gifting (8)** are the best next tier: cheap, on-brand, and reach warmer, more specific audiences than a generic post. **the conservation tie-in (9)** is the one genuinely different acquisition angle in this whole list — it reaches people none of your other channels touch. the rest are good opportunistic adds once the core runway from `docs/SOCIAL_MEDIA.md` is already running.
+**start with the 24-member reality (18).** at your size, acquisition into a low-retention server leaks out as fast as it comes in — onboarding, one reliable weekly ritual, the 48-hour lurker dm, and co-creation are the cheapest, highest-leverage moves here, and every acquisition play converts better once they're in place. then **start the email list (16)** — the one audience no algorithm can throttle, and what you'll actually launch the kickstarter to. then **record your rp as actual play (14)** — it turns the weekly activity you already run into discovery content with no new cast to find.
 
-## COLLABORATION TEMPLATE
--
-Consider using this template when looking for collaboration opportunities! This can help you get on the same page as potential collab partners faster:
--
-
-Platform:
-Game(s):
-Timezone:
-General information about the collab:
-
-Age range of collab partners:
-Is your content Family-Friendly?: Yes/No
-Is your content for those 18+ Only?: Yes/No
-
-What I want out of the collab:
-What I don't want from the collab:
+from the original list, **finishing the referral loop (1)** and **discord discovery (5)** remain the strongest acquisition plays (free, compounding, high-intent), and **the in-character wolf account (2)**, **toyhouse/art fight (4)**, **micro-influencer gifting (8)**, and **the conservation tie-in (9)** are the best warm-audience next tier. the in-world audio series (15), fan wiki (17), one-off server event (19), and namespace housekeeping (20) are strong opportunistic adds. layer the rest on once the retention loop and your owned assets (list, audio, wiki) are running.
 
