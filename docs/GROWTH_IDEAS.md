@@ -64,6 +64,30 @@ you do not need a large streamer; you need a handful of small ones (hundreds to 
 
 pitch: "permadeath wolf rp discord bot, free, 20 minutes to try." offer a light incentive: a "streamer's wolf" cosmetic title or founding-player credit for anyone who joins from the stream. this doubles as content: clip the vod for a tiktok/reel (type c, "community moment," already in the plan's video framework) — someone else generating your best raw footage for free.
 
+### ready to post: smallstreamercommunity collab ad
+
+post this in smallstreamercommunity's freeform collab ad channel, filled into their required template. it leads with the hook (a wolf that can really die), keeps expectations loose since this is a discord bot rather than a stream native game, and is explicit about the darker themes and the 18+ server up front so nobody signs up for a surprise.
+
+> **platform:** discord (howlbert is a free discord bot, playable and showable on whatever platform you stream: twitch, youtube, kick, tiktok live, all fine)
+>
+> **game(s):** howlbert, a permadeath wolf roleplay bot. real injuries and disease, no cooldowns (energy is the only throttle), a wolf you can genuinely lose for good.
+>
+> **timezone:** flexible, async friendly. i'm one solo dev, not a live co host, so this isn't a "stream together" collab, think "try it live on your own schedule" rather than a scheduled two person stream.
+>
+> **general information about the collab:** i'm looking for streamers to try howlbert live, chat driven, for 20 to 30 minutes, register a wolf, hunt, forage, maybe watch chat pick which risky choice to make. it's slow burn and stat driven, closer to a cozy survival sim than a shooter, so it plays well with chat participation (let chat vote on actions, name the wolf, etc). i'll be in your discord or chat during the stream if you want live support, and i'll clip and credit the vod afterward (with your permission) for howlbert's own socials. happy to set your wolf, or a wolf named after your channel, up with a small "streamer's wolf" cosmetic title as a thank you, and credit you as a founding tester in the server.
+>
+> **age range of collab partners:** the howlbert discord server is 18+ only, so i'm looking for streamers whose audience skews adult, or who are comfortable filtering for that.
+>
+> **is your content family friendly?:** no. it's fantasy wolf ecology content (hunting, injury, illness, and permadeath are core mechanics), with animal death and some genuinely dark themes (terminal illness, mercy killing). no gore and no sexual content, but the tone is closer to a nature documentary than a cozy game, and it's paired with an 18+ discord.
+>
+> **is your content for those 18+ only?:** yes. the discord server howlbert lives in is 18+ only.
+>
+> **what i want out of the collab:** a genuine 20+ minute live try through in front of your chat, a mention or link to the discord if you had fun, and (only with your ok) permission to clip a moment or two for howlbert's own social accounts with full credit to you.
+>
+> **what i don't want from the collab:** no exclusivity, no pressure to make it a recurring series unless you want to, no need to oversell it to your chat. if it's not for you or your audience, no hard feelings and thanks for the look.
+
+adjust the tone slightly per-server (some collab channels want it terser), but keep the "what I don't want" line — a no-pressure ask reads as trustworthy in these communities and gets more replies than a pitch that sounds like it needs a yes.
+
 ---
 
 ## 7. youtube shorts, distinct from a full youtube channel
