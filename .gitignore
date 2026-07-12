@@ -11,3 +11,11 @@ venv/
 *.bak-*
 fable.db.bak*
 .DS_Store
+
+# db backups (never commit these)
+*.bak-*
+fable.db.bak*
+fable.db-journal
+
+# personal art notes (keep local)
+docs/ARTIST_BEST_PRACTICES.md
