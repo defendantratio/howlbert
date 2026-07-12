@@ -423,6 +423,13 @@ async def treat(
         db.set_user_conditions(subject_did, wolf_id=subject_id, clear_disease=True, condition='healthy')
         who = 'their disease' if treat_patient else 'your disease'
         msg = f"**{meta.get('name', item['name'])}** cured {who}."
+        from engine.wolf_journal import log_achievement_once
+        log_achievement_once(
+            subject_id, treat_subject['wolf_name'], "First Cure",
+            achievement_key="first_disease_cured",
+            guild_id=interaction.guild.id if interaction.guild else None,
+            day=treat_day,
+        )
 
     elif outcome == 'cough_dose':
         from engine.herb_buffs import apply_disease_dose

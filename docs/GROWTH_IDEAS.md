@@ -370,11 +370,11 @@ the whole plan runs on free channels on purpose, but a handful of small, bounded
 
 ---
 
-## 42. frequent small achievements, not just the big prestige climb — started
+## 42. frequent small achievements, not just the big prestige climb — built
 
-**status: one real trigger wired, more to come.** prestige (`/prestige`) is a long multi-tier climb; good long-term hook, slow one. `engine/wolf_journal.py`'s `log_achievement` already existed but had exactly one caller (a quest-completion path); founding a pack (`/foundpack`) now also logs a genuine achievement trophy for both founders, which was a real gap — a major, rare moment that previously left no journal trace at all.
+**status: built.** prestige (`/prestige`) is a long multi-tier climb; good long-term hook, slow one. `engine/wolf_journal.py`'s original `log_achievement` had exactly one caller (a quest-completion path); founding a pack (`/foundpack`) now also logs a genuine achievement trophy for both founders. added `log_achievement_once` (keys namespaced as `achievement:<type>` so multiple distinct "first x" moments can each land once per wolf, instead of only a wolf's very first achievement of any kind ever counting) and wired two new triggers: a wolf's first successful surgery (`engine/surgery.py`) and a wolf's first disease cured (`cogs/care_handlers.py`'s `cured_disease` outcome). `engine/spotlight.py` was updated so these namespaced keys still score as a normal achievement for wolf-of-the-week picks.
 
-- **worth wiring next, when there's time:** first kill/blooding already has its own journal event (`log_blooded`), so it's covered; first successful surgery, surviving a chronic-illness scare, and a wolf's first cured disease are the next-best candidates — each just needs one `log_achievement` call added at its existing success point, same pattern as `/foundpack`.
+- **worth wiring next, when there's time:** first kill/blooding already has its own journal event (`log_blooded`), so it's covered; surviving a chronic-illness scare (a disease death-save success, not just a cure) is the next-best candidate — same `log_achievement_once` pattern, added at its existing success point.
 - these feed the wolf-of-the-week (40) and community-highlights pillar (`docs/SOCIAL_MEDIA.md` section 4) with more raw material than the big prestige tiers alone generate.
 
 ---
@@ -391,6 +391,39 @@ post a `/vitals` panel or a combat log with no caption; ask people to guess what
 
 - **why it's off right now:** an earlier rollover-reminder dm feature landed badly with the community, so this is gated behind `QUIETWOLVES_COMMAND_ENABLED` in `config.py` (currently `False`) until there's been a chance to actually ask players how they'd feel about an activity check-in, rather than assuming. flip the flag when ready; nothing else needs to change.
 - **how to use it once it's on:** run it occasionally, then send a few genuine, low-pressure manual dms to whoever's on the list ("saw your wolf's been quiet, everything okay?"). it's a list, not an auto-messenger, on purpose — a real check-in reads very differently from a bot-blasted one, and that distinction is probably worth explaining up front if it comes up when asking players.
+
+---
+
+## 45. a real server structure: booster perks + an art/creative wing
+
+most of this doc treats the server as a container for the bot. it's worth treating server *structure itself* as a retention lever — a server that only has rp channels gives people one reason to stay; a server with a real creative community around it gives them several, and most of these cost nothing but channel setup.
+
+**booster perks, documented properly:** the bones/mood/standing rewards for boosting already exist and already auto-fire the moment someone boosts (`cogs/patron.py`'s `on_member_update` listener, `engine/patron.py`'s `grant_first_boost`/`grant_second_boost`) — the gap isn't code, it's visibility. a **#patron** channel spelling out exactly what boosting and other support gets someone (and who's currently boosting/backing) turns an invisible auto-grant into something people actually know to want. this channel can mostly write itself from data the bot already has: `/patron` for personal status, the referral leaderboard (section 1) and kickstarter backer badge for public recognition.
+
+**checked against the real server structure:** the real server already has an **art sharing** channel under OOC SPACE. that channel doesn't get replaced by this wing — it's the general dump, and the wing below is the specialization of it (commissions vs. free trades vs. adopts vs. weekly spotlight are different enough activities that splitting them out is worth it once art sharing has enough volume to justify it). start the wing small — #commissions and #art-of-the-week are the two with the clearest immediate payoff (real marketplace, reuses the spotlight code already built) — and only peel off the rest of the list as art-sharing traffic actually demands it, rather than launching 8 near-empty channels at once.
+
+a dedicated **howlbert category** (separate from OOC SPACE) is worth it specifically because bot commands currently sit inside a general ooc catch-all alongside voice chat and birthdays — pulling bot-adjacent channels (bot commands, and #open-scenes and #screenshot-showcase once those exist) into their own category makes the bot's presence feel intentional instead of tacked-on, and it's a pure discord-admin reorg, no bot code involved. not worth it yet if it's just one channel; worth it once #open-scenes and #screenshot-showcase exist alongside bot commands, since three related channels in a generic ooc category is exactly the kind of clutter categories are for.
+
+**an art/creative wing**, mostly under one **art** category:
+- **#commissions** (forum) — writing and art commissions, a real marketplace channel; this is also where the micro-influencer gifting play (section 8) and the sofurry/vgen artist-discovery channels (section 37) point *inward* to once someone's interested, instead of the conversation dead-ending in dms.
+- **#headcanons** — quick lore ideas and interpretations; low-effort, high-frequency posting, the kind of channel that stays alive on its own once it has momentum.
+- **#free-to-use-images** — a shared stock/asset folder (borders, dividers, textures); small thing, real quality-of-life for anyone building a character sheet or a bio.
+- **#art-of-the-week** — same underlying idea as the wolf-of-the-week spotlight (section 40, already built), applied to the art side instead of the journal side; could even be judged the same way the contest picks (section 18) are.
+- **#art-trade** and **#requests** — free-exchange boards, distinct from paid commissions; lower barrier to entry, keeps less-established artists engaged too.
+- **#adopts** (forum) — character-adoption marketplace; a genuinely standard, well-understood channel type in oc/rp-adjacent communities (the same crowd toyhouse and art fight, sections 4 and 8, already reach).
+- **#resources** (forum) — tutorials, palettes, brush packs, reference sheets; a forum type here so tutorials stay individually findable instead of scrolling, same reasoning as #commissions and #adopts above.
+- **partnership rules** (a pinned doc or channel topic, not necessarily its own channel) — the actual terms for the affiliate swaps already happening (section 3): what a partner gets, what's expected in return, so it's a repeatable process instead of a one-off conversation each time.
+- **#server-directory** — the affiliate/partner server links live here (sections 3, 13), in one place instead of scattered.
+- **#server-art** — credited server- and howlbert-specific art (emojis, icons, banners), with a pinned "how to submit" post; this is also where a future logo/wordmark commission (section 39) or a `/showcase`-style asset (section 30) would get shown off.
+- **#neocities** — just the link, kept simple; the neocities site (`docs/SOCIAL_MEDIA.md` section 15) deserves a persistent, easy-to-find pointer in-server, not just an occasional social post.
+- **#howlbert** — the real server already has a **bot commands** channel under OOC SPACE, which mostly covers this; a rename/repurpose rather than a new channel, unless the goal is separating command-spam from bot-related discussion, in which case keeping both makes sense.
+
+**a few more channels worth adding to the list, on top of what's already planned:**
+- **#new-member-intro** — the real server already has an **introductions** channel under BEGIN YOUR JOURNEY, so this is covered; no new channel needed.
+- **#screenshot-showcase** — a dedicated dump for dramatic `/vitals` panels, death saves, and combat logs. this is the exact raw material the wolf-of-the-week spotlight and caption-this format (sections 40, 43) already need; right now those moments have nowhere to land and just scroll past in rp channels. genuinely new — nothing in the real channel list covers this.
+- **#fic-recs** (distinct from headcanons) — headcanons are quick lore ideas; this is for actual longer written scenes and stories in the world, and it's the natural in-server counterpart to the ao3 crosspost idea (section 23). genuinely new.
+- **#open-scenes — built.** the bot now keeps a live, auto-edited index of currently-open `/scene` threads (`engine/open_scenes_index.py`, wired into `/scene start`/`join`/`leave`/`end`); point `OPEN_SCENES_CHANNEL_ID` at a channel and it maintains itself. the real server already has **rp finder** and **session discussion** under ROLEPLAY HUB — worth checking what those are actually used for before adding a third channel; if rp finder is just "post looking for rp" text, the auto-index is a straight upgrade and can replace it, if it's doing something else the two can coexist.
+- **#suggestions** — the real server already has a **suggestions** channel under OOC SPACE, so this is covered; no new channel needed.
 
 ---
 
@@ -413,4 +446,6 @@ post a `/vitals` panel or a combat log with no caption; ask people to guess what
 **the paid upgrades (39) are purely opportunistic — nice when there's a few dollars spare, never a blocker.** the domain and the logo commission are the two with the best cost-to-polish ratio if only doing one or two; the rest (print materials, a test ad, canva pro, an occasional referral prize) are fine to skip entirely without weakening anything else in this doc.
 
 **the wolf-of-the-week spotlight (40) and the obituary line (41) are built; start actually using them.** `/patronadmin spotlight` weekly is now just a habit to build, not a feature to build — the code side is done. caption-this (43) is the same content pipeline with zero code, pure posting habit. frequent achievements (42) has one real trigger wired (founding a pack); the next few (surgery, disease survival) are small, one-line additions whenever there's a spare few minutes. finding quiet players (44) is built but deliberately left off — ask players how they'd feel about it before flipping `QUIETWOLVES_COMMAND_ENABLED` on.
+
+**the server structure (45) is cheap, one-time setup work — worth doing in one focused pass rather than piecemeal.** the #patron channel and #screenshot-showcase are the two with the most direct payoff (documenting a reward that already silently exists; feeding content into 40/43 that currently has nowhere to go). the rest of the art wing can be seeded thin (one pinned post each) and left to grow on its own; an empty channel is fine, an empty *category* full of dead channels reads worse than not having them.
 

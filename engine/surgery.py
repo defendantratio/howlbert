@@ -544,6 +544,12 @@ def run_surgery(
             from engine.wolf_journal import log_surgery
 
             log_surgery(patient_id, patient["wolf_name"], spec.label, success=True)
+        from engine.wolf_journal import log_achievement_once
+
+        log_achievement_once(
+            surgeon["id"], surgeon["wolf_name"], "First Surgery",
+            achievement_key="first_surgery", guild_id=guild_id, day=day,
+        )
         return True, "\n".join(lines)
 
     lines.append(spec.failure)

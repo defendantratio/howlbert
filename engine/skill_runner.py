@@ -601,6 +601,13 @@ def run_skill_scenario(
             extra_notes.append(f"{note} (older trail: x{trail_age_scale:g})")
         elif note:
             extra_notes.append(note)
+        from engine.location_effects import location_scent_dc_mod
+
+        ic_location = user["ic_location"] if "ic_location" in user.keys() else None
+        loc_mod, loc_note = location_scent_dc_mod(ic_location)
+        if loc_mod:
+            dc += loc_mod
+            extra_notes.append(loc_note)
     if scenario.key == "track_blood" and rained:
         dc += 5
         extra_notes.append("blood trail washed (+5 DC)")

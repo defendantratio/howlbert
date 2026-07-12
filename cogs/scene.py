@@ -6,6 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 import database as db
 from engine.scene_roster import build_roster_embed, refresh_scene_roster
+from engine.open_scenes_index import refresh_open_scenes_index
 from utils.embeds import ERROR_COLOR, SUCCESS_COLOR, howlbert_embed, player_message, choice_label
 from utils.permissions import is_howlbert_admin
 from utils.replies import reply_ephemeral
@@ -113,6 +114,7 @@ class Scene(commands.Cog):
         scene = db.get_scene_by_thread(thread.id)
         if scene:
             await refresh_scene_roster(self.bot, scene)
+        await refresh_open_scenes_index(self.bot, interaction.guild.id)
         await interaction.followup.send(embed=howlbert_embed('Scene Opened', f"{thread.mention} is live as **{wolf['wolf_name']}**.", color=SUCCESS_COLOR), ephemeral=reply_ephemeral())
 
     def _scene_here(self, interaction: discord.Interaction):
@@ -141,6 +143,7 @@ class Scene(commands.Cog):
             return
         db.join_scene(scene['id'], wolf['id'], wolf['wolf_name'], message.author.id)
         await refresh_scene_roster(self.bot, scene)
+        await refresh_open_scenes_index(self.bot, message.guild.id)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -158,6 +161,7 @@ class Scene(commands.Cog):
             return
         db.join_scene(scene['id'], wolf['id'], wolf['wolf_name'], interaction.user.id)
         await refresh_scene_roster(self.bot, scene)
+        await refresh_open_scenes_index(self.bot, interaction.guild.id)
         await interaction.response.send_message(embed=howlbert_embed('Joined Scene', f"**{wolf['wolf_name']}** steps in.", color=SUCCESS_COLOR))
 
     @scene.command(name='leave', description='leave the scene in this thread.')
@@ -173,6 +177,7 @@ class Scene(commands.Cog):
         left = db.leave_scene(scene['id'], wolf['id'])
         if left:
             await refresh_scene_roster(self.bot, scene)
+            await refresh_open_scenes_index(self.bot, interaction.guild.id)
         msg = f"**{wolf['wolf_name']}** slips away." if left else "You weren't in this scene."
         await interaction.response.send_message(embed=howlbert_embed('Scene', msg, color=SUCCESS_COLOR))
 
@@ -213,6 +218,7 @@ class Scene(commands.Cog):
             await interaction.response.send_message(embed=howlbert_embed('Not Yours', "Only the scene's opener or an admin can end it.", color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         db.close_scene(scene['id'])
+        await refresh_open_scenes_index(self.bot, interaction.guild.id)
         await interaction.response.send_message(embed=howlbert_embed('Scene Ended', f"**{scene['name']}** is closed. Thanks for playing.", color=SUCCESS_COLOR))
         channel = interaction.channel
         if isinstance(channel, discord.Thread):

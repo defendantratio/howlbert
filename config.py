@@ -47,6 +47,11 @@ for _part in _rp_ambience_raw.replace(";", ",").split(","):
     if _part.isdigit():
         RP_AMBIENCE_CHANNEL_IDS.append(int(_part))
 
+# channel that keeps a live, auto-edited index of currently-open /scene threads
+# (see docs/GROWTH_IDEAS.md section 45, "#open-scenes"); leave unset to disable.
+_open_scenes_ch = os.getenv("OPEN_SCENES_CHANNEL_ID", "").strip()
+OPEN_SCENES_CHANNEL_ID = int(_open_scenes_ch) if _open_scenes_ch.isdigit() else None
+
 # Slash replies: when true, bot posts to the channel (profiles, hunts, errors, everything)
 PUBLIC_GAMEPLAY_MESSAGES = os.getenv("PUBLIC_GAMEPLAY_MESSAGES", "true").strip().lower() in (
     "1",
@@ -1343,7 +1348,7 @@ RP_LOCATIONS = (
     "The Rapids",
     "The Shallows",  # where warriors fight
     "The Neutral Bend",
-    "The Maw's Mouth",  # drown-rite pool
+    "The Weeping Deep",  # drown-rite pool
     "The Weep Stone",
     "The Dam",
     "Riverbank Dens",
@@ -1384,6 +1389,21 @@ RP_LOCATIONS = (
     "The Elder's Den",
     "Rogue Camp",
     "The Sundering Stone",  # prophecy stone; no pack dares enter
+    "The Maw's Throat",  # the caldera; where all four territories meet
+    "The Tongue-Stone",  # sacred slab at the caldera's center; site of the moon-howl
+    # Forest cat clan territory (see engine.cat_clans.CLAN_TERRITORY); the
+    # packs' borders touch these but no pack claims them.
+    "The Oak Forest",  # ThunderClan; their core territory
+    "Sunningrocks",  # ThunderClan; oak forest edge
+    "Snakerocks",  # ThunderClan; old rockslide, ShadowClan border landmark
+    "The Abandoned Twoleg Nest",  # ThunderClan; disused barn, used for training
+    "The Pine Shadows",  # ShadowClan; pine forest and marsh edge
+    "The Carrionplace",  # ShadowClan; Twoleg dump at the territory's edge
+    "The Open Moors",  # WindClan; moor and rabbit runs
+    "The Horseplace",  # WindClan; a farm bordering the moor, source of catmint
+    "The River Gorge",  # RiverClan; river, gorge, reed beds
+    "The Twoleg Bridge",  # RiverClan; a footbridge crossing over the river
+    "Fourtrees",  # neutral clan gathering hollow; truce ground for all four Clans
 )
 
 # Static quests: key, title, description, objective, count, reward, standing, type, difficulty

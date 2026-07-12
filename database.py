@@ -1337,6 +1337,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN plot_prompt_index INTEGER NOT NULL DEFAULT 0"
         )
+    if world_cols and "open_scenes_index_message_id" not in world_cols:
+        conn.execute(
+            "ALTER TABLE world_state ADD COLUMN open_scenes_index_message_id INTEGER"
+        )
     if world_cols and "last_den_news_dm_day" not in world_cols:
         conn.execute(
             "ALTER TABLE world_state ADD COLUMN last_den_news_dm_day INTEGER NOT NULL DEFAULT 0"
@@ -3779,6 +3783,33 @@ def set_scene_roster_message_id(scene_id: int, message_id: int | None) -> None:
         conn.execute(
             "UPDATE rp_scenes SET roster_message_id = ? WHERE id = ?",
             (message_id, scene_id),
+        )
+
+
+def list_open_scenes(guild_id: int) -> list[sqlite3.Row]:
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM rp_scenes WHERE guild_id = ? AND status = 'open' ORDER BY day ASC, id ASC",
+            (guild_id,),
+        ).fetchall()
+
+
+def get_open_scenes_index_message_id(guild_id: int) -> int | None:
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT open_scenes_index_message_id FROM world_state WHERE guild_id = ?",
+            (guild_id,),
+        ).fetchone()
+    if not row or not row["open_scenes_index_message_id"]:
+        return None
+    return int(row["open_scenes_index_message_id"])
+
+
+def set_open_scenes_index_message_id(guild_id: int, message_id: int | None) -> None:
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE world_state SET open_scenes_index_message_id = ? WHERE guild_id = ?",
+            (message_id, guild_id),
         )
 
 

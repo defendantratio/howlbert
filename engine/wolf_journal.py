@@ -166,6 +166,33 @@ def log_achievement(
     )
 
 
+def log_achievement_once(
+    wolf_id: int,
+    wolf_name: str,
+    title: str,
+    *,
+    achievement_key: str,
+    guild_id: int | None = None,
+    day: int | None = None,
+) -> bool:
+    """Same as log_achievement, but only the first time this wolf earns this
+    specific achievement — for "first X" moments (first surgery, first cured
+    disease, ...) that can otherwise fire every time the underlying action
+    succeeds. ``achievement_key`` must be unique per achievement *type*
+    (distinct from the general "achievement" key so multiple different
+    achievements can each land once, instead of only the wolf's very first
+    achievement of any kind ever counting). Returns True if this was new."""
+    if day is None:
+        day = _day_for_wolf(wolf_id, guild_id)
+    return db.add_wolf_journal_entry_if_new(
+        wolf_id,
+        f"achievement:{achievement_key}",
+        f"**{wolf_name}** earned the **{title}** trophy.",
+        day=day,
+        guild_id=guild_id,
+    )
+
+
 def log_quest_complete(
     wolf_id: int, wolf_name: str, title: str, *, reward_bones: int, standing_reward: int
 ) -> None:

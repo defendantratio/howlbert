@@ -90,7 +90,7 @@ def _single_elimination_bracket(fighters: list) -> tuple[sqlite3.Row, list[str]]
 
 def _maybe_grant_drown_rite_mark(conn: sqlite3.Connection, wolf_id: int) -> str | None:
     """
-    Silverrush lore: alphas claim the seat by submerging in the Maw's Mouth
+    Silverrush lore: alphas claim the seat by submerging in the Weeping Deep
     until the current turns. Prolonged hypoxia sometimes leaves them
     "brilliant and mad in equal measure"; a permanent +wisdom / -charisma
     trait pair, layered onto whatever traits the wolf already has.
@@ -215,7 +215,7 @@ def run_broken_canine_rite(
             mark = _maybe_grant_drown_rite_mark(conn, int(winner["id"]))
             if mark:
                 logs.append(
-                    f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
+                    f"**{winner['wolf_name']}** held the Weeping Deep past the current's turn; "
                     f"emerges **{mark}**; brilliant and a little mad in equal measure."
                 )
         outcome = "new_alpha"
@@ -310,7 +310,7 @@ def run_vacancy_rite(
         mark = _maybe_grant_drown_rite_mark(conn, int(winner["id"]))
         if mark:
             logs.append(
-                f"**{winner['wolf_name']}** held the Maw's Mouth past the current's turn; "
+                f"**{winner['wolf_name']}** held the Weeping Deep past the current's turn; "
                 f"emerges **{mark}**; brilliant and a little mad in equal measure."
             )
 

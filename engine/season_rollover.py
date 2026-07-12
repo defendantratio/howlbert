@@ -29,7 +29,18 @@ def apply_winter_hunger_stress(
     if season != "winter":
         return []
     extra = max(1, int(HUNGER_ROLLOVER_DECAY * 0.5))
-    ids = _rollover_wolf_ids(conn)
+    rows = conn.execute(
+        "SELECT id, ic_location FROM users WHERE condition NOT IN ('dead', 'dying')"
+    ).fetchall()
+    if not rows:
+        return []
+    from engine.location_effects import location_winter_hunger_exempt
+
+    ids = [
+        int(row["id"])
+        for row in rows
+        if not location_winter_hunger_exempt(row["ic_location"])
+    ]
     if not ids:
         return []
     placeholders = ",".join("?" * len(ids))

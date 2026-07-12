@@ -82,15 +82,15 @@ def try_rotting_meat_exposure(user) -> str | None:
     return None
 
 
-def try_carrion_exposure(user) -> str | None:
+def try_carrion_exposure(user, *, location_mult: float = 1.0) -> str | None:
     roll = random.random()
-    if roll < 0.12:
+    if roll < 0.12 * location_mult:
         return try_contract_disease(user, "hepatitis", chance=1.0)
-    if roll < 0.22:
+    if roll < 0.22 * location_mult:
         note = try_contract_disease(user, "distemper", chance=1.0)
         if note:
             return f"carrion from a sick canid: {note}"
-    if roll < 0.26:
+    if roll < 0.26 * location_mult:
         from engine.chronic_conditions import try_wasting_from_carrion
 
         return try_wasting_from_carrion(user)
@@ -298,32 +298,34 @@ def try_den_filth_exposure(user, *, day: int | None = None) -> str | None:
     return try_poop_roll_exposure(user)
 
 
-def try_scavenge_canid_exposure(user) -> str | None:
+def try_scavenge_canid_exposure(user, *, location_mult: float = 1.0) -> str | None:
     """scavenge near hearth-hound kills or mangy coyote leavings."""
     roll = random.random()
-    if roll < 0.10:
+    if roll < 0.10 * location_mult:
         note = try_contract_disease(user, "distemper", chance=1.0)
         if note:
             return f"sick canid leavings: {note}"
-    if roll < 0.16:
+    if roll < 0.16 * location_mult:
         note = try_contract_disease(user, "mange", chance=1.0)
         if note:
             return f"nest mites from a mangy den site: {note}"
     return None
 
 
-def try_scavenge_filth_exposure(user, *, day: int | None = None) -> str | None:
+def try_scavenge_filth_exposure(
+    user, *, day: int | None = None, location_mult: float = 1.0
+) -> str | None:
     from engine.herb_buffs import burial_scent_masked
 
     if day is None:
         day = int(user["last_rest_day"] if user and "last_rest_day" in user.keys() else 0)
-    flea_chance = 0.05 if burial_scent_masked(user, day) else 0.10
+    flea_chance = (0.05 if burial_scent_masked(user, day) else 0.10) * location_mult
     if random.random() < flea_chance:
         return try_contract_disease(user, "fleas", chance=1.0)
-    note = try_scavenge_canid_exposure(user)
+    note = try_scavenge_canid_exposure(user, location_mult=location_mult)
     if note:
         return note
-    return try_carrion_exposure(user)
+    return try_carrion_exposure(user, location_mult=location_mult)
 
 
 def try_weather_fever_exposure(user) -> str | None:

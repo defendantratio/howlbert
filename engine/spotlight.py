@@ -43,7 +43,13 @@ def pick_wolf_of_the_week(guild_id: int, current_day: int) -> dict | None:
     best = None
     best_score = -1
     for row in rows:
-        score = _EVENT_WEIGHT.get(str(row["event_key"]), 0)
+        key = str(row["event_key"])
+        # "first X" achievements are stored as "achievement:<type>" (see
+        # engine.wolf_journal.log_achievement_once) so several distinct ones
+        # can each land once per wolf; they all score the same as a plain
+        # "achievement" entry here.
+        lookup_key = "achievement" if key.startswith("achievement:") else key
+        score = _EVENT_WEIGHT.get(lookup_key, 0)
         if score > best_score:
             best_score = score
             best = row

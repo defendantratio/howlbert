@@ -536,6 +536,14 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
         _sb = max(1, int(gross * LONER_SCAVENGE_BONUS_PCT // 100))
         gross += _sb
         scav_loner_note = f"scavenger's edge: +{LONER_SCAVENGE_BONUS_PCT}%"
+    from engine.location_effects import location_scavenge_bonus_pct
+    ic_location = user["ic_location"] if "ic_location" in user.keys() else None
+    loc_bonus_pct = location_scavenge_bonus_pct(ic_location)
+    loc_scavenge_note = ""
+    if loc_bonus_pct:
+        _lb = max(1, int(gross * loc_bonus_pct // 100))
+        gross += _lb
+        loc_scavenge_note = f"cold-cached carrion: +{loc_bonus_pct}%"
     net, tax, _, _, mood_note, hunger_note, thirst_note, exhaustion_note, season_note = award_bones(
         user, gross, world["weather"], "scavenge", season=world["season"], guild_id=guild_id
     )
@@ -566,9 +574,12 @@ def try_scavenge(interaction: discord.Interaction) -> discord.Embed | None:
     embed.add_field(name="balance", value=format_bones(updated["bones"]), inline=True)
     if net > 0:
         from engine.disease_contract import try_scavenge_filth_exposure
+        from engine.location_effects import location_disease_mult
 
-        filth = try_scavenge_filth_exposure(user, day=day)
-        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scav_loner_note, scavenge_penalty) if n]
+        filth = try_scavenge_filth_exposure(
+            user, day=day, location_mult=location_disease_mult(ic_location)
+        )
+        notes = [n for n in (scavenge_food_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note, filth, sniff_note, raven_scavenge_note, scav_loner_note, loc_scavenge_note, scavenge_penalty) if n]
         footer = "old carrion in hoard (`/food`) · rotting meat risks gut sickness"
         if notes:
             footer += " · " + " · ".join(notes)

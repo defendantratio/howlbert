@@ -20,7 +20,8 @@ def test_winter_stress_does_not_query_pack_guild_id():
             pack_id INTEGER,
             condition TEXT NOT NULL DEFAULT 'healthy',
             hunger INTEGER NOT NULL DEFAULT 50,
-            food_cache_meals INTEGER NOT NULL DEFAULT 0
+            food_cache_meals INTEGER NOT NULL DEFAULT 0,
+            ic_location TEXT
         );
         INSERT INTO users (id, wolf_name, pack_id, hunger) VALUES (1, 'Ash', 1, 40);
         """
@@ -67,7 +68,8 @@ def test_apply_season_rollover_effects_winter():
             pack_id INTEGER,
             condition TEXT NOT NULL DEFAULT 'healthy',
             hunger INTEGER NOT NULL DEFAULT 50,
-            food_cache_meals INTEGER NOT NULL DEFAULT 0
+            food_cache_meals INTEGER NOT NULL DEFAULT 0,
+            ic_location TEXT
         );
         INSERT INTO users (id, wolf_name, pack_id) VALUES (1, 'River', 2);
         """
