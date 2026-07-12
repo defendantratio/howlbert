@@ -54,7 +54,6 @@ no changes.
 - roleplay rules
 - relationship rules
 - dice and statistics guide
-- examples (for dice and statistics)
 - plot updates
 - event request
 - text rp
@@ -63,7 +62,7 @@ no changes.
 - in game roleplay chat
 - roleplay voice
 
-no changes. rp finder and session discussion stay; see note above on why they're not replaced by the bot index.
+rp finder and session discussion stay; see note above on why they're not replaced by the bot index. **examples (for dice and statistics)** is removed as its own channel; worked examples now belong inside the dice and statistics guide content itself (see the lore forum section below), not a separate channel.
 
 ---
 
@@ -350,6 +349,264 @@ not added to the server's rp location map itself since it's already crowded; thi
 ### walking the furrow: what prestige actually means
 
 > the pack doesn't hand out reputation. it's earned the slow way: quests finished, hunts survived, legacy carried past your own death into whoever remembers you. the wolves who've walked that whole road long enough have a name for it: the furrow. most wolves live and die without the maw ever learning their name. the ones who don't get remembered differently, not as heroes necessarily, just as wolves the maw's eye lingers on a little longer than most.
+
+---
+
+## healer handbook: full herb compendium & treatment flows
+
+everything below is pulled straight from the game's actual data (`herbs_compendium.py`'s `HERBS` dict and `herbs.py`'s `INJURIES` dict), not condensed or reinterpreted; this is what `/herbs action:guide` and `/medic action:treat` actually check against. meant to live in the **healer handbook** channel (server info), since that's the one channel already scoped for exactly this.
+
+### how treatment actually works, mechanically
+
+1. **forage**: `/bones action:forage` pulls from the territory's herb table at a dc set by rarity (common **8**, uncommon **12**, rare **15**, very rare **20**), modified by season. restricted herbs (poisons) don't show up on a normal forage roll.
+2. **prepare**: `/herbs action:prepare herb:<inventory herb>` turns a raw herb into a usable form; prep method depends on the herb (dry, poultice, juice, raw, tea, gargle, sweeten, ointment, sap, pelt rub, cooked, simmered in milk). most herbs only work prepared one specific way; the wrong method just wastes it.
+3. **treat**: `/medic action:treat herb:<prepared herb>` applies it to a patient (self or packmate) against whatever injury or disease is active. field dressing (cobwebs) and wound wash (dock/horsetail) exist as lighter, faster options for the two most common battlefield injuries; deep gash and infected wound.
+4. **surgery**: anything marked "surgery only" below (bruised lung, snapped sinew, torn gristle, and a few others) can't be herb-cured at all; it needs `/medic action:surgery procedure:<stitch|set_bone|extract|amputate>`, usually with a medicine check, sometimes with a helper for advantage.
+5. **restricted herbs**: wolfsbane and water hemlock are medic-only by lore and by mechanic; every other poison in the table below exists purely as a hazard (accidental ingestion, execution, hunting cats) with no legitimate treatment use.
+
+### injury table
+
+- **broken tooth**: permanent; permanent, no heal time.
+- **torn claw**: horsetail poultice · 1 week natural heal; treat herbs: horsetail; 7 days to heal.
+- **deep gash**: yarrow + cobwebs (or cattail/oak bark) stops bleeding; treat herbs: yarrow, oak bark, cattail, cobwebs; heal time varies.
+- **sprained leg**: comfrey poultice · 1 week rest; treat herbs: comfrey, arnica, tansy; 7 days to heal.
+- **fractured rib**: comfrey poultice · 2 weeks rest; treat herbs: comfrey, bindweed, broom; 14 days to heal.
+- **concussion**: dried skullcap · 1 week sleep; treat herbs: dried skullcap; 7 days to heal.
+- **punctured paw**: heals in 1 week; oak bark binding halves time; treat herbs: oak bark, dock, plantain; 7 days to heal.
+- **infected wound**: yarrow or goldenrod poultice; treat herbs: yarrow, goldenrod, burdock root, wild garlic; heal time varies.
+- **torn ear / lost eye**: torn ear heals cosmetically; penalty remains. lost eye: no cure; permanent, no heal time.
+- **broken jaw**: broth/milk · comfrey poultice reduces to 2 weeks; treat herbs: comfrey, bindweed, slippery elm; 21 days to heal.
+- **spinal injury**: comfrey poultice · bindweed splint · 28 days rest; treat herbs: comfrey, bindweed, broom; 28 days to heal.
+- **paralyzed (permanent)**: no cure; lifelong den care; permanent, no heal time.
+- **festering wound**: yarrow tea · goldenrod tea · urgent medic care; treat herbs: yarrow, goldenrod, burdock root; 7 days to heal.
+- **scorched hide**: cobwebs dressing · 7 days full rest; no herb cure; treat herbs: cobwebs, common mallow; 7 days to heal.
+- **bruised lung**: surgery (set_bone); no herb cure; 14 days to heal.
+- **swollen eye**: celandine or feverfew poultice; treat herbs: celandine, feverfew, witch hazel; 5 days to heal.
+- **blood loss**: 3 full rests; clears automatically; 3 days to heal.
+- **snake venom**: twinflower poultice may slow progression; feverfew reduces fever. no guaranteed cure; treat herbs: blackberry, snakeroot, sticklewort, adders tongue, feverfew; 5 days to heal.
+- **insect sting**: dock leaf or burdock poultice reduces swelling. clears in 3 days; treat herbs: dock, burdock root, blackberry, jewelweed; 3 days to heal.
+- **lost eye**: permanent; permanent, no heal time.
+- **dead-limb**: no cure; can compensate with training; permanent, no heal time.
+- **caved-chest**: surgery only; 6 weeks rest; comfrey poultice for pain; treat herbs: comfrey, willow bark; 42 days to heal.
+- **heatstroke (sun-sick)**: cool water; rest; feverfew; can be fatal if untreated; treat herbs: feverfew, watermint, willow bark; 3 days to heal.
+- **hypothermia (chill-bite)**: warmth; honey; rest; avoid extreme cold; treat herbs: honey, pine bark; 3 days to heal.
+- **smoke-lung**: mullein or lungwort tea; rest; avoid smoke; treat herbs: mullein, lungwort, pine needle; 7 days to heal.
+- **snapped sinew**: surgery only; long healing (6 weeks); no herb cure; 42 days to heal.
+- **wrenched joint**: pop back in (medicine dc 15); then rest 1-2 weeks; willow bark for pain; treat herbs: willow bark, comfrey, arnica; 10 days to heal.
+- **mangled paw**: comfrey poultice + splint; 3 weeks rest; dock leaf for swelling; treat herbs: comfrey, dock, plantain, bindweed; 21 days to heal.
+- **blood-within**: shepherd's purse + yarrow tea; requires medicine check dc 15 to stop; otherwise fatal; treat herbs: shepherds purse, yarrow, horsetail; 5 days to heal.
+- **pus-pocket**: hot compress + burdock root; lance with stick (surgery); treat herbs: burdock root, dock, wild garlic; 5 days to heal.
+- **pulled sinew**: rest 3 days; comfrey poultice reduces to 1 day; treat herbs: comfrey, arnica, meadowsweet; 3 days to heal.
+- **torn gristle**: surgery needed; long recovery (4 weeks); no simple herb cure; 28 days to heal.
+- **thorn-stuck**: remove with stick (survival/medicine dc 10); then dock leaf; treat herbs: dock, plantain; 2 days to heal.
+
+### the full herb compendium
+
+sorted by rarity, common first. "pack" is the territory it's native to; "any territory" means it isn't pack-locked. "cures" lists the injuries/diseases it treats; restricted (poison) herbs have no cures, they're hazards, not medicine.
+
+**common**
+- **adder's tongue** (any territory): reroll failed poison save with advantage if within 1 minute of sting. cures: mild poison, swollen eye, deep gash, shaking sickness.
+- **beech leaves** (any territory): carry herbs. cures: leafbare cough, infected wound.
+- **bindweed vines** (any territory): relieves gut complaints and urinary problems. cures: eating distress, urinary infection, influenza, constipation.
+- **blackberry (bramble)** (any territory): soothes insect stings and ends non-magical venom. cures: diarrhea, eating distress, infected wound, mild poison.
+- **boneset** (mistmoor): reroll failed disease save with advantage. cures: influenza, leafbare cough.
+- **borage** (any territory): extra milk for nursing mother. cures: influenza, leafbare cough, anxiety, depression.
+- **broom** (any territory): bind broken bones and splint fractures. cures: fractured rib, sprained leg, broken jaw.
+- **burdock root** (any territory): poultice draws infection from bites and open wounds after 24h rest. cures: infected wound, deep gash, mange, cancer.
+- **burnet** (any territory): leaf applied to cuts staunches bleeding. cures: sprained leg, diarrhea, deep gash.
+- **catchweed burrs** (any territory): burrs hold poultices in place. cures: urinary infection.
+- **cattail** (silverrush, mistmoor): pollen is hemostatic. cures: deep gash, sprained leg, infected wound.
+- **celandine** (any territory): removes eye swelling and restores eyesight within 1 hour. cures: swollen eye, partial blindness, hepatitis, leafbare cough, gallstones.
+- **chamomile** (any territory): advantage on wisdom saves vs fear for 1 hour. cures: anxiety, insomnia, eating distress, influenza, grief melancholy, delirium.
+- **chervil** (any territory): removes nausea. cures: infected wound, diarrhea, redscratch, eating distress, wasting sickness.
+- **chickweed** (any territory): ends green-cough (3 doses per 24 hours). cures: cough, leafbare cough, infected wound.
+- **chicory** (any territory): settles gut upset, diarrhea, and eating distress. cures: diarrhea, eating distress, hepatitis.
+- **cobnuts** (any territory): +1 stealth when approaching prey. no listed cures; utility use.
+- **cobwebs** (any territory): auto-stabilize dying wolf. cures: dying, deep gash, shaking sickness, scorched hide.
+- **coltsfoot** (any territory): ends green-cough after 1 dose. cures: cough, leafbare cough, punctured paw, asthma.
+- **common mallow** (any territory): poultice for scraped and scorched pads. cures: punctured paw, leafbare cough, eating distress, scorched hide, asthma.
+- **coneflower (echinacea)** (greyspire): advantage on infection saves within 1h of injury. cures: infected wound, influenza, leafbare cough.
+- **daisy** (any territory): ignore arthritis and joint pain penalties for 8 hours. cures: deep gash, leafbare cough, infected wound, insomnia, sprained leg, arthritis.
+- **dandelion** (any territory): soothes stings and flushes fever. cures: eating distress, hepatitis, influenza, leptospirosis, mild poison.
+- **dock** (any territory): restores cracked paw pads after 1 day rest. cures: leafbare cough, hepatitis, diarrhea, punctured paw, infected wound.
+- **douglas' sagewort** (greyspire): prevents infection 24h. cures: poison ivy, infected wound, mild poison.
+- **elder (external)** (any territory, poison): treats sprains. cures: sprained leg.
+- **fennel** (any territory): extra day without food before exhaustion sets in. cures: eating distress, leafbare cough, bloat, infected wound.
+- **feverfew** (any territory): reduces inflammation and fever. cures: influenza, redscratch, pox, rot lung, milk fever, swollen eye, leafbare cough.
+- **garden mint** (any territory): ends nausea in minutes. cures: eating distress, diarrhea, bloat, infected wound.
+- **garlic mustard** (any territory): rub through pelt to drive off fleas. cures: leafbare cough, infected wound, mild poison, lyme, worms.
+- **heather** (any territory): sweetens bitter herb mixtures. cures: diarrhea, leafbare cough, anxiety.
+- **honey** (any territory): feeds starving pups (+10 hunger, -1 exhaustion). cures: leafbare cough, deep gash.
+- **horsetail** (any territory): +3 medicine to stabilize dying. cures: deep gash, torn claw, punctured paw, urinary infection.
+- **ivy vines** (any territory): preserves dried herbs 2 extra weeks. cures: leafbare cough, influenza, asthma.
+- **jewelweed** (any territory): sap neutralizes poison-ivy rash. cures: poison ivy, mild poison, hepatitis, diarrhea.
+- **juniper berries** (any territory): neutralizes mild poison. cures: mild poison, diarrhea, urinary infection, infected wound.
+- **knotgrass** (any territory): cures diarrhea. cures: diarrhea, fleas, leafbare cough, urinary infection, worms.
+- **labrador tea** (any territory): ends wheezing for 4 hours. cures: leafbare cough, diarrhea, asthma.
+- **lamb's ear** (any territory): fuzzy leaves pressed on wounds stop bleeding and soothe insect stings. cures: infected wound, mild poison.
+- **lavender** (any territory): cures fever and chills. cures: influenza, anxiety, insomnia, grief melancholy, night terrors.
+- **lizard's tail** (mistmoor): removes 1 fever exhaustion. cures: influenza, urinary infection.
+- **mountain ash (rowan)** (any territory): bitter bark eases fever and weeping-scale, soothes liver complaints. cures: influenza, distemper, hepatitis.
+- **oak bark** (thistlehide): stops bleeding. cures: deep gash, infected wound, diarrhea.
+- **oxeye daisy** (any territory): eases joint ache and sprains. cures: sprained leg, leafbare cough, influenza, hepatitis, urinary infection.
+- **parsley** (any territory): ends lactation within 6 hours. cures: milk fever, wasting sickness, eating distress, urinary infection.
+- **pine bark** (greyspire): inner bark eases leaf-bare cough and frost-nipped paws. cures: leafbare cough, punctured paw, asthma.
+- **pine needles** (greyspire): tea ends coughing after 1 dose. cures: cough, leafbare cough, urinary infection, asthma.
+- **poppy seeds** (any territory): sedative and pain relief. cures: insomnia, anxiety, shock emotional, grief melancholy.
+- **purple loosestrife** (silverrush): staunches bleeding on stitched wounds. cures: deep gash, diarrhea, infected wound.
+- **purslane** (any territory): fleshy leaves hold ditch-water. cures: eating distress, anxiety.
+- **ragweed** (any territory): 3 leaves removes 1 exhaustion. cures: leafbare cough, hepatitis.
+- **ragwort** (any territory): elder hunts at full speed for 1 day. cures: sprained leg.
+- **raspberry leaves** (any territory): advantage on birth hemorrhage saves. cures: diarrhea, leafbare cough.
+- **rosemary** (any territory): hides death-scent at burial. cures: grief melancholy, dementia, chronic stress, anxiety, obsession.
+- **rush stalks** (mistmoor, silverrush): hard stalks bind broken bones. cures: fractured rib, broken jaw, sprained leg.
+- **saffron** (any territory): auto-stabilize postpartum hemorrhage. cures: dying, milk fever, leafbare cough, anxiety, grief melancholy.
+- **sage** (any territory): soothes sore throat. cures: leafbare cough, eating distress, diarrhea, infected wound.
+- **shepherd's purse** (any territory): hemostatic. cures: deep gash, internal bleeding.
+- **skunk cabbage (dried)** (any territory): treats severe cough and blackcough. cures: cough, leafbare cough, asthma.
+- **snakeroot** (any territory): advantage vs snake venom saves. cures: anxiety, insomnia, mild poison.
+- **sorrel** (any territory): stops heavy bleeding from deep wounds. cures: deep gash, leafbare cough, sprained leg, urinary infection, eating distress.
+- **sticklewort** (any territory): neutralizes snake venom. cures: diarrhea, leafbare cough, infected wound, mild poison, hepatitis.
+- **stinging nettle** (any territory): with comfrey -1 broken bone healing day. cures: fractured rib, sprained leg, fleas, urinary infection, lyme, arthritis.
+- **straight stick** (any territory): thin twig for wolves in pain to bite during deep treatment. no listed cures; utility use.
+- **sweet sedge** (any territory): ends mild gut infection in 1 day. cures: diarrhea, shaking sickness, eating distress, bloat.
+- **tansy** (any territory): halves sprain recovery time. cures: sprained leg, fleas, leafbare cough, worms.
+- **thyme** (any territory): ends minor pain for 2 hours. cures: anxiety, insomnia, leafbare cough, asthma.
+- **tormentil** (any territory): +2 medicine for any injury. cures: diarrhea, leafbare cough, infected wound.
+- **valerian** (any territory): calms shock. cures: anxiety, insomnia, feral shift, eating distress, grief melancholy, shock emotional.
+- **watermint** (any territory): removes nausea in 10 minutes. cures: leafbare cough, infected wound, diarrhea, eating distress, hepatitis, bloat, leptospirosis.
+- **wild cherry bark** (any territory): stops coughing for 2 hours, even blackcough. cures: cough, leafbare cough, diarrhea, anxiety.
+- **wild garlic** (any territory): advantage vs vermin disease 24h. cures: leafbare cough, fleas, infected wound, hepatitis, leptospirosis.
+- **willow bark** (mistmoor, silverrush): pain relief 1 sunrise. cures: influenza, sprained leg, fractured rib, lyme, arthritis.
+- **witch hazel** (any territory): astringent and hemostatic. cures: swollen eye, infected wound, poison ivy, leafbare cough, mild poison.
+- **wood sorrel** (any territory): steadies a queasy stomach. cures: influenza, eating distress.
+- **yarrow** (any territory): +2 medicine to stabilize. cures: deep gash, infected wound, shaking sickness, torn claw, diarrhea.
+
+**uncommon**
+- **alder bark** (mistmoor): chewed and applied to wounds. cures: tooth infection, infected wound, diarrhea.
+- **catmint tea** (any territory): cures severe blackcough (2 doses per 24 hours). cures: cough, leafbare cough, anxiety, insomnia, eating distress, asthma.
+- **comfrey** (thistlehide): poultice heals 1d4 hp on deep wounds. cures: fractured rib, broken jaw, sprained leg, deep gash.
+- **dried skullcap** (any territory): sedative rest for concussion recovery. cures: concussion, dementia, feral shift, anxiety, delirium, obsession, pack madness, insomnia, grief melancholy.
+- **marsh-mallow root** (mistmoor): soothes rot-lung fever and wheeze. cures: rot lung, leafbare cough, sprained leg, asthma.
+- **meadowsweet** (silverrush): ignore 1 pain exhaustion for 4 hours. cures: sprained leg, diarrhea, eating distress, influenza, lyme, arthritis.
+- **mugwort** (any territory): rub through pelt to drive off fleas. cures: fleas, diarrhea, eating distress.
+- **passionflower** (any territory): eases racing thoughts and insomnia. cures: anxiety, insomnia, feral shift.
+- **plantain** (thistlehide): gentle wound remedy. cures: leafbare cough, deep gash, punctured paw, torn claw, asthma, bronchitis.
+- **slippery elm** (thistlehide): eat or drink without pain for 8 hours. cures: broken jaw, diarrhea, eating distress, anxiety, urinary infection.
+
+**rare**
+- **arnica** (greyspire): halves bruise and sprain recovery (external only). cures: sprained leg, punctured paw, arthritis.
+- **belly-rip fungus** (mistmoor): glow-fungus from the belly-rip sinkhole. cures: rot lung.
+- **death-cap mushroom** (mistmoor, poison): pale mushroom found only in the rotting mere. no cures; hazard only.
+- **elderberry** (mistmoor): advantage on disease saves for 3 sunrises. cures: distemper, influenza, leafbare cough.
+- **goldenrod** (any territory): +2 hp per 8h rest. cures: infected wound, deep gash, urinary infection, lyme.
+- **lungwort** (greyspire, mistmoor): also heals yellowcough and rot-lung when mullein is scarce. cures: yellowcough, rot lung, cancer, asthma, bronchitis.
+- **mullein** (greyspire, mistmoor): heals yellowcough and rot-lung lung damage. cures: yellowcough, rot lung, cancer, asthma, bronchitis.
+- **prickly ash** (greyspire): ends frozen-paw numbness. cures: tooth infection, punctured paw, arthritis.
+
+**very rare**
+- **edelweiss** (greyspire): ends bellyache and eating troubles. cures: diarrhea, eating distress, leafbare cough.
+- **swamp milkweed** (mistmoor): breaks curses. cures: pox, spirit curse.
+- **wolfsbane** (greyspire, poison): removes spirit curse (dc 20 medicine check). cures: spirit curse.
+
+**restricted (poison; medic-handled only)**
+- **bloodroot** (any territory, poison): 3d6 poison damage (dc 16 half). no cures; hazard only.
+- **deadly nightshade** (any territory, poison): confusion then paralysis (wis dc 15). no cures; hazard only.
+- **deathberries (yew)** (any territory, poison): mercy killing. no cures; hazard only.
+- **foxglove** (any territory, poison): deadly heart poison (dc 18 or die in 1d4 min). no cures; hazard only.
+- **holly berries** (any territory, poison): 2d4 poison (dc 12 half). no cures; hazard only.
+- **oleander** (any territory, poison): 4d6 poison, no antidote (dc 18 half). no cures; hazard only.
+- **poison ivy** (any territory, poison): contact: -1d4 cha, disadvantage stealth 3 days. no cures; hazard only.
+- **water hemlock** (any territory, poison): lethal poison (dc 20 half, still 6d6). no cures; hazard only.
+- **wintergreen** (any territory, poison): often misidentified. no cures; hazard only.
+
+full mechanical detail (exact hp/exhaustion math, prep methods per herb, side effects) lives on the site's [illness and herbs page](https://howlbert.straw.page/illness.html); this is the reference version for quick lookup in-server.
+
+---
+
+## dice and statistics guide: content
+
+pulled from `rpg_rules.py` and `engine/dice.py`; this is the actual math behind every `/rpg action:roll` and skill check in the game, not a simplified version of it. meant to live in the **dice and statistics guide** channel; the separate **examples** channel is folded into this instead (see below), rather than being a second channel.
+
+### the core roll
+
+every check is **d20 + attribute modifier + situational modifiers**, compared against a difficulty class (dc):
+
+- **natural 1**: automatic failure, regardless of modifiers.
+- **natural 20**: automatic success, regardless of modifiers.
+- **advantage**: roll twice, take the higher.
+- **disadvantage**: roll twice, take the lower. advantage and disadvantage cancel out if a wolf has sources of both on the same roll; they don't stack in the same direction either (two sources of advantage is still just advantage once).
+
+### dc tiers
+
+- **easy**: dc 10, routine.
+- **moderate**: dc 15, challenging.
+- **hard**: dc 20, desperate.
+- **legendary**: dc 25, nearly impossible.
+
+### attribute modifiers
+
+attributes run 1 to 10. the modifier added to a roll isn't the raw score, it's this:
+
+- score 1: -3 modifier
+- score 2: -2 modifier
+- score 3: -2 modifier
+- score 4: -1 modifier
+- score 5: 0 modifier
+- score 6: +1 modifier
+- score 7: +1 modifier
+- score 8: +2 modifier
+- score 9: +2 modifier
+- score 10: +3 modifier
+
+### the six attributes and eight skills
+
+attributes: strength, dexterity, survival (constitution), intelligence, charisma, wisdom.
+
+- **herblore**: governed by intelligence.
+- **hunting**: governed by strength, dexterity.
+- **stealth**: governed by dexterity.
+- **tracking**: governed by intelligence.
+- **intimidation**: governed by charisma.
+- **persuasion**: governed by charisma.
+- **survival**: governed by constitution, strength.
+- **medicine**: governed by wisdom.
+
+a role's proficiencies (below) determine which skills it rolls best at; every role has two.
+
+### role attribute ranges and proficiencies
+
+distribute points across all six attributes; the total must fall within the role's range. this is also the fastest way to see which two skills a role leans on.
+
+- **alpha**: 30 to 35 points; proficient in intimidation, persuasion.
+- **alpha's guard / advisor**: 27 to 32 points; proficient in intimidation, tracking.
+- **medic**: 20 to 25 points; proficient in herblore, medicine.
+- **guard**: 18 to 22 points; proficient in intimidation, survival.
+- **hunter**: 16 to 20 points; proficient in hunting, stealth.
+- **scout**: 16 to 20 points; proficient in stealth, tracking.
+- **forager**: 15 to 20 points; proficient in herblore, survival.
+- **diplomat**: 15 to 20 points; proficient in persuasion, intimidation.
+- **elder**: 15 to 20 points; proficient in medicine, herblore.
+- **caretaker**: 12 to 18 points; proficient in persuasion, medicine.
+- **juvenile**: 12 to 16 points; proficient in hunting, survival.
+- **pup**: 8 to 12 points; proficient in survival.
+- **rogue**: 15 to 20 points; proficient in stealth, tracking.
+- **lowbelly**: 12 to 18 points; proficient in stealth, persuasion.
+- **bog-born**: 15 to 20 points; proficient in herblore, survival.
+- **drown-sick oracle**: 12 to 18 points; proficient in stealth, tracking.
+
+apprentice variants (hunter apprentice, scout apprentice, forager apprentice, diplomat apprentice, caretaker apprentice, medic apprentice) sit a tier below their full role, both in point range and in what they're allowed to do solo; see `rpg_rules.py`'s `ROLE_FEATURES` for the exact caps.
+
+### where modifiers actually come from
+
+beyond the base d20 + attribute modifier, a real roll can pick up adjustments from (in the order the code checks them): injury, disease, genetics, character traits, herb buffs, frostbite, role features, long-term injuries, fear triggers, fire phobia, age (very young or very old), and omens (a good or bad omen from the previous sunrise grants advantage or disadvantage outright). weather and season modify tracking/scent dcs specifically, and now so do a handful of specific rp locations (the open moors and sunningrocks add +2 to scent dcs; see the gazetteer above).
+
+### worked examples
+
+- **a hunter (dex 7, +1 mod) tries a hunting check at moderate dc (15\)**, no other modifiers: needs to roll a 14+ on the d20 to succeed (14 + 1 = 15).
+- **that same hunter is exhausted (disadvantage) but has a good omen active (advantage)**: they cancel out; the hunter rolls once, normally.
+- **a scout (dex 6, +1 mod) tracks a fresh trail in rain**: rain adds +3 to the dc, but a fresh trail only takes half that penalty (trail-age scaling), so the actual dc goes up by ~2, not 3.
+- **a medic (wis 7, +2 mod) treats an infected wound (cure dc 14) with yarrow**: 2 mod + whatever the die rolls; a natural 12 or higher succeeds outright, a natural 1 fails regardless of the math.
 
 ---
 
