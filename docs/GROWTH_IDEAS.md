@@ -394,6 +394,54 @@ post a `/vitals` panel or a combat log with no caption; ask people to guess what
 
 ---
 
+## 45. enter a game jam / themed community jam
+
+jams are time-boxed events with a built-in, discovery-hungry audience already hunting for something new to try. even a discord bot can ride the traffic with a devlog entry, but the honest catch is that most jams expect a downloadable or browser-playable game — so the thing i'd actually *enter* is the **twine teaser (section 21)**, not the bot itself. a jam gives that teaser a reason to exist on a deadline and an audience the day it ships. i browse **[itch.io/jams](https://itch.io/jams)**, pick one whose theme fits (cozy, wholesome, animals, interactive fiction), submit the teaser on my existing itch page, and post the jam link everywhere. free, dated (urgency built in), and it points curious players at a five-minute taste of the world rather than a cold discord invite.
+
+---
+
+## 46. a small ambassador / "pack leader" program
+
+formalize the co-creation in section 18: pick 2–3 of my most active members, give them a cosmetic title + a private channel + first look at features, and ask them (no pressure) to help welcome newcomers and post about events. a tiny, motivated ambassador cohort is the classic small-community growth multiplier — they carry the culture and recruit from their own circles. costs nothing but a role and some trust, and it's the natural next step *once a few standouts emerge* from the retention work (18), not something to force early — at 24 members, appointing "ambassadors" before there's an obvious 2–3 would read as hierarchy for its own sake.
+
+---
+
+## 47. a "which pack are you" quiz, extending the name generator i already built
+
+the lead-magnet mini-tool idea is half-done already: `docs/site/namegen.html` is exactly the pattern — a tiny interactive page that ranks for high-volume searches ("wolf name generator," "wolf rp name") and funnels cold searchers toward the bot. the cheap next increment on the same hub is a **"which great pack are you" sorting quiz**: quiz results are inherently shareable ("i got mistmoor!" screenshots spread themselves), and the result page can CTA straight into "make this wolf real → `/register` in the discord." it reuses the same dark/bone css the name generator and neocities pages already share, so it's writing + light html, no art or voice, and it pulls search-and-share traffic none of my lore pages do.
+
+---
+
+## 48. bot-to-bot cross-promotion, not just server-to-server
+
+the affiliate swaps in section 3 are server-to-server; there's a parallel lane in mutual promotion between complementary discord *bots/projects*. i find another small rp- or cozy-game bot dev (through the top.gg / discadia listings, or indie-bot-dev discords) and we agree to mention each other in our `/help` credits, pinned channels, or newsletters. it reaches an audience that has already proven it installs bots — warmer and more qualified than a cold server crowd — and it's a genuinely mutual, low-ask trade between peers rather than a promotion i'm begging for.
+
+---
+
+## 49. a printable "field guide" zine as a newsletter incentive
+
+a short, pretty PDF — a wolf-world field guide covering the diseases, herbs, and packs — does triple duty: (a) a **lead magnet**, "subscribe to get the field guide," which measurably lifts newsletter signups (section 16); (b) shareable lore content; (c) a proto-artifact if i ever do print/merch (section 39). the text is nearly free — the herb compendium, disease list, and pack traits are all already in-bot content i can lift straight out — and i gate the download behind the newsletter join form. the animal-art caveat is real: it wants at least a little art to look good, so it pairs with the learn-in-public art practice (38) or a small logo/spot commission (39), and it's a "once i have a few pieces i like" task, not a day-one one.
+
+---
+
+## 50. a "make-a-wolf" picrew as a shareable lead magnet
+
+a picrew (picrew.me, a japanese "image maker" platform) is a character-avatar creator that other people use to build their own oc and share it. a **make-a-wolf picrew** — build your own howlbert-style wolf — is an inherently viral lead magnet: players make their own wolf, post it to their own socials, and the image carries a link back, so the discovery is driven by *them*, not me.
+
+- **i can build it myself or commission one.** either way the parts must be *my own art* (or commissioned *with rights*) — same rule as my local artist best-practices notes. building it myself doubles as animal-art practice (section 38), and pairs perfectly with the name generator/quiz (47): "generate a name → design the wolf → make it real in the discord."
+
+
+---
+
+## 51. canon-character speedpaints as short-form art content (tiktok / instagram / youtube shorts)
+
+the canon roster (~60 wolves with real lore) is a ready-made subject list for speedpaint/timelapse videos, cross-posted to **tiktok, instagram reels, and youtube shorts** — three discovery algorithms off one recording. this is the video/art route made concrete, and it slots straight into learn-in-public (38): early ones are allowed to be rough, "watch me get better at drawing these wolves" *is* the arc, and each finished piece is also a static post (tumblr/bluesky), a candidate art-fight ref (4), and a zine page (49).
+
+- **the honest short-form fit:** the priority read is right that short-form usually punishes a slow, cozy world for lacking a two-second hook — but a *speedpaint* has a built-in one: the satisfying blank-to-finished timelapse is the hook. so speedpaints are the one short-form format actually worth prioritizing for me, even while reels/shorts stay deprioritized for gameplay clips.
+- **compliance matters here because these promote a paid product.** before posting any speedpaint i run the local `docs/ARTIST_BEST_PRACTICES.md` checklist — especially: **commercial-cleared music only** (tiktok's commercial music library / instagram's business-licensed audio / the youtube audio library — crediting a copyrighted song is *not* permission, **credit** any base/brushes, and **show the full process** so it never reads as traced.)
+
+---
+
 ## priority read
 
 **start with the 24-member reality (18).** at my size, acquisition into a low-retention server leaks out as fast as it comes in — onboarding, one reliable weekly ritual, the 48-hour lurker dm, and co-creation are the cheapest, highest-leverage moves here (the qotd habit is already running and already correct, keep it), and every acquisition play converts better once they're in place. then **start the email list (16)** — the one audience no algorithm can throttle, and what i'll actually launch the kickstarter to.
@@ -413,4 +461,6 @@ post a `/vitals` panel or a combat log with no caption; ask people to guess what
 **the paid upgrades (39) are purely opportunistic — nice when there's a few dollars spare, never a blocker.** the domain and the logo commission are the two with the best cost-to-polish ratio if only doing one or two; the rest (print materials, a test ad, canva pro, an occasional referral prize) are fine to skip entirely without weakening anything else in this doc.
 
 **the wolf-of-the-week spotlight (40) and the obituary line (41) are built; start actually using them.** `/patronadmin spotlight` weekly is now just a habit to build, not a feature to build — the code side is done. caption-this (43) is the same content pipeline with zero code, pure posting habit. frequent achievements (42) has one real trigger wired (founding a pack); the next few (surgery, disease survival) are small, one-line additions whenever there's a spare few minutes. finding quiet players (44) is built but deliberately left off — ask players how they'd feel about it before flipping `QUIETWOLVES_COMMAND_ENABLED` on.
+
+**the latest additions (45–51) mostly slot into tiers already above.** the **"which pack are you" quiz (47)** is the cheapest and most on-brand — it's a small extension of the name generator i already built, pure writing/html, and it feeds the same search-and-share funnel as the twine teaser (21). **speedpaints (51)** are the one short-form format worth prioritizing despite the reels/shorts caution, because the timelapse *is* the hook — but only under the `ARTIST_BEST_PRACTICES.md` rules (commercial-cleared music,  credit, show process), since they promote a paid product. the **make-a-wolf picrew (50)** and the **field-guide zine (49)** are strong fan-spread/lead-magnet plays but both wait on a little art (38/39) and both carry commercial caveats worth minding. the **ambassador program (46)** and **bot-to-bot cross-promo (48)** are natural once retention (18) and a few peer-dev relationships exist. the **game jam (45)** is opportunistic — worth it *only* to give the twine teaser a launch moment, not on its own.
 

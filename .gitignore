@@ -16,6 +16,3 @@ fable.db.bak*
 *.bak-*
 fable.db.bak*
 fable.db-journal
-
-# personal art notes (keep local)
-docs/ARTIST_BEST_PRACTICES.md
