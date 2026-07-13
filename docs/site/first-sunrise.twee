@@ -1,0 +1,120 @@
+:: start
+the frost hasn't lifted. your mother's scent is already thinning out of the den;
+three sunrises gone now, taken by the river rot before the medics could gather
+enough lungwort to matter.
+
+you are hungry. the pack does not feed a wolf who will not hunt.
+
+[[slip out alone, before the others wake.->alonehunt]]
+[[wait for the dawn patrol and hunt with the pack.->packhunt]]
+
+:: alonehunt
+fog to your hocks. alone, the whole forest is yours and none of it is safe.
+two scents cross the wind: a hare in the bracken, close and certain, and,
+further off, an elk that moves wrong. sick. slow. too much meat for one wolf,
+if the one wolf lives to eat it.
+
+[[take the hare. small, but sure.->hare]]
+[[go for the elk. land it and you eat for days.->elk]]
+
+:: hare
+you eat. the hunger loosens its grip, for now. a lone belly is never full for
+long, and the cold is only getting deeper.
+
+then the wind shifts, and it carries another wolf. not pack. a rogue's scent,
+laid deliberately across the border you were about to cross.
+
+[[back away. it isn't worth your throat.->border]]
+[[hold your ground and answer the scent.->border]]
+
+:: elk
+the elk is dying already; it just doesn't know the order of things. you do.
+you take it at the hamstring, and its hoof takes you back, once, hard, against
+the foreleg. bone gives with a sound you feel more than hear.
+
+the elk goes down. so, nearly, do you. you've made your first real kill, and
+you're bleeding into the snow, and there is no one here.
+
+[[pack the wound with cobweb and moss yourself, and push on.->selftreat]]
+[[leave the meat. limp home and find the medic.->findmedic]]
+
+:: selftreat
+cobweb slows the bleed. moss hides it. it is not the same as mending it.
+you drag what meat you can and tell yourself the heat in the leg is just the
+work. by the second sunrise it is not just the work.
+
+[[continue.->fever]]
+
+:: fever
+the wound has gone tight and shining and hot. the fever walks up your spine one
+vertebra at a time. this is where a great many wolves' stories quietly end:
+not in a fight, in a leg they should have shown to a healer.
+
+[[lie down in the cold and let your body decide.->deathsave]]
+
+:: deathsave
+three breaths. three rolls of the dying.
+
+(this part is real. in the world past this story, death is permanent, and *death
+saves* are the thin thread a life hangs from when the healers are too far.)
+
+you pass the first breath. you pass the second. the third comes slow, and
+colder than the others.
+
+[[...->survive]]
+[[...->death]]
+
+:: survive
+and holds. barely. you wake to a medic's breath fogging over your muzzle,
+her paw already splinting the leg she found you dying on. you lived.
+
+most don't. you should know that going in.
+
+[[continue.->hook]]
+
+:: death
+and doesn't come. the cold finishes what the elk started. by morning the den
+news carries a single line: your name, your cause, and the one thing you did
+that a wolf would remember you for.
+
+that's how it ends here. every wolf. eventually. the only question the game ever
+asks is *what you did with the sunrises in between.*
+
+[[continue.->hook]]
+
+:: findmedic
+you leave good meat to the crows and limp three miles on three legs to reach
+her. the medic doesn't scold you. she sets the bone, packs it with comfrey,
+binds it tight. "you'll limp a moon," she says. "you'll limp."
+
+knowing when to carry your own wound and when to lay it in front of someone
+else is, in the end, the difference between a scar and a grave.
+
+[[continue.->hook]]
+
+:: packhunt
+you wait. the patrol takes you in without ceremony, and together the big prey
+falls the way it never falls for one wolf alone. you eat well. your standing
+rises. and for the first sunrise since your mother, the cold at your flank is
+someone else's warmth, not just absence.
+
+a pack is that: a full belly, a treasury, a border worth defending, a war worth
+surviving. it is also the thing you can lose.
+
+[[continue.->hook]]
+
+:: border
+whichever way you turned, the border holds its breath and lets you go, this
+time. a lone wolf's whole life is this: small choices at the edge of things,
+each one deciding whether there's a next sunrise.
+
+[[continue.->hook]]
+
+:: hook
+that was one wolf. one sunrise. one choice out of ten thousand.
+
+the wolf you'd actually build, its bloodline, its bonds, its diseases and
+rivals and the pack it dies defending, waits in the wild past this page.
+
+[[enter the wild. join the pack.|https://discord.gg/47m93n6ZTB]]
+[[see the world first.|https://howlbert.neocities.org]]
