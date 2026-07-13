@@ -4,6 +4,8 @@ paste these into ko-fi shop listings. **product titles should include the keywor
 
 **on every order:** buyer must be in discord, have used `/register`, and put their **discord user id** in the order message (see `/patron`).
 
+**server age:** the discord server is 18+ only; note this on the ko-fi page since every item here requires joining it to redeem.
+
 ---
 
 ## tier 1; digital and bones

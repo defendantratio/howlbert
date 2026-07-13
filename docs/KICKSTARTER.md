@@ -4,7 +4,8 @@
 **creator:** basil (he/him)  
 **funding goal:** $1,500 usd (deliberately lean; see below)  
 **campaign length:** 21 to 28 days (recommended)  
-**audience today:** ~30 discord members. plan to reach wolf-rp communities beyond the server
+**audience today:** ~30 discord members. plan to reach wolf-rp communities beyond the server  
+**server age:** the discord server is 18+ only; note this on the campaign page since the pitch is pointing backers at joining it
 
 **world framing:** howlbert is the bot/world. the four great packs (greyspire, mistmoor, thistlehide, and silverrush) are equal pillars at `/register`, plus loners.
 
@@ -342,6 +343,9 @@ ko-fi = ongoing tips and shop. kickstarter = one-time fund for 12 months hosting
 
 **do i need to join discord?**  
 yes. all in-game rewards require `/register`.
+
+**is the server all ages?**  
+no. the discord server is 18+ only. it's not an nsfw space, the age gate is about the server's overall tone and moderation, not adult content.
 
 **which great pack should i pick?**  
 any. greyspire, mistmoor, thistlehide, and silverrush are designed as equals. loners are supported too.
