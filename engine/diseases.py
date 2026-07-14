@@ -46,7 +46,7 @@ DISEASES: dict[str, dict] = {
                 "name": "Gut-Run",
                 "dc": 11,
                 "next": None,
-                "effect": "Gut sickness: −8 hunger each sunrise; CON save to recover.",
+                "effect": "Gut sickness: −8 satiety each sunrise; CON save to recover.",
                 "hunger_loss": 8,
                 "cure_on_save": True,
             },
@@ -251,7 +251,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 13,
                 "next": "wheeze",
                 "effect": (
-                    "Marsh lung-fever: +1 exhaustion and −8 hunger each sunrise; "
+                    "Marsh lung-fever: +1 exhaustion and −8 satiety each sunrise; "
                     "pups take extra harm as the season worsens."
                 ),
                 "exhaustion_gain": 1,
@@ -499,7 +499,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 14,
                 "next": "emaciated",
                 "effect": (
-                    "Body sheds weight: −12 hunger each sunrise; −15% hunt bones; "
+                    "Body sheds weight: −12 satiety each sunrise; −15% hunt bones; "
                     "**borage** or **parsley** may halt it."
                 ),
                 "hunger_loss": 12,
@@ -509,7 +509,7 @@ DISEASES: dict[str, dict] = {
                 "name": "Wasting Sickness (Emaciated)",
                 "dc": 16,
                 "next": "cachectic",
-                "effect": "Muscle wastes away: −1 HP and −15 hunger each sunrise.",
+                "effect": "Muscle wastes away: −1 HP and −15 satiety each sunrise.",
                 "hunger_loss": 15,
                 "hp_loss": 1,
                 "hunt_mult": 0.7,
@@ -535,7 +535,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 13,
                 "next": "bloody_flux",
                 "effect": (
-                    "Sewage-tainted water churns the belly: −10 hunger and −6 hydration "
+                    "Sewage-tainted water churns the belly: −10 satiety and −6 hydration "
                     "each sunrise; con save shakes it off before it sets in."
                 ),
                 "hunger_loss": 10,
@@ -546,7 +546,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 17,
                 "next": "failing",
                 "effect": (
-                    "Bowels turn against the wolf: −1 hp, −14 hunger, −12 hydration each "
+                    "Bowels turn against the wolf: −1 hp, −14 satiety, −12 hydration each "
                     "sunrise. no known herb touches it."
                 ),
                 "hp_loss": 1,
@@ -785,7 +785,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 14,
                 "next": "hollow",
                 "effect": (
-                    "Joy feels far away: −8 mood; −10 hunger; "
+                    "Joy feels far away: −8 mood; −10 satiety; "
                     "**lavender**, **meadowsweet**, or **rosemary** at burial rites."
                 ),
                 "mood_loss": 8,
@@ -1018,7 +1018,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 11,
                 "next": "refusing",
                 "effect": (
-                    "Food turns to ash: −6 hunger; −4 mood; "
+                    "Food turns to ash: −6 satiety; −4 mood; "
                     "**chamomile**, **meadowsweet**, or honey."
                 ),
                 "hunger_loss": 6,
@@ -1030,7 +1030,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 13,
                 "next": "wasting",
                 "effect": (
-                    "Won't keep meals down: −10 hunger; −6 mood; "
+                    "Won't keep meals down: −10 satiety; −6 mood; "
                     "**chervil**, **watermint**, or **meadowsweet**."
                 ),
                 "hunger_loss": 10,
@@ -1041,7 +1041,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 15,
                 "next": None,
                 "effect": (
-                    "Body thins from refusal: −12 hunger; −1 HP/sunrise; "
+                    "Body thins from refusal: −12 satiety; −1 HP/sunrise; "
                     "Medic feeding and **borage** support."
                 ),
                 "hunger_loss": 12,
@@ -1166,7 +1166,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 11,
                 "next": "impacted",
                 "effect": (
-                    "Gut backs up; strained and uncomfortable: −4 hunger; −4 mood; "
+                    "Gut backs up; strained and uncomfortable: −4 satiety; −4 mood; "
                     "**bindweed** or extra water."
                 ),
                 "hunger_loss": 4,
@@ -1177,7 +1177,7 @@ DISEASES: dict[str, dict] = {
                 "name": "The Stopping (Impacted)",
                 "dc": 14,
                 "next": None,
-                "effect": "Gut fully blocked: −8 hunger; −1 HP/sunrise; needs Medic care.",
+                "effect": "Gut fully blocked: −8 satiety; −1 HP/sunrise; needs Medic care.",
                 "hunger_loss": 8,
                 "hp_loss": 1,
                 "mood_loss": 6,
@@ -1207,7 +1207,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 14,
                 "next": "despair",
                 "effect": (
-                    "Pulls away from the den: −8 mood; −6 hunger; "
+                    "Pulls away from the den: −8 mood; −6 satiety; "
                     "**borage** and steady den care."
                 ),
                 "mood_loss": 8,
@@ -1218,7 +1218,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 17,
                 "next": None,
                 "effect": (
-                    "Nothing left to reach for: −10 mood; −8 hunger; blocks socialize; "
+                    "Nothing left to reach for: −10 mood; −8 satiety; blocks socialize; "
                     "den care, patience, and time."
                 ),
                 "mood_loss": 10,
@@ -1400,7 +1400,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 11,
                 "next": "heavy_burden",
                 "effect": (
-                    "Parasites from raw prey sap strength quietly: −6 hunger each sunrise; "
+                    "Parasites from raw prey sap strength quietly: −6 satiety each sunrise; "
                     "**tansy** or **knotgrass** clears them early."
                 ),
                 "hunger_loss": 6,
@@ -1411,7 +1411,7 @@ DISEASES: dict[str, dict] = {
                 "dc": 14,
                 "next": None,
                 "effect": (
-                    "Burden grows heavy: −12 hunger; −15% hunt bones; "
+                    "Burden grows heavy: −12 satiety; −15% hunt bones; "
                     "pups hit hardest by the drain."
                 ),
                 "hunger_loss": 12,

@@ -133,6 +133,6 @@ def drink_liquid(user, liquid_key: str) -> tuple[bool, str]:
             standing_note += "\n_your standing sinks too low; you are cast out._"
 
     gained = capped_hunger - hunger
-    hunger_bit = f"hunger **{new_hunger}** (+{gained})" if gained > 0 else f"hunger **{new_hunger}**"
+    hunger_bit = f"satiety **{new_hunger}** (+{gained})" if gained > 0 else f"satiety **{new_hunger}**"
     msg = f"you lap up **{label}**; {hunger_bit}, hydration **{new_thirst}** (+{thirst_gain}){exhaustion_note}.{cap_note}{upset_note}{standing_note}"
     return True, msg

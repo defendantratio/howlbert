@@ -257,7 +257,7 @@ def _feed_wolf_from_stack(wolf, stack, *, day: int = 0) -> tuple[bool, str]:
     db.update_pack_prey_stack_uses(stack["id"], uses_left)
 
     old_exhaustion = int(wolf["exhaustion"]) if "exhaustion" in wolf.keys() else 0
-    msg = f"**{wolf['wolf_name']}**; **{meta['label']}** +{hp_gain} hp, hunger **{new_hunger}**, hydration **{new_thirst}**"
+    msg = f"**{wolf['wolf_name']}**; **{meta['label']}** +{hp_gain} hp, satiety **{new_hunger}**, hydration **{new_thirst}**"
     from engine.cannibalism import cannibalism_eat_consequences
 
     msg += cannibalism_eat_consequences(wolf, stack["prey_key"])

@@ -121,7 +121,7 @@ async def treat(
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
         return
 
-    from herbs import HERBS
+    from herbs import HERBS, INJURIES
     from engine.conditions import medicine_check, parse_injuries, treat_with_herb, herb_special_effect
     from engine.herb_properties import herb_form_rule
     from engine.rolls import roll_d20
@@ -132,6 +132,23 @@ async def treat(
     herb_key = 'stick' if item['key'] == 'stick' else item['key'].replace('herb_', '', 1)
     meta = HERBS.get(herb_key, {'cures': (), 'effect': item['description']})
     special = herb_special_effect(herb_key, user, inventory_qty=qty)
+
+    # prefer a prepared stack (tea, gargle, poultice, etc) over the raw/dried
+    # copy when one exists, so the real prep form actually reaches the
+    # side-effects/benefits roll below instead of always falling back to raw.
+    _pack_id_for_prep = int(user['pack_id']) if ('pack_id' in user.keys() and user['pack_id']) else None
+    if _pack_id_for_prep:
+        for s in db.get_pack_herb_stacks(_pack_id_for_prep):
+            if s['herb_key'] == herb_key:
+                prepared_stack_source = 'pack'
+                prepared_stack_row = s
+                break
+    if prepared_stack_row is None:
+        for s in db.get_herb_stacks(user['id']):
+            if s['herb_key'] == herb_key:
+                prepared_stack_source = 'personal'
+                prepared_stack_row = s
+                break
     world = db.get_world(interaction.guild.id) if interaction.guild else None
     treat_day = world['day_number'] if world else int(user['last_rest_day'] or 0)
 
@@ -281,6 +298,34 @@ async def treat(
             outcome = 'no_effect'
             _tol_blocked = True
 
+    # cure_dc gate: a handful of serious injuries need a real medicine check
+    # to actually clear, not just the right herb applied (popping a
+    # dislocated joint back in, stitching a festering wound closed, and so
+    # on). a failed attempt doesn't consume the herb, same convention as the
+    # generic no-effect check below.
+    if outcome == 'cured_injury':
+        _dc_targets = [
+            (inj, INJURIES[inj]['cure_dc'])
+            for inj in _tol_injuries
+            if inj in INJURIES and INJURIES[inj].get('cure_dc')
+        ]
+        if _dc_targets:
+            _cure_inj_key, _cure_dc = _dc_targets[0]
+            _cure_check = medicine_check(user, dc=_cure_dc + _tol_penalty)
+            from engine.herb_buffs import consume_herb_check_buffs as _consume_cure_buffs
+            _consume_fields = _consume_cure_buffs(user, skill_key='medicine')
+            if _consume_fields:
+                db.update_user(interaction.user.id, wolf_id=user['id'], **_consume_fields)
+            if not _cure_check['success']:
+                embed = howlbert_embed(
+                    'treatment failed',
+                    f"**{INJURIES[_cure_inj_key]['name']}** needs a steadier hand; "
+                    f"medicine check {_cure_check['total']} vs dc {_cure_dc + _tol_penalty}; no effect this time.",
+                    color=ERROR_COLOR
+                )
+                await interaction.response.send_message(embed=embed)
+                return
+
     # special case early exits
     if special == 'reduce_exhaustion' and int(user['exhaustion']) <= 0:
         embed = howlbert_embed(
@@ -294,7 +339,7 @@ async def treat(
     if special == 'hunger_shield' and int(user['hunger_exhaustion_skip'] if 'hunger_exhaustion_skip' in user.keys() else 0):
         embed = howlbert_embed(
             'already shielded',
-            "fennel's hunger shield is already active for the next sunrise.",
+            "fennel's satiety shield is already active for the next sunrise.",
             color=ERROR_COLOR
         )
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -330,13 +375,13 @@ async def treat(
             await interaction.response.send_message(embed=embed)
             return
 
-    # consume herb: from the raw dried copy normally, or from the prepared
-    # stack itself when the raw copy was fully used up making it (see
-    # prepared_stack_source above).
+    # consume herb: prefer a prepared stack (tea, gargle, poultice, etc) when
+    # one exists, so the real prep form is what actually gets used; otherwise
+    # fall back to the raw/dried copy.
     use_qty = 3 if herb_key == 'ragweed' and special == 'reduce_exhaustion' else 1
-    if qty >= use_qty:
-        db.consume_item(interaction.user.id, item['id'], quantity=use_qty)
-    elif prepared_stack_row is not None:
+    consumed_form: str | None = None
+    if prepared_stack_row is not None:
+        consumed_form = prepared_stack_row['form']
         if prepared_stack_source == 'pack':
             remaining = int(prepared_stack_row['quantity']) - 1
             if remaining > 0:
@@ -345,6 +390,8 @@ async def treat(
                 db.remove_pack_herb_stack(int(prepared_stack_row['id']))
         else:
             db.remove_herb_stack(int(prepared_stack_row['id']))
+    elif qty >= use_qty:
+        db.consume_item(interaction.user.id, item['id'], quantity=use_qty)
     else:
         embed = howlbert_embed(
             'not in inventory',
@@ -371,7 +418,7 @@ async def treat(
 
     elif special == 'hunger_shield':
         db.update_user(interaction.user.id, wolf_id=user['id'], hunger_exhaustion_skip=1)
-        msg = "**{item['name']}**: you won't gain hunger exhaustion on the next sunrise (hydration still applies)."
+        msg = "**{item['name']}**: you won't gain satiety exhaustion on the next sunrise (hydration still applies)."
 
     elif special == 'march_shield':
         db.update_user(interaction.user.id, wolf_id=user['id'], march_exhaustion_skip=1)
@@ -401,7 +448,7 @@ async def treat(
         from config import HUNGER_MAX
         new_hunger = min(HUNGER_MAX, int(user['hunger']) + 8)
         db.update_user(interaction.user.id, wolf_id=user['id'], hunger=new_hunger)
-        msg = f"**{item['name']}**: sustained energy; hunger +8 ({new_hunger})."
+        msg = f"**{item['name']}**: sustained energy; satiety +8 ({new_hunger})."
 
     elif special == 'sorrel_restore':
         from config import HUNGER_MAX
@@ -415,7 +462,7 @@ async def treat(
             if not injuries:
                 fields['condition'] = 'healthy'
         db.update_user(interaction.user.id, wolf_id=user['id'], **fields)
-        msg = f"**{item['name']}**: appetite returns (**hunger {new_hunger}**)."
+        msg = f"**{item['name']}**: appetite returns (**satiety {new_hunger}**)."
         if had_gash:
             msg += ' bleeding staunched.'
 
@@ -632,8 +679,11 @@ async def treat(
     if treat_shift:
         msg += f'\n\n_{treat_shift}_'
 
-    # side effects, systemic benefits + addiction; external use (poultice) skips internal effects
-    _se_form = 'poultice' if (rule.external_only or rule.requires_poultice) else 'tea'
+    # side effects, systemic benefits + addiction; external use (poultice) skips internal effects.
+    # when the herb actually consumed came from a prepared stack (tea, gargle,
+    # simmered milk, etc), use its real form; otherwise fall back to the old
+    # heuristic for a raw/dried copy straight from inventory.
+    _se_form = consumed_form or ('poultice' if (rule.external_only or rule.requires_poultice) else 'tea')
     _se_fresh = db.get_user_by_id(subject_id) or treat_subject
     from engine.herb_side_effects import roll_herb_side_effects
     _side_note = roll_herb_side_effects(_se_fresh, herb_key, _se_form, day=treat_day)

@@ -403,7 +403,7 @@ def progress_disease(user, *, day: int = 0) -> dict:
     if result["exhaustion_gain"]:
         symptom_bits.append(f"+**{result['exhaustion_gain']}** exhaustion")
     if result["hunger_loss"]:
-        symptom_bits.append(f"−**{result['hunger_loss']}** hunger")
+        symptom_bits.append(f"−**{result['hunger_loss']}** satiety")
     if result["thirst_loss"]:
         symptom_bits.append(f"−**{result['thirst_loss']}** hydration")
     if result["mood_loss"]:
@@ -613,6 +613,8 @@ def herb_special_effect(herb_key: str, user, *, inventory_qty: int = 1) -> str |
         return None
     if herb_key == "purslane":
         return "purslane_thirst"
+    if herb_key == "cobnuts":
+        return "cobnuts_energy"
     if herb_key == "honey" and not disease_key:
         return None
     return None

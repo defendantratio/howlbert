@@ -188,7 +188,7 @@ def eat_prey_carcass(user, stack_id: int, *, day: int = 0) -> tuple[bool, str]:
     verb = "graze on" if forage else "tear into"
     msg = (
         f"you {verb} **{meta['label']}**; +{hp_gain} hp, "
-        f"hunger **{new_hunger}** (+{hunger_gain}), hydration **{new_thirst}** (+{thirst_gain})"
+        f"satiety **{new_hunger}** (+{hunger_gain}), hydration **{new_thirst}** (+{thirst_gain})"
     )
     from engine.cannibalism import cannibalism_eat_consequences
 

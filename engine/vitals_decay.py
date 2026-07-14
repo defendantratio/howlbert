@@ -76,7 +76,7 @@ def apply_time_decay(user) -> tuple[dict, str]:
         return {}, ""
     parts = []
     if applied.get("hunger"):
-        parts.append(f"hunger -{applied['hunger']}")
+        parts.append(f"satiety -{applied['hunger']}")
     if applied.get("thirst"):
         parts.append(f"hydration -{applied['thirst']}")
     return applied, "the day wears on; " + ", ".join(parts) + "."

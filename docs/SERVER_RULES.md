@@ -1,6 +1,6 @@
 # server rules
 
-howlbert (our discord wolf-rp bot) is the **main mode of roleplay** on this server. your wolf is a
+howlbert (our discord wolf-RP bot) is the **main mode of roleplay** on this server. your wolf is a
 real character in the bot, created, aged, fed, healed, mated, and (permanently) killed through
 slash commands, and roleplay is posted in-character on top of it. these rules say how the two fit
 together. commands look like `/command` (for example `/register`, `/combat`, `/medic`); run `/help`
@@ -8,18 +8,18 @@ for the full list.
 
 # [📝] server rules
 
-these are the baseline conduct and safety rules for the server itself, discord-wide (voice, dms, every channel), not just in-character behavior. the character, roleplay, and relationship rules below build on top of these; this section always wins if the two ever seem to disagree.
+these are the baseline conduct and safety rules for the server itself, discord-wide (voice, DMs, every channel), not just in-character behavior. the character, roleplay, and relationship rules below build on top of these; this section always wins if the two ever seem to disagree.
 
 ## age requirements & platform terms
 
 * howlbert is a discord bot; this section covers discord's own terms of service and community guidelines, not any other platform's.
 * this server is **18+ only**. discord's own minimum age is 13, but this server sets a higher bar than that floor; any underage (under 18) user discovered will be banned.
 * verify your age through the #how-to-verify channel before you get full server access; staff may also ask for verification directly to keep the space safe for everyone.
-* the server does not host nsfw content despite being 18+; **no sexual, adult, or nsfw roleplay is allowed anywhere**, in any channel or dm. any discussion, depiction, or roleplay of sexual acts leads to an **immediate ban**.
+* the server does not host NSFW content despite being 18+; **no sexual, adult, or NSFW roleplay is allowed anywhere**, in any channel or DM. any discussion, depiction, or roleplay of sexual acts leads to an **immediate ban**.
 
 ## content warnings for sensitive themes
 
-* if your rp or discussion involves graphic violence, gore, torture, self-harm, suicide, addiction, or other topics that could be triggering, you must:
+* if your RP or discussion involves graphic violence, gore, torture, self-harm, suicide, addiction, or other topics that could be triggering, you must:
   * post a clear content warning in the channel before starting.
   * give others the chance to opt out.
   * respect that some members may be uncomfortable; do not pressure them to stay.
@@ -27,25 +27,13 @@ these are the baseline conduct and safety rules for the server itself, discord-w
 
 ## no jokes about abuse or sensitive topics
 
-* don't make jokes, lighthearted remarks, or casual references about physical, emotional, or sexual abuse; self-harm, suicide, or trauma; or addiction and eating disorders. this applies **both ic and ooc**; "dark humor" can still be genuinely hurtful.
+* don't make jokes, lighthearted remarks, or casual references about physical, emotional, or sexual abuse; self-harm, suicide, or trauma; or addiction and eating disorders. this applies **both IC and OOC**; "dark humor" can still be genuinely hurtful.
 * if you're unsure whether something's appropriate, err on the side of caution or ask a mod.
 * violations: a warning; repeat offenses lead to a mute or kick.
 
-## no godmodding, metagaming, or powerplaying
-
-* you control only your own character. use attempted actions ("rivenmaw lunges for the intruder's throat") and let the other player decide how it lands.
-* no character is invincible; the bot's hp and injury system (see fighting mechanics below) already enforces this mechanically; treat godmodding in prose as the same violation as ignoring that system.
-* repeated godmodding or ignoring others' actions may lead to a kick.
-
-## separating ic and ooc
-
-* use `(( ))`, `//`, or `[ ]` for ooc asides inside rp channels.
-* keep ic drama out of ooc spaces (general chat, voice).
-* harassment, bullying, or leaking private conversations results in immediate moderator action (mute or ban).
-
 ## personal information & privacy
 
-* don't share anyone's real name, location, workplace, school, or other identifying information without their explicit consent, in the server or in dms.
+* don't share anyone's real name, location, workplace, school, or other identifying information without their explicit consent, in the server or in DMs.
 * doxxing (posting or threatening to post someone's private information) is an instant ban, no warning.
 * be mindful of what you share about yourself too; staff can help but can't undo something once it's posted.
 
@@ -59,59 +47,43 @@ these are the baseline conduct and safety rules for the server itself, discord-w
 * any art, character designs, writing, or other creative content you post must be either your own original work, or properly credited to the original creator (link or name). credit commissioned artists too.
 * tracing or passing off someone else's work as your own is a serious offense; expect a mute or kick, and repeat offenders are banned.
 
-## no ai-generated content
+## no AI-generated content
 
-* no ai-generated images, writing, character designs, lore, or backstories anywhere in the server; original creative work only.
-* not sure if a tool counts as ai? ask staff before posting.
+* no AI-generated images, writing, character designs, lore, or backstories anywhere in the server; original creative work only.
+* not sure if a tool counts as AI? ask staff before posting.
 * violations: content removal and a warning; repeat offenses may lead to a mute or kick.
 
 ## no real-world illegal content
 
-* don't discuss, depict, or share anything that violates discord's prohibited content policy: csam, bestiality, necrophilia, extreme real-world violence, or illegal activity of any kind. this is reported to discord and, where applicable, to authorities.
+* don't discuss, depict, or share anything that violates discord's prohibited content policy: CSAM, bestiality, necrophilia, extreme real-world violence, or illegal activity of any kind. this is reported to discord and, where applicable, to authorities.
 * the wolf/human dynamics allowed in-fiction never extend to this; see human relationships under relationship rules for where that line already sits.
-
-## character sheets: approval & transparency
-
-* new characters go through the approval process described under character rules below; on top of that, your sheet should note any potential triggers present in your character's backstory or behavior, and your own ooc boundaries around interacting with them.
-* characters in the pup or juvenile life stage may appear in family or adventure rp, but must never be placed in romantic or suggestive situations, consistent with the no-nsfw rule above.
 
 ## spoiler & leak policy
 
 * lore, plot twists, backstories, and worldbuilding shared in this server are for this community; don't repost, screenshot, or copy server-exclusive lore or story content elsewhere without staff permission.
 * violations are treated as a breach of trust and may result in a mute or kick.
 
-## activity, hiatus, and the pause system
-
-* leaving a scene unexpectedly? use #hiatus-notice or dm your scene partner so they know.
-* repeated ghosting (leaving without warning) may get you restricted from certain channels; see ghosting in rp scenes under roleplay rules for the rest of that etiquette.
-* any participant can call a pause at any time (`((pause))`) and the scene stops immediately, no explanation required.
-
-## no unsolicited dm roleplay or harassment
-
-* rp happens in public server channels unless everyone involved agrees to move to dms.
-* unsolicited rp requests or harassment in dms results in an instant ban. respect "no" or "not interested" the first time.
-
 ## advertising & self-promotion
 
-* no server invites, self-promotion outside designated commission channels, or service ads without prior staff approval; this includes unsolicited dm advertising.
+* no server invites, self-promotion outside designated commission channels, or service ads without prior staff approval; this includes unsolicited DM advertising.
 * violators get a warning first; repeat offenses lead to a mute or kick.
 
 ## respect mod decisions: appeals go private
 
-* disagree with a mod call? don't argue publicly in any channel. dm a staff member or use #support-tickets to raise it privately.
+* disagree with a mod call? don't argue publicly in any channel. DM a staff member or use #support-tickets to raise it privately.
 * public arguing, callouts, insults, or drama about mod decisions results in a mute or escalated action.
 
 ## keep content in the right channel; no spam
 
-* use channels for their intended purpose (rp in rp channels, memes in memes, lore in lore). ask a mod if you're unsure where something goes.
-* no ping spam, flooding, or wall-of-text dumps in general ooc channels.
+* use channels for their intended purpose (RP in RP channels, memes in memes, lore in lore). ask a mod if you're unsure where something goes.
+* no ping spam, flooding, or wall-of-text dumps in general OOC channels.
 * violations get a warning; repeated spam may lead to a mute.
 
 ## voice chat conduct
 
 * no ear-rape, sudden loud sounds, or excessive background noise; use push-to-talk if your space is noisy.
 * nobody has to join voice if they don't want to; don't pressure them.
-* repeated vc trolling or disruptive behavior results in a mute or kick.
+* repeated VC trolling or disruptive behavior results in a mute or kick.
 
 ## alt accounts must be registered
 
@@ -121,13 +93,13 @@ these are the baseline conduct and safety rules for the server itself, discord-w
 
 ## no excessive political or religious debate
 
-* casual mentions are fine; heated real-world political or religious debate doesn't belong in ooc channels and reliably derails things for everyone.
-* want to go deeper on a topic like that? take it to dms with willing participants.
+* casual mentions are fine; heated real-world political or religious debate doesn't belong in OOC channels and reliably derails things for everyone.
+* want to go deeper on a topic like that? take it to DMs with willing participants.
 * violations: a warning; repeat offenses may lead to a mute or kick.
 
 ## no mini-modding
 
-* see a rule being broken? report it to staff (dm or #support-tickets) and let them handle it, rather than warning or scolding the other member yourself.
+* see a rule being broken? report it to staff (DM or #support-tickets) and let them handle it, rather than warning or scolding the other member yourself.
 * mini-modding tends to escalate situations and creates a hostile atmosphere. violators get a warning; repeat offenses may lead to a mute.
 
 ## use common sense: rules are not exhaustive
@@ -140,10 +112,10 @@ this is a space for creativity and respect. treat others how you want to be trea
 
 ## consequences for breaking rules
 
-* **warning**: minor ooc disrespect, forgetting a content warning, or a first-time ai/art-credit issue.
+* **warning**: minor OOC disrespect, forgetting a content warning, or a first-time AI/art-credit issue.
 * **mute**: repeated disregard for content warnings, boundary violations, minor advertising or spoiler breaches, or offensive jokes about sensitive topics.
-* **kick**: godmodding, metagaming, harassment, serious boundary breaches, or leaking lore.
-* **ban**: underage users, illegal content, doxxing, severe harassment, non-consensual major-consequence rp, or any tos violation that endangers the community.
+* **kick**: godmodding, metagaming, powerplaying, serious boundary breaches, or leaking lore.
+* **ban**: underage users, illegal content, doxxing, harassment (including any unsolicited DM harassment, which is always an instant ban, no warning), non-consensual major-consequence RP, or any TOS violation that endangers the community.
 
 ---
 
@@ -186,7 +158,7 @@ this is a space for creativity and respect. treat others how you want to be trea
 * characters inactive **60+ days** may be **archived** to free a slot.
 * archived characters can be reactivated within **90 days** (`/switchwolf`). after that they are
   **forgotten, dead to the maw**, unless you reapply.
-* players who leave the server permanently forfeit their characters to the narrative (npc'd, killed,
+* players who leave the server permanently forfeit their characters to the narrative (NPC'd, killed,
   or exiled at moderator discretion).
 
 ## name structure
@@ -200,13 +172,13 @@ this is a space for creativity and respect. treat others how you want to be trea
 
 ## prohibited names
 
-* canon names from popular ips (ghost, nymeria, whitefang).
+* canon names from popular IPs (ghost, nymeria, whitefang).
 * names referencing real-world brands or memes.
 
 ## name changes
 
-* a wolf may earn a new name ic through notable deeds (for example softpaw becomes ironjaw after
-  killing a bear). apply it with `/rename` after moderator approval and an ic scene.
+* a wolf may earn a new name IC through notable deeds (for example softpaw becomes ironjaw after
+  killing a bear). apply it with `/rename` after moderator approval and an IC scene.
 * no frivolous changes.
 
 ## realistic wolf anatomy
@@ -243,10 +215,15 @@ your character's backstory must answer:
   with `/character maw belief`; the bot tracks `maw_favor` and `maw_karma`.)
 * **humans:** have they met humans? how did it go? (human factions are real, see `/faction`.)
 
+## character sheets: approval & transparency
+
+* new characters go through the approval process described above; on top of that, your sheet should note any potential triggers present in your character's backstory or behavior, and your own OOC boundaries around interacting with them.
+* characters in the pup or juvenile life stage may appear in family or adventure RP, but must never be placed in romantic or suggestive situations, consistent with the no-NSFW rule under server rules above.
+
 ## personality & flaws requirement
 
 * every character must have at least **two visible flaws** (reckless, distrustful, cowardly,
-  obsessive, volatile) that affect their decisions in rp.
+  obsessive, volatile) that affect their decisions in RP.
 * "flawless" or "perfectly noble" characters are not allowed. this is a brutal world.
 * personality must be consistent with backstory (a wolf who lost their pack to betrayal should show
   guardedness).
@@ -256,17 +233,17 @@ your character's backstory must answer:
 * you may establish pre-existing relationships (family, rivalry, past alliance) with other players'
   characters, both parties must consent and document it. record them in the bot with `/bonds` (kin,
   friendships, rivalries, mentors, romances, found families) and view lineage with `/family`.
-* new characters cannot automatically know or be trusted by established pack leaders without an ic
+* new characters cannot automatically know or be trusted by established pack leaders without an IC
   reason or scene.
 * family trees must be approved by staff to prevent lore contradictions.
 
 ## pack transfer & loyalty rules
 
 * a character may leave their pack and join another via `/setfaction`, but this requires:
-  * an ic scene showing the departure and its reasons.
+  * an IC scene showing the departure and its reasons.
   * staff approval (fits the lore, does not disrupt pack dynamics).
 * no switching packs more than once every 30 days without special permission.
-* betraying a pack and joining an enemy carries severe ic consequences (hostility, exile, or death
+* betraying a pack and joining an enemy carries severe IC consequences (hostility, exile, or death
   from the old pack; the bot tracks exile and rejoin cooldowns, `/pack pardon` can lift them).
 
 ## pups & breeding rules
@@ -274,8 +251,11 @@ your character's backstory must answer:
 * pups **inherit a mix of both parents' traits**. the bot rolls appearance and genetics at birth
   (`/courtship` to mate and check pregnancy; `/pupcare` to birth and raise a litter). they follow
   the age rules above.
-* no more than **three (3) living, played pups** per character at a time. (a litter is larger, see
-  pregnancy & birth, but you only play up to 3.)
+* you may play your whole litter as named characters; born pups do not count toward the **ten (10)**
+  wolf slot cap (see starting slots above), so a big litter never blocks you from registering or
+  keeping other wolves.
+* if you don't want to play every pup yourself, you can hand extras off: put them up as character
+  adopts for other players (see adoption & found family below), or leave them as den NPCs.
 * pups need an adult guardian (a parent or designated caretaker) and are nursed until they leave the
   pup stage (`/pupcare`, `/drink type:milk`).
 
@@ -285,7 +265,7 @@ your character's backstory must answer:
   persist across sunrises and only clear through `/medic` (clinical care, herb treatment, spirit
   rites) or herbs; broken bones and deep wounds take real in-game time.
 * untreated wounds get worse: left alone, injuries develop complications or convert to permanent
-  chronic conditions (limp, chronic pain, scarring). reflect it in your rp (limping, favoring a leg,
+  chronic conditions (limp, chronic pain, scarring). reflect it in your RP (limping, favoring a leg,
   slower reactions). the bot already is.
 * staff may enforce additional cooldowns on heavily injured characters for realism.
 
@@ -313,7 +293,7 @@ your character's backstory must answer:
 
 ## death & resurrection policy
 
-* **character death is permanent.** when your wolf hits 0 hp it enters dying and rolls death saves
+* **character death is permanent.** when your wolf hits 0 HP it enters dying and rolls death saves
   (`/medic action:deathsaves`, or a medic's `/medic action:stabilize`); fail them and the bot marks
   the wolf **dead, no exceptions.** resurrection happens only as part of a staff-run plot (for
   example the maw raises a corrupted husk).
@@ -325,7 +305,7 @@ your character's backstory must answer:
 ## activity & participation expectation
 
 * characters are expected to participate in pack life. a wolf that never interacts may be archived
-  or npc'd. if you join a pack you are expected to:
+  or NPC'd. if you join a pack you are expected to:
   * attend pack meetings (when scheduled).
   * respond to pack-wide events and threats (`/pack`, wars, `/preypile`, howls).
   * engage with packmates in at least one thread per week (or per your availability).
@@ -338,30 +318,49 @@ your character's backstory must answer:
 
 ## posting format
 
-* in-character posting runs through the bot: `/proxy` (tupperbox-style, type and it posts as your
-  wolf), `/say` (a one-line ic line), `/sign` (body language, whimper, growl, nuzzle, lick), and
-  `/scene` (threaded scenes with a roster). `/whisper` sends an ic dm.
-* **third person, past tense** preferred. *rivenmaw stalked through the snow, his breath frosting
-  the air.*
-* **no asterisk roleplay** (`*licks paw*`). use full sentences for prose, and `/sign` for pure body
-  language.
-* length: one paragraph to several. quality over quantity. one-liners are discouraged but allowed
-  for fast-paced scenes (that is what `/say` is for).
+in-character posting runs entirely through the bot; there's no "just type it in chat" for actual prose. pick the tool that fits what you're doing:
+
+* **`/proxy` for full scenes; set it up once, then just type.** `/proxy set tag:` binds a bracket or prefix (like `[text]`) to your wolf; from then on, any normal message you type matching that pattern gets deleted and reposted as a webhook under your wolf's name and avatar, no slash command needed per line. if you'd rather not tag every message, `/proxy autoproxy mode:on` makes every untagged message you send in that channel post as your wolf automatically (prefix a line with `\` to speak as yourself, ooc, without turning it off). this is the main way to write actual prose scenes.
+* **`/say` for a quick single line.** `/say line:` posts one IC line (under 500 characters) as an embed under your wolf's name, no proxy setup required. good for a one-off reaction without committing to a full proxy session. **`(( ))`, `//`, and `[ ]` do nothing here**; unlike `/proxy`, `/say` has no OOC-stripping built in, so whatever you type in `line:` posts exactly as written. keep OOC asides out of the command entirely and say them in a separate message instead.
+* **`/sign` for body language instead of words.** `/sign signal:` picks from a fixed list (alert, rally, play-bow, submit, soothe, threaten, freeze, track, greet, grieve, challenge, nuzzle, whimper, growl, lick, stretch, plus reading another wolf's signals), and can target a specific wolf and add a short `message:`. use this instead of writing out gestures in prose. same as `/say`: nothing in `/sign` parses OOC markers, so any aside needs to go in its own message, not inside `message:`.
+* **`/scene` to open a real threaded scene with a roster.** `/scene start` opens a thread and shows who's in it; anyone who posts in that thread is auto-joined to the roster, so `/scene join` is only needed if you want to be listed before you've posted. `/scene here` shows the current roster, `/scene poke` pings everyone in it, `/scene end` closes it out.
+* **`/whisper` for a private IC line.** sends an actual discord DM to the other player (not an in-channel ephemeral message), so use it when the scene itself needs to stay private.
+* **`/location set` before you start**, if you want your surroundings to show up automatically; it adds a location line to your `/say` posts (not to `/proxy` webhook posts, so mention it in prose there if it matters to the scene).
+* **third person, past tense** preferred. *rivenmaw stalked through the snow, his breath frosting the air.*
+* **no asterisk roleplay** (`*licks paw*`). use full sentences for prose, and `/sign` for pure body language.
+* length: one paragraph to several. quality over quantity. one-liners are discouraged but allowed for fast-paced scenes (that is what `/say` is for).
+
+## separating IC and OOC
+
+* **`(( ))` and lines starting with `//` are real, bot-recognized OOC markers when you're using `/proxy`.** the bot automatically pulls anything written inside `(( ))`, or any full line starting with `//`, out of your wolf's IC post and attaches it instead as a short "OOC:" note on the same message. this means an aside like `((brb, dog needs out))` never actually gets posted in your wolf's voice, it's stripped out mechanically, not just by convention.
+* **`[ ]` is not recognized by the bot at all.** it's a common manual convention in other RP servers, but howlbert won't parse or strip it; if you use square brackets for an OOC aside, it just posts as plain text inside your IC message like anything else. stick to `(( ))` or `//` if you want the bot to actually separate it out for you.
+* keep IC drama out of OOC spaces (general chat, voice); a rivalry your wolves have shouldn't turn into real tension in general chat.
+* harassment, bullying, or leaking private conversations results in immediate moderator action (mute or ban).
+
+## no unsolicited DM roleplay or harassment
+
+* RP happens in public server channels unless everyone involved agrees to move to DMs.
+* unsolicited RP requests or harassment in DMs results in an instant ban. respect "no" or "not interested" the first time.
 
 ## fighting mechanics
 
 * combat runs on the bot: `/combat start`, then `/combat begin` (rolls initiative), then
   `/combat attack` (bite or claw), with `/combat maneuver`, `/combat npc` for predators, and
-  `/combat yield` to surrender. hp, injuries, and size all matter mechanically.
-* **consent-based pvp:** player-versus-player fights need ooc agreement from everyone involved, or
+  `/combat yield` to surrender. HP, injuries, and size all matter mechanically.
+* **consent-based PVP:** player-versus-player fights need OOC agreement from everyone involved, or
   moderator oversight for plot-critical fights.
-* **death:** permanent death happens only if the player agrees or it is a moderated event with clear
-  stakes (for example a challenge for alpha). you will be warned ooc before a mod-approved death. the
-  bot's death-save system (above) resolves the mechanics.
-* **injury:** your character can be injured without consent in moderated events, but not maimed or
-  killed without it.
-* **hunting and npc fights:** resolved by dice. `/combat` for fights, `/rpg roll` and `/skills` for
+* **death:** what needs consent is entering a fight that could kill your character at all, either PVP agreement from everyone involved or a moderated event with clear stakes (for example a challenge for alpha); you'll be warned OOC before a mod-approved death fight starts. once you're actually in that fight, the death-save system (see death & resurrection policy above) resolves for real, no exceptions and no separate veto over the dice; consent is for agreeing to the risk, not for overriding the outcome.
+* **injury:** your character can be injured without consent in moderated events, but you can't be put into a fight that risks maiming or killing your wolf without that consent in the first place.
+* **hunting and NPC fights:** resolved by dice. `/combat` for fights, `/rpg roll` and `/skills` for
   checks, `/field` and `/bones` for hunting. mods set difficulty numbers for plot-critical rolls.
+
+## no godmodding, metagaming, or powerplaying
+
+* **godmodding**: deciding someone else's reaction or outcome for them instead of writing your own wolf's action and stopping there. actual fighting goes through `/combat`, not freeform prose, so this isn't usually about winning a fight, it's about writing past the other player's consent: "rivenmaw shoulders past, low and deliberate" is fine, "...and mossheart flinches back, submitting" isn't, that's the other player's call to write, not yours.
+* **metagaming**: acting on knowledge your wolf has no IC way of knowing, like reacting to something you only saw in another thread, in someone's DMs, or in an OOC channel as if your character overheard it.
+* **powerplaying**: writing your own wolf's action so it can't fail or be resisted ("rivenmaw's bite finds mossheart's throat before she can move"), instead of leaving room for the other player, or the dice for anything `/combat` actually resolves, to decide whether it lands. this isn't just a combat problem: "rivenmaw kisses mossheart before he can move" is the same violation applied to intimacy instead of a fight, and it also breaks the OOC-consent requirement under casual physical intimacy below.
+* no character is invincible; the bot's HP and injury system already enforces this mechanically for anything resolved through `/combat`.
+* repeated godmodding, metagaming, or powerplaying may lead to a kick.
 
 ## pack allegiance
 
@@ -378,7 +377,7 @@ your character's backstory must answer:
 ## lore compliance
 
 * your character must fit their pack's culture, hierarchy, and beliefs. a greyspire wolf who rejects
-  scar-oaths is possible but must be justified and will face ic consequences.
+  scar-oaths is possible but must be justified and will face IC consequences.
 * the great maw is the dominant (not universal) belief system. atheism exists but is rare. your
   character can doubt, but cannot prove the maw false.
 * human activity is real (`/faction`). your wolf has probably met humans, raiders, traders, threats.
@@ -390,23 +389,22 @@ your character's backstory must answer:
 
 ## hierarchy & challenges
 
-* pack ranks are ic. if your character challenges a higher rank, be prepared to lose, flee, or die,
-  and the higher-ranked **player must agree ooc** unless it is a mod-run succession event.
+* pack ranks are IC. if your character challenges a higher rank, be prepared to lose, flee, or die,
+  and the higher-ranked **player must agree OOC** unless it is a mod-run succession event.
 * you cannot challenge a leader for their position without moderator approval. (formal disputes run
   through `/role` and `/rite trial`.)
 
 ## scene location & territory respect
 
-* entering another pack's territory without ic permission is trespassing. expect hostility. the bot
+* entering another pack's territory without IC permission is trespassing. expect hostility. the bot
   tracks territory (`/pack territory`) and lets you sneak with `/disguise` (risky).
-* cross-territory scenes require ooc coordination with the other pack and, ideally, mod awareness.
-* claiming a neutral location (the ripsnout, the maw's teeth) is fine, but neutral zones are often
-  contested or dangerous. mark where you are with `/location set`.
+* cross-territory scenes require OOC coordination with the other pack and, ideally, mod awareness.
+* setting a scene at a neutral location (the sundering stone, the maw's throat, neutral grounds, the borderlands) is fine; no pack owns these, that's what makes them neutral, but that doesn't make them safe, they're often contested or dangerous anyway, and some (the maw's throat, the sundering stone) carry real lore weight of their own; see the lore forum for what each one means. mark where you are with `/location set`.
 
-## ic time flow
+## IC time flow
 
 * scenes exist in a "time bubble." they progress at their own pace, and concurrent scenes may sit at
-  different ic times.
+  different IC times.
 * the **server clock** is the bot's (`/world` shows time, weather, season; sunrises advance on
   `/world rollover`). major time-skips (healing, pregnancy, aging, large plot jumps) require
   moderator approval and are announced server-wide.
@@ -418,43 +416,49 @@ your character's backstory must answer:
 * numbers matter. a single wolf cannot easily beat three healthy opponents, and the bot's combat
   math backs that up. be realistic about your limits.
 * **injury stacks:** entering a fight already wounded is a real mechanical disadvantage (the bot
-  carries your injuries and hp into the encounter).
+  carries your injuries and HP into the encounter).
 * retreat is always valid (`/combat yield`). survival is a win; not every conflict ends in death.
 
 ## consequences of actions
 
-* ic actions have ic consequences. murder, betrayal, theft (`/crime`), or treason ripple through the
+* IC actions have IC consequences. murder, betrayal, theft (`/crime`), or treason ripple through the
   world. reputation spreads, alliances shift, vendettas form (the bot tracks pack standing and
   `maw_karma`).
-* "murder-hobo" behavior (random killing, senseless violence) is discouraged and will draw ic
+* "murder-hobo" behavior (random killing, senseless violence) is discouraged and will draw IC
   punishment or mod intervention.
 * commit a major crime and be ready for the fallout: exile, execution, or being hunted.
 
-## supernatural / maw influence in rp
+## supernatural / maw influence in RP
 
 * the maw's influence is **subtle**: whispers, visions, rotting prey, strange omens, not overt
   magic.
-* you may weave maw visions or corruption into your own rp, but major supernatural events
+* you may weave maw visions or corruption into your own RP, but major supernatural events
   (possessions, curses, manifested spirits) require mod oversight. the bot's maw favor and karma and
   spirit rites (`/medic`) are the mechanical backbone.
-* characters who claim to speak for the maw are met with ic skepticism unless proven through mod-run
+* characters who claim to speak for the maw are met with IC skepticism unless proven through mod-run
   events. no psychic abilities, telepathy, or direct maw communication without approval.
 
-## ghosting in rp scenes
+## activity, hiatus, and the pause system
+
+* leaving a scene unexpectedly? use #hiatus-notice or DM your scene partner so they know.
+* repeated ghosting (leaving without warning) may get you restricted from certain channels; see ghosting in RP scenes below for the rest of that etiquette.
+* any participant can call a pause at any time (`((pause))`) and the scene stops immediately, no explanation required.
+
+## ghosting in RP scenes
 
 * if you leave a scene without warning (especially mid-fight or mid-confrontation), a mod may
-  temporarily npc your character to keep the scene moving (`/scene`, `/npc`).
+  temporarily NPC your character to keep the scene moving (`/scene`, `/npc`).
 * repeated ghosting leads to a warning and possible restriction from high-stakes scenes.
-* need to step away? use `((brb))`, `((pause))`, `/scene leave`, or dm your scene partner.
+* need to step away? use `((brb))`, `((pause))`, `/scene leave`, or DM your scene partner.
   communication is key.
 
 ---
 
 # [💕] relationship rules
 
-## ic relationship categories
+## IC relationship categories
 
-the server recognizes several ic bonds, most trackable with `/bonds`:
+the server recognizes several IC bonds, most trackable with `/bonds`:
 
 * **pack bonds:** loyalty (or disloyalty) between packmates; the strongest ties in a wolf's life.
 * **friendships:** voluntary bonds of trust and affection.
@@ -466,26 +470,26 @@ the server recognizes several ic bonds, most trackable with `/bonds`:
 * **family:** blood relations (`/bonds` kin, `/family`).
 * **cross-pack ties:** relationships across borders. taboo but not impossible.
 
-## no nsfw content in relationships
+## no NSFW content in relationships
 
-* as per the server's core rules, **no sexual, adult, or nsfw roleplay anywhere**, including all
+* as per the server's core rules, **no sexual, adult, or NSFW roleplay anywhere**, including all
   relationship dynamics (mating, flings, courtship, intimate scenes).
 * romantic intimacy is portrayed through **fade-to-black, implication, or emotional connection**.
   explicit content is strictly prohibited.
 * do not describe physical acts, bodily details, or sexual tension in explicit terms.
 * **violations result in an immediate ban.**
 
-## ooc vs. ic relationships
+## OOC vs. IC relationships
 
-* your character's feelings are not your feelings. ic rivalry is not ooc hostility.
-* ic romance does not require ooc romance. it is collaborative storytelling.
-* if ooc feelings interfere with ic dynamics, step back and talk to a moderator.
+* your character's feelings are not your feelings. IC rivalry is not OOC hostility.
+* IC romance does not require OOC romance. it is collaborative storytelling.
+* if OOC feelings interfere with IC dynamics, step back and talk to a moderator.
 
 ## mating rules
 
-* mating is an **ic commitment**, made through the bot (`/courtship`) and often a ceremony
+* mating is an **IC commitment**, made through the bot (`/courtship`) and often a ceremony
   (`/rite joining_howl`, `/rite moon_witness`), or simply by choosing each other.
-* mates are expected to hunt together, share dens, and defend each other. breaking a bond can have ic
+* mates are expected to hunt together, share dens, and defend each other. breaking a bond can have IC
   consequences (jealousy, exile, blood feuds).
 * there is no "marriage." mates stay together as long as both wish; separation is allowed but may be
   messy.
@@ -494,12 +498,12 @@ the server recognizes several ic bonds, most trackable with `/bonds`:
 
 * wolves are not strictly monogamous. polyamorous bonds (a triad) are permitted **with all players'
   consent**.
-* a wolf may take a secondary mate while keeping a primary, but this needs ic negotiation and may
+* a wolf may take a secondary mate while keeping a primary, but this needs IC negotiation and may
   cause drama.
 
 ## cross-pack mating
 
-* allowed but carries heavy ic risk (and real border tension the bot tracks via pack relations):
+* allowed but carries heavy IC risk (and real border tension the bot tracks via pack relations):
   * **greyspire** views cross-pack mates as traitors unless the other joins greyspire.
   * **mistmoor** may see it as stealing swamp secrets. dangerous.
   * **thistlehide** might remember the couple but not trust them.
@@ -513,23 +517,25 @@ packs have different traditions (roleplayed; back them with rites like `/rite mo
 * **greyspire:** hunt a dangerous prey together (mountain goat, bear cub) and return with scars.
 * **mistmoor:** drink from the belly-rip's edge and share a prophetic dream; if dreams align, mates.
 * **thistlehide:** howl their ancestors' names together, binding memories; the pack witnesses.
-* **silverrush:** swim the ripsnout channel together; if both survive, mates.
+* **silverrush:** swim the deep channels together; if both survive, mates.
 
 ## breaking a mating bond
 
-* mates may separate ic: betrayal, dead pups, political necessity, or simply falling apart.
+* mates may separate IC: betrayal, dead pups, political necessity, or simply falling apart.
 * separated mates may stay in the same pack (awkward) or one may leave.
-* a scorned mate may seek revenge. allowed, but follows pvp consent rules.
-* **no ooc harassment for ic breakups.**
+* a scorned mate may seek revenge. allowed, but follows PVP consent rules.
+* **no OOC harassment for IC breakups.**
 
 ## pregnancy & birth
 
 * pregnancy and birth run through the bot: `/courtship` to conceive and check status, `/pupcare` to
-  birth and raise the litter. gestation is tracked in-game (roughly nine weeks ic); you may time-skip
+  birth and raise the litter. gestation is tracked in-game (roughly nine weeks IC); you may time-skip
   or play through it.
-* litters are typically **4 to 6 pups** (the bot rolls size and genetics; conditions like
-  thin-litter reduce it). you may name and play only **1 to 3** as characters or npcs; the rest are
-  npcs who may survive or die as plot demands.
+* litters are typically **2 to 5 pups** (the bot rolls size and genetics; low satiety or conditions like
+  thin-litter reduce it further, a well-fed dam can occasionally have more). you may name and play the entire litter as full characters if you want to;
+  born pups are automatically exempt from the ten-wolf slot cap, so this never costs you a slot. any
+  pups you'd rather not play yourself can be put up as character adopts for other players instead, or
+  left as den NPCs who may survive or die as plot demands.
 
 ## playing pups
 
@@ -543,7 +549,7 @@ packs have different traditions (roleplayed; back them with rites like `/rite mo
 ## adoption & found family
 
 * wolves may adopt orphaned pups, even from other packs (`/pupcare adopt`, `/foster` to send a pup to
-  an allied pack). adoption needs ic consent from active birth parents.
+  an allied pack). adoption needs IC consent from active birth parents.
 * found family (non-blood bonds as strong as blood) is encouraged. record it with `/bonds`. the maw
   values memory, not genetics.
 
@@ -555,27 +561,27 @@ packs have different traditions (roleplayed; back them with rites like `/rite mo
 
 ## spies & traitors
 
-* a wolf may betray their pack to another, a major plot point. the betraying player must **ooc inform
+* espionage between wolf packs is a real mechanic, not just prose: an alpha or diplomat can plant a spy on another pack with `/pact action:infiltrate`, and the embedded wolf sends word home with `/pact action:report`, risking exposure every time. this is the bot actually resolving whether the spying succeeds, not something you narrate freely.
+* a wolf may betray their pack to another, a major plot point. the betraying player must **OOC inform
   moderators before acting.**
 * consequences are severe (exile, death, being forgotten).
 * **no player may be forced to make their character a traitor.**
 
-## major npc relationships
+## major NPC relationships
 
-* npcs (run by mods via `/npc`, `/narrate`) may serve as mates, parents, rivals, or litter-mates.
+* NPCs (run by mods via `/npc`, `/narrate`) may serve as mates, parents, rivals, or litter-mates.
   these develop through events.
-* npc deaths are not subject to player consent, but mods handle them fairly.
+* NPC deaths are not subject to player consent, but mods handle them fairly.
 
-## minor npcs
+## minor NPCs
 
-* you may create minor npcs (an unnamed packmate, a background elder) without approval.
-* minor npcs cannot give your character unfair advantages ("my npc friend gives me extra food").
-* minor npcs can be killed or removed by mods as needed.
+* you may create minor NPCs (an unnamed packmate, a background elder) without approval.
+* minor NPCs cannot give your character unfair advantages ("my NPC friend gives me extra food").
+* minor NPCs can be killed or removed by mods as needed.
 
 ## human relationships
 
-* wolves may form relationships with specific humans (the harrow daughter, silas crow historically;
-  human factions are real, `/faction`). these are complex and often tragic. humans are npcs, not
+* wolves may form relationships with specific humans (eliza harrow, the researcher who keeps returning to the border; silas crow, historically; human factions are real, `/faction`). these are complex and often tragic. humans are NPCs, not
   playable characters.
 * **romantic or sexual relationships with humans are not allowed** (bestiality themes are prohibited).
 
@@ -587,47 +593,47 @@ packs have different traditions (roleplayed; back them with rites like `/rite mo
 
 * no pressuring others to ship their characters with yours. shipping is collaborative, not coercive.
 * if someone says "no" to a romantic plotline, accept it gracefully. do not ask why. move on.
-* public shipping channels or memes about ic couples are fine as long as everyone involved is
+* public shipping channels or memes about IC couples are fine as long as everyone involved is
   comfortable.
 
 ## arranged mating & forced bonds
 
 * alphas may arrange matings for political reasons (strengthen alliances, settle disputes).
-* players must **ooc consent** before their character enters an arranged bond. no forced ic mating
-  without ooc agreement.
+* players must **OOC consent** before their character enters an arranged bond. no forced IC mating
+  without OOC agreement.
 * arranged mates may grow to love, resent, or merely tolerate each other. all valid arcs.
 
 ## casual physical intimacy
 
 * flings, casual courtship, and brief romantic encounters are allowed (`/courtship`,
   `/rite bone_gift`, `/sign` nuzzle or lick).
-* **all parties must ooc consent** before any intimate ic scene (even kissing, cuddling, or sharing a
+* **all parties must OOC consent** before any intimate IC scene (even kissing, cuddling, or sharing a
   den overnight). no assumptions. ask first, even for a fling.
 
 ## mentor / protégé bonds
 
 * an older or more experienced wolf may take a student or guide (`/bonds` mentor; `/role` shadowing).
-  this creates a power dynamic that should be respected ic.
+  this creates a power dynamic that should be respected IC.
 * mentor bonds can evolve into friendship or rivalry, but **romance is strictly prohibited** given
-  the power imbalance and ooc-discomfort risk. if a dynamic drifts, discuss it ooc and involve staff
+  the power imbalance and OOC-discomfort risk. if a dynamic drifts, discuss it OOC and involve staff
   if needed.
 
-## handling jealousy (ic vs. ooc)
+## handling jealousy (IC vs. OOC)
 
-* ic jealousy is allowed and encouraged for drama.
-* ooc jealousy must be kept separate. if you feel jealous of another player's ic relationship, step
+* IC jealousy is allowed and encouraged for drama.
+* OOC jealousy must be kept separate. if you feel jealous of another player's IC relationship, step
   back, breathe, and talk to a mod.
-* do not use ic jealousy as an excuse for ooc hostility or passive-aggression.
+* do not use IC jealousy as an excuse for OOC hostility or passive-aggression.
 
 ## reconciliation & re-mating
 
 * broken bonds (mating, friendship, family) may mend over time.
-* reconciliation requires ic scenes showing rebuilt trust, and mutual player consent.
+* reconciliation requires IC scenes showing rebuilt trust, and mutual player consent.
 * re-mating after a breakup is allowed but should not be rushed. let the story breathe.
 
 ## grief & loss
 
-* losing a mate, pup, family member, or close friend is a major ic event (and the bot logs it in your
+* losing a mate, pup, family member, or close friend is a major IC event (and the bot logs it in your
   `/journal`). silverrush wolves can even `/weep` at the weep stone.
 * let your character grieve realistically: anger, withdrawal, depression, revenge are all valid.
 * do not rush a grieving player's character to "get over it." respect their pacing. grief fuels
@@ -637,5 +643,5 @@ packs have different traditions (roleplayed; back them with rites like `/rite mo
 
 * pups born to cross-pack mates are often viewed with suspicion by both packs.
 * they may be claimed by either pack, rejected by both, or born outcasts.
-* a hybrid pup's pack status requires staff approval and should be handled ic with care.
+* a hybrid pup's pack status requires staff approval and should be handled IC with care.
 * these pups often face unique challenges: identity, belonging, loyalty conflicts.

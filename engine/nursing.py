@@ -147,7 +147,7 @@ def _honey_suffix(honey_used: bool) -> str:
     if not honey_used:
         return ""
     return (
-        f" **honey** sweetens the meal (**+{HONEY_PUP_HUNGER_BONUS}** hunger per pup; "
+        f" **honey** sweetens the meal (**+{HONEY_PUP_HUNGER_BONUS}** satiety per pup; "
         "starving pups shed **1** exhaustion)."
     )
 
@@ -184,7 +184,7 @@ def execute_mother_nursing(
     if mother_hunger - total_cost < HUNGER_CRITICAL_THRESHOLD:
         return False, (
             f"**{mother['wolf_name']}** is too hungry to nurse "
-            f"(needs **{total_cost}** hunger; eat from `/food` first)."
+            f"(needs **{total_cost}** satiety; eat from `/food` first)."
             + lone_nursing_note(mother)
         )
 
@@ -207,8 +207,8 @@ def execute_mother_nursing(
     lines = ", ".join(f"**{n}**" for n in fed)
     return True, (
         f"**{mother['wolf_name']}** nurses {lines}. "
-        f"milk restores **+{MILK_HUNGER_GAIN}** hunger and **+{MILK_THIRST_GAIN}** hydration per pup "
-        f"(**−{total_cost}** hunger for the mother)."
+        f"milk restores **+{MILK_HUNGER_GAIN}** satiety and **+{MILK_THIRST_GAIN}** hydration per pup "
+        f"(**−{total_cost}** satiety for the mother)."
         + _honey_suffix(honey_used)
         + (lone_nursing_note(mother) if not mother["pack_id"] else "")
     )
@@ -251,7 +251,7 @@ def execute_caretaker_feed(
     lines = ", ".join(f"**{n}**" for n in fed)
     return True, (
         f"**{caretaker['wolf_name']}** shares warm mash with {lines} "
-        f"(**+{CARETAKER_MASH_HUNGER_GAIN}** hunger, **+{CARETAKER_MASH_THIRST_GAIN}** hydration each)."
+        f"(**+{CARETAKER_MASH_HUNGER_GAIN}** satiety, **+{CARETAKER_MASH_THIRST_GAIN}** hydration each)."
         + _honey_suffix(honey_used)
     )
 
@@ -308,7 +308,7 @@ def apply_unfed_pup_penalty_on_rollover(conn, day_ending: int) -> list[dict]:
                     "discord_id": row["discord_id"],
                     "line": (
                         f"**{row['wolf_name']}** went hungry in the nursery "
-                        f"(**−{PUP_UNFED_EXTRA_DECAY}** hunger; use **`/pupcare action:feed`** "
+                        f"(**−{PUP_UNFED_EXTRA_DECAY}** satiety; use **`/pupcare action:feed`** "
                         "or **`/medic action:treat`** with **honey**)."
                     ),
                 }
@@ -368,7 +368,7 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
         )
         drain_parts = []
         if hunger_loss:
-            drain_parts.append(f"hunger **−{hunger_loss}**")
+            drain_parts.append(f"satiety **−{hunger_loss}**")
         if thirst_loss:
             drain_parts.append(f"hydration **−{thirst_loss}**")
         if exhaustion_gain:

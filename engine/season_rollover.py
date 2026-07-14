@@ -48,7 +48,7 @@ def apply_winter_hunger_stress(
         f"update users set hunger = max(0, hunger - ?) where id in ({placeholders})",
         (extra, *ids),
     )
-    return [f"leaf-bare cold bites; **−{extra}** extra hunger for wolves in winter dens."]
+    return [f"leaf-bare cold bites; **−{extra}** extra satiety for wolves in winter dens."]
 
 
 def apply_food_cache_on_rollover(conn: sqlite3.Connection, guild_id: int) -> list[dict]:
@@ -80,7 +80,7 @@ def apply_food_cache_on_rollover(conn: sqlite3.Connection, guild_id: int) -> lis
         notes.append(
             {
                 "wolf_name": row["wolf_name"],
-                "text": f"ate **{meals}** cached kill(s) (+{hunger_add} hunger)",
+                "text": f"ate **{meals}** cached kill(s) (+{hunger_add} satiety)",
             }
         )
     return notes

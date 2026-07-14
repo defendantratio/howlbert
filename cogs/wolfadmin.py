@@ -250,7 +250,7 @@ class WolfAdmin(commands.Cog):
         embed.set_thumbnail(url=image_url)
         await interaction.response.send_message(embed=embed)
 
-    @wolfadmin.command(name='dormant', description="toggle a wolf's dormant flag (exempt from hunger/thirst/mood decay on /rollover).")
+    @wolfadmin.command(name='dormant', description="toggle a wolf's dormant flag (exempt from satiety/thirst/mood decay on /rollover).")
     @app_commands.describe(player='wolf owner', state='dormant (no decay) or active (normal decay)', wolf_name='which wolf (defaults to their active wolf)')
     @app_commands.choices(state=[app_commands.Choice(name='dormant', value='dormant'), app_commands.Choice(name='active', value='active')])
     @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
@@ -266,7 +266,7 @@ class WolfAdmin(commands.Cog):
             return
         is_dormant = state.value == 'dormant'
         db.set_wolf_dormant(wolf['id'], is_dormant)
-        note = 'exempt from hunger/thirst/mood decay on `/rollover` until set back to active.' if is_dormant else 'hungers, thirsts, and moods normally again on `/rollover`.'
+        note = 'exempt from satiety/thirst/mood decay on `/rollover` until set back to active.' if is_dormant else 'gains satiety and thirst and moods normally again on `/rollover`.'
         embed = howlbert_embed('wolf marked dormant' if is_dormant else 'wolf marked active', f"**{wolf['wolf_name']}** ({player.mention}); {note}", color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 

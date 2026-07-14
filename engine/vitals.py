@@ -235,7 +235,7 @@ def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
                 )
             else:
                 gain += NEEDS_EXHAUSTION_GAIN
-                causes.append("hunger")
+                causes.append("satiety")
         if int(row["thirst"]) < THIRST_LOW_THRESHOLD:
             gain += NEEDS_EXHAUSTION_GAIN
             causes.append("hydration")

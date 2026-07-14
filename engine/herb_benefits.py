@@ -19,6 +19,13 @@ import database as db
 # systemic effects only reach the body when the herb is eaten/drunk
 EXTERNAL_FORMS = {"poultice", "ointment", "rub", "sap"}
 
+# liquid prep forms restore a little hydration on top of whatever the herb
+# itself does, since the patient is actually drinking something. a gargle is
+# rinsed and spat, not swallowed, so it doesn't count. simmered milk also has
+# calories, so it nudges hunger too.
+LIQUID_HYDRATION_FORMS = {"tea": 3, "simmered_milk": 3}
+LIQUID_HUNGER_FORMS = {"simmered_milk": 3}
+
 # herb_key -> benefit archetype tags
 HERB_BENEFITS: dict[str, tuple[str, ...]] = {
     # diuretic: flushes the system; costs water but clears inflammation/toxins
@@ -77,14 +84,23 @@ def _drop_pain_exhaustion(patient) -> bool:
 
 def roll_herb_benefits(patient, herb_key: str, form: str, *, day: int) -> str:
     """Apply the herb's benefits to ``patient``. Returns a note (or '')."""
-    tags = HERB_BENEFITS.get(herb_key, ())
-    if not tags:
-        return ""
     if patient["condition"] in ("dead", "dying"):
         return ""
-    internal = _is_internal(form)
+    tags = HERB_BENEFITS.get(herb_key, ())
     notes: list[str] = []
     buff_updates: dict = {}
+
+    if form in LIQUID_HYDRATION_FORMS:
+        new_thirst = db.adjust_thirst(patient["id"], LIQUID_HYDRATION_FORMS[form])
+        notes.append(f"_you drink it down; hydration **{new_thirst}**, +{LIQUID_HYDRATION_FORMS[form]}._")
+    if form in LIQUID_HUNGER_FORMS:
+        new_hunger = db.adjust_hunger(patient["id"], LIQUID_HUNGER_FORMS[form])
+        notes.append(f"_the milk has some substance to it; satiety **{new_hunger}**, +{LIQUID_HUNGER_FORMS[form]}._")
+
+    if not tags:
+        return ("\n" + "\n".join(notes)) if notes else ""
+
+    internal = _is_internal(form)
 
     if internal and "diuretic" in tags:
         new_thirst = db.adjust_thirst(patient["id"], -5)
@@ -94,11 +110,11 @@ def roll_herb_benefits(patient, herb_key: str, form: str, *, day: int) -> str:
 
     if internal and "nutritive" in tags:
         new_hunger = db.adjust_hunger(patient["id"], 4)
-        notes.append(f"_nourishing; vitamins and antioxidants settle the gut (hunger **{new_hunger}**, +4)._")
+        notes.append(f"_nourishing; vitamins and antioxidants settle the gut (satiety **{new_hunger}**, +4)._")
 
     if internal and "appetite_stimulant" in tags:
         new_hunger = db.adjust_hunger(patient["id"], 5)
-        notes.append(f"_whets the appetite; you feel hungrier (hunger **{new_hunger}**, +5)._")
+        notes.append(f"_whets the appetite; you feel hungrier (satiety **{new_hunger}**, +5)._")
 
     if internal and "circulation" in tags:
         if _drop_pain_exhaustion(patient):

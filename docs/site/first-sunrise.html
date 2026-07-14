@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="first sunrise: a short playable taste of howlbert's world before you ever open discord." />
+    <title>howlbert · first sunrise</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            text-transform: lowercase;
+        }
+
+        :root {
+            --ink: #f6f2e9;
+            --ink-soft: #ece6d9;
+            --bone: #2c2a24;
+            --bone-dim: #6a655a;
+            --moss: #4a6a3a;
+            --river: #3a7a8a;
+            --rot: #6a7a3a;
+            --stone: #6a6e75;
+            --maw: #a0323a;
+            --line: #d0ccc0;
+            --glass-bg: rgba(246, 242, 233, 0.8);
+            --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+            --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --ink: #0e0f0d;
+            --ink-soft: #1a1c18;
+            --bone: #e7e2d4;
+            --bone-dim: #a9a596;
+            --moss: #7fa87f;
+            --river: #7ab0c0;
+            --rot: #9aaa5a;
+            --stone: #9a9ea6;
+            --maw: #b84048;
+            --line: #3a3d34;
+            --glass-bg: rgba(14, 15, 13, 0.75);
+            --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        audio {
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--bone);
+            background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+        }
+
+        ::selection {
+            background: var(--moss);
+            color: var(--ink);
+        }
+
+        a {
+            color: var(--moss);
+            text-decoration: none;
+            transition: color 0.25s, text-shadow 0.25s;
+        }
+        a:hover {
+            color: var(--river);
+            text-shadow: 0 0 12px rgba(106, 151, 166, 0.25);
+        }
+        a:visited {
+            color: var(--bone-dim);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: var(--bone);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+            z-index: 1000;
+        }
+        .theme-toggle:hover {
+            background: var(--moss);
+            color: var(--ink);
+            border-color: var(--river);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .site-wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 22px 26px;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        .top-bar-directory {
+            flex: 1;
+            min-width: 200px;
+        }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bone);
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+        }
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.2px;
+            color: var(--bone-dim);
+            padding: 4px 0;
+            border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+            text-shadow: none;
+        }
+        .side-nav .current {
+            color: var(--bone);
+            border-bottom-color: var(--maw);
+        }
+
+        .hero {
+            padding: 34px 30px 22px;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-weight: 900;
+            font-size: 3rem;
+            letter-spacing: 6px;
+            color: var(--bone);
+            margin: 0 0 6px 0;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--bone-dim);
+            max-width: 60ch;
+            margin: 0 auto;
+        }
+
+        .story-section {
+            padding: 30px 34px;
+            min-height: 240px;
+        }
+        .story-text p {
+            margin-bottom: 14px;
+            color: var(--bone);
+            max-width: 68ch;
+        }
+        .story-text em {
+            color: var(--river);
+            font-style: italic;
+        }
+        .story-note {
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+            border-left: 3px solid var(--maw);
+            padding: 6px 14px;
+            margin: 10px 0;
+            border-radius: 0 6px 6px 0;
+            background: var(--glass-bg);
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+        }
+        .choice-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 12px 18px;
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 1rem;
+            font-style: italic;
+            letter-spacing: 0.3px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--bone);
+            backdrop-filter: blur(4px);
+            transition: all 0.25s ease;
+            box-shadow: var(--glass-shadow);
+            cursor: pointer;
+        }
+        .choice-btn:hover {
+            border-color: var(--maw);
+            transform: translateX(4px);
+            color: var(--bone);
+        }
+        .choice-btn::before {
+            content: "⟡ ";
+            color: var(--maw);
+        }
+
+        .restart-row {
+            margin-top: 18px;
+            text-align: center;
+        }
+        .restart-row button {
+            background: none;
+            border: none;
+            color: var(--bone-dim);
+            font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .restart-row button:hover {
+            color: var(--maw);
+        }
+
+        .footer {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone-dim);
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+        .footer a {
+            color: var(--bone-dim);
+        }
+        .footer a:hover {
+            color: var(--bone);
+        }
+        .footer .heart {
+            color: var(--maw);
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 2.2rem;
+                letter-spacing: 4px;
+            }
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                padding: 6px 16px;
+                font-size: 0.7rem;
+            }
+            body {
+                padding: 12px;
+            }
+            .glass {
+                padding: 16px 18px;
+            }
+            .story-section {
+                padding: 20px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <div class="site-wrap">
+
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="first-sunrise.html" class="current">⟡ first sunrise</a>
+                        <a href="namegen.html">⟡ wolf name generator</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>first sunrise</h1>
+                <p class="hook">one wolf. one sunrise. one choice out of ten thousand.<br />a short playable taste of the world, before you ever open discord.</p>
+            </header>
+
+            <section class="glass story-section">
+                <div class="story-text" id="storyText"></div>
+                <div class="choices" id="choices"></div>
+                <div class="restart-row">
+                    <button id="restartBtn" type="button">↺ start over</button>
+                </div>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        // passages transcribed from first-sunrise.twee; internal links use ->target,
+        // the closing passage links out to the real server and site instead.
+        const PASSAGES = {
+            start: {
+                text: [
+                    "the frost hasn't lifted. your mother's scent is already thinning out of the den; three sunrises gone now, taken by the river rot before the medics could gather enough lungwort to matter.",
+                    "you are hungry. the pack does not feed a wolf who will not hunt."
+                ],
+                choices: [
+                    { label: "slip out alone, before the others wake.", target: "alonehunt" },
+                    { label: "wait for the dawn patrol and hunt with the pack.", target: "packhunt" }
+                ]
+            },
+            alonehunt: {
+                text: [
+                    "fog to your hocks. alone, the whole forest is yours and none of it is safe. two scents cross the wind: a hare in the bracken, close and certain, and, further off, an elk that moves wrong. sick. slow. too much meat for one wolf, if the one wolf lives to eat it."
+                ],
+                choices: [
+                    { label: "take the hare. small, but sure.", target: "hare" },
+                    { label: "go for the elk. land it and you eat for days.", target: "elk" }
+                ]
+            },
+            hare: {
+                text: [
+                    "you eat. the hunger loosens its grip, for now. a lone belly is never full for long, and the cold is only getting deeper.",
+                    "then the wind shifts, and it carries another wolf. not pack. a rogue's scent, laid deliberately across the border you were about to cross."
+                ],
+                choices: [
+                    { label: "back away. it isn't worth your throat.", target: "border" },
+                    { label: "hold your ground and answer the scent.", target: "border" }
+                ]
+            },
+            elk: {
+                text: [
+                    "the elk is dying already; it just doesn't know the order of things. you do. you take it at the hamstring, and its hoof takes you back, once, hard, against the foreleg. bone gives with a sound you feel more than hear.",
+                    "the elk goes down. so, nearly, do you. you've made your first real kill, and you're bleeding into the snow, and there is no one here."
+                ],
+                choices: [
+                    { label: "pack the wound with cobweb and moss yourself, and push on.", target: "selftreat" },
+                    { label: "leave the meat. limp home and find the medic.", target: "findmedic" }
+                ]
+            },
+            selftreat: {
+                text: [
+                    "cobweb slows the bleed. moss hides it. it is not the same as mending it. you drag what meat you can and tell yourself the heat in the leg is just the work. by the second sunrise it is not just the work."
+                ],
+                choices: [
+                    { label: "continue.", target: "fever" }
+                ]
+            },
+            fever: {
+                text: [
+                    "the wound has gone tight and shining and hot. the fever walks up your spine one vertebra at a time. this is where a great many wolves' stories quietly end: not in a fight, in a leg they should have shown to a healer."
+                ],
+                choices: [
+                    { label: "lie down in the cold and let your body decide.", target: "deathsave" }
+                ]
+            },
+            deathsave: {
+                text: [
+                    "three breaths. three rolls of the dying.",
+                ],
+                note: "this part is real. in the world past this story, death is permanent, and death saves are the thin thread a life hangs from when the healers are too far.",
+                textAfterNote: [
+                    "you pass the first breath. you pass the second. the third comes slow, and colder than the others."
+                ],
+                choices: [
+                    { label: "...", target: "survive" },
+                    { label: "...", target: "death" }
+                ]
+            },
+            survive: {
+                text: [
+                    "and holds. barely. you wake to a medic's breath fogging over your muzzle, her paw already splinting the leg she found you dying on. you lived.",
+                    "most don't. you should know that going in."
+                ],
+                choices: [
+                    { label: "continue.", target: "hook" }
+                ]
+            },
+            death: {
+                text: [
+                    "and doesn't come. the cold finishes what the elk started. by morning the den news carries a single line: your name, your cause, and the one thing you did that a wolf would remember you for.",
+                    "that's how it ends here. every wolf. eventually. the only question the game ever asks is what you did with the sunrises in between."
+                ],
+                choices: [
+                    { label: "continue.", target: "hook" }
+                ]
+            },
+            findmedic: {
+                text: [
+                    "you leave good meat to the crows and limp three miles on three legs to reach her. the medic doesn't scold you. she sets the bone, packs it with comfrey, binds it tight. \"you'll limp a moon,\" she says. \"you'll limp.\"",
+                    "knowing when to carry your own wound and when to lay it in front of someone else is, in the end, the difference between a scar and a grave."
+                ],
+                choices: [
+                    { label: "continue.", target: "hook" }
+                ]
+            },
+            packhunt: {
+                text: [
+                    "you wait. the patrol takes you in without ceremony, and together the big prey falls the way it never falls for one wolf alone. you eat well. your standing rises. and for the first sunrise since your mother, the cold at your flank is someone else's warmth, not just absence.",
+                    "a pack is that: a full belly, a treasury, a border worth defending, a war worth surviving. it is also the thing you can lose."
+                ],
+                choices: [
+                    { label: "continue.", target: "hook" }
+                ]
+            },
+            border: {
+                text: [
+                    "whichever way you turned, the border holds its breath and lets you go, this time. a lone wolf's whole life is this: small choices at the edge of things, each one deciding whether there's a next sunrise."
+                ],
+                choices: [
+                    { label: "continue.", target: "hook" }
+                ]
+            },
+            hook: {
+                text: [
+                    "that was one wolf. one sunrise. one choice out of ten thousand.",
+                    "the wolf you'd actually build, its bloodline, its bonds, its diseases and rivals and the pack it dies defending, waits in the wild past this page."
+                ],
+                choices: [
+                    { label: "enter the wild. join the pack.", url: "https://discord.gg/47m93n6ZTB" },
+                    { label: "see the world first.", url: "https://howlbert.neocities.org" }
+                ]
+            }
+        };
+
+        const storyText = document.getElementById('storyText');
+        const choicesEl = document.getElementById('choices');
+
+        function render(passageKey) {
+            const p = PASSAGES[passageKey];
+            storyText.innerHTML = '';
+            (p.text || []).forEach(line => {
+                const para = document.createElement('p');
+                para.textContent = line;
+                storyText.appendChild(para);
+            });
+            if (p.note) {
+                const note = document.createElement('div');
+                note.className = 'story-note';
+                note.textContent = p.note;
+                storyText.appendChild(note);
+            }
+            (p.textAfterNote || []).forEach(line => {
+                const para = document.createElement('p');
+                para.textContent = line;
+                storyText.appendChild(para);
+            });
+
+            choicesEl.innerHTML = '';
+            p.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.type = 'button';
+                btn.textContent = choice.label;
+                if (choice.url) {
+                    btn.addEventListener('click', () => window.open(choice.url, '_blank', 'noopener'));
+                } else {
+                    btn.addEventListener('click', () => render(choice.target));
+                }
+                choicesEl.appendChild(btn);
+            });
+
+            storyText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('restartBtn').addEventListener('click', () => render('start'));
+
+        render('start');
+    </script>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+            } catch (_) {}
+        })();
+    </script>
+
+</body>
+</html>

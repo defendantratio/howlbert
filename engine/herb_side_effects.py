@@ -257,7 +257,7 @@ def _apply_vomiting(patient) -> str:
     new_thirst = max(THIRST_MIN, thirst - 6)
     db.update_user(patient["discord_id"], wolf_id=patient["id"], hunger=new_hunger, thirst=new_thirst)
     db.adjust_mood(patient["id"], -3)
-    return "_the herb turns the stomach; you retch it back up. **-8 hunger, -6 hydration, -3 mood**._"
+    return "_the herb turns the stomach; you retch it back up. **-8 satiety, -6 hydration, -3 mood**._"
 
 
 def _tally_organ_toxicity(patient, herb_key: str, *, day: int) -> str:

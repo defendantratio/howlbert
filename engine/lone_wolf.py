@@ -65,7 +65,7 @@ def apply_loner_winter_cold_on_rollover(conn: sqlite3.Connection, season: str, d
                 gained = True
         sets = ", ".join(f"{k} = ?" for k in fields)
         conn.execute(f"UPDATE users SET {sets} WHERE id = ?", (*fields.values(), wolf["id"]))
-        line = f"no den to huddle in; winter cold gnaws (**−{LONER_WINTER_HUNGER_EXTRA} hunger**"
+        line = f"no den to huddle in; winter cold gnaws (**−{LONER_WINTER_HUNGER_EXTRA} satiety**"
         line += "; **+1 exhaustion**)." if gained else ")."
         notes.append({"wolf_name": wolf["wolf_name"], "discord_id": wolf["discord_id"], "line": line})
     return notes

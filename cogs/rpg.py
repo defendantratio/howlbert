@@ -196,7 +196,7 @@ class Rpg(commands.Cog):
         con_val = int(user['attr_con']) if 'attr_con' in user.keys() else 5
         embed.add_field(name='HP', value=f"{user['hp']}/{effective_max_hp(user)}\n{format_max_hp_breakdown(str_val, con_val, max_hp=int(user['max_hp']))}" + (f"\n_(exhaustion cap {effective_max_hp(user)}; base {user['max_hp']})_" if user_exhaustion(user) >= 6 else ''), inline=True)
         embed.add_field(name='Mood', value=format_mood_line(user), inline=True)
-        embed.add_field(name='Hunger', value=format_hunger_line(user), inline=True)
+        embed.add_field(name='Satiety', value=format_hunger_line(user), inline=True)
         embed.add_field(name='Hydration', value=format_thirst_line(user), inline=True)
         from engine.energy import energy_line
         embed.add_field(name='Energy', value=energy_line(user), inline=True)
@@ -254,7 +254,7 @@ class Rpg(commands.Cog):
             mood_gain = rest['mood'] - int(user['mood'])
             hp_gain = rest['hp'] - int(user['hp'])
             ex_drop = int(user['exhaustion']) - rest['exhaustion']
-            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + energy_line + '\n\n_Still need `/eat` and `/drink` for hunger and hydration._', color=SUCCESS_COLOR)
+            embed = howlbert_embed('Long Rest', f"Recovered **{hp_gain} HP** (now {rest['hp']}/{user['max_hp']}).\nExhaustion **−{ex_drop}** ({user['exhaustion']} → {rest['exhaustion']})" + (f"\nMood **+{mood_gain}** (now {rest['mood']})." if mood_gain else '') + energy_line + '\n\n_Still need `/eat` and `/drink` for satiety and hydration._', color=SUCCESS_COLOR)
             await interaction.response.send_message(embed=embed)
             return
         if herb_heal_limit_reached(user):

@@ -403,7 +403,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(updated):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
         notes = [n for n in (loner_note, sniff_note, season_note, mood_note, hunger_note, thirst_note, exhaustion_note) if n]
         if _hunt_energy_note:
             notes.append(_hunt_energy_note)
@@ -438,7 +438,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(updated):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
         embed.set_footer(text=footer)
     _append_notes_to_footer(embed, fatigue)
     from engine.disease_contract import try_hunt_flea_exposure, try_insect_sting_exposure
@@ -473,7 +473,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
                         _sr_injs = _add_inj_sr(_sr_injs, "deep_gash")
                         db.set_user_conditions(interaction.user.id, wolf_id=_sr_user2["id"], active_injuries=_json_sr.dumps(_sr_injs))
                         embed.description = (embed.description or "") + " **deep gash** re-opens."
-    # Concussion escalation: strenuous activity worsens untreated concussion.
+    # Skull-ring (concussion) escalation: strenuous activity worsens it untreated.
     from engine.conditions import parse_injuries as _parse_conc
     _conc_injs = _parse_conc(user["active_injuries"] if "active_injuries" in user.keys() else None)
     if "concussion" in _conc_injs and "swollen_eye" not in _conc_injs:
@@ -486,7 +486,7 @@ def try_hunt(interaction: discord.Interaction, *, territory: str | None = None) 
                 _conc_list = _parse_conc(_conc_fresh["active_injuries"] if "active_injuries" in _conc_fresh.keys() else None)
                 _conc_list = _add_conc(_conc_list, "swollen_eye")
                 db.set_user_conditions(interaction.user.id, wolf_id=_conc_fresh["id"], active_injuries=_json_conc.dumps(_conc_list))
-                embed.description = (embed.description or "") + "\n\n_running with a concussion; the blow to the eye socket swells; **swollen eye** early onset._"
+                embed.description = (embed.description or "") + "\n\n_running with a skull-ring (concussion); the blow to the eye socket swells; **swollen eye** early onset._"
     # Heat exhaustion: summer hunts at exhaustion ≥ 3 risk +1 exhaustion (10%, DC 10 CON save).
     _world_season = world["season"] if "season" in world.keys() else None
     _u_exhaustion = int(user["exhaustion"]) if "exhaustion" in user.keys() else 0
@@ -695,7 +695,7 @@ def try_track(
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(updated):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
         embed.set_footer(text=footer)
     else:
         footer = "the trail goes cold."
@@ -789,7 +789,7 @@ def try_fishing(interaction: discord.Interaction) -> tuple[discord.Embed | None,
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(updated):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
         embed.set_footer(text=footer)
         from engine.disease_contract import try_snake_venom_exposure
 

@@ -101,7 +101,7 @@ def test_default_method_reqs_other():
     from engine.herb_admin import DEFAULT_METHOD_REQS
     assert DEFAULT_METHOD_REQS["fleas"] == "rub"
     assert DEFAULT_METHOD_REQS["poison_ivy"] == "sap"
-    assert DEFAULT_METHOD_REQS["mild_poison"] == "juice"
+    assert DEFAULT_METHOD_REQS["mild_poison"] == "poultice"
 
 
 # ---- sqlite3.Row field access (Row-safe pattern) ----

@@ -219,7 +219,7 @@ def ambush_victory_embed(encounter_id: int, *, kill_note: str | None = None):
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(user):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
     else:
         title = "ambush survived" if not kill_note else "attacker killed"
         body = (

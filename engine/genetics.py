@@ -100,7 +100,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
 
         "name": "Flat-Skull",
 
-        "effect": "flat skull and shortened airway; labored breathing; -2 scent perception; con disadvantage on respiratory saves; -4 hunger/sunrise (chewing pain); -10% hunt. often fatal in newborns.",
+        "effect": "flat skull and shortened airway; labored breathing; -2 scent perception; con disadvantage on respiratory saves; -4 satiety/sunrise (chewing pain); -10% hunt. often fatal in newborns.",
 
         "hunt_mult": 0.90,
 
@@ -423,7 +423,7 @@ GENETIC_CONDITIONS: dict[str, dict] = {
     },
     "overbite_underbite": {
         "name": "Crooked-Jaw",
-        "effect": "malocclusion; cannot properly grip or tear meat; -15% hunt; -2 hunger each sunrise from inefficient eating.",
+        "effect": "malocclusion; cannot properly grip or tear meat; -15% hunt; -2 satiety each sunrise from inefficient eating.",
         "hunt_mult": 0.85,
         "hunger_drain": 2,
         "lethal_at_birth": False,

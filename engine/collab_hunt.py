@@ -350,7 +350,7 @@ def payout_collab_hunt(
         from engine.nursing import is_nursing_mother
 
         if is_nursing_mother(leader):
-            footer += " · Nursing dam: eat extra from `/food`; lactation drains hunger each sunrise"
+            footer += " · Nursing dam: eat extra from `/food`; lactation drains satiety each sunrise"
         embed.set_footer(text=footer)
     return embed
 

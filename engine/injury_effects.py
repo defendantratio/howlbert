@@ -164,7 +164,7 @@ def injury_hunt_multiplier(user) -> tuple[float, str]:
         "sprained_leg":   (0.25, "sprained leg; speed cut on the hunt (**−25%**)"),
         "punctured_paw":  (0.20, "punctured paw; every stride costs (**−20%**)"),
         "bruised_lung":   (0.20, "bruised lung; every stride is labored (**−20%**)"),
-        "concussion":     (0.20, "concussion; disoriented tracking (**−20%**)"),
+        "concussion":     (0.20, "skull-ring (concussion); disoriented tracking (**−20%**)"),
         "snake_venom":    (0.20, "snake venom; venom-slowed limbs and burning pain (**−20%**)"),
         "deep_gash":      (0.15, "deep gash; blood loss and pain (**−15%**)"),
         "infected_wound": (0.15, "infected wound; fever and fatigue (**−15%**)"),
