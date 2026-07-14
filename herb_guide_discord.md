@@ -103,7 +103,7 @@ cures: partial blindness, torn ear (cosmetic), swollen eye
 
 **chamomile** · `herb_chamomile` · common · compound
 advantage on Wisdom saves vs fear for 1 hour; reduces fever; calms nerves; soothes stomach cramps; mildly sedative.
-cures: concussion, dementia, anxiety, insomnia, grief melancholy, emotional shock, influenza
+cures: skull-ring (concussion), dementia, anxiety, insomnia, grief melancholy, emotional shock, influenza
 
 ---
 
@@ -177,8 +177,8 @@ cures: mild poison, fleas, diarrhea, influenza
 ---
 
 **dried skullcap** · `herb_dried_skullcap` · uncommon · wild
-sedative rest for concussion recovery; anti-anxiety and anti-inflammatory; treats nervous conditions, epilepsy, depression, delirium.
-cures: concussion, dementia, feral shift, anxiety, delirium, obsession, pack madness, insomnia
+sedative rest for skull-ring (concussion) recovery; anti-anxiety and anti-inflammatory; treats nervous conditions, epilepsy, depression, delirium.
+cures: skull-ring (concussion), dementia, feral shift, anxiety, delirium, obsession, pack madness, insomnia
 ⚠ high doses cause confusion and irregular heartbeat
 
 ---
@@ -419,7 +419,7 @@ cures: deep gash, punctured paw, torn claw, mild illness
 
 **poppy seeds** · `herb_poppy_seeds` · common · wild
 sedative and pain relief; unconscious rest for 1 sunrise; calms shock and distress; mild hypnotic for sleep.
-cures: concussion, insomnia, anxiety, emotional shock, night terrors
+cures: skull-ring (concussion), insomnia, anxiety, emotional shock, night terrors
 ⚠ excessive intake is toxic; plant (not seeds alone) poisonous in large amounts
 
 ---
@@ -578,7 +578,7 @@ cures: infected wound, deep gash, diarrhea
 
 **valerian** · `herb_valerian` · common · wild
 calms shock; renders the wolf unconscious for 1d4 hours; reduces nervous tension and improves sleep; treats gastrointestinal spasms.
-cures: concussion, insomnia, anxiety, night terrors, emotional shock
+cures: skull-ring (concussion), insomnia, anxiety, night terrors, emotional shock
 ⚠ withdrawal symptoms after long-term use — wean slowly; vivid dreams and heart disturbances possible
 
 ---

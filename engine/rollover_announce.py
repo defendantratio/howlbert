@@ -335,9 +335,9 @@ def build_rollover_embed(world, crisis: dict) -> discord.Embed:
 
         text=(
 
-            "hunger −12 · hydration −14 · low mood/hunger/hydration +1 exhaustion each. "
+            "satiety −12 · hydration −14 · low mood/satiety/hydration +1 exhaustion each. "
 
-            "Exhaustion 10 = death. At 0 hunger/hydration, collapse: `/medic action:deathsaves`. "
+            "Exhaustion 10 = death. At 0 satiety/hydration, collapse: `/medic action:deathsaves`. "
 
             f"long-rest: +1 hp, −1 exhaustion. {age_note}"
 

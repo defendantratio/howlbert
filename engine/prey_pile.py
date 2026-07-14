@@ -9,7 +9,7 @@ PREY_CHOICES = {
     "eat": {
         "label": "eat your fill",
         "emoji": "🍖",
-        "description": "take a portion; restores hunger, hydration, +hp, and −1 exhaustion.",
+        "description": "take a portion; restores satiety, hydration, +hp, and −1 exhaustion.",
     },
     "share": {
         "label": "share fairly",
@@ -66,13 +66,13 @@ def choice_outcome_message(
     if hp_gain > 0:
         parts.append(f"+{hp_gain} hp")
     if hunger_gain > 0:
-        parts.append(f"+{hunger_gain} hunger")
+        parts.append(f"+{hunger_gain} satiety")
     if thirst_gain > 0:
         parts.append(f"+{thirst_gain} thirst")
     if exhaustion_delta < 0:
         parts.append(f"{exhaustion_delta} exhaustion (energy restored)")
     elif choice == "eat" and hp_gain == 0 and hunger_gain == 0 and exhaustion_delta == 0:
-        parts.append("belly already full; no energy or hunger left to restore.")
+        parts.append("belly already full; no energy or satiety left to restore.")
     if standing > 0:
         parts.append(f"+{standing} standing")
     if treasury > 0:

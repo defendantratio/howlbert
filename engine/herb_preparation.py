@@ -15,11 +15,12 @@ from herbs import HERBS
 # preparation methods a wolf can choose. each maps to the stored `form`, its
 # herblore dc, which source forms it can be made from (the chaining), and a
 # player-facing effect line. you can dry a fresh herb, then turn the dried herb
-# into a tea, rub, juice, poultice, and so on; a tea or gargle can be sweetened.
+# into a tea, rub, poultice, and so on; a tea or gargle can be sweetened,
+# and a poultice can also be dried back down for storage. dried herbs can
+# always be eaten raw directly.
 PREP_METHODS: dict[str, dict] = {
-    "dry":      {"form": "dried",         "dc": 8,  "from": ("fresh",),          "bonus": " Stores for months in your herb bag."},
+    "dry":      {"form": "dried",         "dc": 8,  "from": ("fresh", "poultice"), "bonus": " Stores for months in your herb bag."},
     "poultice": {"form": "poultice",      "dc": 10, "from": ("fresh", "dried"),  "bonus": " Heals **1d4** on complex wounds (vs 1d2 raw)."},
-    "juice":    {"form": "juice",         "dc": 11, "from": ("fresh", "dried"),  "bonus": " Pressed juice; fast into eyes and open wounds."},
     "raw":      {"form": "raw",           "dc": 6,  "from": ("fresh", "dried"),  "bonus": " Eaten raw; swallowed whole."},
     "tea":      {"form": "tea",           "dc": 10, "from": ("fresh", "dried"),  "bonus": " Steeped tea; a gentle internal draught."},
     "gargle":   {"form": "gargle",        "dc": 10, "from": ("fresh", "dried"),  "bonus": " A gargle for sore throat and mouth."},
@@ -33,12 +34,12 @@ PREP_METHODS: dict[str, dict] = {
 
 
 METHOD_LABELS = {
-    "dry": "dry", "poultice": "poultice", "juice": "juice", "raw": "eaten raw",
+    "dry": "dry", "poultice": "poultice", "raw": "eaten raw",
     "tea": "tea", "gargle": "gargle", "sweeten": "sweeten", "ointment": "ointment",
     "sap": "sap", "rub": "rub", "cook": "eaten cooked", "milk": "simmered milk",
 }
 
-_METHOD_LIST_MSG = "use one of: **dry, poultice, juice, eaten raw, tea, gargle, sweeten, ointment, sap, rub, eaten cooked, simmered milk**."
+_METHOD_LIST_MSG = "use one of: **dry, poultice, eaten raw, tea, gargle, sweeten, ointment, sap, rub, eaten cooked, simmered milk**."
 
 
 def _herblore_proficient(user) -> bool:

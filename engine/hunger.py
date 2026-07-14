@@ -34,7 +34,7 @@ def apply_hunger_bone_penalty(amount: int, hunger: int) -> tuple[int, str]:
     if amount <= 0 or hunger >= HUNGER_LOW_THRESHOLD:
         return amount, ""
     reduced = max(0, int(amount * (100 - HUNGER_HUNT_PENALTY_PCT) / 100))
-    note = f"low hunger ({hunger}); −{HUNGER_HUNT_PENALTY_PCT}% bone payout."
+    note = f"low satiety ({hunger}); −{HUNGER_HUNT_PENALTY_PCT}% bone payout."
     return reduced, note
 
 

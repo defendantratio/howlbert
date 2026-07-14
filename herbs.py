@@ -101,7 +101,7 @@ INJURIES = {
         "heal_reduction": 5,
     },
     "concussion": {
-        "name": "Concussion",
+        "name": "Skull-Ring (Concussion)",
         "effect": "Disadvantage on Intelligence checks; memory loss.",
         "treatment": "Dried skullcap · 1 week sleep",
         "heal_days": 7,
@@ -226,7 +226,7 @@ INJURIES = {
     "swollen_eye": {
         "name": "Swollen Eye",
         "effect": (
-            "Develops from a concussion left untreated for 2+ sunrises. "
+            "Develops from a skull-ring (concussion) left untreated for 2+ sunrises. "
             "Vision impaired: disadvantage on all attack rolls while active. "
             "Cured by celandine or feverfew poultice."
         ),
@@ -256,7 +256,7 @@ INJURIES = {
             "venom courses through the body; +1 pain exhaustion and -1 HP each sunrise. "
             "dex -4; con save DC 14 each sunrise or +1 exhaustion. fades after ~5 days if survived."
         ),
-        "treatment": "twinflower poultice may slow progression; feverfew reduces fever. no guaranteed cure.",
+        "treatment": "snakeroot poultice may slow progression; feverfew reduces fever. no guaranteed cure.",
         "permanent": False,
         "heal_days": 5,
         "snake_venom": True,

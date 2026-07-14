@@ -138,7 +138,7 @@ def drink_at_creek(user, *, day: int, season: str, guild_id: int | None = None, 
 
     msg = (
         f"cold water from the **{season}** creek; hydration **{thirst}** (+{thirst_restore}), "
-        f"hunger **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
+        f"satiety **{hunger}** (+{DRINK_HUNGER_RESTORE}), mood **{mood}** (+{DRINK_MOOD_RESTORE})"
     )
     if new_exhaustion != old_exhaustion:
         msg += f", exhaustion **{new_exhaustion}** (−{old_exhaustion - new_exhaustion})"

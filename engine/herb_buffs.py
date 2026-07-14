@@ -180,12 +180,25 @@ def tick_buffs_for_rollover(user, new_day: int) -> dict:
     for key in until_keys:
         if buffs.get(key) and int(buffs[key]) < new_day:
             buffs.pop(key, None)
+    # Blood loss clears itself after 3 full rests (sunrises); the actual
+    # injury removal + max_hp restore happens in database.py's rollover loop,
+    # which reads this flag back out of the returned fields.
+    if buffs.get("blood_loss_clear_day") and int(buffs["blood_loss_clear_day"]) <= new_day:
+        buffs.pop("blood_loss_clear_day", None)
+        fields["_clear_blood_loss"] = True
     # Clear one-shot injury buffs at sunrise
     for key in ("injury_heal_halved", "bone_heal_days_reduced", "broom_splint", "disease_grace"):
         buffs.pop(key, None)
     fields["herb_buffs"] = buffs_json(buffs)
     fields.update(tick_disease_save_days(user, new_day))
     return fields
+
+
+def grant_blood_loss_timer(user, *, day: int, duration: int = 3) -> dict:
+    """a wolf who ended a fight at ≤2 hp starts a 3-sunrise countdown; see
+    engine.combat_injuries.blood_loss_triggered and database.py's rollover
+    loop for the other two thirds of this mechanic."""
+    return merge_buff_fields(user, blood_loss_clear_day=day + duration)
 
 
 def injury_heal_multiplier(user) -> float:
@@ -837,7 +850,7 @@ def apply_supplemental_herb(herb_key: str, user, *, day: int, outcome: str) -> d
             }
         return {
             "kind": "minor_relief",
-            "message": "sedative rest **1 sunrise** (concussion / fevered mind).",
+            "message": "sedative rest **1 sunrise** (skull-ring / concussion / fevered mind).",
             "fields": fields,
         }
 

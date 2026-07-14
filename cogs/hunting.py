@@ -166,7 +166,7 @@ class Hunting(commands.Cog):
             color = SUCCESS_COLOR if ok else ERROR_COLOR
             embed = howlbert_embed('Liquid Diet', msg, color=color)
             if ok:
-                embed.set_footer(text=f'liquids feed to {LIQUID_HUNGER_CAP} hunger at most; only meat fully satisfies')
+                embed.set_footer(text=f'liquids feed to {LIQUID_HUNGER_CAP} satiety at most; only meat fully satisfies')
             await interaction.response.send_message(embed=embed)
             return
         if not interaction.guild:
@@ -214,7 +214,7 @@ class Hunting(commands.Cog):
         title = 'Drink' if ok else 'Creek Cooldown' if 'min' in msg else 'Cannot Drink'
         embed = howlbert_embed(title, msg, color=color)
         if ok:
-            embed.set_footer(text='hydration slips faster than hunger each sunrise; drink when you can.')
+            embed.set_footer(text='hydration slips faster than satiety each sunrise; drink when you can.')
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='salvage', description='salvage a rotting carcass into bones.')

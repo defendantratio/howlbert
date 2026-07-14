@@ -241,6 +241,26 @@ def _apply_attack_result(defender_f, action: str, attacker_stats, att_name: str,
                     injuries = add_injury(injuries, "infected_wound")
                     db.set_user_conditions(defender_f['discord_id'], active_injuries=json.dumps(injuries))
                     injury_note += '\n_the wound already looks wrong; **infected wound** sets in._'
+        if 1 <= new_hp <= 2:
+            injuries_raw2 = defender_stats['active_injuries'] if 'active_injuries' in defender_stats.keys() else None
+            injuries2 = parse_injuries(injuries_raw2)
+            had_blood_loss = 'blood_loss' in injuries2
+            injuries2 = add_injury(injuries2, 'blood_loss')
+            enc2 = db.get_encounter(defender_f['encounter_id'])
+            if enc2:
+                world2 = db.get_world(enc2['guild_id'])
+                day2 = int(world2['day_number']) if world2 else 0
+                from engine.herb_buffs import grant_blood_loss_timer
+                timer_fields = grant_blood_loss_timer(defender_stats, day=day2)
+                bl_max_hp = int(db.row_val(defender_stats, 'max_hp') or defender_f['max_hp'] or 1)
+                db.update_user(
+                    defender_f['discord_id'], wolf_id=defender_stats['id'],
+                    active_injuries=json.dumps(injuries2),
+                    max_hp=bl_max_hp if had_blood_loss else max(1, bl_max_hp - 1),
+                    **timer_fields
+                )
+            if not had_blood_loss:
+                injury_note += "\n**Blood loss:** severe haemorrhage; **-1 max hp** until 3 full sunrises pass."
         if new_hp == 0:
             from engine.chronic_conditions import try_near_death_mental_trauma
             trauma = try_near_death_mental_trauma(defender_stats)

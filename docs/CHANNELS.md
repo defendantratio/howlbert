@@ -2,7 +2,7 @@
 
 full proposed structure, reconciling the real current server against everything in `docs/GROWTH_IDEAS.md`. existing channels are kept unless a change is called out; new channels are marked **new**; channels being renamed/repurposed instead of duplicated are marked **repurpose**.
 
-rp finder (pings everyone when someone wants to start an rp) and session discussion (server wide talk about ongoing rp sessions) are both kept as is. they do different jobs than the bot's open-scenes index: rp finder is an active broadcast/ping, the index is a passive, always current list, and session discussion is conversation, not a listing. also different from fic-recs, which is finished/ongoing written scenes, not live session logistics.
+RP finder (pings everyone when someone wants to start an RP) and session discussion (server wide talk about ongoing RP sessions) are both kept as is. they do different jobs than the bot's open-scenes index: RP finder is an active broadcast/ping, the index is a passive, always current list, and session discussion is conversation, not a listing. also different from fic-recs, which is finished/ongoing written scenes, not live session logistics.
 
 ---
 
@@ -27,7 +27,7 @@ no changes.
 
 no changes.
 
-## ooc space
+## OOC space
 - general chat
 - art sharing
 - music
@@ -56,30 +56,30 @@ no changes.
 - dice and statistics guide
 - plot updates
 - event request
-- text rp
-- rp finder
+- text RP
+- RP finder
 - session discussion
 - in game roleplay chat
 - roleplay voice
 
-rp finder and session discussion stay; see note above on why they're not replaced by the bot index. **examples (for dice and statistics)** is removed as its own channel; worked examples now belong inside the dice and statistics guide content itself (see the lore forum section below), not a separate channel.
+RP finder and session discussion stay; see note above on why they're not replaced by the bot index. **examples (for dice and statistics)** is removed as its own channel; worked examples now belong inside the dice and statistics guide content itself (see the lore forum section below), not a separate channel.
 
 ---
 
 ## howlbert, new category
 
-pulls bot specific channels out of the general ooc catch all once there's more than one of them, so the bot's presence reads as intentional instead of tacked onto voice/birthdays/etc.
+pulls bot specific channels out of the general OOC catch all once there's more than one of them, so the bot's presence reads as intentional instead of tacked onto voice/birthdays/etc.
 
-- **bot commands** (repurpose, moved from ooc space, unchanged otherwise)
-- **#open-scenes** (**new**): the auto updating index the bot now maintains (`engine/open_scenes_index.py`). point `open_scenes_channel_id` at this channel. a passive list, not a ping; complements rp finder rather than replacing it.
+- **bot commands** (repurpose, moved from OOC space, unchanged otherwise)
+- **#open-scenes** (**new**): the auto updating index the bot now maintains (`engine/open_scenes_index.py`). point `open_scenes_channel_id` at this channel. a passive list, not a ping; complements RP finder rather than replacing it.
 - **#screenshot-showcase** (**new**): dump for dramatic `/vitals` panels, death saves, combat logs. raw material for the wolf of the week spotlight and caption this format (growth ideas sections 40, 43), which currently have nowhere to pull from.
 - **#patron** (**new**, from growth ideas section 45): spells out what boosting/supporting actually grants (the bones/mood/standing rewards already auto fire on boost, this channel just makes that visible), plus public recognition: `/patron` status, referral leaderboard, kickstarter backer badge.
 
-only worth breaking out as its own category once #open-scenes and #screenshot-showcase exist alongside bot commands. three related channels in a generic ooc category is exactly the clutter categories are for; two or fewer, leave them in ooc space.
+only worth breaking out as its own category once #open-scenes and #screenshot-showcase exist alongside bot commands. three related channels in a generic OOC category is exactly the clutter categories are for; two or fewer, leave them in OOC space.
 
 ## art, new category, start small
 
-art sharing (staying in ooc space) is the general dump and doesn't get replaced. this wing is a specialization of it; only worth splitting off once art sharing volume actually justifies it. start with the two that have the clearest immediate payoff, add the rest later if it's warranted:
+art sharing (staying in OOC space) is the general dump and doesn't get replaced. this wing is a specialization of it; only worth splitting off once art sharing volume actually justifies it. start with the two that have the clearest immediate payoff, add the rest later if it's warranted:
 
 - **#commissions** (forum, **new**): real marketplace channel. where the micro influencer gifting play (section 8) and sofurry/vgen artist discovery (section 37) point once someone's interested, instead of dead ending in dms.
 - **#art-of-the-week** (**new**): same mechanism as wolf of the week (already built), applied to art. could reuse the contest judging approach from section 18.
@@ -181,7 +181,7 @@ pulled straight from what's already canon in the code (`config.py`'s `great_pack
 > - **elder**: respected but not sentimental. fed last. if winter is hard, they walk into the snow, the long nap, to spare the pack.
 > - **diplomat**: the pack's voice in negotiations with other packs, and the one who gathers secrets from outsiders.
 >
-> full attribute ranges and role features (commanding howl, green tongue, killer's instinct, and the rest) live on the site's [packs page](https://howlbert.straw.page/packs.html), not repeated here.
+> full attribute ranges and role features (commanding howl, green tongue, killer's instinct, and the rest) live on the site's [packs page](https://howlbert.neocities.org/packs.html), not repeated here.
 
 ### pack law: mating, exile, and scent
 
@@ -211,7 +211,7 @@ pulled straight from what's already canon in the code (`config.py`'s `great_pack
 >
 > **thistlehide**, path of the fur. *"the forest remembers the names of the dead."* memory and lineage; the dead aren't gone while the forest still holds their names. tawny, russet coats, pragmatic and blunt but fiercely loyal once bonds form; the pack that howls the most, for war, joy, grief, and the plain pleasure of sound. practices bark burial, and fights a slow war against logging trucks and pipeline surveyors at its borders.
 >
-> full appearance, culture, hierarchy, and relations detail for each pack lives on the site's [packs page](https://howlbert.straw.page/packs.html).
+> full appearance, culture, hierarchy, and relations detail for each pack lives on the site's [packs page](https://howlbert.neocities.org/packs.html).
 
 ### the green tongue: restricted herbs
 
@@ -222,7 +222,7 @@ pulled straight from what's already canon in the code (`config.py`'s `great_pack
 > - **wolfsbane**: the only plant that can permanently kill a spirit cursed wolf. touching it without ritual cleansing is believed to taint the wolf's soul.
 > - **water hemlock**: used for executions. a single leaf in a piece of meat kills in hours; the medic prepares it in secret, then the alpha feeds it to the condemned.
 >
-> full herb, disease, and dosage detail lives on the site's [illness and herbs page](https://howlbert.straw.page/illness.html), including which restricted herbs actually exist in the game's compendium (wolfsbane and water hemlock among them).
+> full herb, disease, and dosage detail lives on the site's [illness and herbs page](https://howlbert.neocities.org/illness.html), including which restricted herbs actually exist in the game's compendium (wolfsbane and water hemlock among them).
 
 ### current tensions
 
@@ -252,7 +252,7 @@ pulled straight from what's already canon in the code (`config.py`'s `great_pack
 
 ### a gazetteer of the four territories
 
-every named place a wolf can actually be sent, raided at, or exiled to, pulled straight from the game's own location list, grouped by den. use these as rp settings; several already carry weight from other pinned lore (the weeping deep is where silverrush drowns its alphas, the sog grave is where mistmoor executes its worst).
+every named place a wolf can actually be sent, raided at, or exiled to, pulled straight from the game's own location list, grouped by den. use these as RP settings; several already carry weight from other pinned lore (the weeping deep is where silverrush drowns its alphas, the sog grave is where mistmoor executes its worst).
 
 **greyspire, the mouth of the world**
 - **greyspire den**: the den proper, carved into rock.
@@ -319,7 +319,7 @@ every named place a wolf can actually be sent, raided at, or exiled to, pulled s
 - **the maw's throat**: the caldera, the collapsed scar where all four territories meet; the only ground no one owns and every pack fears.
 - **the tongue-stone**: the warm black slab at the caldera's center, inside the maw's throat; sacred, unowned ground, and where the moon-howl happens under the full moon.
 
-**forest cat territory**, not wolf ground, but real rp locations where border scenes and diplomacy actually happen:
+**forest cat territory**, not wolf ground, but real RP locations where border scenes and diplomacy actually happen:
 - **the oak forest**: thunderclan's core territory; where most of the pack actually lives and hunts, as opposed to sunningrocks below, which is just their edge.
 - **sunningrocks**: thunderclan's edge, where oak forest meets open rock; the most common thunderclan border encounter site.
 - **snakerocks**: an old rockslide on thunderclan's far border, sharp footing and worse odds; a landmark, not a place either side lingers.
@@ -332,7 +332,7 @@ every named place a wolf can actually be sent, raided at, or exiled to, pulled s
 - **the twoleg bridge**: a footbridge crossing riverclan's river; the closest thing to neutral ground on that border, since neither side can hold it for long.
 - **fourtrees**: neutral hollow where all four clans gather under truce; the closest thing the cats have to the sundering stone, and the only cat ground a wolf diplomat might actually be invited onto.
 
-not added to the server's rp location map itself since it's already crowded; this list exists for lore reference and border/diplomacy scenes only.
+not added to the server's RP location map itself since it's already crowded; this list exists for lore reference and border/diplomacy scenes only.
 
 ### the drown rite
 
@@ -358,11 +358,22 @@ everything below is pulled straight from the game's actual data (`herbs_compendi
 
 ### how treatment actually works, mechanically
 
-1. **forage**: `/bones action:forage` pulls from the territory's herb table at a dc set by rarity (common **8**, uncommon **12**, rare **15**, very rare **20**), modified by season. restricted herbs (poisons) don't show up on a normal forage roll.
-2. **prepare**: `/herbs action:prepare herb:<inventory herb>` turns a raw herb into a usable form; prep method depends on the herb (dry, poultice, juice, raw, tea, gargle, sweeten, ointment, sap, pelt rub, cooked, simmered in milk). most herbs only work prepared one specific way; the wrong method just wastes it.
+1. **forage**: `/bones action:forage` pulls from the territory's herb table at a DC set by rarity (common **8**, uncommon **12**, rare **15**, very rare **20**), modified by season. restricted herbs (poisons) don't show up on a normal forage roll.
+2. **prepare**: `/herbs action:prepare herb:<inventory herb>` turns a raw herb into a usable form; prep method depends on the herb (dry, poultice, raw, tea, gargle, sweeten, ointment, sap, pelt rub, cooked, simmered in milk). most herbs only work prepared one specific way, and the wrong method isn't just wasteful, it can genuinely hurt the patient: eating something meant to stay external, or pressing a toxic herb straight onto an open wound, can deal real HP damage on the spot (a con save can avoid it, and a skilled preparer halves the odds it happens at all, but it's a live risk, not flavor text).
 3. **treat**: `/medic action:treat herb:<prepared herb>` applies it to a patient (self or packmate) against whatever injury or disease is active. field dressing (cobwebs) and wound wash (dock/horsetail) exist as lighter, faster options for the two most common battlefield injuries; deep gash and infected wound.
-4. **surgery**: anything marked "surgery only" below (bruised lung, snapped sinew, torn gristle, and a few others) can't be herb-cured at all; it needs `/medic action:surgery procedure:<stitch|set_bone|extract|amputate>`, usually with a medicine check, sometimes with a helper for advantage.
-5. **restricted herbs**: wolfsbane and water hemlock are medic-only by lore and by mechanic; every other poison in the table below exists purely as a hazard (accidental ingestion, execution, hunting cats) with no legitimate treatment use.
+4. **the harder injuries need a real medicine check, not just the right herb**: infected wound (DC 14), festering wound (DC 15), snake venom (DC 14), sun-sick (DC 12), wrenched joint (DC 15), blood-within (DC 15), and thorn-stuck (DC 10) only clear on a successful medicine check against their listed DC; fail it and the herb doesn't consume, nothing happens, try again. every other injury still just clears the moment the right herb is applied, no roll.
+5. **surgery**: anything marked "surgery only" below (bruised lung, snapped sinew, torn gristle, and a few others) can't be herb-cured at all; it needs `/medic action:surgery procedure:<stitch|set_bone|extract|amputate>`, usually with a medicine check, sometimes with a helper for advantage.
+6. **restricted herbs**: wolfsbane and water hemlock are medic-only by lore and by mechanic; every other poison in the table below exists purely as a hazard (accidental ingestion, execution, hunting cats) with no legitimate treatment use.
+
+### the healer's code
+
+not a mechanic, an in-world ethic every medic character should actually carry, drawn from what the pack roles and restricted-herb rules already imply about the role:
+
+- **the green tongue is a sacred right, not a convenience.** a forager collects; only the medic treats. a forager who treats anyway is overstepping a real boundary in-world, not just skipping a formality.
+- **neutrality is the job.** medics are forbidden to mate specifically so their scent stays neutral enough to treat any wolf in the den without triggering dominance aggression; a medic who breaks that neutrality is breaking the thing that lets them do the job at all.
+- **restricted herbs are restricted for a reason.** wolfsbane and water hemlock sit outside normal treatment entirely; a medic character who hands them to an untrained wolf, or uses them outside their real purpose (spirit-curse removal, execution), is writing a serious plot event, not a routine one.
+- **knowledge is power, and medics know it.** a medic who withholds a cure, or a forager who lies about where a rare herb grows, is playing with real leverage over an alpha or a rival den; that's intended as a plot hook, not an exploit.
+- **the wrong dose is a real death.** given the mechanical harm above, an in-world medic who's careless, or cruel, with preparation isn't just failing a roll, they're a wolf other characters have a real reason to fear or distrust.
 
 ### injury table
 
@@ -371,156 +382,156 @@ everything below is pulled straight from the game's actual data (`herbs_compendi
 - **deep gash**: yarrow + cobwebs (or cattail/oak bark) stops bleeding; treat herbs: yarrow, oak bark, cattail, cobwebs; heal time varies.
 - **sprained leg**: comfrey poultice · 1 week rest; treat herbs: comfrey, arnica, tansy; 7 days to heal.
 - **fractured rib**: comfrey poultice · 2 weeks rest; treat herbs: comfrey, bindweed, broom; 14 days to heal.
-- **concussion**: dried skullcap · 1 week sleep; treat herbs: dried skullcap; 7 days to heal.
+- **skull-ring (concussion)**: skullcap · 1 week sleep; treat herbs: skullcap; 7 days to heal.
 - **punctured paw**: heals in 1 week; oak bark binding halves time; treat herbs: oak bark, dock, plantain; 7 days to heal.
-- **infected wound**: yarrow or goldenrod poultice; treat herbs: yarrow, goldenrod, burdock root, wild garlic; heal time varies.
+- **infected wound**: yarrow or goldenrod poultice; medicine check required (DC 14) for the herb to actually clear it, not just applying it; treat herbs: yarrow, goldenrod, burdock root, wild garlic; heal time varies.
 - **torn ear / lost eye**: torn ear heals cosmetically; penalty remains. lost eye: no cure; permanent, no heal time.
 - **broken jaw**: broth/milk · comfrey poultice reduces to 2 weeks; treat herbs: comfrey, bindweed, slippery elm; 21 days to heal.
 - **spinal injury**: comfrey poultice · bindweed splint · 28 days rest; treat herbs: comfrey, bindweed, broom; 28 days to heal.
 - **paralyzed (permanent)**: no cure; lifelong den care; permanent, no heal time.
-- **festering wound**: yarrow tea · goldenrod tea · urgent medic care; treat herbs: yarrow, goldenrod, burdock root; 7 days to heal.
-- **scorched hide**: cobwebs dressing · 7 days full rest; no herb cure; treat herbs: cobwebs, common mallow; 7 days to heal.
-- **bruised lung**: surgery (set_bone); no herb cure; 14 days to heal.
+- **festering wound**: yarrow tea · goldenrod tea · urgent medic care; medicine check required (DC 15); treat herbs: yarrow, goldenrod, burdock root; 7 days to heal.
+- **scorched hide (burn)**: cobwebs dressing · 7 days full rest; no herb cure; treat herbs: cobwebs, common mallow; 7 days to heal.
+- **bruised lung (pulmonary contusion)**: surgery (set_bone); no herb cure; 14 days to heal.
 - **swollen eye**: celandine or feverfew poultice; treat herbs: celandine, feverfew, witch hazel; 5 days to heal.
 - **blood loss**: 3 full rests; clears automatically; 3 days to heal.
-- **snake venom**: twinflower poultice may slow progression; feverfew reduces fever. no guaranteed cure; treat herbs: blackberry, snakeroot, sticklewort, adders tongue, feverfew; 5 days to heal.
+- **snake venom**: snakeroot poultice may slow progression; feverfew reduces fever; medicine check required (DC 14) for any of the treat herbs to actually clear it. no guaranteed cure; treat herbs: blackberry, snakeroot, sticklewort, adders tongue, feverfew; 5 days to heal.
 - **insect sting**: dock leaf or burdock poultice reduces swelling. clears in 3 days; treat herbs: dock, burdock root, blackberry, jewelweed; 3 days to heal.
 - **lost eye**: permanent; permanent, no heal time.
-- **dead-limb**: no cure; can compensate with training; permanent, no heal time.
-- **caved-chest**: surgery only; 6 weeks rest; comfrey poultice for pain; treat herbs: comfrey, willow bark; 42 days to heal.
-- **heatstroke (sun-sick)**: cool water; rest; feverfew; can be fatal if untreated; treat herbs: feverfew, watermint, willow bark; 3 days to heal.
-- **hypothermia (chill-bite)**: warmth; honey; rest; avoid extreme cold; treat herbs: honey, pine bark; 3 days to heal.
-- **smoke-lung**: mullein or lungwort tea; rest; avoid smoke; treat herbs: mullein, lungwort, pine needle; 7 days to heal.
-- **snapped sinew**: surgery only; long healing (6 weeks); no herb cure; 42 days to heal.
-- **wrenched joint**: pop back in (medicine dc 15); then rest 1-2 weeks; willow bark for pain; treat herbs: willow bark, comfrey, arnica; 10 days to heal.
-- **mangled paw**: comfrey poultice + splint; 3 weeks rest; dock leaf for swelling; treat herbs: comfrey, dock, plantain, bindweed; 21 days to heal.
-- **blood-within**: shepherd's purse + yarrow tea; requires medicine check dc 15 to stop; otherwise fatal; treat herbs: shepherds purse, yarrow, horsetail; 5 days to heal.
-- **pus-pocket**: hot compress + burdock root; lance with stick (surgery); treat herbs: burdock root, dock, wild garlic; 5 days to heal.
-- **pulled sinew**: rest 3 days; comfrey poultice reduces to 1 day; treat herbs: comfrey, arnica, meadowsweet; 3 days to heal.
-- **torn gristle**: surgery needed; long recovery (4 weeks); no simple herb cure; 28 days to heal.
-- **thorn-stuck**: remove with stick (survival/medicine dc 10); then dock leaf; treat herbs: dock, plantain; 2 days to heal.
+- **dead-limb (nerve damage)**: no cure; can compensate with training; permanent, no heal time.
+- **caved-chest (flail chest)**: surgery only; 6 weeks rest; comfrey poultice for pain; treat herbs: comfrey, willow bark; 42 days to heal.
+- **sun-sick (heatstroke)**: cool water; rest; feverfew; medicine check required (DC 12); can be fatal if untreated; treat herbs: feverfew, watermint, willow bark; 3 days to heal.
+- **chill-bite (hypothermia)**: warmth; honey; rest; avoid extreme cold; treat herbs: honey, pine bark; 3 days to heal.
+- **smoke-lung (smoke inhalation)**: mullein or lungwort tea; rest; avoid smoke; treat herbs: mullein, lungwort, pine needle; 7 days to heal.
+- **snapped sinew (ruptured tendon)**: surgery only; long healing (6 weeks); no herb cure; 42 days to heal.
+- **wrenched joint (dislocated shoulder)**: pop back in (medicine DC 15); then rest 1-2 weeks; willow bark for pain; treat herbs: willow bark, comfrey, arnica; 10 days to heal.
+- **mangled paw (crushed paw)**: comfrey poultice + splint; 3 weeks rest; dock leaf for swelling; treat herbs: comfrey, dock, plantain, bindweed; 21 days to heal.
+- **blood-within (internal bleeding)**: shepherd's purse + yarrow tea; requires medicine check DC 15 to stop; otherwise fatal; treat herbs: shepherds purse, yarrow, horsetail; 5 days to heal.
+- **pus-pocket (abscess)**: hot compress + burdock root; lance with stick (surgery); treat herbs: burdock root, dock, wild garlic; 5 days to heal.
+- **pulled sinew (muscle strain)**: rest 3 days; comfrey poultice reduces to 1 day; treat herbs: comfrey, arnica, meadowsweet; 3 days to heal.
+- **torn gristle (ligament tear)**: surgery needed; long recovery (4 weeks); no simple herb cure; 28 days to heal.
+- **thorn-stuck (splinter)**: remove with stick (survival/medicine DC 10); then dock leaf; treat herbs: dock, plantain; 2 days to heal.
 
 ### the full herb compendium
 
 sorted by rarity, common first. "pack" is the territory it's native to; "any territory" means it isn't pack-locked. "cures" lists the injuries/diseases it treats; restricted (poison) herbs have no cures, they're hazards, not medicine.
 
 **common**
-- **adder's tongue** (any territory): reroll failed poison save with advantage if within 1 minute of sting. cures: mild poison, swollen eye, deep gash, shaking sickness.
-- **beech leaves** (any territory): carry herbs. cures: leafbare cough, infected wound.
-- **bindweed vines** (any territory): relieves gut complaints and urinary problems. cures: eating distress, urinary infection, influenza, constipation.
-- **blackberry (bramble)** (any territory): soothes insect stings and ends non-magical venom. cures: diarrhea, eating distress, infected wound, mild poison.
-- **boneset** (mistmoor): reroll failed disease save with advantage. cures: influenza, leafbare cough.
-- **borage** (any territory): extra milk for nursing mother. cures: influenza, leafbare cough, anxiety, depression.
-- **broom** (any territory): bind broken bones and splint fractures. cures: fractured rib, sprained leg, broken jaw.
-- **burdock root** (any territory): poultice draws infection from bites and open wounds after 24h rest. cures: infected wound, deep gash, mange, cancer.
-- **burnet** (any territory): leaf applied to cuts staunches bleeding. cures: sprained leg, diarrhea, deep gash.
-- **catchweed burrs** (any territory): burrs hold poultices in place. cures: urinary infection.
-- **cattail** (silverrush, mistmoor): pollen is hemostatic. cures: deep gash, sprained leg, infected wound.
-- **celandine** (any territory): removes eye swelling and restores eyesight within 1 hour. cures: swollen eye, partial blindness, hepatitis, leafbare cough, gallstones.
-- **chamomile** (any territory): advantage on wisdom saves vs fear for 1 hour. cures: anxiety, insomnia, eating distress, influenza, grief melancholy, delirium.
-- **chervil** (any territory): removes nausea. cures: infected wound, diarrhea, redscratch, eating distress, wasting sickness.
-- **chickweed** (any territory): ends green-cough (3 doses per 24 hours). cures: cough, leafbare cough, infected wound.
-- **chicory** (any territory): settles gut upset, diarrhea, and eating distress. cures: diarrhea, eating distress, hepatitis.
-- **cobnuts** (any territory): +1 stealth when approaching prey. no listed cures; utility use.
-- **cobwebs** (any territory): auto-stabilize dying wolf. cures: dying, deep gash, shaking sickness, scorched hide.
-- **coltsfoot** (any territory): ends green-cough after 1 dose. cures: cough, leafbare cough, punctured paw, asthma.
-- **common mallow** (any territory): poultice for scraped and scorched pads. cures: punctured paw, leafbare cough, eating distress, scorched hide, asthma.
-- **coneflower (echinacea)** (greyspire): advantage on infection saves within 1h of injury. cures: infected wound, influenza, leafbare cough.
-- **daisy** (any territory): ignore arthritis and joint pain penalties for 8 hours. cures: deep gash, leafbare cough, infected wound, insomnia, sprained leg, arthritis.
-- **dandelion** (any territory): soothes stings and flushes fever. cures: eating distress, hepatitis, influenza, leptospirosis, mild poison.
-- **dock** (any territory): restores cracked paw pads after 1 day rest. cures: leafbare cough, hepatitis, diarrhea, punctured paw, infected wound.
-- **douglas' sagewort** (greyspire): prevents infection 24h. cures: poison ivy, infected wound, mild poison.
-- **elder (external)** (any territory, poison): treats sprains. cures: sprained leg.
-- **fennel** (any territory): extra day without food before exhaustion sets in. cures: eating distress, leafbare cough, bloat, infected wound.
-- **feverfew** (any territory): reduces inflammation and fever. cures: influenza, redscratch, pox, rot lung, milk fever, swollen eye, leafbare cough.
-- **garden mint** (any territory): ends nausea in minutes. cures: eating distress, diarrhea, bloat, infected wound.
-- **garlic mustard** (any territory): rub through pelt to drive off fleas. cures: leafbare cough, infected wound, mild poison, lyme, worms.
-- **heather** (any territory): sweetens bitter herb mixtures. cures: diarrhea, leafbare cough, anxiety.
-- **honey** (any territory): feeds starving pups (+10 hunger, -1 exhaustion). cures: leafbare cough, deep gash.
-- **horsetail** (any territory): +3 medicine to stabilize dying. cures: deep gash, torn claw, punctured paw, urinary infection.
-- **ivy vines** (any territory): preserves dried herbs 2 extra weeks. cures: leafbare cough, influenza, asthma.
-- **jewelweed** (any territory): sap neutralizes poison-ivy rash. cures: poison ivy, mild poison, hepatitis, diarrhea.
-- **juniper berries** (any territory): neutralizes mild poison. cures: mild poison, diarrhea, urinary infection, infected wound.
-- **knotgrass** (any territory): cures diarrhea. cures: diarrhea, fleas, leafbare cough, urinary infection, worms.
-- **labrador tea** (any territory): ends wheezing for 4 hours. cures: leafbare cough, diarrhea, asthma.
-- **lamb's ear** (any territory): fuzzy leaves pressed on wounds stop bleeding and soothe insect stings. cures: infected wound, mild poison.
-- **lavender** (any territory): cures fever and chills. cures: influenza, anxiety, insomnia, grief melancholy, night terrors.
-- **lizard's tail** (mistmoor): removes 1 fever exhaustion. cures: influenza, urinary infection.
-- **mountain ash (rowan)** (any territory): bitter bark eases fever and weeping-scale, soothes liver complaints. cures: influenza, distemper, hepatitis.
-- **oak bark** (thistlehide): stops bleeding. cures: deep gash, infected wound, diarrhea.
-- **oxeye daisy** (any territory): eases joint ache and sprains. cures: sprained leg, leafbare cough, influenza, hepatitis, urinary infection.
-- **parsley** (any territory): ends lactation within 6 hours. cures: milk fever, wasting sickness, eating distress, urinary infection.
-- **pine bark** (greyspire): inner bark eases leaf-bare cough and frost-nipped paws. cures: leafbare cough, punctured paw, asthma.
-- **pine needles** (greyspire): tea ends coughing after 1 dose. cures: cough, leafbare cough, urinary infection, asthma.
-- **poppy seeds** (any territory): sedative and pain relief. cures: insomnia, anxiety, shock emotional, grief melancholy.
-- **purple loosestrife** (silverrush): staunches bleeding on stitched wounds. cures: deep gash, diarrhea, infected wound.
-- **purslane** (any territory): fleshy leaves hold ditch-water. cures: eating distress, anxiety.
-- **ragweed** (any territory): 3 leaves removes 1 exhaustion. cures: leafbare cough, hepatitis.
-- **ragwort** (any territory): elder hunts at full speed for 1 day. cures: sprained leg.
-- **raspberry leaves** (any territory): advantage on birth hemorrhage saves. cures: diarrhea, leafbare cough.
-- **rosemary** (any territory): hides death-scent at burial. cures: grief melancholy, dementia, chronic stress, anxiety, obsession.
-- **rush stalks** (mistmoor, silverrush): hard stalks bind broken bones. cures: fractured rib, broken jaw, sprained leg.
-- **saffron** (any territory): auto-stabilize postpartum hemorrhage. cures: dying, milk fever, leafbare cough, anxiety, grief melancholy.
-- **sage** (any territory): soothes sore throat. cures: leafbare cough, eating distress, diarrhea, infected wound.
-- **shepherd's purse** (any territory): hemostatic. cures: deep gash, internal bleeding.
-- **skunk cabbage (dried)** (any territory): treats severe cough and blackcough. cures: cough, leafbare cough, asthma.
-- **snakeroot** (any territory): advantage vs snake venom saves. cures: anxiety, insomnia, mild poison.
-- **sorrel** (any territory): stops heavy bleeding from deep wounds. cures: deep gash, leafbare cough, sprained leg, urinary infection, eating distress.
-- **sticklewort** (any territory): neutralizes snake venom. cures: diarrhea, leafbare cough, infected wound, mild poison, hepatitis.
-- **stinging nettle** (any territory): with comfrey -1 broken bone healing day. cures: fractured rib, sprained leg, fleas, urinary infection, lyme, arthritis.
-- **straight stick** (any territory): thin twig for wolves in pain to bite during deep treatment. no listed cures; utility use.
-- **sweet sedge** (any territory): ends mild gut infection in 1 day. cures: diarrhea, shaking sickness, eating distress, bloat.
-- **tansy** (any territory): halves sprain recovery time. cures: sprained leg, fleas, leafbare cough, worms.
-- **thyme** (any territory): ends minor pain for 2 hours. cures: anxiety, insomnia, leafbare cough, asthma.
-- **tormentil** (any territory): +2 medicine for any injury. cures: diarrhea, leafbare cough, infected wound.
-- **valerian** (any territory): calms shock. cures: anxiety, insomnia, feral shift, eating distress, grief melancholy, shock emotional.
-- **watermint** (any territory): removes nausea in 10 minutes. cures: leafbare cough, infected wound, diarrhea, eating distress, hepatitis, bloat, leptospirosis.
-- **wild cherry bark** (any territory): stops coughing for 2 hours, even blackcough. cures: cough, leafbare cough, diarrhea, anxiety.
-- **wild garlic** (any territory): advantage vs vermin disease 24h. cures: leafbare cough, fleas, infected wound, hepatitis, leptospirosis.
-- **willow bark** (mistmoor, silverrush): pain relief 1 sunrise. cures: influenza, sprained leg, fractured rib, lyme, arthritis.
-- **witch hazel** (any territory): astringent and hemostatic. cures: swollen eye, infected wound, poison ivy, leafbare cough, mild poison.
-- **wood sorrel** (any territory): steadies a queasy stomach. cures: influenza, eating distress.
-- **yarrow** (any territory): +2 medicine to stabilize. cures: deep gash, infected wound, shaking sickness, torn claw, diarrhea.
+- **adder's tongue** (any territory): reroll failed poison save with advantage if within 1 minute of sting. cures: sting-swell (mild poison), swollen eye, deep gash, shaking-sickness (seizure disorder). preparation: fresh roots or leaves simmered in milk; chewed into a poultice for eyes and wounds.
+- **beech leaves** (any territory): carry herbs. cures: leaf-bare cough (cold/chill), infected wound. preparation: leaves used in teas; ointments for burns, sores, and ulcers.
+- **bindweed vines** (any territory): relieves gut complaints and urinary problems; the tough vines themselves lash splints to broken bones, speeding supported breaks (bone healing minus 7 days), the actual splint-binding herb in the compendium. cures: the refusing (eating distress), water-scorch (urinary infection), shiver-fever (influenza), gut-stone (constipation). preparation: leaves may be cooked to reduce oxalic acid; seeds used as purgative.
+- **blackberry (bramble)** (any territory): soothes insect stings and ends non-magical venom. cures: gut-run (diarrhea), the refusing (eating distress), infected wound, sting-swell (mild poison). preparation: leaves chewed into a poultice and applied to stings; root bark eaten raw or as tea.
+- **boneset** (mistmoor): reroll failed disease save with advantage. cures: shiver-fever (influenza), leaf-bare cough (cold/chill). preparation: leaves and flowers eaten fresh or dried.
+- **borage** (any territory): extra milk for nursing mother. cures: shiver-fever (influenza), leaf-bare cough (cold/chill), the skitters (anxiety), the low-spirit (depression). preparation: must be used fresh, never dried; leaves and roots eaten raw.
+- **broom** (any territory): anti-inflammatory poultice for the bruising and sprains that come with a fracture; doesn't do the physical splinting itself, that's bindweed's job, broom just treats the injury alongside it. cures: fractured rib, sprained leg, broken jaw. preparation: chewed and applied as poultice.
+- **burdock root** (any territory): poultice draws infection from bites and open wounds after 24h rest. cures: infected wound, deep gash, scratch-bare (mange), growth-sickness (cancer). preparation: root dug up, washed, and chewed into a poultice for bites and wounds.
+- **burnet** (any territory): leaf applied to cuts staunches bleeding. cures: sprained leg, gut-run (diarrhea), deep gash. preparation: applied as poultice; root used as astringent tea.
+- **catchweed burrs** (any territory): burrs hold poultices in place. cures: water-scorch (urinary infection). preparation: burrs attached to pelt over poultices.
+- **cattail** (silverrush, mistmoor): pollen is hemostatic. cures: deep gash, sprained leg, infected wound. preparation: pollen eaten raw; young shoots and rhizomes eaten cooked.
+- **celandine** (any territory): removes eye swelling and restores eyesight within 1 hour. cures: swollen eye, partial blindness, yellow-eye (hepatitis), leaf-bare cough (cold/chill), belly-grind (gallstones). preparation: leaves chewed into a poultice and held gently against the eye.
+- **chamomile** (any territory): advantage on wisdom saves vs fear for 1 hour. cures: the skitters (anxiety), the sleepless (insomnia), the refusing (eating distress), shiver-fever (influenza), the hollowing (grief), fever-wander (delirium). preparation: leaves and flowers eaten raw; tea made from flowers.
+- **chervil** (any territory): removes nausea. cures: infected wound, gut-run (diarrhea), redscratch, the refusing (eating distress), wasting-sickness (chronic wasting). preparation: poultice applied to wounds or eaten raw for bellyache.
+- **chickweed** (any territory): ends green-cough (3 doses per 24 hours). cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), infected wound. preparation: used as tea or poultice application.
+- **chicory** (any territory): settles gut upset, diarrhea, and eating distress. cures: gut-run (diarrhea), the refusing (eating distress), yellow-eye (hepatitis). preparation: root eaten raw or as tea.
+- **cobnuts** (any territory): +1 stealth when approaching prey; restores +8 satiety on patrol. no listed cures; utility use. preparation: eaten raw or cooked.
+- **cobwebs** (any territory): auto-stabilize dying wolf. cures: dying, deep gash, shaking-sickness (seizure disorder), scorched hide. preparation: gathered in a swath and applied to bleeding wound; wrapped around injury.
+- **coltsfoot** (any territory): ends green-cough after 1 dose. cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), punctured paw, chestbind (asthma). preparation: leaves eaten raw for shortness of breath.
+- **common mallow** (any territory): poultice for scraped and scorched pads. cures: punctured paw, leaf-bare cough (cold/chill), the refusing (eating distress), scorched hide, chestbind (asthma). preparation: tea, poultice.
+- **coneflower (echinacea)** (greyspire): advantage on infection saves within 1h of injury. cures: infected wound, shiver-fever (influenza), leaf-bare cough (cold/chill). preparation: tea, or root dried for later use.
+- **daisy** (any territory): ignore arthritis and joint pain penalties for 8 hours. cures: deep gash, leaf-bare cough (cold/chill), infected wound, the sleepless (insomnia), sprained leg, joint-rot (arthritis). preparation: tea, poultice.
+- **dandelion** (any territory): soothes stings and flushes fever. cures: the refusing (eating distress), yellow-eye (hepatitis), shiver-fever (influenza), foulwater rot (leptospirosis), sting-swell (mild poison). preparation: leaves and stems eaten; root made into tea.
+- **dock** (any territory): restores cracked paw pads after 1 day rest. cures: leaf-bare cough (cold/chill), yellow-eye (hepatitis), gut-run (diarrhea), punctured paw, infected wound. preparation: leaf chewed into a poultice and applied to scratches; root dug and steeped into a tea for liver and gut complaints.
+- **douglas' sagewort** (greyspire): prevents infection 24h. cures: leaf-burn (poison ivy), infected wound, sting-swell (mild poison). preparation: leaves and stems dried, used as rub or tea.
+- **elder (external)** (any territory, poison): treats sprains. cures: sprained leg. preparation: bark and leaf prepared as a poultice; requires careful preparation, unripe or uncooked parts are toxic.
+- **fennel** (any territory): extra day without food before exhaustion sets in. cures: the refusing (eating distress), leaf-bare cough (cold/chill), gutknot (bloat), infected wound. preparation: seeds eaten fresh, or steeped as tea.
+- **feverfew** (any territory): reduces inflammation and fever. cures: shiver-fever (influenza), redscratch, the spotting (pox), rot-lung (swamp fever), milk-fever (eclampsia), swollen eye, leaf-bare cough (cold/chill). preparation: fresh or dried leaf eaten.
+- **garden mint** (any territory): ends nausea in minutes. cures: the refusing (eating distress), gut-run (diarrhea), gutknot (bloat), infected wound. preparation: tea, eaten raw.
+- **garlic mustard** (any territory): rub through pelt to drive off fleas. cures: leaf-bare cough (cold/chill), infected wound, sting-swell (mild poison), burrfever (lyme), belly-worm (worms). preparation: young leaves eaten; poultice; rubbed through the pelt for fleas.
+- **heather** (any territory): sweetens bitter herb mixtures. cures: gut-run (diarrhea), leaf-bare cough (cold/chill), the skitters (anxiety). preparation: tender tops and flowers made into tea; roots in milk for diarrhea.
+- **honey** (any territory): feeds starving pups (+10 satiety, -1 exhaustion). cures: leaf-bare cough (cold/chill), deep gash. preparation: eaten raw, or used to sweeten teas and gargles.
+- **horsetail** (any territory): +3 medicine to stabilize dying. cures: deep gash, torn claw, punctured paw, water-scorch (urinary infection). preparation: tea or poultice.
+- **ivy vines** (any territory): preserves dried herbs 2 extra weeks; not a splinting herb, its actual use is respiratory (thins chest mucus, opens airways) plus a minor-skin-irritation poultice. cures: leaf-bare cough (cold/chill), shiver-fever (influenza), chestbind (asthma). preparation: leaves steeped as tea, often sweetened with honey, or crushed and applied as poultice.
+- **jewelweed** (any territory): sap neutralizes poison-ivy rash. cures: leaf-burn (poison ivy), sting-swell (mild poison), yellow-eye (hepatitis), gut-run (diarrhea). preparation: sap applied directly; tea.
+- **juniper berries** (any territory): neutralizes mild poison. cures: sting-swell (mild poison), gut-run (diarrhea), water-scorch (urinary infection), infected wound. preparation: berries eaten raw; leaves used as tea for respiratory issues.
+- **knotgrass** (any territory): cures diarrhea. cures: gut-run (diarrhea), the itch (fleas), leaf-bare cough (cold/chill), water-scorch (urinary infection), belly-worm (worms). preparation: eaten fresh several times a day; tea for kidney and bladder conditions.
+- **labrador tea** (any territory): ends wheezing for 4 hours. cures: leaf-bare cough (cold/chill), gut-run (diarrhea), chestbind (asthma). preparation: dried leaves brewed as tea; maximum one cup per day.
+- **lamb's ear** (any territory): fuzzy leaves pressed on wounds stop bleeding and soothe insect stings. cures: infected wound, sting-swell (mild poison). preparation: fuzzy leaves applied directly to skin as a poultice.
+- **lavender** (any territory): cures fever and chills. cures: shiver-fever (influenza), the skitters (anxiety), the sleepless (insomnia), the hollowing (grief), the screaming-sleep (night terrors). preparation: leaves or flowers eaten raw; used as rub or tea.
+- **lizard's tail** (mistmoor): removes 1 fever exhaustion. cures: shiver-fever (influenza), water-scorch (urinary infection). preparation: dried roots eaten raw; steeped as tea.
+- **mountain ash (rowan)** (any territory): bitter bark eases fever and weeping-scale, soothes liver complaints. cures: shiver-fever (influenza), weeping-scale (distemper), yellow-eye (hepatitis). preparation: bark as tea; berries require caution.
+- **oak bark** (thistlehide): stops bleeding. cures: deep gash, infected wound, gut-run (diarrhea). preparation: tea for diarrhea; chewed as poultice for wounds.
+- **oxeye daisy** (any territory): eases joint ache and sprains. cures: sprained leg, leaf-bare cough (cold/chill), shiver-fever (influenza), yellow-eye (hepatitis), water-scorch (urinary infection). preparation: young leaves eaten raw; tea.
+- **parsley** (any territory): ends lactation within 6 hours. cures: milk-fever (eclampsia), wasting-sickness (chronic wasting), the refusing (eating distress), water-scorch (urinary infection). preparation: eaten raw or as tea.
+- **pine bark** (greyspire): inner bark eases leaf-bare cough and frost-nipped paws. cures: leaf-bare cough (cold/chill), punctured paw, chestbind (asthma). preparation: inner bark eaten raw or steeped as tea.
+- **pine needles** (greyspire): tea ends coughing after 1 dose. cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), water-scorch (urinary infection), chestbind (asthma). preparation: tea from fresh or dried needles.
+- **poppy seeds** (any territory): sedative and pain relief. cures: the sleepless (insomnia), the skitters (anxiety), heart-shock (emotional shock), the hollowing (grief). preparation: seeds, petals, and leaves eaten raw; petals and leaves used for sleep.
+- **purple loosestrife** (silverrush): staunches bleeding on stitched wounds. cures: deep gash, gut-run (diarrhea), infected wound. preparation: tea; flowering tops dried.
+- **purslane** (any territory): fleshy leaves hold ditch-water. cures: the refusing (eating distress), the skitters (anxiety). preparation: fleshy leaves eaten raw.
+- **ragweed** (any territory): 3 leaves removes 1 exhaustion. cures: leaf-bare cough (cold/chill), yellow-eye (hepatitis). preparation: tea; caution, highly allergenic.
+- **ragwort** (any territory): elder hunts at full speed for 1 day. cures: sprained leg. preparation: avoid; no safe preparation.
+- **raspberry leaves** (any territory): advantage on birth hemorrhage saves. cures: gut-run (diarrhea), leaf-bare cough (cold/chill). preparation: tea.
+- **rosemary** (any territory): hides death-scent at burial. cures: the hollowing (grief), the long-forgetting (dementia), the fraying (chronic stress), the skitters (anxiety), the fixing (obsession). preparation: eaten fresh, or steeped as tea.
+- **rush stalks** (mistmoor, silverrush): hard stalks bind broken bones. cures: fractured rib, broken jaw, sprained leg. preparation: stalks steeped as tea for diuretic use; also used as splint material.
+- **saffron** (any territory): auto-stabilize postpartum hemorrhage. cures: dying, milk-fever (eclampsia), leaf-bare cough (cold/chill), the skitters (anxiety), the hollowing (grief). preparation: petals eaten fresh or dried.
+- **sage** (any territory): soothes sore throat. cures: leaf-bare cough (cold/chill), the refusing (eating distress), gut-run (diarrhea), infected wound. preparation: tea, gargle, eaten raw.
+- **shepherd's purse** (any territory): hemostatic. cures: deep gash, internal bleeding. preparation: tea, or fresh leaves eaten raw.
+- **skunk cabbage** (any territory): treats severe cough and blackcough. cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), chestbind (asthma). preparation: dried root eaten raw or steeped as tea; dried form only.
+- **snakeroot** (any territory): advantage vs snake venom saves. cures: the skitters (anxiety), the sleepless (insomnia), sting-swell (mild poison). preparation: dried root eaten raw, in small amounts.
+- **sorrel** (any territory): stops heavy bleeding from deep wounds. cures: deep gash, leaf-bare cough (cold/chill), sprained leg, water-scorch (urinary infection), the refusing (eating distress). preparation: leaves used fresh or cooked.
+- **sticklewort** (any territory): neutralizes snake venom. cures: gut-run (diarrhea), leaf-bare cough (cold/chill), infected wound, sting-swell (mild poison), yellow-eye (hepatitis). preparation: tea, gargle, poultice.
+- **stinging nettle** (any territory): with comfrey -1 broken bone healing day. cures: fractured rib, sprained leg, the itch (fleas), water-scorch (urinary infection), burrfever (lyme), joint-rot (arthritis). preparation: dried or cooked form safe; tea, or eaten cooked.
+- **straight stick** (any territory): thin twig for wolves in pain to bite during deep treatment. no listed cures; utility use. preparation: gathered from any woody area.
+- **sweet sedge** (any territory): ends mild gut infection in 1 day. cures: gut-run (diarrhea), shaking-sickness (seizure disorder), the refusing (eating distress), gutknot (bloat). preparation: avoid; no safe preparation.
+- **tansy** (any territory): halves sprain recovery time. cures: sprained leg, the itch (fleas), leaf-bare cough (cold/chill), belly-worm (worms). preparation: leaves, flowers, and stems eaten raw together; extreme caution.
+- **thyme** (any territory): ends minor pain for 2 hours. cures: the skitters (anxiety), the sleepless (insomnia), leaf-bare cough (cold/chill), chestbind (asthma). preparation: eaten raw; tea.
+- **tormentil** (any territory): +2 medicine for any injury. cures: gut-run (diarrhea), leaf-bare cough (cold/chill), infected wound. preparation: tea, or root chewed into a poultice and applied to the skin.
+- **valerian** (any territory): calms shock. cures: the skitters (anxiety), the sleepless (insomnia), feral shift, the refusing (eating distress), the hollowing (grief), heart-shock (emotional shock). preparation: root eaten raw, or steeped as tea.
+- **watermint** (any territory): removes nausea in 10 minutes. cures: leaf-bare cough (cold/chill), infected wound, gut-run (diarrhea), the refusing (eating distress), yellow-eye (hepatitis), gutknot (bloat), foulwater rot (leptospirosis). preparation: leaves eaten raw; tea from fresh or dried leaves.
+- **wild cherry bark** (any territory): stops coughing for 2 hours, even blackcough. cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), gut-run (diarrhea), the skitters (anxiety). preparation: bark eaten raw or steeped as tea; short-term use only.
+- **wild garlic** (any territory): advantage vs vermin disease 24h. cures: leaf-bare cough (cold/chill), the itch (fleas), infected wound, yellow-eye (hepatitis), foulwater rot (leptospirosis). preparation: eaten raw or cooked; tea.
+- **willow bark** (mistmoor, silverrush): pain relief 1 sunrise. cures: shiver-fever (influenza), sprained leg, fractured rib, burrfever (lyme), joint-rot (arthritis). preparation: bark eaten raw in small amounts for pain; steeped as tea.
+- **witch hazel** (any territory): astringent and hemostatic. cures: swollen eye, infected wound, leaf-burn (poison ivy), leaf-bare cough (cold/chill), sting-swell (mild poison). preparation: bark or leaves chewed into a poultice and applied to the skin; tea with caution for internal use.
+- **wood sorrel** (any territory): steadies a queasy stomach. cures: shiver-fever (influenza), the refusing (eating distress). preparation: small amounts as tea; poultice.
+- **yarrow** (any territory): +2 medicine to stabilize. cures: deep gash, infected wound, shaking-sickness (seizure disorder), torn claw, gut-run (diarrhea). preparation: tea, or leaves chewed into a poultice and applied to wounds.
 
 **uncommon**
-- **alder bark** (mistmoor): chewed and applied to wounds. cures: tooth infection, infected wound, diarrhea.
-- **catmint tea** (any territory): cures severe blackcough (2 doses per 24 hours). cures: cough, leafbare cough, anxiety, insomnia, eating distress, asthma.
-- **comfrey** (thistlehide): poultice heals 1d4 hp on deep wounds. cures: fractured rib, broken jaw, sprained leg, deep gash.
-- **dried skullcap** (any territory): sedative rest for concussion recovery. cures: concussion, dementia, feral shift, anxiety, delirium, obsession, pack madness, insomnia, grief melancholy.
-- **marsh-mallow root** (mistmoor): soothes rot-lung fever and wheeze. cures: rot lung, leafbare cough, sprained leg, asthma.
-- **meadowsweet** (silverrush): ignore 1 pain exhaustion for 4 hours. cures: sprained leg, diarrhea, eating distress, influenza, lyme, arthritis.
-- **mugwort** (any territory): rub through pelt to drive off fleas. cures: fleas, diarrhea, eating distress.
-- **passionflower** (any territory): eases racing thoughts and insomnia. cures: anxiety, insomnia, feral shift.
-- **plantain** (thistlehide): gentle wound remedy. cures: leafbare cough, deep gash, punctured paw, torn claw, asthma, bronchitis.
-- **slippery elm** (thistlehide): eat or drink without pain for 8 hours. cures: broken jaw, diarrhea, eating distress, anxiety, urinary infection.
+- **alder bark** (mistmoor): chewed and applied to wounds. cures: root-rot (tooth infection), infected wound, gut-run (diarrhea). preparation: bark chewed directly or applied as poultice; gargled for tooth and gum pain.
+- **catmint tea** (any territory): cures severe blackcough (2 doses per 24 hours). cures: green-cough (mild respiratory), leaf-bare cough (cold/chill), the skitters (anxiety), the sleepless (insomnia), the refusing (eating distress), chestbind (asthma). preparation: leaves and flowers for congestion and coughs; tea.
+- **comfrey** (thistlehide): poultice heals 1d4 HP on deep wounds. cures: fractured rib, broken jaw, sprained leg, deep gash. preparation: roots chewed into poultice and applied externally.
+- **skullcap** (any territory): sedative rest for skull-ring (concussion) recovery. cures: skull-ring (concussion), the long-forgetting (dementia), feral shift, the skitters (anxiety), fever-wander (delirium), the fixing (obsession), den-madness (paranoia), the sleepless (insomnia), the hollowing (grief). preparation: dried herb steeped in water.
+- **marsh-mallow root** (mistmoor): soothes rot-lung fever and wheeze. cures: rot-lung (swamp fever), leaf-bare cough (cold/chill), sprained leg, chestbind (asthma). preparation: tea, poultice.
+- **meadowsweet** (silverrush): ignore 1 pain exhaustion for 4 hours. cures: sprained leg, gut-run (diarrhea), the refusing (eating distress), shiver-fever (influenza), burrfever (lyme), joint-rot (arthritis). preparation: tea from the flower or dried herb.
+- **mugwort** (any territory): rub through pelt to drive off fleas. cures: the itch (fleas), gut-run (diarrhea), the refusing (eating distress). preparation: tea, rubbed through the pelt; use with caution.
+- **passionflower** (any territory): eases racing thoughts and insomnia. cures: the skitters (anxiety), the sleepless (insomnia), feral shift. preparation: tea from the dried vine and flower.
+- **plantain** (thistlehide): gentle wound remedy. cures: leaf-bare cough (cold/chill), deep gash, punctured paw, torn claw, chestbind (asthma), bronchitis. preparation: tea, or leaves chewed into a poultice.
+- **slippery elm** (thistlehide): eat or drink without pain for 8 hours. cures: broken jaw, gut-run (diarrhea), the refusing (eating distress), the skitters (anxiety), water-scorch (urinary infection). preparation: inner bark eaten raw, or steeped as tea.
 
 **rare**
-- **arnica** (greyspire): halves bruise and sprain recovery (external only). cures: sprained leg, punctured paw, arthritis.
-- **belly-rip fungus** (mistmoor): glow-fungus from the belly-rip sinkhole. cures: rot lung.
-- **death-cap mushroom** (mistmoor, poison): pale mushroom found only in the rotting mere. no cures; hazard only.
-- **elderberry** (mistmoor): advantage on disease saves for 3 sunrises. cures: distemper, influenza, leafbare cough.
-- **goldenrod** (any territory): +2 hp per 8h rest. cures: infected wound, deep gash, urinary infection, lyme.
-- **lungwort** (greyspire, mistmoor): also heals yellowcough and rot-lung when mullein is scarce. cures: yellowcough, rot lung, cancer, asthma, bronchitis.
-- **mullein** (greyspire, mistmoor): heals yellowcough and rot-lung lung damage. cures: yellowcough, rot lung, cancer, asthma, bronchitis.
-- **prickly ash** (greyspire): ends frozen-paw numbness. cures: tooth infection, punctured paw, arthritis.
+- **arnica** (greyspire): halves bruise and sprain recovery (external only). cures: sprained leg, punctured paw, joint-rot (arthritis). preparation: external use only; chewed into a poultice or rubbed on as ointment.
+- **belly-rip fungus** (mistmoor): glow-fungus from the belly-rip sinkhole. cures: rot-lung (swamp fever). preparation: applied directly to necrotic tissue as a poultice; healer's discretion.
+- **death-cap mushroom** (mistmoor, poison): pale mushroom found only in the rotting mere. no cures; hazard only. preparation: no safe preparation; experimental use only by experienced healers.
+- **elderberry** (mistmoor): advantage on disease saves for 3 sunrises. cures: weeping-scale (distemper), shiver-fever (influenza), leaf-bare cough (cold/chill). preparation: must be cooked; raw or unripe berries are toxic.
+- **goldenrod** (any territory): +2 HP per 8h rest. cures: infected wound, deep gash, water-scorch (urinary infection), burrfever (lyme). preparation: tea, or poultice from bruised leaves.
+- **lungwort** (greyspire, mistmoor): also heals yellowcough and rot-lung when mullein is scarce. cures: yellowcough, rot-lung (swamp fever), growth-sickness (cancer), chestbind (asthma), bronchitis. preparation: tea, or leaves chewed into a poultice and applied to the skin.
+- **mullein** (greyspire, mistmoor): heals yellowcough and rot-lung lung damage. cures: yellowcough, rot-lung (swamp fever), growth-sickness (cancer), chestbind (asthma), bronchitis. preparation: tea, or dried leaf eaten raw.
+- **prickly ash** (greyspire): ends frozen-paw numbness. cures: root-rot (tooth infection), punctured paw, joint-rot (arthritis). preparation: bark and berries eaten raw or as tea.
 
 **very rare**
-- **edelweiss** (greyspire): ends bellyache and eating troubles. cures: diarrhea, eating distress, leafbare cough.
-- **swamp milkweed** (mistmoor): breaks curses. cures: pox, spirit curse.
-- **wolfsbane** (greyspire, poison): removes spirit curse (dc 20 medicine check). cures: spirit curse.
+- **edelweiss** (greyspire): ends bellyache and eating troubles. cures: gut-run (diarrhea), the refusing (eating distress), leaf-bare cough (cold/chill). preparation: eaten raw.
+- **swamp milkweed** (mistmoor): breaks curses. cures: the spotting (pox), the spirit-eaten (spirit curse). preparation: dried roots eaten, medic-supervised only given the toxicity.
+- **wolfsbane** (greyspire, poison): removes spirit curse (DC 20 medicine check). cures: the spirit-eaten (spirit curse). preparation: steeped into a strong tea by a trained medic and given directly to the patient; no way to lessen the risk, only a steady hand and a fast attempt.
 
-**restricted (poison; medic-handled only)**
-- **bloodroot** (any territory, poison): 3d6 poison damage (dc 16 half). no cures; hazard only.
-- **deadly nightshade** (any territory, poison): confusion then paralysis (wis dc 15). no cures; hazard only.
+**restricted (poison; medic-handled only)**: no herb in this tier has a listed preparation; a real method here would imply a safe way to use it, and there isn't one. these exist purely as hazards.
+- **bloodroot** (any territory, poison): 3d6 poison damage (DC 16 half). no cures; hazard only.
+- **deadly nightshade** (any territory, poison): confusion then paralysis (wis DC 15). no cures; hazard only.
 - **deathberries (yew)** (any territory, poison): mercy killing. no cures; hazard only.
-- **foxglove** (any territory, poison): deadly heart poison (dc 18 or die in 1d4 min). no cures; hazard only.
-- **holly berries** (any territory, poison): 2d4 poison (dc 12 half). no cures; hazard only.
-- **oleander** (any territory, poison): 4d6 poison, no antidote (dc 18 half). no cures; hazard only.
+- **foxglove** (any territory, poison): deadly heart poison (DC 18 or die in 1d4 min). no cures; hazard only.
+- **holly berries** (any territory, poison): 2d4 poison (DC 12 half). no cures; hazard only.
+- **oleander** (any territory, poison): 4d6 poison, no antidote (DC 18 half). no cures; hazard only.
 - **poison ivy** (any territory, poison): contact: -1d4 cha, disadvantage stealth 3 days. no cures; hazard only.
-- **water hemlock** (any territory, poison): lethal poison (dc 20 half, still 6d6). no cures; hazard only.
+- **water hemlock** (any territory, poison): lethal poison (DC 20 half, still 6d6). no cures; hazard only.
 - **wintergreen** (any territory, poison): often misidentified. no cures; hazard only.
 
-full mechanical detail (exact hp/exhaustion math, prep methods per herb, side effects) lives on the site's [illness and herbs page](https://howlbert.straw.page/illness.html); this is the reference version for quick lookup in-server.
+full mechanical detail (exact HP/exhaustion math, prep methods per herb, side effects) lives on the site's [illness and herbs page](https://howlbert.neocities.org/illness.html); this is the reference version for quick lookup in-server.
 
 ---
 
@@ -530,19 +541,19 @@ pulled from `rpg_rules.py` and `engine/dice.py`; this is the actual math behind 
 
 ### the core roll
 
-every check is **d20 + attribute modifier + situational modifiers**, compared against a difficulty class (dc):
+every check is **d20 + attribute modifier + situational modifiers**, compared against a difficulty class (DC):
 
 - **natural 1**: automatic failure, regardless of modifiers.
 - **natural 20**: automatic success, regardless of modifiers.
 - **advantage**: roll twice, take the higher.
 - **disadvantage**: roll twice, take the lower. advantage and disadvantage cancel out if a wolf has sources of both on the same roll; they don't stack in the same direction either (two sources of advantage is still just advantage once).
 
-### dc tiers
+### DC tiers
 
-- **easy**: dc 10, routine.
-- **moderate**: dc 15, challenging.
-- **hard**: dc 20, desperate.
-- **legendary**: dc 25, nearly impossible.
+- **easy**: DC 10, routine.
+- **moderate**: DC 15, challenging.
+- **hard**: DC 20, desperate.
+- **legendary**: DC 25, nearly impossible.
 
 ### attribute modifiers
 
@@ -599,23 +610,183 @@ apprentice variants (hunter apprentice, scout apprentice, forager apprentice, di
 
 ### where modifiers actually come from
 
-beyond the base d20 + attribute modifier, a real roll can pick up adjustments from (in the order the code checks them): injury, disease, genetics, character traits, herb buffs, frostbite, role features, long-term injuries, fear triggers, fire phobia, age (very young or very old), and omens (a good or bad omen from the previous sunrise grants advantage or disadvantage outright). weather and season modify tracking/scent dcs specifically, and now so do a handful of specific rp locations (the open moors and sunningrocks add +2 to scent dcs; see the gazetteer above).
+beyond the base d20 + attribute modifier, a real roll can pick up adjustments from (in the order the code checks them): injury, disease, genetics, character traits, herb buffs, frostbite, role features, long-term injuries, fear triggers, fire phobia, age (very young or very old), and omens (a good or bad omen from the previous sunrise grants advantage or disadvantage outright). weather and season modify tracking/scent dcs specifically, and now so do a handful of specific RP locations (the open moors and sunningrocks add +2 to scent dcs; see the gazetteer above).
+
+### HP and combat
+
+HP is **10 + strength score + survival (constitution) score**, using the raw attribute score, not the modifier (`engine/character.py`); a str 7, con 5 wolf has 22 HP.
+
+- **initiative**: 1d20 + dexterity modifier.
+- **bite**: attacker rolls strength modifier + hunting proficiency (+ trait mods) vs the defender's dexterity modifier; a hit deals 1d6 + strength modifier.
+- **claw**: both sides roll dexterity modifier; a hit deals 1d4 + dexterity modifier.
+- a natural 20 on the attack roll is an automatic hit (crit); a natural 1 is an automatic miss (fumble). a defender's natural 1 is an automatic hit against them (no crit); a defender's natural 20 is an automatic miss.
+- **crit** (1d4): 1 extra 1d4 damage, 2 knocks the target prone, 3 disarms, 4 applies a 3-round bleed (1 HP/round).
+- **fumble** (1d4): 1 grants the enemy a free attack, 2 gives disadvantage on your next attack, 3 knocks you prone, 4 has you bite your own tongue for 1 self-damage.
+- **maneuvers**: `/combat maneuver` covers 18 named moves (`engine/combat_guide.py`), including four lethal finishers only usable once the defender is already badly hurt: killing bite (1d12+2, defender at or below 35% HP), spine bite (1d10, 50%), neck snap (1d10+1, 40%), skull smash (1d12, 45%).
+- **NPCs**: `/combat npc` pulls from a real bestiary (`engine/bestiary.py`); predators, hearth-hounds, and clan cats all have full attribute blocks and use the same HP formula as player wolves.
+
+### death and dying
+
+a wolf at 0 HP is dying, not dead. `/medic action:deathsaves` rolls constitution against an escalating DC each round: **10, then 12, then 15** (`engine/death_saves.py`). three rounds survived without a fail stabilizes at 1 HP; a single fail is death. a natural 1 is an automatic fail, a natural 20 an automatic stabilize.
+
+a medic or packmate can stabilize someone else directly with `/medic action:stabilize`: wisdom + medicine proficiency vs DC 15, with yarrow, oak bark, or cattail each adding +2 if used. cobwebs skip the roll entirely and auto-stabilize. there's no mercy-kill mechanic in the bot; a wolf being allowed to die is purely a roleplay choice, not a command.
+
+### exhaustion
+
+exhaustion runs 0 to 10 (`EXHAUSTION_MAX`, `engine/exhaustion_effects.py`), not the shorter 6-level track some older references use:
+
+- **6 or higher**: max HP is halved.
+- **8 or higher**: cannot move or take field actions.
+- **10**: death at the next sunrise.
+
+a long rest relieves exhaustion; `/vitals action:rest` is the command. there's a separate, smaller **pain exhaustion** track (0 to 5) that adds disadvantage at its cap; herbs and treatment relieve it independently of the main exhaustion track.
+
+### disease
+
+diseases don't share one universal progression formula; each of the 25+ diseases in `engine/diseases.py` has its own per-stage DC and its own effect (HP loss, mood loss, hunger loss, exhaustion gain, hunt penalty, and so on). a mild/severe/deadly disease like cough happens to run DC 12 → 15 → 18, but that's that disease's own numbers, not a fixed rule; check `/skilllist` or the specific disease entry rather than assuming a pattern.
+
+### mating, pregnancy, and litters
+
+- **courtship**: `/courtship action:court` rolls a charisma-based check; success marks the target receptive for the next 7 days.
+- **mating**: `/courtship action:mate` requires both wolves' players to confirm; neither side can commit the other alone.
+- **conception**: checked at DC 15 (`engine/mating.py`).
+- **gestation**: 63 days; the final 21 days count as late pregnancy, with hunt yield cut 20% at the midpoint and 35% in the final stretch (`engine/pregnancy.py`).
+- **litter size**: 1d4+1 (2 to 5 pups), adjusted down for the mother's condition, floor of 1.
+- **inheritance**: each pup's starting score per attribute is `(parent a + parent b) // 2 + 1d4 - 2`, clamped 1 to 10, then the whole spread is rebalanced to a pup-appropriate total (`engine/family.py`).
+- raspberry leaves are a real mechanic here too: they grant advantage on the next birth-related hemorrhage save, not just flavor text.
+
+### pack unity and bonds
+
+pack unity runs **-5 to 10**; collaborative hunts and patrols raise it, paranoia-triggered raids, pack schisms, and broken cat pacts lower it (`config.py`, `db.adjust_pack_unity`). there's no separate numeric "rival pack standing" scale; rivalry between individual wolves is tracked as a bond-strength type (`db.adjust_bond_strength`), raised by things like food theft or jealousy, not a per-pack diplomacy meter.
+
+### fire, weather, and travel hazards
+
+- **fire fear** is real: within range of open flame, a wolf rolls a wisdom save at DC 12 or is frightened (disadvantage while the fire's in view); wildfire specifically also forces a survival/constitution save at DC 15 each round or 1d4 heat damage. an ally can talk a frightened wolf through it with a persuasion check at DC 14 (`engine/fire_fear.py`).
+- **territory hazards** (`engine/travel_hazards.py`): river DC 12, swamp DC 15, mountain DC 18, forest DC 10, twolegplace DC 14; river crossings get +2 DC in spring runoff.
+- **twoleg-world failures** on a bad hazard roll: thunderpath (3d8), a twoleg nest (1d4), a dog (2d6), or a trap (no damage, but you're caught).
+
+### seasonal modifiers
+
+season shifts real numbers, not just flavor text (`config.py`):
+
+- **hunt payout**: spring +5%, summer +10%, autumn -5%, winter -20%.
+- **forage DC**: spring -2, summer +0, autumn +2, winter +5.
+
+### advancement
+
+XP comes from daily play, quest completion, and den chat. spending it (`/advance action:spend`): 5 XP for +1 to an attribute (capped at 10), 5 XP for an earned skill trait (capped at +3 total from XP), 10 XP to request a bonus role feature, which still needs admin approval.
+
+### the skill check catalog
+
+`/skills` and `/skilllist` are the real DC reference for everything not covered above: 9 categories (tracking, stealth, howling, social, spiritual, survival, herb_prep, crafting, navigation) covering the basil rules' full scripted check list. use those commands for a specific DC rather than guessing from an old flat table; a lot of the numbers floating around predate the bot and don't match what's actually coded anymore.
+
+a note on scope: an older, pre-bot version of this guide included a standalone "NPC generator" and a page of GM random-event tables. those were tools for a live human game master rolling dice by hand; howlbert resolves NPCs through the real bestiary above and doesn't need a manual random-event table, since every relevant roll already happens inside a command. neither has a bot equivalent, so neither is reproduced here.
 
 ### worked examples
 
-- **a hunter (dex 7, +1 mod) tries a hunting check at moderate dc (15\)**, no other modifiers: needs to roll a 14+ on the d20 to succeed (14 + 1 = 15).
+- **a hunter (dex 7, +1 mod) tries a hunting check at moderate DC (15\)**, no other modifiers: needs to roll a 14+ on the d20 to succeed (14 + 1 = 15).
 - **that same hunter is exhausted (disadvantage) but has a good omen active (advantage)**: they cancel out; the hunter rolls once, normally.
-- **a scout (dex 6, +1 mod) tracks a fresh trail in rain**: rain adds +3 to the dc, but a fresh trail only takes half that penalty (trail-age scaling), so the actual dc goes up by ~2, not 3.
-- **a medic (wis 7, +2 mod) treats an infected wound (cure dc 14) with yarrow**: 2 mod + whatever the die rolls; a natural 12 or higher succeeds outright, a natural 1 fails regardless of the math.
+- **a scout (dex 6, +1 mod) tracks a fresh trail in rain**: rain adds +3 to the DC, but a fresh trail only takes half that penalty (trail-age scaling), so the actual DC goes up by ~2, not 3.
+- **a medic (wis 7, +2 mod) treats an infected wound (cure DC 14) with yarrow**: 2 mod + whatever the die rolls; a natural 12 or higher succeeds outright, a natural 1 fails regardless of the math.
+
+---
+
+## adoptables guide: content
+
+meant to live in **#adopts**, pinned or as the forum's guide post.
+
+### what are adoptables?
+
+an adoptable is a character someone else offers up for another player to take on. there are two real kinds, and they claim differently:
+
+- **a concept, not yet registered**: a partial character idea (a sibling, a rival, a litter-mate) posted for someone else to design the rest of and bring into the game themselves. nothing is real until whoever claims it actually runs `/register` and builds the wolf.
+- **an existing wolf, already registered and fully statted**: a pup from a litter the parent doesn't plan to keep playing, or a character a player no longer wants but doesn't want to see die off. this wolf already has real stats, skills, and history in the bot; claiming it doesn't create a new wolf, it hands over an existing one.
+
+either kind is different from an NPC on the wolves page: an NPC is staff-made and already registered whether or not a player has claimed it. an adoptable is offered up by another *player*, whether or not it happens to already exist in-game.
+
+### what to include for adoptables
+
+for a not-yet-registered concept, include whatever information the adoptee needs to finish making the character:
+
+- pack/allegiance
+- character name
+- character age
+- character gender
+- relation to your character
+- character looks
+- any other important details you deem necessary
+
+mark clearly which of these are locked and which the adoptee is free to customize.
+
+for an already-registered wolf, post its real sheet instead: pull straight from `/profile sheet:true` (attributes, hp, skills, role, lore) so whoever claims it knows exactly what they're taking on, plus anything the previous owner wants to note about its history or relationships.
+
+### to get started
+
+1. name the adoptable, preferably in relation to your character (example: OC's brother, or OC's kit); or, for an already-registered wolf, just use its real name.
+2. include any necessary information about the character (see above; a concept needs its set/customizable traits, an existing wolf needs its real sheet).
+3. let them know what's free to customize, if anything.
+4. post it.
+
+### claiming adoptables
+
+- comment in the adoptable's thread to claim it.
+- **for a concept**: once claimed, register the actual wolf yourself with `/register`; the set traits above become that command's starting details (name, starting age, and any genetic condition like blind, deaf, or missing a limb all have real `/register` parameters), and the customizable traits are yours to decide before or during registration.
+- **for an already-registered wolf**: claiming it doesn't move ownership by itself; a mod needs to run `/wolfadmin transfer` to actually hand the wolf from the old owner's account to the new one. comment to claim, then flag a mod to make the transfer real.
+- claiming an adoptable doesn't reserve it forever; if you don't follow through (registering the concept, or getting the transfer done), the poster can reopen it for someone else to claim.
+
+### adoptable example
+
+**sibling for my OC**
+
+set traits:
+- looks:
+- age:
+- pack:
+
+customizable traits:
+- gender:
+- personality:
+- name:
+
+---
+
+## neocities guide: content
+
+meant to live in **#neocities**, as a pinned post; a persistent link to the site, not a live feed, so this only needs to explain what's there and why it's worth the click.
+
+### what is it?
+
+[howlbert.neocities.org](https://howlbert.neocities.org) is the world bible: the deep, evergreen lore and reference material that doesn't fit a chat channel or a social post, hosted as a free static site on [neocities](https://neocities.org/site/howlbert). no login, no cookie banner, nothing to install; just pages to read.
+
+### why a neocities site and not another discord channel?
+
+channels scroll; this doesn't. the world's lore, the pack write-ups, and the herb/disease reference all change slowly and get referenced constantly, which is exactly what a wiki-style site is for and a chat channel is bad at. it's also just the aesthetic: neocities leans into a dark, atmospheric, old-web feel that suits a field-journal-for-a-dying-wild tone better than a discord embed does.
+
+### what's actually on it
+
+- **[the world](https://howlbert.neocities.org/world.html)**: the setting itself, the maw, and the shape of the wild the four packs share.
+- **[the four packs](https://howlbert.neocities.org/packs.html)**: full appearance, culture, hierarchy, and relations detail for greyspire, mistmoor, thistlehide, and silverrush, plus the real role features (commanding howl, green tongue, killer's instinct, and the rest).
+- **[illness & herbs](https://howlbert.neocities.org/illness.html)**: the full mechanical reference, exact hp/exhaustion math, every herb's real preparation method and side effects, and which restricted herbs actually exist in the compendium.
+- **[the wolves](https://howlbert.neocities.org/characters.html)**: the character roster, claimed and adoptable alike.
+- **[the human world](https://howlbert.neocities.org/twolegs.html)**: twolegs, thunderpath, and the rest of what's dangerous on the other side of the tree line.
+- **[how to play](https://howlbert.neocities.org/play.html)**: a plain-language onboarding page for anyone who lands on the site before ever opening discord.
+- **[wolf name generator](https://howlbert.neocities.org/namegen.html)**: exactly what it says.
+- **[book one: the blinking](https://howlbert.neocities.org/bookone.html)**: the server's actual ongoing plot, the way a reader (not a player) would encounter it.
+- **[first sunrise](https://howlbert.neocities.org/first-sunrise.html)**: a short playable choice-based teaser, one wolf's first hunt, that ends by linking straight to the discord invite. built to give a visitor something to *do* before they ever open discord.
+- **[credits](https://howlbert.neocities.org/credits.html)**: who made what.
+
+### how it stays honest
+
+the site is a reference, not a second source of truth; where it and the bot disagree, the bot's actual code wins, and the site gets corrected to match, not the other way around. if you spot a mismatch (an herb's prep method, a disease's cure, a stat that doesn't add up), flag it; it's a real bug in the docs, not flavor.
 
 ---
 
 ## more channel ideas: additions, changes, removals
 
-**addition, #in-memoriam** (server info or its own small category). the permadeath/obituary system (`engine/obituary.py`) already writes a real, specific line for every wolf that dies (cause plus a pulled highlight from their own journal), and today that only surfaces once, buried in the rollover crisis "losses" embed. a dedicated channel the bot also posts every obituary line to turns something that currently scrolls past once into a permanent, browsable memorial, which matters more here than in most rp servers, since death is actually permanent. cheap: one more `send()` call at the same point `rollover_announce.py` already fires.
+**addition, #in-memoriam** (server info or its own small category). the permadeath/obituary system (`engine/obituary.py`) already writes a real, specific line for every wolf that dies (cause plus a pulled highlight from their own journal), and today that only surfaces once, buried in the rollover crisis "losses" embed. a dedicated channel the bot also posts every obituary line to turns something that currently scrolls past once into a permanent, browsable memorial, which matters more here than in most RP servers, since death is actually permanent. cheap: one more `send()` call at the same point `rollover_announce.py` already fires.
 
 **change, reconcile advertisement with #server-directory.** these aren't quite duplicates but they're close enough to cause confusion once both exist. **advertisement** (server info) reads as outbound: the server's own pinned ad copy for other servers to see. **#server-directory** (art wing, held for later tier) is inbound: the curated list of partner/affiliate servers this server is pointing members toward. worth a one line pinned note in each clarifying which direction it faces, or just merging server directory's job into advertisement's channel topic instead of adding a new channel at all.
 
-**change, consider merging hiatus notice and leaving notice.** both are low traffic, single purpose status announcements with the same audience and the same "post once, mods see it" shape. not urgent, but if ooc space ever feels crowded, this is the safest pair to fold into one **#member-status** channel without losing anything.
+**change, consider merging hiatus notice and leaving notice.** both are low traffic, single purpose status announcements with the same audience and the same "post once, mods see it" shape. not urgent, but if OOC space ever feels crowded, this is the safest pair to fold into one **#member-status** channel without losing anything.
 
-**not recommending, per pack text channels.** worth naming since it's the obvious next idea once the great packs lore above exists in one place: a channel per pack (#greyspire, #silverrush, etc.) for in den ooc chat. holding off on this one specifically; it fragments an already small server's ooc conversation four ways, which is the opposite of what a 24 member server needs. the affiliation is already expressed in character through rp channels and pack roles; a fifth ooc chat shaped channel per pack isn't worth the dilution at this size. revisit only if the server genuinely outgrows a single general chat.
+**not recommending, per pack text channels.** worth naming since it's the obvious next idea once the great packs lore above exists in one place: a channel per pack (#greyspire, #silverrush, etc.) for in den OOC chat. holding off on this one specifically; it fragments an already small server's OOC conversation four ways, which is the opposite of what a 24 member server needs. the affiliation is already expressed in character through RP channels and pack roles; a fifth OOC chat shaped channel per pack isn't worth the dilution at this size. revisit only if the server genuinely outgrows a single general chat.

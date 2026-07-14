@@ -21,7 +21,7 @@ DEFAULT_METHOD_REQS: dict[str, str] = {
     "punctured_paw": "poultice",
     "torn_claw": "poultice",
     "scorched_hide": "ointment",
-    "mild_poison": "juice",
+    "mild_poison": "poultice",
     "poison_ivy": "sap",
     "mange": "ointment",
     "fleas": "rub",

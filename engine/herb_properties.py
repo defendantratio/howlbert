@@ -99,7 +99,6 @@ def form_label(form: str) -> str:
         "fresh": "fresh",
         "dried": "dried",
         "poultice": "poultice",
-        "juice": "juice",
         "tea": "tea",
         "ointment": "ointment",
         "sap": "sap",

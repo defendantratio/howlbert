@@ -38,7 +38,6 @@ OVERVIEW_BODY = (
 # keyword in an herb's `preparation` text -> the prep method it implies.
 _PREP_TEXT_METHODS: tuple[tuple[str, str], ...] = (
     ("poultice", "poultice"),
-    ("juice", "juice"),
     ("gargle", "gargle"),
     ("ointment", "ointment"),
     ("salve", "ointment"),
@@ -60,7 +59,7 @@ _PREP_TEXT_METHODS: tuple[tuple[str, str], ...] = (
 
 def _derive_prep_methods(herb_key: str, meta: dict) -> list[str]:
     """Preparation methods that make sense for an herb, read from its own
-    `preparation` text (dry first, then tea/rub/juice/poultice/etc, and a tea or
+    `preparation` text (dry first, then tea/rub/poultice/etc, and a tea or
     gargle can be sweetened). Explicit prep_methods still win when present."""
     explicit = meta.get("prep_methods") or ()
     if explicit:
