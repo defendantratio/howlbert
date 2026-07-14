@@ -270,6 +270,19 @@ class WolfAdmin(commands.Cog):
         embed = howlbert_embed('wolf marked dormant' if is_dormant else 'wolf marked active', f"**{wolf['wolf_name']}** ({player.mention}); {note}", color=SUCCESS_COLOR)
         await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
 
+    @wolfadmin.command(name='healall', description='full heal every living wolf: hp, injuries, disease, exhaustion (admin).')
+    @app_commands.describe(confirm='type heal to confirm; this touches every registered wolf at once')
+    async def wolfadmin_healall(self, interaction: discord.Interaction, confirm: str):
+        if not await self._require_admin(interaction):
+            return
+        if confirm.strip().lower() != 'heal':
+            embed = howlbert_embed('Not Confirmed', 'Re-run with `confirm: heal` to full-heal every living wolf on the server.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        count = db.heal_all_wolves()
+        embed = howlbert_embed('den-wide healing', f"**{count}** wolves restored to full hp, injuries and disease cleared, exhaustion reset.", color=SUCCESS_COLOR)
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
     @wolfadmin.command(name='execute', description='mark a wolf dead with a lore-flavored cause (admin; severe rp punishment).')
     @app_commands.describe(player='wolf owner', wolf_name='which wolf (defaults to their active wolf)', method='execution style (sets the cause text)', cause='custom cause text (used when method is custom)')
     @app_commands.choices(method=[app_commands.Choice(name="sog grave (mistmoor's pit of acidic water)", value='sog_grave'), app_commands.Choice(name='high ledge (greyspire; left to freeze)', value='high_ledge'), app_commands.Choice(name='custom cause', value='custom')])

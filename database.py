@@ -4488,6 +4488,26 @@ def set_quarantined(discord_id: int, quarantined: bool, *, wolf_id: int | None =
     update_user(discord_id, wolf_id=wolf_id, quarantined=1 if quarantined else 0)
 
 
+def heal_all_wolves() -> int:
+    """Full heal for every living wolf: hp to max, injuries and disease cleared,
+    exhaustion and pain exhaustion reset. Dead/dying wolves are left alone.
+    Returns the number of wolves healed."""
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            UPDATE users
+            SET hp = max_hp,
+                condition = 'healthy',
+                active_injuries = '[]',
+                disease = NULL,
+                exhaustion = 0,
+                pain_exhaustion = 0
+            WHERE condition NOT IN ('dead', 'dying')
+            """
+        )
+        return cur.rowcount
+
+
 def set_wolf_dormant(wolf_id: int, dormant: bool) -> None:
     """
     Dormant wolves (admin-held NPCs nobody is actively playing) are exempt

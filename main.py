@@ -226,9 +226,12 @@ async def main():
             )
         from engine.view_restore import restore_pending_views
         from engine.rollover_announce import start_auto_rollover
+        from engine.open_scenes_index import refresh_open_scenes_index
 
         await restore_pending_views(bot)
         start_auto_rollover(bot)
+        for guild in bot.guilds:
+            await refresh_open_scenes_index(bot, guild.id)
         await _post_startup_status(bot)
 
     async with bot:

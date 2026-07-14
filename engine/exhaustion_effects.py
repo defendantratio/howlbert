@@ -131,7 +131,7 @@ def apply_mood_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
         """
         SELECT id, wolf_name, discord_id, mood, exhaustion, condition, march_exhaustion_skip
         FROM users
-        WHERE condition NOT IN ('dead', 'dying')
+        WHERE condition NOT IN ('dead', 'dying') AND dormant = 0
         """
     ).fetchall()
 

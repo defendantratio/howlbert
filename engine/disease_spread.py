@@ -40,6 +40,7 @@ def apply_disease_spread_on_rollover(
         WHERE disease IS NOT NULL AND disease != ''
           AND condition NOT IN ('dead', 'dying')
           AND pack_id IS NOT NULL
+          AND dormant = 0
         """
     ).fetchall()
 

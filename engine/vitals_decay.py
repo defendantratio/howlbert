@@ -34,6 +34,8 @@ def apply_time_decay(user) -> tuple[dict, str]:
 
     if not user or (user["condition"] if "condition" in user.keys() else "healthy") in ("dead", "dying"):
         return {}, ""
+    if "dormant" in user.keys() and int(user["dormant"] or 0):
+        return {}, ""
 
     now = db.utcnow()
     last = user["vitals_decayed_at"] if "vitals_decayed_at" in user.keys() else ""

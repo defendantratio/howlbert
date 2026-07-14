@@ -218,7 +218,7 @@ def apply_needs_exhaustion_on_rollover(conn: sqlite3.Connection) -> list[dict]:
         SELECT id, wolf_name, discord_id, hunger, thirst, exhaustion, condition,
                hunger_exhaustion_skip, march_exhaustion_skip
         FROM users
-        WHERE condition NOT IN ('dead', 'dying')
+        WHERE condition NOT IN ('dead', 'dying') AND dormant = 0
         """
     ).fetchall()
 

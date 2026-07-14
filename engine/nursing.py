@@ -290,6 +290,7 @@ def apply_unfed_pup_penalty_on_rollover(conn, day_ending: int) -> list[dict]:
         FROM users
         WHERE age_months < ?
           AND condition NOT IN ('dead', 'dying')
+          AND dormant = 0
           AND COALESCE(last_milk_day, 0) < ?
         """,
         (PUP_MAX_MOONS, day_ending),
@@ -330,6 +331,7 @@ def apply_reproduction_vitals_drain_on_rollover(conn) -> list[dict]:
         SELECT id, wolf_name, discord_id, hunger, thirst, exhaustion, is_pregnant
         FROM users
         WHERE condition NOT IN ('dead', 'dying')
+          AND dormant = 0
           AND birth_sex = 'female'
         """
     ).fetchall()
@@ -436,7 +438,7 @@ def apply_winter_pup_cold_on_rollover(conn, season: str) -> list[dict]:
         """
         SELECT id, wolf_name, discord_id, exhaustion, age_months
         FROM users
-        WHERE age_months < ? AND condition NOT IN ('dead', 'dying')
+        WHERE age_months < ? AND condition NOT IN ('dead', 'dying') AND dormant = 0
         """,
         (PUP_MAX_MOONS,),
     ).fetchall()

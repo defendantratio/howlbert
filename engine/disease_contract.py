@@ -192,11 +192,14 @@ def try_tooth_infection_from_broken_tooth(user, *, chance: float = 0.05, conn=No
 
 def apply_physical_illness_rollover(conn, day: int) -> list[dict]:
     """dehydration and untreated injuries may fester into a physical illness."""
+    from database import active_wolf_where
+
     rows = conn.execute(
-        """
+        f"""
         SELECT * FROM users
         WHERE condition NOT IN ('dead', 'dying')
           AND (disease IS NULL OR disease = '')
+          AND {active_wolf_where(day)}
         """
     ).fetchall()
     notes: list[dict] = []
