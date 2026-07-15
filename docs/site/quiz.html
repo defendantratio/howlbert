@@ -102,10 +102,14 @@
             letter-spacing: 2px; color: var(--bone); margin: 0 0 10px 0;
             border-bottom: 1px solid var(--line); padding-bottom: 6px;
         }
-        .side-nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-        .side-nav a { font-size: 0.85rem; padding: 2px 0; }
-        .side-nav a:hover { padding-left: 4px; }
-        .side-nav .current { color: var(--maw); font-weight: 700; }
+        .side-nav { display: flex; flex-direction: column; gap: 3px; }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.75rem; letter-spacing: 1.2px;
+            color: var(--bone-dim); padding: 4px 0; border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover { color: var(--bone); border-bottom-color: var(--maw); text-shadow: none; }
+        .side-nav .current { color: var(--bone); border-bottom-color: var(--maw); font-weight: 700; }
 
         .hero { padding: 34px 30px 28px; text-align: center; border-bottom: 1px solid var(--line); }
         .hero h1 {
@@ -229,7 +233,7 @@
                 <h1>which pack fits you</h1>
                 <p class="hook">
                     four packs share one dying wild and one <span class="maw-word">hungry god</span>.<br />
-                    six questions decide where you'd belong.
+                    a dozen questions decide where you'd belong.
                 </p>
                 <p class="description">
                     there are no wrong answers, only truer ones. answer honestly, then bring your
@@ -289,38 +293,72 @@
             // each answer scores one pack: g = greyspire (mountain/strength),
             // m = mistmoor (swamp/faith), t = thistlehide (forest/memory),
             // s = silverrush (river/grief). questions map onto the four packs'
-            // canon values (config.GREAT_PACKS / packs.html).
+            // canon values (config.GREAT_PACKS / packs.html), but phrased as
+            // situations and small choices rather than restating each pack's
+            // motto, so the mapping isn't legible from the wording alone.
+            // display order is shuffled per question at render time for the
+            // same reason: nothing here should be guessable by position.
             const QUESTIONS = [
-                { q: "what do you trust to keep you alive?", opts: [
-                    ["your own strength, first and last", "g"],
-                    ["the omens, if you read them right", "m"],
-                    ["what the pack remembers and passes down", "t"],
-                    ["the wolves who'd grieve if you fell", "s"] ] },
-                { q: "a packmate is dying of a wound that won't close. you...", opts: [
-                    ["end it cleanly; mercy is strength", "g"],
-                    ["read what the maw wants of them", "m"],
-                    ["gather every herb and sit through the night", "t"],
-                    ["stay, and let them go their own way", "s"] ] },
-                { q: "where does your wolf feel most at home?", opts: [
-                    ["the high, cold teeth of the mountain", "g"],
-                    ["the black, breathing swamp", "m"],
-                    ["the deep, remembering forest", "t"],
-                    ["the wide, grieving river", "s"] ] },
-                { q: "a stranger stands at your border. you...", opts: [
-                    ["show teeth and let them decide", "g"],
-                    ["watch for a sign of what they are", "m"],
-                    ["ask their name and their dead", "t"],
-                    ["offer them water before words", "s"] ] },
-                { q: "what is the worst thing a wolf can be?", opts: [
-                    ["weak", "g"],
-                    ["faithless", "m"],
-                    ["forgetful", "t"],
-                    ["heartless", "s"] ] },
-                { q: "when you die, you want to be...", opts: [
-                    ["remembered as unbroken", "g"],
-                    ["taken cleanly by the maw", "m"],
-                    ["named in the pack's memory", "t"],
-                    ["mourned by someone who loved you", "s"] ] }
+                { q: "a den-mate loses a fight they didn't need to start. after, you...", opts: [
+                    ["tell them plainly what they did wrong, once, and move on", "g"],
+                    ["say nothing; the outcome already told them everything", "m"],
+                    ["bring it up again in a season, when the lesson can land softer", "t"],
+                    ["sit with them until they're ready to talk, whenever that is", "s"] ] },
+                { q: "the pack is splitting over a hard call and no one will budge. you...", opts: [
+                    ["back whoever argues it best under pressure", "g"],
+                    ["wait for a sign before you commit to a side", "m"],
+                    ["ask what the ones before us would have done", "t"],
+                    ["try to find the version everyone can live with", "s"] ] },
+                { q: "you catch the scent of something wrong on the wind. your first thought is...", opts: [
+                    ["can i take it, if it comes to that", "g"],
+                    ["what is it trying to tell me", "m"],
+                    ["has anything like this happened before", "t"],
+                    ["who else needs to know, and how fast", "s"] ] },
+                { q: "an elder can no longer keep up with the pack. what happens to them?", opts: [
+                    ["they earn their keep another way, or they don't stay", "g"],
+                    ["their time is close, and that's neither good nor bad", "m"],
+                    ["someone stays behind with them; that's not a burden, it's a debt", "t"],
+                    ["the whole den slows down for them, without being asked to", "s"] ] },
+                { q: "you're offered an easy win by cutting a corner no one would notice. you...", opts: [
+                    ["take it; results are what get judged", "g"],
+                    ["let it play out; if it's meant to work, it will", "t"],
+                    ["decline; it's not how it's supposed to be done", "m"],
+                    ["decline; someone else would pay for it later", "s"] ] },
+                { q: "what actually earns your respect in another wolf?", opts: [
+                    ["they don't flinch", "g"],
+                    ["they notice things before anyone else does", "m"],
+                    ["they know things most wolves have let go of", "t"],
+                    ["they show up for you when it costs them something", "s"] ] },
+                { q: "a rival pack crosses your border without asking. your den looks to you. you...", opts: [
+                    ["meet them at the line; let the answer be obvious", "g"],
+                    ["watch how they move before deciding what it means", "m"],
+                    ["ask what the last wolf to do this cost them", "t"],
+                    ["find out what they actually need first", "s"] ] },
+                { q: "you're hurt badly enough that the pack notices. what bothers you most about it?", opts: [
+                    ["being seen as something that has to be carried", "g"],
+                    ["nothing; it happened for a reason or it didn't", "m"],
+                    ["that no one will remember exactly how it happened", "t"],
+                    ["that someone's about to worry themselves sick over you", "s"] ] },
+                { q: "a young wolf asks you what they should be afraid of. you tell them...", opts: [
+                    ["being caught weak in front of the wrong wolf", "g"],
+                    ["ignoring what's right in front of them", "m"],
+                    ["being the reason something true gets forgotten", "t"],
+                    ["being the reason someone they love goes without", "s"] ] },
+                { q: "what does a good death look like to you?", opts: [
+                    ["quick, and on your feet", "g"],
+                    ["quiet, and without a fight left in you", "m"],
+                    ["with your name still being said afterward", "t"],
+                    ["with someone there who didn't want you to go", "s"] ] },
+                { q: "you find a wounded stranger just past your territory line. you...", opts: [
+                    ["decide fast whether they're worth the risk", "g"],
+                    ["read what finding them like this might mean", "m"],
+                    ["ask who they lost before you ask what they need", "t"],
+                    ["help first, and worry about the rest after", "s"] ] },
+                { q: "if the pack forgot your name completely one day, what would sting most?", opts: [
+                    ["that no one would remember what you'd survived", "g"],
+                    ["nothing; the maw remembers what matters", "m"],
+                    ["that whatever you knew would go with you", "t"],
+                    ["that no one would grieve you properly", "s"] ] }
             ];
 
             const PACKS = {
@@ -338,6 +376,15 @@
                      body: "you belong to silverrush, the river pack who carry grief like water and heal by feeling it through. open-bordered and tender in a brutal world, they drink the poison the twolegs pour upstream and mourn every wolf it takes." }
             };
 
+            function shuffled(arr) {
+                const a = arr.slice();
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
             const form = document.getElementById('quizForm');
             const answers = new Array(QUESTIONS.length).fill(null);
 
@@ -350,7 +397,7 @@
                 block.appendChild(qt);
                 const opts = document.createElement('div');
                 opts.className = 'quiz-opts';
-                item.opts.forEach(function(opt) {
+                shuffled(item.opts).forEach(function(opt) {
                     const btn = document.createElement('button');
                     btn.className = 'quiz-opt';
                     btn.type = 'button';

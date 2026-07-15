@@ -68,10 +68,14 @@
             letter-spacing: 2px; color: var(--bone); margin: 0 0 10px 0;
             border-bottom: 1px solid var(--line); padding-bottom: 6px;
         }
-        .side-nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-        .side-nav a { font-size: 0.85rem; padding: 2px 0; }
-        .side-nav a:hover { padding-left: 4px; }
-        .side-nav .current { color: var(--maw); font-weight: 700; }
+        .side-nav { display: flex; flex-direction: column; gap: 3px; }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.75rem; letter-spacing: 1.2px;
+            color: var(--bone-dim); padding: 4px 0; border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover { color: var(--bone); border-bottom-color: var(--maw); text-shadow: none; }
+        .side-nav .current { color: var(--bone); border-bottom-color: var(--maw); font-weight: 700; }
 
         .hero { padding: 34px 30px 28px; text-align: center; border-bottom: 1px solid var(--line); }
         .hero h1 {
