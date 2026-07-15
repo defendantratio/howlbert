@@ -87,32 +87,64 @@ _WEAKNESS_ATTRS = {
 }
 
 
-def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None):
+def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None,
+                           default_bonus: int = 1, default_penalty: int = -1):
     """Parse comma-separated starting skills and weak attributes from /register.
-    Returns (skill_keys, weakness_attr_keys, error). Duplicates are dropped; an
-    unknown token returns a helpful error instead of silently vanishing."""
+    Each item may carry its own value inline (e.g. `hunting:2, stealth`); a bare
+    item uses the default bonus/penalty. Returns (skill_pairs, weakness_pairs,
+    error), each pair a (key, value); duplicates are dropped, and an unknown token
+    or out-of-range value returns a helpful error instead of vanishing."""
     from rpg_rules import SKILLS
-    skills: list[str] = []
+
+    def split_val(part, default):
+        if ':' in part:
+            name, _, raw = part.rpartition(':')
+            raw = raw.strip()
+            try:
+                return name.strip(), int(raw), None
+            except ValueError:
+                return None, None, f"**{raw}** isn't a number (use e.g. `hunting:2`)."
+        return part.strip(), default, None
+
+    skills: list[tuple[str, int]] = []
+    seen_s: set[str] = set()
     if trait_skill:
         for part in trait_skill.replace(';', ',').split(','):
-            tok = part.strip().lower().replace(' ', '_')
-            if not tok:
+            part = part.strip()
+            if not part:
                 continue
+            name, val, err = split_val(part, default_bonus)
+            if err:
+                return [], [], err
+            if not 0 <= val <= 5:
+                return [], [], f"skill bonus **{val}** is out of range (0 to 5)."
+            tok = name.lower().replace(' ', '_')
             if tok not in SKILLS:
-                return [], [], f"unknown skill **{part.strip()}**; pick from: {', '.join(SKILLS)}."
-            if tok not in skills:
-                skills.append(tok)
-    weaknesses: list[str] = []
+                return [], [], f"unknown skill **{name}**; pick from: {', '.join(SKILLS)}."
+            if tok not in seen_s:
+                seen_s.add(tok)
+                skills.append((tok, val))
+    weaknesses: list[tuple[str, int]] = []
+    seen_w: set[str] = set()
     if trait_weakness:
         for part in trait_weakness.replace(';', ',').split(','):
-            tok = part.strip().lower().replace('attr_', '').replace(' (constitution)', '')
-            if not tok:
+            part = part.strip()
+            if not part:
                 continue
+            name, val, err = split_val(part, default_penalty)
+            if err:
+                return [], [], err
+            if val > 0:
+                val = -val
+            if not -5 <= val <= 0:
+                return [], [], f"weakness penalty **{val}** is out of range (-5 to 0)."
+            tok = name.lower().replace('attr_', '').replace(' (constitution)', '')
             key = _WEAKNESS_ATTRS.get(tok)
             if not key:
-                return [], [], f"unknown attribute **{part.strip()}**; pick from: strength, dexterity, constitution, intelligence, charisma, wisdom."
-            if key not in weaknesses:
-                weaknesses.append(key)
+                return [], [], f"unknown attribute **{name}**; pick from: strength, dexterity, constitution, intelligence, charisma, wisdom."
+            if key not in seen_w:
+                seen_w.add(key)
+                weaknesses.append((key, val))
     return skills, weaknesses, None
 
 
@@ -156,7 +188,7 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', personality='personality: traits and how they act (optional; shows on /profile sheet:true)', personality2='more personality if it ran long (optional; appended)', backstory='backstory prose (optional; shows on /profile sheet:true)', backstory2='more backstory if it ran past the limit (optional; appended)', rp_sample='a short writing sample (optional; shows on /profile sheet:true)', family_ties='known family: parents, siblings, kin (optional; shows on /profile sheet:true)', open_plots='hooks other players can pick up (optional; shows on /profile sheet:true)', trait_skill='starting bonus skills, comma-separated (e.g. hunting, stealth, medicine); permanent', trait_skill_bonus='bonus applied to each listed skill, 0 to 5 (default 1)', trait_weakness='starting weak attributes, comma-separated (e.g. strength, wisdom); permanent', trait_weakness_penalty='penalty applied to each listed weakness, -5 to 0 (default -1)')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', personality='personality: traits and how they act (optional; shows on /profile sheet:true)', personality2='more personality if it ran long (optional; appended)', backstory='backstory prose (optional; shows on /profile sheet:true)', backstory2='more backstory if it ran past the limit (optional; appended)', rp_sample='a short writing sample (optional; shows on /profile sheet:true)', family_ties='known family: parents, siblings, kin (optional; shows on /profile sheet:true)', open_plots='hooks other players can pick up (optional; shows on /profile sheet:true)', trait_skill='bonus skills, comma-separated; add :N per skill (e.g. hunting:2, stealth); permanent', trait_skill_bonus='default bonus for skills without an inline :N, 0 to 5 (default 1)', trait_weakness='weak attributes, comma-separated; add :N per attr (e.g. strength:2, wisdom); permanent', trait_weakness_penalty='default penalty for weaknesses without inline :N, -5 to 0 (default -1)')
     @app_commands.autocomplete(pack=_pack_register_autocomplete)
     @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
     async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, personality: str | None=None, personality2: str | None=None, backstory: str | None=None, backstory2: str | None=None, rp_sample: str | None=None, family_ties: str | None=None, open_plots: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
@@ -184,13 +216,13 @@ class Profile(commands.Cog):
             embed = howlbert_embed('Invalid Genetics', genetic_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness)
+        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness, trait_skill_bonus, trait_weakness_penalty)
         if trait_err:
             embed = howlbert_embed('Invalid Trait', trait_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        bonus_pts = len(skill_keys) * int(trait_skill_bonus)
-        weak_pts = len(weakness_keys) * abs(int(trait_weakness_penalty))
+        bonus_pts = sum(v for _, v in skill_keys)
+        weak_pts = sum(abs(v) for _, v in weakness_keys)
         if bonus_pts > weak_pts:
             embed = howlbert_embed('Unbalanced Traits', f'starting skill bonuses (**+{bonus_pts}** total) must be paid for with at least as many weakness points (you have **{weak_pts}**). add more weaknesses (or a bigger penalty), or take fewer or smaller skill bonuses.', color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
@@ -213,10 +245,10 @@ class Profile(commands.Cog):
             db.set_character_lore_fields(new_wolf_id, **lore_fields)
         if skill_keys or weakness_keys:
             from engine.character_traits import set_registration_traits
-            for sk in skill_keys:
-                set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=trait_skill_bonus)
-            for wk in weakness_keys:
-                set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=trait_weakness_penalty)
+            for sk, val in skill_keys:
+                set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=val)
+            for wk, val in weakness_keys:
+                set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=val)
         from engine.patron import on_wolf_registered
         invite_note = None
         if interaction.guild:
@@ -254,14 +286,12 @@ class Profile(commands.Cog):
         if genetic_keys:
             from engine.genetics import format_genetic_conditions
             embed.add_field(name='Genetics', value=format_genetic_conditions(user), inline=False)
-        if (skill_keys and trait_skill_bonus) or (weakness_keys and trait_weakness_penalty):
+        if skill_keys or weakness_keys:
             trait_lines = []
-            if trait_skill_bonus:
-                for sk in skill_keys:
-                    trait_lines.append(f"+{trait_skill_bonus} {SKILLS[sk][1]} (permanent, applies to real rolls)")
-            if trait_weakness_penalty:
-                for wk in weakness_keys:
-                    trait_lines.append(f"{trait_weakness_penalty} {wk.replace('attr_', '').title()} (permanent, applies to real rolls)")
+            for sk, val in skill_keys:
+                trait_lines.append(f"+{val} {SKILLS[sk][1]} (permanent, applies to real rolls)")
+            for wk, val in weakness_keys:
+                trait_lines.append(f"{val} {wk.replace('attr_', '').title()} (permanent, applies to real rolls)")
             if trait_lines:
                 embed.add_field(name='Starting Traits', value='\n'.join(trait_lines), inline=False)
         if pack in GREAT_PACKS:
