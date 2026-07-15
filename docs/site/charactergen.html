@@ -211,7 +211,7 @@
                     this fills a complete, submission-ready character sheet: name, pack, appearance,
                     a backstory seed, skills, weaknesses, and a fair spread of stats. reroll any line
                     you don't like, then flesh out the prose in your own words. it's a spark, not a
-                    script, and nothing here is machine-written.
+                    script.
                 </p>
             </header>
 
@@ -253,7 +253,7 @@
                     appearance, backstory, and rp_sample are longer prose fields that show on
                     /profile sheet:true. all six are optional at registration and can be set or
                     changed anytime after with /character. a genetic condition, if you rolled one
-                    above, goes in the separate genetic: field, not appearance.
+                    above, goes in the separate genetic field, not appearance.
                 </p>
             </section>
 
@@ -370,6 +370,66 @@
                 diplomat: [15, 20], elder: [15, 20],
                 alpha: [30, 35], 'alpha\'s guard / advisor': [27, 32]
             };
+            // rolled rank label -> the real role key in rpg_rules.py.
+            const ROLE_KEY = {
+                'hunter': 'hunter', 'hunter apprentice': 'hunter_apprentice',
+                'scout': 'scout', 'scout apprentice': 'scout_apprentice',
+                'forager': 'forager', 'forager apprentice': 'forager_apprentice',
+                'guard': 'guard', 'medic': 'medic', 'medic apprentice': 'medic_apprentice',
+                'caretaker': 'caretaker', 'caretaker apprentice': 'caretaker_apprentice',
+                'diplomat': 'diplomat', 'elder': 'elder',
+                'lowbelly': 'lowbelly', 'bog-born': 'bog_born', 'drown-sick oracle': 'drown_sick',
+                'rogue': 'rogue', 'loner': 'rogue',
+                'alpha': 'alpha', "alpha's guard / advisor": 'advisor'
+            };
+            // the archetype shape of each role, straight from ROLE_DEFAULT_STATS
+            // (attr_con is shown as 'survival' to match this sheet's stat names). the
+            // rolled total is spread across attributes in these proportions, so a
+            // guard comes out strong/tough and a medic comes out wise/clever.
+            const ROLE_BASE = {
+                hunter: { strength: 6, dexterity: 5, survival: 4, intelligence: 1, charisma: 1, wisdom: 1 },
+                hunter_apprentice: { strength: 5, dexterity: 4, survival: 3, intelligence: 2, charisma: 2, wisdom: 2 },
+                scout: { strength: 4, dexterity: 7, survival: 4, intelligence: 5, charisma: 3, wisdom: 6 },
+                scout_apprentice: { strength: 3, dexterity: 6, survival: 3, intelligence: 4, charisma: 3, wisdom: 5 },
+                forager: { strength: 4, dexterity: 4, survival: 5, intelligence: 7, charisma: 3, wisdom: 5 },
+                forager_apprentice: { strength: 3, dexterity: 3, survival: 4, intelligence: 6, charisma: 3, wisdom: 4 },
+                guard: { strength: 7, dexterity: 5, survival: 7, intelligence: 4, charisma: 5, wisdom: 5 },
+                medic: { strength: 4, dexterity: 5, survival: 5, intelligence: 7, charisma: 5, wisdom: 7 },
+                medic_apprentice: { strength: 3, dexterity: 4, survival: 4, intelligence: 6, charisma: 4, wisdom: 6 },
+                caretaker: { strength: 3, dexterity: 4, survival: 5, intelligence: 4, charisma: 6, wisdom: 5 },
+                caretaker_apprentice: { strength: 3, dexterity: 3, survival: 4, intelligence: 3, charisma: 5, wisdom: 4 },
+                diplomat: { strength: 3, dexterity: 4, survival: 4, intelligence: 5, charisma: 7, wisdom: 5 },
+                elder: { strength: 3, dexterity: 3, survival: 4, intelligence: 6, charisma: 6, wisdom: 7 },
+                lowbelly: { strength: 2, dexterity: 5, survival: 3, intelligence: 4, charisma: 4, wisdom: 4 },
+                bog_born: { strength: 4, dexterity: 3, survival: 5, intelligence: 4, charisma: 2, wisdom: 4 },
+                drown_sick: { strength: 1, dexterity: 2, survival: 2, intelligence: 4, charisma: 2, wisdom: 5 },
+                rogue: { strength: 4, dexterity: 4, survival: 5, intelligence: 4, charisma: 2, wisdom: 4 },
+                alpha: { strength: 7, dexterity: 6, survival: 6, intelligence: 5, charisma: 6, wisdom: 5 },
+                advisor: { strength: 5, dexterity: 5, survival: 5, intelligence: 6, charisma: 6, wisdom: 6 }
+            };
+            // which skills each rank is actually proficient in (ROLE_PROFICIENCIES);
+            // the skill roll is biased toward these so a hunter rolls hunting, a
+            // medic rolls healing, and so on.
+            const RANK_SKILLS = {
+                'hunter': ['hunting', 'stealth'], 'hunter apprentice': ['hunting'],
+                'scout': ['stealth', 'tracking'], 'scout apprentice': ['tracking'],
+                'forager': ['herblore', 'survival'], 'forager apprentice': ['herblore'],
+                'guard': ['intimidation', 'survival'],
+                'medic': ['herblore', 'medicine'], 'medic apprentice': ['medicine'],
+                'caretaker': ['persuasion', 'medicine'],
+                'diplomat': ['persuasion', 'intimidation'], 'elder': ['medicine', 'herblore'],
+                'lowbelly': ['stealth', 'survival'], 'bog-born': ['survival', 'herblore'], 'drown-sick oracle': ['medicine', 'herblore'],
+                'rogue': ['survival', 'stealth', 'hunting'], 'loner': ['survival', 'stealth', 'hunting'],
+                'alpha': ['intimidation', 'persuasion'], "alpha's guard / advisor": ['intimidation', 'tracking']
+            };
+            // which attribute governs each skill (the d20 + attribute modifier system);
+            // a rolled skill nudges its attribute up, a weakness nudges its attribute
+            // down, so the numbers agree with the words.
+            const SKILL_ATTR = {
+                hunting: ['strength', 'dexterity'], stealth: ['dexterity'], tracking: ['intelligence'],
+                herblore: ['intelligence'], survival: ['survival', 'strength'], medicine: ['wisdom'],
+                intimidation: ['charisma'], persuasion: ['charisma']
+            };
             const FUR = ['black','charcoal grey','wolf-grey','pale silver','brown','tawny','red-brown','rust','cream','off-white','sable (brown and black)','blue-grey (dilute)','bone-pale (albino)','all-black (melanistic)','washed-out and muddy'];
             const BUILD = ['small and wiry','lean and rangy','average, unremarkable','tall and long-legged','heavy and thickset','broad and powerful','gaunt, all ribs and sinew','compact and low'];
             const EYES = ['amber eyes','gold eyes','yellow eyes','pale ice-yellow eyes','warm brown eyes','muddy brown eyes','green eyes','muted blue eyes','one blue and one amber eye (heterochromia)','milky and blind in one eye','pink-red eyes (albino)'];
@@ -394,7 +454,11 @@
                 { text: 'scenting: an unusually sharp nose', skill: 'tracking', mod: 2 },
                 { text: 'fishing: patient at the water', skill: 'survival', mod: 1 },
                 { text: 'survival: reads weather and land well', skill: 'survival', mod: 2 },
-                { text: 'memory: keeps the pack’s history', skill: 'persuasion', mod: 1 }
+                { text: 'memory: keeps the pack’s history', skill: 'persuasion', mod: 1 },
+                { text: 'healing: a steady paw with wounds', skill: 'medicine', mod: 2 },
+                { text: 'healing: knows the rites and the herbs', skill: 'medicine', mod: 3 },
+                { text: 'intimidation: a stare that ends fights', skill: 'intimidation', mod: 2 },
+                { text: 'diplomacy: a calm, trusted voice', skill: 'persuasion', mod: 2 }
             ];
             const WEAKNESSES = [
                 { text: 'an old leg injury; slow to run', attr: 'dexterity', mod: -2 },
@@ -516,25 +580,52 @@
                 for (const b of bands) { if ((r -= b[1]) <= 0) return b[0]; }
                 return bands[0][0];
             }
-            // stats are rolled inside the rolled rank's real point range (see
-            // RANK_RANGE above), not a flat sum of 30 for every wolf; an alpha and a
-            // caretaker are not built the same way in the actual bot.
+            // stats are rolled inside the rolled rank's real point range (RANK_RANGE),
+            // spread in the rank's archetype proportions (ROLE_BASE), then nudged so a
+            // rolled skill raises its governing attribute and a weakness lowers its
+            // attribute; the total stays inside the rank's range either way.
+            const STAT_KEYS = ['strength', 'dexterity', 'survival', 'intelligence', 'charisma', 'wisdom'];
+            function fixTotal(v, target) {
+                let sum = STAT_KEYS.reduce((s, k) => s + v[k], 0), guard = 0;
+                while (sum !== target && guard++ < 300) {
+                    if (sum < target) { const up = STAT_KEYS.filter(k => v[k] < 10); if (!up.length) break; v[pick(up)]++; sum++; }
+                    else { const dn = STAT_KEYS.filter(k => v[k] > 1); if (!dn.length) break; v[pick(dn)]--; sum--; }
+                }
+            }
+            function transfer(v, toAttr, up) {
+                // move one point to (up) or from (down) toAttr, keeping the total constant
+                if (up) {
+                    if (v[toAttr] >= 10) return;
+                    const donors = STAT_KEYS.filter(k => k !== toAttr && v[k] > 1).sort((a, b) => v[a] - v[b]);
+                    if (!donors.length) return; v[toAttr]++; v[donors[0]]--;
+                } else {
+                    if (v[toAttr] <= 1) return;
+                    const recip = STAT_KEYS.filter(k => k !== toAttr && v[k] < 10).sort((a, b) => v[b] - v[a]);
+                    if (!recip.length) return; v[toAttr]--; v[recip[0]]++;
+                }
+            }
             function genStats(rank) {
                 const range = RANK_RANGE[rank] || [15, 20];
                 const total = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
-                const keys = ['strength', 'dexterity', 'survival', 'intelligence', 'charisma', 'wisdom'];
-                const base = Math.floor(total / 6);
-                let remainder = total - base * 6;
-                const v = {}; keys.forEach(k => v[k] = Math.max(1, base));
-                // hand out the remainder, then jitter a bit so it isn't perfectly flat
-                const order = pickN(keys, keys.length);
-                for (let i = 0; i < remainder; i++) v[order[i % order.length]]++;
-                for (let i = 0; i < 6; i++) {
-                    const from = pick(keys), to = pick(keys);
-                    if (from !== to && v[from] > 1 && v[to] < 10) { v[from]--; v[to]++; }
-                }
-                v._total = total; v._range = range;
+                const shape = ROLE_BASE[ROLE_KEY[rank] || 'rogue'] || { strength: 5, dexterity: 5, survival: 5, intelligence: 5, charisma: 5, wisdom: 5 };
+                const shapeSum = STAT_KEYS.reduce((s, k) => s + shape[k], 0);
+                const v = {};
+                STAT_KEYS.forEach(k => { v[k] = Math.max(1, Math.round(total * shape[k] / shapeSum)); });
+                fixTotal(v, total);
+                (C.skills || []).forEach(sk => { const a = (SKILL_ATTR[sk.skill] || [])[0]; if (a) transfer(v, a, true); });
+                (C.weaknesses || []).forEach(w => { if (w.attr) transfer(v, w.attr, false); });
+                v._total = STAT_KEYS.reduce((s, k) => s + v[k], 0); v._range = range;
                 return v;
+            }
+            // skills are biased toward the rank's real proficiencies (RANK_SKILLS): up
+            // to two matching skills, then filled to three for a little variety.
+            function genSkills(rank) {
+                const prefKeys = RANK_SKILLS[rank] || [];
+                const preferred = SKILLS.filter(s => prefKeys.includes(s.skill));
+                const out = pickN(preferred, Math.min(2, preferred.length));
+                const fill = SKILLS.filter(s => out.indexOf(s) === -1);
+                while (out.length < 3 && fill.length) out.push(fill.splice(Math.floor(Math.random() * fill.length), 1)[0]);
+                return out;
             }
 
             // ---- state + field generators ----
@@ -553,7 +644,7 @@
                 traits: () => pickN(TRAITS, 3 + Math.floor(Math.random() * 3)).join(', '),
                 origin: () => pick(ORIGINS), wound: () => pick(WOUNDS), human: () => pick(HUMANS),
                 mawBelief: () => pick(MAWBELIEF),
-                skills: () => pickN(SKILLS, 3),
+                skills: () => genSkills(C.rank),
                 weaknesses: () => pickN(WEAKNESSES, 2 + Math.floor(Math.random() * 2)),
                 stats: () => genStats(C.rank),
                 genetic: () => {
@@ -587,9 +678,9 @@
             }
 
             function reroll(field) {
-                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); C.stats = GEN.stats(); }
+                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
                 else if (field === 'name') C.name = GEN.name();
-                else if (field === 'rank') { C.rank = GEN.rank(); C.stats = GEN.stats(); }
+                else if (field === 'rank') { C.rank = GEN.rank(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
                 else if (field === 'age') C.age = GEN.age();
                 else if (field === 'sexuality') C.sexuality = GEN.sexuality();
                 else if (field === 'gender') C.gender = GEN.gender();
@@ -597,8 +688,8 @@
                 else if (field === 'traits') C.traits = GEN.traits();
                 else if (field === 'backstory') { C.origin = GEN.origin(); C.wound = GEN.wound(); C.human = GEN.human(); }
                 else if (field === 'mawBelief') C.mawBelief = GEN.mawBelief();
-                else if (field === 'skills') C.skills = GEN.skills();
-                else if (field === 'weaknesses') C.weaknesses = GEN.weaknesses();
+                else if (field === 'skills') { C.skills = GEN.skills(); C.stats = GEN.stats(); }
+                else if (field === 'weaknesses') { C.weaknesses = GEN.weaknesses(); C.stats = GEN.stats(); }
                 else if (field === 'stats') C.stats = GEN.stats(C.rank);
                 else if (field === 'genetic') C.genetic = GEN.genetic();
                 else if (field === 'other') C.other = GEN.other();
