@@ -4,7 +4,6 @@ BIRTH_SEX_LABELS = {
     "female": "female",
     "male": "male",
     "intersex": "intersex",
-    "nonbinary": "nonbinary",
 }
 
 PUP_SEXUALITY = "too_young"
@@ -17,6 +16,7 @@ SEXUALITY_OPTIONS_ADULT: tuple[tuple[str, str], ...] = (
     ("Asexual", "asexual"),
     ("Demisexual", "demisexual"),
     ("Demiromantic", "demiromantic"),
+    ("Unlabelled", "unlabelled"),
     ("Undiscovered", "undiscovered"),
 )
 SEXUALITY_OPTIONS: tuple[tuple[str, str], ...] = (

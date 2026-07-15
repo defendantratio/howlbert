@@ -1631,7 +1631,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
     if "ic_location" not in user_cols_late:
         conn.execute("ALTER TABLE users ADD COLUMN ic_location TEXT")
-    for _appearance_col in ("fur_color", "eye_color", "markings"):
+    for _appearance_col in ("fur_color", "eye_color", "markings", "scars"):
         if _appearance_col not in user_cols_late:
             conn.execute(f"ALTER TABLE users ADD COLUMN {_appearance_col} TEXT")
     if "dormant" not in user_cols_late:
@@ -3624,7 +3624,7 @@ def get_active_wolf_id(discord_id: int) -> int | None:
 _IDENTITY_FIELDS = frozenset(
     {
         "avatar_url", "pronouns", "ref_image_url", "bio", "birthday",
-        "fur_color", "eye_color", "markings",
+        "fur_color", "eye_color", "markings", "scars",
     }
 )
 

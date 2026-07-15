@@ -76,6 +76,46 @@ def _paginate_embed_fields(embed: discord.Embed, *, max_fields: int=25) -> list[
     return pages
 PACK_CHOICES = [app_commands.Choice(name=choice_label(f"{info['name']}; {info['path']}"), value=key) for key, info in GREAT_PACKS.items()] + [app_commands.Choice(name=choice_label(f'{LONER_LABEL}; walk apart from any pack'), value=LONER_KEY), app_commands.Choice(name=choice_label(f'{ROGUE_LABEL}; hostile, border-raiding loner'), value=ROGUE_KEY)]
 
+# friendly attribute names -> attr key, for the comma-separated trait_weakness field.
+_WEAKNESS_ATTRS = {
+    'strength': 'attr_str', 'str': 'attr_str',
+    'dexterity': 'attr_dex', 'dex': 'attr_dex',
+    'constitution': 'attr_con', 'con': 'attr_con', 'survival': 'attr_con',
+    'intelligence': 'attr_int', 'int': 'attr_int',
+    'charisma': 'attr_cha', 'cha': 'attr_cha',
+    'wisdom': 'attr_wis', 'wis': 'attr_wis',
+}
+
+
+def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None):
+    """Parse comma-separated starting skills and weak attributes from /register.
+    Returns (skill_keys, weakness_attr_keys, error). Duplicates are dropped; an
+    unknown token returns a helpful error instead of silently vanishing."""
+    from rpg_rules import SKILLS
+    skills: list[str] = []
+    if trait_skill:
+        for part in trait_skill.replace(';', ',').split(','):
+            tok = part.strip().lower().replace(' ', '_')
+            if not tok:
+                continue
+            if tok not in SKILLS:
+                return [], [], f"unknown skill **{part.strip()}**; pick from: {', '.join(SKILLS)}."
+            if tok not in skills:
+                skills.append(tok)
+    weaknesses: list[str] = []
+    if trait_weakness:
+        for part in trait_weakness.replace(';', ',').split(','):
+            tok = part.strip().lower().replace('attr_', '').replace(' (constitution)', '')
+            if not tok:
+                continue
+            key = _WEAKNESS_ATTRS.get(tok)
+            if not key:
+                return [], [], f"unknown attribute **{part.strip()}**; pick from: strength, dexterity, constitution, intelligence, charisma, wisdom."
+            if key not in weaknesses:
+                weaknesses.append(key)
+    return skills, weaknesses, None
+
+
 async def _pack_register_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     """Great packs + loner/rogue + any live founded pack (dynamic; can't be a static Choice list)."""
     from engine.factions import founded_key_for
@@ -116,10 +156,10 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='scars, patterns, notable marks, short (optional; shows on /profile)', appearance='fuller appearance prose (optional; shows on /profile sheet:true)', backstory='backstory prose (optional; shows on /profile sheet:true)', rp_sample='a short writing sample (optional; shows on /profile sheet:true)', trait_skill='optional starting bonus skill; permanent, applies to real rolls', trait_skill_bonus='bonus size for trait_skill, 0 to 5 (default 1)', trait_weakness='optional starting weak attribute; permanent, applies to real rolls', trait_weakness_penalty='penalty size for trait_weakness, -5 to 0 (default -1)')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', personality='personality: traits and how they act (optional; shows on /profile sheet:true)', personality2='more personality if it ran long (optional; appended)', backstory='backstory prose (optional; shows on /profile sheet:true)', backstory2='more backstory if it ran past the limit (optional; appended)', rp_sample='a short writing sample (optional; shows on /profile sheet:true)', family_ties='known family: parents, siblings, kin (optional; shows on /profile sheet:true)', open_plots='hooks other players can pick up (optional; shows on /profile sheet:true)', trait_skill='starting bonus skills, comma-separated (e.g. hunting, stealth, medicine); permanent', trait_skill_bonus='bonus applied to each listed skill, 0 to 5 (default 1)', trait_weakness='starting weak attributes, comma-separated (e.g. strength, wisdom); permanent', trait_weakness_penalty='penalty applied to each listed weakness, -5 to 0 (default -1)')
     @app_commands.autocomplete(pack=_pack_register_autocomplete)
-    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS], trait_skill=[app_commands.Choice(name=label, value=key) for key, (attr_keys, label) in SKILLS.items()], trait_weakness=[app_commands.Choice(name='strength', value='attr_str'), app_commands.Choice(name='dexterity', value='attr_dex'), app_commands.Choice(name='survival (constitution)', value='attr_con'), app_commands.Choice(name='intelligence', value='attr_int'), app_commands.Choice(name='charisma', value='attr_cha'), app_commands.Choice(name='wisdom', value='attr_wis')])
-    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, appearance: str | None=None, backstory: str | None=None, rp_sample: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
+    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
+    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, personality: str | None=None, personality2: str | None=None, backstory: str | None=None, backstory2: str | None=None, rp_sample: str | None=None, family_ties: str | None=None, open_plots: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
         wolf_count = db.count_slot_wolves(interaction.user.id)
         is_admin = is_howlbert_admin(interaction)
         if not is_admin and wolf_count >= MAX_WOLVES_PER_PLAYER:
@@ -144,6 +184,17 @@ class Profile(commands.Cog):
             embed = howlbert_embed('Invalid Genetics', genetic_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
+        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness)
+        if trait_err:
+            embed = howlbert_embed('Invalid Trait', trait_err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        bonus_pts = len(skill_keys) * int(trait_skill_bonus)
+        weak_pts = len(weakness_keys) * abs(int(trait_weakness_penalty))
+        if bonus_pts > weak_pts:
+            embed = howlbert_embed('Unbalanced Traits', f'starting skill bonuses (**+{bonus_pts}** total) must be paid for with at least as many weakness points (you have **{weak_pts}**). add more weaknesses (or a bigger penalty), or take fewer or smaller skill bonuses.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
         try:
             new_wolf_id = db.register_user(interaction.user.id, wolf_name, pack, wolf_role=role, birth_sex=birth_sex, sexuality=sexuality, age_months=age_months, genetic_conditions=encode_genetic_conditions(genetic_keys), maw_belief=maw_belief)
         except ValueError as exc:
@@ -152,15 +203,20 @@ class Profile(commands.Cog):
             embed = howlbert_embed(title, msg, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        identity_fields = {k: v.strip() for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings}.items() if v and v.strip()}
+        identity_fields = {k: v.strip()[:64] for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings, 'scars': scars}.items() if v and v.strip()}
         if identity_fields:
             db.set_wolf_identity(new_wolf_id, **identity_fields)
-        lore_fields = {k: v.strip() for k, v in {'appearance': appearance, 'backstory': backstory, 'rp_sample': rp_sample}.items() if v and v.strip()}
+        personality_full = '\n\n'.join(p.strip() for p in (personality, personality2) if p and p.strip())
+        backstory_full = '\n\n'.join(p.strip() for p in (backstory, backstory2) if p and p.strip())
+        lore_fields = {k: v for k, v in {'personality': personality_full, 'backstory': backstory_full, 'family_ties': (family_ties or '').strip(), 'open_plots': (open_plots or '').strip(), 'rp_sample': (rp_sample or '').strip()}.items() if v}
         if lore_fields:
             db.set_character_lore_fields(new_wolf_id, **lore_fields)
-        if trait_skill or trait_weakness:
+        if skill_keys or weakness_keys:
             from engine.character_traits import set_registration_traits
-            set_registration_traits(new_wolf_id, skill_key=trait_skill, skill_bonus=trait_skill_bonus, weakness_attr_key=trait_weakness, weakness_penalty=trait_weakness_penalty)
+            for sk in skill_keys:
+                set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=trait_skill_bonus)
+            for wk in weakness_keys:
+                set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=trait_weakness_penalty)
         from engine.patron import on_wolf_registered
         invite_note = None
         if interaction.guild:
@@ -198,13 +254,16 @@ class Profile(commands.Cog):
         if genetic_keys:
             from engine.genetics import format_genetic_conditions
             embed.add_field(name='Genetics', value=format_genetic_conditions(user), inline=False)
-        if (trait_skill and trait_skill_bonus) or (trait_weakness and trait_weakness_penalty):
+        if (skill_keys and trait_skill_bonus) or (weakness_keys and trait_weakness_penalty):
             trait_lines = []
-            if trait_skill and trait_skill_bonus:
-                trait_lines.append(f"+{trait_skill_bonus} {SKILLS[trait_skill][1]} (permanent, applies to real rolls)")
-            if trait_weakness and trait_weakness_penalty:
-                trait_lines.append(f"{trait_weakness_penalty} {trait_weakness.replace('attr_', '').title()} (permanent, applies to real rolls)")
-            embed.add_field(name='Starting Trait', value='\n'.join(trait_lines), inline=False)
+            if trait_skill_bonus:
+                for sk in skill_keys:
+                    trait_lines.append(f"+{trait_skill_bonus} {SKILLS[sk][1]} (permanent, applies to real rolls)")
+            if trait_weakness_penalty:
+                for wk in weakness_keys:
+                    trait_lines.append(f"{trait_weakness_penalty} {wk.replace('attr_', '').title()} (permanent, applies to real rolls)")
+            if trait_lines:
+                embed.add_field(name='Starting Traits', value='\n'.join(trait_lines), inline=False)
         if pack in GREAT_PACKS:
             faction = GREAT_PACKS[pack]
             embed.add_field(name='Motto', value=f"_{faction['motto']}_", inline=False)
@@ -436,17 +495,17 @@ class Profile(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='character', description="set your wolf's identity: pronouns, sex, belief, size, age, or appearance.")
-    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", birth_sex='biological sex (affects conception checks)', sexuality='romantic/sexual attraction', maw_belief='faith in the maw', size='combat build size (auto = role/age default)', age_moons='age in moons, 0 to 120 (role and proficiencies re-sync to the new age)', fur_color='coat color, short (shows on /profile, inherited by pups)', eye_color='eye color, short (shows on /profile, inherited by pups)', markings='scars, patterns, notable marks, short (shows on /profile)', appearance='fuller appearance prose (shows on /profile sheet:true)', backstory='backstory prose (shows on /profile sheet:true)', rp_sample='a short writing sample (shows on /profile sheet:true)', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
-    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], maw_belief=[app_commands.Choice(name=label, value=value) for label, value in MAW_BELIEF_OPTIONS], size=[app_commands.Choice(name='auto (role / age)', value='auto'), app_commands.Choice(name='small', value='small'), app_commands.Choice(name='medium', value='medium'), app_commands.Choice(name='large', value='large')], clear=[app_commands.Choice(name='pronouns', value='pronouns'), app_commands.Choice(name='birthday', value='birthday'), app_commands.Choice(name='birth sex', value='birth_sex'), app_commands.Choice(name='sexuality', value='sexuality'), app_commands.Choice(name='maw belief', value='maw_belief'), app_commands.Choice(name='combat size', value='size_class'), app_commands.Choice(name='fur color', value='fur_color'), app_commands.Choice(name='eye color', value='eye_color'), app_commands.Choice(name='markings', value='markings')])
+    @app_commands.describe(pronouns='pronouns, e.g. she/her, ey/em, fae/faer (defaults from lore or birth sex)', birthday="birthday text, e.g. 'early greenleaf' or a date", birth_sex='biological sex (affects conception checks)', sexuality='romantic/sexual attraction', maw_belief='faith in the maw', size='combat build size (auto = role/age default)', age_moons='age in moons, 0 to 120 (role and proficiencies re-sync to the new age)', fur_color='coat color, short (shows on /profile, inherited by pups)', eye_color='eye color, short (shows on /profile, inherited by pups)', markings='natural coat patterns and markings, short (shows on /profile)', scars='earned scars and old wounds, short (shows on /profile)', personality='personality prose (shows on /profile sheet:true)', personality2='more personality if it ran long (appended)', backstory='backstory prose (shows on /profile sheet:true)', backstory2='more backstory if it ran past the limit (appended)', rp_sample='a short writing sample (shows on /profile sheet:true)', family_ties='known family: parents, siblings, kin (shows on /profile sheet:true)', open_plots='hooks other players can pick up (shows on /profile sheet:true)', clear='clear a single field instead of setting it', own_wolf='which of your wolves (defaults to your active wolf)')
+    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS], size=[app_commands.Choice(name='auto (role / age)', value='auto'), app_commands.Choice(name='small', value='small'), app_commands.Choice(name='medium', value='medium'), app_commands.Choice(name='large', value='large')], clear=[app_commands.Choice(name='pronouns', value='pronouns'), app_commands.Choice(name='birthday', value='birthday'), app_commands.Choice(name='birth sex', value='birth_sex'), app_commands.Choice(name='sexuality', value='sexuality'), app_commands.Choice(name='maw belief', value='maw_belief'), app_commands.Choice(name='combat size', value='size_class'), app_commands.Choice(name='fur color', value='fur_color'), app_commands.Choice(name='eye color', value='eye_color'), app_commands.Choice(name='markings', value='markings'), app_commands.Choice(name='scars', value='scars')])
     @app_commands.autocomplete(own_wolf=_own_wolf_autocomplete)
-    async def character(self, interaction: discord.Interaction, pronouns: str | None=None, birthday: str | None=None, birth_sex: str | None=None, sexuality: str | None=None, maw_belief: str | None=None, size: str | None=None, age_moons: app_commands.Range[int, 0, 120] | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, appearance: str | None=None, backstory: str | None=None, rp_sample: str | None=None, clear: str | None=None, own_wolf: str | None=None):
+    async def character(self, interaction: discord.Interaction, pronouns: str | None=None, birthday: str | None=None, birth_sex: str | None=None, sexuality: str | None=None, maw_belief: str | None=None, size: str | None=None, age_moons: app_commands.Range[int, 0, 120] | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, personality: str | None=None, personality2: str | None=None, backstory: str | None=None, backstory2: str | None=None, rp_sample: str | None=None, family_ties: str | None=None, open_plots: str | None=None, clear: str | None=None, own_wolf: str | None=None):
         wolf = db.find_user_wolf(interaction.user.id, own_wolf) if own_wolf else db.get_user(interaction.user.id)
         if not wolf:
             msg = 'No wolf with that name on your account.' if own_wolf else 'Use `/register` first.'
             await interaction.response.send_message(embed=howlbert_embed('No Wolf', msg, color=ERROR_COLOR), ephemeral=reply_ephemeral())
             return
         if clear:
-            if clear in ('pronouns', 'birthday', 'fur_color', 'eye_color', 'markings'):
+            if clear in ('pronouns', 'birthday', 'fur_color', 'eye_color', 'markings', 'scars'):
                 db.set_wolf_identity(wolf['id'], **{clear: None})
             else:
                 db.update_user(wolf['discord_id'], wolf_id=wolf['id'], **{clear: None})
@@ -461,12 +520,14 @@ class Profile(commands.Cog):
                 fields['birthday'] = birthday[:48]
             db.set_wolf_identity(wolf['id'], **fields)
             updated_parts.extend(fields.keys())
-        if fur_color or eye_color or markings:
-            appearance_fields = {k: v.strip()[:64] for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings}.items() if v and v.strip()}
+        if fur_color or eye_color or markings or scars:
+            appearance_fields = {k: v.strip()[:64] for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings, 'scars': scars}.items() if v and v.strip()}
             db.set_wolf_identity(wolf['id'], **appearance_fields)
             updated_parts.extend(appearance_fields.keys())
-        if appearance or backstory or rp_sample:
-            lore_fields = {k: v.strip() for k, v in {'appearance': appearance, 'backstory': backstory, 'rp_sample': rp_sample}.items() if v and v.strip()}
+        if personality or personality2 or backstory or backstory2 or rp_sample or family_ties or open_plots:
+            personality_full = '\n\n'.join(p.strip() for p in (personality, personality2) if p and p.strip())
+            backstory_full = '\n\n'.join(p.strip() for p in (backstory, backstory2) if p and p.strip())
+            lore_fields = {k: v for k, v in {'personality': personality_full, 'backstory': backstory_full, 'family_ties': (family_ties or '').strip(), 'open_plots': (open_plots or '').strip(), 'rp_sample': (rp_sample or '').strip()}.items() if v}
             db.set_character_lore_fields(wolf['id'], **lore_fields)
             updated_parts.extend(lore_fields.keys())
         if birth_sex:
@@ -635,7 +696,7 @@ class Profile(commands.Cog):
         wolf_birthday = user['birthday'] if 'birthday' in user.keys() else None
         if wolf_birthday:
             embed.add_field(name='Birthday', value=str(wolf_birthday), inline=True)
-        appearance_bits = [user[k] for k in ('fur_color', 'eye_color', 'markings') if k in user.keys() and user[k]]
+        appearance_bits = [user[k] for k in ('fur_color', 'eye_color', 'markings', 'scars') if k in user.keys() and user[k]]
         if appearance_bits:
             embed.add_field(name='Appearance', value=', '.join(appearance_bits), inline=False)
         wolf_bio = user['bio'] if 'bio' in user.keys() else None
