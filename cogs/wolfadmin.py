@@ -53,7 +53,7 @@ class WolfAdmin(commands.Cog):
 
     @wolfadmin.command(name='assign', description='create a wolf and assign it to a player.')
     @app_commands.describe(player='discord member who will own this wolf', name='wolf name', pack='great pack or loner', birth_sex='birth sex', sexuality='attraction', role='wolf role (stats and skills)', starting_age='starting age in moons, 0 to 120 (optional)', set_active='make this their active wolf immediately')
-    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex'), app_commands.Choice(name='nonbinary', value='nonbinary')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS])
+    @app_commands.choices(pack=PACK_CHOICES, birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=ROLE_LABELS[key], value=key) for key in ROLE_LABELS])
     async def wolfadmin_assign(self, interaction: discord.Interaction, player: discord.User, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, set_active: bool=True):
         if not await self._require_admin(interaction):
             return
