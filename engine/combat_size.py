@@ -130,3 +130,27 @@ def can_pin_target(attacker_stats, defender_stats) -> bool:
 
 def can_scruff_target(attacker_stats, defender_stats) -> bool:
     return size_rank(attacker_stats) > size_rank(defender_stats)
+
+
+def size_evasion_modifier(stats) -> int:
+    """A small body is a harder target to land a clean hit on; a large one is
+    harder to miss. Modest +-1, on top of (not replacing) the dex-based
+    defense roll, so build finally does something in a fight beyond pinning."""
+    rank = size_rank(stats)
+    if rank == SIZE_RANK["small"]:
+        return 1
+    if rank == SIZE_RANK["large"]:
+        return -1
+    return 0
+
+
+def size_damage_modifier(stats) -> int:
+    """More mass behind a bite/claw means more force; a small attacker hits
+    softer. Symmetric with size_evasion_modifier so being large is a real
+    trade-off (easier to hit, hits harder) rather than a strict upgrade."""
+    rank = size_rank(stats)
+    if rank == SIZE_RANK["large"]:
+        return 1
+    if rank == SIZE_RANK["small"]:
+        return -1
+    return 0

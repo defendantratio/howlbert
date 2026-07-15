@@ -6,6 +6,7 @@ from engine.character_traits import (
     trait_damage_reduction,
 )
 from engine.combat_guide import COMBAT_MANEUVERS
+from engine.combat_size import size_damage_modifier, size_evasion_modifier
 from engine.combat_status import attacker_roll_modifiers, maneuver_pin_block, roll_attack_die
 from engine.rolls import roll_d20
 from engine.injury_effects import attack_roll_modifiers, bite_attack_blocked
@@ -13,7 +14,7 @@ from engine.factions import faction_name
 CRIT_HIT_EFFECTS = {
     1: "Bonus damage (+1d4)",
     2: "Knock target prone",
-    3: "Disarm; target drops held item or loses grip",
+    3: "Grip Lost; a solid hit knocks the target off balance, its next claw swipe weaker",
     4: "Temporary bleed; target loses 1 HP per round for 3 rounds (3 HP now)",
 }
 
@@ -272,17 +273,17 @@ def resolve_attack(
 
     if attack_type == "bite":
         a_mod = attr_modifier(attacker["attr_str"]) + _prof_bonus(attacker, "hunting")
-        d_mod = attr_modifier(defender["attr_dex"])
+        d_mod = attr_modifier(defender["attr_dex"]) + size_evasion_modifier(defender)
         damage_die = 6
-        str_mod = attr_modifier(attacker["attr_str"])
+        str_mod = attr_modifier(attacker["attr_str"]) + size_damage_modifier(attacker)
         attack_name = "Bite"
     else:
         # claw: accuracy is dexterity (a precise swipe), but the damage is powered by
         # muscle and mass, so the damage bonus is strength, not dexterity.
         a_mod = attr_modifier(attacker["attr_dex"])
-        d_mod = attr_modifier(defender["attr_dex"])
+        d_mod = attr_modifier(defender["attr_dex"]) + size_evasion_modifier(defender)
         damage_die = 4
-        str_mod = attr_modifier(attacker["attr_str"])
+        str_mod = attr_modifier(attacker["attr_str"]) + size_damage_modifier(attacker)
         attack_name = "Claw"
 
     a_mod += trait_combat_modifier(attacker)

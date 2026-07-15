@@ -52,7 +52,7 @@ def format_combat_flags(
     if flags.get("prone"):
         tags.append("prone")
     if flags.get("disarmed"):
-        tags.append("disarmed")
+        tags.append("off-balance")
     if flags.get("obscured"):
         tags.append("hidden")
     if flags.get("attack_disadvantage"):
@@ -301,7 +301,7 @@ def apply_crit_status_effects(defender_fighter_id: int, crit_effect: int | None)
         return "**knocked prone.**"
     if crit_effect == 3:
         db.update_fighter_combat_flags(defender_fighter_id, disarmed=True)
-        return "**disarmed**; grip lost."
+        return "**off balance**; grip lost, next claw swipe weaker."
     return None
 
 

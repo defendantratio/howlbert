@@ -156,10 +156,13 @@ def birth_check(mother) -> dict:
 
 
 def inherit_pup_attribute(parent_a: int, parent_b: int) -> int:
-    """Method 2: average + 1d4: 2."""
+    """Parents' average, plus a real spread of variance (1d4 - 3, so -2 to
+    +1): even two maxed-out parents have a genuine chance at a merely-good
+    pup instead of a guaranteed clone, the way real inheritance doesn't
+    promise perfect offspring from perfect parents."""
     avg = (parent_a + parent_b) // 2
     roll = random.randint(1, 4)
-    return max(1, min(10, avg + roll - 2))
+    return max(1, min(10, avg + roll - 3))
 
 
 def generate_pup_stats(mother, father) -> dict:

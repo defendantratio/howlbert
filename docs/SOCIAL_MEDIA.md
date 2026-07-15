@@ -139,7 +139,7 @@ pure fiction; no gameplay needed. these travel furthest on tumblr and bluesky.
 ### how-to tips (retain new players)
 - "surviving your first sunrise: `/eat` from your `/food`, `/drink` at the creek, and check `/vitals action:condition`. then wait for rollover."
 - "`/vitals action:condition` shows everything wrong with your wolf: injuries, disease, exhaustion, pain. check it whenever something feels off."
-- "if your wolf hits 0 hp, a medic uses `/medic action:deathsaves` and `action:stabilize`. three failed saves and the wolf is gone for good."
+- "if your wolf hits 0 hp, a medic uses `/medic action:deathsaves` and `action:stabilize`. one failed save and the wolf is gone for good."
 
 **note on the brutal themes:** howlbert includes death, terminal disease, mercy kills, and pup culling. that darkness is a selling point, but handle it deliberately (see section 11). lead with the emotional weight, not gore for its own sake.
 
@@ -321,7 +321,7 @@ this replaces the older devlog-tour script with a tighter, story-first cut: **on
 >
 > "here's the part that matters. no other player can kill your wolf without your say-so — you can't be griefed out of your own story.
 >
-> but the *wild* can. hunger, thirst, a fever, a wound left too long — and then the death saves. three of them. fail, and the bot marks that wolf dead. permanently. same rules for everyone, first sunrise or fiftieth.
+> but the *wild* can. hunger, thirst, a fever, a wound left too long — and then the death saves. three rounds, escalating, but only one fail is all it takes. the bot marks that wolf dead. permanently. same rules for everyone, first sunrise or fiftieth.
 >
 > [name] failed hers. and that was the end of four years of her."
 >
@@ -366,7 +366,7 @@ a second first-video option, and honestly the one to shoot *first*: instead of a
 
 **the flow to capture** (screen-record all of it clean, no talking over the raw take):
 
-1. **the neocities.** generate a name (name generator), skim the lore (the world, the four packs), read the stat guide, take the **"which pack fits you"** quiz, and roll a **backstory seed**. this is the "look how little friction there is to start" beat — the two new tools do real funnel work here.
+1. **the neocities.** skim the lore (the world, the four packs), take the **"which pack fits you"** quiz, then run the **character generator** (`charactergen.html`) to roll a full concept: name, stats, skills, weaknesses, appearance, and a backstory seed in one pass. this is the "look how little friction there is to start" beat — the quiz and the character generator do real funnel work here.
 2. **write the character.** turn the rolled seed into a short backstory in your own words, and submit it for approval.
 3. **register.** `/register`, `/setfaction`, `/character` — the wolf becomes real, on screen.
 4. **play a first sunrise.** hunt, forage, form a bond, and then let the game do what it does: an injury, a disease, a lucky roll, a bad one.

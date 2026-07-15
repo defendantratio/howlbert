@@ -68,10 +68,14 @@
             letter-spacing: 2px; color: var(--bone); margin: 0 0 10px 0;
             border-bottom: 1px solid var(--line); padding-bottom: 6px;
         }
-        .side-nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-        .side-nav a { font-size: 0.85rem; padding: 2px 0; }
-        .side-nav a:hover { padding-left: 4px; }
-        .side-nav .current { color: var(--maw); font-weight: 700; }
+        .side-nav { display: flex; flex-direction: column; gap: 3px; }
+        .side-nav a {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.75rem; letter-spacing: 1.2px;
+            color: var(--bone-dim); padding: 4px 0; border-bottom: 1px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+        }
+        .side-nav a:hover { color: var(--bone); border-bottom-color: var(--maw); text-shadow: none; }
+        .side-nav .current { color: var(--bone); border-bottom-color: var(--maw); font-weight: 700; }
 
         .hero { padding: 34px 30px 28px; text-align: center; border-bottom: 1px solid var(--line); }
         .hero h1 {
@@ -194,7 +198,6 @@
                         <a href="bookone.html">⟡ book one: the blinking</a>
                         <a href="play.html">⟡ how to play</a>
                         <a href="first-sunrise.html">⟡ first sunrise</a>
-                        <a href="namegen.html">⟡ wolf name generator</a>
                         <a href="quiz.html">⟡ which pack fits you</a>
                         <a href="charactergen.html" class="current">⟡ build a wolf</a>
                         <a href="credits.html">⟡ credits &amp; links</a>
@@ -383,29 +386,29 @@
                 'alpha': 'alpha', "alpha's guard / advisor": 'advisor'
             };
             // the archetype shape of each role, straight from ROLE_DEFAULT_STATS
-            // (attr_con is shown as 'survival' to match this sheet's stat names). the
+            // (attr_con is shown as 'constitution' to avoid clashing with the real survival skill). the
             // rolled total is spread across attributes in these proportions, so a
             // guard comes out strong/tough and a medic comes out wise/clever.
             const ROLE_BASE = {
-                hunter: { strength: 6, dexterity: 5, survival: 4, intelligence: 1, charisma: 1, wisdom: 1 },
-                hunter_apprentice: { strength: 5, dexterity: 4, survival: 3, intelligence: 2, charisma: 2, wisdom: 2 },
-                scout: { strength: 4, dexterity: 7, survival: 4, intelligence: 5, charisma: 3, wisdom: 6 },
-                scout_apprentice: { strength: 3, dexterity: 6, survival: 3, intelligence: 4, charisma: 3, wisdom: 5 },
-                forager: { strength: 4, dexterity: 4, survival: 5, intelligence: 7, charisma: 3, wisdom: 5 },
-                forager_apprentice: { strength: 3, dexterity: 3, survival: 4, intelligence: 6, charisma: 3, wisdom: 4 },
-                guard: { strength: 7, dexterity: 5, survival: 7, intelligence: 4, charisma: 5, wisdom: 5 },
-                medic: { strength: 4, dexterity: 5, survival: 5, intelligence: 7, charisma: 5, wisdom: 7 },
-                medic_apprentice: { strength: 3, dexterity: 4, survival: 4, intelligence: 6, charisma: 4, wisdom: 6 },
-                caretaker: { strength: 3, dexterity: 4, survival: 5, intelligence: 4, charisma: 6, wisdom: 5 },
-                caretaker_apprentice: { strength: 3, dexterity: 3, survival: 4, intelligence: 3, charisma: 5, wisdom: 4 },
-                diplomat: { strength: 3, dexterity: 4, survival: 4, intelligence: 5, charisma: 7, wisdom: 5 },
-                elder: { strength: 3, dexterity: 3, survival: 4, intelligence: 6, charisma: 6, wisdom: 7 },
-                lowbelly: { strength: 2, dexterity: 5, survival: 3, intelligence: 4, charisma: 4, wisdom: 4 },
-                bog_born: { strength: 4, dexterity: 3, survival: 5, intelligence: 4, charisma: 2, wisdom: 4 },
-                drown_sick: { strength: 1, dexterity: 2, survival: 2, intelligence: 4, charisma: 2, wisdom: 5 },
-                rogue: { strength: 4, dexterity: 4, survival: 5, intelligence: 4, charisma: 2, wisdom: 4 },
-                alpha: { strength: 7, dexterity: 6, survival: 6, intelligence: 5, charisma: 6, wisdom: 5 },
-                advisor: { strength: 5, dexterity: 5, survival: 5, intelligence: 6, charisma: 6, wisdom: 6 }
+                hunter: { strength: 6, dexterity: 5, constitution: 4, intelligence: 1, charisma: 1, wisdom: 1 },
+                hunter_apprentice: { strength: 5, dexterity: 4, constitution: 3, intelligence: 2, charisma: 2, wisdom: 2 },
+                scout: { strength: 4, dexterity: 7, constitution: 4, intelligence: 5, charisma: 3, wisdom: 6 },
+                scout_apprentice: { strength: 3, dexterity: 6, constitution: 3, intelligence: 4, charisma: 3, wisdom: 5 },
+                forager: { strength: 4, dexterity: 4, constitution: 5, intelligence: 7, charisma: 3, wisdom: 5 },
+                forager_apprentice: { strength: 3, dexterity: 3, constitution: 4, intelligence: 6, charisma: 3, wisdom: 4 },
+                guard: { strength: 7, dexterity: 5, constitution: 7, intelligence: 4, charisma: 5, wisdom: 5 },
+                medic: { strength: 4, dexterity: 5, constitution: 5, intelligence: 7, charisma: 5, wisdom: 7 },
+                medic_apprentice: { strength: 3, dexterity: 4, constitution: 4, intelligence: 6, charisma: 4, wisdom: 6 },
+                caretaker: { strength: 3, dexterity: 4, constitution: 5, intelligence: 4, charisma: 6, wisdom: 5 },
+                caretaker_apprentice: { strength: 3, dexterity: 3, constitution: 4, intelligence: 3, charisma: 5, wisdom: 4 },
+                diplomat: { strength: 3, dexterity: 4, constitution: 4, intelligence: 5, charisma: 7, wisdom: 5 },
+                elder: { strength: 3, dexterity: 3, constitution: 4, intelligence: 6, charisma: 6, wisdom: 7 },
+                lowbelly: { strength: 2, dexterity: 5, constitution: 3, intelligence: 4, charisma: 4, wisdom: 4 },
+                bog_born: { strength: 4, dexterity: 3, constitution: 5, intelligence: 4, charisma: 2, wisdom: 4 },
+                drown_sick: { strength: 1, dexterity: 2, constitution: 2, intelligence: 4, charisma: 2, wisdom: 5 },
+                rogue: { strength: 4, dexterity: 4, constitution: 5, intelligence: 4, charisma: 2, wisdom: 4 },
+                alpha: { strength: 7, dexterity: 6, constitution: 6, intelligence: 5, charisma: 6, wisdom: 5 },
+                advisor: { strength: 5, dexterity: 5, constitution: 5, intelligence: 6, charisma: 6, wisdom: 6 }
             };
             // which skills each rank is actually proficient in (ROLE_PROFICIENCIES);
             // the skill roll is biased toward these so a hunter rolls hunting, a
@@ -418,16 +421,16 @@
                 'medic': ['herblore', 'medicine'], 'medic apprentice': ['medicine'],
                 'caretaker': ['persuasion', 'medicine'],
                 'diplomat': ['persuasion', 'intimidation'], 'elder': ['medicine', 'herblore'],
-                'lowbelly': ['stealth', 'survival'], 'bog-born': ['survival', 'herblore'], 'drown-sick oracle': ['medicine', 'herblore'],
-                'rogue': ['survival', 'stealth', 'hunting'], 'loner': ['survival', 'stealth', 'hunting'],
+                'lowbelly': ['stealth', 'persuasion'], 'bog-born': ['survival', 'herblore'], 'drown-sick oracle': ['stealth', 'tracking'],
+                'rogue': ['stealth', 'tracking'], 'loner': ['stealth', 'tracking'],
                 'alpha': ['intimidation', 'persuasion'], "alpha's guard / advisor": ['intimidation', 'tracking']
             };
             // which attribute governs each skill (the d20 + attribute modifier system);
             // a rolled skill nudges its attribute up, a weakness nudges its attribute
             // down, so the numbers agree with the words.
             const SKILL_ATTR = {
-                hunting: ['strength', 'dexterity', 'wisdom'], stealth: ['dexterity'], tracking: ['wisdom', 'survival'],
-                herblore: ['intelligence'], survival: ['survival', 'strength'], medicine: ['wisdom'],
+                hunting: ['strength', 'dexterity', 'wisdom'], stealth: ['dexterity'], tracking: ['wisdom', 'constitution'],
+                herblore: ['intelligence'], survival: ['constitution', 'strength'], medicine: ['wisdom'],
                 intimidation: ['charisma'], persuasion: ['charisma']
             };
             const FUR = ['black','charcoal grey','wolf-grey','pale silver','brown','tawny','red-brown','rust','cream','off-white','sable (brown and black)','blue-grey (dilute)','bone-pale (albino)','all-black (melanistic)','washed-out and muddy'];
@@ -469,10 +472,10 @@
                 { text: 'small; easily overpowered', attr: 'strength', mod: -2 },
                 { text: 'freezes up under grief', attr: 'wisdom', mod: -1 },
                 { text: 'reckless; charges into fights', attr: 'wisdom', mod: -1 },
-                { text: 'cannot swim', attr: 'survival', mod: -2 },
-                { text: 'brittle, easily-broken bones', attr: 'survival', mod: -2 },
+                { text: 'cannot swim', attr: 'constitution', mod: -2 },
+                { text: 'brittle, easily-broken bones', attr: 'constitution', mod: -2 },
                 { text: 'soft-hearted; will not make a kill', attr: 'charisma', mod: -1 },
-                { text: 'a lingering cough that flares in the cold', attr: 'survival', mod: -1 },
+                { text: 'a lingering cough that flares in the cold', attr: 'constitution', mod: -1 },
                 { text: 'haunted by a past death; nightmares', attr: 'wisdom', mod: -1 },
                 { text: 'deaf on one side', attr: 'wisdom', mod: -1 }
             ];
@@ -565,17 +568,30 @@
             // juvenile 6 to 24, adult 24 to 59, elder 60+. these bands are converted
             // to years for readability but the boundaries match the bot's, not a
             // rounder-sounding guess.
-            function genAge() {
-                const bands = [
-                    ['~13 moons, 1 year (juvenile; apprentice ranks only)', 3],
-                    ['~26 moons, 2 years (young adult)', 20],
-                    ['~36 moons, 3 years (adult, in their prime)', 22],
-                    ['~48 moons, 4 years (adult)', 20],
-                    ['~58 moons, nearly 5 years (adult, on the edge of elder)', 12],
-                    ['~66 moons, 5.5 years (elder)', 10],
-                    ['~84 moons, 7 years (elder)', 7],
-                    ['~108 moons, 9 years (elder, rare and respected)', 4]
-                ];
+            const AGE_BANDS = [
+                ['~13 moons, 1 year (juvenile)', 3],
+                ['~26 moons, 2 years (young adult)', 20],
+                ['~36 moons, 3 years (adult, in their prime)', 22],
+                ['~48 moons, 4 years (adult)', 20],
+                ['~58 moons, nearly 5 years (adult, on the edge of elder)', 12],
+                ['~66 moons, 5.5 years (elder)', 10],
+                ['~84 moons, 7 years (elder)', 7],
+                ['~108 moons, 9 years (elder, rare and respected)', 4]
+            ];
+            // apprentice ranks are juvenile by definition, so they only ever roll
+            // that one band; the elder rank only rolls the elder bands; alpha,
+            // advisor, and diplomat skew older since those seats aren't handed to
+            // brand-new wolves; everything else rolls the ordinary adult spread.
+            // matches the rank so a hunter apprentice doesn't come out a 9 year
+            // elder, or an elder come out barely grown.
+            function ageBandsForRank(rank) {
+                if (/apprentice$/.test(rank || '')) return [AGE_BANDS[0]];
+                if (rank === 'elder') return AGE_BANDS.slice(5);
+                if (rank === 'alpha' || rank === "alpha's guard / advisor" || rank === 'diplomat') return AGE_BANDS.slice(2, 7);
+                return AGE_BANDS.slice(1, 5);
+            }
+            function genAge(rank) {
+                const bands = ageBandsForRank(rank);
                 let total = bands.reduce((s, b) => s + b[1], 0), r = Math.random() * total;
                 for (const b of bands) { if ((r -= b[1]) <= 0) return b[0]; }
                 return bands[0][0];
@@ -584,7 +600,7 @@
             // spread in the rank's archetype proportions (ROLE_BASE), then nudged so a
             // rolled skill raises its governing attribute and a weakness lowers its
             // attribute; the total stays inside the rank's range either way.
-            const STAT_KEYS = ['strength', 'dexterity', 'survival', 'intelligence', 'charisma', 'wisdom'];
+            const STAT_KEYS = ['strength', 'dexterity', 'constitution', 'intelligence', 'charisma', 'wisdom'];
             function fixTotal(v, target) {
                 let sum = STAT_KEYS.reduce((s, k) => s + v[k], 0), guard = 0;
                 while (sum !== target && guard++ < 300) {
@@ -607,7 +623,7 @@
             function genStats(rank) {
                 const range = RANK_RANGE[rank] || [15, 20];
                 const total = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
-                const shape = ROLE_BASE[ROLE_KEY[rank] || 'rogue'] || { strength: 5, dexterity: 5, survival: 5, intelligence: 5, charisma: 5, wisdom: 5 };
+                const shape = ROLE_BASE[ROLE_KEY[rank] || 'rogue'] || { strength: 5, dexterity: 5, constitution: 5, intelligence: 5, charisma: 5, wisdom: 5 };
                 const shapeSum = STAT_KEYS.reduce((s, k) => s + shape[k], 0);
                 const v = {};
                 STAT_KEYS.forEach(k => { v[k] = Math.max(1, Math.round(total * shape[k] / shapeSum)); });
@@ -637,7 +653,7 @@
                 name: () => genName(packSel),
                 pack: () => { C._packKey = resolvedPack(); return PACK_LABEL[C._packKey]; },
                 rank: () => pick(RANKS[C._packKey || 'loner'] || RANKS.loner),
-                age: () => genAge(),
+                age: () => genAge(C.rank),
                 sexuality: () => pick(SEX),
                 gender: () => { const g = pick(GENDER); return g[0] + ', ' + g[1]; },
                 fur: () => pick(FUR), bodyBuild: () => pick(BUILD), eyes: () => pick(EYES), marks: () => pick(MARKS),
@@ -662,7 +678,7 @@
                 C = {};
                 C.pack = GEN.pack();      // sets _packKey first
                 C.name = GEN.name();
-                C.rank = GEN.rank();      // sets rank before stats, so stats use its real range
+                C.rank = GEN.rank();      // sets rank before age/stats, so both use its real range
                 C.age = GEN.age();
                 C.sexuality = GEN.sexuality();
                 C.gender = GEN.gender();
@@ -678,9 +694,9 @@
             }
 
             function reroll(field) {
-                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
+                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); C.age = GEN.age(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
                 else if (field === 'name') C.name = GEN.name();
-                else if (field === 'rank') { C.rank = GEN.rank(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
+                else if (field === 'rank') { C.rank = GEN.rank(); C.age = GEN.age(); C.skills = GEN.skills(); C.stats = GEN.stats(); }
                 else if (field === 'age') C.age = GEN.age();
                 else if (field === 'sexuality') C.sexuality = GEN.sexuality();
                 else if (field === 'gender') C.gender = GEN.gender();
@@ -746,11 +762,11 @@
                     '<div class="stat-grid">' +
                     '<span class="stat-cell"><b>str</b> ' + st.strength + '</span>' +
                     '<span class="stat-cell"><b>dex</b> ' + st.dexterity + '</span>' +
-                    '<span class="stat-cell"><b>sur</b> ' + st.survival + '</span>' +
+                    '<span class="stat-cell"><b>con</b> ' + st.constitution + '</span>' +
                     '<span class="stat-cell"><b>int</b> ' + st.intelligence + '</span>' +
                     '<span class="stat-cell"><b>cha</b> ' + st.charisma + '</span>' +
                     '<span class="stat-cell"><b>wis</b> ' + st.wisdom + '</span></div>' +
-                    '<span class="sheet-note">1 to 10, total ' + st._total + ' (real range for ' + esc(s.rank) + ': ' + st._range[0] + ' to ' + st._range[1] + '); shift points to taste, then set them with /rpg action:setstats. survival is the attribute (governs endurance, foraging, resisting poison/disease); there is also a separate survival skill built on it.</span></div>';
+                    '<span class="sheet-note">1 to 10, total ' + st._total + ' (real range for ' + esc(s.rank) + ': ' + st._range[0] + ' to ' + st._range[1] + '); shift points to taste, then set them with /rpg action:setstats. constitution is the attribute (governs endurance, foraging, resisting poison/disease); survival is a separate skill built on it, not the same thing.</span></div>';
 
                 html += '<div class="sheet-block">' + row('maw-belief', s.mawBelief, 'mawBelief') + '</div>';
                 html += '<div class="sheet-block">' + row('other', s.other, 'other') + '</div>';
@@ -792,7 +808,7 @@
                     '**statistics**',
                     'strength: ' + s.stats.strength,
                     'dexterity: ' + s.stats.dexterity,
-                    'survival (constitution): ' + s.stats.survival,
+                    'constitution: ' + s.stats.constitution,
                     'intelligence: ' + s.stats.intelligence,
                     'charisma: ' + s.stats.charisma,
                     'wisdom: ' + s.stats.wisdom,
