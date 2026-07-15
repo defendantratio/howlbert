@@ -1631,6 +1631,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
     if "ic_location" not in user_cols_late:
         conn.execute("ALTER TABLE users ADD COLUMN ic_location TEXT")
+    for _appearance_col in ("fur_color", "eye_color", "markings"):
+        if _appearance_col not in user_cols_late:
+            conn.execute(f"ALTER TABLE users ADD COLUMN {_appearance_col} TEXT")
     if "dormant" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN dormant INTEGER NOT NULL DEFAULT 0"
@@ -3619,16 +3622,39 @@ def get_active_wolf_id(discord_id: int) -> int | None:
 # --- Wolf identity (avatar / bio / pronouns) and message proxying ---
 
 _IDENTITY_FIELDS = frozenset(
-    {"avatar_url", "pronouns", "ref_image_url", "bio", "birthday"}
+    {
+        "avatar_url", "pronouns", "ref_image_url", "bio", "birthday",
+        "fur_color", "eye_color", "markings",
+    }
 )
 
 
 def set_wolf_identity(wolf_id: int, **fields) -> None:
-    """Update a wolf's RP identity fields (avatar, bio, pronouns, ref image, birthday)."""
+    """Update a wolf's RP identity fields (avatar, bio, pronouns, ref image, birthday,
+    fur/eye color, build, markings)."""
     clean = {k: v for k, v in fields.items() if k in _IDENTITY_FIELDS}
     if not clean or not wolf_id:
         return
     update_user_by_id(wolf_id, **clean)
+
+
+def set_character_lore_fields(wolf_id: int, **fields: str) -> None:
+    """Merge new values into a wolf's `character_lore` JSON blob (appearance,
+    personality, backstory, family_ties, rp_sample, open_plots), keeping any
+    existing fields not being overwritten."""
+    from engine.character_lore import LORE_FIELDS, encode_character_lore, parse_character_lore
+
+    clean = {k: v for k, v in fields.items() if k in LORE_FIELDS and v}
+    if not clean or not wolf_id:
+        return
+    with get_db() as conn:
+        row = conn.execute("SELECT character_lore FROM users WHERE id = ?", (wolf_id,)).fetchone()
+        existing = parse_character_lore(row["character_lore"] if row else None) or {}
+        existing.update(clean)
+        conn.execute(
+            "UPDATE users SET character_lore = ? WHERE id = ?",
+            (encode_character_lore(**existing), wolf_id),
+        )
 
 
 def set_wolf_avatar_cache(wolf_id: int, image_bytes: bytes | None, *, url: str | None = None) -> None:

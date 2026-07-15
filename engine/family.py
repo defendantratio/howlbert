@@ -183,6 +183,32 @@ def generate_pup_stats(mother, father) -> dict:
     return stats
 
 
+def inherit_pup_appearance(mother, father) -> dict:
+    """A pup's coat/eye color leans on a parent's, when either parent has one
+    set; picks one parent's value rather than blending text, since there's no
+    sensible way to average "charcoal grey" and "rust" into a real color. a
+    pup with neither parent's fields set just gets nothing, same as any other
+    optional field. build and markings are left to the player: build changes
+    with how the pup actually grows, and markings are as often earned (scars)
+    as congenital, so they aren't a clean genetic roll the way coat/eye color
+    are."""
+    fields: dict[str, str] = {}
+    for key in ("fur_color", "eye_color"):
+        candidates = []
+        for parent in (mother, father):
+            if not parent:
+                continue
+            try:
+                value = parent[key] if key in parent.keys() else None
+            except (KeyError, TypeError):
+                value = None
+            if value:
+                candidates.append(value)
+        if candidates:
+            fields[key] = random.choice(candidates)
+    return fields
+
+
 def inherit_parent_skill_trait(pup_id: int, mother, father) -> str | None:
     """
     A small chance for a pup to start with a one-rank head start in

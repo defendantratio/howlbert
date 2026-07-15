@@ -3217,6 +3217,48 @@ def ensure_traits_dict(traits: dict | None) -> dict:
     return out
 
 
+def set_registration_traits(
+    wolf_id: int,
+    *,
+    skill_key: str | None = None,
+    skill_bonus: int = 1,
+    weakness_attr_key: str | None = None,
+    weakness_penalty: int = -1,
+) -> None:
+    """One-time, player-picked starting trait pair from /register: a skill
+    bonus (0 to 5) and/or an attribute weakness (-5 to 0). Mechanically
+    identical to a lore trait (unearned, uncapped by the XP trait system,
+    picked up automatically by trait_check_adjustments on every real roll);
+    not tied to XP spend."""
+    import database as db
+    from rpg_rules import SKILLS
+
+    skill_bonus = max(0, min(5, int(skill_bonus)))
+    weakness_penalty = max(-5, min(0, int(weakness_penalty)))
+    if not wolf_id or (not skill_key and not weakness_attr_key):
+        return
+    fresh = db.get_user_by_id(wolf_id)
+    traits = ensure_traits_dict(parse_character_traits(fresh["character_traits"] if fresh and "character_traits" in fresh.keys() else None))
+    if skill_key and skill_key in SKILLS and skill_bonus:
+        attr_keys, label = SKILLS[skill_key]
+        traits["bonuses"].append({
+            "name": f"{label} (starting trait)",
+            "modifier": skill_bonus,
+            "skills": [skill_key],
+            "attrs": list(attr_keys),
+            "earned": False,
+        })
+    if weakness_attr_key and weakness_penalty:
+        traits["weaknesses"].append({
+            "name": f"{weakness_attr_key.replace('attr_', '').title()} (starting weakness)",
+            "modifier": weakness_penalty,
+            "skills": [],
+            "attrs": [weakness_attr_key],
+            "earned": False,
+        })
+    db.update_user_by_id(wolf_id, character_traits=encode_character_traits(traits))
+
+
 def _earned_traits_for_skill(traits: dict, skill_key: str, *, group: str) -> list[dict]:
     matches: list[dict] = []
     for trait in traits.get(group, []):

@@ -242,10 +242,18 @@
                     and backstory, are yours to write: expand the appearance to 2 to 3 sentences, turn
                     the traits into a paragraph or two, and grow the backstory seed into at least three
                     paragraphs covering your origin, the wound that shaped you, your stance toward the
-                    maw, and a brush with the twolegs. the stats are a fair starting spread (all sixes
-                    average out to a plain wolf); shift points to fit the character, then set them in
-                    the bot. when it's ready, submit it for approval and
-                    <span style="color:var(--maw); font-weight:700;">/register</span>.
+                    maw, and a brush with the twolegs. the stats are rolled inside the real range for
+                    your rank; shift points to fit the character, then set them with
+                    <span style="color:var(--maw); font-weight:700;">/rpg action:setstats</span>.
+                </p>
+                <p>
+                    <span style="color:var(--maw); font-weight:700;">/register</span> now genuinely
+                    takes appearance directly: fur_color, eye_color, and markings are short fields
+                    that show on /profile and get passed down to any pups this wolf has later;
+                    appearance, backstory, and rp_sample are longer prose fields that show on
+                    /profile sheet:true. all six are optional at registration and can be set or
+                    changed anytime after with /character. a genetic condition, if you rolled one
+                    above, goes in the separate genetic: field, not appearance.
                 </p>
             </section>
 
@@ -331,25 +339,107 @@
                 thistlehide: 'thistlehide (forest)', silverrush: 'silverrush (river)',
                 loner: 'loner / rogue (no pack)'
             };
-            // entry ranks a new wolf can plausibly hold; leadership (alpha, advisor,
-            // diplomat) is earned in play, so it is never rolled here.
+            // entry ranks first, weighted heavier (listed more than once) since
+            // that's what most new wolves actually roll as; leadership (alpha,
+            // advisor, diplomat, elder) can genuinely be chosen at registration
+            // too, so it's included, just rare in the roll since most new
+            // characters aren't leaders. alpha and alpha's guard / advisor are
+            // capped at one seat per pack (0/1), so check the open roles list
+            // before registering as one; if it's taken, reroll or pick another
+            // rank. lowbelly is a greyspire-only rank; bog-born and drown-sick
+            // oracle are mistmoor-only (matches the real server role list, not
+            // just flavor).
             const RANKS = {
-                greyspire: ['hunter','scout','forager','guard','caretaker','hunter apprentice','scout apprentice','medic apprentice'],
-                mistmoor: ['hunter','scout','forager','guard','medic','lowbelly','bog-born','medic apprentice'],
-                thistlehide: ['hunter','scout','forager','medic','caretaker','medic apprentice','forager apprentice'],
-                silverrush: ['hunter','scout','forager','guard','medic','caretaker','scout apprentice'],
-                loner: ['rogue','loner','wanderer','drifter']
+                greyspire: ['hunter','hunter','scout','scout','forager','forager','guard','guard','caretaker','lowbelly','hunter apprentice','scout apprentice','medic apprentice','diplomat','elder','alpha','alpha\'s guard / advisor'],
+                mistmoor: ['hunter','hunter','scout','scout','forager','forager','guard','guard','medic','medic','bog-born','drown-sick oracle','medic apprentice','diplomat','elder','alpha','alpha\'s guard / advisor'],
+                thistlehide: ['hunter','hunter','scout','scout','forager','forager','medic','medic','caretaker','caretaker','medic apprentice','forager apprentice','diplomat','elder','alpha','alpha\'s guard / advisor'],
+                silverrush: ['hunter','hunter','scout','scout','forager','forager','guard','guard','medic','medic','caretaker','scout apprentice','diplomat','elder','alpha','alpha\'s guard / advisor'],
+                loner: ['rogue','rogue','rogue','loner']
+            };
+            // real per-rank attribute-point ranges, straight from rpg_rules.py's
+            // ROLE_ATTRIBUTE_RANGES; stats are rolled inside these, not a flat 30.
+            const RANK_RANGE = {
+                hunter: [16, 20], 'hunter apprentice': [14, 18],
+                scout: [16, 20], 'scout apprentice': [14, 18],
+                forager: [15, 20], 'forager apprentice': [13, 17],
+                guard: [18, 22],
+                medic: [20, 25], 'medic apprentice': [16, 20],
+                caretaker: [12, 18], 'caretaker apprentice': [10, 16],
+                lowbelly: [12, 18], 'bog-born': [15, 20], 'drown-sick oracle': [12, 18],
+                rogue: [15, 20], loner: [15, 20],
+                diplomat: [15, 20], elder: [15, 20],
+                alpha: [30, 35], 'alpha\'s guard / advisor': [27, 32]
             };
             const FUR = ['black','charcoal grey','wolf-grey','pale silver','brown','tawny','red-brown','rust','cream','off-white','sable (brown and black)','blue-grey (dilute)','bone-pale (albino)','all-black (melanistic)','washed-out and muddy'];
             const BUILD = ['small and wiry','lean and rangy','average, unremarkable','tall and long-legged','heavy and thickset','broad and powerful','gaunt, all ribs and sinew','compact and low'];
-            const EYES = ['amber','gold','yellow','pale ice-yellow','warm brown','muddy brown','green','muted blue','one blue and one amber (heterochromia)','milky and blind in one eye','pink-red (albino)'];
+            const EYES = ['amber eyes','gold eyes','yellow eyes','pale ice-yellow eyes','warm brown eyes','muddy brown eyes','green eyes','muted blue eyes','one blue and one amber eye (heterochromia)','milky and blind in one eye','pink-red eyes (albino)'];
             const MARKS = ['a pale saddle down the back','a dark mask over the eyes','white socks and a white chest blaze','a torn, notched ear','a long scar across the muzzle','a grizzled, greying muzzle','flecked, grizzled fur','a missing tail','a foreleg that ends in a stump','a twisted, mis-set hindleg','a raw, hairless patch on one flank','no notable marks yet'];
             const TRAITS = ['reckless','distrustful','fiercely loyal','cold','tender','volatile','obsessive','patient','proud','cowardly','curious','cruel','gentle','superstitious','restless','stoic','playful','vengeful','secretive','devout','cynical','protective','ambitious','soft-spoken','quick-tempered','watchful'];
-            const SKILLS = ['hunting: expert tracker','hunting: fast, poor endurance','fighting: strong bite, weak defence','fighting: quick and evasive','herbal knowledge: basic','herbal knowledge: skilled healer','swimming: strong in water','stealth: moves unseen','endurance: tireless on long marches','climbing: sure-footed on rock','scenting: an unusually sharp nose','fishing: patient at the water','survival: reads weather and land well','memory: keeps the pack’s history'];
-            const WEAKNESSES = ['an old leg injury; slow to run','a deep fear of fire','trusts far too easily','poor eyesight in low light','a quick, dangerous temper','small; easily overpowered','freezes up under grief','reckless; charges into fights','cannot swim','brittle, easily-broken bones','soft-hearted; will not make a kill','a lingering cough that flares in the cold','haunted by a past death; nightmares','deaf on one side'];
-            const MAWBELIEF = ['orthodox — every illness is the maw eating, and that is right','doubter — prays anyway, in case','heretic — the maw is only rot with a name','zealot — burns to serve the maw, loudly','agnostic — the maw can wait; there is hunting to do'];
+            // skills carry a real skill name (herblore, hunting, stealth, tracking,
+            // intimidation, persuasion, survival, medicine) and a flavor modifier;
+            // weaknesses carry a real attribute name and a negative one. these mirror
+            // the actual d20 + attribute modifier + skill proficiency system, they
+            // aren't invented numbers.
+            const SKILLS = [
+                { text: 'hunting: expert tracker', skill: 'hunting', mod: 2 },
+                { text: 'hunting: fast, poor endurance', skill: 'hunting', mod: 1 },
+                { text: 'fighting: strong bite, weak defence', skill: 'hunting', mod: 1 },
+                { text: 'fighting: quick and evasive', skill: 'stealth', mod: 1 },
+                { text: 'herbal knowledge: basic', skill: 'herblore', mod: 1 },
+                { text: 'herbal knowledge: skilled healer', skill: 'herblore', mod: 3 },
+                { text: 'swimming: strong in water', skill: 'survival', mod: 1 },
+                { text: 'stealth: moves unseen', skill: 'stealth', mod: 2 },
+                { text: 'endurance: tireless on long marches', skill: 'survival', mod: 2 },
+                { text: 'climbing: sure-footed on rock', skill: 'survival', mod: 1 },
+                { text: 'scenting: an unusually sharp nose', skill: 'tracking', mod: 2 },
+                { text: 'fishing: patient at the water', skill: 'survival', mod: 1 },
+                { text: 'survival: reads weather and land well', skill: 'survival', mod: 2 },
+                { text: 'memory: keeps the pack’s history', skill: 'persuasion', mod: 1 }
+            ];
+            const WEAKNESSES = [
+                { text: 'an old leg injury; slow to run', attr: 'dexterity', mod: -2 },
+                { text: 'a deep fear of fire', attr: 'wisdom', mod: -1 },
+                { text: 'trusts far too easily', attr: 'wisdom', mod: -1 },
+                { text: 'poor eyesight in low light', attr: 'wisdom', mod: -1 },
+                { text: 'a quick, dangerous temper', attr: 'charisma', mod: -1 },
+                { text: 'small; easily overpowered', attr: 'strength', mod: -2 },
+                { text: 'freezes up under grief', attr: 'wisdom', mod: -1 },
+                { text: 'reckless; charges into fights', attr: 'wisdom', mod: -1 },
+                { text: 'cannot swim', attr: 'survival', mod: -2 },
+                { text: 'brittle, easily-broken bones', attr: 'survival', mod: -2 },
+                { text: 'soft-hearted; will not make a kill', attr: 'charisma', mod: -1 },
+                { text: 'a lingering cough that flares in the cold', attr: 'survival', mod: -1 },
+                { text: 'haunted by a past death; nightmares', attr: 'wisdom', mod: -1 },
+                { text: 'deaf on one side', attr: 'wisdom', mod: -1 }
+            ];
+            const MAWBELIEF = ['orthodox — every illness is the maw eating, and that is right','orthodox (pragmatic) — the faith is true, but hunting still comes first','doubter — prays anyway, in case','heretic — the maw is only rot with a name','zealot — burns to serve the maw, loudly','agnostic — the maw can wait; there is hunting to do','atheist — there is no maw, only weather and bad luck'];
+            // real /register genetic conditions a wolf can actually be born with and
+            // choose at registration (engine/genetics.py's REGISTERABLE_GENETIC); the
+            // rest only ever appear at birth and are never player-chosen. most rolled
+            // wolves get none at all, matching how rare these are in play.
+            const GENETIC = [
+                { label: 'none', tag: null },
+                { label: 'none', tag: null },
+                { label: 'none', tag: null },
+                { label: 'none', tag: null },
+                { label: 'blindness', tag: 'blind' },
+                { label: 'partial blindness (hereditary cataracts)', tag: 'half_blind' },
+                { label: 'deafness', tag: 'deaf' },
+                { label: 'flat-skull (brachycephaly)', tag: 'brachy' },
+                { label: 'pale-hide (albinism)', tag: 'albino' },
+                { label: 'shadow-hide (melanism)', tag: 'melanistic' },
+                { label: 'missing a foreleg', tag: 'foreleg' },
+                { label: 'missing a hindleg', tag: 'hindleg' },
+                { label: 'missing tail', tag: 'no_tail' },
+                { label: 'muteness', tag: 'mute' },
+                { label: 'spine-twist (lstv)', tag: 'lumbosacral' },
+                { label: 'back-rot (spinal arthritis)', tag: 'arthritis_spinal' },
+                { label: 'thin-blood (inbreeding depression)', tag: 'inbreeding' },
+                { label: 'racing-mind (adhd-like)', tag: 'adhd' },
+                { label: 'still-mind (autism-like)', tag: 'autism' }
+            ];
             const SEX = ['straight','gay','bisexual','pansexual','asexual','aromantic','unlabelled'];
-            const GENDER = [['female','she/her'],['male','he/him'],['nonbinary','they/them'],['male','he/they'],['female','she/they']];
+            const GENDER = [['female','she/her'],['male','he/him'],['nonbinary','they/them'],['male','he/they'],['female','she/they'],['nonbinary','ey/em'],['nonbinary','fae/faer'],['nonbinary','xe/xem'],['nonbinary','it/its'],['nonbinary','ze/zir']];
             const OTHER = ['a sibling somewhere in a rival pack','an unpaid blood debt following them','hunting for the wolf who scarred them','hiding the truth of their parentage','a secret bond across an enemy border','wants a rank they have not yet earned','carrying a dead friend’s last request','nothing yet — wide open to plots','a prophecy spoken over them at birth','a name they were given, and a name they hide'];
 
             // backstory seed pools (shared with the standalone seed generator)
@@ -407,19 +497,43 @@
             const HUMANS = ['never seen a twoleg, only their leavings and their traps','caught in a twoleg trap once, and carries the scar','watches twolegs from the treeline; gods or monsters, can’t say','a twoleg spared them once, and they never understood why','the twolegs took someone from them','has eaten from a twoleg’s leavings when hunting failed','fears the poisoned water they pour into the river upstream','thinks the stories are exaggerated; a twoleg is just another animal'];
 
             // ---- age / stats ----
+            // real life stages are moons-based (engine/aging.py): pup under 6 moons,
+            // juvenile 6 to 24, adult 24 to 59, elder 60+. these bands are converted
+            // to years for readability but the boundaries match the bot's, not a
+            // rounder-sounding guess.
             function genAge() {
-                const bands = [['2 years (young adult)',20],['3 years (adult, in their prime)',22],['4 years (adult)',20],['5 years (adult)',14],['6 years (older adult)',10],['7 years (older adult)',7],['9 years (elder, rare and respected)',4],['1 year (barely grown; low ranks only)',3]];
+                const bands = [
+                    ['~13 moons, 1 year (juvenile; apprentice ranks only)', 3],
+                    ['~26 moons, 2 years (young adult)', 20],
+                    ['~36 moons, 3 years (adult, in their prime)', 22],
+                    ['~48 moons, 4 years (adult)', 20],
+                    ['~58 moons, nearly 5 years (adult, on the edge of elder)', 12],
+                    ['~66 moons, 5.5 years (elder)', 10],
+                    ['~84 moons, 7 years (elder)', 7],
+                    ['~108 moons, 9 years (elder, rare and respected)', 4]
+                ];
                 let total = bands.reduce((s, b) => s + b[1], 0), r = Math.random() * total;
                 for (const b of bands) { if ((r -= b[1]) <= 0) return b[0]; }
                 return bands[0][0];
             }
-            function genStats() {
-                const keys = ['strength','dexterity','constitution','intelligence','charisma','wisdom'];
-                const v = {}; keys.forEach(k => v[k] = 5);
-                for (let i = 0; i < 12; i++) {
+            // stats are rolled inside the rolled rank's real point range (see
+            // RANK_RANGE above), not a flat sum of 30 for every wolf; an alpha and a
+            // caretaker are not built the same way in the actual bot.
+            function genStats(rank) {
+                const range = RANK_RANGE[rank] || [15, 20];
+                const total = range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+                const keys = ['strength', 'dexterity', 'survival', 'intelligence', 'charisma', 'wisdom'];
+                const base = Math.floor(total / 6);
+                let remainder = total - base * 6;
+                const v = {}; keys.forEach(k => v[k] = Math.max(1, base));
+                // hand out the remainder, then jitter a bit so it isn't perfectly flat
+                const order = pickN(keys, keys.length);
+                for (let i = 0; i < remainder; i++) v[order[i % order.length]]++;
+                for (let i = 0; i < 6; i++) {
                     const from = pick(keys), to = pick(keys);
-                    if (from !== to && v[from] > 2 && v[to] < 9) { v[from]--; v[to]++; }
+                    if (from !== to && v[from] > 1 && v[to] < 10) { v[from]--; v[to]++; }
                 }
+                v._total = total; v._range = range;
                 return v;
             }
 
@@ -441,7 +555,14 @@
                 mawBelief: () => pick(MAWBELIEF),
                 skills: () => pickN(SKILLS, 3),
                 weaknesses: () => pickN(WEAKNESSES, 2 + Math.floor(Math.random() * 2)),
-                stats: () => genStats(),
+                stats: () => genStats(C.rank),
+                genetic: () => {
+                    // most rolled wolves have nothing; the odds of any single condition
+                    // are deliberately low, matching how rare these are in play.
+                    if (Math.random() < 0.78) return { label: 'none', tag: null };
+                    const pool = GENETIC.filter(g => g.tag);
+                    return pick(pool);
+                },
                 other: () => pick(OTHER)
             };
 
@@ -450,7 +571,7 @@
                 C = {};
                 C.pack = GEN.pack();      // sets _packKey first
                 C.name = GEN.name();
-                C.rank = GEN.rank();
+                C.rank = GEN.rank();      // sets rank before stats, so stats use its real range
                 C.age = GEN.age();
                 C.sexuality = GEN.sexuality();
                 C.gender = GEN.gender();
@@ -460,14 +581,15 @@
                 C.mawBelief = GEN.mawBelief();
                 C.skills = GEN.skills(); C.weaknesses = GEN.weaknesses();
                 C.stats = GEN.stats();
+                C.genetic = GEN.genetic();
                 C.other = GEN.other();
                 render();
             }
 
             function reroll(field) {
-                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); }
+                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); C.stats = GEN.stats(); }
                 else if (field === 'name') C.name = GEN.name();
-                else if (field === 'rank') C.rank = GEN.rank();
+                else if (field === 'rank') { C.rank = GEN.rank(); C.stats = GEN.stats(); }
                 else if (field === 'age') C.age = GEN.age();
                 else if (field === 'sexuality') C.sexuality = GEN.sexuality();
                 else if (field === 'gender') C.gender = GEN.gender();
@@ -477,7 +599,8 @@
                 else if (field === 'mawBelief') C.mawBelief = GEN.mawBelief();
                 else if (field === 'skills') C.skills = GEN.skills();
                 else if (field === 'weaknesses') C.weaknesses = GEN.weaknesses();
-                else if (field === 'stats') C.stats = GEN.stats();
+                else if (field === 'stats') C.stats = GEN.stats(C.rank);
+                else if (field === 'genetic') C.genetic = GEN.genetic();
                 else if (field === 'other') C.other = GEN.other();
                 render();
             }
@@ -491,7 +614,7 @@
             }
 
             function render() {
-                const s = C, appearance = s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ' eyes, ' + s.marks;
+                const s = C, appearance = s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ', ' + s.marks;
                 let html = '';
                 html += '<div class="sheet-block">' +
                     row('name', s.name, 'name') + row('pack', s.pack, 'pack') + row('rank', s.rank, 'rank') +
@@ -499,7 +622,12 @@
                     row('gender / pronouns', s.gender, 'gender') + '</div>';
 
                 html += '<div class="sheet-block">' + row('appearance', appearance, 'appearance') +
-                    '<span class="sheet-note">a starter: expand to 2 to 3 sentences of your own.</span></div>';
+                    '<span class="sheet-note">a starter: expand to 2 to 3 sentences of your own, then split it across /register\'s real fields; fur_color, eye_color, and markings are short and get inherited by pups, the fuller prose goes in appearance.</span></div>';
+
+                html += '<div class="sheet-block">' + row('genetic condition', s.genetic.label, 'genetic') +
+                    (s.genetic.tag
+                        ? '<span class="sheet-note">a real, registerable condition; use genetic:' + esc(s.genetic.tag) + ' on /register if you keep it.</span>'
+                        : '<span class="sheet-note">most wolves roll none; these are rare and optional, separate from appearance.</span>') + '</div>';
 
                 html += '<div class="sheet-block">' + row('personality', s.traits, 'traits') +
                     '<span class="sheet-note">3 to 5 traits; expand into 1 to 2 paragraphs.</span></div>';
@@ -513,11 +641,13 @@
 
                 html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">skills</span>' +
                     '<span class="sheet-val"></span><button class="reroll" type="button" onclick="__rerollCG(\'skills\')">↻</button></div>' +
-                    '<ul class="sheet-ul">' + s.skills.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+                    '<ul class="sheet-ul">' + s.skills.map(x => '<li>' + esc(x.text) + ' (+' + x.mod + ' ' + x.skill + ')</li>').join('') + '</ul>' +
+                    '<span class="sheet-note">the modifier is a proficiency bonus on top of the attribute modifier; real skill checks work the same way.</span></div>';
 
                 html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">weaknesses</span>' +
                     '<span class="sheet-val"></span><button class="reroll" type="button" onclick="__rerollCG(\'weaknesses\')">↻</button></div>' +
-                    '<ul class="sheet-ul">' + s.weaknesses.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+                    '<ul class="sheet-ul">' + s.weaknesses.map(x => '<li>' + esc(x.text) + ' (' + x.mod + ' ' + x.attr + ')</li>').join('') + '</ul>' +
+                    '<span class="sheet-note">a note to roleplay by, not a rule the bot enforces; if you want it mechanical, reflect it by shifting a point out of that attribute when you set stats.</span></div>';
 
                 const st = s.stats;
                 html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">statistics</span>' +
@@ -525,11 +655,11 @@
                     '<div class="stat-grid">' +
                     '<span class="stat-cell"><b>str</b> ' + st.strength + '</span>' +
                     '<span class="stat-cell"><b>dex</b> ' + st.dexterity + '</span>' +
-                    '<span class="stat-cell"><b>con</b> ' + st.constitution + '</span>' +
+                    '<span class="stat-cell"><b>sur</b> ' + st.survival + '</span>' +
                     '<span class="stat-cell"><b>int</b> ' + st.intelligence + '</span>' +
                     '<span class="stat-cell"><b>cha</b> ' + st.charisma + '</span>' +
                     '<span class="stat-cell"><b>wis</b> ' + st.wisdom + '</span></div>' +
-                    '<span class="sheet-note">1 to 10, averaging 5 (total 30); shift points to taste, then set them in the bot. survival is a skill, not a stat.</span></div>';
+                    '<span class="sheet-note">1 to 10, total ' + st._total + ' (real range for ' + esc(s.rank) + ': ' + st._range[0] + ' to ' + st._range[1] + '); shift points to taste, then set them with /rpg action:setstats. survival is the attribute (governs endurance, foraging, resisting poison/disease); there is also a separate survival skill built on it.</span></div>';
 
                 html += '<div class="sheet-block">' + row('maw-belief', s.mawBelief, 'mawBelief') + '</div>';
                 html += '<div class="sheet-block">' + row('other', s.other, 'other') + '</div>';
@@ -549,7 +679,9 @@
                     '**gender/pronouns:** ' + s.gender,
                     '',
                     '**appearance:**',
-                    '(' + s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ' eyes, ' + s.marks + '. expand to 2-3 sentences.)',
+                    '(' + s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ', ' + s.marks + '. expand to 2-3 sentences.)',
+                    '',
+                    '**genetic condition:** ' + s.genetic.label + (s.genetic.tag ? ' (`genetic:' + s.genetic.tag + '` on /register)' : ' (none rolled; optional, most wolves have none)'),
                     '',
                     '**personality:** ' + s.traits,
                     '(expand into 1-2 paragraphs.)',
@@ -561,15 +693,15 @@
                     '- the twolegs: ' + s.human,
                     '',
                     '**skills:**',
-                    s.skills.map(x => '- ' + x).join('\n'),
+                    s.skills.map(x => '- ' + x.text + ' (+' + x.mod + ' ' + x.skill + ')').join('\n'),
                     '',
                     '**weaknesses:**',
-                    s.weaknesses.map(x => '- ' + x).join('\n'),
+                    s.weaknesses.map(x => '- ' + x.text + ' (' + x.mod + ' ' + x.attr + ')').join('\n'),
                     '',
                     '**statistics**',
                     'strength: ' + s.stats.strength,
                     'dexterity: ' + s.stats.dexterity,
-                    'constitution: ' + s.stats.constitution,
+                    'survival (constitution): ' + s.stats.survival,
                     'intelligence: ' + s.stats.intelligence,
                     'charisma: ' + s.stats.charisma,
                     'wisdom: ' + s.stats.wisdom,

@@ -1044,6 +1044,10 @@ class Life(commands.Cog):
                 continue
             stats = generate_pup_stats(user, father) if father else generate_pup_stats(user, user)
             pup_id = db.register_born_wolf(discord_id=user['discord_id'], wolf_name=pup_name, mother_wolf_id=user['id'], father_wolf_id=father_id, stats=stats, pack_id=user['pack_id'], great_pack=user['great_pack'], birth_sex=random_birth_sex(), genetic_conditions=encode_genetic_conditions(conditions), father_hidden=hide_father)
+            from engine.family import inherit_pup_appearance
+            appearance_fields = inherit_pup_appearance(user, father)
+            if appearance_fields:
+                db.set_wolf_identity(pup_id, **appearance_fields)
             if carriers:
                 db.update_user(user['discord_id'], wolf_id=pup_id, genetic_carriers=encode_genetic_conditions(carriers))
             born_pup_ids.append(pup_id)

@@ -19,7 +19,7 @@ every post should move someone one step along that funnel. if a post does not bu
 **the one principle that matters most: build the runway before i launch.**
 i already decided to open the kickstarter only after social reach exists. a kickstarter with no audience fails on day one; the algorithm and the "almost funded" psychology both need an existing crowd. so the first 6 to 8 weeks are pure audience building with zero asking. i don't mention the kickstarter until the runway is built.
 
-**what makes howlbert postable:** it is not a generic bot. the hooks are the brutal, specific mechanics (a broken jaw changes what i can eat; there is no cure for river rot; three failed death saves and the wolf is gone) and the emotional weight of a persistent wolf i can lose. lead with those, always.
+**what makes howlbert postable:** it is not a generic bot. the hooks are the brutal, specific mechanics (a broken jaw changes what i can eat; there is no cure for river rot; one failed death save and the wolf is gone) and the emotional weight of a persistent wolf i can lose. lead with those, always.
 
 **where i actually stand, read before the video sections:** i'm shy about performing on mic, and animal art isn't my strength yet, but i want to use this project as a reason to actually get better at both, in public, rather than avoid them. so the plan below shifts shape rather than dropping video entirely: **short-form (tiktok, reels) stays deprioritized** — that format lives and dies on a hook in the first two seconds, which is a bad fit for a slow, cozy world and a bad place to practice narration under pressure. **long-form, narrated youtube is a real second track instead**, forgiving of a rough take and a better match for this world's actual pacing. text-first channels (tumblr, bluesky, the directories and forums in sections 16-17) are still the fastest wins and still make up most of the runway, but see `docs/GROWTH_IDEAS.md`'s learn-in-public section for how the narration/art practice itself becomes postable content instead of something to hide until it's polished.
 
@@ -206,7 +206,7 @@ these platforms reach the most new people *in theory*, but per section 1, treat 
 - slow zoom; then: "if your words die before the third echo, the maw heard the lie."
 
 **type c: community moment (with permission).** a screenshot of a tense rp beat or a death-save success with captions that tell the story.
-- screenshot: vitals showing 2 failed death saves, 1 success.
+- screenshot: vitals showing 2 successful death saves, round 3 about to roll.
 - text: "this wolf had one sunrise left. the medic rolled high on stabilize."
 - cut: "he lived. barely."
 
@@ -240,8 +240,14 @@ this is the video format actually worth building toward, not short-form. long-fo
 
 **music, when going the no-narration route:** stick to sources with clear, current free-for-use licensing so a video doesn't eat a copyright claim.
 - **[youtube's own audio library](https://www.youtube.com/audiolibrary)** — free, built directly into youtube studio, zero attribution headaches since it's designed for exactly this.
-- **[pixabay music](https://pixabay.com/music/)** — free, no attribution required, searchable by mood (a good match for "atmospheric," "dark ambient," "folk").
-- **[incompetech](https://incompetech.com/)** (kevin macleod) — free with attribution, a long-standing, reliable standby for indie/hobby video.
+- **[pixabay music](https://pixabay.com/music/)** — free, no attribution required, searchable by mood (a good match for "atmospheric," "dark ambient," "folk"); pixabay's catalog rotates, so search "dark atmosphere ambient" or "ambient folk" fresh rather than relying on a fixed pick.
+- **[incompetech](https://incompetech.com/)** (kevin macleod) — free with attribution (name the track and "kevin macleod (incompetech.com)" in the description), a long-standing, reliable standby for indie/hobby video. specific tracks worth previewing for this video, pulled from incompetech's own catalog and roughly mapped to the script's beats (`incompetech.com/music/royalty-free/music.html`, filter by mood):
+  - **"loss"** — slow, piano-led, genuinely sad rather than spooky; strong fit for the 0:00–0:15 cold open and the 3:00–3:40 death beat.
+  - **"lasting hope"** — melancholy but not hopeless; fits 3:40–4:15 (who it's for, the found-family beat) better than something purely bleak.
+  - **"himalayan atmosphere"** — slow ambient drone, no percussion; good bed under 0:30–1:10 (world-building narration) where the voice needs room.
+  - **"hidden past"** — atmospheric with a little forward motion; a reasonable fit for 2:00–4:00 if the gameplay walkthrough needs something less static than a pure drone.
+  - **"land of phantoms"** — darker, more tension than grief; hold in reserve for a cut that leans harder into the horror side rather than the cozy-melancholy pitch section 1 argues for.
+  - avoid incompetech's horror-tagged tracks generally ("darkness is coming," "evil plan," "grim league," etc.) — they read as jump-scare horror, which fights the "dark cozy" positioning this whole plan is built around.
 - pick a mood that matches the world (slow, atmospheric, a little melancholy) over anything upbeat or trend-driven; the tone should match the "cozy, not attention-grabbing" pitch, not fight it.
 
 ---
@@ -254,7 +260,7 @@ the first video does two jobs at once, same as the first post in section 14: **h
 this is the version that does the most funnel work for the least production complexity: it's the youtube equivalent of the pinned first post, explaining the hook and the world in one sitting, and it doubles as the pinned video on the channel. narration can be a little rough — per section 1, that's the point early on, not a flaw to fix before posting.
 
 **2. write a short script before recording anything.** don't ad-lib the whole thing; a loose script keeps the take short and avoids the re-record spiral. rough beats, roughly timed:
-- **0:00 to 0:20 — the hook, cold open, no logo yet.** death is permanent, full stop, no exceptions: *"in howlbert, death is real. there is no cure for river rot. three failed death saves, and that wolf is gone. for good."* over an atmospheric screenshot or slow pan, not a talking head.
+- **0:00 to 0:20 — the hook, cold open, no logo yet.** death is permanent, full stop, no exceptions: *"in howlbert, death is real. there is no cure for river rot. one failed death save, and that wolf is gone. for good."* over an atmospheric screenshot or slow pan, not a talking head.
 - **0:20 to 0:40 — title card.** my existing logo/pfp, one line under it: "a discord wolf rp bot."
 - **0:40 to 2:00 — what the world is.** the caldera, the four packs, the maw, in the same voice as the tumblr lore posts (section 4 of the content pillars) — this can lean on the `docs/site/world.html` and `packs.html` text almost directly, since it's already written in the right voice.
 - **2:00 to 4:00 — what actually happens to a wolf.** walk through one full mechanic loop on screen: register, hunt, get hurt, treat the wound, survive (or don't). screen-recorded gameplay under the narration, not a talking head; this is the "prove it's real, not vaporware" beat from the kickstarter schedule (`docs/KICKSTARTER.md`), reused here for free.
@@ -307,7 +313,7 @@ this replaces the older devlog-tour script with a tighter, story-first cut: **on
 >
 > "here's how a life actually goes. you register a wolf and pick a pack — or walk alone as a loner. then you live: hunt, forage, hold territory, build bonds the bot actually remembers.
 >
-> and it's real. injuries and disease stack and they cost you — a sprained leg on the hunt, a broken jaw that changes what you can eat. there are no cooldowns telling you to come back tomorrow. every wound is a choice: treat it, or push on and hope.
+> and it's real. injuries and disease stack and they cost you — a sprained leg on the hunt, a broken jaw that changes what you can eat. almost nothing locks you out until tomorrow; it's energy that runs out, not a timer. every wound is a choice: treat it, or push on and hope.
 >
 > [name] pushed on. one winter, she didn't treat the wound in time."
 >
@@ -467,7 +473,7 @@ keep asking-fatigue down: for every campaign ask, still post a normal lore or me
 
 ## 14. my first post on each platform (in depth)
 
-my first post is the one every new visitor checks before deciding to follow, so it has to do two jobs at once: **hook** (make the world feel real and different) and **orient** (say what howlbert is and where to go). pin it where the platform allows. below is exactly what to post on each, with copy i can adapt. the visual for almost every "first post" should be a striking in-bot screenshot: a `/vitals` panel showing 2 failed death saves, an injury sunrise message, or a rollover announcement. blur usernames.
+my first post is the one every new visitor checks before deciding to follow, so it has to do two jobs at once: **hook** (make the world feel real and different) and **orient** (say what howlbert is and where to go). pin it where the platform allows. below is exactly what to post on each, with copy i can adapt. the visual for almost every "first post" should be a striking in-bot screenshot: a `/vitals` panel mid-death-save (2 successes, one round left), an injury sunrise message, or a rollover announcement. blur usernames.
 
 ### twitter/x
 
@@ -476,7 +482,7 @@ my first post is the one every new visitor checks before deciding to follow, so 
 **post text (adapt):**
 > death is real, and it's usually permanent.
 >
-> howlbert is a discord wolf rp bot. four great packs, real injuries and disease. there is no cure for river rot. three failed death saves and most wolves don't come back from that.
+> howlbert is a discord wolf rp bot. four great packs, real injuries and disease. there is no cure for river rot. one failed death save and it's over.
 >
 > story over pay-to-win.
 
@@ -497,12 +503,12 @@ my first post is the one every new visitor checks before deciding to follow, so 
 **post text (adapt):**
 > death is real, and it's usually permanent.
 >
-> howlbert is a discord wolf rp bot: four great packs, real injuries and disease. no cure for river rot; three failed death saves and most wolves don't come back from that.
+> howlbert is a discord wolf rp bot: four great packs, real injuries and disease. no cure for river rot; one failed death save and it's over.
 >
 > join the pack: [discord invite link]
 
 **format checklist:**
-- attach the screenshot and **write alt text** describing it (e.g., "a wolf's condition panel showing two failed death saves and one success").
+- attach the screenshot and **write alt text** describing it (e.g., "a wolf's condition panel showing two successful death saves, one round left").
 - pin the post to my profile.
 - keep it to a few short lines with white space.
 - reply to a handful of wolf rp and warriors accounts right after posting; bluesky growth is chronological and social, so early conversation matters.
@@ -542,7 +548,7 @@ tags: #wolf rp #warriors #worldbuilding #lore #creature
 **post 3; the mechanic that hooks (day 6).** one brutal system, told as a story, with a screenshot if i have one.
 > in most rp bots your character is safe. in howlbert your wolf can catch **river rot** from the poisoned river, and there is no cure. not a hard one. none. your healer can ease the pain, buy days, sit with them. that is all anyone can do.
 >
-> injuries cut your hunt yield. a broken jaw changes what you can eat. three failed death saves is permanent. it is a discord bot; it plays like a hard little rpg about surviving a shrinking wild.
+> injuries cut your hunt yield. a broken jaw changes what you can eat. one failed death save is permanent. it is a discord bot; it plays like a hard little rpg about surviving a shrinking wild.
 >
 > [screenshot of /vitals showing a sick wolf]
 >
@@ -615,7 +621,7 @@ tags: #wolf rp #worldbuilding #ttrpg #dark #wolf roleplay
 **post shape (adapt to the sub):**
 > **title:** i built a discord wolf rp bot where diseases have no cure and wolves stay dead
 >
-> **body:** a short, genuine story: what the bot does, one or two brutal mechanics (river rot has no cure; three failed death saves is permanent), what makes it different (real wolf ecology, story over pay-to-win), and an invitation. put the discord link at the end, not the top.
+> **body:** a short, genuine story: what the bot does, one or two brutal mechanics (river rot has no cure; one failed death save is permanent), what makes it different (real wolf ecology, story over pay-to-win), and an invitation. put the discord link at the end, not the top.
 
 **format checklist:**
 - one sub per post; space them out; do not blast the same text everywhere.
@@ -812,7 +818,7 @@ almost every early account stalls for the same handful of reasons. diagnose agai
 
 **2. i'm spread too thin.** trying to keep five platforms alive at once burns me out and means none of them get the volume they need to catch. **fix:** pick one primary and one secondary, and go hard on those. for this audience the primary is tumblr (wolf-rp and warriors live there and posts get reblogged for months) and the secondary is tiktok (short clips are the cheapest reach). let the others idle or cross-post.
 
-**3. my posts read as announcements.** static "here is a feature" posts underperform badly. the research puts hard numbers on it: posts with interactive elements get ~150% more engagement than static announcements, and behind-the-scenes content gets ~58% more than standard promo. **fix:** lead with the brutal specific hooks and make posts *do* something. polls ("your wolf finds a rival pup alone at the border; what do they do?"), "reblog with your wolf's name and cause of death," screenshots of a real brutal moment, dev-log peeks. the pinned mechanic hooks (no cure for river rot; three failed death saves and they are gone) are my best cold-open every time.
+**3. my posts read as announcements.** static "here is a feature" posts underperform badly. the research puts hard numbers on it: posts with interactive elements get ~150% more engagement than static announcements, and behind-the-scenes content gets ~58% more than standard promo. **fix:** lead with the brutal specific hooks and make posts *do* something. polls ("your wolf finds a rival pup alone at the border; what do they do?"), "reblog with your wolf's name and cause of death," screenshots of a real brutal moment, dev-log peeks. the pinned mechanic hooks (no cure for river rot; one failed death save and they are gone) are my best cold-open every time.
 
 **4. i'm not using each platform's discovery engine.** organic reach is throttled everywhere; i have to feed the discovery mechanic. on tumblr that is the first five tags (only those are searchable). on tiktok it is trending sounds and hooking the first two seconds. on bluesky it is starter packs and feeds. posting without these is posting into the void. **fix:** every post uses the platform's discovery levers, not generic hashtags.
 
