@@ -17,7 +17,7 @@ a full playbook for building an audience for howlbert, a discord wolf rp bot, an
 every post should move someone one step along that funnel. if a post does not build the world, teach a mechanic, or show a real moment, it does not earn its slot.
 
 **the one principle that matters most: build the runway before i launch.**
-i already decided to open the kickstarter only after social reach exists. that is correct. a kickstarter with no audience fails on day one; the algorithm and the "almost funded" psychology both need an existing crowd. so the first 6 to 8 weeks are pure audience building with zero asking. i don't mention the kickstarter until the runway is built.
+i already decided to open the kickstarter only after social reach exists. a kickstarter with no audience fails on day one; the algorithm and the "almost funded" psychology both need an existing crowd. so the first 6 to 8 weeks are pure audience building with zero asking. i don't mention the kickstarter until the runway is built.
 
 **what makes howlbert postable:** it is not a generic bot. the hooks are the brutal, specific mechanics (a broken jaw changes what i can eat; there is no cure for river rot; three failed death saves and the wolf is gone) and the emotional weight of a persistent wolf i can lose. lead with those, always.
 
@@ -254,7 +254,7 @@ the first video does two jobs at once, same as the first post in section 14: **h
 this is the version that does the most funnel work for the least production complexity: it's the youtube equivalent of the pinned first post, explaining the hook and the world in one sitting, and it doubles as the pinned video on the channel. narration can be a little rough — per section 1, that's the point early on, not a flaw to fix before posting.
 
 **2. write a short script before recording anything.** don't ad-lib the whole thing; a loose script keeps the take short and avoids the re-record spiral. rough beats, roughly timed:
-- **0:00 to 0:20 — the hook, cold open, no logo yet.** death is permanent, full stop, no exceptions, no shop item that undoes it (the old draft hedged this with "mostly/usually" to paper over a revive/reincarnation shop item that no longer exists; the shop only sells things like herbs now, nothing that undoes death, so the hook doesn't need softening): *"in howlbert, death is real. there is no cure for river rot. three failed death saves, and that wolf is gone. for good."* over an atmospheric screenshot or slow pan, not a talking head.
+- **0:00 to 0:20 — the hook, cold open, no logo yet.** death is permanent, full stop, no exceptions: *"in howlbert, death is real. there is no cure for river rot. three failed death saves, and that wolf is gone. for good."* over an atmospheric screenshot or slow pan, not a talking head.
 - **0:20 to 0:40 — title card.** my existing logo/pfp, one line under it: "a discord wolf rp bot."
 - **0:40 to 2:00 — what the world is.** the caldera, the four packs, the maw, in the same voice as the tumblr lore posts (section 4 of the content pillars) — this can lean on the `docs/site/world.html` and `packs.html` text almost directly, since it's already written in the right voice.
 - **2:00 to 4:00 — what actually happens to a wolf.** walk through one full mechanic loop on screen: register, hunt, get hurt, treat the wound, survive (or don't). screen-recorded gameplay under the narration, not a talking head; this is the "prove it's real, not vaporware" beat from the kickstarter schedule (`docs/KICKSTARTER.md`), reused here for free.
@@ -283,51 +283,97 @@ this is the version that does the most funnel work for the least production comp
 
 ## 7d. the first video: full script
 
-read this at a normal pace, out loud, once, before recording, to check the timing actually lands near the section 7c beats. every `[bracket]` is a direction, not something to say out loud.
+this replaces the older devlog-tour script with a tighter, story-first cut: **one wolf's whole life and death, in about four and a half minutes.** read it out loud once before recording to check the timing lands. every `[bracket]` is a direction, not something to say out loud. it does the same job as section 7c — hook, then orient — but carries it on a single wolf's arc instead of a feature list, because the death lands harder when you've watched the life.
 
-> **[0:00–0:20 — cold open, atmospheric footage, no logo]**
+> **[0:00–0:15 — cold open, atmospheric footage or a slow pan over in-bot art, no logo yet]**
 >
-> "in howlbert, death is real.
+> "this is a wolf named [name]. she was born in the swamp, lost her first litter to river rot, and lived four more winters than anyone expected.
 >
-> there's no cure for river rot. three failed death saves, and most wolves don't come back from that.
+> in this game, when she dies, she's gone. for good. no revive, no reroll, nothing that brings her back."
 >
-> this is a discord bot about surviving that world anyway."
->
-> **[0:20–0:35 — title card: my logo/pfp, centered, on the neocities dark background]**
+> **[0:15–0:30 — title card: logo/pfp on the neocities dark background]**
 >
 > on-screen text only: "howlbert — a discord wolf rp bot."
 >
-> **[0:35–1:50 — world tour, screenshots/slow pans of the site or in-bot art, pulled loosely from `docs/site/world.html` and `packs.html`]**
+> **[0:30–1:10 — what the world is: screenshots / slow pans, voice in the tumblr-lore register]**
 >
-> "howlbert is set in a world where four packs share one dying wild and one hungry god.
+> "howlbert is a discord bot where you raise a wolf and live its whole life — hunting, bonding, raising pups, growing old — in a dying wild ruled by four packs and one hungry god.
 >
-> greyspire holds the mountain by strength. mistmoor lives in the maw's belly, in the swamp. thistlehide remembers its dead in the forest. silverrush carries its grief like river-water, drinking the poison the twolegs pour upstream.
+> greyspire holds the mountain by strength. mistmoor lives in the swamp, in the maw's own belly. thistlehide remembers its dead in the forest. silverrush carries its grief downriver. and under all of them, the maw: not evil, just wounded, and always chewing. illness is the maw eating. injury is the maw eating.
 >
-> and underneath all four: the maw. not good, not evil — wounded, and hungry, and always chewing. illness is the maw eating. injury is the maw eating. all a wolf gets to choose is how they meet the teeth."
+> the wolves think, believe, name their dead, and choose — but they're wolves, all the way down."
 >
-> **[1:50–4:00 — screen-recorded gameplay under narration: /register, a hunt roll, an injury, a treat command]**
+> **[1:10–3:00 — one wolf's life, on screen: /register, a pack pick, a hunt roll, a bond, then an injury and the choice to treat it]**
 >
-> "here's what that actually looks like. you register a wolf, pick a pack — or go it alone as a loner or a rogue. then you live: hunt, forage, build bonds, hold territory.
+> "here's how a life actually goes. you register a wolf and pick a pack — or walk alone as a loner. then you live: hunt, forage, hold territory, build bonds the bot actually remembers.
 >
-> injuries and disease are real and they stack. a sprained leg costs you on the hunt. a broken jaw changes what you can even eat. there are no cooldowns — energy is the only thing slowing you down, so the world never tells you to just come back tomorrow.
+> and it's real. injuries and disease stack and they cost you — a sprained leg on the hunt, a broken jaw that changes what you can eat. there are no cooldowns telling you to come back tomorrow. every wound is a choice: treat it, or push on and hope.
 >
-> and if it goes wrong, it can really go wrong. three failed death saves and that wolf is gone. permanently. no shop item, no workaround, nothing that brings them back — every wolf in the den plays by the same rules, whether it's your first sunrise or your fiftieth."
+> [name] pushed on. one winter, she didn't treat the wound in time."
 >
-> **[4:00–4:45 — a slower, calmer beat: found-family/community footage or screenshots, if any exist]**
+> **[3:00–3:40 — the death: the bot's dying / death-save embed on screen, held, quiet]**
 >
-> "but it's not just survival. it's found family, pack politics, slow-burn plots that unfold over real sunrises, not cutscenes. book one, the current arc, gives every canon wolf in the world a real mechanical role in the story, not just flavor text."
+> "here's the part that matters. no other player can kill your wolf without your say-so — you can't be griefed out of your own story.
 >
-> **[4:45–5:15 — the pitch, direct to camera or over a calm screenshot]**
+> but the *wild* can. hunger, thirst, a fever, a wound left too long — and then the death saves. three of them. fail, and the bot marks that wolf dead. permanently. same rules for everyone, first sunrise or fiftieth.
 >
-> "if that sounds like your kind of world: this is a solo project, made by one person, and it's free to play. story over pay-to-win — nothing in the shop makes your wolf stronger than anyone else's, it's all cosmetic or convenience.
+> [name] failed hers. and that was the end of four years of her."
 >
-> i'm also running a kickstarter [replace with the actual campaign line once it's live, or cut this beat entirely during the pre-launch runway — see section 2, don't mention the kickstarter before the runway is built], and you can find howlbert on tumblr, bluesky, and [any other platform actually live at the time] if you want lore and dev updates between videos."
+> **[3:40–4:15 — who it's for: calmer footage, community / found-family screenshots if any exist]**
 >
-> **[5:15–5:30 — end card: logo, discord link spelled out on screen, same closing line as every other platform's first post]**
+> "if that sounds bleak — it is, and that's the point. the deaths mean something because they're permanent, and the found family, the pack politics, the slow plots over real sunrises all hit harder for it.
 >
-> "join the pack. link's in the description and the pinned comment. thanks for watching."
+> it's free to play, made by one person, story over pay-to-win — nothing in the shop makes your wolf stronger than anyone else's. one thing to know up front: the community is 18+, for mature themes, not adult content."
+>
+> **[4:15–4:30 — end card: logo, discord link spelled out on screen]**
+>
+> "if you want a wolf of your own to lose — join the pack. link's in the description and the pinned comment. thanks for watching."
 
-**adapting this over time:** the kickstarter beat only belongs in the video once the runway (section 2) is actually built and the campaign is live or imminent — cut it entirely before then, and re-record just that 30-second beat when it's time rather than reshooting the whole video. the social-platform beat should list only what's actually active when this gets recorded, not the full aspirational list from section 3.
+**adapting this over time:** swap `[name]` for a real wolf from your own game (a canon wolf, or a memorable player one with the player's ok) — a real death lands harder than a hypothetical. keep the kickstarter *out* of this cut entirely until the runway (section 2) is built; it's left out of this script on purpose. re-record only the beat that changes rather than reshooting the whole thing.
+
+---
+
+## 7e. thumbnail + title concepts
+
+the thumbnail and title decide whether the video is watched at all, so treat them as the real deliverable and design them before editing. three thumbnail directions, cheapest first:
+
+- **a. the face.** one striking wolf portrait (the commissioned mascot art or a clean in-bot portrait), gothic and muted, filling the frame, with three words of bone-white text: **"your wolf dies."** the most clickable option once the mascot art exists.
+- **b. proof-of-stakes.** the bot's actual dying / death-save embed, cropped and enlarged on the dark background, with **"permanent. no revives."** in the corner. reads as "this is real," which this audience rewards.
+- **c. the before/after.** a healthy wolf and a scarred, greyed one side by side, text **"one wolf. one life."** — sells the permanence emotionally.
+
+design rules for all three: dark bone palette to match the brand, **one face and one emotion**, text large enough to read on a phone, and **no graphic gore** (youtube age-gates it and reach collapses) — stylized menace over viscera. lock one template and reuse it so the channel reads as a set.
+
+titles (put "wolf rp" and "discord bot" in plainly, for search, then earn the click):
+
+- *"the discord wolf rp bot where your wolf can actually die — for good"*
+- *"i made a wolf rp discord bot with permanent death and no revives"*
+- *"howlbert: a discord wolf rp where the wild can kill you, and it's forever"*
+- *"no cooldowns, no revives, permanent death — a discord wolf rp bot"*
+
+pair thumbnail **a** with the first or third title for the main channel video; then cut a sub-60-second **short** of the [3:00–3:40] death beat, framed like thumbnail **b**, as the discovery hook that feeds it.
+
+---
+
+## 7f. the onboarding-playthrough video (record first, script later)
+
+a second first-video option, and honestly the one to shoot *first*: instead of a scripted trailer, film yourself doing exactly what a brand-new player does, start to finish, and narrate over it afterward. it proves the game is real, doubles as a tutorial, and — because the dice decide what happens — it can't feel staged. this is the format for "watch me actually onboard and play," where 7d is the polished pitch.
+
+**the flow to capture** (screen-record all of it clean, no talking over the raw take):
+
+1. **the neocities.** generate a name (name generator), skim the lore (the world, the four packs), read the stat guide, take the **"which pack fits you"** quiz, and roll a **backstory seed**. this is the "look how little friction there is to start" beat — the two new tools do real funnel work here.
+2. **write the character.** turn the rolled seed into a short backstory in your own words, and submit it for approval.
+3. **register.** `/register`, `/setfaction`, `/character` — the wolf becomes real, on screen.
+4. **play a first sunrise.** hunt, forage, form a bond, and then let the game do what it does: an injury, a disease, a lucky roll, a bad one.
+
+**production notes:**
+
+- **record first, script later.** the playthrough is unpredictable, so don't write narration until you've seen what actually happened, then write the voiceover *to* the footage. this is the right call — don't try to script the play section in advance.
+- **over-capture.** grab far more than you'll use and note timestamps of anything dramatic (a bad roll, an injury, a death); those become your shorts and your thumbnail.
+- **if the wolf dies during the session, let the video become its story** — that's the best possible outcome, not a ruined take.
+- keep the raw gameplay silent and narrate separately (see 7c, step 3) so a flubbed line is a ten-second redo, not a lost take.
+- **length:** this one can run a little longer than the trailer — 6 to 10 minutes — because it's a journey, not a pitch; still cut a sub-60-second short from the single best moment.
+
+**how it differs from 7d:** 7d is a tight, scripted trailer built around one wolf's life and death — better *once you have mascot art* and want a clean pinned video. this onboarding playthrough is rougher, more honest, and far easier to finish, which is exactly what makes it the better **first** upload. do this one first; save the trailer for when the brand assets are ready.
 
 ---
 

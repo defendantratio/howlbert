@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="a full wolf character generator for howlbert, the discord wolf rp bot. roll a complete, submission-ready character sheet: name, pack, appearance, backstory, stats and all." />
+    <title>howlbert · build a wolf</title>
+    <link rel="icon" href="https://iili.io/FnQMOjs.md.png" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; text-transform: lowercase; }
+
+        :root {
+            --ink: #f6f2e9; --ink-soft: #ece6d9; --bone: #2c2a24; --bone-dim: #6a655a;
+            --moss: #4a6a3a; --river: #3a7a8a; --rot: #6a7a3a; --stone: #6a6e75; --maw: #a0323a;
+            --line: #d0ccc0; --glass-bg: rgba(246, 242, 233, 0.8); --glass-border: rgba(200, 195, 180, 0.65);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08); --ctrl-bg: rgba(246, 242, 233, 0.9);
+        }
+        [data-theme="dark"] {
+            --ink: #0e0f0d; --ink-soft: #1a1c18; --bone: #e7e2d4; --bone-dim: #a9a596;
+            --moss: #7fa87f; --river: #7ab0c0; --rot: #9aaa5a; --stone: #9a9ea6; --maw: #b84048;
+            --line: #3a3d34; --glass-bg: rgba(14, 15, 13, 0.75); --glass-border: rgba(51, 54, 46, 0.75);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7); --ctrl-bg: rgba(14, 15, 13, 0.85);
+        }
+
+        audio { width: 0; height: 0; overflow: hidden; position: absolute; opacity: 0; pointer-events: none; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0; padding: 20px; min-height: 100vh;
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 19px; line-height: 1.7;
+            color: var(--bone); background: var(--ink);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(74, 106, 58, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(58, 122, 138, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(160, 50, 58, 0.04) 0%, transparent 70%);
+            transition: background 0.4s, color 0.4s;
+            cursor: url(https://cur.cursors-4u.net/nature/nat-10/nat985.cur), auto !important;
+        }
+        ::selection { background: var(--moss); color: var(--ink); }
+
+        a { color: var(--moss); text-decoration: none; transition: color 0.25s, text-shadow 0.25s; }
+        a:hover { color: var(--river); text-shadow: 0 0 12px rgba(106, 151, 166, 0.25); }
+        a:visited { color: var(--bone-dim); }
+
+        .theme-toggle {
+            position: fixed; top: 20px; right: 20px; padding: 10px 22px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 40px;
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.85rem; letter-spacing: 1px;
+            color: var(--bone); cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            box-shadow: var(--glass-shadow); transition: all 0.3s cubic-bezier(.4, 2, .6, 1); z-index: 1000;
+        }
+        .theme-toggle:hover { background: var(--moss); color: var(--ink); border-color: var(--river); transform: scale(1.05) translateY(-2px); }
+
+        .site-wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        .main-col { display: flex; flex-direction: column; gap: 24px; }
+
+        .glass {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px;
+            box-shadow: var(--glass-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 22px 26px;
+        }
+
+        .top-bar { display: flex; gap: 24px; align-items: stretch; flex-wrap: wrap; }
+        .top-bar-directory { flex: 1; min-width: 200px; }
+        .top-bar h3 {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.85rem; font-weight: 700;
+            letter-spacing: 2px; color: var(--bone); margin: 0 0 10px 0;
+            border-bottom: 1px solid var(--line); padding-bottom: 6px;
+        }
+        .side-nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+        .side-nav a { font-size: 0.85rem; padding: 2px 0; }
+        .side-nav a:hover { padding-left: 4px; }
+        .side-nav .current { color: var(--maw); font-weight: 700; }
+
+        .hero { padding: 34px 30px 28px; text-align: center; border-bottom: 1px solid var(--line); }
+        .hero h1 {
+            font-family: 'EB Garamond', 'Georgia', serif; font-weight: 900; font-size: 3.2rem;
+            letter-spacing: 6px; color: var(--bone); margin: 0 0 6px 0; line-height: 1.1;
+            text-shadow: 0 0 30px rgba(160, 50, 58, 0.10);
+        }
+        .hero .hook { font-size: 1.2rem; font-style: italic; color: var(--bone); max-width: 62ch; margin: 0 auto 6px; }
+        .hero .hook .maw-word { color: var(--maw); font-weight: 600; }
+        .hero .description { font-size: 1.02rem; color: var(--bone-dim); max-width: 66ch; margin: 8px auto 0; line-height: 1.7; }
+
+        .content-section { padding: 18px 26px 26px; }
+        .content-section h2 {
+            font-family: 'EB Garamond', 'Georgia', serif; font-weight: 700; font-size: 1.3rem;
+            letter-spacing: 3px; color: var(--bone); margin: 0 0 12px 0;
+            border-bottom: 1px solid var(--line); padding-bottom: 6px;
+        }
+        .content-section p { margin-bottom: 12px; color: var(--bone-dim); max-width: 70ch; }
+
+        .gen-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 4px; }
+        .gen-controls label { font-size: 0.8rem; letter-spacing: 1px; color: var(--bone-dim); margin-right: 4px; }
+        select {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.95rem; padding: 8px 14px;
+            border-radius: 10px; border: 1px solid var(--glass-border); background: var(--ctrl-bg);
+            color: var(--bone); text-transform: lowercase; cursor: pointer;
+        }
+        .gen-btn {
+            display: inline-block; padding: 12px 32px; font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; border-radius: 40px;
+            border: 1px solid var(--maw); background: var(--maw); color: var(--ink);
+            backdrop-filter: blur(4px); transition: all 0.3s ease; box-shadow: var(--glass-shadow); cursor: pointer;
+        }
+        .gen-btn:hover { background: #c04a52; border-color: #c04a52; transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5); }
+        .copy-btn {
+            font-family: 'EB Garamond', 'Georgia', serif; font-size: 0.8rem; letter-spacing: 1px;
+            padding: 12px 24px; border-radius: 40px; border: 1px solid var(--glass-border);
+            background: var(--glass-bg); color: var(--bone); cursor: pointer; transition: all 0.25s ease;
+        }
+        .copy-btn:hover, .copy-btn.copied { background: var(--moss); color: var(--ink); border-color: var(--moss); }
+
+        /* the sheet */
+        .sheet { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .sheet-empty { color: var(--bone-dim); font-style: italic; padding: 12px 4px; }
+        .sheet-block {
+            background: var(--ink-soft); border: 1px solid var(--line); border-radius: 12px;
+            padding: 12px 18px; margin-bottom: 8px; animation: fadeIn 0.3s ease;
+        }
+        .sheet-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+        .sheet-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; color: var(--maw); min-width: 118px; }
+        .sheet-val { font-size: 1.05rem; color: var(--bone); flex: 1; min-width: 180px; }
+        .sheet-note { display: block; font-size: 0.82rem; color: var(--bone-dim); font-style: italic; margin-top: 2px; }
+        .reroll {
+            border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--bone-dim);
+            border-radius: 8px; padding: 2px 9px; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; transition: all 0.2s ease;
+        }
+        .reroll:hover { background: var(--river); color: var(--ink); border-color: var(--river); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px 18px; margin-top: 4px; }
+        .stat-cell { color: var(--bone); font-size: 1rem; }
+        .stat-cell b { color: var(--maw); font-weight: 700; }
+        ul.sheet-ul { margin: 4px 0 0 18px; color: var(--bone); }
+        ul.sheet-ul li { margin-bottom: 2px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cta-section { padding: 18px 26px 26px; text-align: center; border-top: 1px solid var(--line); }
+        .cta-section .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 6px; }
+        .cta-btn {
+            display: inline-block; padding: 12px 32px; font-family: 'EB Garamond', 'Georgia', serif;
+            font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; border-radius: 40px;
+            border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--bone);
+            backdrop-filter: blur(4px); transition: all 0.3s ease; box-shadow: var(--glass-shadow); cursor: pointer;
+        }
+        .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5); text-shadow: none; }
+        .cta-btn.primary { background: var(--maw); border-color: var(--maw); color: var(--ink); }
+        .cta-btn.primary:hover { background: #c04a52; border-color: #c04a52; color: var(--ink); }
+
+        .footer { margin-top: 6px; text-align: center; font-size: 0.8rem; color: var(--bone-dim); border-top: 1px solid var(--line); padding-top: 18px; }
+        .footer a { color: var(--bone-dim); }
+        .footer a:hover { color: var(--bone); }
+        .footer .heart { color: var(--maw); }
+
+        @media (max-width: 900px) {
+            .hero h1 { font-size: 2.2rem; letter-spacing: 4px; }
+            .hero .hook { font-size: 1.05rem; }
+            .theme-toggle { top: 12px; right: 12px; padding: 6px 16px; font-size: 0.7rem; }
+            body { padding: 12px; }
+            .glass { padding: 16px 18px; }
+        }
+        @media (max-width: 500px) {
+            .hero h1 { font-size: 1.7rem; letter-spacing: 2px; }
+            .hero .hook { font-size: 0.9rem; }
+            .hero .description { font-size: 0.85rem; }
+            .gen-btn, .cta-btn, .copy-btn { padding: 10px 20px; font-size: 0.75rem; }
+            .sheet-label { min-width: 90px; }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <audio loop autoplay>
+        <source src="https://files.catbox.moe/0fxv5o.mp3" type="audio/mpeg" />
+    </audio>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="toggle dark and light mode">🌙 dark</button>
+
+    <div class="site-wrap">
+        <div class="main-col">
+
+            <div class="glass top-bar">
+                <nav class="top-bar-directory" aria-label="page directory">
+                    <h3>directory</h3>
+                    <div class="side-nav">
+                        <a href="index.html">⟡ home</a>
+                        <a href="world.html">⟡ the world</a>
+                        <a href="packs.html">⟡ the four packs</a>
+                        <a href="twolegs.html">⟡ the human world</a>
+                        <a href="illness.html">⟡ illness &amp; herbs</a>
+                        <a href="characters.html">⟡ the wolves</a>
+                        <a href="bookone.html">⟡ book one: the blinking</a>
+                        <a href="play.html">⟡ how to play</a>
+                        <a href="first-sunrise.html">⟡ first sunrise</a>
+                        <a href="namegen.html">⟡ wolf name generator</a>
+                        <a href="quiz.html">⟡ which pack fits you</a>
+                        <a href="charactergen.html" class="current">⟡ build a wolf</a>
+                        <a href="credits.html">⟡ credits &amp; links</a>
+                    </div>
+                </nav>
+            </div>
+
+            <header class="glass hero">
+                <h1>build a wolf</h1>
+                <p class="hook">
+                    a whole wolf, rolled in one sitting, name to <span class="maw-word">scars</span>.
+                </p>
+                <p class="description">
+                    this fills a complete, submission-ready character sheet: name, pack, appearance,
+                    a backstory seed, skills, weaknesses, and a fair spread of stats. reroll any line
+                    you don't like, then flesh out the prose in your own words. it's a spark, not a
+                    script, and nothing here is machine-written.
+                </p>
+            </header>
+
+            <section class="glass content-section">
+                <h2>the forge</h2>
+                <div class="gen-controls">
+                    <label for="packSelect">pack flavour</label>
+                    <select id="packSelect">
+                        <option value="any">any / surprise me</option>
+                        <option value="greyspire">greyspire — mountain</option>
+                        <option value="mistmoor">mistmoor — swamp</option>
+                        <option value="thistlehide">thistlehide — forest</option>
+                        <option value="silverrush">silverrush — river</option>
+                        <option value="loner">loner / rogue</option>
+                    </select>
+                    <button class="gen-btn" id="rollBtn" type="button">roll a wolf</button>
+                    <button class="copy-btn" id="copyBtn" type="button">copy full sheet</button>
+                </div>
+                <div class="sheet" id="sheet">
+                    <p class="sheet-empty">no wolf yet; pick a flavour and press roll a wolf.</p>
+                </div>
+            </section>
+
+            <section class="glass content-section">
+                <h2>finishing your wolf</h2>
+                <p>
+                    the rolled lines are scaffolding. the three prose fields, appearance, personality,
+                    and backstory, are yours to write: expand the appearance to 2 to 3 sentences, turn
+                    the traits into a paragraph or two, and grow the backstory seed into at least three
+                    paragraphs covering your origin, the wound that shaped you, your stance toward the
+                    maw, and a brush with the twolegs. the stats are a fair starting spread (all sixes
+                    average out to a plain wolf); shift points to fit the character, then set them in
+                    the bot. when it's ready, submit it for approval and
+                    <span style="color:var(--maw); font-weight:700;">/register</span>.
+                </p>
+            </section>
+
+            <section class="glass cta-section">
+                <div class="cta-buttons">
+                    <a href="https://howlbert.straw.page" class="cta-btn primary">howlbert.straw.page</a>
+                    <a href="quiz.html" class="cta-btn">which pack fits you</a>
+                    <a href="play.html" class="cta-btn">how to play</a>
+                </div>
+            </section>
+
+            <footer class="footer">
+                <p>
+                    <span class="heart">♥</span> howlbert, a discord wolf rp bot &nbsp;·&nbsp;
+                    <a href="https://neocities.org/site/howlbert">neocities</a> &nbsp;·&nbsp;
+                    built with bark and bone
+                </p>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const toggle = document.getElementById('themeToggle');
+            const body = document.body;
+            function setTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                toggle.textContent = theme === 'dark' ? '☀️ light' : '🌙 dark';
+                try { localStorage.setItem('howlbert-theme', theme); } catch (_) {}
+            }
+            toggle.addEventListener('click', function() {
+                const current = body.getAttribute('data-theme') || 'dark';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+            try {
+                const stored = localStorage.getItem('howlbert-theme');
+                if (stored === 'light' || stored === 'dark') setTheme(stored);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+            } catch (_) {}
+        })();
+    </script>
+
+    <script>
+        (function() {
+            function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+            function pickN(a, n) {
+                const pool = a.slice(); const out = [];
+                for (let i = 0; i < n && pool.length; i++) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+                return out;
+            }
+            function cap(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
+
+            // ---- name parts (pack-flavoured), mirroring the standalone name generator ----
+            const PARTS = {
+                greyspire: { p: ['stone','iron','grey','crag','flint','shale','ridge','boulder','granite','high'], s: ['claw','fang','peak','horn','tooth','spire','gnaw','jaw','grip','blood'], one: ['flint','gravel','shale','quarry','blizzard','talon','crag','basalt'] },
+                mistmoor: { p: ['mist','fen','swamp','reed','bog','shroud','murk','hollow','drown','silt'], s: ['wisp','shroud','omen','drift','mire','gaze','whisper','root','sink','tide'], one: ['tallow','wraith','fen','omen','marrow','moss','hollow','silt'] },
+                thistlehide: { p: ['thorn','bramble','oak','thistle','moss','fern','elder','bark','root','ash'], s: ['bramble','leaf','bark','thorn','grove','hollow','bough','wood','nettle','vine'], one: ['bramble','thistle','birch','bracken','elder','nettle','briar','moss'] },
+                silverrush: { p: ['river','silver','rush','current','shale','brook','flood','foam','grey','still'], s: ['bone','current','stream','rush','wake','tide','water','run','drift','shroud'], one: ['eddy','silt','current','foam','gravel','reed','shale','brook'] },
+                loner: { p: ['dust','lone','grey','wild','road','far','still','thin','quiet','old'], s: ['paw','wander','trail','edge','howl','run','foot','watch','road','shade'], one: ['dust','wander','gaunt','ash','quiet','scraps','shade','echo'] }
+            };
+            const PACK_KEYS = Object.keys(PARTS);
+            const CANON = new Set(['aromis','ashbark','barkhollow','brackenpelt','cinder','cloverfern','croaker','curlgrip','dusk','ebb','fernspot','finnpelt','firepaw','frostburn','gasp','grim','hemlock','hollowstem','icefang','ironjaw','kanami','lucid','maggotbrain','mossgaze','mossheart','moth','mudnose','murkvein','pebble','puddlebane','raven','reedwhisper','rift','rime','ripple','riptide','rivenmaw','rivershroud','root','rotteddust','saltmuzzle','scab','skye','slate','sleet','sludge','soot','splinter','stonepiercer','sypha','talus','thorn','thyme','yarrow','mirewort']);
+
+            function genName(packSel) {
+                const key = (packSel === 'any' || packSel === undefined) ? pick(PACK_KEYS) : packSel;
+                const b = PARTS[key] || PARTS.loner;
+                for (let i = 0; i < 60; i++) {
+                    let name;
+                    if (Math.random() < 0.72) {
+                        let pre = pick(b.p), suf = pick(b.s), g = 0;
+                        while (pre === suf && g++ < 5) suf = pick(b.s);
+                        name = cap(pre) + suf;
+                    } else name = cap(pick(b.one));
+                    if (!CANON.has(name.toLowerCase())) return name;
+                }
+                return cap(pick(b.one));
+            }
+
+            // ---- data pools ----
+            const PACK_LABEL = {
+                greyspire: 'greyspire (mountain)', mistmoor: 'mistmoor (swamp)',
+                thistlehide: 'thistlehide (forest)', silverrush: 'silverrush (river)',
+                loner: 'loner / rogue (no pack)'
+            };
+            // entry ranks a new wolf can plausibly hold; leadership (alpha, advisor,
+            // diplomat) is earned in play, so it is never rolled here.
+            const RANKS = {
+                greyspire: ['hunter','scout','forager','guard','caretaker','hunter apprentice','scout apprentice','medic apprentice'],
+                mistmoor: ['hunter','scout','forager','guard','medic','lowbelly','bog-born','medic apprentice'],
+                thistlehide: ['hunter','scout','forager','medic','caretaker','medic apprentice','forager apprentice'],
+                silverrush: ['hunter','scout','forager','guard','medic','caretaker','scout apprentice'],
+                loner: ['rogue','loner','wanderer','drifter']
+            };
+            const FUR = ['black','charcoal grey','wolf-grey','pale silver','brown','tawny','red-brown','rust','cream','off-white','sable (brown and black)','blue-grey (dilute)','bone-pale (albino)','all-black (melanistic)','washed-out and muddy'];
+            const BUILD = ['small and wiry','lean and rangy','average, unremarkable','tall and long-legged','heavy and thickset','broad and powerful','gaunt, all ribs and sinew','compact and low'];
+            const EYES = ['amber','gold','yellow','pale ice-yellow','warm brown','muddy brown','green','muted blue','one blue and one amber (heterochromia)','milky and blind in one eye','pink-red (albino)'];
+            const MARKS = ['a pale saddle down the back','a dark mask over the eyes','white socks and a white chest blaze','a torn, notched ear','a long scar across the muzzle','a grizzled, greying muzzle','flecked, grizzled fur','a missing tail','a foreleg that ends in a stump','a twisted, mis-set hindleg','a raw, hairless patch on one flank','no notable marks yet'];
+            const TRAITS = ['reckless','distrustful','fiercely loyal','cold','tender','volatile','obsessive','patient','proud','cowardly','curious','cruel','gentle','superstitious','restless','stoic','playful','vengeful','secretive','devout','cynical','protective','ambitious','soft-spoken','quick-tempered','watchful'];
+            const SKILLS = ['hunting: expert tracker','hunting: fast, poor endurance','fighting: strong bite, weak defence','fighting: quick and evasive','herbal knowledge: basic','herbal knowledge: skilled healer','swimming: strong in water','stealth: moves unseen','endurance: tireless on long marches','climbing: sure-footed on rock','scenting: an unusually sharp nose','fishing: patient at the water','survival: reads weather and land well','memory: keeps the pack’s history'];
+            const WEAKNESSES = ['an old leg injury; slow to run','a deep fear of fire','trusts far too easily','poor eyesight in low light','a quick, dangerous temper','small; easily overpowered','freezes up under grief','reckless; charges into fights','cannot swim','brittle, easily-broken bones','soft-hearted; will not make a kill','a lingering cough that flares in the cold','haunted by a past death; nightmares','deaf on one side'];
+            const MAWBELIEF = ['orthodox — every illness is the maw eating, and that is right','doubter — prays anyway, in case','heretic — the maw is only rot with a name','zealot — burns to serve the maw, loudly','agnostic — the maw can wait; there is hunting to do'];
+            const SEX = ['straight','gay','bisexual','pansexual','asexual','aromantic','unlabelled'];
+            const GENDER = [['female','she/her'],['male','he/him'],['nonbinary','they/them'],['male','he/they'],['female','she/they']];
+            const OTHER = ['a sibling somewhere in a rival pack','an unpaid blood debt following them','hunting for the wolf who scarred them','hiding the truth of their parentage','a secret bond across an enemy border','wants a rank they have not yet earned','carrying a dead friend’s last request','nothing yet — wide open to plots','a prophecy spoken over them at birth','a name they were given, and a name they hide'];
+
+            // backstory seed pools (shared with the standalone seed generator)
+            const ORIGINS = [
+                "a former hearth-hound, or a twoleg’s captive who slipped the leash",
+                "the last of a pack that no longer exists; you carry ways no one else remembers",
+                "born to the lowest wolves in the den, and clawed up from nothing",
+                "born to a proud, high-standing line, and never allowed to forget it",
+                "the only survivor of your litter; the rest didn’t last the first winter",
+                "an abandoned runt, left behind for being too small to keep up",
+                "born with a defect they expected to kill you, and you lived anyway",
+                "born in the teeth of a disaster, a burning mountain or a freezing storm",
+                "your whole litter was culled by the elders; you are the one they missed",
+                "born blind, or pale as bone, or without a voice; the den recoiled at you",
+                "you killed a packmate over a scrap of food, and were driven out for it",
+                "you fled one pack half-dead and dragged yourself to the border of another",
+                "a mistmoor oracle, or a wolf who claims to read the maw’s omens",
+                "caught in a forbidden romance with a wolf of an enemy pack",
+                "your parents were killed by twolegs, and you watched it happen",
+                "raised by another animal entirely after you were orphaned",
+                "an alpha with no pups, watching younger wolves sharpen their teeth",
+                "a hostage pup, handed to a rival pack to seal a truce",
+                "the last keeper of a conquered pack’s rites, swallowed by the pack that beat you",
+                "a living treaty, born of a mating an alpha arranged for politics",
+                "a rotation wolf who has worn three packs’ scents and belongs to none",
+                "a river rot survivor, a carrier the den keeps at arm’s length",
+                "the surviving half of twins; the den says the maw took one soul and left yours",
+                "you went blind or deaf from a fever full-grown, and relearned survival",
+                "the only wolf ever known to walk away from cloudmouth, the frothing madness",
+                "your scent reads wrong to prey and packmates alike, and no one trusts it",
+                "a false prophet who faked the maw’s voice, and now half-believes the lie",
+                "a maw-apostate who felt the god once and turned from it; the faithful hate you",
+                "a tithe wolf, pledged to the maw at birth to pay a family’s debt of favour",
+                "you fell into the belly-rip and climbed back out, mute and changed",
+                "a grave-tender who buries the dead and talks to them; the living find it unnerving",
+                "a culler, the wolf a pack used to put down its own sick, and it doesn’t wash off",
+                "exiled not for a crime but for a prophecy: this one ends the pack",
+                "the sole deserter of a pack war, alive only because you ran",
+                "you won an alpha challenge, then walked away rather than lead",
+                "a famine cannibal who ate the dead through one winter, and wears the shame",
+                "an escaped hearth-hound raise who never learned how to be wild",
+                "you bear a twoleg’s collar-scar, and wolves who fear the two-legs shun you",
+                "raised inside a cat clan’s camp; you speak their ways, not wolf ways",
+                "a collaborator who trades or spies for a human faction, useful and hated",
+                "the sole survivor of a pack that drank the poison the twolegs pour upstream",
+                "a widow who never took another mate, raising the dead one’s pups alone",
+                "an elder who outlived their whole generation, the last who remembers",
+                "a mentor whose every apprentice died; you refuse to take another",
+                "half of a sibling-bond so close you can’t function apart, and the other half just died",
+                "you are secretly raising a rival pack’s orphaned pup across enemy lines",
+                "a beta who is the real power behind a weak alpha, and knows the pack suspects it",
+                "you fled a schism, a pack that tore itself in two, and can’t go back to either half"
+            ];
+            const WOUNDS = ['a hunt you led that got a packmate killed','a litter you could not keep alive','a betrayal by the one wolf you trusted most','a wound that never fully healed','a winter of starvation that changed what you’re willing to do','a mate who chose another','a killing you cannot take back','a moment of cowardice at the worst time','an oath you swore, and then broke','someone you could have saved, and didn’t','a punishment you’re still not sure you deserved','the day you learned what you’re capable of'];
+            const HUMANS = ['never seen a twoleg, only their leavings and their traps','caught in a twoleg trap once, and carries the scar','watches twolegs from the treeline; gods or monsters, can’t say','a twoleg spared them once, and they never understood why','the twolegs took someone from them','has eaten from a twoleg’s leavings when hunting failed','fears the poisoned water they pour into the river upstream','thinks the stories are exaggerated; a twoleg is just another animal'];
+
+            // ---- age / stats ----
+            function genAge() {
+                const bands = [['2 years (young adult)',20],['3 years (adult, in their prime)',22],['4 years (adult)',20],['5 years (adult)',14],['6 years (older adult)',10],['7 years (older adult)',7],['9 years (elder, rare and respected)',4],['1 year (barely grown; low ranks only)',3]];
+                let total = bands.reduce((s, b) => s + b[1], 0), r = Math.random() * total;
+                for (const b of bands) { if ((r -= b[1]) <= 0) return b[0]; }
+                return bands[0][0];
+            }
+            function genStats() {
+                const keys = ['strength','dexterity','constitution','intelligence','charisma','wisdom'];
+                const v = {}; keys.forEach(k => v[k] = 5);
+                for (let i = 0; i < 12; i++) {
+                    const from = pick(keys), to = pick(keys);
+                    if (from !== to && v[from] > 2 && v[to] < 9) { v[from]--; v[to]++; }
+                }
+                return v;
+            }
+
+            // ---- state + field generators ----
+            let packSel = 'any';
+            let C = {};
+            function resolvedPack() { return (packSel === 'any') ? pick(PACK_KEYS) : packSel; }
+
+            const GEN = {
+                name: () => genName(packSel),
+                pack: () => { C._packKey = resolvedPack(); return PACK_LABEL[C._packKey]; },
+                rank: () => pick(RANKS[C._packKey || 'loner'] || RANKS.loner),
+                age: () => genAge(),
+                sexuality: () => pick(SEX),
+                gender: () => { const g = pick(GENDER); return g[0] + ', ' + g[1]; },
+                fur: () => pick(FUR), bodyBuild: () => pick(BUILD), eyes: () => pick(EYES), marks: () => pick(MARKS),
+                traits: () => pickN(TRAITS, 3 + Math.floor(Math.random() * 3)).join(', '),
+                origin: () => pick(ORIGINS), wound: () => pick(WOUNDS), human: () => pick(HUMANS),
+                mawBelief: () => pick(MAWBELIEF),
+                skills: () => pickN(SKILLS, 3),
+                weaknesses: () => pickN(WEAKNESSES, 2 + Math.floor(Math.random() * 2)),
+                stats: () => genStats(),
+                other: () => pick(OTHER)
+            };
+
+            function rollAll() {
+                packSel = document.getElementById('packSelect').value;
+                C = {};
+                C.pack = GEN.pack();      // sets _packKey first
+                C.name = GEN.name();
+                C.rank = GEN.rank();
+                C.age = GEN.age();
+                C.sexuality = GEN.sexuality();
+                C.gender = GEN.gender();
+                C.fur = GEN.fur(); C.bodyBuild = GEN.bodyBuild(); C.eyes = GEN.eyes(); C.marks = GEN.marks();
+                C.traits = GEN.traits();
+                C.origin = GEN.origin(); C.wound = GEN.wound(); C.human = GEN.human();
+                C.mawBelief = GEN.mawBelief();
+                C.skills = GEN.skills(); C.weaknesses = GEN.weaknesses();
+                C.stats = GEN.stats();
+                C.other = GEN.other();
+                render();
+            }
+
+            function reroll(field) {
+                if (field === 'pack') { C.pack = GEN.pack(); C.rank = GEN.rank(); C.name = GEN.name(); }
+                else if (field === 'name') C.name = GEN.name();
+                else if (field === 'rank') C.rank = GEN.rank();
+                else if (field === 'age') C.age = GEN.age();
+                else if (field === 'sexuality') C.sexuality = GEN.sexuality();
+                else if (field === 'gender') C.gender = GEN.gender();
+                else if (field === 'appearance') { C.fur = GEN.fur(); C.bodyBuild = GEN.bodyBuild(); C.eyes = GEN.eyes(); C.marks = GEN.marks(); }
+                else if (field === 'traits') C.traits = GEN.traits();
+                else if (field === 'backstory') { C.origin = GEN.origin(); C.wound = GEN.wound(); C.human = GEN.human(); }
+                else if (field === 'mawBelief') C.mawBelief = GEN.mawBelief();
+                else if (field === 'skills') C.skills = GEN.skills();
+                else if (field === 'weaknesses') C.weaknesses = GEN.weaknesses();
+                else if (field === 'stats') C.stats = GEN.stats();
+                else if (field === 'other') C.other = GEN.other();
+                render();
+            }
+            window.__rerollCG = reroll;
+
+            function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+            function row(label, val, field) {
+                return '<div class="sheet-row"><span class="sheet-label">' + label + '</span>' +
+                    '<span class="sheet-val">' + esc(val) + '</span>' +
+                    (field ? '<button class="reroll" type="button" onclick="__rerollCG(\'' + field + '\')">↻</button>' : '') + '</div>';
+            }
+
+            function render() {
+                const s = C, appearance = s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ' eyes, ' + s.marks;
+                let html = '';
+                html += '<div class="sheet-block">' +
+                    row('name', s.name, 'name') + row('pack', s.pack, 'pack') + row('rank', s.rank, 'rank') +
+                    row('age', s.age, 'age') + row('sexuality', s.sexuality, 'sexuality') +
+                    row('gender / pronouns', s.gender, 'gender') + '</div>';
+
+                html += '<div class="sheet-block">' + row('appearance', appearance, 'appearance') +
+                    '<span class="sheet-note">a starter: expand to 2 to 3 sentences of your own.</span></div>';
+
+                html += '<div class="sheet-block">' + row('personality', s.traits, 'traits') +
+                    '<span class="sheet-note">3 to 5 traits; expand into 1 to 2 paragraphs.</span></div>';
+
+                html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">backstory seed</span>' +
+                    '<span class="sheet-val">write at least 3 paragraphs from these:</span>' +
+                    '<button class="reroll" type="button" onclick="__rerollCG(\'backstory\')">↻</button></div>' +
+                    '<ul class="sheet-ul"><li><b>origin:</b> ' + esc(s.origin) + '</li>' +
+                    '<li><b>the wound:</b> ' + esc(s.wound) + '</li>' +
+                    '<li><b>the twolegs:</b> ' + esc(s.human) + '</li></ul></div>';
+
+                html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">skills</span>' +
+                    '<span class="sheet-val"></span><button class="reroll" type="button" onclick="__rerollCG(\'skills\')">↻</button></div>' +
+                    '<ul class="sheet-ul">' + s.skills.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+
+                html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">weaknesses</span>' +
+                    '<span class="sheet-val"></span><button class="reroll" type="button" onclick="__rerollCG(\'weaknesses\')">↻</button></div>' +
+                    '<ul class="sheet-ul">' + s.weaknesses.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+
+                const st = s.stats;
+                html += '<div class="sheet-block"><div class="sheet-row"><span class="sheet-label">statistics</span>' +
+                    '<span class="sheet-val"></span><button class="reroll" type="button" onclick="__rerollCG(\'stats\')">↻</button></div>' +
+                    '<div class="stat-grid">' +
+                    '<span class="stat-cell"><b>str</b> ' + st.strength + '</span>' +
+                    '<span class="stat-cell"><b>dex</b> ' + st.dexterity + '</span>' +
+                    '<span class="stat-cell"><b>con</b> ' + st.constitution + '</span>' +
+                    '<span class="stat-cell"><b>int</b> ' + st.intelligence + '</span>' +
+                    '<span class="stat-cell"><b>cha</b> ' + st.charisma + '</span>' +
+                    '<span class="stat-cell"><b>wis</b> ' + st.wisdom + '</span></div>' +
+                    '<span class="sheet-note">1 to 10, averaging 5 (total 30); shift points to taste, then set them in the bot. survival is a skill, not a stat.</span></div>';
+
+                html += '<div class="sheet-block">' + row('maw-belief', s.mawBelief, 'mawBelief') + '</div>';
+                html += '<div class="sheet-block">' + row('other', s.other, 'other') + '</div>';
+
+                document.getElementById('sheet').innerHTML = html;
+            }
+
+            function sheetText() {
+                if (!C.name) return '';
+                const s = C;
+                return [
+                    '**name:** ' + s.name,
+                    '**pack:** ' + s.pack,
+                    '**rank:** ' + s.rank,
+                    '**age:** ' + s.age,
+                    '**sexuality:** ' + s.sexuality,
+                    '**gender/pronouns:** ' + s.gender,
+                    '',
+                    '**appearance:**',
+                    '(' + s.fur + ' coat, ' + s.bodyBuild + ' build, ' + s.eyes + ' eyes, ' + s.marks + '. expand to 2-3 sentences.)',
+                    '',
+                    '**personality:** ' + s.traits,
+                    '(expand into 1-2 paragraphs.)',
+                    '',
+                    '**backstory:** (at least 3 paragraphs, covering:)',
+                    '- origin: ' + s.origin,
+                    '- the wound: ' + s.wound,
+                    '- maw-belief: ' + s.mawBelief,
+                    '- the twolegs: ' + s.human,
+                    '',
+                    '**skills:**',
+                    s.skills.map(x => '- ' + x).join('\n'),
+                    '',
+                    '**weaknesses:**',
+                    s.weaknesses.map(x => '- ' + x).join('\n'),
+                    '',
+                    '**statistics**',
+                    'strength: ' + s.stats.strength,
+                    'dexterity: ' + s.stats.dexterity,
+                    'constitution: ' + s.stats.constitution,
+                    'intelligence: ' + s.stats.intelligence,
+                    'charisma: ' + s.stats.charisma,
+                    'wisdom: ' + s.stats.wisdom,
+                    '',
+                    '**maw-belief:** ' + s.mawBelief,
+                    '',
+                    '**other:** ' + s.other
+                ].join('\n');
+            }
+
+            function copySheet() {
+                const btn = document.getElementById('copyBtn');
+                if (!C.name) return;
+                const text = sheetText();
+                function done() { btn.textContent = 'copied'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'copy full sheet'; btn.classList.remove('copied'); }, 1200); }
+                if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(function() { fb(text, done); });
+                else fb(text, done);
+            }
+            function fb(text, done) { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) {} document.body.removeChild(ta); done(); }
+
+            document.getElementById('rollBtn').addEventListener('click', rollAll);
+            document.getElementById('copyBtn').addEventListener('click', copySheet);
+        })();
+    </script>
+
+    <script> NekoType = "white"; </script>
+    <script src="https://webneko.net/n20171213.js"></script>
+
+</body>
+
+</html>
