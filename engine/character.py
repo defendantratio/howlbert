@@ -9,17 +9,17 @@ def attr_modifier(score: int) -> int:
 
 
 def compute_max_hp(attr_str: int, attr_con: int) -> int:
-    """hp = 10 + strength + survival (constitution score)."""
-    strength = max(1, min(10, int(attr_str)))
+    """hp = 10 + 2 × survival (constitution score). vitality is constitution, not
+    muscle; strength drives bite damage and hunting, not how much punishment a wolf
+    can take. (attr_str is kept in the signature for callers but no longer used.)"""
     survival = max(1, min(10, int(attr_con)))
-    return max(1, 10 + strength + survival)
+    return max(1, 10 + 2 * survival)
 
 
 def format_max_hp_breakdown(attr_str: int, attr_con: int, *, max_hp: int | None = None) -> str:
-    strength = max(1, min(10, int(attr_str)))
     survival = max(1, min(10, int(attr_con)))
-    total = max_hp if max_hp is not None else compute_max_hp(strength, survival)
-    return f"10 + {strength}(str) + {survival}(survival) = {total}"
+    total = max_hp if max_hp is not None else compute_max_hp(attr_str, survival)
+    return f"10 + {survival}(survival) × 2 = {total}"
 
 
 def legacy_modifier_max_hp(attr_str: int, attr_con: int) -> int:

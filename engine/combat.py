@@ -112,8 +112,14 @@ def _combat_stats(stats) -> dict:
 
 
 def roll_initiative(user) -> tuple[int, int, int]:
+    # reaction is reflex (dex) + alertness (wis): a wise, watchful wolf sees the
+    # threat coming before a fast, oblivious one does.
     die = roll_d20()
-    mod = attr_modifier(user["attr_dex"])
+    try:
+        wis = attr_modifier(user["attr_wis"])
+    except (KeyError, IndexError, TypeError):
+        wis = 0
+    mod = attr_modifier(user["attr_dex"]) + wis
     return die, mod, die + mod
 
 
@@ -271,10 +277,12 @@ def resolve_attack(
         str_mod = attr_modifier(attacker["attr_str"])
         attack_name = "Bite"
     else:
+        # claw: accuracy is dexterity (a precise swipe), but the damage is powered by
+        # muscle and mass, so the damage bonus is strength, not dexterity.
         a_mod = attr_modifier(attacker["attr_dex"])
         d_mod = attr_modifier(defender["attr_dex"])
         damage_die = 4
-        str_mod = attr_modifier(attacker["attr_dex"])
+        str_mod = attr_modifier(attacker["attr_str"])
         attack_name = "Claw"
 
     a_mod += trait_combat_modifier(attacker)

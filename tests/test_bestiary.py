@@ -34,7 +34,7 @@ def main() -> None:
 
     stats = build_npc_stats("clan_warrior")
     check("clan warrior claw profile", stats["npc_attack_profile"]["type"] == "claw")
-    check("clan warrior hp", npc_hp(BESTIARY_NPCS["clan_warrior"]) == 21)
+    check("clan warrior hp", npc_hp(BESTIARY_NPCS["clan_warrior"]) == 22)
 
     badger_hp = npc_hp(BESTIARY_NPCS["badger"])
     check("badger tough", badger_hp >= 14, str(badger_hp))

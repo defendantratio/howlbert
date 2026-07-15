@@ -1,7 +1,10 @@
 # Basil TTRPG rules; core mechanics for Howlbert
 
 ATTRIBUTE_MODIFIERS = {
-    1: -3, 2: -2, 3: -2, 4: -1, 5: 0, 6: 1, 7: 1, 8: 2, 9: 2, 10: 3,
+    # score - 5: every point matters (no dead levels), and a specialist truly
+    # dominates its niche. midrange (3-6) is unchanged from the old curve, so DCs
+    # stay roughly as tuned; only the high and low ends widen. see docs/CHANNELS.md.
+    1: -4, 2: -3, 3: -2, 4: -1, 5: 0, 6: 1, 7: 2, 8: 3, 9: 4, 10: 5,
 }
 
 DC_TIERS = {
@@ -131,9 +134,9 @@ ROLE_FEATURES = {
 
 SKILLS = {
     "herblore": (("attr_int",), "Herblore"),
-    "hunting": (("attr_str", "attr_dex"), "Hunting"),
+    "hunting": (("attr_str", "attr_dex", "attr_wis"), "Hunting"),
     "stealth": (("attr_dex",), "Stealth"),
-    "tracking": (("attr_int",), "Tracking"),
+    "tracking": (("attr_wis", "attr_con"), "Tracking"),
     "intimidation": (("attr_cha",), "Intimidation"),
     "persuasion": (("attr_cha",), "Persuasion"),
     "survival": (("attr_con", "attr_str"), "Survival"),

@@ -557,27 +557,27 @@ every check is **d20 + attribute modifier + situational modifiers**, compared ag
 
 ### attribute modifiers
 
-attributes run 1 to 10. the modifier added to a roll isn't the raw score, it's this:
+attributes run 1 to 10. the modifier added to a roll is the score minus 5, so every point earned actually changes something (no dead levels) and a specialist truly dominates its niche:
 
-- score 1: -3 modifier
-- score 2: -2 modifier
+- score 1: -4 modifier
+- score 2: -3 modifier
 - score 3: -2 modifier
 - score 4: -1 modifier
 - score 5: 0 modifier
 - score 6: +1 modifier
-- score 7: +1 modifier
-- score 8: +2 modifier
-- score 9: +2 modifier
-- score 10: +3 modifier
+- score 7: +2 modifier
+- score 8: +3 modifier
+- score 9: +4 modifier
+- score 10: +5 modifier
 
 ### the six attributes and eight skills
 
 attributes: strength, dexterity, survival (constitution), intelligence, charisma, wisdom.
 
 - **herblore**: governed by intelligence.
-- **hunting**: governed by strength, dexterity.
+- **hunting**: governed by strength, dexterity, wisdom (power, precision, and the instinct to read prey and terrain; an old, wise wolf can out-hunt a fast, thoughtless one).
 - **stealth**: governed by dexterity.
-- **tracking**: governed by intelligence.
+- **tracking**: governed by wisdom, constitution (instinct and a scent-reading nose, not book-cleverness; a good tracker isn't the same wolf as a good herbalist).
 - **intimidation**: governed by charisma.
 - **persuasion**: governed by charisma.
 - **survival**: governed by constitution, strength.
@@ -614,11 +614,11 @@ beyond the base d20 + attribute modifier, a real roll can pick up adjustments fr
 
 ### HP and combat
 
-HP is **10 + strength score + survival (constitution) score**, using the raw attribute score, not the modifier (`engine/character.py`); a str 7, con 5 wolf has 22 HP.
+HP is **10 + 2 × survival (constitution) score**, using the raw score, not the modifier (`engine/character.py`); a con 5 wolf has 20 HP, a con 8 wolf has 26. vitality is constitution, not muscle: strength drives bite damage and hunting, but not how much punishment a wolf can take, so a strong, sickly wolf is no longer as hard to bring down as a tough one.
 
-- **initiative**: 1d20 + dexterity modifier.
+- **initiative**: 1d20 + dexterity modifier + wisdom modifier (reflex plus alertness; a watchful wolf reacts to an ambush before a merely fast one does).
 - **bite**: attacker rolls strength modifier + hunting proficiency (+ trait mods) vs the defender's dexterity modifier; a hit deals 1d6 + strength modifier.
-- **claw**: both sides roll dexterity modifier; a hit deals 1d4 + dexterity modifier.
+- **claw**: the attacker rolls dexterity modifier (a precise swipe) vs the defender's dexterity modifier; a hit deals 1d4 + strength modifier (the damage is powered by muscle and mass, not finesse).
 - a natural 20 on the attack roll is an automatic hit (crit); a natural 1 is an automatic miss (fumble). a defender's natural 1 is an automatic hit against them (no crit); a defender's natural 20 is an automatic miss.
 - **crit** (1d4): 1 extra 1d4 damage, 2 knocks the target prone, 3 disarms, 4 applies a 3-round bleed (1 HP/round).
 - **fumble** (1d4): 1 grants the enemy a free attack, 2 gives disadvantage on your next attack, 3 knocks you prone, 4 has you bite your own tongue for 1 self-damage.
