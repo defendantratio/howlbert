@@ -127,7 +127,7 @@ COMBAT_GUIDE_TOPICS["crits"] = (
     "**natural 20 (critical hit)**; roll 1d4 for extra effect:\n"
     "1. bonus damage (+1d4)\n"
     "2. knock target prone\n"
-    "3. disarm; target drops held item or loses grip\n"
+    "3. off balance; a solid hit knocks the target off its footing, its next claw swipe weaker\n"
     "4. temporary bleed: 1 hp/round for 3 rounds (3 hp applied in combat)\n\n"
     "**natural 1 (critical fumble)**; roll 1d4:\n"
     "1. drop guard; enemy gets a free attack on you\n"

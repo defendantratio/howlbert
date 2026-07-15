@@ -198,6 +198,11 @@ def validate_stats(role: str, stats: dict) -> str | None:
     for key, val in stats.items():
         if val < 1 or val > 10:
             return "each attribute must be between 1 and 10."
+    # a living wolf can't dump an attribute to nothing and stay functional;
+    # a floor keeps every point-buy build a wolf, not a stat-stacked outlier.
+    for key, val in stats.items():
+        if val < 2:
+            return "each attribute must be at least 2; even a specialist wolf keeps some baseline capability everywhere."
     if total < lo or total > hi:
         return f"attribute total must be {lo}; {hi} for your role (yours: {total})."
     return None

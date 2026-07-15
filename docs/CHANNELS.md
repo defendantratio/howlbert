@@ -543,8 +543,7 @@ pulled from `rpg_rules.py` and `engine/dice.py`; this is the actual math behind 
 
 every check is **d20 + attribute modifier + situational modifiers**, compared against a difficulty class (DC):
 
-- **natural 1**: automatic failure, regardless of modifiers.
-- **natural 20**: automatic success, regardless of modifiers.
+- **natural 1 / natural 20**: labeled a critical failure/success for flavor, but for a plain skill check the math still decides; a well-built wolf can't be tripped by an unlucky 1, and an unskilled one can't luck past a DC their build has no business clearing. **combat attack rolls and death saves are the exception**: those have their own resolution (see below) where a natural 20 is a genuine automatic hit/stabilize and a natural 1 a genuine automatic miss/fail.
 - **advantage**: roll twice, take the higher.
 - **disadvantage**: roll twice, take the lower. advantage and disadvantage cancel out if a wolf has sources of both on the same roll; they don't stack in the same direction either (two sources of advantage is still just advantage once).
 
@@ -620,7 +619,7 @@ HP is **10 + 2 × survival (constitution) score**, using the raw score, not the 
 - **bite**: attacker rolls strength modifier + hunting proficiency (+ trait mods) vs the defender's dexterity modifier; a hit deals 1d6 + strength modifier.
 - **claw**: the attacker rolls dexterity modifier (a precise swipe) vs the defender's dexterity modifier; a hit deals 1d4 + strength modifier (the damage is powered by muscle and mass, not finesse).
 - a natural 20 on the attack roll is an automatic hit (crit); a natural 1 is an automatic miss (fumble). a defender's natural 1 is an automatic hit against them (no crit); a defender's natural 20 is an automatic miss.
-- **crit** (1d4): 1 extra 1d4 damage, 2 knocks the target prone, 3 disarms, 4 applies a 3-round bleed (1 HP/round).
+- **crit** (1d4): 1 extra 1d4 damage, 2 knocks the target prone, 3 knocks the target off balance (grip lost, weaker claw next swipe), 4 applies a 3-round bleed (1 HP/round).
 - **fumble** (1d4): 1 grants the enemy a free attack, 2 gives disadvantage on your next attack, 3 knocks you prone, 4 has you bite your own tongue for 1 self-damage.
 - **maneuvers**: `/combat maneuver` covers 18 named moves (`engine/combat_guide.py`), including four lethal finishers only usable once the defender is already badly hurt: killing bite (1d12+2, defender at or below 35% HP), spine bite (1d10, 50%), neck snap (1d10+1, 40%), skull smash (1d12, 45%).
 - **NPCs**: `/combat npc` pulls from a real bestiary (`engine/bestiary.py`); predators, hearth-hounds, and clan cats all have full attribute blocks and use the same HP formula as player wolves.
@@ -687,7 +686,7 @@ a note on scope: an older, pre-bot version of this guide included a standalone "
 - **a hunter (dex 7, +1 mod) tries a hunting check at moderate DC (15\)**, no other modifiers: needs to roll a 14+ on the d20 to succeed (14 + 1 = 15).
 - **that same hunter is exhausted (disadvantage) but has a good omen active (advantage)**: they cancel out; the hunter rolls once, normally.
 - **a scout (dex 6, +1 mod) tracks a fresh trail in rain**: rain adds +3 to the DC, but a fresh trail only takes half that penalty (trail-age scaling), so the actual DC goes up by ~2, not 3.
-- **a medic (wis 7, +2 mod) treats an infected wound (cure DC 14) with yarrow**: 2 mod + whatever the die rolls; a natural 12 or higher succeeds outright, a natural 1 fails regardless of the math.
+- **a medic (wis 7, +2 mod) treats an infected wound (cure DC 14) with yarrow**: 2 mod + whatever the die rolls; a natural 12 or higher succeeds, and (unlike a combat attack roll) a natural 1 only fails here because 1 + 2 = 3 is genuinely short of 14, not because it's an automatic miss.
 
 ---
 
@@ -770,7 +769,8 @@ channels scroll; this doesn't. the world's lore, the pack write-ups, and the her
 - **[the wolves](https://howlbert.neocities.org/characters.html)**: the character roster, claimed and adoptable alike.
 - **[the human world](https://howlbert.neocities.org/twolegs.html)**: twolegs, thunderpath, and the rest of what's dangerous on the other side of the tree line.
 - **[how to play](https://howlbert.neocities.org/play.html)**: a plain-language onboarding page for anyone who lands on the site before ever opening discord.
-- **[wolf name generator](https://howlbert.neocities.org/namegen.html)**: exactly what it says.
+- **[which pack fits you](https://howlbert.neocities.org/quiz.html)**: a short sorting quiz that points a newcomer toward a pack before they ever register.
+- **[character generator](https://howlbert.neocities.org/charactergen.html)**: rolls a full concept (name, stats, skills, weaknesses, appearance, backstory seed) tied to rank and pack, so someone can walk into `/register` with a ready-made wolf.
 - **[book one: the blinking](https://howlbert.neocities.org/bookone.html)**: the server's actual ongoing plot, the way a reader (not a player) would encounter it.
 - **[first sunrise](https://howlbert.neocities.org/first-sunrise.html)**: a short playable choice-based teaser, one wolf's first hunt, that ends by linking straight to the discord invite. built to give a visitor something to *do* before they ever open discord.
 - **[credits](https://howlbert.neocities.org/credits.html)**: who made what.

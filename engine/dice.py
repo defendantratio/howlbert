@@ -106,17 +106,18 @@ def resolve_check(
     safe_roll_used = False
     first_die = die
 
-    if die == 1:
-        outcome = "critical_failure"
-        success = False
-    elif die == 20:
-        outcome = "critical_success"
-        success = True
-    elif total >= dc:
-        outcome = "success"
+    # a natural 1 or 20 no longer auto-fails/succeeds a skill check on its own;
+    # combat attack rolls and death saves have their own, separate resolution
+    # (engine/combat.py, engine/death_saves.py) and keep true crit behavior.
+    # here the die still decides whether the label reads "critical" for
+    # flavor, but success is always the real total against the dc, so a
+    # highly skilled wolf can't be tripped by an unlucky 1 and an unskilled
+    # one can't luck out past a dc their build has no business clearing.
+    if total >= dc:
+        outcome = "critical_success" if die == 20 else "success"
         success = True
     else:
-        outcome = "failure"
+        outcome = "critical_failure" if die == 1 else "failure"
         success = False
         if allow_safe_roll and has_safe_roll and die != 1:
             safe_roll_used = True
@@ -127,17 +128,11 @@ def resolve_check(
             else:
                 die = roll_d20()
             total = die + mod + prof + inj_pen + gen_pen + trait_mod + role_mod + herb_mod + lt_mod + frost_mod + disease_mod + age_mod
-            if die == 1:
-                outcome = "critical_failure"
-                success = False
-            elif die == 20:
-                outcome = "critical_success"
-                success = True
-            elif total >= dc:
-                outcome = "success"
+            if total >= dc:
+                outcome = "critical_success" if die == 20 else "success"
                 success = True
             else:
-                outcome = "failure"
+                outcome = "critical_failure" if die == 1 else "failure"
                 success = False
 
     if omen_buff in ("good", "bad") and "id" in user.keys():
