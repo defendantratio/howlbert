@@ -634,12 +634,25 @@
                 return v;
             }
             // skills are biased toward the rank's real proficiencies (RANK_SKILLS): up
-            // to two matching skills, then filled to three for a little variety.
+            // to two matching skills, then filled to three for a little variety. several
+            // flavor entries share the same real skill key at different modifiers (e.g.
+            // two herblore entries); a rolled wolf should only ever show one line per
+            // real skill, so both the preferred pick and the fill pick dedupe by
+            // `skill` key, not just by array identity.
+            function bySkillKey(list) {
+                // group flavor entries by their real skill, so callers can pick one
+                // random variant per skill instead of possibly getting two lines
+                // (e.g. two herblore entries at different modifiers) for one wolf.
+                const groups = {};
+                list.forEach(s => { (groups[s.skill] = groups[s.skill] || []).push(s); });
+                return Object.keys(groups).map(k => pick(groups[k]));
+            }
             function genSkills(rank) {
                 const prefKeys = RANK_SKILLS[rank] || [];
-                const preferred = SKILLS.filter(s => prefKeys.includes(s.skill));
+                const preferred = bySkillKey(SKILLS.filter(s => prefKeys.includes(s.skill)));
                 const out = pickN(preferred, Math.min(2, preferred.length));
-                const fill = SKILLS.filter(s => out.indexOf(s) === -1);
+                const usedSkills = () => out.map(x => x.skill);
+                const fill = bySkillKey(SKILLS.filter(s => usedSkills().indexOf(s.skill) === -1));
                 while (out.length < 3 && fill.length) out.push(fill.splice(Math.floor(Math.random() * fill.length), 1)[0]);
                 return out;
             }
