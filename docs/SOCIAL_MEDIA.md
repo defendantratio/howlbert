@@ -415,7 +415,7 @@ swampsink did not turn. xe knew the scent before the shape emerged from the reed
 
 the raw recording came in at **152 minutes**. that is source footage, not a video. a first upload from a channel with no audience does not survive two and a half hours, and the front of that recording is three lore pages being scrolled and read — the exact place viewers leave. this script cuts it to **about eleven minutes**. the full recording can go up later as an unlisted long-form VOD for the handful who want it; it is not the thing that earns the channel its first subscriber.
 
-**the spine, say it once and let the footage prove it three times:** swampsink's sheet says half blind, volatile, devout. the game charges xem for all three. everything you wrote on a form is a real number in the world.
+**the spine, say it once and let the footage prove it three times:** the generator dealt swampsink a half-blind, volatile, devout wolf; the game then charged xem for all three. this is not a character you author so much as one you're handed and have to live with, which is exactly what xer own backstory says happened to xem: *the fever had not asked permission.* the tool enacts the theme. don't oversell authorship you didn't have.
 
 **the three beats that carry the whole video** (they're already in the can):
 
@@ -429,7 +429,7 @@ everything in `[brackets]` is an edit direction, not a line to read.
 >
 > "this is swampsink. half blind, volatile, and praying to a god xe doesn't believe in.
 >
-> i wrote that on a character sheet an hour ago. the game has been charging xem for it ever since; every hunt, every roll, minus fifteen percent, because i gave xem an eye disease and meant it.
+> i didn't choose any of that. a generator rolled it an hour ago and handed it to me. and the game has been charging xem for it ever since; every hunt, every roll, minus fifteen percent, for an eye disease xe never asked for.
 >
 > this is howlbert. let me show you how xe got here."
 >
@@ -455,9 +455,11 @@ everything in `[brackets]` is an edit direction, not a line to read.
 >
 > **[2:20–3:20 — charactergen: roll a wolf, reroll the backstory a couple of times, copy the sheet]**
 >
-> "then the generator builds the rest. name, pack, rank, a fair spread of stats, an appearance, and a backstory seed.
+> "then the generator builds the rest. name, pack, rank, a fair spread of stats, an appearance, a genetic condition, and a backstory seed.
 >
-> i rerolled the backstory until one of them bit: *went blind from a fever full-grown, and relearned survival.* not born blind. blinded, as an adult, and forced to learn the swamp all over again. that's the wolf. everything after that is just writing it down."
+> and it deals you things you didn't ask for. it gave xem hereditary cataracts; half blind, permanently, before xe existed. i kept it.
+>
+> then i rerolled the backstory until one bit: *went blind from a fever full-grown, and relearned survival.* which lined up with the eye it had already taken. that's the wolf. everything after that is just writing it down."
 >
 > **[3:20–4:20 — the google doc. TIMELAPSE HARD, 4x to 8x. do not show real-time typing]**
 >
@@ -487,7 +489,7 @@ everything in `[brackets]` is an edit direction, not a line to read.
 >
 > "an armored alligator gar. *elders will speak of this haul.*
 >
-> and read the bottom of every one of those results. minus fifteen percent. partial blindness. the game never once forgot what i wrote on that form."
+> and read the bottom of every one of those results. minus fifteen percent. partial blindness. a condition a generator handed xem in half a second, and the world has charged xem for it on every hunt since."
 >
 > **[7:30–8:20 — forage, explore, the leaf-burn rash, the vitals card at energy 12/100, the short rest]**
 >

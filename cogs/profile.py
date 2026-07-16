@@ -87,35 +87,51 @@ _WEAKNESS_ATTRS = {
 }
 
 
-def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None,
-                           default_bonus: int = 1, default_penalty: int = -1):
-    """Parse comma-separated starting skills and weak attributes from /register.
-    Each item may carry its own value inline (e.g. `hunting:2, stealth`); a bare
-    item uses the default bonus/penalty. Returns (skill_pairs, weakness_pairs,
-    error), each pair a (key, value); duplicates are dropped, and an unknown token
+DEFAULT_TRAIT_BONUS = 1
+DEFAULT_TRAIT_PENALTY = -1
+
+
+def _split_trait_items(raw: str) -> list[str]:
+    """Items are separated by `|` when any flavour text is present (flavour often
+    contains commas, e.g. "strong bite, weak defence"), and by `,` otherwise, so
+    the simple `hunting, stealth` form still works."""
+    sep = '|' if '|' in raw else ','
+    return [p.strip() for p in raw.split(sep) if p.strip()]
+
+
+def _split_trait_item(part: str, default: int):
+    """One item: `skill`, `skill:N`, `skill:N:flavour`, or `skill:flavour`.
+    Returns (name, value, flavour). flavour may itself contain colons, so only the
+    first (and optionally second) segment are structural."""
+    bits = part.split(':')
+    name = bits[0].strip()
+    if len(bits) == 1:
+        return name, default, None
+    try:
+        value = int(bits[1].strip())
+        flavour = ':'.join(bits[2:]).strip() or None
+    except ValueError:
+        # no number given; the rest is all flavour
+        value = default
+        flavour = ':'.join(bits[1:]).strip() or None
+    return name, value, flavour
+
+
+def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None):
+    """Parse starting skills and weak attributes from /register.
+
+    Each item may carry its own value and its own flavour text inline, e.g.
+    `survival:1:swimming; strong in water | intimidation:2:a stare that ends fights`.
+    a bare item uses the default bonus/penalty. Returns (skills, weaknesses, error),
+    each entry a (key, value, flavour); duplicates are dropped, and an unknown token
     or out-of-range value returns a helpful error instead of vanishing."""
     from rpg_rules import SKILLS
 
-    def split_val(part, default):
-        if ':' in part:
-            name, _, raw = part.rpartition(':')
-            raw = raw.strip()
-            try:
-                return name.strip(), int(raw), None
-            except ValueError:
-                return None, None, f"**{raw}** isn't a number (use e.g. `hunting:2`)."
-        return part.strip(), default, None
-
-    skills: list[tuple[str, int]] = []
+    skills: list[tuple[str, int, str | None]] = []
     seen_s: set[str] = set()
     if trait_skill:
-        for part in trait_skill.replace(';', ',').split(','):
-            part = part.strip()
-            if not part:
-                continue
-            name, val, err = split_val(part, default_bonus)
-            if err:
-                return [], [], err
+        for part in _split_trait_items(trait_skill):
+            name, val, flavour = _split_trait_item(part, DEFAULT_TRAIT_BONUS)
             if not 0 <= val <= 5:
                 return [], [], f"skill bonus **{val}** is out of range (0 to 5)."
             tok = name.lower().replace(' ', '_')
@@ -123,17 +139,12 @@ def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None,
                 return [], [], f"unknown skill **{name}**; pick from: {', '.join(SKILLS)}."
             if tok not in seen_s:
                 seen_s.add(tok)
-                skills.append((tok, val))
-    weaknesses: list[tuple[str, int]] = []
+                skills.append((tok, val, flavour))
+    weaknesses: list[tuple[str, int, str | None]] = []
     seen_w: set[str] = set()
     if trait_weakness:
-        for part in trait_weakness.replace(';', ',').split(','):
-            part = part.strip()
-            if not part:
-                continue
-            name, val, err = split_val(part, default_penalty)
-            if err:
-                return [], [], err
+        for part in _split_trait_items(trait_weakness):
+            name, val, flavour = _split_trait_item(part, DEFAULT_TRAIT_PENALTY)
             if val > 0:
                 val = -val
             if not -5 <= val <= 0:
@@ -144,7 +155,7 @@ def _parse_register_traits(trait_skill: str | None, trait_weakness: str | None,
                 return [], [], f"unknown attribute **{name}**; pick from: strength, dexterity, constitution, intelligence, charisma, wisdom."
             if key not in seen_w:
                 seen_w.add(key)
-                weaknesses.append((key, val))
+                weaknesses.append((key, val, flavour))
     return skills, weaknesses, None
 
 
@@ -225,10 +236,10 @@ class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
             db.set_character_lore_fields(new_wolf_id, **lore_fields)
         if skill_keys or weakness_keys:
             from engine.character_traits import set_registration_traits
-            for sk, val in skill_keys:
-                set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=val)
-            for wk, val in weakness_keys:
-                set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=val)
+            for sk, val, flavour in skill_keys:
+                set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=val, skill_flavour=flavour)
+            for wk, val, flavour in weakness_keys:
+                set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=val, weakness_flavour=flavour)
         # mods running /register (usually on a player's behalf, from a submitted
         # sheet) are trusted to skip the queue; a self-registering player's wolf
         # goes in pending so a mod can review (and, via /wolfadmin possess +
@@ -273,10 +284,13 @@ class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
             embed.add_field(name='Genetics', value=format_genetic_conditions(user), inline=False)
         if skill_keys or weakness_keys:
             trait_lines = []
-            for sk, val in skill_keys:
-                trait_lines.append(f"+{val} {SKILLS[sk][1]} (permanent, applies to real rolls)")
-            for wk, val in weakness_keys:
-                trait_lines.append(f"{val} {wk.replace('attr_', '').title()} (permanent, applies to real rolls)")
+            for sk, val, flavour in skill_keys:
+                label = flavour or SKILLS[sk][1]
+                trait_lines.append(f"+{val} {label} ({SKILLS[sk][1]}; permanent, applies to real rolls)")
+            for wk, val, flavour in weakness_keys:
+                attr_label = wk.replace('attr_', '').title()
+                label = flavour or attr_label
+                trait_lines.append(f"{val} {label} ({attr_label}; permanent, applies to real rolls)")
             if trait_lines:
                 embed.add_field(name='Starting Traits', value='\n'.join(trait_lines), inline=False)
         if pack in GREAT_PACKS:
@@ -346,10 +360,10 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', trait_skill='bonus skills, comma-separated; add :N per skill (e.g. hunting:2, stealth); permanent', trait_skill_bonus='default bonus for skills without an inline :N, 0 to 5 (default 1)', trait_weakness='weak attributes, comma-separated; add :N per attr (e.g. strength:2, wisdom); permanent', trait_weakness_penalty='default penalty for weaknesses without inline :N, -5 to 0 (default -1)')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', trait_skill='e.g. hunting:2:fast, tires quick | stealth (skill[:0-5][:flavour], | between)', trait_weakness='e.g. strength:2:small, easily overpowered | wisdom (attr[:0-5][:flavour])')
     @app_commands.autocomplete(pack=_pack_register_autocomplete)
     @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
-    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
+    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, trait_skill: str | None=None, trait_weakness: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
         is_admin = is_howlbert_admin(interaction)
         if not is_admin and wolf_count >= MAX_WOLVES_PER_PLAYER:
@@ -374,7 +388,7 @@ class Profile(commands.Cog):
             embed = howlbert_embed('Invalid Genetics', genetic_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
             return
-        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness, trait_skill_bonus, trait_weakness_penalty)
+        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness)
         if trait_err:
             embed = howlbert_embed('Invalid Trait', trait_err, color=ERROR_COLOR)
             await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())

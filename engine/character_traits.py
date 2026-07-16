@@ -3222,8 +3222,10 @@ def set_registration_traits(
     *,
     skill_key: str | None = None,
     skill_bonus: int = 1,
+    skill_flavour: str | None = None,
     weakness_attr_key: str | None = None,
     weakness_penalty: int = -1,
+    weakness_flavour: str | None = None,
 ) -> None:
     """One-time, player-picked starting trait pair from /register: a skill
     bonus (0 to 5) and/or an attribute weakness (-5 to 0). Mechanically
@@ -3241,16 +3243,21 @@ def set_registration_traits(
     traits = ensure_traits_dict(parse_character_traits(fresh["character_traits"] if fresh and "character_traits" in fresh.keys() else None))
     if skill_key and skill_key in SKILLS and skill_bonus:
         attr_keys, label = SKILLS[skill_key]
+        # player-written flavour replaces the plain label on /profile ("swimming;
+        # strong in water" instead of "Survival"); the mechanics are unchanged.
+        name = f"{skill_flavour.strip()} ({label})" if skill_flavour and skill_flavour.strip() else f"{label} (starting trait)"
         traits["bonuses"].append({
-            "name": f"{label} (starting trait)",
+            "name": name[:120],
             "modifier": skill_bonus,
             "skills": [skill_key],
             "attrs": list(attr_keys),
             "earned": False,
         })
     if weakness_attr_key and weakness_penalty:
+        attr_label = weakness_attr_key.replace("attr_", "").title()
+        name = f"{weakness_flavour.strip()} ({attr_label})" if weakness_flavour and weakness_flavour.strip() else f"{attr_label} (starting weakness)"
         traits["weaknesses"].append({
-            "name": f"{weakness_attr_key.replace('attr_', '').title()} (starting weakness)",
+            "name": name[:120],
             "modifier": weakness_penalty,
             "skills": [],
             "attrs": [weakness_attr_key],

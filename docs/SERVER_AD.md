@@ -59,20 +59,26 @@ other **species**     `🐾`
 
 -# **humans** (twolegs)
 -# **forest cats** (clan warrior, loner, rogue, kittypet)
--# **other non-wolf animals**; staff approval; dm for details
+-# **other non-wolf animals**; staff approval; DM for details
 
 `🧭`     __we offer:__
 
 > -# a brand new 18+ server; personal character channels & pack dens
-> -# **twelve phases. three acts.** a slow-burn plot that advances when rp earns it, not on a fixed calendar.
-> -# wolf; cat border diplomacy on warrior cats lake territory; d&d style, 24/7 text rp
+> -# **twelve phases. three acts.** a slow-burn plot that advances when RP earns it, not on a fixed calendar.
+> -# wolf; cat border diplomacy on warrior cats lake territory; D&D style, 24/7 text RP
 > -# **howlbert**, our custom bot: your wolf is real and persistent; hunger, exhaustion, and injury tick forward every sunrise, and only real treatment heals them.
 > -# 100+ real herbs and 30+ diseases with real mechanics; the green tongue is an actual skill, not a flavor line.
 > -# death is permanent, no revives; every wolf that dies gets a real obituary pulled from their own journal.
-> -# a full d20 skill system underneath the roleplay: six attributes, eight skills, real dcs, advantage and disadvantage.
+> -# a full d20 skill system underneath the roleplay: six attributes, eight skills, real DCs, advantage and disadvantage.
 > -# pack politics with teeth: alpha challenges, exile, cross-pack tension, and a faith system that actually shapes how your wolf reads the world.
 > -# `/scene` threads with a living roster and an auto-updating index of what's open, so you're never stuck scrolling.
-> -# a full art wing: commissions, weekly art-of-the-week, headcanons, art trades, adopts, and resources.
+> -# a full art wing: commissions, art, writing, and RP competitions, headcanons, art trades, adopts, and resources.
 > -# a healer handbook, dice and statistics guide, and lore forum.
 
-**dm the advertiser or @twisted_rivers to join or for details! mod applications open!**
+`⚖️`     __house rules:__ (the short version; full rules in the server)
+
+> -# **18+ only, and we check.** this is an adult space for the **safety and comfort** of everyone in it: the themes here are heavy, and nobody should be sharing them with minors. verification is a **redacted photo ID** (cover everything except your date of birth) **or** a screenshot of your **roblox age group**. that's it; nothing else is asked for, kept, or shared.
+> -# **no NSFW, anywhere.** 18+ here means mature *themes*, not adult content; there is nothing sexual in any channel or DM. this one is an instant ban.
+> -# **no AI.** no AI-generated art, writing, character designs, lore, or backstories. original work only, and credit anything that isn't yours.
+
+**DM the advertiser or @twisted_rivers to join or for details! mod applications open!**
