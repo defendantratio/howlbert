@@ -182,7 +182,7 @@ def _pack_display(affiliation: str) -> str:
         return f"**{info['name']}** ({terrain})" if terrain else f"**{info['name']}** (founded pack)"
     return 'Unknown'
 
-class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional; skip and add later with /character)'):
+class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
     """The prose half of /register. Modal text inputs cap at 4000 characters each
     with real multi-line paste, so this replaces the old personality/personality2
     and backstory/backstory2 split-field workaround that existed only to dodge
