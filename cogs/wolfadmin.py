@@ -179,6 +179,40 @@ class WolfAdmin(commands.Cog):
         embed.set_footer(text=f'{len(wolves)} wolf(s) · discord id {player.id}')
         await interaction.followup.send(embed=embed, ephemeral=reply_ephemeral())
 
+    @wolfadmin.command(name='pending', description='list wolves awaiting mod approval.')
+    async def wolfadmin_pending(self, interaction: discord.Interaction):
+        if not await self._require_admin(interaction):
+            return
+        rows = db.list_pending_wolves()
+        if not rows:
+            embed = howlbert_embed('No Pending Wolves', 'nothing waiting on approval right now.', color=SUCCESS_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        lines = [f"**{row['wolf_name']}**; owner <@{row['discord_id']}> (id `{row['id']}`)" for row in rows]
+        embed = howlbert_embed('Pending Approval', '\n'.join(lines), color=ERROR_COLOR)
+        embed.set_footer(text='review with /wolfadmin possess + /character, then /wolfadmin approve')
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
+    @wolfadmin.command(name='approve', description="approve a player's pending wolf so it can play.")
+    @app_commands.describe(player='wolf owner', wolf_name='which wolf (defaults to their active wolf)')
+    @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)
+    async def wolfadmin_approve(self, interaction: discord.Interaction, player: discord.User, wolf_name: str | None=None):
+        if not await self._require_admin(interaction):
+            return
+        wolf = _resolve_player_wolf(player, wolf_name)
+        if not wolf:
+            await interaction.response.send_message(embed=_wolf_not_found_embed(player, wolf_name or ''), ephemeral=reply_ephemeral())
+            return
+        current = wolf['approval_status'] if 'approval_status' in wolf.keys() else 'approved'
+        if current == 'approved':
+            embed = howlbert_embed('Already Approved', f"**{wolf['wolf_name']}** is already approved.", color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        db.set_wolf_approval(wolf['id'], 'approved')
+        embed = howlbert_embed('Approved', f"**{wolf['wolf_name']}** ({player.display_name}) can now play.", color=SUCCESS_COLOR)
+        embed.set_footer(text='need to edit the sheet first? /wolfadmin possess then /character, /wolfadmin release')
+        await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+
     @wolfadmin.command(name='possess', description="steer another player's wolf (all commands act as that character).")
     @app_commands.describe(player='wolf owner', wolf_name='which wolf (defaults to their active wolf)')
     @app_commands.autocomplete(wolf_name=_wolfadmin_wolf_autocomplete)

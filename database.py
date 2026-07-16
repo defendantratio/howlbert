@@ -1634,6 +1634,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
     for _appearance_col in ("fur_color", "eye_color", "markings", "scars"):
         if _appearance_col not in user_cols_late:
             conn.execute(f"ALTER TABLE users ADD COLUMN {_appearance_col} TEXT")
+    if "approval_status" not in user_cols_late:
+        # existing wolves predate the approval gate and are grandfathered in as
+        # approved; only wolves self-registered after this ships start pending.
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'approved'"
+        )
     if "dormant" not in user_cols_late:
         conn.execute(
             "ALTER TABLE users ADD COLUMN dormant INTEGER NOT NULL DEFAULT 0"
@@ -3655,6 +3661,21 @@ def set_character_lore_fields(wolf_id: int, **fields: str) -> None:
             "UPDATE users SET character_lore = ? WHERE id = ?",
             (encode_character_lore(**existing), wolf_id),
         )
+
+
+def set_wolf_approval(wolf_id: int, status: str) -> None:
+    """Set a wolf's approval gate ('pending' or 'approved')."""
+    if status not in ("pending", "approved"):
+        return
+    update_user_by_id(wolf_id, approval_status=status)
+
+
+def list_pending_wolves() -> list[sqlite3.Row]:
+    """Wolves awaiting mod approval, oldest first."""
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM users WHERE approval_status = 'pending' ORDER BY id ASC"
+        ).fetchall()
 
 
 def set_wolf_avatar_cache(wolf_id: int, image_bytes: bytes | None, *, url: str | None = None) -> None:

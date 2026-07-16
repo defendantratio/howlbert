@@ -182,51 +182,33 @@ def _pack_display(affiliation: str) -> str:
         return f"**{info['name']}** ({terrain})" if terrain else f"**{info['name']}** (founded pack)"
     return 'Unknown'
 
-class Profile(commands.Cog):
+class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional; skip and add later with /character)'):
+    """The prose half of /register. Modal text inputs cap at 4000 characters each
+    with real multi-line paste, so this replaces the old personality/personality2
+    and backstory/backstory2 split-field workaround that existed only to dodge
+    Discord's ~6000-character combined limit on a slash command's composer."""
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+    personality = discord.ui.TextInput(label='personality', style=discord.TextStyle.paragraph, required=False, max_length=4000)
+    backstory = discord.ui.TextInput(label='backstory', style=discord.TextStyle.paragraph, required=False, max_length=4000)
+    rp_sample = discord.ui.TextInput(label='rp sample', style=discord.TextStyle.paragraph, required=False, max_length=4000)
+    family_ties = discord.ui.TextInput(label='family ties', style=discord.TextStyle.paragraph, required=False, max_length=1000)
+    open_plots = discord.ui.TextInput(label='open plots', style=discord.TextStyle.paragraph, required=False, max_length=1000)
 
-    @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', personality='personality: traits and how they act (optional; shows on /profile sheet:true)', personality2='more personality if it ran long (optional; appended)', backstory='backstory prose (optional; shows on /profile sheet:true)', backstory2='more backstory if it ran past the limit (optional; appended)', rp_sample='a short writing sample (optional; shows on /profile sheet:true)', family_ties='known family: parents, siblings, kin (optional; shows on /profile sheet:true)', open_plots='hooks other players can pick up (optional; shows on /profile sheet:true)', trait_skill='bonus skills, comma-separated; add :N per skill (e.g. hunting:2, stealth); permanent', trait_skill_bonus='default bonus for skills without an inline :N, 0 to 5 (default 1)', trait_weakness='weak attributes, comma-separated; add :N per attr (e.g. strength:2, wisdom); permanent', trait_weakness_penalty='default penalty for weaknesses without inline :N, -5 to 0 (default -1)')
-    @app_commands.autocomplete(pack=_pack_register_autocomplete)
-    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
-    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, personality: str | None=None, personality2: str | None=None, backstory: str | None=None, backstory2: str | None=None, rp_sample: str | None=None, family_ties: str | None=None, open_plots: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
-        wolf_count = db.count_slot_wolves(interaction.user.id)
-        is_admin = is_howlbert_admin(interaction)
-        if not is_admin and wolf_count >= MAX_WOLVES_PER_PLAYER:
-            embed = howlbert_embed('Wolf Limit Reached', f'You already have **{MAX_WOLVES_PER_PLAYER}** wolves. Use `/switchwolf` to change active character, or `/rpg action:delete confirm:DELETE` to remove one.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        wolf_name, name_err = db.validate_wolf_name_available(name, label='Wolf names')
-        if name_err:
-            title = 'Name Taken' if 'already taken' in name_err else 'Invalid Name'
-            embed = howlbert_embed(title, name_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        from engine.factions import is_faction
-        if pack not in (LONER_KEY, ROGUE_KEY) and not is_faction(pack):
-            embed = howlbert_embed('Unknown Pack', 'pick a pack from the autocomplete list; a great pack, a founded pack, lone wolf, or rogue.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        age_months = starting_age
-        from engine.genetics import encode_genetic_conditions, parse_genetic_register_input
-        genetic_keys, genetic_err = parse_genetic_register_input(genetic)
-        if genetic_err:
-            embed = howlbert_embed('Invalid Genetics', genetic_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness, trait_skill_bonus, trait_weakness_penalty)
-        if trait_err:
-            embed = howlbert_embed('Invalid Trait', trait_err, color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
-        bonus_pts = sum(v for _, v in skill_keys)
-        weak_pts = sum(abs(v) for _, v in weakness_keys)
-        if bonus_pts > weak_pts:
-            embed = howlbert_embed('Unbalanced Traits', f'starting skill bonuses (**+{bonus_pts}** total) must be paid for with at least as many weakness points (you have **{weak_pts}**). add more weaknesses (or a bigger penalty), or take fewer or smaller skill bonuses.', color=ERROR_COLOR)
-            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
-            return
+    def __init__(self, *, params: dict):
+        super().__init__()
+        self._p = params
+
+    async def on_submit(self, interaction: discord.Interaction):
+        p = self._p
+        wolf_name, pack, role, birth_sex, sexuality, age_months, genetic_keys, maw_belief = (
+            p['wolf_name'], p['pack'], p['role'], p['birth_sex'], p['sexuality'],
+            p['age_months'], p['genetic_keys'], p['maw_belief'],
+        )
+        fur_color, eye_color, markings, scars = p['fur_color'], p['eye_color'], p['markings'], p['scars']
+        skill_keys, weakness_keys = p['skill_keys'], p['weakness_keys']
+        is_admin, wolf_count = p['is_admin'], p['wolf_count']
+        from engine.genetics import encode_genetic_conditions
+
         try:
             new_wolf_id = db.register_user(interaction.user.id, wolf_name, pack, wolf_role=role, birth_sex=birth_sex, sexuality=sexuality, age_months=age_months, genetic_conditions=encode_genetic_conditions(genetic_keys), maw_belief=maw_belief)
         except ValueError as exc:
@@ -238,9 +220,7 @@ class Profile(commands.Cog):
         identity_fields = {k: v.strip()[:64] for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings, 'scars': scars}.items() if v and v.strip()}
         if identity_fields:
             db.set_wolf_identity(new_wolf_id, **identity_fields)
-        personality_full = '\n\n'.join(p.strip() for p in (personality, personality2) if p and p.strip())
-        backstory_full = '\n\n'.join(p.strip() for p in (backstory, backstory2) if p and p.strip())
-        lore_fields = {k: v for k, v in {'personality': personality_full, 'backstory': backstory_full, 'family_ties': (family_ties or '').strip(), 'open_plots': (open_plots or '').strip(), 'rp_sample': (rp_sample or '').strip()}.items() if v}
+        lore_fields = {k: v for k, v in {'personality': (self.personality.value or '').strip(), 'backstory': (self.backstory.value or '').strip(), 'family_ties': (self.family_ties.value or '').strip(), 'open_plots': (self.open_plots.value or '').strip(), 'rp_sample': (self.rp_sample.value or '').strip()}.items() if v}
         if lore_fields:
             db.set_character_lore_fields(new_wolf_id, **lore_fields)
         if skill_keys or weakness_keys:
@@ -249,6 +229,11 @@ class Profile(commands.Cog):
                 set_registration_traits(new_wolf_id, skill_key=sk, skill_bonus=val)
             for wk, val in weakness_keys:
                 set_registration_traits(new_wolf_id, weakness_attr_key=wk, weakness_penalty=val)
+        # mods running /register (usually on a player's behalf, from a submitted
+        # sheet) are trusted to skip the queue; a self-registering player's wolf
+        # goes in pending so a mod can review (and, via /wolfadmin possess +
+        # /character, edit) before it's approved.
+        db.set_wolf_approval(new_wolf_id, 'approved' if is_admin else 'pending')
         from engine.patron import on_wolf_registered
         invite_note = None
         if interaction.guild:
@@ -310,7 +295,10 @@ class Profile(commands.Cog):
                 embed.add_field(name='Pack Trait', value=trait, inline=False)
         else:
             embed.add_field(name='The Rogue Path', value='No pack treasury, tax, or trait; free to roam. Use `/setfaction` to join a Great Pack later.', inline=False)
-        embed.add_field(name='Next Steps', value='Try `/profile` for your sheet, `/rpg action:roll` for skill checks, `/bones action:hunt` or `action:work` for bones.\nNew here? **`/help topic:getting-started`** walks through courtship, pups, and the den.', inline=False)
+        if is_admin:
+            embed.add_field(name='Next Steps', value='Try `/profile` for your sheet, `/rpg action:roll` for skill checks, `/bones action:hunt` or `action:work` for bones.\nNew here? **`/help topic:getting-started`** walks through courtship, pups, and the den.', inline=False)
+        else:
+            embed.add_field(name='⏳ Pending Approval', value='A mod will review this wolf before it can play; you can still explore `/profile` and `/help topic:getting-started` in the meantime.', inline=False)
         if invite_note:
             embed.add_field(name='Invite Reward', value=invite_note, inline=False)
         total = db.count_user_wolves(interaction.user.id)
@@ -350,6 +338,61 @@ class Profile(commands.Cog):
             )
         view = make_arrival_scene_view(user['id'], wolf_name, interaction.user.id, pup=is_pup, loner=is_loner)
         await interaction.followup.send(embed=scene_embed, view=view)
+
+
+class Profile(commands.Cog):
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', trait_skill='bonus skills, comma-separated; add :N per skill (e.g. hunting:2, stealth); permanent', trait_skill_bonus='default bonus for skills without an inline :N, 0 to 5 (default 1)', trait_weakness='weak attributes, comma-separated; add :N per attr (e.g. strength:2, wisdom); permanent', trait_weakness_penalty='default penalty for weaknesses without inline :N, -5 to 0 (default -1)')
+    @app_commands.autocomplete(pack=_pack_register_autocomplete)
+    @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
+    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, trait_skill: str | None=None, trait_skill_bonus: app_commands.Range[int, 0, 5]=1, trait_weakness: str | None=None, trait_weakness_penalty: app_commands.Range[int, -5, 0]=-1):
+        wolf_count = db.count_slot_wolves(interaction.user.id)
+        is_admin = is_howlbert_admin(interaction)
+        if not is_admin and wolf_count >= MAX_WOLVES_PER_PLAYER:
+            embed = howlbert_embed('Wolf Limit Reached', f'You already have **{MAX_WOLVES_PER_PLAYER}** wolves. Use `/switchwolf` to change active character, or `/rpg action:delete confirm:DELETE` to remove one.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        wolf_name, name_err = db.validate_wolf_name_available(name, label='Wolf names')
+        if name_err:
+            title = 'Name Taken' if 'already taken' in name_err else 'Invalid Name'
+            embed = howlbert_embed(title, name_err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        from engine.factions import is_faction
+        if pack not in (LONER_KEY, ROGUE_KEY) and not is_faction(pack):
+            embed = howlbert_embed('Unknown Pack', 'pick a pack from the autocomplete list; a great pack, a founded pack, lone wolf, or rogue.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        age_months = starting_age
+        from engine.genetics import parse_genetic_register_input
+        genetic_keys, genetic_err = parse_genetic_register_input(genetic)
+        if genetic_err:
+            embed = howlbert_embed('Invalid Genetics', genetic_err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        skill_keys, weakness_keys, trait_err = _parse_register_traits(trait_skill, trait_weakness, trait_skill_bonus, trait_weakness_penalty)
+        if trait_err:
+            embed = howlbert_embed('Invalid Trait', trait_err, color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        bonus_pts = sum(v for _, v in skill_keys)
+        weak_pts = sum(abs(v) for _, v in weakness_keys)
+        if bonus_pts > weak_pts:
+            embed = howlbert_embed('Unbalanced Traits', f'starting skill bonuses (**+{bonus_pts}** total) must be paid for with at least as many weakness points (you have **{weak_pts}**). add more weaknesses (or a bigger penalty), or take fewer or smaller skill bonuses.', color=ERROR_COLOR)
+            await interaction.response.send_message(embed=embed, ephemeral=reply_ephemeral())
+            return
+        modal = _RegisterLoreModal(params=dict(
+            wolf_name=wolf_name, pack=pack, role=role, birth_sex=birth_sex, sexuality=sexuality,
+            age_months=age_months, genetic_keys=genetic_keys, maw_belief=maw_belief,
+            fur_color=fur_color, eye_color=eye_color, markings=markings, scars=scars,
+            skill_keys=skill_keys, weakness_keys=weakness_keys,
+            is_admin=is_admin, wolf_count=wolf_count,
+        ))
+        await interaction.response.send_modal(modal)
 
     @app_commands.command(name='wolves', description='list all wolves on your account.')
     async def wolves(self, interaction: discord.Interaction):
@@ -741,6 +784,8 @@ class Profile(commands.Cog):
             embed.set_image(url=wolf_ref)
         if has_character_lore(user):
             embed.add_field(name='Character Sheet', value='Appearance, backstory, and RP sample on file; use `/profile sheet:true`.', inline=False)
+        if 'approval_status' in user.keys() and user['approval_status'] == 'pending':
+            embed.add_field(name='⏳ Pending Approval', value='a mod hasn\'t reviewed this wolf yet.', inline=False)
         if 'bonded_mate_id' in user.keys() and user['bonded_mate_id']:
             bonded = db.get_bonded_mate(user)
             if bonded:
