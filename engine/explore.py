@@ -21,19 +21,23 @@ EXPLORE_ACTIONS = {
         "dc": 10,
         "flavor": "You dig through leaf-mold and old den scrapes.",
     },
+    # following a scent and reading sign are tracking, not survival: the printed
+    # skill has to match the attributes actually rolled (spec["skill"] is also the
+    # proficiency/trait key), and tracking is wisdom + constitution, instinct and a
+    # scent-reading nose. dig stays survival, which really is strength + endurance.
     "follow": {
         "label": "Follow scent",
         "emoji": "👃",
-        "skill": "Survival",
-        "attrs": ("attr_wis", "attr_dex"),
+        "skill": "Tracking",
+        "attrs": ("attr_wis", "attr_con"),
         "dc": 12,
         "flavor": "A bitter thread of scent leads you off the main trail.",
     },
     "investigate": {
         "label": "Investigate",
         "emoji": "🔍",
-        "skill": "Survival",
-        "attrs": ("attr_wis", "attr_int"),
+        "skill": "Tracking",
+        "attrs": ("attr_wis", "attr_con"),
         "dc": 11,
         "flavor": "Something moved in the brush; you circle wide and look closer.",
     },

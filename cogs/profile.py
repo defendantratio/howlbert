@@ -305,7 +305,7 @@ class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
         slots = db.count_slot_wolves(interaction.user.id)
         born = db.count_born_pups(interaction.user.id)
         if total > 1:
-            footer = f'Active wolf · {slots} of {MAX_WOLVES_PER_PLAYER} slots'
+            footer = f'Active wolf · {slots} of {MAX_WOLVES_PER_PLAYER} slots' if slots <= MAX_WOLVES_PER_PLAYER else f'Active wolf · {slots} wolves (no slot limit)'
             if born:
                 footer += f" (+ {born} born pup{('s' if born != 1 else '')})"
             footer += ' · use /switchwolf to change'
@@ -892,7 +892,7 @@ class Profile(commands.Cog):
             slots = db.count_slot_wolves(target.id)
             born = db.count_born_pups(target.id)
             if slots > 1 or born:
-                footer = f'Active wolf · {slots} of {MAX_WOLVES_PER_PLAYER} slots'
+                footer = f'Active wolf · {slots} of {MAX_WOLVES_PER_PLAYER} slots' if slots <= MAX_WOLVES_PER_PLAYER else f'Active wolf · {slots} wolves (no slot limit)'
                 if born:
                     footer += f" (+ {born} born pup{('s' if born != 1 else '')})"
                 footer += ' · /switchwolf to change'

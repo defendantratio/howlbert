@@ -411,6 +411,132 @@ swampsink did not turn. xe knew the scent before the shape emerged from the reed
 
 ---
 
+## 7g. video one: the narration script (written to the recorded footage)
+
+the raw recording came in at **152 minutes**. that is source footage, not a video. a first upload from a channel with no audience does not survive two and a half hours, and the front of that recording is three lore pages being scrolled and read — the exact place viewers leave. this script cuts it to **about eleven minutes**. the full recording can go up later as an unlisted long-form VOD for the handful who want it; it is not the thing that earns the channel its first subscriber.
+
+**the spine, say it once and let the footage prove it three times:** swampsink's sheet says half blind, volatile, devout. the game charges xem for all three. everything you wrote on a form is a real number in the world.
+
+**the three beats that carry the whole video** (they're already in the can):
+
+1. **the blindness tax.** every hunt result ends `partial blindness (hereditary cataracts); −15%`. the disability you chose is taxing every roll.
+2. **the rotteddust rivalry.** you wrote swampsink volatile; xer first socialize went badly and the bot logged a real grudge bond. the game confirmed your character sheet without being asked. this is the best thing in the footage.
+3. **defender's watch.** "your growl sends it running. the pups never wake." the role feature paying off as story.
+
+everything in `[brackets]` is an edit direction, not a line to read.
+
+> **[0:00–0:30 — cold open. the /profile card, then hard cut to a hunt result with `partial blindness (hereditary cataracts); −15%` highlighted. no logo yet]**
+>
+> "this is swampsink. half blind, volatile, and praying to a god xe doesn't believe in.
+>
+> i wrote that on a character sheet an hour ago. the game has been charging xem for it ever since; every hunt, every roll, minus fifteen percent, because i gave xem an eye disease and meant it.
+>
+> this is howlbert. let me show you how xe got here."
+>
+> **[0:30–0:40 — title card: logo on the dark background]**
+>
+> on-screen text only: "howlbert — a discord wolf rp bot."
+>
+> **[0:40–1:20 — fast B-roll of the site: index, the map, world.html, packs.html. speed-ramp the scrolling. do NOT read the pages aloud; hold ~2 seconds on the map and on each pack name]**
+>
+> "howlbert is a discord bot where you build a wolf and live its whole life: hunt, bond, raise pups, get sick, get old, and die. permanently.
+>
+> four packs share one dying wild and one hungry god called the maw. greyspire holds the mountain by strength. mistmoor lives in the swamp, in the maw's own belly. thistlehide remembers its dead. silverrush carries its grief downriver. that's the world. everything else is consequences."
+>
+> **[1:20–1:35 — the neko. click it once]**
+>
+> "that little cat follows your cursor. it's there because it's cute, because this world is warriors-adjacent and my wolves have to do real diplomacy with the cat clans at the border — and, honestly, because i couldn't find a wolf one."
+>
+> **[1:35–2:20 — quiz.html. show two or three questions, not all six, then the mistmoor result]**
+>
+> "if you don't know where you'd belong, the site asks you six questions and tells you.
+>
+> mistmoor. the swamp. rot, omens, and the maw's belly. which suits me, because my main wolf, mirewort, is already mistmoor; so swampsink is walking into a den i already know."
+>
+> **[2:20–3:20 — charactergen: roll a wolf, reroll the backstory a couple of times, copy the sheet]**
+>
+> "then the generator builds the rest. name, pack, rank, a fair spread of stats, an appearance, and a backstory seed.
+>
+> i rerolled the backstory until one of them bit: *went blind from a fever full-grown, and relearned survival.* not born blind. blinded, as an adult, and forced to learn the swamp all over again. that's the wolf. everything after that is just writing it down."
+>
+> **[3:20–4:20 — the google doc. TIMELAPSE HARD, 4x to 8x. do not show real-time typing]**
+>
+> "the generator gives you the bones; you write the meat. appearance, personality, backstory, and a short rp sample.
+>
+> i gave xem a cynicism that isn't a shield, it's a lens; a volatility that costs xem packmates; and a prayer xe says every morning to a god xe's pretty sure isn't listening. not faith. insurance."
+>
+> **[4:20–5:10 — straw.page, the discord button, the welcome page, the how-to-verify channel]**
+>
+> "the site hands you off to the server.
+>
+> one thing up front: this community is eighteen plus. that's for mature themes, not adult content; there is no nsfw here at all, in any channel. you verify your age, you get in."
+>
+> **[5:10–6:00 — /register, the paste, the "limps in, half-starved" pick, then the /profile reveal]**
+>
+> "then you register. everything from the sheet goes in: the pack, the rank, the genetics — i picked partial blindness, hereditary cataracts, on purpose — the personality, the backstory.
+>
+> and it asks how you arrived. i picked *limps in, half-starved.* the bot gave xem a permanent trait for it: **wary arrival, plus one on survival**. xe hasn't taken a single step yet and xe's already shaped by how xe walked in."
+>
+> **[6:00–7:30 — the first sunrise: hunt prayer, the two hunts, the sniff, then the alligator gar. hold on the gar]**
+>
+> "the prayer is a real mechanic. maw favor, plus two bones on every hunt today.
+>
+> two rabbits. then a full deer share; xer jaws still ache from the haul. and then—"
+>
+> **[beat, let the gar land]**
+>
+> "an armored alligator gar. *elders will speak of this haul.*
+>
+> and read the bottom of every one of those results. minus fifteen percent. partial blindness. the game never once forgot what i wrote on that form."
+>
+> **[7:30–8:20 — forage, explore, the leaf-burn rash, the vitals card at energy 12/100, the short rest]**
+>
+> "xe forages a cattail. xe pushes into the fen and finds a feather bundle, and a contact rash off the oily leaves; minus four mood every sunrise until somebody treats it.
+>
+> energy: twelve out of a hundred. xe is done. this world makes you stop."
+>
+> **[8:20–9:40 — the pack howl, then THE SOCIAL FAILURE, the groom, and the rivalry bond. this is the centerpiece; give it room]**
+>
+> "xe howls. the den answers. unity ten out of ten.
+>
+> and then the part i didn't plan.
+>
+> i wrote swampsink as *volatile*. one word, on a form, an hour earlier. first thing xe does in the den: play too rough. rotteddust leaves with flattened ears. unity drops.
+>
+> so i tried to fix it. groomed the burrs out of xer coat. mood up for both of them. and the bot logged it anyway—"
+>
+> **[hold on the bond line: rivalry, grudge]**
+>
+> "*rivalry. grudge.*
+>
+> i didn't write that scene. the game did, because of a word i chose about who this wolf is. that's the whole pitch, and i got it by accident on xer first night."
+>
+> **[9:40–10:20 — defender's watch]**
+>
+> "and then xe earned xer keep. something old and large circles the den in the dark.
+>
+> *your growl sends it running. the pups never wake.*
+>
+> that's a guard's whole job. xe did it half blind."
+>
+> **[10:20–11:00 — the food reserve, feed all (18 wolves), then the end card with the link on screen]**
+>
+> "eighteen wolves ate tonight because xe hunted.
+>
+> that's the den. that's the game. it's free, it's made by one person, and your wolf can die and stay dead.
+>
+> if you want one of your own to lose: link's in the description and the pinned comment. thanks for watching."
+
+**editing notes:**
+
+- **no memes.** the brand is grim and the pitch is emotional; comedy clips undercut it, and vlipsy's library is ripped copyrighted tv/film, which is a content-id claim waiting to happen on a video promoting a monetized project.
+- **cut the lore reading.** the site pages are B-roll, not a reading. anyone who wants the lore will pause or visit the site; anyone who doesn't will leave.
+- **the writing block must be a timelapse.** it is the single biggest chunk of dead air in the raw recording.
+- **shorts:** cut the 8:20–9:40 rivalry beat to a sub-60-second short on its own. "i wrote one word on a character sheet and the game turned it into a grudge" is the hook that travels.
+- **fix before publishing:** the profile in the raw footage shows guard's default stats and a medium build rather than the sheet's, and the slot counter misreads. reshoot the registration segment after those are corrected.
+
+---
+
 ## 8. assets and tooling (where the visuals come from)
 
 i cannot post text forever; visuals carry reach. sources, cheapest first:
