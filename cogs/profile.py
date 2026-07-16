@@ -194,16 +194,22 @@ def _pack_display(affiliation: str) -> str:
     return 'Unknown'
 
 class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
-    """The prose half of /register. Modal text inputs cap at 4000 characters each
-    with real multi-line paste, so this replaces the old personality/personality2
-    and backstory/backstory2 split-field workaround that existed only to dodge
-    Discord's ~6000-character combined limit on a slash command's composer."""
+    """The prose half of /register: real multi-line paste, unlike a slash option.
+
+    Discord caps a modal at **5** text inputs and each one at **4000** characters,
+    which is less than a slash option's 6000; a full backstory routinely runs past
+    4000, so the two fields that actually overflow (backstory, personality) get a
+    "continued" partner and are joined back together on submit. rp sample keeps a
+    single 4000 field (it's meant to be short; longer ones can use `/character
+    rp_sample`, a 6000-character slash option). family ties and open plots are short
+    enough to live on the slash command itself, which frees the two slots this needs.
+    """
 
     personality = discord.ui.TextInput(label='personality', style=discord.TextStyle.paragraph, required=False, max_length=4000)
+    personality2 = discord.ui.TextInput(label='personality (continued, if it ran long)', style=discord.TextStyle.paragraph, required=False, max_length=4000)
     backstory = discord.ui.TextInput(label='backstory', style=discord.TextStyle.paragraph, required=False, max_length=4000)
+    backstory2 = discord.ui.TextInput(label='backstory (continued, if it ran long)', style=discord.TextStyle.paragraph, required=False, max_length=4000)
     rp_sample = discord.ui.TextInput(label='rp sample', style=discord.TextStyle.paragraph, required=False, max_length=4000)
-    family_ties = discord.ui.TextInput(label='family ties', style=discord.TextStyle.paragraph, required=False, max_length=1000)
-    open_plots = discord.ui.TextInput(label='open plots', style=discord.TextStyle.paragraph, required=False, max_length=1000)
 
     def __init__(self, *, params: dict):
         super().__init__()
@@ -231,7 +237,18 @@ class _RegisterLoreModal(discord.ui.Modal, title='wolf lore (optional)'):
         identity_fields = {k: v.strip()[:64] for k, v in {'fur_color': fur_color, 'eye_color': eye_color, 'markings': markings, 'scars': scars}.items() if v and v.strip()}
         if identity_fields:
             db.set_wolf_identity(new_wolf_id, **identity_fields)
-        lore_fields = {k: v for k, v in {'personality': (self.personality.value or '').strip(), 'backstory': (self.backstory.value or '').strip(), 'family_ties': (self.family_ties.value or '').strip(), 'open_plots': (self.open_plots.value or '').strip(), 'rp_sample': (self.rp_sample.value or '').strip()}.items() if v}
+        # a field and its "continued" partner are two boxes only because Discord caps
+        # each at 4000; they're one piece of prose, so join them back together.
+        def _joined(*parts):
+            return '\n\n'.join(t.strip() for t in parts if t and t.strip())
+
+        lore_fields = {k: v for k, v in {
+            'personality': _joined(self.personality.value, self.personality2.value),
+            'backstory': _joined(self.backstory.value, self.backstory2.value),
+            'family_ties': (p.get('family_ties') or '').strip(),
+            'open_plots': (p.get('open_plots') or '').strip(),
+            'rp_sample': (self.rp_sample.value or '').strip(),
+        }.items() if v}
         if lore_fields:
             db.set_character_lore_fields(new_wolf_id, **lore_fields)
         if skill_keys or weakness_keys:
@@ -360,10 +377,10 @@ class Profile(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name='register', description=f'Create a wolf (up to {MAX_WOLVES_PER_PLAYER} per player; admins unlimited).')
-    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', trait_skill='e.g. hunting:2:fast, tires quick | stealth (skill[:0-5][:flavour], | between)', trait_weakness='e.g. strength:2:small, easily overpowered | wisdom (attr[:0-5][:flavour])')
+    @app_commands.describe(name="your wolf's name", pack='join a great pack, a founded pack, or walk as a lone wolf / rogue', birth_sex='birth sex (female, male, or intersex; affects conception)', sexuality='who your wolf is attracted to (pups: too young / none)', role="your wolf's role (sets starting attributes and skills)", starting_age='starting age in moons, 0 to 120 (optional; defaults from role)', genetic='optional rp genetics, comma-separated (blind, deaf, mute, albinism, missing_leg, …)', maw_belief='faith in the maw (defaults to orthodox for great pack wolves)', fur_color='coat color, short (optional; shows on /profile and inherited by pups)', eye_color='eye color, short (optional; shows on /profile and inherited by pups)', markings='natural coat patterns and markings, short (optional; shows on /profile)', scars='earned scars and old wounds, short (optional; shows on /profile)', family_ties='known family: parents, siblings, kin (optional; the prose goes in the popup)', open_plots='hooks other players can pick up (optional; the prose goes in the popup)', trait_skill='e.g. hunting:2:fast, tires quick | stealth (skill[:0-5][:flavour], | between)', trait_weakness='e.g. strength:2:small, easily overpowered | wisdom (attr[:0-5][:flavour])')
     @app_commands.autocomplete(pack=_pack_register_autocomplete)
     @app_commands.choices(birth_sex=[app_commands.Choice(name='female', value='female'), app_commands.Choice(name='male', value='male'), app_commands.Choice(name='intersex', value='intersex')], sexuality=[app_commands.Choice(name=choice_label(name), value=value) for name, value in SEXUALITY_OPTIONS], role=[app_commands.Choice(name=choice_label(ROLE_LABELS[key]), value=key) for key in ROLE_LABELS], maw_belief=[app_commands.Choice(name=choice_label(label), value=value) for label, value in MAW_BELIEF_OPTIONS])
-    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, trait_skill: str | None=None, trait_weakness: str | None=None):
+    async def register(self, interaction: discord.Interaction, name: str, pack: str, birth_sex: str, sexuality: str, role: str='hunter', starting_age: app_commands.Range[int, 0, 120] | None=None, genetic: str | None=None, maw_belief: str | None=None, fur_color: str | None=None, eye_color: str | None=None, markings: str | None=None, scars: str | None=None, family_ties: str | None=None, open_plots: str | None=None, trait_skill: str | None=None, trait_weakness: str | None=None):
         wolf_count = db.count_slot_wolves(interaction.user.id)
         is_admin = is_howlbert_admin(interaction)
         if not is_admin and wolf_count >= MAX_WOLVES_PER_PLAYER:
@@ -403,6 +420,7 @@ class Profile(commands.Cog):
             wolf_name=wolf_name, pack=pack, role=role, birth_sex=birth_sex, sexuality=sexuality,
             age_months=age_months, genetic_keys=genetic_keys, maw_belief=maw_belief,
             fur_color=fur_color, eye_color=eye_color, markings=markings, scars=scars,
+            family_ties=family_ties, open_plots=open_plots,
             skill_keys=skill_keys, weakness_keys=weakness_keys,
             is_admin=is_admin, wolf_count=wolf_count,
         ))
