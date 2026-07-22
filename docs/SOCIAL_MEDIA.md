@@ -539,6 +539,95 @@ everything in `[brackets]` is an edit direction, not a line to read.
 
 ---
 
+## 7h. video one: the youtube description
+
+**1524 characters**; youtube's cap is 5,000. no summary of the video in it on purpose: the video already says all of that, and a description that recaps it buries the two things people actually come down here for, the links and the chapters.
+
+the first two lines are what shows above "show more", so the hook and the one-line what-is-it sit there and nothing else competes. chapter timestamps need filling once the edit is locked: youtube requires the first to be `0:00`, at least three chapters, and each at least ten seconds long. the discord link goes in both the description and the pinned comment, per section 7b.
+
+**link every destination directly, don't route through straw.page or the site index.** every extra click loses people, and the four destinations are four different intents (join, read, read the code, support); a single link makes a viewer who wanted one of them go hunting for it. the straw.page stays useful where only one link is allowed, like a bio.
+
+**music:** the tracks used in video one need no attribution, so nothing is credited for them. fairygore is site music only and does not belong in a video description. if a future video uses incompetech, that one does need naming the track and "kevin macleod (incompetech.com)" here (section 8).
+
+```
+i built a discord wolf TTRPG where death is permanent, and then i made a wolf and gave it to the dice.
+
+howlbert is a gritty wolf simulator played on discord through a bot i built from scratch. 18+ only, no NSFW, no AI-generated work.
+
+recorded and edited on a laptop that is old enough to have opinions about it, so the capture quality is what it is. and yes, that is level 2 autism you can hear in my voice. it came with the worldbuilding.
+
+links
+
+discord: [invite link, also pinned in the comments]
+neocities site (lore, map, pack quiz, character generator, how to play): [link]
+github: [link]
+ko-fi: [link]
+
+chapters
+
+0:00 what howlbert actually is
+[--:--] why the land is a god
+[--:--] the d20 system, combat, and death saves
+[--:--] herbs, diseases, and genetics
+[--:--] journals, obituaries, bones, and prestige
+[--:--] the honest part: hosting, and learning in public
+[--:--] rules, consent, and relationships
+[--:--] lore, rituals, and the human factions
+[--:--] the pack quiz
+[--:--] rolling swampsink in the character generator
+[--:--] writing xem into a real wolf
+[--:--] verification and /register
+[--:--] the first sunrise: prayer, hunts, and a legendary catch
+[--:--] leaf-burn, and the swamp taking it back
+[--:--] the howl, and the grudge with rotteddust
+[--:--] defender's watch, and feeding eighteen wolves
+[--:--] ko-fi, the kickstarter, and what's next
+
+credits: neko by webneko.net. cursor from cursors-4u.com.
+
+#ttrpg #discord #roleplay #warriorcats #wolves #indiedev #dnd #rpg #worldbuilding #gamedev
+```
+
+---
+
+## 7i. video one: captions
+
+the file is `docs/captions/video_one_transcript.txt`: the narration script, plain text, **no timestamps**, one sentence or clause per line, blank lines between beats.
+
+**it is untimed on purpose.** an `.srt` needs real timecodes and i cannot know when a line is actually spoken in the final edit; guessed timings drift within a minute and land worse than no captions at all. youtube's subtitle uploader takes an untimed transcript and **force-aligns it to the audio itself** with speech recognition, which is far more accurate than anything guessed and takes about a minute of processing.
+
+**how to upload:** youtube studio, subtitles, add language (english), **upload file, without timing**, then auto-sync.
+
+**it is fully editable after upload.** studio's subtitle editor lets any line be retyped, retimed, split, or merged, and edits can be published without re-uploading the video. so if a line was ad-libbed differently from the script, fix it in the editor rather than re-cutting the file.
+
+**do this rather than relying on youtube's auto-captions,** which mangle the proper nouns this video is built on: maw, mistmoor, thistlehide, silverrush, greyspire, swampsink, mirewort, rotteddust, murkvein, and the xe/xer pronouns.
+
+**the file tracks the script, not the take.** where the recorded narration wanders off-script, correct it in the studio editor after auto-sync.
+
+---
+
+## 7j. the youtube channel description
+
+**945 characters**; youtube's cap is 1,000. this is the "about" text, not a video description: it answers "should i subscribe" rather than "what is this video," so it leads with the game and ends with what the channel actually posts.
+
+**the first line is doing double duty.** only the opening ~100 characters preview in search results and on the mobile about card, so "wolf TTRPG played on discord" and "death is permanent" both sit there. the words people would actually search (wolf, TTRPG, discord, roleplay, d20) are in real sentences rather than a keyword pile; youtube indexes this text, and a stuffed list reads as spam to a human reading the about tab.
+
+**the 18+/no NSFW/no AI line stays even though it costs characters.** it filters before someone joins and it's the one policy statement an artist deciding whether to follow will look for.
+
+```
+howlbert is a wolf TTRPG played on discord, through a bot i built from scratch. you make a wolf, join one of four packs, and survive. or you don't. death is permanent and there are no revives.
+
+the land here is the body of a wounded, hungry god called the maw. illness is the maw eating, so when twolegs poison a river it isn't scenery, it's the god of this world bleeding.
+
+under the roleplay: a full d20 system, over 100 herbs with real doses and side effects, over 30 diseases, heritable genetics with real tradeoffs, and a journal for every wolf that becomes their obituary when they die.
+
+on this channel: playthroughs, devlogs, lore, and the occasional honest account of building a thing i wasn't qualified to build yet. i'm basil (he/him), and i'm learning to code, narrate, draw, and edit in public, so you get to watch all of it get better.
+
+the server is 18+, has no NSFW anywhere, and allows no AI-generated work. links below to join.
+```
+
+---
+
 ## 8. assets and tooling (where the visuals come from)
 
 i cannot post text forever; visuals carry reach. sources, cheapest first:
@@ -878,6 +967,22 @@ this is the most direct funnel i have and the plan was missing it. people litera
 - **discadia**, **discord.me**, **discords.com**: additional server directories; list on each with the same tight description and tags.
 - **top.gg** (top.gg): the major **bot** list. list howlbert as a bot with a strong description, tags, and screenshots. note that bot listings usually require the bot to be public and may need verification once it is in enough servers; follow their process.
 - **rules and upkeep:** keep every listing description short and hook-led (lead with the brutal mechanic, not a feature list), keep the invite link working, and reply to reviews and ratings. make sure the server has a clear landing channel and an easy `/register` path, because directory traffic arrives cold and leaves fast if the first screen is confusing.
+
+### 16a. the listing description (write once, reuse everywhere)
+
+**full version, 471 characters** (fits disboard/discadia's 500 cap with headroom). the age-check line sits near the end on purpose: it reads as a "here's what joining involves" heads-up, not a headline, and it doubles as a filter so anyone who won't verify self-selects out before joining instead of hitting the wall at #how-to-verify.
+
+```
+a gritty 18+ wolf RP where death is permanent and the land is a wounded, hungry god. four packs claw through disease, famine, and each other on a custom bot i built from scratch: a full d20 system, 100+ herbs, 30+ diseases, real genetics, and an obituary for every wolf that dies. 24/7 text RP, cat-clan diplomacy, and art contests and adopts. no NSFW, no AI. entry needs quick age check (a redacted ID or roblox age screenshot), for safety. come lose a wolf of your own.
+```
+
+**short version, ~200 characters** (for tighter cards, discord.me-style previews, or a bio line):
+
+```
+a gritty 18+ wolf RP: permanent death, a land that's a wounded god, four packs, and a custom d20 bot i built from scratch. 24/7 text RP. no NSFW, no AI. quick age check to enter (redacted ID or roblox), for safety.
+```
+
+**tags (max 5, ranked): wolf rp · roleplay · warriors · permadeath · discord bot.** lead with `wolf rp` (the exact search term this audience types) and `roleplay` (the broadest bucket that still fits); `warriors` catches the warrior-cats crossover the setting actually has; `permadeath` is the differentiator that filters for people who want the stakes; `discord bot` catches searchers browsing for bots, not just servers. skip clever/brand tags — directory tags are discovery, not identity. where a site allows more than 5, keep these 5 first (many, like tumblr, only index the first 5 anyway).
 
 ---
 

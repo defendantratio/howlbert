@@ -83,14 +83,14 @@ the green tongue, without the walk to find it.
 herb satchel is a one-time in-game item for howlbert, our discord wolf rp bot. purchase grants your choice of herb (pick one from the compendium, `/herbs action:guide`), added to your inventory as raw stock, same as if you'd foraged it yourself.
 
 what you get
-• 2 to 4 units of one herb of your choice, in its raw/dried form
-• still needs preparing and using the normal way: `/herbs action:prepare`, `/medic action:treat`
-• does not skip the medicine check, the right-herb-for-the-ailment matching, or any of the normal treatment mechanics
+✦ 2 to 4 units of one herb of your choice, in its raw/dried form
+✦ still needs preparing and using the normal way: `/herbs action:prepare`, `/medic action:treat`
+✦ does not skip the medicine check, the right-herb-for-the-ailment matching, or any of the normal treatment mechanics
 
 what this is not
-• not a cure, not a heal, not a shortcut around any check or roll
-• does not touch injuries, disease, or hp directly; it's stock, not a spell
-• restricted/poison herbs are not available through this listing
+✦ not a cure, not a heal, not a shortcut around any check or roll
+✦ does not touch injuries, disease, or hp directly; it's stock, not a spell
+✦ restricted/poison herbs are not available through this listing
 
 how to use
 1. join our discord server and /register your wolf first
@@ -192,7 +192,7 @@ put your discord user id in the order message.
 | 9 | wolf portrait | https://ko-fi.com/s/1acef91903 |
 | 10 | custom item name | https://ko-fi.com/s/7293d845b2 |
 | 11 | legend gift card | https://ko-fi.com/s/ff775b47c9 |
-| 12 | herb satchel ($8) | (create listing; add link here) |
+| 12 | herb satchel ($8) | https://ko-fi.com/s/350f8969d2 |
 
 ## admin
 

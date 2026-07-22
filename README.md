@@ -236,12 +236,20 @@ on large prey or ambushes, party wolves join combat on initiative (+1 attack per
 
 | reward                                | who gets it                                |
 | ------------------------------------- | ------------------------------------------ |
-| **25 bones** on first `/register`     | invited new player (within 7 days of join) |
-| **40 bones + 2 standing**             | inviter after invitee stays **3 sunrises** |
+| **40 bones** on first `/register`     | invited new player (within 7 days of join) |
+| **40 bones + 2 standing**             | inviter after invitee stays **3 sunrises** (capped at 3 payouts/month) |
 | **60 bones + 3 standing + 10 mood**   | first server boost (one-time)              |
 | **40 bones**                          | second boost slot (one-time)               |
 | **+5 bones on `/bones action:daily`** | while actively boosting                    |
 
+lifetime referral titles (uncapped, one-time bone grant on each; hard to farm, since every referral only counts after the invitee stays 3 sunrises):
+
+| title           | lifetime referrals | one-time bonus |
+| --------------- | ------------------ | -------------- |
+| **Den-Builder** | 5                  | **15 bones**   |
+| **Den-Keeper**  | 10                 | **25 bones**   |
+| **Pack-Raiser** | 15                 | **40 bones**   |
+| **Pack Founder**| 25                 | **100 bones**  |
 
 use `/patron` to check status. the bot needs **manage server** to track invites.
 

@@ -390,6 +390,17 @@ class Life(commands.Cog):
             body += f"\n\nSurvived round {result['round']}. **Round {result['round'] + 1}** next."
             color = SUCCESS_COLOR
         await interaction.response.send_message(embed=howlbert_embed('Death Save', body, color=color))
+        if outcome == 'died' and interaction.guild_id:
+            from utils.notifications import post_obituary_to_memoriam
+            try:
+                await post_obituary_to_memoriam(
+                    interaction.client, interaction.guild_id, obituary, wolf_name=user['wolf_name']
+                )
+            except Exception:
+                import logging
+                logging.getLogger("howlbert").exception(
+                    "Could not post obituary for wolf %s", user['id']
+                )
 
     async def _stabilize(self, interaction: discord.Interaction, target: dict, use_yarrow: bool=False, use_cobwebs: bool=False):
         healer = await self._require_user(interaction)

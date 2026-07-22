@@ -8,9 +8,47 @@ import discord
 
 import database as db
 from engine.family import GESTATION_DAYS
-from utils.embeds import SUCCESS_COLOR, howlbert_embed
+from utils.embeds import EMBED_COLOR, SUCCESS_COLOR, howlbert_embed
 
 logger = logging.getLogger("howlbert")
+
+
+async def _resolve_guild_channel(
+    bot: discord.Client, guild_id: int, channel_id: int
+) -> discord.TextChannel | None:
+    """Fetch a text channel by id and confirm it belongs to guild_id."""
+    ch = bot.get_channel(channel_id)
+    if not isinstance(ch, discord.TextChannel):
+        try:
+            ch = await bot.fetch_channel(channel_id)
+        except discord.HTTPException:
+            return None
+    if isinstance(ch, discord.TextChannel) and ch.guild.id == guild_id:
+        return ch
+    return None
+
+
+async def post_obituary_to_memoriam(
+    bot: discord.Client, guild_id: int, obituary_line: str, *, wolf_name: str | None = None
+) -> bool:
+    """Post a finished obituary line to the configured #in-memoriam channel, so
+    the world keeps its dead in one place. Best-effort: never raises into the
+    death flow; logs and returns False on any failure or if disabled."""
+    from config import IN_MEMORIAM_CHANNEL_ID
+
+    if not IN_MEMORIAM_CHANNEL_ID:
+        return False
+    channel = await _resolve_guild_channel(bot, guild_id, IN_MEMORIAM_CHANNEL_ID)
+    if channel is None:
+        return False
+    title = f"in memoriam: {wolf_name}" if wolf_name else "in memoriam"
+    embed = howlbert_embed(title, obituary_line, color=EMBED_COLOR)
+    try:
+        await channel.send(embed=embed)
+        return True
+    except discord.HTTPException as exc:
+        logger.info("Could not post obituary to memoriam in guild %s: %s", guild_id, exc)
+        return False
 
 
 async def try_dm_user(

@@ -42,7 +42,7 @@ def hunts_left_footer(user, day: int, *, role_prefix: bool = True) -> str:
     from config import ENERGY_MAX
 
     energy = current_energy(user)
-    core = f"energy **{energy}/{ENERGY_MAX}**; each hunt tires you"
+    core = f"energy {energy}/{ENERGY_MAX}; each hunt tires you"
     if role_prefix and is_hunter(user):
         return f"hunter: {core}, but you tire slower on the hunt"
     return core

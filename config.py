@@ -52,6 +52,12 @@ for _part in _rp_ambience_raw.replace(";", ",").split(","):
 _open_scenes_ch = os.getenv("OPEN_SCENES_CHANNEL_ID", "").strip()
 OPEN_SCENES_CHANNEL_ID = int(_open_scenes_ch) if _open_scenes_ch.isdigit() else None
 
+# channel where a permanently-dead wolf's obituary is posted, so the world
+# remembers its dead in one place. defaults to the server's #in-memoriam;
+# override with the IN_MEMORIAM_CHANNEL_ID env var, or set it to 0 to disable.
+_in_memoriam_ch = os.getenv("IN_MEMORIAM_CHANNEL_ID", "").strip()
+IN_MEMORIAM_CHANNEL_ID = int(_in_memoriam_ch) if _in_memoriam_ch.isdigit() else 1527765654906605708
+
 # Slash replies: when true, bot posts to the channel (profiles, hunts, errors, everything)
 PUBLIC_GAMEPLAY_MESSAGES = os.getenv("PUBLIC_GAMEPLAY_MESSAGES", "true").strip().lower() in (
     "1",
@@ -699,20 +705,35 @@ SIGN_READ_RALLY_UNITY = 1
 SIGN_READ_STANDING = 1
 
 # Invite & server boost rewards (booster perks are personal only; not pack treasury)
-INVITE_WELCOME_BONES = 25
+INVITE_WELCOME_BONES = 40
 INVITE_REFERRER_BONES = 40
 INVITE_REFERRER_STANDING = 2
 INVITE_REGISTER_WINDOW_DAYS = 7
 INVITE_REFERRAL_ROLLOVERS = 3
 INVITE_MAX_PAYOUTS_PER_MONTH = 3
 
-# uncapped, cosmetic-only titles for lifetime successful referrals (does not
-# replace or extend the monthly bones/standing cap above; a player who brings
-# in a whole friend group in one month still only banks INVITE_MAX_PAYOUTS_PER_MONTH
-# worth of bones, but keeps earning these titles regardless of the cap).
+# uncapped titles for lifetime successful referrals (does not replace or extend
+# the monthly bones/standing cap above; a player who brings in a whole friend
+# group in one month still only banks INVITE_MAX_PAYOUTS_PER_MONTH worth of the
+# per-referral payout, but keeps earning these titles regardless of the cap).
 REFERRAL_MILESTONES: dict[int, str] = {
     5: "Den-Builder",
+    10: "Den-Keeper",
+    15: "Pack-Raiser",
     25: "Pack Founder",
+}
+
+# one-time bone grant the first time each milestone above is crossed. paid on top
+# of (and unaffected by) the monthly per-referral cap, because it rewards a hard
+# lifetime count of real, retained invitees rather than raw invite volume: each
+# referral only counts once the invitee has stayed INVITE_REFERRAL_ROLLOVERS
+# sunrises, so this track can't be farmed with throwaway joins the way an uncapped
+# per-invite payout could. one-time, never recurring, so it does not compound.
+REFERRAL_MILESTONE_BONES: dict[int, int] = {
+    5: 15,
+    10: 25,
+    15: 40,
+    25: 100,
 }
 
 BOOST_FIRST_BONES = 60
@@ -856,7 +877,7 @@ KOFI_SHOP_CATALOG: dict[str, dict] = {
         "delivery": "manual",
         "sla_days": 3,
         "match_names": ("herb satchel", "herb bundle", "choose herb"),
-        "direct_link_codes": (),
+        "direct_link_codes": ("350f8969d2",),
     },
 }
 

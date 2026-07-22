@@ -450,6 +450,22 @@ async def run_guild_rollover(
                 await channel.send(embed=embed)
             except discord.HTTPException as exc:
                 logger.warning("Could not announce rollover in guild %s: %s", guild_id, exc)
+        # keep the world's dead in one place: post each permanent death's obituary
+        # to #in-memoriam, separate from (and regardless of) the rollover summary.
+        # mirrors the embed's own losses formatting so every death is covered,
+        # including starvation/thirst deaths that arrive without a wolf_id.
+        for d in crisis.get("deaths", []):
+            from engine.obituary import format_obituary_line
+            from utils.notifications import post_obituary_to_memoriam
+
+            try:
+                if d.get("wolf_id"):
+                    line = format_obituary_line(d["wolf_id"], d["wolf_name"], d["cause"])
+                else:
+                    line = f"**{d['wolf_name']}**; died of {d['cause']}."
+                await post_obituary_to_memoriam(bot, guild_id, line, wolf_name=d.get("wolf_name"))
+            except Exception:
+                logger.exception("Could not post obituary for %s", d.get("wolf_name"))
         if world:
             from engine.rp_ambience import post_rp_ambience
 

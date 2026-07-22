@@ -17,6 +17,7 @@ from config import (
     INVITE_REFERRER_STANDING,
     INVITE_REGISTER_WINDOW_DAYS,
     INVITE_WELCOME_BONES,
+    REFERRAL_MILESTONE_BONES,
     REFERRAL_MILESTONES,
 )
 
@@ -148,6 +149,18 @@ def _check_referral_milestone(discord_id: int, conn=None) -> str | None:
     highest = newly_earned[-1]
     db.set_referral_milestone(discord_id, highest, conn=conn)
     title = REFERRAL_MILESTONES[highest]
+    # one-time grant for every threshold crossed at once (a big jump can clear
+    # more than one); paid on top of the monthly per-referral cap by design.
+    bonus = sum(REFERRAL_MILESTONE_BONES.get(n, 0) for n in newly_earned)
+    if bonus > 0:
+        conn.execute(
+            "UPDATE users SET bones = bones + ? WHERE discord_id = ?",
+            (bonus, discord_id),
+        )
+        return (
+            f"<@{discord_id}> reached **{count}** lifetime referrals; new title unlocked: "
+            f"**{title}** (**+{bonus}** bones, one-time)."
+        )
     return f"<@{discord_id}> reached **{count}** lifetime referrals; new title unlocked: **{title}**."
 
 
@@ -295,6 +308,9 @@ def referral_milestone_line(discord_id: int) -> str:
     if next_threshold:
         remaining = next_threshold - count
         line += f" · **{remaining}** more to **{REFERRAL_MILESTONES[next_threshold]}**"
+        next_bonus = REFERRAL_MILESTONE_BONES.get(next_threshold, 0)
+        if next_bonus > 0:
+            line += f" (**+{next_bonus}** bones)"
     return line
 
 

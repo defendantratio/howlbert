@@ -81,4 +81,48 @@ other **species**     `🐾`
 > -# **no NSFW, anywhere.** 18+ here means mature *themes*, not adult content; there is nothing sexual in any channel or DM. this one is an instant ban.
 > -# **no AI.** no AI-generated art, writing, character designs, lore, or backstories. original work only, and credit anything that isn't yours.
 
+`⚠️`     __content warnings:__ psychological horror, permanent character death, graphic violence, gore, and injury, torture, cannibalism, illness and disease, self-harm, suicide, addiction, and religious themes. per-scene warnings are required in the server.
+
 **DM the advertiser or @twisted_rivers to join or for details! mod applications open!**
+
+---
+
+## short version (fits Discord's free 2,000-character limit as one message)
+
+the full ad above is **4,684 characters**; Discord allows **2,000** free and **4,000** with Nitro, so the long one can't be posted in one message even with Nitro. use the long version for our own server (as a bot/webhook **embed**, which allows 4,096 in a description for free) and this one for outbound partner ads.
+
+what got cut and why: the **open roles list** (it goes stale the moment a role is claimed, and the wolves page already holds the live roster) and half of **we offer** (eleven bullets is a spec sheet; the five strongest convert better). the **art wing and the no-AI rule are both kept in full**, because they're what brings artists in.
+
+[:tooth:]     **whispers** beyond the trees
+
+> -# a **long-term 18+ wolf RP** of **psychological horror** & **religious ambiguity**, across **four packs**.
+
+`📜`     __book one: the blinking__
+
+> -# ***"did you taste it?"***
+> -# *the moon has begun to blink.*
+> -# once there was one pack; hunger, sickness, and the iron teeth of twolegs split it into four. now the moon rises bruised, the rivers run warm, and cat warriors prowl toward an old mill where something ancient sleeps.
+> -# the packs are afraid, and the **maw has not fed** in a very, very long time.
+
+the **packs**     `🐺`
+
+-# `⛰️` **greyspire** (mountain) · `🌫️` **mistmoor** (swamp) · `🌲` **thistlehide** (forest) · `🌊` **silverrush** (river)
+-# most ranks **open**, including **alpha** in three packs; humans and forest cats playable too. **full roster on the wolves page.**
+
+`🧭`     __we offer:__
+
+> -# a full **art wing**: commissions, **art, writing, and RP competitions**, headcanons, art trades, adopts, and resources.
+> -# **howlbert**, our custom bot: your wolf hungers, tires, sickens, and **dies permanently**; only real treatment heals it, and the dead get a real obituary from their own journal.
+> -# 100+ herbs and 30+ diseases with real mechanics, over a full **d20 system**.
+> -# **twelve phases, three acts**; a slow-burn plot that advances when RP earns it, not on a fixed calendar.
+> -# wolf and cat border diplomacy on warrior cats lake territory; 24/7 text RP.
+
+`⚖️`     __house rules:__
+
+> -# **18+ only, and we check** (a redacted **ID** or a **roblox age group** screenshot), for everyone's safety & comfort.
+> -# **no NSFW, anywhere.** 18+ means mature *themes*, not adult content.
+> -# **no AI.** original art, writing, and lore only; credit anything that isn't yours.
+
+`⚠️`     __CW:__ psychological horror, permanent character death, graphic violence, gore, torture, cannibalism, illness, self-harm, suicide, addiction, and religious themes.
+
+**DM the advertiser or @twisted_rivers to join! mod apps open!**

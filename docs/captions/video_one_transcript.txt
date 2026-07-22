@@ -1,0 +1,496 @@
+Hey, everyone! My name's Basil, my pronouns are he him, and I'm the developer, worldbuilder, and caretaker of Howlbert.
+Before we get into the world and the character building, let me tell you what this actually is.
+
+Howlbert's a virtual tabletop roleplaying game, a TTRPG, played on Discord through a bot I built from scratch.
+It's a gritty wolf simulator set in a world where wolves are sentient, the land is the body of a wounded, hungry god called the Maw,
+and the four great packs, Greyspire, Mistmoor, Thistlehide, and Silverrush, are slowly being squeezed out of existence by humans and their own hunger.
+You create a wolf, you join a pack, and you survive.
+Or you don't. Death's permanent here.
+
+I built the world that way on purpose.
+Making the land itself a wounded, hungry god instead of just scenery was my way of putting environmentalism at the center of the setting without ever having to write a lecture about it.
+Illness, disease, injury, that's all the Maw eating.
+So when the twolegs pollute a river or clear-cut a forest, it's not backdrop, it's the actual god of this world bleeding.
+And I wanted the threat to be humans specifically, not some invented monster, because that's the real pressure wild animals are under right now,
+and I wanted a game about wolves to sit with that honestly instead of dodging it.
+
+You might've noticed the little cat chasing my cursor at the beginning.
+That's a Neko. It's a web toy that follows your mouse around the page.
+Why'd I add it? Honestly, because it's cute!
+But also, this world has Warrior Cats influence and is set in the Warrior Cats universe.
+The Packs interact with the four cat clans: ThunderClan, ShadowClan, WindClan, RiverClan.
+So having a cat wandering around the website felt thematically appropriate.
+I couldn't find a wolf version of the Neko, so I paired it with a bunny cursor.
+So now you've got a cat chasing a bunny across the map of a wolf world.
+It's silly, but I like it. It makes the site feel alive.
+In a world this grim, you need those little moments of lightness.
+
+Mechanically, everything runs on a D20 system.
+You've got six attributes and eight skills.
+You roll D20 plus your attribute modifier plus any situational modifiers against a difficulty class.
+There are no dead levels in the attributes; every point matters.
+
+Combat's tactical and lethal.
+You've got bite, claw, and eighteen different maneuvers.
+Critical hits and fumbles have real consequences.
+There are four lethal finishers that can only be used when the defender's already badly hurt.
+When you hit zero HP, you roll death saves against an escalating DC.
+Fail once, you're DEAD. No revives. No exceptions.
+
+The healing system's just as detailed!
+Over one hundred herbs with real preparation methods and side effects.
+Over thirty diseases with daily penalties.
+A separate pain and exhaustion tracker.
+Injuries that reduce your hunt yield.
+The wrong dose, an herb eaten instead of applied, or one pressed into an open wound, backfires!
+Sedatives like poppy build tolerance, addiction, and withdrawal.
+
+Genetics are real, too.
+Blindness, deafness, brachycephaly, spinal disorders, albinism, melanism, ADHD, autism, and more.
+These are heritable and rolled at birth or passed from parents.
+Each has real mechanical consequences, not just flavor, and, as you'll see, not always a pure downside either.
+I did that deliberately.
+I didn't want a disabled wolf to just be a worse wolf on paper; real animals with these conditions adapt,
+and I wanted the mechanics to reflect that instead of just docking a stat and calling it done.
+
+And there's almost no hard blocking.
+Most actions spend energy, but running out never blocks the action.
+It still succeeds, but it costs extra exhaustion and mood instead.
+Consequences, not walls!
+You can always act, even if you're exhausted; the wolf just pays for it.
+That one's honestly as much for the players as it is for the wolves.
+I didn't want anyone locked out of the story because they missed a login window or ran their character too hard on a busy week.
+Real life doesn't wait for cooldowns to reset, so I didn't want the game to either.
+
+Every wolf gets a journal that records their life automatically: birth, pack moves, bonds, blooding, death, and rites.
+And when a wolf dies, they get a real obituary pulled from their own journal.
+It's not just flavor text. The world remembers.
+When a wolf dies, that obituary gets posted in the in-memoriam channel, so their story's never forgotten.
+
+This is a collaborative storytelling game, not a solo adventure.
+Your wolf exists in a living world with other players, and every choice matters.
+The bot gives you the mechanics; the community gives you the story.
+The scene system creates threaded roleplay with a pinned, living roster,
+so you always know who's in the scene with you, and anyone who posts is automatically joined.
+
+Bones are the currency of the wolf world.
+You earn them by hunting, working, praying, completing quests, and from the daily stipend if you're in a pack.
+You spend them at the shop for herbs, tools, and other items.
+Every pack also takes a small tax on what you bring home, into a shared treasury,
+so hunting well isn't just personal, it's feeding the den's finances too.
+There's a referral system where you get bones for bringing new players.
+If you bring someone to the server, they get twenty-five bones for showing up,
+and you get forty bones and plus two standing when they register within seven days.
+There are lifetime titles for bringing more people: Den-Builder at five, and Pack Founder at twenty-five.
+
+Prestige is your legacy.
+It grows from completing quests and retiring wolves.
+Each tier grants a permanent bone bonus on hunts and daily stipends.
+The tiers range from the Named at Tier One to the Sunderer at Tier Seven, which gives a one hundred and forty-five percent bone bonus.
+Your prestige follows you across wolves, so your legacy carries forward even when a wolf dies.
+Retiring a wolf to the Hall of Fame is how you earn prestige and make sure their story lives on.
+
+You can have up to ten wolves per player.
+Each wolf's got to be in a different pack, to prevent conflict of interest and metagaming.
+The only exception is if a pack's got fewer than three active players,
+in which case you can temporarily run two characters there with moderator approval.
+Loners count toward your slot total and require special approval.
+Quick honesty note for later in this video: my own account's an admin account I use for testing,
+so when you see Swampsink's profile say something like forty-five of ten slots,
+that's a testing artifact from that, not a real number a player would ever see.
+A normal account's hard-capped at ten.
+
+Pups don't count toward your ten-slot cap.
+If you've got a litter, you can keep and play all of them, without using up your slots.
+Any pups you don't want to play can be put up as adopts for other players, or left as den NPCs.
+This encourages large families and pack dynamics without punishing players.
+The adoption system lets you take in orphaned pups, even from other packs, with consent from the birth parents.
+
+Here's the honest truth about Howlbert that I need to tell you before you get too excited.
+The bot isn't hosted on a VPS right now. It runs locally on my machine.
+That means the bot's only online when I'm online and my computer's on.
+If I close my laptop, the den goes quiet.
+If my internet flickers, the world pauses.
+If I'm asleep, the packs are frozen in time.
+
+This isn't a twenty-four-seven, persistent world yet.
+It's a living world that breathes when I'm awake.
+And that's okay for now, because we're a small community and we only play together.
+But it's something you should know going in: the Maw doesn't chew when the machine's off.
+The wolves don't hunt when the developer's sleeping.
+
+So, why am I telling you this? Because honesty matters.
+Howlbert's a passion project, not a commercial product.
+It's a world I built for my friends, and for anyone who wants to tell stories in a harsh, beautiful, dying wild.
+If you join, you're joining a community that plays together, not a bot farm that runs itself.
+And that's part of the charm.
+I'm working on getting it hosted twenty-four seven, but today, the bot lives on my laptop.
+And I'm okay with that. I just want you to know what you're signing up for.
+The Kickstarter planned for the future is specifically to change this, and keep the den awake around the clock.
+
+And since I'm already being honest about the hosting, here's the other honest thing:
+I'm learning to code this in public.
+The whole codebase is up on GitHub, and I'm not some seasoned backend engineer who already knew how to build all this.
+I'm figuring a lot of it out as I go, and every commit is right there
+if you want to see how a genetics system or a combat resolver actually gets built by someone who's still learning.
+I could hide that and just present the finished bot like it fell out of the sky, but I'd rather you see the process.
+If you're curious, or if you're learning to code yourself and want to watch someone else stumble through it in real time,
+the repo's linked in the description too.
+
+Honestly, the code's not the only thing I'm learning out loud.
+I'm shy about being on mic, so this narration you're hearing right now is genuinely one of my first real reps at it, not a polished voiceover reel.
+I'm not an animal artist either, but I want to get good enough to draw these wolves myself instead of only ever commissioning them,
+so expect rough sketches and speedpaints from me eventually, not just finished pieces.
+And this video itself is me learning to make video, the pacing, the editing, all of it.
+I could wait until I was actually good at narrating, drawing, and editing before I ever showed you any of it,
+but that felt dishonest, and honestly, kind of boring.
+I'd rather you watch me get better at this stuff in real time than pretend I showed up already knowing how.
+
+Roleplay in Howlbert is serious and collaborative.
+The server's got a comprehensive set of rules to keep things respectful and immersive.
+The server's eighteen plus, and we verify age with a redacted ID or a Roblox age group screenshot.
+There's no NSFW content anywhere.
+No AI-generated content's allowed; everything's got to be original or properly credited.
+Character death is permanent, and players have to consent to major PvP or death-risk scenes.
+Alpha challenges and the Rite of Broken Canine are the only ways to unseat a sitting alpha, and those require consent, too.
+
+There are rules against godmodding, metagaming, and powerplaying.
+You can't decide someone else's reaction or outcome for them.
+You can't act on knowledge your wolf has no way of knowing.
+You can't write your own action so it can't fail.
+This is a collaborative space, and the rules exist to keep it fair and safe for everyone.
+
+Relationships are documented through the bot.
+There are bonds: friendships, rivalries, kin, mentors, romances, and found families.
+Cross-pack romances are allowed, but carry heavy IC risk.
+Flings, courtship, and mating all go through the bot and require consent from everyone involved.
+The server's also got a full adoption system for pups, foster relationships, and found family dynamics.
+The Oath of Mercy means medics can't refuse to treat a wolf in need,
+and they're forbidden to mate, so their scent stays neutral enough to treat any wolf without triggering dominance aggression.
+
+The Neocities site has all the lore and reference material you could need:
+the world, the packs, the herbs, the diseases, and a how-to-play guide.
+The Rotting Mere and the Belly-Rip are specific Mistmoor locations with real mechanics,
+where Mistmoor wolves can become drown-sick or find rare herbs.
+The Drowning Rite is how Silverrush alphas claim the seat, by swimming under the river and seeing who comes back,
+and Bark-Burial in Thistlehide and the Weep Stone in Silverrush are significant pack rituals for honouring the dead.
+
+There's an art sharing channel where people post their wolf art, character designs, and scene illustrations.
+There's a fic-recs channel for longer written scenes and stories, both in-progress and finished.
+We also run a Screenshot Showcase, where people post dramatic moments from the game,
+like a clutch death save, a legendary catch, or a tense combat log.
+
+We've got competitions planned too: art, RP, and writing competitions where you can submit scenes, poetry, or lore pieces.
+The server's a creative space as much as a roleplay space, and we want to celebrate the art that comes out of it.
+Mod applications are open if you want to help shape the community.
+
+This server's brand new. I built it from scratch and opened it recently.
+That means right now's the best time to join!
+You're not joining a crowded, established server where everyone already knows each other and has deep, years-long histories.
+You're joining a growing community where your wolf can make a real impact.
+You can shape the culture, claim important roles, and help build the world alongside the other early members.
+There are Alpha seats open in three of the four packs.
+Diplomat roles are open in every pack.
+You can be part of the first generation of wolves in this version of the world.
+
+The world bible on the Neocities is where all the lore lives.
+Mountains are teeth. Forests are fur. Swamps are belly. Rivers are tears.
+The moon's the Maw's eye. The sun's the Maw's breath.
+When a wolf dies, their matter returns to the Maw.
+They don't go to a happy hunting ground. They become the land.
+To be remembered by the living is the only immortality.
+That's the theology. It's bleak, but it's honest.
+The human factions like Thorne Lumber, the River Mill, and the Crows
+all have real mechanics for observing, trading, raiding, and sabotaging them.
+
+Each pack's got its own culture, its own rituals, its own way of reading the Maw's hunger.
+Greyspire culls the weak. Thistlehide buries their dead in trees.
+Mistmoor eats carrion to build disease resistance.
+Silverrush sends its mourners alone to the weep stone.
+When I built this world, I wanted each pack to feel like a distinct culture, each with real tradeoffs.
+You're not just picking a team, you're picking a way of life.
+Honestly, that's also just good game design.
+If one pack were obviously the good one or the strong one, everyone would pick it and the other three would empty out.
+Real terrain shapes real animal behavior differently depending on where they live, so I leaned into that instead of fighting it.
+
+One of the most important choices you make for your wolf is their Maw Belief.
+The Maw's the Packs' god, a wounded, hungry thing that chews.
+Every wolf chooses a belief at registration, and it colors how they read every bad sunrise that follows.
+There are seven options.
+Orthodox, the default faith: the Maw is what is, wounded, hungry, neither good nor evil.
+Orthodox Pragmatic: the Maw's hunger justifies the strong eating the weak.
+Zealot: every illness is the Maw's question and every cure is the wolf's answer.
+Doubter: wants to believe in justice but hasn't seen much of it.
+Agnostic: has seen too much suffering to claim certainty either way.
+Atheist: no god would let wolves suffer the way they do.
+And Heretic: whispers that the Maw doesn't just endure its hunger, it chooses it, and enjoys the watching.
+
+No belief's correct, and that's the point.
+I didn't want to write a game where the right answer to grief and death is baked into the mechanics,
+because that's not how faith actually works for real people either.
+Seven honest positions, none of them punished by the dice.
+The Maw doesn't reward one over another. But it does keep count.
+Pray before a hunt and the Maw listens.
+It grants Maw Favor, standing with something older than any pack.
+The heretics call this vanity. They pray, too.
+The omen and prophecy system means natural ones and twenties on omen readings can bless or sour the next sunrise,
+and the drown-sick and tear-drinkers are always reading the signs.
+
+Not every wolf belongs to a pack.
+You can choose to be a loner or a rogue at registration.
+Loners walk alone by choice, rogues by exile.
+The packless life is its own path, not a downgrade.
+A lone wolf can take small quarry better than a pack wolf, scavenge carrion more effectively, and explore for better loot.
+But they've got no den to huddle in, no healer to treat their wounds, and they burn extra hunger in winter.
+Rogues build notoriety with each crime, and packs hunt a notorious rogue harder, but fear one at notoriety five or higher.
+
+Two bonded loners can end their wandering and raise their own Den with the foundpack command.
+A founded Pack is a true faction with its own name, trait, standing, and rival relations.
+The alpha can recruit loners with packinvite, challenge for territory, and wage war, just like a Great Pack.
+So even if you start alone, you can build something real.
+During a war, members patrol and scout, and after two rollovers the highest score claims the contested territory.
+
+The pack quiz on the site's a good place to start if you're not sure where you belong.
+I genuinely don't remember which answers lead to which results, so this is a surprise for me too!
+
+Mistmoor. Path of the Belly. The swamp remembers, the Maw chews.
+Mistmoor's strange and spiritual and deeply unsettling to outsiders.
+Perfect, honestly. My own main character in the server, Mirewort, already calls Mistmoor home, so I'm glad the dice agree with me.
+I'm going to use the character generator to build a second wolf for this pack.
+
+The character generator's on the Neocities site.
+It rolls a complete wolf: name, pack, rank, age, sexuality, gender, appearance, personality traits, backstory seeds, skills, weaknesses, stats, and a genetic condition.
+It's not a finished character. It's a spark.
+You take the spark and you grow the rest.
+
+Let's see what I get.
+The generator gives me a name: Swampsink. That's a good Mistmoor name.
+The rank's Guard. That fits. Xer stats are solid for a guard.
+Xer genetic condition's partial blindness from hereditary cataracts.
+That's going to be a defining trait.
+Xer personality traits are cynical, volatile, obsessive, and devout.
+That's a FANTASTIC hook!
+A half-blind guard who doesn't believe in the Maw but still whispers the old words to the mud every morning.
+Xe's a doubter who prays anyway, just in case.
+I want a different backstory seed than the one it gave me, so I reroll just that line without touching anything else.
+There. Now I copy the whole sheet over.
+
+Here's my actual reasoning once I've got these four pieces in front of me: cynical, volatile, obsessive, devout.
+Those don't naturally sit together.
+Cynical usually reads as someone who's stopped caring, and devout usually reads as someone who still believes.
+So instead of softening that contradiction, I decided to write straight into it:
+a wolf who's certain the Maw doesn't listen, and prays every single morning anyway.
+That tension is a much stronger hook than picking four traits that agree with each other.
+And the cataracts aren't just a stat line either.
+I made the compulsive watchfulness the actual product of losing that eye.
+Xer whole personality is built around compensating for a body that failed xem once already.
+
+This is the part I LOVE!
+Taking these raw seeds and turning them into a living, breathing wolf!
+The generator gives me seeds, and I grow them into full prose:
+an expanded appearance, a personality writeup, a full backstory, and an RP sample.
+I'm not going to read the whole doc to you word for word, it runs pages, but let me walk you through what I actually wrote.
+
+For personality, cynicism becomes xer whole lens.
+Xe reads the rot in every kindness, catalogues every small betrayal,
+and holds all of it in xer head like a knot xe can't stop tugging at.
+And that same watchfulness is what makes the devotion make sense.
+Every morning, before anyone's awake to see it, xe presses xer nose to the cold earth and prays to a god xe's certain isn't listening.
+Not because xe believes. Because xe can't afford to be wrong.
+
+The backstory gives that watchfulness a cause.
+A fever took half xer sight when xe was full grown,
+and xe spent three weeks relearning the swamp by scent and sound alone, hating every bit of the pity that came with it.
+Later, xe got proven right about something the pack didn't want to hear,
+that the rival pack was marking fresh territory near a contested sinkhole,
+and got punished for saying so anyway.
+Murkvein, the rotmother, called it insubordination;
+Dusk, her second, is the one who actually pinned xem down and opened xer flank for it.
+Two days after that, a rival patrol turned up dead at that same sinkhole, poisoned by the exact runoff xe'd smelled coming.
+Xe was right, and xe still bled for it.
+That's the wound xer whole worldview runs on: doing the right thing and getting hurt for it anyway.
+
+And the RP sample is just one quiet night that pulls all of that together:
+Swampsink at the sinkhole at dawn, praying anyway, watching the twoleg poison spread through the water,
+and then a twig snaps, and a wolf from an enemy pack sits down beside xem instead of attacking.
+They watch the poison together in silence.
+It ends on a line I really like:
+Swampsink lets xerself pretend, just for a moment, that xer prayer had actually been heard.
+
+I made that border wolf on purpose instead of just another friend, because the pollution doesn't care about pack borders.
+The poison doesn't stop at the treaty line,
+and the one relationship Swampsink can't bring xemself to end is built entirely on a shared enemy neither pack takes seriously.
+It's the environmentalism theme again, just scaled down to two wolves instead of a whole world.
+
+A new wolf doesn't exist in a vacuum, either.
+Mistmoor's already full of named wolves with their own agendas,
+so before I ever touch Discord, I think up how xe actually fits into that pack.
+Xe answers to Dusk day to day, the same wolf who gave xem that scar on Murkvein's word,
+and there's a real unspoken tension there.
+Swampsink suspects Dusk already knows about the secret border meetings and just hasn't said anything.
+Xe doesn't trust Murkvein's prophecies, but can't deny they keep coming true,
+so xe avoids the Belly-Rip entirely rather than risk hearing one.
+Mirewort, the healer, is the only wolf who doesn't flinch at xer coughing,
+and Swampsink's started quietly leaving xem gifts xe'll never admit to.
+A young scout named Yarrow won't stop trying to earn xer approval.
+And the drown-sick oracle Gasp said one line to xem once,
+the river will take what you love, but you will love it anyway,
+that xe still can't stop turning over.
+None of that's mechanical, none of it's rolled by the bot.
+It's just me making sure Swampsink has somewhere real to stand before xe ever logs a single action.
+
+Now, I take Swampsink into the Discord server.
+Howlbert runs on slash commands.
+The first step's verification.
+The server's eighteen plus, not for anything NSFW, but for safety and comfort.
+We want to make sure everyone interacting's an adult.
+To verify, you send a redacted ID, just cover everything except your birth year,
+or you can send a screenshot of your Roblox age group.
+We play a lot of Roblox together in the server,
+so that's an easy, low-stakes way to confirm age without sharing sensitive documents.
+
+Then I head to the bot-commands channel and type register.
+I fill in the name, Swampsink. The pack, Mistmoor. The rank, Guard. The age, twenty-six moons.
+Then I copy the appearance, personality, backstory, RP sample, and genetic condition straight over from the doc.
+
+Right after registration, the bot asks how your wolf actually arrived, and gives you a few options to pick from.
+I go with limps in, half-starved, specifically because it lines up with what I already wrote.
+Xe already survived one body-breaking fever, so a rough arrival isn't a random pick, it's just consistent with who xe already is.
+It's not just flavor, either.
+Swampsink walks away from that choice with a permanent Wary Arrival mark: plus one on survival checks, for the rest of xer life.
+That's the kind of thing I mean when I say every choice matters.
+Even the very first one.
+
+The bot handles the rest.
+It sets xer attributes, xer HP, xer role feature.
+Swampsink's role feature is Defender's Resolve.
+When an adjacent packmate's attacked, Swampsink can impose disadvantage on the attack roll.
+That's important!
+Swampsink's small and half-blind, but xe'll stand between danger and the pack.
+And that genetic condition isn't pure downside, either.
+The cataracts cost xer perception, but xer nose and ears pick up the slack,
+so xe actually gets a bonus on tracking, plus an edge on disease saves.
+Real trade, not just a penalty.
+
+After registration, I use the character command to set the finer details.
+This is where I set xer pronouns, and xer combat size.
+I actually forgot to do that in this footage, but normally you'd set it here.
+The bot defaults to medium for adults, but you can set it to small, medium, or large depending on your build.
+
+I set a proxy tag so that when I type ss colon text, the bot posts it as Swampsink.
+That's how roleplay works in the server. You speak as your wolf.
+The proxy tag makes it seamless. You don't have to type the full name every time.
+
+The first thing I do is pray.
+Swampsink's a doubter, but xe prays anyway.
+The bot's got a hunt prayer command.
+It gives a small Maw Favor bonus and blesses the next hunt.
+It's a tiny mechanical thing, but it's also roleplay.
+Xe's asking the Maw for help while not believing the Maw will answer.
+That contradiction's the whole character.
+
+Then, I sniff the wind first, which tells me where the game's running and buffs the next hunt.
+Swampsink's a guard, but every wolf's got to eat.
+The bot rolls dice based on xer stats.
+I get a decent haul: two rabbits in one sweep, then a full deer share off the back of that sniff bonus, and then, a legendary catch!
+An armored alligator gar.
+That's a big moment. The pack'll eat well tonight.
+Even the weather's playing a part without me touching a thing:
+there's fog knocking hunting down a little, but it's also highsun, which pushes it back up,
+and summer heat's quietly draining hydration in the background the whole time.
+The world doesn't pause for you to be ready for it.
+
+I forage next, and it actually goes well: a cattail, useful for stopping bleeding.
+But the swamp gives, and the swamp takes.
+I explore the brush right after, and this time it bites back.
+Swampsink comes away with leaf-burn, a contact rash from oily leaves.
+It costs xer mood every sunrise and makes xer harder to move quietly.
+That's how the world works.
+Every success comes with a consequence, sometimes from the very next roll.
+The bot even tells you exactly how to treat it: which herbs work, whether it needs surgery or just rest.
+Swampsink's case just needs herbs and time.
+That level of detail's everywhere.
+Over one hundred herbs, and the bot always tells you the real fix, not just the wound.
+
+I take a short rest to claw back some energy, then howl for the pack.
+The den answers back, unity ticks up, standing ticks up,
+and the howl itself carries seven tree-lengths on the wind.
+That's not just a number, that's who might hear it.
+
+I try to socialize with Rotteddust, a medic apprentice in the pack.
+It goes badly. The play gets too rough, and I lose mood and den unity.
+But I don't give up!
+I groom the burrs out of Rotteddust's coat instead.
+That restores mood and builds a bond.
+It's not a rivalry anymore. It's a grudge with a thread of understanding.
+That's the kind of storytelling the bot supports.
+You can't just fight. You have to mend.
+
+Another short rest to clear the exhaustion that groom cost me, and then the final action: the defender's watch.
+Swampsink guards the den.
+Something circles in the dark, older and larger, but xe growls and it runs.
+The pups never wake.
+That's the payoff.
+Swampsink's small and half blind and cynical, but xe does xer job.
+Xe protects the den. That's why xe's a guard.
+
+I tend the pack garden, deposit today's kills, the gar, the deer, the rabbits, into the den's food reserve,
+and then feed the whole den at once.
+Eighteen wolves eat off that one reserve tonight.
+That's Mirewort in there too, my main character, sharing a meal with a wolf I made up an hour ago.
+That's not a scripted moment.
+That's just what the pack does every sunrise,
+and it's the best proof I've got that this is a collaborative game and not a solo one.
+
+I pull up Swampsink's full profile.
+Xe's got stats, skills, a genetic condition, a pack trait, and a growing list of bonds and conditions.
+Xe's even carrying a little Prestige already, Tier One, the Named, just from this one sunrise.
+That's the account-wide legacy I mentioned earlier, already stacking up.
+Xe's alive in the world!
+Xer checklist shows what xe's still got left to do this sunrise.
+That's the rhythm of the game.
+You hunt, you forage, you heal, you protect, you build relationships.
+And slowly, your wolf becomes part of the Pack.
+Collaborative activities like shared hunts and patrols let two to four wolves join forces and earn bonuses for working together.
+You can also disguise your scent to cross enemy territory undetected,
+bury a carcass in a personal cache to keep it fresh longer,
+and plant damaging rumors about other wolves with the gossip system.
+
+The bot's deeply integrated with the lore and the community.
+If you've got an idea for a feature or a system, I can actually build it!
+The community shapes the world.
+Early members have a real say in what gets added next.
+If enough people want a new herb, a new disease, a new location, or a new mechanic, I can add it.
+This is a living project, and the people who play it help decide where it goes.
+The Book One plot arc, The Blinking, has twelve phases that add global mechanical weight,
+and every wolf can participate, with their first plot-tagged action each sunrise giving a mood bonus.
+
+If you want to support the project, there's a Ko-fi shop with a few options:
+bone pouches for in-game bones, herb satchels for your inventory,
+digital commissions like wolf portraits and custom item names, supporter badges, and a few other small things.
+These are personal rewards, never pack treasury drains or combat advantages.
+Nothing here makes your wolf stronger than anyone else's.
+No revives, no stat boosts, no way around a medicine check or a bad winter.
+Bones, cosmetics, and convenience, only.
+There's also the Legend Gift Card, which gives a month of Legend-tier perks to any registered player.
+
+There's also a Kickstarter planned for the future.
+The goal's a development roadmap: a cross-pack political gathering system, Fourtrees diplomacy,
+combat and healing depth, and a content drop for all four packs,
+alongside the twenty-four seven hosting I mentioned earlier.
+The Kickstarter isn't live yet, but when it is, it'll be the way to help fund all of that.
+Until then, the bot lives on my laptop.
+The Kickstarter reward tiers include Den Supporter, Bone Pouch Backer, Pack Friend, Legend of the Den,
+Landmark Name, Quest Hook, Great Pack Patron, and Founding Wolf Portrait.
+
+Swampsink's now a real wolf in the Mistmoor swamp.
+If you want to join xem, the link to the Discord server's in the description.
+The Neocities site's got everything you need: the lore, the map, the character generator, and a full guide on how to play.
+
+Next time, I want to follow Swampsink through xer first full week in the pack.
+See what happens when the Belly-Rip starts chewing louder and the twolegs get closer.
+Let me know in the comments what you want to see!
+
+Thanks for sticking with me through this long one.
+I built this world for my community, and I'm so glad to finally share it with you.
+I'll see you in the swamp.

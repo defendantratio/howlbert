@@ -14,9 +14,9 @@ paste as one pinned post in the patron / support channel. every number below is 
 
 **free ways to help**     `🐺`
 
--# **bring someone home.** they get **25 bones** for showing up; you get **40 bones** and **+2 standing** when they `/register` within **7 days**.
+-# **bring someone home.** they get **40 bones** for showing up; you get **40 bones** and **+2 standing** when they `/register` within **7 days**.
 -# capped at **3 payouts a month**, so it stays a thank-you and not a job. bring a whole friend group anyway; the titles below don't care about the cap.
--# **lifetime titles**, uncapped: **den-builder** (5 wolves brought home) · **pack founder** (25). `/referrals` shows the leaderboard.
+-# **lifetime titles**, uncapped, each with a **one-time bone grant** the first time you hit it: **den-builder** (5, +15) · **den-keeper** (10, +25) · **pack-raiser** (15, +40) · **pack founder** (25, +100). every referral only counts once the wolf you brought stays **3 sunrises**, so the track rewards real, retained players, not raw invites. `/referrals` shows the leaderboard.
 -# **boost the server.** first boost: **60 bones**, **+3 standing**, **+10 mood**. second boost: **40 bones**. while you're boosting: **+5 bones** on every `/bones action:daily`.
 -# boost and referral rewards are **personal**; nothing is skimmed into the pack treasury.
 
